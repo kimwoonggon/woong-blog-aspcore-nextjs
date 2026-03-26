@@ -1,0 +1,61 @@
+import { defineConfig, devices } from '@playwright/test'
+
+const AUTHENTICATED_SPECS = [
+  /tests\/admin-(?!redirect).*\.spec\.ts$/,
+  /tests\/public-inline-editors\.spec\.ts$/,
+  /tests\/public-blog-detail-inline-edit\.spec\.ts$/,
+  /tests\/public-work-detail-inline-edit\.spec\.ts$/,
+  /tests\/resume\.spec\.ts$/,
+]
+
+const RUNTIME_AUTH_SPECS = [
+  /tests\/auth-security-browser\.spec\.ts$/,
+  /tests\/public-admin-affordances\.spec\.ts$/,
+]
+
+const IGNORE_LOCALHOST_HTTPS_ERRORS = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(
+  process.env.PLAYWRIGHT_BASE_URL ?? 'http://127.0.0.1:3000',
+)
+
+export default defineConfig({
+  testDir: './tests',
+  outputDir: 'test-results/playwright',
+  timeout: 30_000,
+  globalSetup: './tests/helpers/global-setup.ts',
+  use: {
+    baseURL: process.env.PLAYWRIGHT_BASE_URL ?? 'http://127.0.0.1:3000',
+    headless: process.env.PLAYWRIGHT_HEADED === '1' ? false : undefined,
+    trace: 'retain-on-failure',
+    ignoreHTTPSErrors: IGNORE_LOCALHOST_HTTPS_ERRORS,
+    screenshot: 'on',
+    video: 'on',
+  },
+  webServer: process.env.PLAYWRIGHT_EXTERNAL_SERVER === '1'
+    ? undefined
+    : {
+        command: 'npm run dev',
+        url: 'http://127.0.0.1:3000',
+        reuseExistingServer: true,
+        timeout: 120_000,
+      },
+  projects: [
+    {
+      name: 'chromium-public',
+      use: { ...devices['Desktop Chrome'] },
+      testIgnore: [...AUTHENTICATED_SPECS, ...RUNTIME_AUTH_SPECS],
+    },
+    {
+      name: 'chromium-authenticated',
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'test-results/playwright/admin-storage-state.json',
+      },
+      testMatch: AUTHENTICATED_SPECS,
+    },
+    {
+      name: 'chromium-runtime-auth',
+      use: { ...devices['Desktop Chrome'] },
+      testMatch: RUNTIME_AUTH_SPECS,
+    },
+  ],
+})

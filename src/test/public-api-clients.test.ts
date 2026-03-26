@@ -1,0 +1,211 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+vi.mock('@/lib/api/server', () => ({
+  getServerApiBaseUrl: vi.fn(async () => 'http://localhost/api'),
+  getServerCookieHeader: vi.fn(async () => 'session=test'),
+}))
+
+describe('public/admin api clients', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('fetchPublicPageBySlug returns null when the backend responds with a non-ok status', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('missing', { status: 404 })) as typeof fetch)
+
+    const { fetchPublicPageBySlug } = await import('@/lib/api/pages')
+
+    await expect(fetchPublicPageBySlug('contact')).resolves.toBeNull()
+  })
+
+  it('fetchPublicBlogs and fetchPublicWorks return empty fallback payloads on non-ok responses', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response('missing', { status: 503 }))
+      .mockResolvedValueOnce(new Response('missing', { status: 500 }))
+    vi.stubGlobal('fetch', fetchMock as typeof fetch)
+
+    const { fetchPublicBlogs } = await import('@/lib/api/blogs')
+    const { fetchPublicWorks } = await import('@/lib/api/works')
+
+    await expect(fetchPublicBlogs(3, 7)).resolves.toEqual({
+      items: [],
+      page: 3,
+      pageSize: 7,
+      totalItems: 0,
+      totalPages: 1,
+    })
+    await expect(fetchPublicWorks(2, 8)).resolves.toEqual({
+      items: [],
+      page: 2,
+      pageSize: 8,
+      totalItems: 0,
+      totalPages: 1,
+    })
+  })
+
+  it('fetchPublicBlogBySlug requests the backend slug endpoint and fetchPublicWorkBySlug returns null on 404', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ id: '1', slug: 'seeded-blog', title: 'Seeded Blog', excerpt: 'excerpt', tags: [], contentJson: '{}' }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      )
+      .mockResolvedValueOnce(new Response('missing', { status: 404 }))
+    vi.stubGlobal('fetch', fetchMock as typeof fetch)
+
+    const { fetchPublicBlogBySlug } = await import('@/lib/api/blogs')
+    const { fetchPublicWorkBySlug } = await import('@/lib/api/works')
+
+    const result = await fetchPublicBlogBySlug('seeded-blog')
+
+    expect(fetchMock).toHaveBeenNthCalledWith(1, 'http://localhost/api/public/blogs/seeded-blog', { cache: 'no-store' })
+    expect(result?.slug).toBe('seeded-blog')
+    await expect(fetchPublicWorkBySlug('missing-work')).resolves.toBeNull()
+  })
+
+  it('fetchAdminWorks forwards the cookie header for authenticated admin fetches', async () => {
+    const fetchMock = vi.fn(async () =>
+      new Response(JSON.stringify([{ id: '1', slug: 'seeded-work', title: 'Seeded Work', excerpt: 'excerpt', category: 'platform', tags: [], published: true }]), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    ) as typeof fetch
+    vi.stubGlobal('fetch', fetchMock)
+
+    const { fetchAdminWorks } = await import('@/lib/api/works')
+
+    const result = await fetchAdminWorks()
+
+    expect(fetchMock).toHaveBeenCalledWith('http://localhost/api/admin/works', {
+      cache: 'no-store',
+      headers: { cookie: 'session=test' },
+    })
+    expect(result).toHaveLength(1)
+  })
+
+  it('fetchAdminBlogs forwards the cookie header for authenticated admin fetches', async () => {
+    const fetchMock = vi.fn(async () =>
+      new Response(JSON.stringify([{ id: '1', slug: 'seeded-blog', title: 'Seeded Blog', excerpt: 'excerpt', tags: [], published: true }]), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    ) as typeof fetch
+    vi.stubGlobal('fetch', fetchMock)
+
+    const { fetchAdminBlogs } = await import('@/lib/api/blogs')
+
+    const result = await fetchAdminBlogs()
+
+    expect(fetchMock).toHaveBeenCalledWith('http://localhost/api/admin/blogs', {
+      cache: 'no-store',
+      headers: { cookie: 'session=test' },
+    })
+    expect(result).toHaveLength(1)
+  })
+
+  it('fetchAdminBlogs and fetchAdminWorks throw when admin list requests fail', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response('bad blogs', { status: 500 }))
+      .mockResolvedValueOnce(new Response('bad works', { status: 500 }))
+    vi.stubGlobal('fetch', fetchMock as typeof fetch)
+
+    const { fetchAdminBlogs } = await import('@/lib/api/blogs')
+    const { fetchAdminWorks } = await import('@/lib/api/works')
+
+    await expect(fetchAdminBlogs()).rejects.toThrow('Failed to load admin blog posts.')
+    await expect(fetchAdminWorks()).rejects.toThrow('Failed to load admin works.')
+  })
+
+  it('fetchResume returns null when no resume is configured and fetchPublicSiteSettings returns parsed data on success', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response('missing', { status: 404 }))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({
+          ownerName: 'Owner',
+          tagline: 'Tagline',
+          facebookUrl: '',
+          instagramUrl: '',
+          twitterUrl: '',
+          linkedInUrl: '',
+          gitHubUrl: 'https://github.com/owner',
+        }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      )
+    vi.stubGlobal('fetch', fetchMock as typeof fetch)
+
+    const { fetchResume, fetchPublicSiteSettings } = await import('@/lib/api/site-settings')
+
+    await expect(fetchResume()).resolves.toBeNull()
+    await expect(fetchPublicSiteSettings()).resolves.toMatchObject({ ownerName: 'Owner', gitHubUrl: 'https://github.com/owner' })
+  })
+
+  it('fetchAllPublicBlogs and fetchAllPublicWorks aggregate every paged response', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ items: [{ id: '1', slug: 'a', title: 'A', excerpt: 'a', tags: [] }], page: 1, pageSize: 1, totalItems: 2, totalPages: 2 }), { status: 200, headers: { 'Content-Type': 'application/json' } }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ items: [{ id: '2', slug: 'b', title: 'B', excerpt: 'b', tags: [] }], page: 2, pageSize: 1, totalItems: 2, totalPages: 2 }), { status: 200, headers: { 'Content-Type': 'application/json' } }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ items: [{ id: '1', slug: 'a', title: 'A', excerpt: 'a', category: 'cat', tags: [] }], page: 1, pageSize: 1, totalItems: 2, totalPages: 2 }), { status: 200, headers: { 'Content-Type': 'application/json' } }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ items: [{ id: '2', slug: 'b', title: 'B', excerpt: 'b', category: 'cat', tags: [] }], page: 2, pageSize: 1, totalItems: 2, totalPages: 2 }), { status: 200, headers: { 'Content-Type': 'application/json' } }))
+    vi.stubGlobal('fetch', fetchMock as typeof fetch)
+
+    const { fetchAllPublicBlogs } = await import('@/lib/api/blogs')
+    const { fetchAllPublicWorks } = await import('@/lib/api/works')
+
+    await expect(fetchAllPublicBlogs(1)).resolves.toHaveLength(2)
+    await expect(fetchAllPublicWorks(1)).resolves.toHaveLength(2)
+  })
+
+  it('admin detail helpers return null on 404 and throw on other failures', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({ status: 404, ok: false })
+      .mockResolvedValueOnce({ status: 500, ok: false })
+      .mockResolvedValueOnce({ status: 404, ok: false })
+      .mockResolvedValueOnce({ status: 500, ok: false })
+    vi.stubGlobal('fetch', fetchMock as typeof fetch)
+
+    const { fetchAdminBlogById } = await import('@/lib/api/blogs')
+    const { fetchAdminWorkById } = await import('@/lib/api/works')
+
+    await expect(fetchAdminBlogById('missing')).resolves.toBeNull()
+    await expect(fetchAdminBlogById('broken')).rejects.toThrow('Failed to load the requested blog post.')
+    await expect(fetchAdminWorkById('missing')).resolves.toBeNull()
+    await expect(fetchAdminWorkById('broken')).rejects.toThrow('Failed to load the requested work item.')
+  })
+
+  it('returns parsed admin detail payloads on successful fetches', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({
+          id: 'blog-1',
+          title: 'Blog title',
+          slug: 'blog-title',
+          excerpt: 'excerpt',
+          tags: ['alpha'],
+          published: true,
+          content: { html: '<p>Hello</p>' },
+        }), { status: 200, headers: { 'Content-Type': 'application/json' } }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({
+          id: 'work-1',
+          title: 'Work title',
+          slug: 'work-title',
+          excerpt: 'excerpt',
+          category: 'platform',
+          tags: ['beta'],
+          published: true,
+          content: { html: '<p>World</p>' },
+          all_properties: {},
+        }), { status: 200, headers: { 'Content-Type': 'application/json' } }),
+      )
+    vi.stubGlobal('fetch', fetchMock as typeof fetch)
+
+    const { fetchAdminBlogById } = await import('@/lib/api/blogs')
+    const { fetchAdminWorkById } = await import('@/lib/api/works')
+
+    await expect(fetchAdminBlogById('blog-1')).resolves.toMatchObject({ slug: 'blog-title' })
+    await expect(fetchAdminWorkById('work-1')).resolves.toMatchObject({ slug: 'work-title', category: 'platform' })
+  })
+})
