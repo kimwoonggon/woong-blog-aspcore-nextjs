@@ -15,8 +15,8 @@ services:
 
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend/Dockerfile
     env_file:
       - .env
     environment:
@@ -25,13 +25,18 @@ services:
       ConnectionStrings__Postgres: Host=db;Port=5432;Database=portfolio;Username=portfolio;Password=portfolio
       Auth__DataProtectionKeysPath: /app/data-protection
       Auth__MediaRoot: /app/media
+    ports:
+      - "8080:8080"
     expose:
       - "8080"
     depends_on:
       - db
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - data-protection-keys:/app/data-protection
       - media-storage:/app/media
+      - ${HOME}/.codex:/root/.codex:ro
 
   db:
     image: postgres:16-alpine

@@ -1,6 +1,12 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    refresh: vi.fn(),
+  }),
+}))
+
 describe('admin page success and not-found states', () => {
   afterEach(() => {
     cleanup()
@@ -85,6 +91,7 @@ describe('admin page success and not-found states', () => {
     expect(screen.getByText('First blog')).toBeInTheDocument()
     expect(screen.getByText('Published')).toBeInTheDocument()
     expect(screen.getByText('tag-a, tag-b')).toBeInTheDocument()
+    expect(screen.getByText(/batch-selection scaffolding/i)).toBeInTheDocument()
   }, 30000)
 
   it('renders draft blog rows without published dates or tags', async () => {

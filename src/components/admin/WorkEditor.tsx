@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { AIFixDialog } from '@/components/admin/AIFixDialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -428,17 +429,26 @@ export function WorkEditor({ initialWork, inlineMode = false }: WorkEditorProps)
             <div className="space-y-4 rounded-2xl border border-border/80 bg-card p-6 shadow-sm dark:border-gray-800">
                 <div className="flex items-center justify-between mb-2">
                     <h3 className="text-lg font-medium">Content (HTML/Text)</h3>
-                    {isEditing && (
-                        <div className="flex items-center space-x-2 rounded-full border bg-gray-50 px-3 py-1.5 dark:bg-gray-900">
-                            <Checkbox
-                                id="published"
-                                name="published"
-                                checked={published}
-                                onCheckedChange={(value) => setPublished(Boolean(value))}
-                            />
-                            <Label htmlFor="published" className="text-sm cursor-pointer">Published</Label>
-                        </div>
-                    )}
+                    <div className="flex items-center gap-2">
+                        <AIFixDialog
+                            content={html}
+                            onApply={setHtml}
+                            apiEndpoint="/api/admin/ai/work-enrich"
+                            title="AI Enrich"
+                            extraBodyParams={{ title }}
+                        />
+                        {isEditing && (
+                            <div className="flex items-center space-x-2 rounded-full border bg-gray-50 px-3 py-1.5 dark:bg-gray-900">
+                                <Checkbox
+                                    id="published"
+                                    name="published"
+                                    checked={published}
+                                    onCheckedChange={(value) => setPublished(Boolean(value))}
+                                />
+                                <Label htmlFor="published" className="text-sm cursor-pointer">Published</Label>
+                            </div>
+                        )}
+                    </div>
                 </div>
                 <div className="rounded-xl border border-dashed border-sky-300 bg-sky-50/70 px-4 py-3 text-sm text-sky-900 dark:border-sky-900 dark:bg-sky-950/20 dark:text-sky-100">
                     Write the public-facing project story here. New works save live immediately, so keep the summary and body ready before hitting create.

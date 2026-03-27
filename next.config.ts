@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
 
+const devProxyOrigin = process.env.DEV_PROXY_ORIGIN?.replace(/\/$/, '')
+
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
@@ -12,6 +14,22 @@ const nextConfig: NextConfig = {
     ],
   },
   output: 'standalone',
+  async rewrites() {
+    if (!devProxyOrigin) {
+      return []
+    }
+
+    return [
+      {
+        source: '/api/:path*',
+        destination: `${devProxyOrigin}/api/:path*`,
+      },
+      {
+        source: '/media/:path*',
+        destination: `${devProxyOrigin}/media/:path*`,
+      },
+    ]
+  },
 };
 
 export default nextConfig;

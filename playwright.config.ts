@@ -14,7 +14,7 @@ const RUNTIME_AUTH_SPECS = [
 ]
 
 const IGNORE_LOCALHOST_HTTPS_ERRORS = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(
-  process.env.PLAYWRIGHT_BASE_URL ?? 'http://127.0.0.1:3000',
+  process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000',
 )
 
 export default defineConfig({
@@ -23,7 +23,7 @@ export default defineConfig({
   timeout: 30_000,
   globalSetup: './tests/helpers/global-setup.ts',
   use: {
-    baseURL: process.env.PLAYWRIGHT_BASE_URL ?? 'http://127.0.0.1:3000',
+    baseURL: process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000',
     headless: process.env.PLAYWRIGHT_HEADED === '1' ? false : undefined,
     trace: 'retain-on-failure',
     ignoreHTTPSErrors: IGNORE_LOCALHOST_HTTPS_ERRORS,
@@ -34,7 +34,14 @@ export default defineConfig({
     ? undefined
     : {
         command: 'npm run dev',
-        url: 'http://127.0.0.1:3000',
+        env: {
+          ...process.env,
+          DEV_PROXY_ORIGIN: 'http://localhost:8080',
+          INTERNAL_API_ORIGIN: 'http://localhost:8080',
+          NEXT_PUBLIC_API_BASE_URL: '/api',
+          NODE_TLS_REJECT_UNAUTHORIZED: '0',
+        },
+        url: 'http://localhost:3000',
         reuseExistingServer: true,
         timeout: 120_000,
       },

@@ -6,6 +6,33 @@ function shouldIgnoreHttpsErrors(baseURL: string) {
   return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(baseURL)
 }
 
+function resolveAuthBaseUrl(baseURL: string) {
+  if (/^https?:\/\/(localhost|127\.0\.0\.1):3000$/i.test(baseURL)) {
+    return 'http://localhost:8080'
+  }
+
+  return baseURL
+}
+
+function shouldRelaxSecureCookiesForBaseUrl(baseURL: string) {
+  return /^http:\/\/(localhost|127\.0\.0\.1):3000$/i.test(baseURL)
+}
+
+async function relaxLocalhostSecureCookies(storageStatePath: string) {
+  const raw = await fs.readFile(storageStatePath, 'utf8')
+  const state = JSON.parse(raw) as {
+    cookies?: Array<{ domain?: string; secure?: boolean }>
+  }
+
+  state.cookies = (state.cookies ?? []).map((cookie) =>
+    /^(localhost|127\.0\.0\.1)$/i.test(cookie.domain ?? '')
+      ? { ...cookie, secure: false }
+      : cookie,
+  )
+
+  await fs.writeFile(storageStatePath, JSON.stringify(state, null, 2))
+}
+
 async function getReadyLoginPage(apiContext: APIRequestContext) {
   const response = await apiContext.get('/login')
   const body = await response.text()
@@ -27,17 +54,24 @@ export default async function globalSetup(config: FullConfig) {
   let lastError: unknown = null
 
   while (Date.now() < deadline) {
-    let apiContext: APIRequestContext | null = null
+    let uiContext: APIRequestContext | null = null
+    let authContext: APIRequestContext | null = null
 
     try {
-      apiContext = await request.newContext({ baseURL, ignoreHTTPSErrors })
-      const readiness = await getReadyLoginPage(apiContext)
+      uiContext = await request.newContext({ baseURL, ignoreHTTPSErrors })
+      const readiness = await getReadyLoginPage(uiContext)
       if (!readiness.ok) {
         throw new Error(`Unexpected login readiness response: ${readiness.status}`)
       }
 
-      await apiContext.get('/api/auth/test-login?email=admin@example.com&returnUrl=%2Fadmin%2Fdashboard')
-      const sessionResponse = await apiContext.get('/api/auth/session')
+      const authBaseURL = resolveAuthBaseUrl(baseURL)
+      authContext = await request.newContext({
+        baseURL: authBaseURL,
+        ignoreHTTPSErrors: shouldIgnoreHttpsErrors(authBaseURL),
+      })
+
+      await authContext.get('/api/auth/test-login?email=admin@example.com&returnUrl=%2Fadmin%2Fdashboard')
+      const sessionResponse = await authContext.get('/api/auth/session')
       const sessionPayload = await sessionResponse.json() as { authenticated?: boolean }
       if (!sessionPayload.authenticated) {
         throw new Error('Admin storage state bootstrap did not yield an authenticated session.')
@@ -45,13 +79,20 @@ export default async function globalSetup(config: FullConfig) {
 
       const storageStatePath = path.resolve('test-results/playwright/admin-storage-state.json')
       await fs.mkdir(path.dirname(storageStatePath), { recursive: true })
-      await apiContext.storageState({ path: storageStatePath })
-      await apiContext.dispose()
+      await authContext.storageState({ path: storageStatePath })
+      if (shouldRelaxSecureCookiesForBaseUrl(baseURL)) {
+        await relaxLocalhostSecureCookies(storageStatePath)
+      }
+      await authContext.dispose()
+      await uiContext.dispose()
       return
     } catch (error) {
       lastError = error
-      if (apiContext) {
-        await apiContext.dispose()
+      if (authContext) {
+        await authContext.dispose()
+      }
+      if (uiContext) {
+        await uiContext.dispose()
       }
     }
 

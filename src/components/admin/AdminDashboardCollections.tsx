@@ -1,9 +1,10 @@
 "use client"
 
 import Link from 'next/link'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { useResponsivePageSize } from '@/hooks/useResponsivePageSize'
 import type { BlogAdminItem } from '@/lib/api/blogs'
 import type { WorkAdminItem } from '@/lib/api/works'
@@ -52,23 +53,43 @@ function AdminCollectionSection<T extends CollectionItem>({
   renderMeta,
 }: AdminCollectionSectionProps<T>) {
   const pageSize = useResponsivePageSize(desktopPageSize, tabletPageSize, mobilePageSize)
+  const [query, setQuery] = useState('')
   const [page, setPage] = useState(1)
-  const totalPages = Math.max(1, Math.ceil(items.length / pageSize))
+  const filteredItems = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase()
+    if (!normalizedQuery) {
+      return items
+    }
+
+    return items.filter((item) => item.title.toLowerCase().includes(normalizedQuery))
+  }, [items, query])
+  const totalPages = Math.max(1, Math.ceil(filteredItems.length / pageSize))
   const currentPage = Math.min(page, totalPages)
+
+  useEffect(() => {
+    setPage(1)
+  }, [query, pageSize])
 
   const visibleItems = useMemo(() => {
     const start = (currentPage - 1) * pageSize
-    return items.slice(start, start + pageSize)
-  }, [currentPage, items, pageSize])
+    return filteredItems.slice(start, start + pageSize)
+  }, [currentPage, filteredItems, pageSize])
 
   const pageWindow = getPageWindow(currentPage, totalPages)
 
   return (
     <section className="space-y-4">
       <div className="flex items-center justify-between gap-3">
-        <div>
+        <div className="flex-1">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-50">{title}</h2>
-          <p className="text-sm text-muted-foreground">{items.length} items · 클릭하면 바로 편집 페이지로 이동합니다.</p>
+          <p className="text-sm text-muted-foreground">{filteredItems.length} shown / {items.length} total · 클릭하면 바로 편집 페이지로 이동합니다.</p>
+          <Input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={`${title} title search`}
+            aria-label={`${title} title search`}
+            className="mt-3 max-w-sm"
+          />
         </div>
         <span className="rounded-full border px-3 py-1 text-xs font-medium text-muted-foreground">
           {pageSize} per page

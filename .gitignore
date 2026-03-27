@@ -60,3 +60,5 @@ notion-view.png
 *.zip
 supabase/
 appsettings.Development.json
+.refs/
+downloads/

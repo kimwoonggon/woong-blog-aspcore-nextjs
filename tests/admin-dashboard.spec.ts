@@ -20,7 +20,7 @@ test('admin dashboard shows summary cards with numeric counts', async ({ page })
 
   await expect(page.getByRole('heading', { name: 'Works' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Blog Posts' })).toBeVisible()
-  await expect(page.getByText(/items · 클릭하면 바로 편집 페이지로 이동합니다\./).first()).toBeVisible()
+  await expect(page.getByText(/shown \/ .* total · 클릭하면 바로 편집 페이지로 이동합니다\./).first()).toBeVisible()
 })
 
 test('admin dashboard cards open edit pages directly and expose pagination controls', async ({ page }) => {
@@ -33,15 +33,19 @@ test('admin dashboard cards open edit pages directly and expose pagination contr
 
   const firstWorkCard = page.getByTestId('works-card-link').first()
   await expect(firstWorkCard).toBeVisible()
-  await firstWorkCard.click()
-  await expect(page).toHaveURL(/\/admin\/works\//)
+  await Promise.all([
+    page.waitForURL(/\/admin\/works\//),
+    firstWorkCard.click(),
+  ])
 
   await page.goto('/admin/dashboard')
 
   const firstBlogCard = page.getByTestId('blog-posts-card-link').first()
   await expect(firstBlogCard).toBeVisible()
-  await firstBlogCard.click()
-  await expect(page).toHaveURL(/\/admin\/blog\//)
+  await Promise.all([
+    page.waitForURL(/\/admin\/blog\//),
+    firstBlogCard.click(),
+  ])
 })
 
 test('admin sidebar exposes a direct public-home shortcut', async ({ page }) => {

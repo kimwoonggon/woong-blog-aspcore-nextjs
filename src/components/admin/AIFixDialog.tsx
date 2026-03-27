@@ -9,6 +9,9 @@ import { toast } from 'sonner'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable"
 import { Rnd } from 'react-rnd'
 import { getErrorMessage } from '@/lib/error-message'
+import { fetchWithCsrf } from '@/lib/api/auth'
+import { Label } from '@/components/ui/label'
+import { fetchAdminAiRuntimeConfigBrowser, type AdminAiRuntimeConfig } from '@/lib/api/admin-ai'
 
 interface AIFixDialogProps {
     content: string
@@ -21,13 +24,16 @@ interface AIFixDialogProps {
 export function AIFixDialog({
     content,
     onApply,
-    apiEndpoint = '/api/ai/fix-blog',
+    apiEndpoint = '/api/admin/ai/blog-fix',
     title = 'AI Content Fixer',
     extraBodyParams = {}
 }: AIFixDialogProps) {
     const [open, setOpen] = useState(false)
     const [loading, setLoading] = useState(false)
     const [fixedContent, setFixedContent] = useState<string | null>(null)
+    const [runtimeConfig, setRuntimeConfig] = useState<AdminAiRuntimeConfig | null>(null)
+    const [codexModel, setCodexModel] = useState('gpt-5.4')
+    const [codexReasoningEffort, setCodexReasoningEffort] = useState('medium')
 
     // Window state for Rnd
     const [windowState, setWindowState] = useState<{
@@ -62,15 +68,47 @@ export function AIFixDialog({
         setIsMounted(true)
     }, [])
 
+    useEffect(() => {
+        if (!open) {
+            return
+        }
+
+        let cancelled = false
+        const savedModel = typeof window !== 'undefined' ? window.localStorage.getItem('admin-ai-codex-model') : null
+        const savedReasoning = typeof window !== 'undefined' ? window.localStorage.getItem('admin-ai-codex-reasoning') : null
+
+        void fetchAdminAiRuntimeConfigBrowser()
+            .then((config: AdminAiRuntimeConfig) => {
+                if (cancelled) {
+                    return
+                }
+
+                setRuntimeConfig(config)
+                setCodexModel(savedModel || config.codexModel || 'gpt-5.4')
+                setCodexReasoningEffort(savedReasoning || config.codexReasoningEffort || 'medium')
+            })
+            .catch((error: unknown) => {
+                if (!cancelled) {
+                    toast.error(getErrorMessage(error, 'Failed to load AI runtime config'))
+                }
+            })
+
+        return () => {
+            cancelled = true
+        }
+    }, [open])
+
     const handleFix = async () => {
         setLoading(true)
         setFixedContent(null)
         try {
-            const response = await fetch(apiEndpoint, {
+            const response = await fetchWithCsrf(apiEndpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     html: content,
+                    codexModel,
+                    codexReasoningEffort,
                     ...extraBodyParams
                 }),
             })
@@ -170,6 +208,46 @@ export function AIFixDialog({
 
                     {/* Content Area - absolutely positioned */}
                     <div className="absolute top-[65px] left-0 right-0 bottom-0">
+                        <div className="absolute left-4 top-3 z-10 flex flex-wrap items-center gap-2 rounded-full border border-border/80 bg-background/95 px-3 py-1.5 shadow-sm">
+                            <span className="text-xs text-muted-foreground">Provider</span>
+                            <span className="text-xs font-medium uppercase">{runtimeConfig?.provider ?? 'loading'}</span>
+                            {runtimeConfig?.provider === 'codex' ? (
+                                <>
+                                    <Label htmlFor="codex-model" className="text-xs text-muted-foreground">Model</Label>
+                                    <select
+                                        id="codex-model"
+                                        value={codexModel}
+                                        onChange={(event) => {
+                                            setCodexModel(event.target.value)
+                                            if (typeof window !== 'undefined') {
+                                                window.localStorage.setItem('admin-ai-codex-model', event.target.value)
+                                            }
+                                        }}
+                                        className="bg-transparent text-xs outline-none"
+                                    >
+                                        {(runtimeConfig.allowedCodexModels || []).map((model: string) => (
+                                            <option key={model} value={model}>{model}</option>
+                                        ))}
+                                    </select>
+                                    <Label htmlFor="codex-reasoning" className="text-xs text-muted-foreground">Reasoning</Label>
+                                    <select
+                                        id="codex-reasoning"
+                                        value={codexReasoningEffort}
+                                        onChange={(event) => {
+                                            setCodexReasoningEffort(event.target.value)
+                                            if (typeof window !== 'undefined') {
+                                                window.localStorage.setItem('admin-ai-codex-reasoning', event.target.value)
+                                            }
+                                        }}
+                                        className="bg-transparent text-xs outline-none"
+                                    >
+                                        {(runtimeConfig.allowedCodexReasoningEfforts || []).map((effort: string) => (
+                                            <option key={effort} value={effort}>{effort}</option>
+                                        ))}
+                                    </select>
+                                </>
+                            ) : null}
+                        </div>
                         <ResizablePanelGroup orientation="horizontal" className="h-full w-full">
                             {/* Original Content */}
                             <ResizablePanel defaultSize={50} minSize={20} className="overflow-hidden">

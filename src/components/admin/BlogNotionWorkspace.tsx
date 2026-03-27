@@ -1,6 +1,7 @@
 "use client"
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,6 +11,7 @@ import { Badge } from '@/components/ui/badge'
 import { TiptapEditor } from '@/components/admin/TiptapEditor'
 import { fetchWithCsrf } from '@/lib/api/auth'
 import { getBrowserApiBaseUrl } from '@/lib/api/browser'
+import { fetchAdminAiRuntimeConfigBrowser, type AdminAiRuntimeConfig } from '@/lib/api/admin-ai'
 import { toast } from 'sonner'
 
 interface BlogWorkspaceListItem {
@@ -53,10 +55,17 @@ function formatTimestamp(value?: string | null) {
 type SaveState = 'idle' | 'saving' | 'saved' | 'error'
 
 export function BlogNotionWorkspace({ blogs, activeBlog }: BlogNotionWorkspaceProps) {
+    const router = useRouter()
     const [title, setTitle] = useState(activeBlog.title)
     const [tagsInput, setTagsInput] = useState(activeBlog.tags?.join(', ') ?? '')
     const [published, setPublished] = useState(activeBlog.published)
     const [html, setHtml] = useState(activeBlog.content.html ?? '')
+    const [selectedBlogIds, setSelectedBlogIds] = useState<string[]>([])
+    const [isBatchFixing, setIsBatchFixing] = useState(false)
+    const [batchFixSummary, setBatchFixSummary] = useState<string | null>(null)
+    const [runtimeConfig, setRuntimeConfig] = useState<AdminAiRuntimeConfig | null>(null)
+    const [codexModel, setCodexModel] = useState('gpt-5.4')
+    const [codexReasoningEffort, setCodexReasoningEffort] = useState('medium')
     const [saveState, setSaveState] = useState<SaveState>('idle')
     const [isSavingMeta, setIsSavingMeta] = useState(false)
     const lastSavedRef = useRef({
@@ -140,11 +149,120 @@ export function BlogNotionWorkspace({ blogs, activeBlog }: BlogNotionWorkspacePr
         }
     }, [activeBlog.id, html])
 
+    useEffect(() => {
+        setSelectedBlogIds((current) => {
+            if (current.length === 0) {
+                return current
+            }
+
+            const blogIds = new Set(blogs.map((blog) => blog.id))
+            const next = current.filter((blogId) => blogIds.has(blogId))
+            return next.length === current.length ? current : next
+        })
+    }, [blogs])
+
+    useEffect(() => {
+        let cancelled = false
+        const savedModel = typeof window !== 'undefined' ? window.localStorage.getItem('admin-ai-codex-model') : null
+        const savedReasoning = typeof window !== 'undefined' ? window.localStorage.getItem('admin-ai-codex-reasoning') : null
+
+        void fetchAdminAiRuntimeConfigBrowser()
+            .then((config: AdminAiRuntimeConfig) => {
+                if (cancelled) {
+                    return
+                }
+
+                setRuntimeConfig(config)
+                setCodexModel(savedModel || config.codexModel || 'gpt-5.4')
+                setCodexReasoningEffort(savedReasoning || config.codexReasoningEffort || 'medium')
+            })
+            .catch((error: unknown) => {
+                if (!cancelled) {
+                    toast.error(error instanceof Error ? error.message : 'Failed to load AI runtime config')
+                }
+            })
+
+        return () => {
+            cancelled = true
+        }
+    }, [])
+
     const metaDirty = useMemo(() => (
         title.trim() !== lastSavedRef.current.title
         || published !== lastSavedRef.current.published
         || JSON.stringify(normalizeTagsInput(tagsInput)) !== JSON.stringify(lastSavedRef.current.tags)
     ), [published, tagsInput, title])
+
+    const selectedCount = selectedBlogIds.length
+    const selectedBlogTitles = blogs
+        .filter((blog) => selectedBlogIds.includes(blog.id))
+        .map((blog) => blog.title)
+
+    function toggleSelectedBlog(blogId: string) {
+        setSelectedBlogIds((current) => (
+            current.includes(blogId)
+                ? current.filter((id) => id !== blogId)
+                : [...current, blogId]
+        ))
+    }
+
+    function selectAllBlogs() {
+        setSelectedBlogIds(blogs.map((blog) => blog.id))
+    }
+
+    function clearSelection() {
+        setSelectedBlogIds([])
+    }
+
+    async function applyBatchAiFix() {
+        if (selectedBlogIds.length === 0) {
+            return
+        }
+
+        setIsBatchFixing(true)
+        setBatchFixSummary(null)
+
+        try {
+            const response = await fetchWithCsrf(
+                `${getBrowserApiBaseUrl()}/admin/ai/blog-fix-batch`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        blogIds: selectedBlogIds,
+                        all: false,
+                        apply: true,
+                        codexModel,
+                        codexReasoningEffort,
+                    }),
+                },
+            )
+
+            const payload = await response.json()
+            if (!response.ok) {
+                throw new Error(payload.error || 'Batch AI Fix failed')
+            }
+
+            const results = Array.isArray(payload.results) ? payload.results : []
+            const fixedCount = results.filter((item: { status?: string }) => item.status === 'fixed').length
+            const failedCount = results.filter((item: { status?: string }) => item.status === 'failed').length
+            const summary = failedCount > 0
+                ? `AI Fix applied to ${fixedCount} posts, ${failedCount} failed.`
+                : `AI Fix applied to ${fixedCount} posts.`
+
+            setBatchFixSummary(summary)
+            toast.success(summary)
+            router.refresh()
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Batch AI Fix failed'
+            setBatchFixSummary(message)
+            toast.error(message)
+        } finally {
+            setIsBatchFixing(false)
+        }
+    }
 
     async function saveMetadata() {
         setIsSavingMeta(true)
@@ -195,43 +313,130 @@ export function BlogNotionWorkspace({ blogs, activeBlog }: BlogNotionWorkspacePr
                     <div className="flex items-center justify-between gap-3">
                         <div>
                             <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Blog library</p>
-                            <p className="text-xs text-muted-foreground">Select a document and start writing immediately.</p>
+                            <p className="text-xs text-muted-foreground">Select a document and stage posts for future batch actions.</p>
                         </div>
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                        <Button size="sm" variant="outline" type="button" onClick={selectAllBlogs} disabled={blogs.length === 0}>
+                            Select all
+                        </Button>
+                        <Button size="sm" variant="ghost" type="button" onClick={clearSelection} disabled={selectedCount === 0}>
+                            Clear selection
+                        </Button>
+                        <div className="flex flex-wrap items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm">
+                            <span className="text-xs text-muted-foreground">Provider</span>
+                            <span data-testid="batch-ai-provider" className="font-medium uppercase">{runtimeConfig?.provider ?? 'loading'}</span>
+                            {runtimeConfig?.provider === 'codex' ? (
+                                <>
+                                    <Label htmlFor="batch-codex-model" className="sr-only">Codex model</Label>
+                                    <select
+                                        id="batch-codex-model"
+                                        aria-label="Batch AI codex model"
+                                        value={codexModel}
+                                        onChange={(event) => {
+                                            setCodexModel(event.target.value)
+                                            if (typeof window !== 'undefined') {
+                                                window.localStorage.setItem('admin-ai-codex-model', event.target.value)
+                                            }
+                                        }}
+                                        className="bg-transparent text-sm outline-none"
+                                    >
+                                        {(runtimeConfig.allowedCodexModels || []).map((model: string) => (
+                                            <option key={model} value={model}>{model}</option>
+                                        ))}
+                                    </select>
+                                    <Label htmlFor="batch-codex-reasoning" className="sr-only">Codex reasoning</Label>
+                                    <select
+                                        id="batch-codex-reasoning"
+                                        aria-label="Batch AI codex reasoning"
+                                        value={codexReasoningEffort}
+                                        onChange={(event) => {
+                                            setCodexReasoningEffort(event.target.value)
+                                            if (typeof window !== 'undefined') {
+                                                window.localStorage.setItem('admin-ai-codex-reasoning', event.target.value)
+                                            }
+                                        }}
+                                        className="bg-transparent text-sm outline-none"
+                                    >
+                                        {(runtimeConfig.allowedCodexReasoningEfforts || []).map((effort: string) => (
+                                            <option key={effort} value={effort}>{effort}</option>
+                                        ))}
+                                    </select>
+                                </>
+                            ) : null}
+                        </div>
+                        <Button size="sm" type="button" onClick={() => void applyBatchAiFix()} disabled={selectedCount === 0 || isBatchFixing}>
+                            {isBatchFixing ? 'Applying AI Fix...' : 'AI Fix selected'}
+                        </Button>
                         <Link href="/admin/blog/new">
-                            <Button size="sm">New Post</Button>
+                            <Button size="sm" type="button">New Post</Button>
                         </Link>
+                    </div>
+                    <div className="mt-3 rounded-2xl border border-dashed border-border/80 bg-muted/20 px-4 py-3">
+                        <p data-testid="batch-selection-count" className="text-sm font-medium text-gray-900 dark:text-gray-100" aria-live="polite">
+                            Selected {selectedCount} {selectedCount === 1 ? 'post' : 'posts'}
+                        </p>
+                        <p data-testid="batch-selection-summary" className="mt-1 text-xs text-muted-foreground">
+                            {selectedCount === 0
+                                ? 'No posts selected yet. Use the checkboxes to stage a batch later.'
+                                : `Ready for future batch actions: ${selectedBlogTitles.join(' · ')}`}
+                        </p>
+                        {batchFixSummary ? (
+                            <p data-testid="batch-ai-status" className="mt-2 text-xs text-muted-foreground">
+                                {batchFixSummary}
+                            </p>
+                        ) : null}
                     </div>
                 </div>
                 <div className="max-h-[calc(100vh-16rem)] space-y-2 overflow-y-auto p-3">
                     {blogs.map((blog) => {
                         const isActive = blog.id === activeBlog.id
+                        const isSelected = selectedBlogIds.includes(blog.id)
 
                         return (
-                            <Link
+                            <div
                                 key={blog.id}
-                                href={`/admin/blog/notion?id=${encodeURIComponent(blog.id)}`}
-                                data-testid="notion-blog-list-item"
-                                className={`block rounded-2xl border px-4 py-3 transition ${
+                                className={`rounded-2xl border px-4 py-3 transition ${
                                     isActive
                                         ? 'border-primary/40 bg-primary/5 shadow-sm'
+                                        : isSelected
+                                            ? 'border-primary/20 bg-primary/5'
                                         : 'border-transparent hover:border-border hover:bg-muted/40'
                                 }`}
                             >
-                                <div className="flex items-start justify-between gap-3">
-                                    <p className="line-clamp-2 text-sm font-medium text-gray-900 dark:text-gray-100">{blog.title}</p>
-                                    <Badge variant="secondary" className={blog.published ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300'}>
-                                        {blog.published ? 'Published' : 'Draft'}
-                                    </Badge>
+                                <div className="flex items-start gap-3">
+                                    <Checkbox
+                                        aria-label={`Select ${blog.title}`}
+                                        checked={isSelected}
+                                        onCheckedChange={() => toggleSelectedBlog(blog.id)}
+                                        className="mt-1"
+                                    />
+                                    <div className="min-w-0 flex-1">
+                                        <div className="flex items-start justify-between gap-3">
+                                            <Link
+                                                href={`/admin/blog/notion?id=${encodeURIComponent(blog.id)}`}
+                                                data-testid="notion-blog-list-item"
+                                                className="block min-w-0"
+                                            >
+                                                <p className="line-clamp-2 text-sm font-medium text-gray-900 underline-offset-4 hover:underline dark:text-gray-100">
+                                                    {blog.title}
+                                                </p>
+                                            </Link>
+                                            <Badge variant="secondary" className={blog.published ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300'}>
+                                                {blog.published ? 'Published' : 'Draft'}
+                                            </Badge>
+                                        </div>
+                                        <p className="mt-2 text-xs text-muted-foreground">
+                                            Updated {formatTimestamp(blog.updatedAt ?? blog.publishedAt)}
+                                        </p>
+                                        {blog.tags?.length ? (
+                                            <p className="mt-2 line-clamp-1 text-xs text-muted-foreground">
+                                                {blog.tags.join(' · ')}
+                                            </p>
+                                        ) : null}
+                                    </div>
                                 </div>
-                                <p className="mt-2 text-xs text-muted-foreground">
-                                    Updated {formatTimestamp(blog.updatedAt ?? blog.publishedAt)}
-                                </p>
-                                {blog.tags?.length ? (
-                                    <p className="mt-2 line-clamp-1 text-xs text-muted-foreground">
-                                        {blog.tags.join(' · ')}
-                                    </p>
-                                ) : null}
-                            </Link>
+                            </div>
                         )
                     })}
                 </div>

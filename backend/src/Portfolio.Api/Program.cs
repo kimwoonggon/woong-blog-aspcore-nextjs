@@ -11,14 +11,15 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using System.Security.Claims;
+using Portfolio.Api.Endpoints;
 using Portfolio.Api.Application.Admin.Abstractions;
 using Portfolio.Api.Application.Public.Abstractions;
 using Portfolio.Api.Application.Behaviors;
+using Portfolio.Api.Infrastructure.Ai;
 using Portfolio.Api.Infrastructure.Auth;
 using Portfolio.Api.Infrastructure.Persistence;
 using Portfolio.Api.Infrastructure.Persistence.Admin;
 using Portfolio.Api.Infrastructure.Persistence.Public;
-using Portfolio.Api.Infrastructure.Persistence.Seeding;
 using Portfolio.Api.Infrastructure.Proxy;
 using Portfolio.Api.Infrastructure.Security;
 using Portfolio.Api.Infrastructure.Validation;
@@ -30,7 +31,39 @@ builder.Services.AddControllers(options =>
     options.Filters.Add<ValidationExceptionFilter>();
 });
 builder.Services.AddHealthChecks();
+builder.Services.AddOpenApi();
 builder.Services.Configure<AuthOptions>(builder.Configuration.GetSection(AuthOptions.SectionName));
+builder.Services.Configure<AiOptions>(builder.Configuration.GetSection(AiOptions.SectionName));
+builder.Services.PostConfigure<AiOptions>(options =>
+{
+    options.Provider = FirstConfigured(builder.Configuration["AI_PROVIDER"], options.Provider, "OpenAi");
+    options.OpenAiApiKey = FirstConfigured(builder.Configuration["OPENAI_API_KEY"], options.OpenAiApiKey);
+    options.OpenAiModel = FirstConfigured(builder.Configuration["OPENAI_MODEL"], options.OpenAiModel, "gpt-4o");
+    options.AzureOpenAiApiKey = FirstConfigured(builder.Configuration["AZURE_OPENAI_API_KEY"], options.AzureOpenAiApiKey);
+    options.AzureOpenAiEndpoint = FirstConfigured(builder.Configuration["AZURE_OPENAI_ENDPOINT"], options.AzureOpenAiEndpoint);
+    options.AzureOpenAiDeployment = FirstConfigured(
+        builder.Configuration["AZURE_OPENAI_DEPLOYMENT"],
+        builder.Configuration["AZURE_DEPLOYMENT_NAME"],
+        options.AzureOpenAiDeployment,
+        "gpt-5.2-chat");
+    options.AzureOpenAiApiVersion = FirstConfigured(builder.Configuration["AZURE_OPENAI_API_VERSION"], options.AzureOpenAiApiVersion, "2024-08-01-preview");
+    options.CodexCommand = FirstConfigured(builder.Configuration["CODEX_COMMAND"], options.CodexCommand, "codex");
+    options.CodexModel = FirstConfigured(builder.Configuration["CODEX_MODEL"], options.CodexModel, "gpt-5.4");
+    options.CodexReasoningEffort = FirstConfigured(builder.Configuration["CODEX_REASONING_EFFORT"], options.CodexReasoningEffort, "medium");
+    if (int.TryParse(builder.Configuration["CODEX_TIMEOUT_MS"], out var timeoutMs) && timeoutMs > 0)
+    {
+        options.CodexTimeoutMs = timeoutMs;
+    }
+    options.CodexWorkdir = FirstConfigured(builder.Configuration["CODEX_WORKDIR"], options.CodexWorkdir);
+    options.CodexAllowedModels = ParseCsv(
+        builder.Configuration["CODEX_ALLOWED_MODELS"],
+        options.CodexAllowedModels,
+        ["gpt-5.4", "gpt-5.3-codex", "gpt-5.3-codex-spark"]);
+    options.CodexAllowedReasoningEfforts = ParseCsv(
+        builder.Configuration["CODEX_ALLOWED_REASONING_EFFORTS"],
+        options.CodexAllowedReasoningEfforts,
+        ["low", "medium", "high", "xhigh"]);
+});
 builder.Services.Configure<ProxyOptions>(builder.Configuration.GetSection(ProxyOptions.SectionName));
 builder.Services.Configure<SecurityOptions>(builder.Configuration.GetSection(SecurityOptions.SectionName));
 
@@ -78,6 +111,7 @@ builder.Services.AddScoped<IPublicPageService, PublicPageService>();
 builder.Services.AddScoped<IPublicSiteService, PublicSiteService>();
 builder.Services.AddScoped<IPublicBlogService, PublicBlogService>();
 builder.Services.AddScoped<IPublicWorkService, PublicWorkService>();
+builder.Services.AddHttpClient<IBlogAiFixService, BlogAiFixService>();
 builder.Services.AddDataProtection()
     .PersistKeysToFileSystem(new DirectoryInfo(authOptions.DataProtectionKeysPath))
     .SetApplicationName("WoongBlog.Portfolio.Api");
@@ -245,20 +279,7 @@ app.UseRateLimiter();
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<PortfolioDbContext>();
-    const int maxAttempts = 10;
-    for (var attempt = 1; attempt <= maxAttempts; attempt++)
-    {
-        try
-        {
-            await dbContext.Database.EnsureCreatedAsync();
-            await SeedData.InitializeAsync(dbContext);
-            break;
-        }
-        catch when (attempt < maxAttempts)
-        {
-            await Task.Delay(TimeSpan.FromSeconds(2));
-        }
-    }
+    await DatabaseBootstrapper.InitializeAsync(dbContext);
 }
 
 app.UseAuthentication();
@@ -271,10 +292,47 @@ app.UseStaticFiles(new StaticFileOptions
     FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(authOptions.MediaRoot)
 });
 
+if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Testing"))
+{
+    app.MapOpenApi("/api/openapi/v1.json");
+}
+
 app.MapControllers();
+app.MapAdminAiEndpoints();
 app.MapGet("/", () => Results.Redirect("/api/health"));
 
 app.Run();
+
+static string FirstConfigured(params string?[] values)
+{
+    foreach (var value in values)
+    {
+        if (!string.IsNullOrWhiteSpace(value))
+        {
+            return value;
+        }
+    }
+
+    return string.Empty;
+}
+
+static string[] ParseCsv(string? raw, IReadOnlyList<string> current, IReadOnlyList<string> fallback)
+{
+    if (!string.IsNullOrWhiteSpace(raw))
+    {
+        return raw
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .ToArray();
+    }
+
+    if (current.Count > 0)
+    {
+        return current.ToArray();
+    }
+
+    return fallback.ToArray();
+}
 
 public partial class Program
 {

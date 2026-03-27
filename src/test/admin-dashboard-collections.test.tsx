@@ -85,4 +85,27 @@ describe('AdminDashboardCollections', () => {
     expect(screen.getByText('Work one')).toBeInTheDocument()
     expect(screen.getByText('Blog one')).toBeInTheDocument()
   })
+
+  it('filters works and blog posts by title independently', () => {
+    render(
+      <AdminDashboardCollections
+        works={[
+          { id: 'work-1', title: 'Alpha Work', slug: 'work-one', excerpt: 'work excerpt', category: 'platform', tags: [], published: true, publishedAt: '2024-01-01T00:00:00.000Z' },
+          { id: 'work-2', title: 'Beta Work', slug: 'work-two', excerpt: '', category: '', tags: [], published: false },
+        ]}
+        blogs={[
+          { id: 'blog-1', title: 'Alpha Blog', slug: 'blog-one', excerpt: 'blog excerpt', tags: ['alpha'], published: true, publishedAt: '2024-01-02T00:00:00.000Z' },
+          { id: 'blog-2', title: 'Beta Blog', slug: 'blog-two', excerpt: '', tags: [], published: false },
+        ]}
+      />,
+    )
+
+    fireEvent.change(screen.getByLabelText('Works title search'), { target: { value: 'beta' } })
+    expect(screen.getByText('Beta Work')).toBeInTheDocument()
+    expect(screen.queryByText('Alpha Work')).not.toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText('Blog Posts title search'), { target: { value: 'beta' } })
+    expect(screen.getByText('Beta Blog')).toBeInTheDocument()
+    expect(screen.queryByText('Alpha Blog')).not.toBeInTheDocument()
+  })
 })
