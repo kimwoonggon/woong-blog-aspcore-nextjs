@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import { join, resolve } from 'node:path'
-import { buildImportPayload, upsertBlogRow } from './notion-db-import-lib.mjs'
+import { buildImportPayload, findExistingBlogIdByTitle, normalizeTitle, upsertBlogRow } from './notion-db-import-lib.mjs'
 
 const root = resolve(process.env.NOTION_EXPORT_DIR || join(process.cwd(), 'downloads', 'notion-connected-2026-03-27T03-08-20-083Z'))
 const statusDir = join(process.cwd(), 'db_status')
@@ -9,6 +9,7 @@ const startedAt = new Date().toISOString()
 const concurrency = Math.max(1, Number(process.env.NOTION_IMPORT_CONCURRENCY || '4'))
 const singleThread = String(process.env.NOTION_IMPORT_SINGLE_THREAD || 'false').toLowerCase() === 'true'
 const workerCount = singleThread ? 1 : concurrency
+const skipExistingTitles = String(process.env.NOTION_IMPORT_SKIP_EXISTING_TITLES || 'false').toLowerCase() === 'true'
 
 async function readJson(path, fallback = null) {
   try {
@@ -66,12 +67,14 @@ async function main() {
     root,
     startedAt,
     totalPages: pages.length,
-    imported: results.length,
+    imported: countImported(results),
     failed: failures.length,
     skipped: done.size,
+    skippedDuplicateTitles: countSkippedDuplicateTitles(results),
     currentIndex: 0,
     currentTitle: null,
     concurrency: workerCount,
+    skipExistingTitles,
   })
 
   async function enqueuePersist(updateStatus) {
@@ -83,10 +86,12 @@ async function main() {
         root,
         startedAt,
         totalPages: pages.length,
-        imported: results.length,
+        imported: countImported(results),
         failed: failures.length,
         skipped: done.size,
+        skippedDuplicateTitles: countSkippedDuplicateTitles(results),
         concurrency: workerCount,
+        skipExistingTitles,
         ...updateStatus,
       })
     })
@@ -114,6 +119,27 @@ async function main() {
     console.log(`[${i + 1}/${pages.length}] ${title}`)
 
     try {
+      if (skipExistingTitles) {
+        const existingBlogId = await findExistingBlogIdByTitle(normalizeTitle(title))
+        if (existingBlogId) {
+          upsertByPageId(results, {
+            pageId: page.id,
+            title,
+            status: 'skipped_duplicate_title',
+            existingBlogId,
+          })
+          removeByPageId(failures, page.id)
+          done.add(page.id)
+          await enqueuePersist({
+            currentIndex: i + 1,
+            currentTitle: title,
+            lastEvent: 'skip_duplicate_title',
+          })
+          console.log(`[${i + 1}/${pages.length}] ${title} (skip: existing title in blog ${existingBlogId})`)
+          return
+        }
+      }
+
       const folderPath = exportManifestByPageId.get(page.id)?.folder || resolveFolderPath(root, i, page)
       const blocks = await readJson(join(folderPath, 'blocks.json'), [])
       const assetsManifest = await readJson(join(folderPath, 'assets-manifest.json'), [])
@@ -166,17 +192,20 @@ async function main() {
     root,
     startedAt,
     totalPages: pages.length,
-    imported: results.length,
+    imported: countImported(results),
     failed: failures.length,
     skipped: done.size,
+    skippedDuplicateTitles: countSkippedDuplicateTitles(results),
     currentIndex: pages.length,
     currentTitle: null,
     lastEvent: 'completed',
     concurrency: workerCount,
+    skipExistingTitles,
   })
   console.log(JSON.stringify({
     root,
-    imported: results.length,
+    imported: countImported(results),
+    skippedDuplicateTitles: countSkippedDuplicateTitles(results),
     failures: failures.length,
   }, null, 2))
 }
@@ -209,6 +238,14 @@ function removeByPageId(rows, pageId) {
   if (index !== -1) {
     rows.splice(index, 1)
   }
+}
+
+function countImported(rows) {
+  return rows.filter((row) => row?.status !== 'skipped_duplicate_title').length
+}
+
+function countSkippedDuplicateTitles(rows) {
+  return rows.filter((row) => row?.status === 'skipped_duplicate_title').length
 }
 
 await main()

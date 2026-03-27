@@ -3,7 +3,8 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useState, useTransition } from 'react'
-import { Eye, Pencil, Trash2 } from 'lucide-react'
+import { Eye, Pencil, Sparkles, Trash2 } from 'lucide-react'
+import { AdminBlogBatchAiPanel } from '@/components/admin/AdminBlogBatchAiPanel'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -20,6 +21,7 @@ interface AdminBlogTableClientProps {
 export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
   const router = useRouter()
   const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [showBatchAiPanel, setShowBatchAiPanel] = useState(false)
   const [query, setQuery] = useState('')
   const [page, setPage] = useState(1)
   const [isPending, startTransition] = useTransition()
@@ -40,6 +42,10 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
   }, [currentPage, filteredBlogs, pageSize])
   const visibleIds = useMemo(() => visibleBlogs.map((blog) => blog.id), [visibleBlogs])
   const selectedCount = selectedIds.length
+  const selectedBlogTitles = useMemo(
+    () => blogs.filter((blog) => selectedIds.includes(blog.id)).map((blog) => blog.title),
+    [blogs, selectedIds],
+  )
   const allSelected = visibleBlogs.length > 0 && visibleIds.every((id) => selectedIds.includes(id))
 
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds])
@@ -110,18 +116,43 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
             {filteredBlogs.length} shown · {selectedCount > 0 ? `${selectedCount} selected` : 'Select rows to enable bulk delete.'}
           </p>
         </div>
-        {selectedCount > 0 ? (
+        <div className="flex flex-wrap items-center gap-2">
           <Button
-            variant="destructive"
+            variant="outline"
             size="sm"
-            onClick={() => runDelete(selectedIds, `${selectedCount} selected blog posts`)}
-            disabled={isPending}
+            type="button"
+            onClick={() => setShowBatchAiPanel((open) => !open)}
           >
-            <Trash2 className="mr-2 h-4 w-4" />
-            Delete Selected
+            <Sparkles className="mr-2 h-4 w-4" />
+            {showBatchAiPanel ? 'Hide Batch AI Fix' : selectedCount > 0 ? `Batch AI Fix (${selectedCount})` : 'Batch AI Fix'}
           </Button>
-        ) : null}
+          {selectedCount > 0 ? (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => runDelete(selectedIds, `${selectedCount} selected blog posts`)}
+              disabled={isPending}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete Selected
+            </Button>
+          ) : null}
+        </div>
       </div>
+      <AdminBlogBatchAiPanel
+        isOpen={showBatchAiPanel}
+        selectedBlogIds={selectedIds}
+        selectedBlogTitles={selectedBlogTitles}
+        availableBlogs={filteredBlogs.map((blog) => ({
+          id: blog.id,
+          title: blog.title,
+          publishedAt: blog.publishedAt ?? null,
+          updatedAt: blog.updatedAt ?? null,
+        }))}
+        onApplied={() => {
+          router.refresh()
+        }}
+      />
       <Table>
         <TableHeader>
           <TableRow>

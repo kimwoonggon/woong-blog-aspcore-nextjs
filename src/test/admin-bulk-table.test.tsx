@@ -39,6 +39,7 @@ describe('admin bulk selection tables', () => {
     expect(screen.queryByText('Delete Selected')).not.toBeInTheDocument()
     fireEvent.click(screen.getByLabelText('Select Blog 1'))
     expect(screen.getByText('Delete Selected')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Generate AI Fix job' })).not.toBeInTheDocument()
   })
 
   it('filters blog rows by title and exposes first/last pagination controls', async () => {

@@ -13,22 +13,22 @@ public sealed class BlogAiFixService : IBlogAiFixService
 {
     private const int MaxCodexImages = 4;
     private static readonly Regex ImageRegex = new("""<img\b[^>]*?\bsrc=(?:""(?<src>[^""]+)""|'(?<src>[^']+)')[^>]*>""", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-
-    private const string BlogSystemPrompt = """
+    private const string PromptFileName = "ai-prompts.json";
+    private static readonly AiPromptCatalog FallbackPrompts = new(
+        BlogFix: """
 You are an expert technical blog editor.
-Your task is to clean up and format the provided HTML content from a Tiptap editor.
+Your task is to clean up, enhance, and format the provided HTML content from a Tiptap editor.
 
 Rules:
-1. CODE BLOCKS: Identify text that looks like code and wrap them in <pre><code class="language-xyz">...</code></pre>.
-2. FORMATTING: Fix grammar, spelling, and punctuation. Improve paragraph structure.
-3. IMAGES: Preserve all <img> tags and keep their placement semantically appropriate.
-4. STRUCTURE: Use proper HTML tags (h1, h2, p, ul, ol).
-5. RETURN ONLY HTML: Do not include markdown fences or explanation.
-""";
-
-    private const string WorkSystemPromptTemplate = """
+1. Rewrite the content into a cleaner, better-organized article while preserving the original meaning and technical depth.
+2. Preserve every <img> tag. Keep image placement unless a nearby move clearly improves readability. Do not change the source URL.
+3. Preserve code blocks, inline code, commands, filenames, and configuration snippets. If code is obviously malformed, you may repair it, but keep the original intent.
+4. Improve headings, section structure, grammar, and flow. Add short explanatory paragraphs around images when the surrounding text is too thin.
+5. Return valid HTML only. Do not emit markdown fences, commentary, or any wrapper outside the final HTML.
+""",
+        WorkEnrichTemplate: """
 You are an expert technical portfolio editor and career coach.
-Your task is to take a raw project description for "{0}" and transform it into a professional, compelling, and well-structured portfolio entry.
+Your task is to take a raw project description for "{title}" and transform it into a professional, compelling, and well-structured portfolio entry.
 
 Rules:
 1. Keep the output as valid HTML only.
@@ -36,17 +36,19 @@ Rules:
 3. Expand vague phrasing into specific technical language.
 4. Preserve all <img> tags and place them contextually.
 5. Keep the output in the same language as the input.
-""";
+""");
 
     private readonly HttpClient _httpClient;
     private readonly AiOptions _options;
     private readonly AuthOptions _authOptions;
+    private readonly AiPromptCatalog _prompts;
 
     public BlogAiFixService(HttpClient httpClient, IOptions<AiOptions> options, IOptions<AuthOptions> authOptions)
     {
         _httpClient = httpClient;
         _options = options.Value;
         _authOptions = authOptions.Value;
+        _prompts = LoadPromptCatalog();
     }
 
     public async Task<BlogAiFixResult> FixHtmlAsync(string html, CancellationToken cancellationToken, AiFixRequestOptions? options = null)
@@ -257,8 +259,8 @@ Rules:
     private string BuildSystemPrompt(AiFixRequestOptions options)
     {
         return options.Mode == AiFixMode.WorkEnrich
-            ? string.Format(WorkSystemPromptTemplate, options.Title ?? "Untitled Project")
-            : BlogSystemPrompt;
+            ? _prompts.WorkEnrichTemplate.Replace("{title}", options.Title ?? "Untitled Project", StringComparison.Ordinal)
+            : _prompts.BlogFix;
     }
 
     private async Task<IReadOnlyList<ImageArtifact>> CollectImageArtifactsAsync(string html, CancellationToken cancellationToken)
@@ -431,6 +433,32 @@ Rules:
             : _options.CodexReasoningEffort;
     }
 
+    private static AiPromptCatalog LoadPromptCatalog()
+    {
+        try
+        {
+            var path = Path.Combine(AppContext.BaseDirectory, PromptFileName);
+            if (!File.Exists(path))
+            {
+                return FallbackPrompts;
+            }
+
+            var json = File.ReadAllText(path);
+            var prompts = JsonSerializer.Deserialize<AiPromptCatalog>(json, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+            return prompts is { BlogFix.Length: > 0, WorkEnrichTemplate.Length: > 0 }
+                ? prompts
+                : FallbackPrompts;
+        }
+        catch
+        {
+            return FallbackPrompts;
+        }
+    }
+
     private sealed class ImageArtifact(string path, bool ownsFile) : IDisposable
     {
         public string Path { get; } = path;
@@ -444,3 +472,5 @@ Rules:
         }
     }
 }
+
+internal sealed record AiPromptCatalog(string BlogFix, string WorkEnrichTemplate);

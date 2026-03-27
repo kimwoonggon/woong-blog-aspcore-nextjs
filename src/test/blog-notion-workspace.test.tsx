@@ -43,6 +43,35 @@ vi.mock('@/lib/api/admin-ai', () => ({
     codexReasoningEffort: 'medium',
     allowedCodexModels: ['gpt-5.4'],
     allowedCodexReasoningEfforts: ['low', 'medium', 'high', 'xhigh'],
+    batchConcurrency: 2,
+    batchCompletedRetentionDays: 3,
+  })),
+  listBlogAiBatchJobsBrowser: vi.fn(async () => ({
+    jobs: [],
+    runningCount: 0,
+    queuedCount: 0,
+    completedCount: 0,
+    failedCount: 0,
+    cancelledCount: 0,
+  })),
+  getBlogAiBatchJobBrowser: vi.fn(async () => ({
+    jobId: 'job-1',
+    status: 'completed',
+    selectionMode: 'selected',
+    selectionLabel: '1 selected',
+    selectionKey: 'selected:job-1',
+    totalCount: 0,
+    processedCount: 0,
+    succeededCount: 0,
+    failedCount: 0,
+    provider: 'codex',
+    model: 'gpt-5.4',
+    reasoningEffort: 'medium',
+    createdAt: '2026-03-27T00:00:00.000Z',
+    startedAt: null,
+    finishedAt: null,
+    cancelRequested: false,
+    items: [],
   })),
 }))
 
@@ -80,7 +109,7 @@ describe('BlogNotionWorkspace selection state', () => {
     },
   ]
 
-  it('tracks selection count and summary while keeping the active editor intact', () => {
+  it('keeps the active editor intact and does not expose batch controls in notion view', () => {
     render(
       <BlogNotionWorkspace
         blogs={blogs}
@@ -88,27 +117,15 @@ describe('BlogNotionWorkspace selection state', () => {
       />,
     )
 
-    expect(screen.getByTestId('batch-selection-count')).toHaveTextContent('Selected 0 posts')
-    expect(screen.getByTestId('batch-selection-summary')).toHaveTextContent('No posts selected yet')
     expect(screen.getByTestId('mock-tiptap-editor')).toBeInTheDocument()
-
-    fireEvent.click(screen.getByRole('button', { name: /select all/i }))
-    expect(screen.getByTestId('batch-selection-count')).toHaveTextContent('Selected 2 posts')
-    expect(screen.getByTestId('batch-selection-summary')).toHaveTextContent('Ready for future batch actions: First blog · Second blog')
-
-    fireEvent.click(screen.getByRole('button', { name: /clear selection/i }))
-    expect(screen.getByTestId('batch-selection-count')).toHaveTextContent('Selected 0 posts')
+    expect(screen.queryByRole('button', { name: /generate ai fix job/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /AI Content Fixer/i })).toBeInTheDocument()
   })
 
-  it('submits selected blog ids to the batch AI endpoint and renders the result summary', async () => {
+  it('still supports metadata save in notion view', async () => {
     vi.mocked(fetchWithCsrf).mockResolvedValue({
       ok: true,
-      json: async () => ({
-        results: [
-          { blogId: 'blog-1', status: 'fixed' },
-          { blogId: 'blog-2', status: 'fixed' },
-        ],
-      }),
+      text: async () => '',
     } as Response)
 
     render(
@@ -118,24 +135,14 @@ describe('BlogNotionWorkspace selection state', () => {
       />,
     )
 
-    fireEvent.click(screen.getByRole('button', { name: /select all/i }))
-    fireEvent.click(screen.getByRole('button', { name: /ai fix selected/i }))
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Updated title' } })
+    fireEvent.click(screen.getByRole('button', { name: /save post settings/i }))
 
     expect(fetchWithCsrf).toHaveBeenCalledWith(
-      'http://localhost/api/admin/ai/blog-fix-batch',
+      'http://localhost/api/admin/blogs/blog-1',
       expect.objectContaining({
-        method: 'POST',
-        body: JSON.stringify({
-          blogIds: ['blog-1', 'blog-2'],
-          all: false,
-          apply: true,
-          codexModel: 'gpt-5.4',
-          codexReasoningEffort: 'medium',
-        }),
+        method: 'PUT',
       }),
     )
-
-    expect(await screen.findByTestId('batch-ai-status')).toHaveTextContent('AI Fix applied to 2 posts.')
-    expect(refreshMock).toHaveBeenCalled()
   })
 })

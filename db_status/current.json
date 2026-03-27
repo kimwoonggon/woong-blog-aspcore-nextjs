@@ -1,12 +1,16 @@
 {
   "mode": "completed",
-  "root": "downloads/notion-connected-2026-03-27T03-08-20-083Z",
-  "totalPages": 831,
-  "importedLegacy": 86,
-  "importedDirect": 745,
-  "importedTotalUnique": 831,
-  "failedUnique": 0,
-  "updatedAt": "2026-03-27T08:17:41.197Z",
-  "lastImportedSlug": "250107-250113-250115c-aspcore",
-  "lastFailureTitle": null
+  "root": "/mnt/d/woong-blog/woong-blog/downloads/notion-connected-2026-03-27T10-24-20-364Z",
+  "startedAt": "2026-03-27T11:51:24.067Z",
+  "totalPages": 1350,
+  "imported": 505,
+  "failed": 0,
+  "skipped": 1350,
+  "skippedDuplicateTitles": 845,
+  "currentIndex": 1350,
+  "currentTitle": null,
+  "lastEvent": "completed",
+  "concurrency": 4,
+  "skipExistingTitles": true,
+  "updatedAt": "2026-03-27T11:57:50.830Z"
 }

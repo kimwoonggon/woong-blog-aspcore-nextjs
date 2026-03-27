@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   blocksToHtml,
   generateExcerpt,
+  normalizeTitle,
   rewriteHtmlWithAssetManifest,
   slugify,
 } from '../../scripts/notion-db-import-lib.mjs'
@@ -14,6 +15,11 @@ describe('notion db import helpers', () => {
 
   it('generates excerpts from html', () => {
     expect(generateExcerpt('<p>Hello</p><p>World</p>')).toBe('Hello World')
+  })
+
+  it('normalizes titles for duplicate-title lookup', () => {
+    expect(normalizeTitle('  Hello   World  ')).toBe('Hello World')
+    expect(normalizeTitle('한글   제목')).toBe('한글 제목')
   })
 
   it('renders notion blocks to html', () => {

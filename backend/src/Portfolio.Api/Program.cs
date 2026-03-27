@@ -55,6 +55,14 @@ builder.Services.PostConfigure<AiOptions>(options =>
         options.CodexTimeoutMs = timeoutMs;
     }
     options.CodexWorkdir = FirstConfigured(builder.Configuration["CODEX_WORKDIR"], options.CodexWorkdir);
+    if (int.TryParse(builder.Configuration["AI_BATCH_CONCURRENCY"], out var batchConcurrency) && batchConcurrency > 0)
+    {
+        options.BatchConcurrency = batchConcurrency;
+    }
+    if (int.TryParse(builder.Configuration["AI_BATCH_COMPLETED_RETENTION_DAYS"], out var retentionDays) && retentionDays >= 0)
+    {
+        options.BatchCompletedRetentionDays = retentionDays;
+    }
     options.CodexAllowedModels = ParseCsv(
         builder.Configuration["CODEX_ALLOWED_MODELS"],
         options.CodexAllowedModels,
@@ -112,6 +120,7 @@ builder.Services.AddScoped<IPublicSiteService, PublicSiteService>();
 builder.Services.AddScoped<IPublicBlogService, PublicBlogService>();
 builder.Services.AddScoped<IPublicWorkService, PublicWorkService>();
 builder.Services.AddHttpClient<IBlogAiFixService, BlogAiFixService>();
+builder.Services.AddHostedService<AiBatchJobProcessor>();
 builder.Services.AddDataProtection()
     .PersistKeysToFileSystem(new DirectoryInfo(authOptions.DataProtectionKeysPath))
     .SetApplicationName("WoongBlog.Portfolio.Api");

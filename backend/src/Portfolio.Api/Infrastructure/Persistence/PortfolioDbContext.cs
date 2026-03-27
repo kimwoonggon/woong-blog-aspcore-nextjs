@@ -10,6 +10,8 @@ public class PortfolioDbContext : DbContext
     }
 
     public DbSet<Asset> Assets => Set<Asset>();
+    public DbSet<AiBatchJob> AiBatchJobs => Set<AiBatchJob>();
+    public DbSet<AiBatchJobItem> AiBatchJobItems => Set<AiBatchJobItem>();
     public DbSet<AuthAuditLog> AuthAuditLogs => Set<AuthAuditLog>();
     public DbSet<AuthSession> AuthSessions => Set<AuthSession>();
     public DbSet<Blog> Blogs => Set<Blog>();
@@ -25,6 +27,18 @@ public class PortfolioDbContext : DbContext
         {
             entity.HasKey(x => x.Singleton);
             entity.Property(x => x.Singleton).ValueGeneratedNever();
+        });
+
+        modelBuilder.Entity<AiBatchJob>(entity =>
+        {
+            entity.HasIndex(x => new { x.TargetType, x.Status, x.CreatedAt });
+            entity.HasIndex(x => new { x.TargetType, x.SelectionKey, x.Status });
+        });
+
+        modelBuilder.Entity<AiBatchJobItem>(entity =>
+        {
+            entity.HasIndex(x => new { x.JobId, x.EntityId }).IsUnique();
+            entity.HasIndex(x => new { x.JobId, x.Status });
         });
 
         modelBuilder.Entity<PageEntity>(entity =>

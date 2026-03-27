@@ -16,6 +16,8 @@ public sealed class AiOptions
     public string CodexReasoningEffort { get; set; } = "medium";
     public int CodexTimeoutMs { get; set; } = 180000;
     public string CodexWorkdir { get; set; } = string.Empty;
+    public int BatchConcurrency { get; set; } = 2;
+    public int BatchCompletedRetentionDays { get; set; } = 3;
     public string[] CodexAllowedModels { get; set; } = [];
     public string[] CodexAllowedReasoningEfforts { get; set; } = [];
 }

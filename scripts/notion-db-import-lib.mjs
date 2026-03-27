@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process'
 import { readFile } from 'node:fs/promises'
-import { basename, extname, join } from 'node:path'
+import { extname } from 'node:path'
 import { randomUUID } from 'node:crypto'
 
 export function slugify(value, fallback = 'post') {
@@ -13,6 +13,12 @@ export function slugify(value, fallback = 'post') {
     .replace(/^-|-$/g, '')
 
   return slug || `${fallback}-${Date.now()}`
+}
+
+export function normalizeTitle(value) {
+  return String(value ?? '')
+    .trim()
+    .replace(/\s+/g, ' ')
 }
 
 export function generateExcerpt(html) {
@@ -200,6 +206,22 @@ export async function findExistingBlogId(marker, slug) {
     FROM "Blogs"
     WHERE position(${sqlText(marker)} in CAST("ContentJson" AS text)) > 0
        OR "Slug" = ${sqlText(slug)}
+    LIMIT 1;
+  `
+  const output = await psqlQuery(sql)
+  return output.trim() || null
+}
+
+export async function findExistingBlogIdByTitle(title) {
+  const normalizedTitle = normalizeTitle(title)
+  if (!normalizedTitle) {
+    return null
+  }
+
+  const sql = `
+    SELECT "Id"
+    FROM "Blogs"
+    WHERE lower(btrim("Title")) = lower(${sqlText(normalizedTitle)})
     LIMIT 1;
   `
   const output = await psqlQuery(sql)
