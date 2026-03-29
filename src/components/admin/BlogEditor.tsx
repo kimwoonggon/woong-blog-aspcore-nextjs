@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { AuthoringCapabilityHints } from '@/components/admin/AuthoringCapabilityHints'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -11,6 +11,7 @@ import { TiptapEditor } from '@/components/admin/TiptapEditor'
 import { AIFixDialog } from '@/components/admin/AIFixDialog'
 import { fetchWithCsrf } from '@/lib/api/auth'
 import { getBrowserApiBaseUrl } from '@/lib/api/browser'
+import { normalizeBlogHtmlForSave } from '@/lib/content/blog-content'
 import { toast } from 'sonner'
 
 interface Blog {
@@ -55,6 +56,7 @@ function buildBlogSnapshot({
 
 export function BlogEditor({ initialBlog, inlineMode = false }: BlogEditorProps) {
     const router = useRouter()
+    const pathname = usePathname()
     const isEditing = Boolean(initialBlog?.id)
     const defaultPublished = initialBlog?.published ?? true
     const [title, setTitle] = useState(initialBlog?.title || '')
@@ -91,11 +93,12 @@ export function BlogEditor({ initialBlog, inlineMode = false }: BlogEditorProps)
     async function saveBlog() {
         const tags = normalizeTagsInput(tagsInput)
         const apiBaseUrl = getBrowserApiBaseUrl()
+        const normalizedHtml = normalizeBlogHtmlForSave(html)
         const payload = {
             title,
             tags,
             published,
-            contentJson: JSON.stringify({ html }),
+            contentJson: JSON.stringify({ html: normalizedHtml }),
         }
 
         setIsSaving(true)
@@ -120,11 +123,39 @@ export function BlogEditor({ initialBlog, inlineMode = false }: BlogEditorProps)
                 return
             }
 
+            const result = await response.json().catch(() => null) as { id?: string; slug?: string } | null
+            const nextSlug = result?.slug ?? initialBlog?.slug ?? null
+
             toast.success(isEditing ? 'Blog post updated successfully' : 'Blog post created successfully')
-            if (!inlineMode) {
-                router.push('/admin/blog')
+            if (normalizedHtml !== html) {
+                setHtml(normalizedHtml)
             }
-            router.refresh()
+
+            if (inlineMode) {
+                if (!isEditing && pathname === '/blog' && nextSlug) {
+                    window.location.assign(`/blog/${encodeURIComponent(nextSlug)}`)
+                    return
+                }
+
+                if (isEditing && pathname.startsWith('/blog/')) {
+                    if (nextSlug) {
+                        window.location.assign(`/blog/${encodeURIComponent(nextSlug)}`)
+                    } else {
+                        router.refresh()
+                    }
+                    return
+                }
+
+                router.refresh()
+                return
+            }
+
+            if (typeof window !== 'undefined' && window.history.length > 1) {
+                router.back()
+                return
+            }
+
+            router.push('/admin/blog')
         } finally {
             setIsSaving(false)
         }

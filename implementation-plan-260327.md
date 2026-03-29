@@ -8,4 +8,4 @@
 
 3. 다운 받은 게시물들이 사진 글 제목 빠짐없이 현재 홈페이지의 blogs에 마이그레이션 되어야 함. 추후에 수정은 내가 할 거임
 4. 현재 홈페이지에 개발되어있는 ai fix generator를 모든 blog에 batch, each로 적용할 수 있는 gpt 등 api 연동 기반 ai fix generator 기능 개발. admin page에서 글들을 체크해서 ai fix generator를 글들을 한번에 적용할 수 있는 기능도 개발.
-5. openai codex를 subprocess로 해서 api를 대신해서 저 글들을 입력하면 gpt처럼 api call 하는 것처럼 처리해주는 기능 개발
+5 . openai codex를 subprocess로 해서 api를 대신해서 저 글들을 입력하면 gpt처럼 api call 하는 것처럼 처리해주는 기능 개발

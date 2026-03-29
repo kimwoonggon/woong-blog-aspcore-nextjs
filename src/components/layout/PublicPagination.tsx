@@ -45,6 +45,16 @@ export function PublicPagination({
       <div className="flex items-center justify-center gap-3">
         {currentPage > 1 ? (
           <Link
+            href={`${pathname}?page=1&pageSize=${pageSize}`}
+            className="rounded-full border px-4 py-2 text-sm font-medium hover:bg-accent"
+          >
+            처음
+          </Link>
+        ) : (
+          <span className="rounded-full border px-4 py-2 text-sm text-muted-foreground">처음</span>
+        )}
+        {currentPage > 1 ? (
+          <Link
             href={`${pathname}?page=${currentPage - 1}&pageSize=${pageSize}`}
             className="rounded-full border px-4 py-2 text-sm font-medium hover:bg-accent"
           >
@@ -65,6 +75,16 @@ export function PublicPagination({
           </Link>
         ) : (
           <span className="rounded-full border px-4 py-2 text-sm text-muted-foreground">다음</span>
+        )}
+        {currentPage < totalPages ? (
+          <Link
+            href={`${pathname}?page=${totalPages}&pageSize=${pageSize}`}
+            className="rounded-full border px-4 py-2 text-sm font-medium hover:bg-accent"
+          >
+            마지막
+          </Link>
+        ) : (
+          <span className="rounded-full border px-4 py-2 text-sm text-muted-foreground">마지막</span>
         )}
       </div>
     </nav>

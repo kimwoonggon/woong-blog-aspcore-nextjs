@@ -73,7 +73,7 @@ export default async function BlogPage({ searchParams }: PageProps) {
                     pagedBlogs.map((blog) => (
                         <Link
                             key={blog.id}
-                            href={`/blog/${blog.slug}`}
+                            href={`/blog/${blog.slug}?relatedPage=${page}`}
                             className="group/card block h-full"
                             data-testid="blog-card"
                         >

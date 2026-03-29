@@ -113,10 +113,22 @@ export function AIFixDialog({
                 }),
             })
 
-            const data = await response.json()
+            const contentType = response.headers.get('content-type') ?? ''
+            const rawBody = await response.text()
+            const data = contentType.includes('application/json')
+                ? JSON.parse(rawBody) as { error?: string; fixedHtml?: string }
+                : null
 
             if (!response.ok) {
-                throw new Error(data.error || 'Failed to fix content')
+                if (response.status === 504) {
+                    throw new Error('AI fix timed out while waiting for the backend response. Please retry.')
+                }
+
+                throw new Error(data?.error || rawBody || 'Failed to fix content')
+            }
+
+            if (!data?.fixedHtml) {
+                throw new Error('AI fix response did not include fixed HTML.')
             }
 
             setFixedContent(data.fixedHtml)

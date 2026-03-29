@@ -118,7 +118,7 @@ npm run build
 ### Backend tests via Dockerized SDK
 
 ```bash
-docker run --pull=never --rm -v "$PWD/backend:/src" -w /src mcr.microsoft.com/dotnet/sdk:10.0 dotnet test tests/Portfolio.Api.Tests/Portfolio.Api.Tests.csproj
+docker run --pull=never --rm -v "$PWD/backend:/src" -w /src mcr.microsoft.com/dotnet/sdk:10.0 dotnet test tests/WoongBlog.Api.Tests/WoongBlog.Api.Tests.csproj
 ```
 
 ### Database smoke/load
@@ -143,8 +143,8 @@ npm run test:e2e:manual-auth
 
 Auth settings live in:
 
-- `backend/src/Portfolio.Api/appsettings.json`
-- `backend/src/Portfolio.Api/appsettings.Development.json`
+- `backend/src/WoongBlog.Api/appsettings.json`
+- `backend/src/WoongBlog.Api/appsettings.Development.json`
 - environment variables consumed by ASP.NET Core
 
 Key fields:
@@ -243,8 +243,8 @@ For the actual deployment checklist and step-by-step runbook, see:
 
 - `src/app/` — Next.js app router frontend
 - `src/lib/api/` — frontend/backend API boundary helpers
-- `backend/src/Portfolio.Api/` — ASP.NET Core application
-- `backend/tests/Portfolio.Api.Tests/` — backend tests
+- `backend/src/WoongBlog.Api/` — ASP.NET Core application
+- `backend/tests/WoongBlog.Api.Tests/` — backend tests
 - `tests/` — Playwright stack/browser regressions
 - `nginx/default.conf` — edge routing contract
 - `docker-compose.yml` — stack orchestration

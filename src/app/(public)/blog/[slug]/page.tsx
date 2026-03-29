@@ -8,6 +8,7 @@ import { InteractiveRenderer } from '@/components/content/InteractiveRenderer'
 import { Badge } from '@/components/ui/badge'
 import { Metadata } from 'next'
 import { fetchServerSession } from '@/lib/api/server'
+import { resolveBlogRenderableHtml } from '@/lib/content/blog-content'
 import { fetchAdminBlogById, fetchAllPublicBlogs, fetchPublicBlogBySlug } from '@/lib/api/blogs'
 
 export const dynamic = 'force-dynamic'
@@ -52,7 +53,7 @@ export default async function BlogDetailPage({ params }: PageProps) {
 
     const relatedBlogs = (await fetchAllPublicBlogs())
         .filter((item) => item.id !== blog.id)
-        .slice(0, 30)
+    const renderedContent = resolveBlogRenderableHtml(blog.contentJson)
 
     // Format date
     const publishDate = blog.publishedAt
@@ -90,8 +91,8 @@ export default async function BlogDetailPage({ params }: PageProps) {
                 </header>
 
                 <div className="mt-8">
-                    {blog.contentJson && (
-                        <InteractiveRenderer html={JSON.parse(blog.contentJson).html ?? ''} />
+                    {renderedContent && (
+                        <InteractiveRenderer html={renderedContent} />
                     )}
                 </div>
 

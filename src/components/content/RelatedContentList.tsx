@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useMemo, useState } from 'react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { useResponsivePageSize } from '@/hooks/useResponsivePageSize'
 
@@ -29,16 +30,15 @@ function formatPublishedDate(publishedAt?: string | null) {
   return publishedAt ? new Date(publishedAt).toLocaleDateString() : '—'
 }
 
-function getPageWindow(currentPage: number, totalPages: number, windowSize = 5) {
-  const half = Math.floor(windowSize / 2)
-  const start = Math.max(1, Math.min(currentPage - half, totalPages - windowSize + 1))
-  const end = Math.min(totalPages, start + windowSize - 1)
-
-  return Array.from({ length: end - start + 1 }, (_, index) => start + index)
-}
-
 interface RelatedContentPagerProps extends RelatedContentListProps {
   pageSize: number
+}
+
+function getPageWindow(currentPage: number, totalPages: number, radius = 2) {
+  const windowSize = radius * 2 + 1
+  const start = Math.max(1, Math.min(currentPage - radius, totalPages - windowSize + 1))
+  const end = Math.min(totalPages, start + windowSize - 1)
+  return Array.from({ length: end - start + 1 }, (_, index) => start + index)
 }
 
 function RelatedContentPager({
@@ -48,7 +48,11 @@ function RelatedContentPager({
   pageSize,
   testIdBase,
 }: RelatedContentPagerProps) {
-  const [page, setPage] = useState(1)
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const initialPage = Math.max(1, Number.parseInt(searchParams.get('relatedPage') ?? '1', 10) || 1)
+  const [page, setPage] = useState(initialPage)
   const totalPages = Math.max(1, Math.ceil(items.length / pageSize))
   const currentPage = Math.min(page, totalPages)
 
@@ -58,6 +62,13 @@ function RelatedContentPager({
   }, [currentPage, items, pageSize])
 
   const pageWindow = getPageWindow(currentPage, totalPages)
+
+  const updateRelatedPage = (nextPage: number) => {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('relatedPage', String(nextPage))
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+    setPage(nextPage)
+  }
 
   if (items.length === 0) {
     return null
@@ -83,7 +94,7 @@ function RelatedContentPager({
         {visibleItems.map((item) => (
           <Link
             key={item.id}
-            href={`${hrefBase}/${item.slug}`}
+            href={`${hrefBase}/${item.slug}?relatedPage=${currentPage}`}
             className="group block h-full"
             data-testid={`${testIdBase}-card`}
           >
@@ -118,7 +129,7 @@ function RelatedContentPager({
               type="button"
               variant={pageNumber === currentPage ? 'default' : 'outline'}
               size="sm"
-              onClick={() => setPage(pageNumber)}
+              onClick={() => updateRelatedPage(pageNumber)}
             >
               {pageNumber}
             </Button>
@@ -130,7 +141,16 @@ function RelatedContentPager({
             variant="outline"
             size="sm"
             disabled={currentPage <= 1}
-            onClick={() => setPage((activePage) => Math.max(1, Math.min(activePage, totalPages) - 1))}
+            onClick={() => updateRelatedPage(1)}
+          >
+            처음
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={currentPage <= 1}
+            onClick={() => updateRelatedPage(Math.max(1, currentPage - 1))}
           >
             이전
           </Button>
@@ -142,9 +162,18 @@ function RelatedContentPager({
             variant="outline"
             size="sm"
             disabled={currentPage >= totalPages}
-            onClick={() => setPage((activePage) => Math.min(totalPages, Math.min(activePage, totalPages) + 1))}
+            onClick={() => updateRelatedPage(Math.min(totalPages, currentPage + 1))}
           >
             다음
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={currentPage >= totalPages}
+            onClick={() => updateRelatedPage(totalPages)}
+          >
+            마지막
           </Button>
         </div>
       </div>

@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge'
 import { TiptapEditor } from '@/components/admin/TiptapEditor'
 import { fetchWithCsrf } from '@/lib/api/auth'
 import { getBrowserApiBaseUrl } from '@/lib/api/browser'
+import { normalizeBlogHtmlForSave } from '@/lib/content/blog-content'
 import { toast } from 'sonner'
 
 interface BlogWorkspaceListItem {
@@ -98,6 +99,7 @@ export function BlogNotionWorkspace({ blogs, activeBlog }: BlogNotionWorkspacePr
         const controller = new AbortController()
         const timeout = window.setTimeout(async () => {
             setSaveState('saving')
+            const normalizedHtml = normalizeBlogHtmlForSave(html)
 
             try {
                 const response = await fetchWithCsrf(
@@ -111,7 +113,7 @@ export function BlogNotionWorkspace({ blogs, activeBlog }: BlogNotionWorkspacePr
                             title: lastSavedRef.current.title,
                             tags: lastSavedRef.current.tags,
                             published: lastSavedRef.current.published,
-                            contentJson: JSON.stringify({ html }),
+                            contentJson: JSON.stringify({ html: normalizedHtml }),
                         }),
                         signal: controller.signal,
                     },
@@ -124,7 +126,10 @@ export function BlogNotionWorkspace({ blogs, activeBlog }: BlogNotionWorkspacePr
 
                 lastSavedRef.current = {
                     ...lastSavedRef.current,
-                    html,
+                    html: normalizedHtml,
+                }
+                if (normalizedHtml !== html) {
+                    setHtml(normalizedHtml)
                 }
                 setSaveState('saved')
             } catch (error) {
@@ -154,6 +159,7 @@ export function BlogNotionWorkspace({ blogs, activeBlog }: BlogNotionWorkspacePr
 
         try {
             const nextTags = normalizeTagsInput(tagsInput)
+            const normalizedHtml = normalizeBlogHtmlForSave(html)
             const response = await fetchWithCsrf(
                 `${getBrowserApiBaseUrl()}/admin/blogs/${encodeURIComponent(activeBlog.id)}`,
                 {
@@ -165,7 +171,7 @@ export function BlogNotionWorkspace({ blogs, activeBlog }: BlogNotionWorkspacePr
                         title,
                         tags: nextTags,
                         published,
-                        contentJson: JSON.stringify({ html }),
+                        contentJson: JSON.stringify({ html: normalizedHtml }),
                     }),
                 },
             )
@@ -179,7 +185,10 @@ export function BlogNotionWorkspace({ blogs, activeBlog }: BlogNotionWorkspacePr
                 title: title.trim(),
                 tags: nextTags,
                 published,
-                html,
+                html: normalizedHtml,
+            }
+            if (normalizedHtml !== html) {
+                setHtml(normalizedHtml)
             }
             setSaveState('saved')
             toast.success('Blog details saved')
