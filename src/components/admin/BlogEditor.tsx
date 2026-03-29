@@ -150,11 +150,6 @@ export function BlogEditor({ initialBlog, inlineMode = false }: BlogEditorProps)
                 return
             }
 
-            if (typeof window !== 'undefined' && window.history.length > 1) {
-                router.back()
-                return
-            }
-
             router.push('/admin/blog')
         } finally {
             setIsSaving(false)

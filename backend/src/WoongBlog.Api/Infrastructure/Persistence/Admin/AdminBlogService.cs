@@ -1,15 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using WoongBlog.Api.Application.Admin.Abstractions;
-using WoongBlog.Api.Application.Admin.CreateBlog;
 using WoongBlog.Api.Application.Admin.GetAdminBlogById;
 using WoongBlog.Api.Application.Admin.GetAdminBlogs;
 using WoongBlog.Api.Application.Admin.Support;
-using WoongBlog.Api.Application.Admin.UpdateBlog;
 using WoongBlog.Api.Domain.Entities;
 
 namespace WoongBlog.Api.Infrastructure.Persistence.Admin;
 
-public sealed class AdminBlogService : IAdminBlogService
+public sealed class AdminBlogService : IAdminBlogQueries, IAdminBlogWriteStore
 {
     private readonly WoongBlogDbContext _dbContext;
 
@@ -56,82 +54,30 @@ public sealed class AdminBlogService : IAdminBlogService
             .SingleOrDefaultAsync(cancellationToken);
     }
 
-    public async Task<AdminMutationResult> CreateAsync(CreateBlogCommand command, CancellationToken cancellationToken)
+    public Task<Blog?> FindByIdAsync(Guid id, CancellationToken cancellationToken)
     {
-        var slug = await GenerateUniqueSlugAsync(command.Title, null, cancellationToken);
-        var excerpt = AdminContentText.GenerateExcerpt(AdminContentJson.ExtractExcerptText(command.ContentJson));
-        var now = DateTimeOffset.UtcNow;
+        return _dbContext.Blogs.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+    }
 
-        var blog = new Blog
-        {
-            Id = Guid.NewGuid(),
-            Title = command.Title,
-            Slug = slug,
-            Excerpt = excerpt,
-            Tags = command.Tags,
-            Published = command.Published,
-            PublishedAt = command.Published ? now : null,
-            ContentJson = command.ContentJson,
-            CreatedAt = now,
-            UpdatedAt = now
-        };
+    public Task<bool> SlugExistsAsync(string slug, Guid? excludingId, CancellationToken cancellationToken)
+    {
+        return _dbContext.Blogs.AnyAsync(
+            x => x.Slug == slug && (!excludingId.HasValue || x.Id != excludingId.Value),
+            cancellationToken);
+    }
 
+    public void Add(Blog blog)
+    {
         _dbContext.Blogs.Add(blog);
-        await _dbContext.SaveChangesAsync(cancellationToken);
-        return new AdminMutationResult(blog.Id, blog.Slug);
     }
 
-    public async Task<AdminMutationResult?> UpdateAsync(UpdateBlogCommand command, CancellationToken cancellationToken)
+    public void Remove(Blog blog)
     {
-        var blog = await _dbContext.Blogs.SingleOrDefaultAsync(x => x.Id == command.Id, cancellationToken);
-        if (blog is null)
-        {
-            return null;
-        }
-
-        blog.Title = command.Title;
-        blog.Slug = await GenerateUniqueSlugAsync(command.Title, blog.Id, cancellationToken);
-        blog.Excerpt = AdminContentText.GenerateExcerpt(AdminContentJson.ExtractExcerptText(command.ContentJson));
-        blog.Tags = command.Tags;
-        blog.ContentJson = command.ContentJson;
-        blog.UpdatedAt = DateTimeOffset.UtcNow;
-        blog.Published = command.Published;
-        if (command.Published && blog.PublishedAt is null)
-        {
-            blog.PublishedAt = DateTimeOffset.UtcNow;
-        }
-
-        await _dbContext.SaveChangesAsync(cancellationToken);
-        return new AdminMutationResult(blog.Id, blog.Slug);
-    }
-
-    public async Task<AdminActionResult> DeleteAsync(Guid id, CancellationToken cancellationToken)
-    {
-        var blog = await _dbContext.Blogs.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
-        if (blog is null)
-        {
-            return new AdminActionResult(false);
-        }
-
         _dbContext.Blogs.Remove(blog);
-        await _dbContext.SaveChangesAsync(cancellationToken);
-        return new AdminActionResult(true);
     }
 
-    private async Task<string> GenerateUniqueSlugAsync(string title, Guid? currentBlogId, CancellationToken cancellationToken)
+    public Task SaveChangesAsync(CancellationToken cancellationToken)
     {
-        var baseSlug = AdminContentText.Slugify(title, "post");
-        var slug = baseSlug;
-        var suffix = 2;
-
-        while (await _dbContext.Blogs.AnyAsync(
-                   x => x.Slug == slug && (!currentBlogId.HasValue || x.Id != currentBlogId.Value),
-                   cancellationToken))
-        {
-            slug = $"{baseSlug}-{suffix}";
-            suffix += 1;
-        }
-
-        return slug;
+        return _dbContext.SaveChangesAsync(cancellationToken);
     }
 }

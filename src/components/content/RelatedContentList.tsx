@@ -154,7 +154,7 @@ function RelatedContentPager({
           >
             이전
           </Button>
-          <span className="text-sm text-muted-foreground">
+          <span data-testid={`${testIdBase}-pagination-status`} className="text-sm text-muted-foreground">
             {currentPage} / {totalPages}
           </span>
           <Button

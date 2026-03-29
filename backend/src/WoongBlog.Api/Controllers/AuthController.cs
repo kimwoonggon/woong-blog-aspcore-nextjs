@@ -22,19 +22,25 @@ public class AuthController : ControllerBase
     private readonly IWebHostEnvironment _environment;
     private readonly WoongBlogDbContext _dbContext;
     private readonly IAntiforgery _antiforgery;
+    private readonly IAuthSessionService _authSessionService;
+    private readonly IAuthAuditService _authAuditService;
 
     public AuthController(
         Microsoft.Extensions.Options.IOptions<AuthOptions> authOptions,
         Microsoft.Extensions.Options.IOptions<SecurityOptions> securityOptions,
         IWebHostEnvironment environment,
         WoongBlogDbContext dbContext,
-        IAntiforgery antiforgery)
+        IAntiforgery antiforgery,
+        IAuthSessionService authSessionService,
+        IAuthAuditService authAuditService)
     {
         _authOptions = authOptions.Value;
         _securityOptions = securityOptions.Value;
         _environment = environment;
         _dbContext = dbContext;
         _antiforgery = antiforgery;
+        _authSessionService = authSessionService;
+        _authAuditService = authAuditService;
     }
 
     [HttpGet("login")]
@@ -94,8 +100,8 @@ public class AuthController : ControllerBase
     [HttpPost("logout")]
     public async Task<IActionResult> Logout([FromQuery] string? returnUrl = null)
     {
-        var recorder = HttpContext.RequestServices.GetRequiredService<AuthRecorder>();
-        await recorder.RecordLogoutAsync(User, HttpContext);
+        await _authSessionService.RevokeCurrentSessionAsync(User, HttpContext.RequestAborted);
+        await _authAuditService.RecordLogoutAsync(User, HttpContext, HttpContext.RequestAborted);
 
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 
@@ -134,8 +140,7 @@ public class AuthController : ControllerBase
             new Claim("name", string.IsNullOrWhiteSpace(profile.DisplayName) ? profile.Email : profile.DisplayName)
         ], "test-login"));
 
-        var recorder = HttpContext.RequestServices.GetRequiredService<AuthRecorder>();
-        var result = await recorder.RecordSuccessfulLoginAsync(oidcPrincipal, HttpContext, HttpContext.RequestAborted);
+        var result = await _authSessionService.RecordSuccessfulLoginAsync(oidcPrincipal, HttpContext, HttpContext.RequestAborted);
 
         var appPrincipal = new ClaimsPrincipal(new ClaimsIdentity(
         [

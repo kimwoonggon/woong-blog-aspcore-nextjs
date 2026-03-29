@@ -52,7 +52,6 @@ export default async function WorkDetailPage({ params }: PageProps) {
 
     const relatedWorks = (await fetchAllPublicWorks())
         .filter((item) => item.id !== work.id)
-        .slice(0, 30)
 
     // Format date
     const publishDate = work.publishedAt

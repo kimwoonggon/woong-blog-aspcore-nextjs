@@ -21,6 +21,10 @@ export function ResponsivePageSizeSync({
 
   useEffect(() => {
     const sync = () => {
+      if (searchParams.has('pageSize')) {
+        return
+      }
+
       const desiredPageSize = resolveResponsivePageSize({
         width: window.innerWidth,
         height: window.innerHeight,

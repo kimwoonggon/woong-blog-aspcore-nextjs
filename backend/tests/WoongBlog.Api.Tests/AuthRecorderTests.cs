@@ -7,7 +7,7 @@ using WoongBlog.Api.Infrastructure.Persistence;
 
 namespace WoongBlog.Api.Tests;
 
-public class AuthRecorderTests
+public class AuthSessionServiceTests
 {
     private static WoongBlogDbContext CreateDbContext()
     {
@@ -18,16 +18,20 @@ public class AuthRecorderTests
         return new WoongBlogDbContext(options);
     }
 
+    private static AuthSessionService CreateSessionService(WoongBlogDbContext dbContext, AuthOptions? options = null)
+        => new(dbContext, Options.Create(options ?? new AuthOptions()));
+
+    private static AuthAuditService CreateAuditService(WoongBlogDbContext dbContext)
+        => new(dbContext);
+
     [Fact]
     public async Task RecordSuccessfulLogin_CreatesProfileSessionAndAuditLog()
     {
         await using var dbContext = CreateDbContext();
-        var recorder = new AuthRecorder(
-            dbContext,
-            Options.Create(new AuthOptions
-            {
-                AdminEmails = ["admin@example.com"]
-            }));
+        var service = CreateSessionService(dbContext, new AuthOptions
+        {
+            AdminEmails = ["admin@example.com"]
+        });
 
         var principal = new ClaimsPrincipal(new ClaimsIdentity(
         [
@@ -39,7 +43,7 @@ public class AuthRecorderTests
         var httpContext = new DefaultHttpContext();
         httpContext.Request.Headers.UserAgent = "xunit";
 
-        var result = await recorder.RecordSuccessfulLoginAsync(principal, httpContext);
+        var result = await service.RecordSuccessfulLoginAsync(principal, httpContext);
 
         Assert.Equal("admin", result.Role);
         Assert.Single(dbContext.Profiles);
@@ -51,12 +55,10 @@ public class AuthRecorderTests
     public async Task RecordSuccessfulLogin_KeepsUserRole_WhenNoAdminOverrideOrMatchingEmailExists()
     {
         await using var dbContext = CreateDbContext();
-        var recorder = new AuthRecorder(
-            dbContext,
-            Options.Create(new AuthOptions
-            {
-                AdminEmails = ["admin@example.com"]
-            }));
+        var service = CreateSessionService(dbContext, new AuthOptions
+        {
+            AdminEmails = ["admin@example.com"]
+        });
 
         var principal = new ClaimsPrincipal(new ClaimsIdentity(
         [
@@ -67,17 +69,18 @@ public class AuthRecorderTests
 
         var httpContext = new DefaultHttpContext();
 
-        var result = await recorder.RecordSuccessfulLoginAsync(principal, httpContext);
+        var result = await service.RecordSuccessfulLoginAsync(principal, httpContext);
 
         Assert.Equal("user", result.Role);
         Assert.Equal("user", dbContext.Profiles.Single().Role);
     }
 
     [Fact]
-    public async Task RecordLogout_RevokesSessionAndAddsAuditLog()
+    public async Task RevokeCurrentSession_AndRecordLogout_AddsAuditLog()
     {
         await using var dbContext = CreateDbContext();
-        var recorder = new AuthRecorder(dbContext, Options.Create(new AuthOptions()));
+        var sessionService = CreateSessionService(dbContext);
+        var auditService = CreateAuditService(dbContext);
 
         var loginPrincipal = new ClaimsPrincipal(new ClaimsIdentity(
         [
@@ -87,7 +90,7 @@ public class AuthRecorderTests
         ], "test"));
 
         var httpContext = new DefaultHttpContext();
-        var loginResult = await recorder.RecordSuccessfulLoginAsync(loginPrincipal, httpContext);
+        var loginResult = await sessionService.RecordSuccessfulLoginAsync(loginPrincipal, httpContext);
 
         var logoutPrincipal = new ClaimsPrincipal(new ClaimsIdentity(
         [
@@ -96,31 +99,32 @@ public class AuthRecorderTests
             new Claim(ClaimTypes.Email, loginResult.Email)
         ], "cookie"));
 
-        await recorder.RecordLogoutAsync(logoutPrincipal, httpContext);
+        await sessionService.RevokeCurrentSessionAsync(logoutPrincipal);
+        await auditService.RecordLogoutAsync(logoutPrincipal, httpContext);
 
-        Assert.Equal(2, dbContext.AuthAuditLogs.Count());
+        Assert.Equal(3, dbContext.AuthAuditLogs.Count());
         Assert.NotNull(dbContext.AuthSessions.Single().RevokedAt);
     }
-
 
     [Fact]
     public async Task ValidateSessionAsync_ReturnsFalse_WhenClaimsMissing()
     {
         await using var dbContext = CreateDbContext();
-        var recorder = new AuthRecorder(dbContext, Options.Create(new AuthOptions()));
+        var service = CreateSessionService(dbContext);
 
         var principal = new ClaimsPrincipal(new ClaimsIdentity([], "cookie"));
 
-        var isValid = await recorder.ValidateSessionAsync(principal);
+        var isValid = await service.ValidateSessionAsync(principal);
 
         Assert.False(isValid);
+        Assert.Empty(dbContext.AuthSessions);
     }
 
     [Fact]
-    public async Task ValidateSessionAsync_ReturnsFalse_WhenSessionRevoked()
+    public async Task ValidateSessionAsync_ReturnsFalse_WhenSessionRevoked_WithoutExtraWrite()
     {
         await using var dbContext = CreateDbContext();
-        var recorder = new AuthRecorder(dbContext, Options.Create(new AuthOptions()));
+        var service = CreateSessionService(dbContext);
 
         var profile = new WoongBlog.Api.Domain.Entities.Profile
         {
@@ -130,14 +134,16 @@ public class AuthRecorderTests
             ProviderSubject = "subject-revoked",
             Role = "user"
         };
+        var revokedAt = DateTimeOffset.UtcNow.AddMinutes(-1);
+        var lastSeenAt = DateTimeOffset.UtcNow.AddMinutes(-2);
         var session = new WoongBlog.Api.Domain.Entities.AuthSession
         {
             Id = Guid.NewGuid(),
             ProfileId = profile.Id,
             SessionKey = "revoked",
-            LastSeenAt = DateTimeOffset.UtcNow,
+            LastSeenAt = lastSeenAt,
             ExpiresAt = DateTimeOffset.UtcNow.AddHours(1),
-            RevokedAt = DateTimeOffset.UtcNow
+            RevokedAt = revokedAt
         };
         dbContext.Profiles.Add(profile);
         dbContext.AuthSessions.Add(session);
@@ -150,16 +156,19 @@ public class AuthRecorderTests
             new Claim(AuthClaimTypes.Role, "user")
         ], "cookie"));
 
-        var isValid = await recorder.ValidateSessionAsync(principal);
+        var isValid = await service.ValidateSessionAsync(principal);
+        var saved = dbContext.AuthSessions.Single();
 
         Assert.False(isValid);
+        Assert.Equal(revokedAt, saved.RevokedAt);
+        Assert.Equal(lastSeenAt, saved.LastSeenAt);
     }
 
     [Fact]
-    public async Task ValidateSessionAsync_ReturnsTrue_AndUpdatesLastSeen_WhenSessionValid()
+    public async Task ValidateSessionAsync_ReturnsTrue_WithoutUpdatingLastSeen_WhenRecentlySeen()
     {
         await using var dbContext = CreateDbContext();
-        var recorder = new AuthRecorder(dbContext, Options.Create(new AuthOptions()));
+        var service = CreateSessionService(dbContext);
 
         var profile = new WoongBlog.Api.Domain.Entities.Profile
         {
@@ -189,23 +198,61 @@ public class AuthRecorderTests
             new Claim(AuthClaimTypes.Role, "user")
         ], "cookie"));
 
-        var isValid = await recorder.ValidateSessionAsync(principal);
+        var isValid = await service.ValidateSessionAsync(principal);
+
+        Assert.True(isValid);
+        Assert.Equal(lastSeenAt, dbContext.AuthSessions.Single().LastSeenAt);
+    }
+
+    [Fact]
+    public async Task ValidateSessionAsync_ReturnsTrue_AndUpdatesLastSeen_WhenThresholdExceeded()
+    {
+        await using var dbContext = CreateDbContext();
+        var service = CreateSessionService(dbContext);
+
+        var profile = new WoongBlog.Api.Domain.Entities.Profile
+        {
+            Id = Guid.NewGuid(),
+            Email = "user@example.com",
+            Provider = "google",
+            ProviderSubject = "subject-throttled",
+            Role = "user"
+        };
+        var lastSeenAt = DateTimeOffset.UtcNow.AddMinutes(-6);
+        var session = new WoongBlog.Api.Domain.Entities.AuthSession
+        {
+            Id = Guid.NewGuid(),
+            ProfileId = profile.Id,
+            SessionKey = "valid-throttled",
+            LastSeenAt = lastSeenAt,
+            ExpiresAt = DateTimeOffset.UtcNow.AddHours(1)
+        };
+        dbContext.Profiles.Add(profile);
+        dbContext.AuthSessions.Add(session);
+        await dbContext.SaveChangesAsync();
+
+        var principal = new ClaimsPrincipal(new ClaimsIdentity(
+        [
+            new Claim(AuthClaimTypes.ProfileId, profile.Id.ToString()),
+            new Claim(AuthClaimTypes.SessionId, session.Id.ToString()),
+            new Claim(AuthClaimTypes.Role, "user")
+        ], "cookie"));
+
+        var isValid = await service.ValidateSessionAsync(principal);
 
         Assert.True(isValid);
         Assert.True(dbContext.AuthSessions.Single().LastSeenAt > lastSeenAt);
     }
 
     [Fact]
-    public async Task ValidateSessionAsync_ReturnsFalse_WhenSessionExpired()
+    public async Task ValidateSessionAsync_ReturnsFalse_AndRevokesSession_WhenSessionExpired()
     {
         await using var dbContext = CreateDbContext();
-        var recorder = new AuthRecorder(
-            dbContext,
-            Options.Create(new AuthOptions
-            {
-                SlidingExpirationMinutes = 1,
-                AbsoluteExpirationHours = 1
-            }));
+        var service = CreateSessionService(dbContext, new AuthOptions
+        {
+            SlidingExpirationMinutes = 1,
+            AbsoluteExpirationHours = 1
+        });
 
         var profile = new WoongBlog.Api.Domain.Entities.Profile
         {
@@ -234,16 +281,17 @@ public class AuthRecorderTests
             new Claim(AuthClaimTypes.Role, "user")
         ], "cookie"));
 
-        var isValid = await recorder.ValidateSessionAsync(principal);
+        var isValid = await service.ValidateSessionAsync(principal);
 
         Assert.False(isValid);
+        Assert.NotNull(dbContext.AuthSessions.Single().RevokedAt);
     }
 
     [Fact]
-    public async Task ValidateSessionAsync_ReturnsFalse_WhenRoleDrifts()
+    public async Task ValidateSessionAsync_ReturnsFalse_AndRevokes_WhenRoleDrifts()
     {
         await using var dbContext = CreateDbContext();
-        var recorder = new AuthRecorder(dbContext, Options.Create(new AuthOptions()));
+        var service = CreateSessionService(dbContext);
 
         var profile = new WoongBlog.Api.Domain.Entities.Profile
         {
@@ -272,8 +320,9 @@ public class AuthRecorderTests
             new Claim(AuthClaimTypes.Role, "admin")
         ], "cookie"));
 
-        var isValid = await recorder.ValidateSessionAsync(principal);
+        var isValid = await service.ValidateSessionAsync(principal);
 
         Assert.False(isValid);
+        Assert.NotNull(dbContext.AuthSessions.Single().RevokedAt);
     }
 }

@@ -5,15 +5,15 @@ namespace WoongBlog.Api.Application.Admin.GetAdminBlogs;
 
 public sealed class GetAdminBlogsQueryHandler : IRequestHandler<GetAdminBlogsQuery, IReadOnlyList<AdminBlogListItemDto>>
 {
-    private readonly IAdminBlogService _adminBlogService;
+    private readonly IAdminBlogQueries _adminBlogQueries;
 
-    public GetAdminBlogsQueryHandler(IAdminBlogService adminBlogService)
+    public GetAdminBlogsQueryHandler(IAdminBlogQueries adminBlogQueries)
     {
-        _adminBlogService = adminBlogService;
+        _adminBlogQueries = adminBlogQueries;
     }
 
     public async Task<IReadOnlyList<AdminBlogListItemDto>> Handle(GetAdminBlogsQuery request, CancellationToken cancellationToken)
     {
-        return await _adminBlogService.GetAllAsync(cancellationToken);
+        return await _adminBlogQueries.GetAllAsync(cancellationToken);
     }
 }

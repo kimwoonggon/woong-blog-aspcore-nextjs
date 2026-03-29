@@ -64,7 +64,7 @@ describe('BlogEditor', () => {
     fireEvent.click(screen.getByRole('button', { name: /Create Post/i }))
 
     await waitFor(() => {
-      expect(mocks.fetchWithCsrf).toHaveBeenCalledWith(
+        expect(mocks.fetchWithCsrf).toHaveBeenCalledWith(
         '/api/admin/blogs',
         expect.objectContaining({
           method: 'POST',
@@ -73,7 +73,7 @@ describe('BlogEditor', () => {
             tags: [],
             published: true,
             contentJson: JSON.stringify({
-              html: '<h2>저장 제목</h2>\n<ul><li>첫 번째</li></ul>\n<ul><li>두 번째</li></ul>',
+              html: '<h2>저장 제목</h2>\n<ul><li>첫 번째</li><li>두 번째</li></ul>',
             }),
           }),
         }),

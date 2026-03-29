@@ -6,15 +6,23 @@ namespace WoongBlog.Api.Application.Admin.DeleteWork;
 
 public sealed class DeleteWorkCommandHandler : IRequestHandler<DeleteWorkCommand, AdminActionResult>
 {
-    private readonly IAdminWorkService _adminWorkService;
+    private readonly IAdminWorkWriteStore _workWriteStore;
 
-    public DeleteWorkCommandHandler(IAdminWorkService adminWorkService)
+    public DeleteWorkCommandHandler(IAdminWorkWriteStore workWriteStore)
     {
-        _adminWorkService = adminWorkService;
+        _workWriteStore = workWriteStore;
     }
 
     public async Task<AdminActionResult> Handle(DeleteWorkCommand request, CancellationToken cancellationToken)
     {
-        return await _adminWorkService.DeleteAsync(request.Id, cancellationToken);
+        var work = await _workWriteStore.FindByIdAsync(request.Id, cancellationToken);
+        if (work is null)
+        {
+            return new AdminActionResult(false);
+        }
+
+        _workWriteStore.Remove(work);
+        await _workWriteStore.SaveChangesAsync(cancellationToken);
+        return new AdminActionResult(true);
     }
 }

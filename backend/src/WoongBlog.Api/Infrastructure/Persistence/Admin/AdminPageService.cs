@@ -2,10 +2,11 @@ using Microsoft.EntityFrameworkCore;
 using WoongBlog.Api.Application.Admin.Abstractions;
 using WoongBlog.Api.Application.Admin.GetAdminPages;
 using WoongBlog.Api.Application.Admin.Support;
+using WoongBlog.Api.Domain.Entities;
 
 namespace WoongBlog.Api.Infrastructure.Persistence.Admin;
 
-public sealed class AdminPageService : IAdminPageService
+public sealed class AdminPageService : IAdminPageQueries, IAdminPageWriteStore
 {
     private readonly WoongBlogDbContext _dbContext;
 
@@ -34,19 +35,13 @@ public sealed class AdminPageService : IAdminPageService
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<AdminActionResult> UpdatePageAsync(Guid id, string title, string contentJson, CancellationToken cancellationToken)
+    public Task<PageEntity?> FindByIdAsync(Guid id, CancellationToken cancellationToken)
     {
-        var page = await _dbContext.Pages.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
-        if (page is null)
-        {
-            return new AdminActionResult(false);
-        }
+        return _dbContext.Pages.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+    }
 
-        page.Title = title;
-        page.ContentJson = contentJson;
-        page.UpdatedAt = DateTimeOffset.UtcNow;
-
-        await _dbContext.SaveChangesAsync(cancellationToken);
-        return new AdminActionResult(true);
+    public Task SaveChangesAsync(CancellationToken cancellationToken)
+    {
+        return _dbContext.SaveChangesAsync(cancellationToken);
     }
 }

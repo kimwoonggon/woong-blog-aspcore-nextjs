@@ -2,6 +2,7 @@ using System.Net.Http.Json;
 using System.Net;
 using System.Net.Http.Headers;
 using Microsoft.Extensions.DependencyInjection;
+using WoongBlog.Api.Domain.Entities;
 using WoongBlog.Api.Infrastructure.Persistence;
 
 namespace WoongBlog.Api.Tests;
@@ -55,6 +56,88 @@ public class UploadsControllerTests : IClassFixture<CustomWebApplicationFactory>
         using var validationScope = _factory.Services.CreateScope();
         var validationDb = validationScope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
         Assert.False(validationDb.Assets.Any(asset => asset.Id == Guid.Parse(assetId)));
+    }
+
+    [Fact]
+    public async Task Upload_WithoutBucket_UsesMediaDefault()
+    {
+        var client = _factory.CreateAuthenticatedClient();
+        using var form = new MultipartFormDataContent();
+        using var stream = new MemoryStream(new byte[] { 37, 80, 68, 70 });
+        using var fileContent = new StreamContent(stream);
+        fileContent.Headers.ContentType = new MediaTypeHeaderValue("application/pdf");
+        form.Add(fileContent, "file", "resume.pdf");
+
+        var response = await client.PostAsync("/api/uploads", form);
+
+        response.EnsureSuccessStatusCode();
+        var payload = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>();
+        Assert.StartsWith("media/", payload!["path"], StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Upload_UnknownBucket_ReturnsBadRequest()
+    {
+        var client = _factory.CreateAuthenticatedClient();
+        using var form = new MultipartFormDataContent();
+        using var stream = new MemoryStream(new byte[] { 37, 80, 68, 70 });
+        using var fileContent = new StreamContent(stream);
+        fileContent.Headers.ContentType = new MediaTypeHeaderValue("application/pdf");
+        form.Add(fileContent, "file", "resume.pdf");
+        form.Add(new StringContent("unknown-bucket"), "bucket");
+
+        var response = await client.PostAsync("/api/uploads", form);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Upload_PathTraversalStyleBucket_ReturnsBadRequest()
+    {
+        var client = _factory.CreateAuthenticatedClient();
+        using var form = new MultipartFormDataContent();
+        using var stream = new MemoryStream(new byte[] { 37, 80, 68, 70 });
+        using var fileContent = new StreamContent(stream);
+        fileContent.Headers.ContentType = new MediaTypeHeaderValue("application/pdf");
+        form.Add(fileContent, "file", "resume.pdf");
+        form.Add(new StringContent("../escape"), "bucket");
+
+        var response = await client.PostAsync("/api/uploads", form);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Delete_InvalidStoredPath_ReturnsConflict_AndKeepsAsset()
+    {
+        Guid assetId;
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
+            var asset = new Asset
+            {
+                Id = Guid.NewGuid(),
+                Bucket = "media",
+                Path = "../../escape.txt",
+                PublicUrl = "/media/../../escape.txt",
+                MimeType = "text/plain",
+                Kind = "other",
+                Size = 1
+            };
+            dbContext.Assets.Add(asset);
+            dbContext.SaveChanges();
+            assetId = asset.Id;
+        }
+
+        var client = _factory.CreateAuthenticatedClient();
+
+        var response = await client.DeleteAsync($"/api/uploads?id={assetId}");
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+
+        using var validationScope = _factory.Services.CreateScope();
+        var validationDb = validationScope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
+        Assert.True(validationDb.Assets.Any(asset => asset.Id == assetId));
     }
 
     [Fact]

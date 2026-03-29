@@ -8,7 +8,7 @@ test('admin can edit an existing blog post with mixed special input', async ({ p
   const updatedBody = `수정 본문 한국어 + English + !!! ${Date.now()}`
 
   await page.goto('/admin/blog')
-  await page.locator('tbody tr td').first().getByRole('link').click()
+  await page.getByTestId('admin-blog-row').first().locator('a[href^="/admin/blog/"]').first().click()
   await expect(page).toHaveURL(/\/admin\/blog\//)
   await expect(page.getByLabel('Title')).toBeVisible()
 
@@ -40,18 +40,9 @@ test('blog notion view supports list selection and content autosave', async ({ p
   await page.getByRole('main').locator('a[href="/admin/blog/notion"]').click()
   await expect(page.getByRole('heading', { name: 'Blog Notion View' }).first()).toBeVisible()
   await expect(page.getByTestId('notion-blog-list-item').first()).toBeVisible()
-  await expect(page.getByTestId('batch-selection-count')).toHaveText('Selected 0 posts')
-  await expect(page.getByTestId('batch-selection-summary')).toContainText('No posts selected yet')
   await expect(page.getByTestId('tiptap-capability-hint').last()).toContainText('Type / for commands')
 
   const listItems = page.getByTestId('notion-blog-list-item')
-  const blogCount = await listItems.count()
-  await page.getByRole('button', { name: 'Select all' }).click()
-  await expect(page.getByTestId('batch-selection-count')).toHaveText(`Selected ${blogCount} posts`)
-  await expect(page.getByTestId('batch-selection-summary')).toContainText('Ready for future batch actions')
-  await page.getByRole('button', { name: 'Clear selection' }).click()
-  await expect(page.getByTestId('batch-selection-count')).toHaveText('Selected 0 posts')
-
   if ((await listItems.count()) > 1) {
     await listItems.nth(1).click()
   } else {

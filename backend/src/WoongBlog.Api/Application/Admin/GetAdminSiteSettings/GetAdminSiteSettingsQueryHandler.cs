@@ -5,15 +5,15 @@ namespace WoongBlog.Api.Application.Admin.GetAdminSiteSettings;
 
 public sealed class GetAdminSiteSettingsQueryHandler : IRequestHandler<GetAdminSiteSettingsQuery, AdminSiteSettingsDto?>
 {
-    private readonly IAdminSiteSettingsService _adminSiteSettingsService;
+    private readonly IAdminSiteSettingsQueries _adminSiteSettingsQueries;
 
-    public GetAdminSiteSettingsQueryHandler(IAdminSiteSettingsService adminSiteSettingsService)
+    public GetAdminSiteSettingsQueryHandler(IAdminSiteSettingsQueries adminSiteSettingsQueries)
     {
-        _adminSiteSettingsService = adminSiteSettingsService;
+        _adminSiteSettingsQueries = adminSiteSettingsQueries;
     }
 
     public async Task<AdminSiteSettingsDto?> Handle(GetAdminSiteSettingsQuery request, CancellationToken cancellationToken)
     {
-        return await _adminSiteSettingsService.GetAsync(cancellationToken);
+        return await _adminSiteSettingsQueries.GetAsync(cancellationToken);
     }
 }

@@ -6,12 +6,13 @@ using Microsoft.Extensions.Options;
 namespace WoongBlog.Api.Infrastructure.Auth;
 
 internal sealed class AppOpenIdConnectEvents(
-    AuthRecorder recorder,
+    IAuthSessionService sessionService,
+    IAuthAuditService auditService,
     IOptions<AuthOptions> authOptions) : OpenIdConnectEvents
 {
     public override async Task TokenValidated(TokenValidatedContext context)
     {
-        var result = await recorder.RecordSuccessfulLoginAsync(
+        var result = await sessionService.RecordSuccessfulLoginAsync(
             context.Principal!,
             context.HttpContext,
             context.HttpContext.RequestAborted);
@@ -38,7 +39,7 @@ internal sealed class AppOpenIdConnectEvents(
 
     public override async Task RemoteFailure(RemoteFailureContext context)
     {
-        await recorder.RecordLoginFailureAsync(
+        await auditService.RecordLoginFailureAsync(
             context.HttpContext,
             context.Failure?.Message ?? "OIDC remote failure",
             context.HttpContext.RequestAborted);

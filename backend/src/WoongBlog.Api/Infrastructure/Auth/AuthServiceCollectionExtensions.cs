@@ -21,7 +21,8 @@ internal static class AuthServiceCollectionExtensions
 
         var authOptions = configuration.GetSection(AuthOptions.SectionName).Get<AuthOptions>() ?? new AuthOptions();
 
-        services.AddScoped<AuthRecorder>();
+        services.AddScoped<IAuthSessionService, AuthSessionService>();
+        services.AddScoped<IAuthAuditService, AuthAuditService>();
         services.AddScoped<AppCookieAuthenticationEvents>();
         services.AddScoped<AppOpenIdConnectEvents>();
 

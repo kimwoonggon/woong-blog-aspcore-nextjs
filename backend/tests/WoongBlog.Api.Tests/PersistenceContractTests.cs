@@ -73,8 +73,8 @@ public class PersistenceContractTests
         Assert.Single(dbContext.SiteSettings);
         Assert.Equal(2, dbContext.Profiles.Count());
         Assert.Equal(3, dbContext.Pages.Count());
-        Assert.Equal(2, dbContext.Works.Count());
-        Assert.Equal(2, dbContext.Blogs.Count());
+        Assert.Equal(13, dbContext.Works.Count());
+        Assert.Equal(24, dbContext.Blogs.Count());
         Assert.Equal(6, dbContext.Assets.Count());
 
         var homePage = dbContext.Pages.Single(page => page.Slug == "home");

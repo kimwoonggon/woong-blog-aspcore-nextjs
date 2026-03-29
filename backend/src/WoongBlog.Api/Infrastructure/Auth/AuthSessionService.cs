@@ -5,12 +5,14 @@ using WoongBlog.Api.Infrastructure.Persistence;
 
 namespace WoongBlog.Api.Infrastructure.Auth;
 
-public class AuthRecorder
+public sealed class AuthSessionService : IAuthSessionService
 {
+    private static readonly TimeSpan LastSeenUpdateInterval = TimeSpan.FromMinutes(5);
+
     private readonly WoongBlogDbContext _dbContext;
     private readonly AuthOptions _authOptions;
 
-    public AuthRecorder(WoongBlogDbContext dbContext, Microsoft.Extensions.Options.IOptions<AuthOptions> authOptions)
+    public AuthSessionService(WoongBlogDbContext dbContext, Microsoft.Extensions.Options.IOptions<AuthOptions> authOptions)
     {
         _dbContext = dbContext;
         _authOptions = authOptions.Value;
@@ -98,73 +100,6 @@ public class AuthRecorder
         return new AuthRecordResult(profile.Id, profile.Email, profile.Role, session.Id, profile.DisplayName);
     }
 
-    public async Task RecordLoginFailureAsync(HttpContext httpContext, string reason, CancellationToken cancellationToken = default)
-    {
-        _dbContext.AuthAuditLogs.Add(new AuthAuditLog
-        {
-            EventType = "login_failure",
-            Provider = "google",
-            IpAddress = httpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty,
-            UserAgent = httpContext.Request.Headers.UserAgent.ToString(),
-            Success = false,
-            FailureReason = reason,
-            CreatedAt = DateTimeOffset.UtcNow
-        });
-        await _dbContext.SaveChangesAsync(cancellationToken);
-    }
-
-    public async Task RecordLogoutAsync(ClaimsPrincipal principal, HttpContext httpContext, CancellationToken cancellationToken = default)
-    {
-        var sessionIdValue = principal.FindFirstValue(AuthClaimTypes.SessionId);
-        if (Guid.TryParse(sessionIdValue, out var sessionId))
-        {
-            var session = await _dbContext.AuthSessions.SingleOrDefaultAsync(x => x.Id == sessionId, cancellationToken);
-            if (session is not null)
-            {
-                session.RevokedAt = DateTimeOffset.UtcNow;
-                session.LastSeenAt = DateTimeOffset.UtcNow;
-            }
-        }
-
-        _dbContext.AuthAuditLogs.Add(new AuthAuditLog
-        {
-            ProfileId = TryGuid(principal.FindFirstValue(AuthClaimTypes.ProfileId)),
-            EventType = "logout",
-            Provider = "google",
-            ProviderSubject = principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? principal.FindFirstValue("sub") ?? string.Empty,
-            Email = principal.FindFirstValue(ClaimTypes.Email) ?? principal.FindFirstValue("email") ?? string.Empty,
-            IpAddress = httpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty,
-            UserAgent = httpContext.Request.Headers.UserAgent.ToString(),
-            Success = true,
-            CreatedAt = DateTimeOffset.UtcNow
-        });
-
-        await _dbContext.SaveChangesAsync(cancellationToken);
-    }
-
-    public async Task RecordDeniedAccessAsync(
-        ClaimsPrincipal principal,
-        HttpContext httpContext,
-        string reason,
-        CancellationToken cancellationToken = default)
-    {
-        _dbContext.AuthAuditLogs.Add(new AuthAuditLog
-        {
-            ProfileId = TryGuid(principal.FindFirstValue(AuthClaimTypes.ProfileId)),
-            EventType = "access_denied",
-            Provider = "google",
-            ProviderSubject = principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? principal.FindFirstValue("sub") ?? string.Empty,
-            Email = principal.FindFirstValue(ClaimTypes.Email) ?? principal.FindFirstValue("email") ?? string.Empty,
-            IpAddress = httpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty,
-            UserAgent = httpContext.Request.Headers.UserAgent.ToString(),
-            Success = false,
-            FailureReason = reason,
-            CreatedAt = DateTimeOffset.UtcNow
-        });
-
-        await _dbContext.SaveChangesAsync(cancellationToken);
-    }
-
     public async Task<bool> ValidateSessionAsync(ClaimsPrincipal principal, CancellationToken cancellationToken = default)
     {
         var sessionIdValue = principal.FindFirstValue(AuthClaimTypes.SessionId);
@@ -180,58 +115,69 @@ public class AuthRecorder
         }
 
         var session = await _dbContext.AuthSessions.SingleOrDefaultAsync(x => x.Id == sessionId, cancellationToken);
-        var now = DateTimeOffset.UtcNow;
-
         if (session is null || session.RevokedAt is not null)
         {
             return false;
         }
 
+        var now = DateTimeOffset.UtcNow;
         if (session.ExpiresAt is not null && session.ExpiresAt <= now)
         {
-            session.RevokedAt = now;
-            await _dbContext.SaveChangesAsync(cancellationToken);
+            await RevokeIfActiveAsync(session, now, cancellationToken);
             return false;
         }
 
         if (session.LastSeenAt.AddMinutes(_authOptions.SlidingExpirationMinutes) <= now)
         {
-            session.RevokedAt = now;
-            await _dbContext.SaveChangesAsync(cancellationToken);
+            await RevokeIfActiveAsync(session, now, cancellationToken);
             return false;
         }
 
         var profile = await _dbContext.Profiles.SingleOrDefaultAsync(x => x.Id == profileId, cancellationToken);
         if (profile is null)
         {
-            session.RevokedAt = now;
-            await _dbContext.SaveChangesAsync(cancellationToken);
+            await RevokeIfActiveAsync(session, now, cancellationToken);
             return false;
         }
 
         var roleClaim = principal.FindFirstValue(AuthClaimTypes.Role) ?? principal.FindFirstValue(ClaimTypes.Role);
         if (!string.Equals(roleClaim, profile.Role, StringComparison.OrdinalIgnoreCase))
         {
-            session.RevokedAt = now;
-            await _dbContext.SaveChangesAsync(cancellationToken);
+            await RevokeIfActiveAsync(session, now, cancellationToken);
             return false;
         }
 
-        session.LastSeenAt = now;
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        if (now - session.LastSeenAt >= LastSeenUpdateInterval)
+        {
+            session.LastSeenAt = now;
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+
         return true;
+    }
+
+    public async Task RevokeCurrentSessionAsync(ClaimsPrincipal principal, CancellationToken cancellationToken = default)
+    {
+        var sessionIdValue = principal.FindFirstValue(AuthClaimTypes.SessionId);
+        if (!Guid.TryParse(sessionIdValue, out var sessionId))
+        {
+            return;
+        }
+
+        await RevokeSessionAsync(sessionId, "logout", cancellationToken);
     }
 
     public async Task RevokeSessionAsync(Guid sessionId, string reason, CancellationToken cancellationToken = default)
     {
         var session = await _dbContext.AuthSessions.SingleOrDefaultAsync(x => x.Id == sessionId, cancellationToken);
-        if (session is null)
+        if (session is null || session.RevokedAt is not null)
         {
             return;
         }
 
-        session.RevokedAt = DateTimeOffset.UtcNow;
-        session.LastSeenAt = DateTimeOffset.UtcNow;
+        var now = DateTimeOffset.UtcNow;
+        session.RevokedAt = now;
+        session.LastSeenAt = now;
 
         _dbContext.AuthAuditLogs.Add(new AuthAuditLog
         {
@@ -240,9 +186,20 @@ public class AuthRecorder
             Provider = "google",
             Success = true,
             FailureReason = reason,
-            CreatedAt = DateTimeOffset.UtcNow
+            CreatedAt = now
         });
 
+        await _dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task RevokeIfActiveAsync(AuthSession session, DateTimeOffset now, CancellationToken cancellationToken)
+    {
+        if (session.RevokedAt is not null)
+        {
+            return;
+        }
+
+        session.RevokedAt = now;
         await _dbContext.SaveChangesAsync(cancellationToken);
     }
 
@@ -250,6 +207,4 @@ public class AuthRecorder
         => _authOptions.AdminEmails.Any(x => string.Equals(x, email, StringComparison.OrdinalIgnoreCase))
             ? "admin"
             : "user";
-
-    private static Guid? TryGuid(string? value) => Guid.TryParse(value, out var result) ? result : null;
 }

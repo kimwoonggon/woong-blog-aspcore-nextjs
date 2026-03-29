@@ -1,15 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using WoongBlog.Api.Application.Admin.Abstractions;
-using WoongBlog.Api.Application.Admin.CreateWork;
 using WoongBlog.Api.Application.Admin.GetAdminWorkById;
 using WoongBlog.Api.Application.Admin.GetAdminWorks;
 using WoongBlog.Api.Application.Admin.Support;
-using WoongBlog.Api.Application.Admin.UpdateWork;
 using WoongBlog.Api.Domain.Entities;
 
 namespace WoongBlog.Api.Infrastructure.Persistence.Admin;
 
-public sealed class AdminWorkService : IAdminWorkService
+public sealed class AdminWorkService : IAdminWorkQueries, IAdminWorkWriteStore
 {
     private readonly WoongBlogDbContext _dbContext;
 
@@ -75,93 +73,31 @@ public sealed class AdminWorkService : IAdminWorkService
         );
     }
 
-    public async Task<AdminMutationResult> CreateAsync(CreateWorkCommand command, CancellationToken cancellationToken)
+    public Task<Work?> FindByIdAsync(Guid id, CancellationToken cancellationToken)
     {
-        var slug = await GenerateUniqueSlugAsync(command.Title, null, cancellationToken);
-        var excerpt = AdminContentText.GenerateExcerpt(AdminContentJson.ExtractHtml(command.ContentJson));
-        var now = DateTimeOffset.UtcNow;
+        return _dbContext.Works.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+    }
 
-        var work = new Work
-        {
-            Id = Guid.NewGuid(),
-            Title = command.Title,
-            Slug = slug,
-            Excerpt = excerpt,
-            ThumbnailAssetId = command.ThumbnailAssetId,
-            IconAssetId = command.IconAssetId,
-            Category = command.Category,
-            Period = command.Period,
-            Tags = command.Tags,
-            Published = command.Published,
-            PublishedAt = command.Published ? now : null,
-            ContentJson = command.ContentJson,
-            AllPropertiesJson = command.AllPropertiesJson,
-            CreatedAt = now,
-            UpdatedAt = now
-        };
+    public Task<bool> SlugExistsAsync(string slug, Guid? excludingId, CancellationToken cancellationToken)
+    {
+        return _dbContext.Works.AnyAsync(
+            x => x.Slug == slug && (!excludingId.HasValue || x.Id != excludingId.Value),
+            cancellationToken);
+    }
 
+    public void Add(Work work)
+    {
         _dbContext.Works.Add(work);
-        await _dbContext.SaveChangesAsync(cancellationToken);
-        return new AdminMutationResult(work.Id, work.Slug);
     }
 
-    public async Task<AdminMutationResult?> UpdateAsync(UpdateWorkCommand command, CancellationToken cancellationToken)
+    public void Remove(Work work)
     {
-        var work = await _dbContext.Works.SingleOrDefaultAsync(x => x.Id == command.Id, cancellationToken);
-        if (work is null)
-        {
-            return null;
-        }
-
-        work.Title = command.Title;
-        work.Slug = await GenerateUniqueSlugAsync(command.Title, work.Id, cancellationToken);
-        work.Excerpt = AdminContentText.GenerateExcerpt(AdminContentJson.ExtractHtml(command.ContentJson));
-        work.ThumbnailAssetId = command.ThumbnailAssetId;
-        work.IconAssetId = command.IconAssetId;
-        work.Category = command.Category;
-        work.Period = command.Period;
-        work.Tags = command.Tags;
-        work.ContentJson = command.ContentJson;
-        work.AllPropertiesJson = command.AllPropertiesJson;
-        work.UpdatedAt = DateTimeOffset.UtcNow;
-        work.Published = command.Published;
-        if (command.Published && work.PublishedAt is null)
-        {
-            work.PublishedAt = DateTimeOffset.UtcNow;
-        }
-
-        await _dbContext.SaveChangesAsync(cancellationToken);
-        return new AdminMutationResult(work.Id, work.Slug);
-    }
-
-    public async Task<AdminActionResult> DeleteAsync(Guid id, CancellationToken cancellationToken)
-    {
-        var work = await _dbContext.Works.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
-        if (work is null)
-        {
-            return new AdminActionResult(false);
-        }
-
         _dbContext.Works.Remove(work);
-        await _dbContext.SaveChangesAsync(cancellationToken);
-        return new AdminActionResult(true);
     }
 
-    private async Task<string> GenerateUniqueSlugAsync(string title, Guid? currentWorkId, CancellationToken cancellationToken)
+    public Task SaveChangesAsync(CancellationToken cancellationToken)
     {
-        var baseSlug = AdminContentText.Slugify(title, "work");
-        var slug = baseSlug;
-        var suffix = 2;
-
-        while (await _dbContext.Works.AnyAsync(
-                   x => x.Slug == slug && (!currentWorkId.HasValue || x.Id != currentWorkId.Value),
-                   cancellationToken))
-        {
-            slug = $"{baseSlug}-{suffix}";
-            suffix += 1;
-        }
-
-        return slug;
+        return _dbContext.SaveChangesAsync(cancellationToken);
     }
 
     private static string ResolveAssetUrl(Guid? assetId, IReadOnlyDictionary<Guid, string> assets)

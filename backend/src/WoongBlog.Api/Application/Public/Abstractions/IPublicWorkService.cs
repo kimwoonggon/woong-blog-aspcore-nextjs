@@ -5,6 +5,6 @@ namespace WoongBlog.Api.Application.Public.Abstractions;
 
 public interface IPublicWorkService
 {
-    Task<PagedWorksDto> GetWorksAsync(GetWorksQuery query, CancellationToken cancellationToken);
+    Task<PagedWorksDto> GetWorksAsync(int page, int pageSize, CancellationToken cancellationToken);
     Task<WorkDetailDto?> GetWorkBySlugAsync(string slug, CancellationToken cancellationToken);
 }

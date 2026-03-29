@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using WoongBlog.Api.Application.Admin.Abstractions;
 using WoongBlog.Api.Application.Public.Abstractions;
+using WoongBlog.Api.Infrastructure.Persistence.Assets;
 using WoongBlog.Api.Infrastructure.Persistence.Admin;
 using WoongBlog.Api.Infrastructure.Persistence.Public;
 
@@ -29,12 +30,21 @@ internal static class PersistenceServiceCollectionExtensions
             options.UseNpgsql(connectionString);
         });
 
+        services.AddScoped<IAssetStorageService, AssetStorageService>();
         services.AddScoped<IAdminDashboardService, AdminDashboardService>();
         services.AddScoped<IAdminMemberService, AdminMemberService>();
-        services.AddScoped<IAdminPageService, AdminPageService>();
-        services.AddScoped<IAdminSiteSettingsService, AdminSiteSettingsService>();
-        services.AddScoped<IAdminBlogService, AdminBlogService>();
-        services.AddScoped<IAdminWorkService, AdminWorkService>();
+        services.AddScoped<AdminPageService>();
+        services.AddScoped<IAdminPageQueries>(sp => sp.GetRequiredService<AdminPageService>());
+        services.AddScoped<IAdminPageWriteStore>(sp => sp.GetRequiredService<AdminPageService>());
+        services.AddScoped<AdminSiteSettingsService>();
+        services.AddScoped<IAdminSiteSettingsQueries>(sp => sp.GetRequiredService<AdminSiteSettingsService>());
+        services.AddScoped<IAdminSiteSettingsWriteStore>(sp => sp.GetRequiredService<AdminSiteSettingsService>());
+        services.AddScoped<AdminBlogService>();
+        services.AddScoped<IAdminBlogQueries>(sp => sp.GetRequiredService<AdminBlogService>());
+        services.AddScoped<IAdminBlogWriteStore>(sp => sp.GetRequiredService<AdminBlogService>());
+        services.AddScoped<AdminWorkService>();
+        services.AddScoped<IAdminWorkQueries>(sp => sp.GetRequiredService<AdminWorkService>());
+        services.AddScoped<IAdminWorkWriteStore>(sp => sp.GetRequiredService<AdminWorkService>());
         services.AddScoped<IPublicHomeService, PublicHomeService>();
         services.AddScoped<IPublicPageService, PublicPageService>();
         services.AddScoped<IPublicSiteService, PublicSiteService>();

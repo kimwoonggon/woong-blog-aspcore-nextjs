@@ -15,11 +15,11 @@ public sealed class PublicBlogService : IPublicBlogService
         _dbContext = dbContext;
     }
 
-    public async Task<PagedBlogsDto> GetBlogsAsync(GetBlogsQuery queryInput, CancellationToken cancellationToken)
+    public async Task<PagedBlogsDto> GetBlogsAsync(int page, int pageSize, CancellationToken cancellationToken)
     {
         var assets = await _dbContext.Assets.AsNoTracking().ToDictionaryAsync(x => x.Id, x => x.PublicUrl, cancellationToken);
-        var pageSize = Math.Max(1, queryInput.PageSize);
-        var requestedPage = Math.Max(1, queryInput.Page);
+        pageSize = Math.Max(1, pageSize);
+        var requestedPage = Math.Max(1, page);
 
         var query = _dbContext.Blogs.AsNoTracking()
             .Where(x => x.Published)
@@ -27,10 +27,10 @@ public sealed class PublicBlogService : IPublicBlogService
 
         var totalItems = await query.CountAsync(cancellationToken);
         var totalPages = Math.Max(1, (int)Math.Ceiling(totalItems / (double)pageSize));
-        var page = Math.Min(requestedPage, totalPages);
+        var resolvedPage = Math.Min(requestedPage, totalPages);
 
         var blogs = await query
-            .Skip((page - 1) * pageSize)
+            .Skip((resolvedPage - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(cancellationToken);
 
@@ -44,7 +44,7 @@ public sealed class PublicBlogService : IPublicBlogService
             blog.PublishedAt
         )).ToList();
 
-        return new PagedBlogsDto(items, page, pageSize, totalItems, totalPages);
+        return new PagedBlogsDto(items, resolvedPage, pageSize, totalItems, totalPages);
     }
 
     public async Task<BlogDetailDto?> GetBlogBySlugAsync(string slug, CancellationToken cancellationToken)

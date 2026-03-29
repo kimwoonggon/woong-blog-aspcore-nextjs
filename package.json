@@ -14,8 +14,8 @@
     "test:e2e:headed": "PLAYWRIGHT_HEADED=1 playwright test --headed --workers=1",
     "test:e2e:manual-auth": "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://localhost PLAYWRIGHT_MANUAL_AUTH=1 PLAYWRIGHT_HEADED=1 playwright test tests/manual-auth.spec.ts --headed --workers=1",
     "test:e2e:stack": "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://localhost playwright test --workers=1",
-    "test:e2e:test-server": "bash scripts/run-playwright-test-server.sh playwright test --workers=1",
-    "test:e2e:test-server:smoke": "bash scripts/run-playwright-test-server.sh playwright test tests/test-server-runtime.spec.ts tests/auth-security-browser.spec.ts --project=chromium-runtime-auth --workers=1",
+    "test:e2e:test-server": "bash scripts/run-playwright-test-server.sh npx playwright test --workers=1",
+    "test:e2e:test-server:smoke": "bash scripts/run-playwright-test-server.sh npx playwright test tests/test-server-runtime.spec.ts tests/auth-security-browser.spec.ts --project=chromium-runtime-auth --workers=1",
     "test:coverage": "vitest run --coverage",
     "test:coverage:m3": "vitest run src/test/api-base.test.ts src/test/auth-login-url.test.ts src/test/auth-csrf.test.ts src/test/responsive-page-size.test.ts src/test/server-api.test.ts src/test/public-api-clients.test.ts src/test/public-api-contracts.test.ts src/test/page-editor.test.ts src/test/admin-dashboard-collections.test.ts src/test/ui-primitives.test.tsx --coverage --coverage.clean=true --coverage.reporter=json-summary --coverage.reporter=text-summary"
   },

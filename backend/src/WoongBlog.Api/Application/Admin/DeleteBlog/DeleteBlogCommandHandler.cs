@@ -6,15 +6,23 @@ namespace WoongBlog.Api.Application.Admin.DeleteBlog;
 
 public sealed class DeleteBlogCommandHandler : IRequestHandler<DeleteBlogCommand, AdminActionResult>
 {
-    private readonly IAdminBlogService _adminBlogService;
+    private readonly IAdminBlogWriteStore _blogWriteStore;
 
-    public DeleteBlogCommandHandler(IAdminBlogService adminBlogService)
+    public DeleteBlogCommandHandler(IAdminBlogWriteStore blogWriteStore)
     {
-        _adminBlogService = adminBlogService;
+        _blogWriteStore = blogWriteStore;
     }
 
     public async Task<AdminActionResult> Handle(DeleteBlogCommand request, CancellationToken cancellationToken)
     {
-        return await _adminBlogService.DeleteAsync(request.Id, cancellationToken);
+        var blog = await _blogWriteStore.FindByIdAsync(request.Id, cancellationToken);
+        if (blog is null)
+        {
+            return new AdminActionResult(false);
+        }
+
+        _blogWriteStore.Remove(blog);
+        await _blogWriteStore.SaveChangesAsync(cancellationToken);
+        return new AdminActionResult(true);
     }
 }

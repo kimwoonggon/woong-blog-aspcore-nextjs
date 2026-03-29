@@ -14,6 +14,6 @@ public class GetWorksQueryHandler : IRequestHandler<GetWorksQuery, PagedWorksDto
 
     public async Task<PagedWorksDto> Handle(GetWorksQuery request, CancellationToken cancellationToken)
     {
-        return await _publicWorkService.GetWorksAsync(request, cancellationToken);
+        return await _publicWorkService.GetWorksAsync(request.Page, request.PageSize, cancellationToken);
     }
 }

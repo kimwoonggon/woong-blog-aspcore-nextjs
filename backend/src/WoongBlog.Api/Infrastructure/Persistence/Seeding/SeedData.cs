@@ -173,6 +173,25 @@ public static class SeedData
             }
         );
 
+        for (var index = 1; index <= 11; index += 1)
+        {
+            dbContext.Works.Add(new Work
+            {
+                Slug = $"seeded-work-{index}",
+                Title = $"Seeded Work {index}",
+                Excerpt = $"Seeded work excerpt {index} for pagination, related content, and layout stability coverage.",
+                ContentJson = $$"""{"html":"<h2>Seeded Work {{index}}</h2><p>This seeded work entry exists to support public grid, pagination, and related content tests.</p>"}""",
+                ThumbnailAssetId = index % 2 == 0 ? workThumb1 : workThumb2,
+                IconAssetId = workIcon1,
+                Category = index % 2 == 0 ? "platform" : "admin",
+                Period = $"2026.0{((index - 1) % 6) + 1} - 2026.0{((index - 1) % 6) + 2}",
+                AllPropertiesJson = $$"""{"teamSize":1,"role":"seeded","index":{{index}}}""",
+                Tags = new[] { "seeded", "work", $"batch-{index}" },
+                Published = true,
+                PublishedAt = DateTimeOffset.UtcNow.AddDays(-(10 + index))
+            });
+        }
+
         dbContext.Blogs.AddRange(
             new Blog
             {
@@ -197,6 +216,21 @@ public static class SeedData
                 PublishedAt = DateTimeOffset.UtcNow.AddDays(-1)
             }
         );
+
+        for (var index = 1; index <= 22; index += 1)
+        {
+            dbContext.Blogs.Add(new Blog
+            {
+                Slug = $"seeded-blog-{index}",
+                Title = $"Seeded Blog {index}",
+                Excerpt = $"Seeded blog excerpt {index} for public pagination, detail, and related-content stability tests.",
+                ContentJson = $$"""{"html":"<p>Seeded blog {{index}} body exists to support public pagination, blog detail rendering, and related content coverage.</p>"}""",
+                CoverAssetId = index % 2 == 0 ? blogCover1 : blogCover2,
+                Tags = new[] { "seeded", "blog", $"batch-{index}" },
+                Published = true,
+                PublishedAt = DateTimeOffset.UtcNow.AddDays(-(6 + index))
+            });
+        }
 
         await dbContext.SaveChangesAsync();
     }

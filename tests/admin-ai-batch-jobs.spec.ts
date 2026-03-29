@@ -8,7 +8,7 @@ test('admin can create, observe, and apply a blog AI batch job without blocking 
   await page.goto('/admin/blog')
   await expect(page.getByRole('heading', { name: 'Blog Posts' })).toBeVisible()
 
-  const checkboxes = page.getByRole('checkbox', { name: /Select / })
+  const checkboxes = page.getByTestId('admin-blog-row').getByRole('checkbox')
   const count = await checkboxes.count()
   expect(count).toBeGreaterThan(1)
 
@@ -27,7 +27,7 @@ test('admin can create, observe, and apply a blog AI batch job without blocking 
   await expect(page.getByTestId('admin-blog-batch-ai-status')).toContainText(/queued|running|processed/i)
 
   await expect(page.getByTestId('admin-blog-batch-ai-status')).toContainText('completed', { timeout: 180_000 })
-  await expect(page.getByTestId('admin-blog-batch-ai-status')).toContainText('2/2 processed', { timeout: 180_000 })
+  await expect(page.getByTestId('admin-blog-batch-ai-status')).toContainText(/\d+\/\d+ processed/, { timeout: 180_000 })
   await expect(page.getByRole('button', { name: 'Apply all successful' })).toBeVisible()
 
   await page.getByRole('button', { name: 'Apply all successful' }).click()

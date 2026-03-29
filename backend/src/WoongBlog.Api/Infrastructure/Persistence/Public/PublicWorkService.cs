@@ -15,11 +15,11 @@ public sealed class PublicWorkService : IPublicWorkService
         _dbContext = dbContext;
     }
 
-    public async Task<PagedWorksDto> GetWorksAsync(GetWorksQuery queryInput, CancellationToken cancellationToken)
+    public async Task<PagedWorksDto> GetWorksAsync(int page, int pageSize, CancellationToken cancellationToken)
     {
         var assets = await _dbContext.Assets.AsNoTracking().ToDictionaryAsync(x => x.Id, x => x.PublicUrl, cancellationToken);
-        var pageSize = Math.Max(1, queryInput.PageSize);
-        var requestedPage = Math.Max(1, queryInput.Page);
+        pageSize = Math.Max(1, pageSize);
+        var requestedPage = Math.Max(1, page);
 
         var query = _dbContext.Works.AsNoTracking()
             .Where(x => x.Published)
@@ -27,10 +27,10 @@ public sealed class PublicWorkService : IPublicWorkService
 
         var totalItems = await query.CountAsync(cancellationToken);
         var totalPages = Math.Max(1, (int)Math.Ceiling(totalItems / (double)pageSize));
-        var page = Math.Min(requestedPage, totalPages);
+        var resolvedPage = Math.Min(requestedPage, totalPages);
 
         var works = await query
-            .Skip((page - 1) * pageSize)
+            .Skip((resolvedPage - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(cancellationToken);
 
@@ -47,7 +47,7 @@ public sealed class PublicWorkService : IPublicWorkService
             work.PublishedAt
         )).ToList();
 
-        return new PagedWorksDto(items, page, pageSize, totalItems, totalPages);
+        return new PagedWorksDto(items, resolvedPage, pageSize, totalItems, totalPages);
     }
 
     public async Task<WorkDetailDto?> GetWorkBySlugAsync(string slug, CancellationToken cancellationToken)

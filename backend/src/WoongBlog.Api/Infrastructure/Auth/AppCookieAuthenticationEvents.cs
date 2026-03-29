@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 
 namespace WoongBlog.Api.Infrastructure.Auth;
 
-internal sealed class AppCookieAuthenticationEvents(AuthRecorder recorder) : CookieAuthenticationEvents
+internal sealed class AppCookieAuthenticationEvents(
+    IAuthSessionService sessionService,
+    IAuthAuditService auditService) : CookieAuthenticationEvents
 {
     public override Task RedirectToLogin(RedirectContext<CookieAuthenticationOptions> context)
     {
@@ -19,7 +21,7 @@ internal sealed class AppCookieAuthenticationEvents(AuthRecorder recorder) : Coo
 
     public override async Task RedirectToAccessDenied(RedirectContext<CookieAuthenticationOptions> context)
     {
-        await recorder.RecordDeniedAccessAsync(
+        await auditService.RecordDeniedAccessAsync(
             context.HttpContext.User,
             context.HttpContext,
             "access_denied",
@@ -36,7 +38,7 @@ internal sealed class AppCookieAuthenticationEvents(AuthRecorder recorder) : Coo
 
     public override async Task ValidatePrincipal(CookieValidatePrincipalContext context)
     {
-        var isValid = await recorder.ValidateSessionAsync(context.Principal!, context.HttpContext.RequestAborted);
+        var isValid = await sessionService.ValidateSessionAsync(context.Principal!, context.HttpContext.RequestAborted);
         if (!isValid)
         {
             context.RejectPrincipal();

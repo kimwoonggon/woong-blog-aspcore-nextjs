@@ -5,6 +5,6 @@ namespace WoongBlog.Api.Application.Public.Abstractions;
 
 public interface IPublicBlogService
 {
-    Task<PagedBlogsDto> GetBlogsAsync(GetBlogsQuery query, CancellationToken cancellationToken);
+    Task<PagedBlogsDto> GetBlogsAsync(int page, int pageSize, CancellationToken cancellationToken);
     Task<BlogDetailDto?> GetBlogBySlugAsync(string slug, CancellationToken cancellationToken);
 }

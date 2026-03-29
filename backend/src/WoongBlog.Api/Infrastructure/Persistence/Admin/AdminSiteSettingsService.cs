@@ -1,12 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using WoongBlog.Api.Application.Admin.Abstractions;
 using WoongBlog.Api.Application.Admin.GetAdminSiteSettings;
-using WoongBlog.Api.Application.Admin.Support;
-using WoongBlog.Api.Application.Admin.UpdateSiteSettings;
+using WoongBlog.Api.Domain.Entities;
 
 namespace WoongBlog.Api.Infrastructure.Persistence.Admin;
 
-public sealed class AdminSiteSettingsService : IAdminSiteSettingsService
+public sealed class AdminSiteSettingsService : IAdminSiteSettingsQueries, IAdminSiteSettingsWriteStore
 {
     private readonly WoongBlogDbContext _dbContext;
 
@@ -33,25 +32,13 @@ public sealed class AdminSiteSettingsService : IAdminSiteSettingsService
             .SingleOrDefaultAsync(cancellationToken);
     }
 
-    public async Task<AdminActionResult> UpdateAsync(UpdateSiteSettingsCommand command, CancellationToken cancellationToken)
+    public Task<SiteSetting?> GetSingletonAsync(CancellationToken cancellationToken)
     {
-        var settings = await _dbContext.SiteSettings.SingleOrDefaultAsync(x => x.Singleton, cancellationToken);
-        if (settings is null)
-        {
-            return new AdminActionResult(false);
-        }
+        return _dbContext.SiteSettings.SingleOrDefaultAsync(x => x.Singleton, cancellationToken);
+    }
 
-        if (command.OwnerName is not null) settings.OwnerName = command.OwnerName;
-        if (command.Tagline is not null) settings.Tagline = command.Tagline;
-        if (command.FacebookUrl is not null) settings.FacebookUrl = command.FacebookUrl;
-        if (command.InstagramUrl is not null) settings.InstagramUrl = command.InstagramUrl;
-        if (command.TwitterUrl is not null) settings.TwitterUrl = command.TwitterUrl;
-        if (command.LinkedInUrl is not null) settings.LinkedInUrl = command.LinkedInUrl;
-        if (command.GitHubUrl is not null) settings.GitHubUrl = command.GitHubUrl;
-        if (command.HasResumeAssetId) settings.ResumeAssetId = command.ResumeAssetId;
-
-        settings.UpdatedAt = DateTimeOffset.UtcNow;
-        await _dbContext.SaveChangesAsync(cancellationToken);
-        return new AdminActionResult(true);
+    public Task SaveChangesAsync(CancellationToken cancellationToken)
+    {
+        return _dbContext.SaveChangesAsync(cancellationToken);
     }
 }

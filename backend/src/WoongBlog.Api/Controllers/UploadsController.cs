@@ -1,9 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using WoongBlog.Api.Domain.Entities;
 using WoongBlog.Api.Infrastructure.Auth;
-using WoongBlog.Api.Infrastructure.Persistence;
+using WoongBlog.Api.Infrastructure.Persistence.Assets;
 
 namespace WoongBlog.Api.Controllers;
 
@@ -12,13 +10,11 @@ namespace WoongBlog.Api.Controllers;
 [Authorize(Policy = "AdminOnly")]
 public class UploadsController : ControllerBase
 {
-    private readonly WoongBlogDbContext _dbContext;
-    private readonly AuthOptions _authOptions;
+    private readonly IAssetStorageService _assetStorageService;
 
-    public UploadsController(WoongBlogDbContext dbContext, Microsoft.Extensions.Options.IOptions<AuthOptions> authOptions)
+    public UploadsController(IAssetStorageService assetStorageService)
     {
-        _dbContext = dbContext;
-        _authOptions = authOptions.Value;
+        _assetStorageService = assetStorageService;
     }
 
     [HttpPost]
@@ -34,42 +30,20 @@ public class UploadsController : ControllerBase
             return BadRequest(new { error = "No file uploaded" });
         }
 
-        bucket = string.IsNullOrWhiteSpace(bucket) ? "media" : bucket;
-        var extension = Path.GetExtension(file.FileName);
-        var fileName = $"{Guid.NewGuid():N}{extension}";
-        var relativePath = Path.Combine(bucket, fileName).Replace('\\', '/');
-        var physicalPath = Path.Combine(_authOptions.MediaRoot, relativePath);
-        var directory = Path.GetDirectoryName(physicalPath);
-        if (string.IsNullOrWhiteSpace(directory))
-        {
-            return Problem("The upload path could not be resolved.");
-        }
-
-        Directory.CreateDirectory(directory);
-
-        await using (var stream = System.IO.File.Create(physicalPath))
-        {
-            await file.CopyToAsync(stream, cancellationToken);
-        }
-
         var profileIdValue = User.FindFirst(AuthClaimTypes.ProfileId)?.Value;
         Guid? profileId = Guid.TryParse(profileIdValue, out var parsed) ? parsed : null;
-
-        var asset = new Asset
+        var result = await _assetStorageService.StoreAsync(file, bucket, profileId, cancellationToken);
+        if (!result.IsSuccess)
         {
-            Id = Guid.NewGuid(),
-            Bucket = bucket,
-            Path = relativePath,
-            PublicUrl = $"/media/{relativePath}",
-            MimeType = file.ContentType,
-            Size = file.Length,
-            Kind = GetKind(file.ContentType),
-            CreatedBy = profileId,
-            CreatedAt = DateTimeOffset.UtcNow
-        };
+            return result.Error!.Kind switch
+            {
+                AssetStorageErrorKind.InvalidBucket => BadRequest(new { error = result.Error.Message }),
+                AssetStorageErrorKind.InvalidPath => Problem(result.Error.Message),
+                _ => BadRequest(new { error = result.Error.Message })
+            };
+        }
 
-        _dbContext.Assets.Add(asset);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        var asset = result.Asset!;
 
         return Ok(new
         {
@@ -82,28 +56,17 @@ public class UploadsController : ControllerBase
     [HttpDelete]
     public async Task<IActionResult> Delete([FromQuery] Guid id, CancellationToken cancellationToken)
     {
-        var asset = await _dbContext.Assets.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
-        if (asset is null)
+        var result = await _assetStorageService.DeleteAsync(id, cancellationToken);
+        if (!result.IsSuccess)
         {
-            return NotFound(new { error = "Asset not found" });
+            return result.Error!.Kind switch
+            {
+                AssetStorageErrorKind.AssetNotFound => NotFound(new { error = result.Error.Message }),
+                AssetStorageErrorKind.StoredPathInvalid => Conflict(new { error = result.Error.Message }),
+                _ => BadRequest(new { error = result.Error.Message })
+            };
         }
 
-        var physicalPath = Path.Combine(_authOptions.MediaRoot, asset.Path);
-        if (System.IO.File.Exists(physicalPath))
-        {
-            System.IO.File.Delete(physicalPath);
-        }
-
-        _dbContext.Assets.Remove(asset);
-        await _dbContext.SaveChangesAsync(cancellationToken);
         return Ok(new { success = true });
-    }
-
-    private static string GetKind(string mimeType)
-    {
-        if (mimeType.StartsWith("image/")) return "image";
-        if (mimeType == "application/pdf") return "pdf";
-        if (mimeType.StartsWith("audio/")) return "audio";
-        return "other";
     }
 }

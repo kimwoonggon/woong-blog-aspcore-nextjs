@@ -14,6 +14,6 @@ public class GetBlogsQueryHandler : IRequestHandler<GetBlogsQuery, PagedBlogsDto
 
     public async Task<PagedBlogsDto> Handle(GetBlogsQuery request, CancellationToken cancellationToken)
     {
-        return await _publicBlogService.GetBlogsAsync(request, cancellationToken);
+        return await _publicBlogService.GetBlogsAsync(request.Page, request.PageSize, cancellationToken);
     }
 }

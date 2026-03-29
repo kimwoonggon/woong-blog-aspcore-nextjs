@@ -8,7 +8,7 @@ test('admin can edit an existing work entry with mixed special input', async ({ 
   const updatedBody = `작업 본문 한국어 + English + !!! ${Date.now()}`
 
   await page.goto('/admin/works')
-  await page.locator('tbody tr td').first().getByRole('link').click()
+  await page.getByTestId('admin-work-row').first().locator('a[href^="/admin/works/"]').first().click()
   await expect(page.getByRole('heading', { name: 'Edit Work' })).toBeVisible()
 
   await page.getByLabel('Title').fill(updatedTitle)

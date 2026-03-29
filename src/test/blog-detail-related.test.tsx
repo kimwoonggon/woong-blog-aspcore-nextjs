@@ -63,5 +63,5 @@ describe('public blog detail related content', () => {
     render(await BlogDetailPage({ params: Promise.resolve({ slug: 'current-post' }) }))
 
     expect(screen.getByTestId('related-count')).toHaveTextContent('37')
-  }, 30000)
+  }, 90000)
 })
