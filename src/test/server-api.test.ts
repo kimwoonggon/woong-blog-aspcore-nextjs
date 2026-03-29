@@ -64,6 +64,21 @@ describe('server api helpers', () => {
     await expect(getServerApiBaseUrl()).resolves.toBe('http://localhost/api')
   })
 
+  it('uses same-origin localhost hosts without forcing the compose proxy override', async () => {
+    headersMock.mockResolvedValue({
+      get: vi.fn((name: string) => {
+        if (name === 'host') return 'localhost'
+        if (name === 'x-forwarded-host') return null
+        if (name === 'x-forwarded-proto') return 'http'
+        return null
+      }),
+    })
+
+    const { getServerApiBaseUrl } = await import('@/lib/api/server')
+
+    await expect(getServerApiBaseUrl()).resolves.toBe('http://localhost/api')
+  })
+
   it('returns an unauthenticated session object when the backend session call fails', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => new Response('nope', { status: 500 })) as unknown as typeof fetch)
     const { fetchServerSession } = await import('@/lib/api/server')

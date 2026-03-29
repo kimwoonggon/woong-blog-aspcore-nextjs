@@ -53,4 +53,24 @@ describe('getApiBaseUrl', () => {
       value: originalLocation,
     })
   })
+
+  it('keeps a relative api base for same-origin localhost test servers', async () => {
+    vi.resetModules()
+    delete process.env.NEXT_PUBLIC_API_BASE_URL
+
+    const originalLocation = window.location
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { origin: 'http://localhost' },
+    })
+
+    const { getApiBaseUrl } = await import('@/lib/api/base')
+
+    expect(getApiBaseUrl()).toBe('/api')
+
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: originalLocation,
+    })
+  })
 })

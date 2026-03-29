@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useMemo, useState, useTransition } from 'react'
+import { useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Eye, Pencil, Trash2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
@@ -39,17 +39,13 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
     return filteredWorks.slice(start, start + pageSize)
   }, [currentPage, filteredWorks, pageSize])
   const visibleIds = useMemo(() => visibleWorks.map((work) => work.id), [visibleWorks])
-  const selectedCount = selectedIds.length
-  const allSelected = visibleWorks.length > 0 && visibleIds.every((id) => selectedIds.includes(id))
-  const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds])
-
-  useEffect(() => {
-    setPage(1)
-  }, [query, pageSize])
-
-  useEffect(() => {
-    setSelectedIds((current) => current.filter((id) => filteredWorks.some((work) => work.id === id)))
-  }, [filteredWorks])
+  const effectiveSelectedIds = useMemo(
+    () => selectedIds.filter((id) => filteredWorks.some((work) => work.id === id)),
+    [filteredWorks, selectedIds],
+  )
+  const selectedCount = effectiveSelectedIds.length
+  const allSelected = visibleWorks.length > 0 && visibleIds.every((id) => effectiveSelectedIds.includes(id))
+  const selectedSet = useMemo(() => new Set(effectiveSelectedIds), [effectiveSelectedIds])
 
   function toggle(id: string) {
     setSelectedIds((current) =>
@@ -100,7 +96,20 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
         <div className="flex min-w-[240px] flex-1 items-center gap-3">
           <Input
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => {
+              const nextQuery = event.target.value
+              const normalizedQuery = nextQuery.trim().toLowerCase()
+              setQuery(nextQuery)
+              setPage(1)
+              setSelectedIds((current) =>
+                current.filter((id) =>
+                  works.some((work) =>
+                    work.id === id
+                    && (!normalizedQuery || work.title.toLowerCase().includes(normalizedQuery)),
+                  ),
+                ),
+              )
+            }}
             placeholder="Search work titles"
             aria-label="Search work titles"
             className="max-w-sm"
@@ -113,7 +122,7 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
           <Button
             variant="destructive"
             size="sm"
-            onClick={() => runDelete(selectedIds, `${selectedCount} selected works`)}
+            onClick={() => runDelete(effectiveSelectedIds, `${selectedCount} selected works`)}
             disabled={isPending}
           >
             <Trash2 className="mr-2 h-4 w-4" />
