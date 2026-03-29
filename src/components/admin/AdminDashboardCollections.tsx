@@ -1,7 +1,7 @@
 "use client"
 
 import Link from 'next/link'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -66,10 +66,6 @@ function AdminCollectionSection<T extends CollectionItem>({
   const totalPages = Math.max(1, Math.ceil(filteredItems.length / pageSize))
   const currentPage = Math.min(page, totalPages)
 
-  useEffect(() => {
-    setPage(1)
-  }, [query, pageSize])
-
   const visibleItems = useMemo(() => {
     const start = (currentPage - 1) * pageSize
     return filteredItems.slice(start, start + pageSize)
@@ -85,7 +81,10 @@ function AdminCollectionSection<T extends CollectionItem>({
           <p className="text-sm text-muted-foreground">{filteredItems.length} shown / {items.length} total · 클릭하면 바로 편집 페이지로 이동합니다.</p>
           <Input
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => {
+              setQuery(event.target.value)
+              setPage(1)
+            }}
             placeholder={`${title} title search`}
             aria-label={`${title} title search`}
             className="mt-3 max-w-sm"

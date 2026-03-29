@@ -1,7 +1,7 @@
 'use client'
 
 import { X } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
@@ -108,6 +108,48 @@ export function AdminBlogBatchAiPanel({
     return acc
   }, {})
 
+  const loadRecentJobs = useCallback(async (nextActiveJobId?: string | null) => {
+    try {
+      const payload = await listBlogAiBatchJobsBrowser()
+      const prioritized = [...payload.jobs].sort((left, right) => rankStatus(left.status) - rankStatus(right.status) || right.createdAt.localeCompare(left.createdAt))
+      setRecentJobs(prioritized)
+      setJobCounts({
+        runningCount: payload.runningCount,
+        queuedCount: payload.queuedCount,
+        completedCount: payload.completedCount,
+        failedCount: payload.failedCount,
+        cancelledCount: payload.cancelledCount,
+      })
+      if (nextActiveJobId) {
+        setActiveJobId(nextActiveJobId)
+      } else if (!activeJobId && prioritized[0]) {
+        setActiveJobId(prioritized[0].jobId)
+      } else if (activeJobId) {
+        const stillExists = prioritized.some((job) => job.jobId === activeJobId)
+        if (!stillExists && prioritized[0]) {
+          setActiveJobId(prioritized[0].jobId)
+        }
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to load AI batch jobs')
+    }
+  }, [activeJobId])
+
+  const loadJobDetail = useCallback(async (jobId: string) => {
+    try {
+      const job = await getBlogAiBatchJobBrowser(jobId)
+      setActiveJob(job)
+      if (job.items.length > 0 && !selectedJobItemId) {
+        const firstPreviewable = job.items.find((item) => item.fixedHtml)
+        if (firstPreviewable) {
+          setSelectedJobItemId(firstPreviewable.jobItemId)
+        }
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to load AI batch job')
+    }
+  }, [selectedJobItemId])
+
   useEffect(() => {
     if (!isOpen) {
       return
@@ -139,7 +181,7 @@ export function AdminBlogBatchAiPanel({
     return () => {
       cancelled = true
     }
-  }, [isOpen])
+  }, [isOpen, loadRecentJobs])
 
   useEffect(() => {
     if (!activeJobId) {
@@ -148,7 +190,7 @@ export function AdminBlogBatchAiPanel({
     }
 
     void loadJobDetail(activeJobId)
-  }, [activeJobId])
+  }, [activeJobId, loadJobDetail])
 
   useEffect(() => {
     if (!isOpen || !activeJobId || !activeJob || !['queued', 'running'].includes(activeJob.status)) {
@@ -163,49 +205,7 @@ export function AdminBlogBatchAiPanel({
     return () => {
       window.clearInterval(timer)
     }
-  }, [activeJob, activeJobId, isOpen])
-
-  async function loadRecentJobs(nextActiveJobId?: string | null) {
-    try {
-      const payload = await listBlogAiBatchJobsBrowser()
-      const prioritized = [...payload.jobs].sort((left, right) => rankStatus(left.status) - rankStatus(right.status) || right.createdAt.localeCompare(left.createdAt))
-      setRecentJobs(prioritized)
-      setJobCounts({
-        runningCount: payload.runningCount,
-        queuedCount: payload.queuedCount,
-        completedCount: payload.completedCount,
-        failedCount: payload.failedCount,
-        cancelledCount: payload.cancelledCount,
-      })
-      if (nextActiveJobId) {
-        setActiveJobId(nextActiveJobId)
-      } else if (!activeJobId && prioritized[0]) {
-        setActiveJobId(prioritized[0].jobId)
-      } else if (activeJobId) {
-        const stillExists = prioritized.some((job) => job.jobId === activeJobId)
-        if (!stillExists && prioritized[0]) {
-          setActiveJobId(prioritized[0].jobId)
-        }
-      }
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to load AI batch jobs')
-    }
-  }
-
-  async function loadJobDetail(jobId: string) {
-    try {
-      const job = await getBlogAiBatchJobBrowser(jobId)
-      setActiveJob(job)
-      if (job.items.length > 0 && !selectedJobItemId) {
-        const firstPreviewable = job.items.find((item) => item.fixedHtml)
-        if (firstPreviewable) {
-          setSelectedJobItemId(firstPreviewable.jobItemId)
-        }
-      }
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to load AI batch job')
-    }
-  }
+  }, [activeJob, activeJobId, isOpen, loadJobDetail, loadRecentJobs])
 
   async function createBatchAiJob() {
     if (mode === 'date' && !dateStart && !dateEnd) {
@@ -286,7 +286,7 @@ export function AdminBlogBatchAiPanel({
         throw new Error(payload.error || 'Failed to apply AI batch results')
       }
 
-      setActiveJob(payload as BlogAiBatchJobDetail)
+      setActiveJob(payload as unknown as BlogAiBatchJobDetail)
       await loadRecentJobs(activeJobId)
       onApplied?.()
       toast.success('AI batch results applied')
@@ -727,14 +727,21 @@ function summarizeSelectionTitles(titles: string[]) {
   return `${titles.slice(0, 5).join(' · ')} · +${titles.length - 5} more`
 }
 
-async function readApiPayload(response: Response): Promise<Record<string, any>> {
+type ApiPayload = Record<string, unknown> & {
+  error?: string
+  jobId?: string
+  cancelled?: number
+  cleared?: number
+}
+
+async function readApiPayload(response: Response): Promise<ApiPayload> {
   const text = await response.text()
   if (!text) {
     return {}
   }
 
   try {
-    return JSON.parse(text) as Record<string, any>
+    return JSON.parse(text) as ApiPayload
   } catch {
     return { error: text }
   }

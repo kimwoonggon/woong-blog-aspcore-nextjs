@@ -1,7 +1,6 @@
 "use client"
 
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { AIFixDialog } from '@/components/admin/AIFixDialog'
 import { Button } from '@/components/ui/button'
@@ -56,7 +55,6 @@ function formatTimestamp(value?: string | null) {
 type SaveState = 'idle' | 'saving' | 'saved' | 'error'
 
 export function BlogNotionWorkspace({ blogs, activeBlog }: BlogNotionWorkspaceProps) {
-    const router = useRouter()
     const [title, setTitle] = useState(activeBlog.title)
     const [tagsInput, setTagsInput] = useState(activeBlog.tags?.join(', ') ?? '')
     const [published, setPublished] = useState(activeBlog.published)

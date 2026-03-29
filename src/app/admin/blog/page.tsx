@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Plus, Pencil, Eye } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { AdminErrorPanel } from '@/components/admin/AdminErrorPanel'
 import { AdminBlogTableClient } from '@/components/admin/AdminBlogTableClient'
 import { Button } from '@/components/ui/button'

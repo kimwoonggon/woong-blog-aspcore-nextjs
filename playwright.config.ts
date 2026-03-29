@@ -11,10 +11,12 @@ const AUTHENTICATED_SPECS = [
 const RUNTIME_AUTH_SPECS = [
   /tests\/auth-security-browser\.spec\.ts$/,
   /tests\/public-admin-affordances\.spec\.ts$/,
+  /tests\/test-server-runtime\.spec\.ts$/,
 ]
 
+const PLAYWRIGHT_BASE_URL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000'
 const IGNORE_LOCALHOST_HTTPS_ERRORS = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(
-  process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000',
+  PLAYWRIGHT_BASE_URL,
 )
 
 export default defineConfig({
@@ -23,7 +25,7 @@ export default defineConfig({
   timeout: 30_000,
   globalSetup: './tests/helpers/global-setup.ts',
   use: {
-    baseURL: process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000',
+    baseURL: PLAYWRIGHT_BASE_URL,
     headless: process.env.PLAYWRIGHT_HEADED === '1' ? false : undefined,
     trace: 'retain-on-failure',
     ignoreHTTPSErrors: IGNORE_LOCALHOST_HTTPS_ERRORS,
