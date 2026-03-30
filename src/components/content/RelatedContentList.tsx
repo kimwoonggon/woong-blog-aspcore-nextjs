@@ -94,7 +94,11 @@ function RelatedContentPager({
         {visibleItems.map((item) => (
           <Link
             key={item.id}
-            href={`${hrefBase}/${item.slug}?relatedPage=${currentPage}`}
+            href={`${hrefBase}/${item.slug}?${(() => {
+              const params = new URLSearchParams(searchParams.toString())
+              params.set('relatedPage', String(currentPage))
+              return params.toString()
+            })()}`}
             className="group block h-full"
             data-testid={`${testIdBase}-card`}
           >

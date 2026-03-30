@@ -16,6 +16,15 @@ export interface AdminSiteSettings {
   linkedin_url: string
   github_url: string
   resume_asset_id?: string | null
+  resume_asset?: AdminResumeAsset | null
+}
+
+export interface AdminResumeAsset {
+  id: string
+  bucket: string
+  path: string
+  public_url: string
+  file_name: string
 }
 
 async function buildAdminHeaders(): Promise<Record<string, string>> {

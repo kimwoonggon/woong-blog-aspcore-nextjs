@@ -3,6 +3,7 @@ using WoongBlog.Api.Application.Public.Abstractions;
 using WoongBlog.Api.Application.Public.GetHome;
 using WoongBlog.Api.Application.Public.GetWorkBySlug;
 using WoongBlog.Api.Application.Public.GetWorks;
+using WoongBlog.Api.Infrastructure.Persistence.Assets;
 
 namespace WoongBlog.Api.Infrastructure.Persistence.Public;
 
@@ -17,7 +18,6 @@ public sealed class PublicWorkQueries : IPublicWorkQueries
 
     public async Task<PagedWorksDto> GetWorksAsync(int page, int pageSize, CancellationToken cancellationToken)
     {
-        var assets = await _dbContext.Assets.AsNoTracking().ToDictionaryAsync(x => x.Id, x => x.PublicUrl, cancellationToken);
         pageSize = Math.Max(1, pageSize);
         var requestedPage = Math.Max(1, page);
 
@@ -32,7 +32,24 @@ public sealed class PublicWorkQueries : IPublicWorkQueries
         var works = await query
             .Skip((resolvedPage - 1) * pageSize)
             .Take(pageSize)
+            .Select(x => new
+            {
+                x.Id,
+                x.Slug,
+                x.Title,
+                x.Excerpt,
+                x.Category,
+                x.Period,
+                x.Tags,
+                x.ThumbnailAssetId,
+                x.IconAssetId,
+                x.PublishedAt
+            })
             .ToListAsync(cancellationToken);
+
+        var assets = await _dbContext.LoadPublicUrlLookupAsync(
+            works.SelectMany(work => new Guid?[] { work.ThumbnailAssetId, work.IconAssetId }),
+            cancellationToken);
 
         var items = works.Select(work => new WorkCardDto(
             work.Id,
@@ -53,16 +70,31 @@ public sealed class PublicWorkQueries : IPublicWorkQueries
     public async Task<WorkDetailDto?> GetWorkBySlugAsync(string slug, CancellationToken cancellationToken)
     {
         var work = await _dbContext.Works.AsNoTracking()
-            .SingleOrDefaultAsync(x => x.Slug == slug && x.Published, cancellationToken);
+            .Where(x => x.Slug == slug && x.Published)
+            .Select(x => new
+            {
+                x.Id,
+                x.Slug,
+                x.Title,
+                x.Excerpt,
+                x.ContentJson,
+                x.Category,
+                x.Period,
+                x.Tags,
+                x.ThumbnailAssetId,
+                x.IconAssetId,
+                x.PublishedAt
+            })
+            .SingleOrDefaultAsync(cancellationToken);
 
         if (work is null)
         {
             return null;
         }
 
-        var assets = await _dbContext.Assets.AsNoTracking()
-            .Where(x => x.Id == work.ThumbnailAssetId || x.Id == work.IconAssetId)
-            .ToDictionaryAsync(x => x.Id, x => x.PublicUrl, cancellationToken);
+        var assets = await _dbContext.LoadPublicUrlLookupAsync(
+            [work.ThumbnailAssetId, work.IconAssetId],
+            cancellationToken);
 
         return new WorkDetailDto(
             work.Id,

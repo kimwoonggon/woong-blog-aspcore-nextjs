@@ -6,7 +6,7 @@ test.use({ storageState: 'test-results/playwright/admin-storage-state.json' })
 test('admin can edit a public work detail inline and save in place', async ({ page }) => {
   const updatedBody = `inline work body ${Date.now()}`
 
-  await page.goto('/works?pageSize=1')
+  await page.goto('/works?page=2&pageSize=1')
   await page.locator('a[href^="/works/"]').first().click()
 
   await expect(page.getByRole('button', { name: '작업 수정' })).toBeVisible()
@@ -23,7 +23,9 @@ test('admin can edit a public work detail inline and save in place', async ({ pa
     saveButton.click(),
   ])
 
+  await expect(page).toHaveURL(/\/works\/.*\?page=2&pageSize=1/)
   await expect(page.getByText(updatedBody).first()).toBeVisible()
+  await expect(page.getByTestId('related-work-card').first()).toHaveAttribute('href', /page=2&pageSize=1/)
 })
 
 test('public work detail shows paginated related items', async ({ page }) => {

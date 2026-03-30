@@ -1,8 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { useMemo, useState, useTransition } from 'react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { useEffect, useMemo, useState, useTransition } from 'react'
 import { Eye, Pencil, Sparkles, Trash2 } from 'lucide-react'
 import { AdminBlogBatchAiPanel } from '@/components/admin/AdminBlogBatchAiPanel'
 import { Badge } from '@/components/ui/badge'
@@ -20,12 +20,14 @@ interface AdminBlogTableClientProps {
 
 export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
   const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [showBatchAiPanel, setShowBatchAiPanel] = useState(false)
-  const [query, setQuery] = useState('')
-  const [page, setPage] = useState(1)
   const [isPending, startTransition] = useTransition()
   const pageSize = useResponsivePageSize(12, 8, 6)
+  const query = searchParams.get('query') ?? ''
+  const requestedPage = Math.max(1, Number.parseInt(searchParams.get('page') ?? '1', 10) || 1)
   const filteredBlogs = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase()
     if (!normalizedQuery) {
@@ -35,7 +37,7 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
     return blogs.filter((blog) => blog.title.toLowerCase().includes(normalizedQuery))
   }, [blogs, query])
   const totalPages = Math.max(1, Math.ceil(filteredBlogs.length / pageSize))
-  const currentPage = Math.min(page, totalPages)
+  const currentPage = Math.min(requestedPage, totalPages)
   const visibleBlogs = useMemo(() => {
     const start = (currentPage - 1) * pageSize
     return filteredBlogs.slice(start, start + pageSize)
@@ -52,6 +54,40 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
   )
   const allSelected = visibleBlogs.length > 0 && visibleIds.every((id) => effectiveSelectedIds.includes(id))
   const selectedSet = useMemo(() => new Set(effectiveSelectedIds), [effectiveSelectedIds])
+
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString())
+    let changed = false
+
+    if (params.get('pageSize') !== String(pageSize)) {
+      params.set('pageSize', String(pageSize))
+      changed = true
+    }
+
+    if (params.get('page') !== String(currentPage)) {
+      params.set('page', String(currentPage))
+      changed = true
+    }
+
+    if (!query) {
+      if (params.has('query')) {
+        params.delete('query')
+        changed = true
+      }
+    }
+
+    if (!changed) {
+      return
+    }
+
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+  }, [currentPage, pageSize, pathname, query, router, searchParams])
+
+  function replaceSearchParams(mutator: (params: URLSearchParams) => void) {
+    const params = new URLSearchParams(searchParams.toString())
+    mutator(params)
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+  }
 
   function toggle(id: string) {
     setSelectedIds((current) =>
@@ -105,8 +141,15 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
             onChange={(event) => {
               const nextQuery = event.target.value
               const normalizedQuery = nextQuery.trim().toLowerCase()
-              setQuery(nextQuery)
-              setPage(1)
+              replaceSearchParams((params) => {
+                if (nextQuery.trim()) {
+                  params.set('query', nextQuery)
+                } else {
+                  params.delete('query')
+                }
+                params.set('page', '1')
+                params.set('pageSize', String(pageSize))
+              })
               setSelectedIds((current) =>
                 current.filter((id) =>
                   blogs.some((blog) =>
@@ -191,7 +234,7 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
                 </TableCell>
                 <TableCell className="font-medium">
                   <Link
-                    href={`/admin/blog/${blog.id}`}
+                    href={`/admin/blog/${blog.id}?returnPage=${currentPage}&returnPageSize=${pageSize}${query ? `&returnQuery=${encodeURIComponent(query)}` : ''}`}
                     className="transition-colors hover:text-primary hover:underline"
                   >
                     {blog.title}
@@ -219,7 +262,7 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
                         <Eye className="h-4 w-4" />
                       </Button>
                     </Link>
-                    <Link href={`/admin/blog/${blog.id}`}>
+                    <Link href={`/admin/blog/${blog.id}?returnPage=${currentPage}&returnPageSize=${pageSize}${query ? `&returnQuery=${encodeURIComponent(query)}` : ''}`}>
                       <Button variant="ghost" size="icon" title="Edit">
                         <Pencil className="h-4 w-4" />
                       </Button>
@@ -248,19 +291,19 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
         </TableBody>
       </Table>
       <div className="flex flex-wrap items-center justify-center gap-2 border-t border-gray-200 px-4 py-3 dark:border-gray-800">
-        <Button type="button" variant="outline" size="sm" disabled={currentPage <= 1} onClick={() => setPage(1)}>
+        <Button type="button" variant="outline" size="sm" disabled={currentPage <= 1} onClick={() => replaceSearchParams((params) => params.set('page', '1'))}>
           처음
         </Button>
-        <Button type="button" variant="outline" size="sm" disabled={currentPage <= 1} onClick={() => setPage((active) => Math.max(1, active - 1))}>
+        <Button type="button" variant="outline" size="sm" disabled={currentPage <= 1} onClick={() => replaceSearchParams((params) => params.set('page', String(Math.max(1, currentPage - 1))))}>
           이전
         </Button>
         <span className="text-sm text-muted-foreground">
           {currentPage} / {totalPages}
         </span>
-        <Button type="button" variant="outline" size="sm" disabled={currentPage >= totalPages} onClick={() => setPage((active) => Math.min(totalPages, active + 1))}>
+        <Button type="button" variant="outline" size="sm" disabled={currentPage >= totalPages} onClick={() => replaceSearchParams((params) => params.set('page', String(Math.min(totalPages, currentPage + 1))))}>
           다음
         </Button>
-        <Button type="button" variant="outline" size="sm" disabled={currentPage >= totalPages} onClick={() => setPage(totalPages)}>
+        <Button type="button" variant="outline" size="sm" disabled={currentPage >= totalPages} onClick={() => replaceSearchParams((params) => params.set('page', String(totalPages)))}>
           끝
         </Button>
       </div>

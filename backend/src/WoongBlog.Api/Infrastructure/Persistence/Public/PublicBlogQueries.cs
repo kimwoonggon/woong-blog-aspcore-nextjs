@@ -3,6 +3,7 @@ using WoongBlog.Api.Application.Public.Abstractions;
 using WoongBlog.Api.Application.Public.GetBlogBySlug;
 using WoongBlog.Api.Application.Public.GetBlogs;
 using WoongBlog.Api.Application.Public.GetHome;
+using WoongBlog.Api.Infrastructure.Persistence.Assets;
 
 namespace WoongBlog.Api.Infrastructure.Persistence.Public;
 
@@ -17,7 +18,6 @@ public sealed class PublicBlogQueries : IPublicBlogQueries
 
     public async Task<PagedBlogsDto> GetBlogsAsync(int page, int pageSize, CancellationToken cancellationToken)
     {
-        var assets = await _dbContext.Assets.AsNoTracking().ToDictionaryAsync(x => x.Id, x => x.PublicUrl, cancellationToken);
         pageSize = Math.Max(1, pageSize);
         var requestedPage = Math.Max(1, page);
 
@@ -32,7 +32,21 @@ public sealed class PublicBlogQueries : IPublicBlogQueries
         var blogs = await query
             .Skip((resolvedPage - 1) * pageSize)
             .Take(pageSize)
+            .Select(x => new
+            {
+                x.Id,
+                x.Slug,
+                x.Title,
+                x.Excerpt,
+                x.Tags,
+                x.CoverAssetId,
+                x.PublishedAt
+            })
             .ToListAsync(cancellationToken);
+
+        var assets = await _dbContext.LoadPublicUrlLookupAsync(
+            blogs.Select(blog => blog.CoverAssetId),
+            cancellationToken);
 
         var items = blogs.Select(blog => new BlogCardDto(
             blog.Id,
@@ -50,20 +64,29 @@ public sealed class PublicBlogQueries : IPublicBlogQueries
     public async Task<BlogDetailDto?> GetBlogBySlugAsync(string slug, CancellationToken cancellationToken)
     {
         var blog = await _dbContext.Blogs.AsNoTracking()
-            .SingleOrDefaultAsync(x => x.Slug == slug && x.Published, cancellationToken);
+            .Where(x => x.Slug == slug && x.Published)
+            .Select(x => new
+            {
+                x.Id,
+                x.Slug,
+                x.Title,
+                x.Excerpt,
+                x.ContentJson,
+                x.Tags,
+                x.CoverAssetId,
+                x.PublishedAt
+            })
+            .SingleOrDefaultAsync(cancellationToken);
 
         if (blog is null)
         {
             return null;
         }
 
-        var coverUrl = blog.CoverAssetId is null
-            ? string.Empty
-            : await _dbContext.Assets
-                .AsNoTracking()
-                .Where(x => x.Id == blog.CoverAssetId.Value)
-                .Select(x => x.PublicUrl)
-                .SingleOrDefaultAsync(cancellationToken) ?? string.Empty;
+        var assetLookup = await _dbContext.LoadPublicUrlLookupAsync([blog.CoverAssetId], cancellationToken);
+        var coverUrl = blog.CoverAssetId is not null && assetLookup.TryGetValue(blog.CoverAssetId.Value, out var resolvedCoverUrl)
+            ? resolvedCoverUrl
+            : string.Empty;
 
         return new BlogDetailDto(
             blog.Id,

@@ -7,10 +7,17 @@ export const revalidate = 0
 
 interface PageProps {
     params: Promise<{ id: string }>
+    searchParams?: Promise<{ returnTo?: string; returnPage?: string; returnPageSize?: string; returnQuery?: string }>
 }
 
-export default async function EditWorkPage({ params }: PageProps) {
+export default async function EditWorkPage({ params, searchParams }: PageProps) {
     const { id } = await params
+    const resolvedSearchParams = await searchParams
+    const returnParams = new URLSearchParams()
+    if (resolvedSearchParams?.returnQuery) returnParams.set('query', resolvedSearchParams.returnQuery)
+    if (resolvedSearchParams?.returnPage) returnParams.set('page', resolvedSearchParams.returnPage)
+    if (resolvedSearchParams?.returnPageSize) returnParams.set('pageSize', resolvedSearchParams.returnPageSize)
+    const returnTo = resolvedSearchParams?.returnTo ?? `/admin/works${returnParams.size > 0 ? `?${returnParams.toString()}` : ''}`
     let work = null
     let loadFailed = false
 
@@ -41,7 +48,7 @@ export default async function EditWorkPage({ params }: PageProps) {
                     message="The selected work entry could not be loaded. Please retry after checking the backend connection."
                 />
             ) : (
-                <WorkEditor initialWork={initialWork} />
+                <WorkEditor initialWork={initialWork} returnTo={returnTo} />
             )}
         </div>
     )

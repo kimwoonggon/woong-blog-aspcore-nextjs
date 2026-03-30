@@ -1,30 +1,88 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using WoongBlog.Api.Infrastructure.Persistence.Seeding;
 
 namespace WoongBlog.Api.Infrastructure.Persistence;
 
 public static class DatabaseBootstrapper
 {
-    public static async Task InitializeAsync(WoongBlogDbContext dbContext, CancellationToken cancellationToken = default)
+    public static Task InitializeAsync(WoongBlogDbContext dbContext, ILogger? logger = null, CancellationToken cancellationToken = default)
+    {
+        return ExecuteWithRetryAsync(
+            async ct =>
+            {
+                await dbContext.Database.EnsureCreatedAsync(ct);
+                await EnsureReadModelIndexesAsync(dbContext, ct);
+                await EnsureAiBatchTablesAsync(dbContext, ct);
+                await SeedData.InitializeAsync(dbContext);
+            },
+            logger,
+            cancellationToken: cancellationToken);
+    }
+
+    internal static async Task ExecuteWithRetryAsync(
+        Func<CancellationToken, Task> operation,
+        ILogger? logger = null,
+        int maxAttempts = 10,
+        TimeSpan? retryDelay = null,
+        CancellationToken cancellationToken = default)
     {
         // Keep startup behavior centralized so the eventual migration-based path
         // can replace this in one place without changing the application entrypoint.
-        const int maxAttempts = 10;
+        var resolvedRetryDelay = retryDelay ?? TimeSpan.FromSeconds(2);
 
         for (var attempt = 1; attempt <= maxAttempts; attempt++)
         {
             try
             {
-                await dbContext.Database.EnsureCreatedAsync(cancellationToken);
-                await EnsureAiBatchTablesAsync(dbContext, cancellationToken);
-                await SeedData.InitializeAsync(dbContext);
+                await operation(cancellationToken);
+
+                if (attempt > 1)
+                {
+                    logger?.LogInformation(
+                        "Database bootstrap succeeded on attempt {Attempt} of {MaxAttempts}.",
+                        attempt,
+                        maxAttempts);
+                }
+
                 return;
             }
-            catch when (attempt < maxAttempts)
+            catch (Exception exception) when (attempt < maxAttempts && !cancellationToken.IsCancellationRequested)
             {
-                await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
+                logger?.LogWarning(
+                    exception,
+                    "Database bootstrap attempt {Attempt} of {MaxAttempts} failed. Retrying in {RetryDelaySeconds} seconds.",
+                    attempt,
+                    maxAttempts,
+                    resolvedRetryDelay.TotalSeconds);
+                await Task.Delay(resolvedRetryDelay, cancellationToken);
+            }
+            catch (Exception exception)
+            {
+                logger?.LogError(
+                    exception,
+                    "Database bootstrap failed on attempt {Attempt} of {MaxAttempts}.",
+                    attempt,
+                    maxAttempts);
+                throw;
             }
         }
+    }
+
+    private static async Task EnsureReadModelIndexesAsync(WoongBlogDbContext dbContext, CancellationToken cancellationToken)
+    {
+        if (!dbContext.Database.IsRelational())
+        {
+            return;
+        }
+
+        const string createIndexesSql = """
+CREATE INDEX IF NOT EXISTS "IX_Works_Published_PublishedAt" ON "Works" ("Published", "PublishedAt" DESC);
+CREATE INDEX IF NOT EXISTS "IX_Blogs_Published_PublishedAt" ON "Blogs" ("Published", "PublishedAt" DESC);
+CREATE INDEX IF NOT EXISTS "IX_AuthSessions_RevokedAt_ExpiresAt_ProfileId" ON "AuthSessions" ("RevokedAt", "ExpiresAt", "ProfileId");
+""";
+
+        await dbContext.Database.ExecuteSqlRawAsync(createIndexesSql, cancellationToken);
     }
 
     private static async Task EnsureAiBatchTablesAsync(WoongBlogDbContext dbContext, CancellationToken cancellationToken)

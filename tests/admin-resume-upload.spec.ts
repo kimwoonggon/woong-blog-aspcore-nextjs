@@ -24,6 +24,15 @@ test('admin can upload a resume pdf and public resume page exposes download', as
 
   await expect(resumeSection.getByText('Resume PDF Uploaded')).toBeVisible({ timeout: 20000 })
 
+  await page.goto('/admin/dashboard')
+  const dashboardDownload = page.getByRole('link', { name: /Download Resume/i })
+  await expect(dashboardDownload).toBeVisible()
+  await expect(page.getByRole('link', { name: /Manage Resume/i })).toBeVisible()
+  const href = await dashboardDownload.getAttribute('href')
+  expect(href).toBeTruthy()
+  const response = await page.request.get(new URL(href!, page.url()).toString())
+  expect(response.ok()).toBeTruthy()
+
   await page.goto('/resume')
   const downloadLink = page.getByRole('link', { name: /download/i }).first()
   await expect(downloadLink).toBeVisible()

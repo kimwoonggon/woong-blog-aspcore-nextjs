@@ -31,7 +31,8 @@ public enum AdminAiFailureKind
 {
     Validation,
     NotFound,
-    Conflict
+    Conflict,
+    System
 }
 
 public sealed record AdminAiFailure(AdminAiFailureKind Kind, string Message);
@@ -84,11 +85,18 @@ public sealed class AdminAiWorkflowService : IAdminAiWorkflowService
             return new AdminAiOperationResult<AdminAiEndpoints.BlogFixResponse>(null, new AdminAiFailure(AdminAiFailureKind.Validation, "HTML content is required."));
         }
 
-        var result = await _aiFixService.FixHtmlAsync(request.Html, cancellationToken, new AiFixRequestOptions(
-            Mode: AiFixMode.BlogFix,
-            CodexModel: request.CodexModel,
-            CodexReasoningEffort: request.CodexReasoningEffort));
-        return new AdminAiOperationResult<AdminAiEndpoints.BlogFixResponse>(new AdminAiEndpoints.BlogFixResponse(result.FixedHtml, result.Provider, result.Model, result.ReasoningEffort));
+        try
+        {
+            var result = await _aiFixService.FixHtmlAsync(request.Html, cancellationToken, new AiFixRequestOptions(
+                Mode: AiFixMode.BlogFix,
+                CodexModel: request.CodexModel,
+                CodexReasoningEffort: request.CodexReasoningEffort));
+            return new AdminAiOperationResult<AdminAiEndpoints.BlogFixResponse>(new AdminAiEndpoints.BlogFixResponse(result.FixedHtml, result.Provider, result.Model, result.ReasoningEffort));
+        }
+        catch (Exception exception)
+        {
+            return new AdminAiOperationResult<AdminAiEndpoints.BlogFixResponse>(null, new AdminAiFailure(AdminAiFailureKind.System, exception.Message));
+        }
     }
 
     public async Task<AdminAiOperationResult<AdminAiEndpoints.BlogFixBatchResponse>> FixBlogBatchAsync(AdminAiEndpoints.BlogFixBatchRequest request, CancellationToken cancellationToken)
@@ -168,12 +176,19 @@ public sealed class AdminAiWorkflowService : IAdminAiWorkflowService
             return new AdminAiOperationResult<AdminAiEndpoints.WorkEnrichResponse>(null, new AdminAiFailure(AdminAiFailureKind.Validation, "HTML content is required."));
         }
 
-        var result = await _aiFixService.FixHtmlAsync(request.Html, cancellationToken, new AiFixRequestOptions(
-            Mode: AiFixMode.WorkEnrich,
-            Title: request.Title,
-            CodexModel: request.CodexModel,
-            CodexReasoningEffort: request.CodexReasoningEffort));
-        return new AdminAiOperationResult<AdminAiEndpoints.WorkEnrichResponse>(new AdminAiEndpoints.WorkEnrichResponse(result.FixedHtml, result.Provider, result.Model, result.ReasoningEffort));
+        try
+        {
+            var result = await _aiFixService.FixHtmlAsync(request.Html, cancellationToken, new AiFixRequestOptions(
+                Mode: AiFixMode.WorkEnrich,
+                Title: request.Title,
+                CodexModel: request.CodexModel,
+                CodexReasoningEffort: request.CodexReasoningEffort));
+            return new AdminAiOperationResult<AdminAiEndpoints.WorkEnrichResponse>(new AdminAiEndpoints.WorkEnrichResponse(result.FixedHtml, result.Provider, result.Model, result.ReasoningEffort));
+        }
+        catch (Exception exception)
+        {
+            return new AdminAiOperationResult<AdminAiEndpoints.WorkEnrichResponse>(null, new AdminAiFailure(AdminAiFailureKind.System, exception.Message));
+        }
     }
 
     public async Task<AdminAiOperationResult<AdminAiEndpoints.BlogFixBatchJobDetailResponse>> CreateBlogFixBatchJobAsync(AdminAiEndpoints.BlogFixBatchJobCreateRequest request, CancellationToken cancellationToken)

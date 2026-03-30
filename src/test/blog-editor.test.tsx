@@ -17,6 +17,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mocks.push, replace: mocks.replace, refresh: mocks.refresh, back: mocks.back }),
   usePathname: () => '/blog',
+  useSearchParams: () => new URLSearchParams('page=2&pageSize=1'),
 }))
 
 vi.mock('sonner', () => ({ toast: mocks.toast }))
@@ -46,6 +47,11 @@ vi.mock('@/components/admin/TiptapEditor', () => ({
 describe('BlogEditor', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.stubGlobal('ResizeObserver', class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    })
     mocks.fetchWithCsrf.mockResolvedValue({
       ok: true,
       json: async () => ({}),
@@ -79,5 +85,36 @@ describe('BlogEditor', () => {
         }),
       )
     })
+  })
+
+  it('returns to the provided list context after updating an existing blog', async () => {
+    mocks.fetchWithCsrf.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ id: 'blog-1', slug: 'existing-blog' }),
+      text: async () => '',
+    })
+
+    render(
+      <BlogEditor
+        returnTo="/admin/blog?query=alpha&page=3&pageSize=8"
+        initialBlog={{
+          id: 'blog-1',
+          title: 'Existing blog',
+          slug: 'existing-blog',
+          tags: ['alpha'],
+          published: true,
+          content: { html: '<p>Before</p>' },
+        }}
+      />,
+    )
+
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Updated blog' } })
+    fireEvent.click(screen.getByRole('button', { name: /Update Post/i }))
+
+    await waitFor(() => {
+      expect(mocks.toast.success).toHaveBeenCalledWith('Blog post updated successfully')
+    })
+
+    expect(mocks.push).toHaveBeenCalledWith('/admin/blog?query=alpha&page=3&pageSize=8')
   })
 })

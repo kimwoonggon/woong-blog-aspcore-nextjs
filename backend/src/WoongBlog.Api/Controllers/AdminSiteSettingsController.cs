@@ -53,6 +53,12 @@ public class AdminSiteSettingsController : ControllerBase
             return NotFound();
         }
 
-        return Ok(new { success = true });
+        var settings = await _sender.Send(new GetAdminSiteSettingsQuery(), cancellationToken);
+        if (settings is null)
+        {
+            return Ok(new { success = true });
+        }
+
+        return Ok(settings);
     }
 }

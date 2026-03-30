@@ -51,6 +51,7 @@ public class WoongBlogDbContext : DbContext
         modelBuilder.Entity<Work>(entity =>
         {
             entity.HasIndex(x => x.Slug).IsUnique();
+            entity.HasIndex(x => new { x.Published, x.PublishedAt });
             entity.Property(x => x.ContentJson).HasColumnType("jsonb");
             entity.Property(x => x.AllPropertiesJson).HasColumnType("jsonb");
         });
@@ -58,6 +59,7 @@ public class WoongBlogDbContext : DbContext
         modelBuilder.Entity<Blog>(entity =>
         {
             entity.HasIndex(x => x.Slug).IsUnique();
+            entity.HasIndex(x => new { x.Published, x.PublishedAt });
             entity.Property(x => x.ContentJson).HasColumnType("jsonb");
         });
 
@@ -76,6 +78,7 @@ public class WoongBlogDbContext : DbContext
         {
             entity.HasIndex(x => x.ProfileId);
             entity.HasIndex(x => x.SessionKey).IsUnique();
+            entity.HasIndex(x => new { x.RevokedAt, x.ExpiresAt, x.ProfileId });
         });
 
         modelBuilder.Entity<Profile>(entity =>

@@ -13,12 +13,10 @@
   "shutdownAction": "stopCompose",
   "overrideCommand": false,
   "remoteEnv": {
-    "HOST_PROJECT_PATH": "${localWorkspaceFolder}"
+    "HOST_PROJECT_PATH": "${localWorkspaceFolder}",
+    "CODEX_HOME_DIR": "/root/.codex"
   },
   "features": {
-    "ghcr.io/devcontainers/features/node:1": {
-      "version": "22"
-    },
     "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
   },
   "forwardPorts": [

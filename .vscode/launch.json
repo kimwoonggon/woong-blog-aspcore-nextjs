@@ -19,14 +19,21 @@
         "ASPNETCORE_URLS": "http://0.0.0.0:5121",
         "ConnectionStrings__Postgres": "Host=db;Port=5432;Database=portfolio;Username=portfolio;Password=portfolio",
         "Auth__DataProtectionKeysPath": "${workspaceFolder}/.devcontainer-data/data-protection",
-        "Auth__MediaRoot": "${workspaceFolder}/.devcontainer-data/media"
+        "Auth__MediaRoot": "${workspaceFolder}/.devcontainer-data/media",
+        "AI_PROVIDER": "codex",
+        "CODEX_COMMAND": "${workspaceFolder}/scripts/run-codex-cli.sh",
+        "CODEX_MODEL": "gpt-5.4",
+        "CODEX_REASONING_EFFORT": "medium",
+        "CODEX_SANDBOX_MODE": "workspace-write",
+        "CODEX_HOME_DIR": "/root/.codex",
+        "HOME": "/root"
       }
     },
     {
       "name": "Frontend Debug (HTTP)",
       "type": "node-terminal",
       "request": "launch",
-      "command": "npm run dev -- --hostname 0.0.0.0 --port 3000",
+      "command": "npm run dev -- --webpack --hostname 0.0.0.0 --port 3000",
       "cwd": "${workspaceFolder}",
       "env": {
         "DEV_PROXY_ORIGIN": "http://localhost:5121",

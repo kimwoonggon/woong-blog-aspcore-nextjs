@@ -4,7 +4,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
     refresh: vi.fn(),
+    replace: vi.fn(),
   }),
+  usePathname: () => '/admin/blog',
+  useSearchParams: () => new URLSearchParams(),
 }))
 
 describe('admin page success and not-found states', () => {
@@ -28,6 +31,25 @@ describe('admin page success and not-found states', () => {
     vi.doMock('@/lib/api/blogs', () => ({
       fetchAdminBlogs: vi.fn(async () => [{ id: 'blog-1', title: 'Blog', slug: 'blog', published: false, excerpt: 'excerpt', tags: [] }]),
     }))
+    vi.doMock('@/lib/api/admin-pages', () => ({
+      fetchAdminSiteSettings: vi.fn(async () => ({
+        owner_name: 'Owner',
+        tagline: 'Tagline',
+        facebook_url: '',
+        instagram_url: '',
+        twitter_url: '',
+        linkedin_url: '',
+        github_url: '',
+        resume_asset_id: 'resume-1',
+        resume_asset: {
+          id: 'resume-1',
+          bucket: 'public-resume',
+          path: 'public-resume/resume.pdf',
+          public_url: '/media/public-resume/resume.pdf',
+          file_name: 'resume.pdf',
+        },
+      })),
+    }))
     vi.doMock('@/components/admin/AdminDashboardCollections', () => ({
       AdminDashboardCollections: ({ works, blogs }: { works: unknown[]; blogs: unknown[] }) => (
         <div data-testid="dashboard-collections">{works.length}:{blogs.length}</div>
@@ -40,6 +62,9 @@ describe('admin page success and not-found states', () => {
     expect(screen.getByText('99')).toBeInTheDocument()
     expect(screen.getByText('3')).toBeInTheDocument()
     expect(screen.getByText('4')).toBeInTheDocument()
+    expect(screen.getByText('resume.pdf')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Download Resume/i })).toHaveAttribute('href', '/media/public-resume/resume.pdf')
+    expect(screen.getByRole('link', { name: /Manage Resume/i })).toHaveAttribute('href', '/admin/pages#resume-editor')
     expect(screen.getByTestId('dashboard-collections')).toHaveTextContent('1:1')
   }, 15000)
 
@@ -59,11 +84,17 @@ describe('admin page success and not-found states', () => {
     vi.doMock('@/lib/api/blogs', () => ({
       fetchAdminBlogs: vi.fn(async () => []),
     }))
+    vi.doMock('@/lib/api/admin-pages', () => ({
+      fetchAdminSiteSettings: vi.fn(async () => {
+        throw new Error('failed')
+      }),
+    }))
 
     const DashboardPage = (await import('@/app/admin/dashboard/page')).default
     render(await DashboardPage())
 
     expect(screen.getAllByText('Dashboard content lists are unavailable')[0]).toBeInTheDocument()
+    expect(screen.getByText('Resume status is unavailable')).toBeInTheDocument()
   }, 15000)
 
   it('renders a populated admin blog table when blogs load successfully', async () => {
@@ -86,7 +117,7 @@ describe('admin page success and not-found states', () => {
     }))
 
     const AdminBlogPage = (await import('@/app/admin/blog/page')).default
-    render(await AdminBlogPage())
+    render(await AdminBlogPage({ searchParams: Promise.resolve({}) }))
 
     expect(screen.getByText('First blog')).toBeInTheDocument()
     expect(screen.getByText('Published')).toBeInTheDocument()
@@ -114,7 +145,7 @@ describe('admin page success and not-found states', () => {
     }))
 
     const AdminBlogPage = (await import('@/app/admin/blog/page')).default
-    render(await AdminBlogPage())
+    render(await AdminBlogPage({ searchParams: Promise.resolve({}) }))
 
     expect(screen.getByText('Draft blog')).toBeInTheDocument()
     expect(screen.getByText('Draft')).toBeInTheDocument()
@@ -156,7 +187,7 @@ describe('admin page success and not-found states', () => {
     }))
 
     const AdminWorksPage = (await import('@/app/admin/works/page')).default
-    render(await AdminWorksPage())
+    render(await AdminWorksPage({ searchParams: Promise.resolve({}) }))
 
     expect(screen.getByText('No works found.')).toBeInTheDocument()
   })
@@ -192,7 +223,7 @@ describe('admin page success and not-found states', () => {
     }))
 
     const AdminWorksPage = (await import('@/app/admin/works/page')).default
-    render(await AdminWorksPage())
+    render(await AdminWorksPage({ searchParams: Promise.resolve({}) }))
 
     expect(screen.getByText('Published work')).toBeInTheDocument()
     expect(screen.getByText('Draft work')).toBeInTheDocument()
@@ -214,6 +245,13 @@ describe('admin page success and not-found states', () => {
         linkedin_url: '',
         github_url: '',
         resume_asset_id: 'resume-1',
+        resume_asset: {
+          id: 'resume-1',
+          bucket: 'public-resume',
+          path: 'public-resume/resume.pdf',
+          public_url: '/media/public-resume/resume.pdf',
+          file_name: 'resume.pdf',
+        },
       })),
       fetchAdminPages: vi.fn(async () => [
         { id: 'page-home', title: 'Home', slug: 'home', content: { headline: 'Hi' } },
@@ -233,8 +271,8 @@ describe('admin page success and not-found states', () => {
       PageEditor: ({ page }: { page: { title: string } }) => <div>Page editor: {page.title}</div>,
     }))
     vi.doMock('@/components/admin/ResumeEditor', () => ({
-      ResumeEditor: ({ resumeAsset }: { resumeAsset: { id: string } | null }) => (
-        <div>Resume editor: {resumeAsset?.id ?? 'none'}</div>
+      ResumeEditor: ({ resumeAsset }: { resumeAsset: { id: string; path: string } | null }) => (
+        <div>Resume editor: {resumeAsset ? `${resumeAsset.id}:${resumeAsset.path}` : 'none'}</div>
       ),
     }))
 
@@ -245,7 +283,7 @@ describe('admin page success and not-found states', () => {
     expect(screen.getByText('Home editor: Home')).toBeInTheDocument()
     expect(screen.getByText('Page editor: Introduction')).toBeInTheDocument()
     expect(screen.getByText('Page editor: Contact')).toBeInTheDocument()
-    expect(screen.getByText('Resume editor: resume-1')).toBeInTheDocument()
+    expect(screen.getByText('Resume editor: resume-1:public-resume/resume.pdf')).toBeInTheDocument()
   })
 
   it('renders only the available sections when optional admin pages are missing', async () => {
@@ -259,6 +297,7 @@ describe('admin page success and not-found states', () => {
         linkedin_url: '',
         github_url: '',
         resume_asset_id: null,
+        resume_asset: null,
       })),
       fetchAdminPages: vi.fn(async () => []),
     }))
@@ -274,8 +313,8 @@ describe('admin page success and not-found states', () => {
       PageEditor: () => <div>unused page editor</div>,
     }))
     vi.doMock('@/components/admin/ResumeEditor', () => ({
-      ResumeEditor: ({ resumeAsset }: { resumeAsset: { id: string } | null }) => (
-        <div>Resume editor: {resumeAsset?.id ?? 'none'}</div>
+      ResumeEditor: ({ resumeAsset }: { resumeAsset: { id: string; path: string } | null }) => (
+        <div>Resume editor: {resumeAsset ? `${resumeAsset.id}:${resumeAsset.path}` : 'none'}</div>
       ),
     }))
 

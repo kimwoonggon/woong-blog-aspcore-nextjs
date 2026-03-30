@@ -7,9 +7,19 @@ import { fetchAdminBlogs, type BlogAdminItem } from '@/lib/api/blogs'
 
 export const dynamic = 'force-dynamic'
 
-export default async function AdminBlogPage() {
+interface PageProps {
+    searchParams?: Promise<{ query?: string; page?: string; pageSize?: string }>
+}
+
+export default async function AdminBlogPage({ searchParams }: PageProps) {
+    const resolvedSearchParams = await searchParams
     let blogs: BlogAdminItem[] = []
     let loadFailed = false
+    const returnParams = new URLSearchParams()
+
+    if (resolvedSearchParams?.query) returnParams.set('returnQuery', resolvedSearchParams.query)
+    if (resolvedSearchParams?.page) returnParams.set('returnPage', resolvedSearchParams.page)
+    if (resolvedSearchParams?.pageSize) returnParams.set('returnPageSize', resolvedSearchParams.pageSize)
 
     try {
         blogs = await fetchAdminBlogs()
@@ -30,7 +40,7 @@ export default async function AdminBlogPage() {
                     <Link href="/admin/blog/notion">
                         <Button variant="outline">Notion View</Button>
                     </Link>
-                    <Link href="/admin/blog/new">
+                    <Link href={`/admin/blog/new${returnParams.size > 0 ? `?${returnParams.toString()}` : ''}`}>
                         <Button>
                             <Plus className="mr-2 h-4 w-4" /> Add Post
                         </Button>

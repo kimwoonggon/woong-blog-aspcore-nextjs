@@ -20,6 +20,7 @@ internal sealed class AiOptionsPostConfigure(IConfiguration configuration) : IPo
         options.CodexCommand = FirstConfigured(configuration["CODEX_COMMAND"], options.CodexCommand, "codex");
         options.CodexModel = FirstConfigured(configuration["CODEX_MODEL"], options.CodexModel, "gpt-5.4");
         options.CodexReasoningEffort = FirstConfigured(configuration["CODEX_REASONING_EFFORT"], options.CodexReasoningEffort, "medium");
+        options.CodexSandboxMode = FirstConfigured(configuration["CODEX_SANDBOX_MODE"], options.CodexSandboxMode, "workspace-write");
 
         if (int.TryParse(configuration["CODEX_TIMEOUT_MS"], out var timeoutMs) && timeoutMs > 0)
         {

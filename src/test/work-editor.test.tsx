@@ -15,6 +15,8 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mocks.push, refresh: mocks.refresh, back: mocks.back }),
+  usePathname: () => '/works',
+  useSearchParams: () => new URLSearchParams('page=2&pageSize=1'),
 }))
 
 vi.mock('sonner', () => ({ toast: mocks.toast }))
@@ -157,6 +159,34 @@ describe('WorkEditor', () => {
     expect(mocks.refresh).toHaveBeenCalled()
   })
 
+  it('returns to the provided list context after updating an existing work', async () => {
+    render(
+      <WorkEditor
+        returnTo="/admin/works?query=platform&page=2&pageSize=8"
+        initialWork={{
+          id: 'work-1',
+          title: 'Existing work',
+          category: 'platform',
+          tags: ['alpha'],
+          published: true,
+          publishedAt: '2024-01-01T00:00:00.000Z',
+          updatedAt: '2024-01-02T00:00:00.000Z',
+          content: { html: '<p>Existing</p>' },
+          all_properties: { score: 1 },
+        }}
+      />,
+    )
+
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Updated work' } })
+    fireEvent.click(screen.getByRole('button', { name: /Update Work/i }))
+
+    await waitFor(() => {
+      expect(mocks.toast.success).toHaveBeenCalledWith('Work updated successfully')
+    })
+
+    expect(mocks.push).toHaveBeenCalledWith('/admin/works?query=platform&page=2&pageSize=8')
+  })
+
   it('uploads a thumbnail preview and lets the user remove it', async () => {
     mocks.fetchWithCsrf.mockResolvedValueOnce({
       ok: true,
@@ -240,6 +270,15 @@ describe('WorkEditor', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Cancel/i }))
     expect(mocks.back).toHaveBeenCalled()
+  })
+
+  it('uses returnTo instead of router.back on cancel when provided', async () => {
+    render(<WorkEditor returnTo="/admin/works?query=platform&page=2&pageSize=8" />)
+
+    fireEvent.click(screen.getByRole('button', { name: /Cancel/i }))
+
+    expect(mocks.push).toHaveBeenCalledWith('/admin/works?query=platform&page=2&pageSize=8')
+    expect(mocks.back).not.toHaveBeenCalled()
   })
 
   it('falls back to the default category when the user clears it', async () => {

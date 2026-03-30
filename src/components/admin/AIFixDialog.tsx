@@ -11,7 +11,7 @@ import { Rnd } from 'react-rnd'
 import { getErrorMessage } from '@/lib/error-message'
 import { fetchWithCsrf } from '@/lib/api/auth'
 import { Label } from '@/components/ui/label'
-import { fetchAdminAiRuntimeConfigBrowser, type AdminAiRuntimeConfig } from '@/lib/api/admin-ai'
+import { fetchAdminAiRuntimeConfigBrowser, getAdminAiErrorMessage, type AdminAiRuntimeConfig } from '@/lib/api/admin-ai'
 
 interface AIFixDialogProps {
     content: string
@@ -124,11 +124,11 @@ export function AIFixDialog({
                     throw new Error('AI fix timed out while waiting for the backend response. Please retry.')
                 }
 
-                throw new Error(data?.error || rawBody || 'Failed to fix content')
+                throw new Error(getAdminAiErrorMessage(data, rawBody || 'Failed to fix content'))
             }
 
             if (!data?.fixedHtml) {
-                throw new Error('AI fix response did not include fixed HTML.')
+                throw new Error(getAdminAiErrorMessage(data, 'AI fix response did not include fixed HTML.'))
             }
 
             setFixedContent(data.fixedHtml)

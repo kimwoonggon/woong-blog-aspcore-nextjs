@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Logging;
+
 namespace WoongBlog.Api.Infrastructure.Persistence;
 
 internal static class DatabaseInitializationExtensions
@@ -6,6 +8,8 @@ internal static class DatabaseInitializationExtensions
     {
         using var scope = app.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
-        await DatabaseBootstrapper.InitializeAsync(dbContext);
+        var loggerFactory = scope.ServiceProvider.GetRequiredService<ILoggerFactory>();
+        var logger = loggerFactory.CreateLogger(nameof(DatabaseBootstrapper));
+        await DatabaseBootstrapper.InitializeAsync(dbContext, logger);
     }
 }

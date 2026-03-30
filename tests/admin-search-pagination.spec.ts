@@ -15,7 +15,7 @@ test('admin blog page supports title search and first/last pagination controls',
   await page.getByLabel('Search blog titles').fill(searchTitle)
   await expect(rows.locator('td:nth-child(2) a', { hasText: searchTitle }).first()).toBeVisible()
   if (hiddenTitle) {
-    await expect(page.getByRole('link', { name: hiddenTitle })).toHaveCount(0)
+    await expect(rows).toHaveCount(1)
   }
 
   await page.getByLabel('Search blog titles').clear()
@@ -97,4 +97,69 @@ test('admin dashboard supports independent title search for works and blog colle
   if (hiddenBlogTitle) {
     await expect(blogsSection.getByRole('heading', { name: hiddenBlogTitle })).toHaveCount(0)
   }
+})
+
+test('admin blog edit preserves originating page and page size after save', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1400 })
+  await page.goto('/admin/blog?page=1&pageSize=8')
+  await page.getByRole('button', { name: '끝' }).click()
+  const counter = page.locator('span.text-sm.text-muted-foreground').filter({ hasText: /\d+ \/ \d+/ }).first()
+  await expect(counter).toContainText('3 / 3')
+
+  const row = page.getByTestId('admin-blog-row').first()
+  const originalTitle = (await row.locator('td:nth-child(2) a').textContent())?.trim() ?? 'Updated blog'
+  await Promise.all([
+    page.waitForURL(/\/admin\/blog\/.+/),
+    row.locator('td:nth-child(2) a').click(),
+  ])
+
+  const blogEditUrl = new URL(page.url())
+  expect(blogEditUrl.searchParams.get('returnPage')).toBe('3')
+  expect(blogEditUrl.searchParams.get('returnPageSize')).toBe('12')
+  await page.getByLabel('Title').fill(`${originalTitle} updated`)
+
+  await Promise.all([
+    page.waitForResponse((res) => res.url().includes('/api/admin/blogs/') && res.request().method() === 'PUT' && res.ok()),
+    page.getByRole('button', { name: 'Update Post' }).click(),
+  ])
+
+  await expect(page).toHaveURL(/\/admin\/blog\?/)
+  const finalBlogUrl = new URL(page.url())
+  expect(finalBlogUrl.pathname).toBe('/admin/blog')
+  expect(finalBlogUrl.searchParams.get('page')).toBe('3')
+  expect(finalBlogUrl.searchParams.get('pageSize')).toBe('12')
+})
+
+test('admin work edit preserves originating query and page size after save', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1400 })
+  await page.goto('/admin/works')
+
+  const rows = page.getByTestId('admin-work-row')
+  await expect(rows.first()).toBeVisible()
+  const searchTitle = ((await rows.locator('td:nth-child(2) a').first().textContent()) ?? '').trim()
+  await page.getByLabel('Search work titles').fill(searchTitle)
+  await expect(page).toHaveURL(/query=/)
+
+  const visibleRow = page.getByTestId('admin-work-row').first()
+  const originalTitle = (await visibleRow.locator('td:nth-child(2) a').textContent())?.trim() ?? 'Updated work'
+  await Promise.all([
+    page.waitForURL(/\/admin\/works\/.+/),
+    visibleRow.locator('td:nth-child(2) a').click(),
+  ])
+
+  const workEditUrl = new URL(page.url())
+  expect(workEditUrl.searchParams.get('returnQuery')).toBe(searchTitle)
+  expect(workEditUrl.searchParams.get('returnPageSize')).toBe('12')
+  await page.getByLabel('Title').fill(`${originalTitle} updated`)
+
+  await Promise.all([
+    page.waitForResponse((res) => res.url().includes('/api/admin/works/') && res.request().method() === 'PUT' && res.ok()),
+    page.getByRole('button', { name: 'Update Work' }).click(),
+  ])
+
+  await expect(page).toHaveURL(/\/admin\/works\?/)
+  const finalWorkUrl = new URL(page.url())
+  expect(finalWorkUrl.pathname).toBe('/admin/works')
+  expect(finalWorkUrl.searchParams.get('query')).toBe(searchTitle)
+  expect(finalWorkUrl.searchParams.get('pageSize')).toBe('12')
 })

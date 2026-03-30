@@ -58,6 +58,29 @@ export interface BlogAiBatchJobListPayload {
   cancelledCount: number
 }
 
+export function getAdminAiErrorMessage(payload: Record<string, unknown> | null | undefined, fallback: string) {
+  if (!payload) {
+    return fallback
+  }
+
+  const direct = payload.error
+  if (typeof direct === 'string' && direct.trim()) {
+    return direct
+  }
+
+  const detail = payload.detail
+  if (typeof detail === 'string' && detail.trim()) {
+    return detail
+  }
+
+  const title = payload.title
+  if (typeof title === 'string' && title.trim()) {
+    return title
+  }
+
+  return fallback
+}
+
 export async function fetchAdminAiRuntimeConfigBrowser() {
   const response = await fetch(`${getBrowserApiBaseUrl()}/admin/ai/runtime-config`, {
     credentials: 'include',

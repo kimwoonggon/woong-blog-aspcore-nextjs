@@ -16,7 +16,7 @@ public sealed class AdminSiteSettingsPersistence : IAdminSiteSettingsQueries, IA
 
     public async Task<AdminSiteSettingsDto?> GetAsync(CancellationToken cancellationToken)
     {
-        return await _dbContext.SiteSettings
+        var siteSettings = await _dbContext.SiteSettings
             .AsNoTracking()
             .Where(x => x.Singleton)
             .Select(x => new AdminSiteSettingsDto(
@@ -27,9 +27,29 @@ public sealed class AdminSiteSettingsPersistence : IAdminSiteSettingsQueries, IA
                 x.TwitterUrl,
                 x.LinkedInUrl,
                 x.GitHubUrl,
-                x.ResumeAssetId
+                x.ResumeAssetId,
+                null
             ))
             .SingleOrDefaultAsync(cancellationToken);
+
+        if (siteSettings?.ResumeAssetId is null)
+        {
+            return siteSettings;
+        }
+
+        var resumeAsset = await _dbContext.Assets
+            .AsNoTracking()
+            .Where(x => x.Id == siteSettings.ResumeAssetId.Value)
+            .Select(x => new AdminResumeAssetDto(
+                x.Id,
+                x.Bucket,
+                x.Path,
+                x.PublicUrl,
+                Path.GetFileName(x.Path)
+            ))
+            .SingleOrDefaultAsync(cancellationToken);
+
+        return siteSettings with { ResumeAsset = resumeAsset };
     }
 
     public Task<SiteSetting?> GetSingletonAsync(CancellationToken cancellationToken)

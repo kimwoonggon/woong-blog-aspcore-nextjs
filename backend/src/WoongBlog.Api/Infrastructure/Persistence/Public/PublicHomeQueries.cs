@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using WoongBlog.Api.Application.Public.Abstractions;
 using WoongBlog.Api.Application.Public.GetHome;
+using WoongBlog.Api.Infrastructure.Persistence.Assets;
 
 namespace WoongBlog.Api.Infrastructure.Persistence.Public;
 
@@ -15,22 +16,51 @@ public sealed class PublicHomeQueries : IPublicHomeQueries
 
     public async Task<HomeDto?> GetHomeAsync(CancellationToken cancellationToken)
     {
-        var siteSettings = await _dbContext.SiteSettings.AsNoTracking().SingleOrDefaultAsync(x => x.Singleton, cancellationToken);
-        var homePage = await _dbContext.Pages.AsNoTracking().SingleOrDefaultAsync(x => x.Slug == "home", cancellationToken);
+        var siteSettings = await _dbContext.SiteSettings
+            .AsNoTracking()
+            .Where(x => x.Singleton)
+            .Select(x => new
+            {
+                x.OwnerName,
+                x.Tagline,
+                x.GitHubUrl,
+                x.LinkedInUrl,
+                x.ResumeAssetId
+            })
+            .SingleOrDefaultAsync(cancellationToken);
+        var homePage = await _dbContext.Pages
+            .AsNoTracking()
+            .Where(x => x.Slug == "home")
+            .Select(x => new
+            {
+                x.Title,
+                x.ContentJson
+            })
+            .SingleOrDefaultAsync(cancellationToken);
 
         if (siteSettings is null || homePage is null)
         {
             return null;
         }
 
-        var assets = await _dbContext.Assets.AsNoTracking().ToListAsync(cancellationToken);
-        var assetById = assets.ToDictionary(x => x.Id, x => x);
-
         var featuredWorks = await _dbContext.Works
             .AsNoTracking()
             .Where(x => x.Published)
             .OrderByDescending(x => x.PublishedAt)
             .Take(3)
+            .Select(x => new
+            {
+                x.Id,
+                x.Slug,
+                x.Title,
+                x.Excerpt,
+                x.Category,
+                x.Period,
+                x.Tags,
+                x.ThumbnailAssetId,
+                x.IconAssetId,
+                x.PublishedAt
+            })
             .ToListAsync(cancellationToken);
 
         var recentPosts = await _dbContext.Blogs
@@ -38,7 +68,23 @@ public sealed class PublicHomeQueries : IPublicHomeQueries
             .Where(x => x.Published)
             .OrderByDescending(x => x.PublishedAt)
             .Take(2)
+            .Select(x => new
+            {
+                x.Id,
+                x.Slug,
+                x.Title,
+                x.Excerpt,
+                x.Tags,
+                x.CoverAssetId,
+                x.PublishedAt
+            })
             .ToListAsync(cancellationToken);
+
+        var assetById = await _dbContext.LoadPublicUrlLookupAsync(
+            [siteSettings.ResumeAssetId,
+             .. featuredWorks.SelectMany(work => new Guid?[] { work.ThumbnailAssetId, work.IconAssetId }),
+             .. recentPosts.Select(post => post.CoverAssetId)],
+            cancellationToken);
 
         return new HomeDto(
             new PageSummaryDto(homePage.Title, homePage.ContentJson),
@@ -73,10 +119,10 @@ public sealed class PublicHomeQueries : IPublicHomeQueries
         );
     }
 
-    private static string ResolveAssetUrl(Guid? assetId, IReadOnlyDictionary<Guid, Domain.Entities.Asset> assets)
+    private static string ResolveAssetUrl(Guid? assetId, IReadOnlyDictionary<Guid, string> assets)
     {
-        return assetId is not null && assets.TryGetValue(assetId.Value, out var asset)
-            ? asset.PublicUrl
+        return assetId is not null && assets.TryGetValue(assetId.Value, out var assetUrl)
+            ? assetUrl
             : string.Empty;
     }
 }

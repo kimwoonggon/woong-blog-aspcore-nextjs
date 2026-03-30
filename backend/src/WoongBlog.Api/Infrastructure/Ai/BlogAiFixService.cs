@@ -139,6 +139,7 @@ Rules:
 
         var model = ResolveCodexModel(options.CodexModel);
         var reasoningEffort = ResolveCodexReasoningEffort(options.CodexReasoningEffort);
+        var sandboxMode = ResolveCodexSandboxMode();
         var prompt = BuildCodexPrompt(html, options);
         var imageArtifacts = await CollectImageArtifactsAsync(html, cancellationToken);
         var workdir = string.IsNullOrWhiteSpace(_options.CodexWorkdir) ? Directory.GetCurrentDirectory() : _options.CodexWorkdir;
@@ -165,6 +166,12 @@ Rules:
             {
                 arguments.Insert(1, $"model_reasoning_effort=\"{reasoningEffort}\"");
                 arguments.Insert(1, "-c");
+            }
+
+            if (!string.IsNullOrWhiteSpace(sandboxMode))
+            {
+                arguments.Insert(1, sandboxMode);
+                arguments.Insert(1, "-s");
             }
 
             foreach (var artifact in imageArtifacts.AsEnumerable().Reverse())
@@ -261,6 +268,18 @@ Rules:
         return options.Mode == AiFixMode.WorkEnrich
             ? _prompts.WorkEnrichTemplate.Replace("{title}", options.Title ?? "Untitled Project", StringComparison.Ordinal)
             : _prompts.BlogFix;
+    }
+
+    private string ResolveCodexSandboxMode()
+    {
+        var configured = _options.CodexSandboxMode?.Trim();
+        return configured?.ToLowerInvariant() switch
+        {
+            "read-only" => "read-only",
+            "workspace-write" => "workspace-write",
+            "danger-full-access" => "danger-full-access",
+            _ => "workspace-write"
+        };
     }
 
     private async Task<IReadOnlyList<ImageArtifact>> CollectImageArtifactsAsync(string html, CancellationToken cancellationToken)

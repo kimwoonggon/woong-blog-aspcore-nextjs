@@ -1,12 +1,15 @@
 services:
   workspace:
-    image: mcr.microsoft.com/devcontainers/dotnet:dev-10.0-noble
+    build:
+      context: .
+      dockerfile: Dockerfile
     init: true
     command: /bin/sh -c "while sleep 1000; do :; done"
     working_dir: /workspaces/woong-blog
     volumes:
       - ..:/workspaces/woong-blog:cached
       - /var/run/docker.sock:/var/run/docker.sock
+      - ${HOME}/.codex:/root/.codex
     depends_on:
       - db
 

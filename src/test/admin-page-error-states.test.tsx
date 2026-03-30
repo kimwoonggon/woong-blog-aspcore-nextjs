@@ -20,12 +20,18 @@ describe('admin page error states', () => {
     vi.doMock('@/lib/api/works', () => ({
       fetchAdminWorks: vi.fn(async () => []),
     }))
+    vi.doMock('@/lib/api/admin-pages', () => ({
+      fetchAdminSiteSettings: vi.fn(async () => {
+        throw new Error('backend failure')
+      }),
+    }))
 
     const DashboardPage = (await import('@/app/admin/dashboard/page')).default
     render(await DashboardPage())
 
     expect(await screen.findByText('Dashboard data is unavailable')).toBeInTheDocument()
-    expect(screen.getByText(/could not be loaded/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/could not be loaded/i)[0]).toBeInTheDocument()
+    expect(screen.getByText('Resume status is unavailable')).toBeInTheDocument()
   }, 30000)
 
   it('renders an explicit error when admin blog list loading fails', async () => {
@@ -42,7 +48,7 @@ describe('admin page error states', () => {
     }))
 
     const AdminBlogPage = (await import('@/app/admin/blog/page')).default
-    render(await AdminBlogPage())
+    render(await AdminBlogPage({ searchParams: Promise.resolve({}) }))
 
     expect(screen.getByText('Blog administration is unavailable')).toBeInTheDocument()
     expect(screen.getByText(/blog posts could not be loaded from the backend/i)).toBeInTheDocument()
@@ -62,7 +68,7 @@ describe('admin page error states', () => {
     }))
 
     const AdminWorksPage = (await import('@/app/admin/works/page')).default
-    render(await AdminWorksPage())
+    render(await AdminWorksPage({ searchParams: Promise.resolve({}) }))
 
     expect(screen.getByText('Work administration is unavailable')).toBeInTheDocument()
     expect(screen.getByText(/works could not be loaded from the backend/i)).toBeInTheDocument()

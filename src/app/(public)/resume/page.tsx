@@ -5,8 +5,7 @@ import { Button } from '@/components/ui/button'
 import { fetchServerSession } from '@/lib/api/server'
 import { Download } from 'lucide-react'
 import { fetchResume } from '@/lib/api/site-settings'
-
-export const revalidate = 60
+export const dynamic = 'force-dynamic'
 
 export default async function ResumePage() {
     const resume = await fetchResume()
@@ -17,6 +16,8 @@ export default async function ResumePage() {
             id: resume.fileName,
             bucket: 'public-resume',
             path: resume.fileName,
+            public_url: resume.publicUrl,
+            file_name: resume.fileName,
         }
         : null
 

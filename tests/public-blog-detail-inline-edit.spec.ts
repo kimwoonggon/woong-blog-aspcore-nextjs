@@ -6,7 +6,7 @@ test.use({ storageState: 'test-results/playwright/admin-storage-state.json' })
 test('admin can edit a public blog detail inline and save in place', async ({ page }) => {
   const updatedBody = `inline blog body ${Date.now()}`
 
-  await page.goto('/blog?pageSize=1')
+  await page.goto('/blog?page=2&pageSize=1')
   await page.locator('a[href^="/blog/"]').first().click()
 
   await expect(page.getByRole('button', { name: '글 수정' })).toBeVisible()
@@ -25,7 +25,9 @@ test('admin can edit a public blog detail inline and save in place', async ({ pa
     saveButton.click(),
   ])
 
+  await expect(page).toHaveURL(/\/blog\/.*\?page=2&pageSize=1/)
   await expect(page.getByText(updatedBody).first()).toBeVisible()
+  await expect(page.getByTestId('related-blog-card').first()).toHaveAttribute('href', /page=2&pageSize=1/)
 })
 
 test('public blog detail shows paginated related posts', async ({ page }) => {

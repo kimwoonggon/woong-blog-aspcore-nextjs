@@ -45,9 +45,17 @@ public class PersistenceContractTests
             index.IsUnique &&
             index.Properties.Select(property => property.Name).SequenceEqual([nameof(Work.Slug)]));
 
+        Assert.Contains(worksEntity.GetIndexes(), index =>
+            !index.IsUnique &&
+            index.Properties.Select(property => property.Name).SequenceEqual([nameof(Work.Published), nameof(Work.PublishedAt)]));
+
         Assert.Contains(blogsEntity.GetIndexes(), index =>
             index.IsUnique &&
             index.Properties.Select(property => property.Name).SequenceEqual([nameof(Blog.Slug)]));
+
+        Assert.Contains(blogsEntity.GetIndexes(), index =>
+            !index.IsUnique &&
+            index.Properties.Select(property => property.Name).SequenceEqual([nameof(Blog.Published), nameof(Blog.PublishedAt)]));
 
         Assert.Contains(profilesEntity.GetIndexes(), index =>
             index.IsUnique &&
@@ -56,6 +64,10 @@ public class PersistenceContractTests
         Assert.Contains(authSessionsEntity.GetIndexes(), index =>
             index.IsUnique &&
             index.Properties.Select(property => property.Name).SequenceEqual([nameof(AuthSession.SessionKey)]));
+
+        Assert.Contains(authSessionsEntity.GetIndexes(), index =>
+            !index.IsUnique &&
+            index.Properties.Select(property => property.Name).SequenceEqual([nameof(AuthSession.RevokedAt), nameof(AuthSession.ExpiresAt), nameof(AuthSession.ProfileId)]));
 
         var primaryKey = siteSettingsEntity.FindPrimaryKey();
         Assert.NotNull(primaryKey);

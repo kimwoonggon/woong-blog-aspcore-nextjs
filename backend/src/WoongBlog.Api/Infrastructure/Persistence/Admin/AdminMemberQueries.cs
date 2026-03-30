@@ -16,14 +16,16 @@ public sealed class AdminMemberQueries : IAdminMemberQueries
     public async Task<IReadOnlyList<AdminMemberListItemDto>> GetAllAsync(CancellationToken cancellationToken)
     {
         var now = DateTimeOffset.UtcNow;
-        var activeSessions = await _dbContext.AuthSessions
+        var activeSessionCounts = await _dbContext.AuthSessions
             .AsNoTracking()
             .Where(session => session.RevokedAt == null && (!session.ExpiresAt.HasValue || session.ExpiresAt > now))
-            .ToListAsync(cancellationToken);
-
-        var activeSessionCounts = activeSessions
             .GroupBy(session => session.ProfileId)
-            .ToDictionary(group => group.Key, group => group.Count());
+            .Select(group => new
+            {
+                ProfileId = group.Key,
+                Count = group.Count()
+            })
+            .ToDictionaryAsync(group => group.ProfileId, group => group.Count, cancellationToken);
 
         var profiles = await _dbContext.Profiles
             .AsNoTracking()

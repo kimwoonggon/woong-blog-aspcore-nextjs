@@ -1,19 +1,22 @@
 import Link from 'next/link'
-import { Briefcase, Eye, FileText } from 'lucide-react'
+import { Briefcase, Download, Eye, FileText } from 'lucide-react'
 import { AdminDashboardCollections } from '@/components/admin/AdminDashboardCollections'
 import { AdminErrorPanel } from '@/components/admin/AdminErrorPanel'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { fetchAdminDashboardSummary } from '@/lib/api/admin-dashboard'
 import { fetchAdminBlogs, type BlogAdminItem } from '@/lib/api/blogs'
+import { fetchAdminSiteSettings } from '@/lib/api/admin-pages'
 import { fetchAdminWorks, type WorkAdminItem } from '@/lib/api/works'
 
 export const dynamic = 'force-dynamic'
 
 export default async function AdminDashboard() {
     let summary: { worksCount: number; blogsCount: number; viewsCount: number } | null = null
+    let siteSettings: Awaited<ReturnType<typeof fetchAdminSiteSettings>> | null = null
     let works: WorkAdminItem[] = []
     let blogs: BlogAdminItem[] = []
+    let resumeLoadFailed = false
     let workLoadFailed = false
     let blogLoadFailed = false
 
@@ -21,6 +24,12 @@ export default async function AdminDashboard() {
         summary = await fetchAdminDashboardSummary()
     } catch {
         summary = null
+    }
+
+    try {
+        siteSettings = await fetchAdminSiteSettings()
+    } catch {
+        resumeLoadFailed = true
     }
 
     try {
@@ -97,6 +106,48 @@ export default async function AdminDashboard() {
                     title="Dashboard data is unavailable"
                     message="The admin dashboard could not be loaded. Please refresh or try again after the backend is healthy."
                 />
+            )}
+
+            {resumeLoadFailed ? (
+                <AdminErrorPanel
+                    title="Resume status is unavailable"
+                    message="The latest resume metadata could not be loaded. Please refresh after verifying the backend and site settings endpoint are healthy."
+                />
+            ) : (
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Resume</CardTitle>
+                        <FileText className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        {siteSettings?.resume_asset ? (
+                            <>
+                                <div>
+                                    <div className="text-base font-semibold">{siteSettings.resume_asset.file_name}</div>
+                                    <p className="text-xs text-muted-foreground">Latest uploaded resume powering the public download flow.</p>
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                    <Button asChild variant="outline" size="sm">
+                                        <a href={siteSettings.resume_asset.public_url} download target="_blank" rel="noopener noreferrer">
+                                            <Download className="mr-2 h-4 w-4" />
+                                            Download Resume
+                                        </a>
+                                    </Button>
+                                    <Link href="/admin/pages#resume-editor">
+                                        <Button size="sm">Manage Resume</Button>
+                                    </Link>
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <p className="text-sm text-muted-foreground">No resume uploaded yet.</p>
+                                <Link href="/admin/pages#resume-editor">
+                                    <Button size="sm">Upload Resume</Button>
+                                </Link>
+                            </>
+                        )}
+                    </CardContent>
+                </Card>
             )}
 
             {workLoadFailed || blogLoadFailed ? (

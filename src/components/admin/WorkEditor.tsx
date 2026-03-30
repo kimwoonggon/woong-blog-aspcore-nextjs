@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { AIFixDialog } from '@/components/admin/AIFixDialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -35,6 +35,7 @@ interface Work {
 interface WorkEditorProps {
     initialWork?: Work
     inlineMode?: boolean
+    returnTo?: string | null
 }
 
 const DEFAULT_WORK_CATEGORY = 'Uncategorized'
@@ -89,8 +90,10 @@ function buildWorkSnapshot({
     })
 }
 
-export function WorkEditor({ initialWork, inlineMode = false }: WorkEditorProps) {
+export function WorkEditor({ initialWork, inlineMode = false, returnTo = null }: WorkEditorProps) {
     const router = useRouter()
+    const pathname = usePathname()
+    const searchParams = useSearchParams()
     const isEditing = Boolean(initialWork?.id)
     const defaultPublished = initialWork?.published ?? true
 
@@ -132,6 +135,20 @@ export function WorkEditor({ initialWork, inlineMode = false }: WorkEditorProps)
         iconAssetId,
     })
     const isDirty = !isEditing || initialSnapshot !== currentSnapshot
+
+    const preservedPublicSearch = (() => {
+        const params = new URLSearchParams()
+        const page = searchParams.get('page')
+        const pageSize = searchParams.get('pageSize')
+        const relatedPage = searchParams.get('relatedPage')
+
+        if (page) params.set('page', page)
+        if (pageSize) params.set('pageSize', pageSize)
+        if (relatedPage) params.set('relatedPage', relatedPage)
+
+        const suffix = params.toString()
+        return suffix ? `?${suffix}` : ''
+    })()
 
     const formatDate = (dateString?: string | null) => {
         if (!dateString) return 'Not yet'
@@ -239,9 +256,31 @@ export function WorkEditor({ initialWork, inlineMode = false }: WorkEditorProps)
                 return
             }
 
+            const result = await response.json().catch(() => null) as { id?: string; slug?: string } | null
+            const nextSlug = result?.slug ?? initialWork?.slug ?? null
+
             toast.success(isEditing ? 'Work updated successfully' : 'Work created successfully')
+            if (inlineMode) {
+                if (!isEditing && pathname === '/works' && nextSlug) {
+                    window.location.assign(`/works/${encodeURIComponent(nextSlug)}${preservedPublicSearch}`)
+                    return
+                }
+
+                if (isEditing && pathname.startsWith('/works/')) {
+                    if (nextSlug) {
+                        window.location.assign(`/works/${encodeURIComponent(nextSlug)}${preservedPublicSearch}`)
+                    } else {
+                        router.refresh()
+                    }
+                    return
+                }
+
+                router.refresh()
+                return
+            }
+
             if (!inlineMode) {
-                router.push('/admin/works')
+                router.push(returnTo || '/admin/works')
             }
             router.refresh()
         } finally {
@@ -473,7 +512,7 @@ export function WorkEditor({ initialWork, inlineMode = false }: WorkEditorProps)
                     </p>
                 )}
                 {!inlineMode && (
-                    <Button type="button" variant="outline" onClick={() => router.back()}>
+                    <Button type="button" variant="outline" onClick={() => returnTo ? router.push(returnTo) : router.back()}>
                         Cancel
                     </Button>
                 )}

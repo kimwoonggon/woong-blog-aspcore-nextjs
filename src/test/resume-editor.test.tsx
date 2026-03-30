@@ -37,7 +37,7 @@ describe('ResumeEditor', () => {
   it('renders an existing resume asset with a public download link', () => {
     render(
       <ResumeEditor
-        resumeAsset={{ id: 'resume-1', bucket: 'public-resume', path: 'public-resume/resume.pdf' }}
+        resumeAsset={{ id: 'resume-1', bucket: 'public-resume', path: 'public-resume/resume.pdf', public_url: '/media/public-resume/resume.pdf', file_name: 'resume.pdf' }}
       />,
     )
 
@@ -60,7 +60,18 @@ describe('ResumeEditor', () => {
         ok: true,
         json: async () => ({ id: 'resume-1', path: 'public-resume/resume.pdf' }),
       })
-      .mockResolvedValueOnce({ ok: true })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          resume_asset: {
+            id: 'resume-1',
+            bucket: 'public-resume',
+            path: 'public-resume/resume.pdf',
+            public_url: '/media/public-resume/resume.pdf',
+            file_name: 'resume.pdf',
+          },
+        }),
+      })
 
     render(<ResumeEditor resumeAsset={null} />)
 
@@ -96,7 +107,7 @@ describe('ResumeEditor', () => {
         ok: true,
         json: async () => ({ id: 'resume-1', path: 'public-resume/resume.pdf' }),
       })
-      .mockResolvedValueOnce({ ok: false })
+      .mockResolvedValueOnce({ ok: false, json: async () => ({}) })
 
     render(<ResumeEditor resumeAsset={null} />)
 
@@ -147,7 +158,7 @@ describe('ResumeEditor', () => {
 
     render(
       <ResumeEditor
-        resumeAsset={{ id: 'resume-1', bucket: 'public-resume', path: 'public-resume/resume.pdf' }}
+        resumeAsset={{ id: 'resume-1', bucket: 'public-resume', path: 'public-resume/resume.pdf', public_url: '/media/public-resume/resume.pdf', file_name: 'resume.pdf' }}
       />,
     )
 
@@ -161,7 +172,7 @@ describe('ResumeEditor', () => {
 
   it('continues deleting the linked resume even when asset deletion fails', async () => {
     mocks.fetchWithCsrf
-      .mockResolvedValueOnce({ ok: true })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ resume_asset: null }) })
       .mockResolvedValueOnce({
         ok: false,
         json: async () => ({ error: 'storage offline' }),
@@ -169,7 +180,7 @@ describe('ResumeEditor', () => {
 
     render(
       <ResumeEditor
-        resumeAsset={{ id: 'resume-1', bucket: 'public-resume', path: 'public-resume/resume.pdf' }}
+        resumeAsset={{ id: 'resume-1', bucket: 'public-resume', path: 'public-resume/resume.pdf', public_url: '/media/public-resume/resume.pdf', file_name: 'resume.pdf' }}
       />,
     )
 
@@ -197,11 +208,11 @@ describe('ResumeEditor', () => {
   })
 
   it('surfaces site-settings update failures during delete and keeps the existing asset', async () => {
-    mocks.fetchWithCsrf.mockResolvedValueOnce({ ok: false })
+    mocks.fetchWithCsrf.mockResolvedValueOnce({ ok: false, json: async () => ({}) })
 
     render(
       <ResumeEditor
-        resumeAsset={{ id: 'resume-1', bucket: 'public-resume', path: 'public-resume/resume.pdf' }}
+        resumeAsset={{ id: 'resume-1', bucket: 'public-resume', path: 'public-resume/resume.pdf', public_url: '/media/public-resume/resume.pdf', file_name: 'resume.pdf' }}
       />,
     )
 
@@ -218,7 +229,7 @@ describe('ResumeEditor', () => {
 
     render(
       <ResumeEditor
-        resumeAsset={{ id: 'resume-1', bucket: 'public-resume', path: 'public-resume/resume.pdf' }}
+        resumeAsset={{ id: 'resume-1', bucket: 'public-resume', path: 'public-resume/resume.pdf', public_url: '/media/public-resume/resume.pdf', file_name: 'resume.pdf' }}
       />,
     )
 

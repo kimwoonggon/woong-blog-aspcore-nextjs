@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from 'react'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { AuthoringCapabilityHints } from '@/components/admin/AuthoringCapabilityHints'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -29,6 +29,7 @@ interface Blog {
 interface BlogEditorProps {
     initialBlog?: Blog
     inlineMode?: boolean
+    returnTo?: string | null
 }
 
 function normalizeTagsInput(tags: string) {
@@ -54,9 +55,10 @@ function buildBlogSnapshot({
     })
 }
 
-export function BlogEditor({ initialBlog, inlineMode = false }: BlogEditorProps) {
+export function BlogEditor({ initialBlog, inlineMode = false, returnTo = null }: BlogEditorProps) {
     const router = useRouter()
     const pathname = usePathname()
+    const searchParams = useSearchParams()
     const isEditing = Boolean(initialBlog?.id)
     const defaultPublished = initialBlog?.published ?? true
     const [title, setTitle] = useState(initialBlog?.title || '')
@@ -78,6 +80,20 @@ export function BlogEditor({ initialBlog, inlineMode = false }: BlogEditorProps)
         html,
     })
     const isDirty = !isEditing || initialSnapshot !== currentSnapshot
+
+    const preservedPublicSearch = (() => {
+        const params = new URLSearchParams()
+        const page = searchParams.get('page')
+        const pageSize = searchParams.get('pageSize')
+        const relatedPage = searchParams.get('relatedPage')
+
+        if (page) params.set('page', page)
+        if (pageSize) params.set('pageSize', pageSize)
+        if (relatedPage) params.set('relatedPage', relatedPage)
+
+        const suffix = params.toString()
+        return suffix ? `?${suffix}` : ''
+    })()
 
     const formatDate = (dateString?: string) => {
         if (!dateString) return 'Not yet'
@@ -133,13 +149,13 @@ export function BlogEditor({ initialBlog, inlineMode = false }: BlogEditorProps)
 
             if (inlineMode) {
                 if (!isEditing && pathname === '/blog' && nextSlug) {
-                    window.location.assign(`/blog/${encodeURIComponent(nextSlug)}`)
+                    window.location.assign(`/blog/${encodeURIComponent(nextSlug)}${preservedPublicSearch}`)
                     return
                 }
 
                 if (isEditing && pathname.startsWith('/blog/')) {
                     if (nextSlug) {
-                        window.location.assign(`/blog/${encodeURIComponent(nextSlug)}`)
+                        window.location.assign(`/blog/${encodeURIComponent(nextSlug)}${preservedPublicSearch}`)
                     } else {
                         router.refresh()
                     }
@@ -150,7 +166,7 @@ export function BlogEditor({ initialBlog, inlineMode = false }: BlogEditorProps)
                 return
             }
 
-            router.push('/admin/blog')
+            router.push(returnTo || '/admin/blog')
         } finally {
             setIsSaving(false)
         }
@@ -224,7 +240,7 @@ export function BlogEditor({ initialBlog, inlineMode = false }: BlogEditorProps)
                     </p>
                 )}
                 {!inlineMode && (
-                    <Button type="button" variant="outline" onClick={() => router.back()}>Cancel</Button>
+                    <Button type="button" variant="outline" onClick={() => returnTo ? router.push(returnTo) : router.back()}>Cancel</Button>
                 )}
                 <Button
                     type="submit"

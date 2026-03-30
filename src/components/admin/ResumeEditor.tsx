@@ -9,15 +9,10 @@ import { fetchWithCsrf } from '@/lib/api/auth'
 import { toast } from 'sonner'
 import { getBrowserApiBaseUrl } from '@/lib/api/browser'
 import { getErrorMessage } from '@/lib/error-message'
-
-interface Asset {
-    id: string
-    bucket: string
-    path: string
-}
+import type { AdminResumeAsset } from '@/lib/api/admin-pages'
 
 interface ResumeEditorProps {
-    resumeAsset: Asset | null
+    resumeAsset: AdminResumeAsset | null
 }
 
 export function ResumeEditor({ resumeAsset }: ResumeEditorProps) {
@@ -25,9 +20,9 @@ export function ResumeEditor({ resumeAsset }: ResumeEditorProps) {
     const [isUploading, setIsUploading] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
 
-    const [asset, setAsset] = useState<Asset | null>(resumeAsset)
+    const [asset, setAsset] = useState<AdminResumeAsset | null>(resumeAsset)
 
-    const resumeUrl = asset ? `/media/${asset.path}` : null
+    const resumeUrl = asset?.public_url ?? null
 
     async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
         const file = e.target.files?.[0]
@@ -51,7 +46,7 @@ export function ResumeEditor({ resumeAsset }: ResumeEditorProps) {
                 body: formData,
             })
 
-            const uploadData = await res.json()
+            const uploadData = await res.json() as { id: string; path: string; url: string; bucket?: string; fileName?: string; error?: string }
             if (!res.ok) throw new Error(uploadData.error || 'Upload failed')
 
             // Link the new asset to site settings
@@ -63,10 +58,16 @@ export function ResumeEditor({ resumeAsset }: ResumeEditorProps) {
                 }),
             })
 
+            const settingsData = await settingsRes.json().catch(() => null) as { resume_asset?: AdminResumeAsset | null } | null
             if (!settingsRes.ok) throw new Error('Failed to link resume to settings')
 
-
-            setAsset({ id: uploadData.id, bucket: 'public-resume', path: uploadData.path })
+            setAsset(settingsData?.resume_asset ?? {
+                id: uploadData.id,
+                bucket: uploadData.bucket || 'public-resume',
+                path: uploadData.path,
+                public_url: uploadData.url,
+                file_name: uploadData.fileName || uploadData.path.split('/').pop() || uploadData.path,
+            })
             toast.success('Resume uploaded and linked!', { id: toastId })
             router.refresh()
         } catch (error: unknown) {
@@ -90,6 +91,7 @@ export function ResumeEditor({ resumeAsset }: ResumeEditorProps) {
                 body: JSON.stringify({ resumeAssetId: null }),
             })
 
+            const settingsData = await settingsRes.json().catch(() => null) as { resume_asset?: AdminResumeAsset | null } | null
             if (!settingsRes.ok) throw new Error('Failed to update site settings')
 
             // 2. Delete the physical asset
@@ -103,8 +105,7 @@ export function ResumeEditor({ resumeAsset }: ResumeEditorProps) {
                 // We proceed since it's already unlinked from settings
             }
 
-
-            setAsset(null)
+            setAsset(settingsData?.resume_asset ?? null)
             toast.success('Resume removed successfully!', { id: toastId })
             router.refresh()
         } catch (error: unknown) {

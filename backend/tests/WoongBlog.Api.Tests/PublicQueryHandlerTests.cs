@@ -153,4 +153,31 @@ public class PublicQueryHandlerTests
         Assert.Equal(2, result.Page);
         Assert.Single(result.Items);
     }
+
+    [Fact]
+    public async Task GetBlogsQueryHandler_ResolvesCoverAssetUrls_WithoutRequiringUnrelatedAssets()
+    {
+        await using var dbContext = CreateDbContext();
+        var coverAssetId = Guid.NewGuid();
+        dbContext.Assets.AddRange(
+            Asset.Create("media", "cover.png", "/media/cover.png", string.Empty, "image", null, null, DateTimeOffset.UtcNow, coverAssetId),
+            Asset.Create("media", "unused.png", "/media/unused.png", string.Empty, "image", null, null, DateTimeOffset.UtcNow, Guid.NewGuid())
+        );
+        dbContext.Blogs.Add(Blog.Seed(
+            new BlogUpsertValues("Visible Blog", Array.Empty<string>(), true, "{}", coverAssetId),
+            "visible-blog",
+            "visible",
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow,
+            Guid.NewGuid(),
+            DateTimeOffset.UtcNow));
+        await dbContext.SaveChangesAsync();
+
+        var handler = new GetBlogsQueryHandler(CreatePublicBlogService(dbContext));
+
+        var result = await handler.Handle(new GetBlogsQuery(), CancellationToken.None);
+
+        var blog = Assert.Single(result.Items);
+        Assert.Equal("/media/cover.png", blog.CoverUrl);
+    }
 }

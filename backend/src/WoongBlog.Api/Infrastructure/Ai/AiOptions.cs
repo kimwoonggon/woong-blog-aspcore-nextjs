@@ -14,6 +14,7 @@ public sealed class AiOptions
     public string CodexCommand { get; set; } = "codex";
     public string CodexModel { get; set; } = "gpt-5.4";
     public string CodexReasoningEffort { get; set; } = "medium";
+    public string CodexSandboxMode { get; set; } = "workspace-write";
     public int CodexTimeoutMs { get; set; } = 180000;
     public string CodexWorkdir { get; set; } = string.Empty;
     public int BatchConcurrency { get; set; } = 2;

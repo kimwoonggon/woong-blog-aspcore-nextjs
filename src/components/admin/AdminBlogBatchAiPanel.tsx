@@ -9,6 +9,7 @@ import { fetchWithCsrf } from '@/lib/api/auth'
 import { getBrowserApiBaseUrl } from '@/lib/api/browser'
 import {
   fetchAdminAiRuntimeConfigBrowser,
+  getAdminAiErrorMessage,
   getBlogAiBatchJobBrowser,
   listBlogAiBatchJobsBrowser,
   type AdminAiRuntimeConfig,
@@ -256,7 +257,7 @@ export function AdminBlogBatchAiPanel({
 
       const payload = await readApiPayload(response)
       if (!response.ok) {
-        throw new Error(payload.error || 'Failed to create AI batch job')
+        throw new Error(getAdminAiErrorMessage(payload, 'Failed to create AI batch job'))
       }
 
       const jobId = payload.jobId as string
@@ -290,7 +291,7 @@ export function AdminBlogBatchAiPanel({
 
       const payload = await readApiPayload(response)
       if (!response.ok) {
-        throw new Error(payload.error || 'Failed to apply AI batch results')
+        throw new Error(getAdminAiErrorMessage(payload, 'Failed to apply AI batch results'))
       }
 
       setActiveJob(payload as unknown as BlogAiBatchJobDetail)
@@ -318,7 +319,7 @@ export function AdminBlogBatchAiPanel({
 
       const payload = await readApiPayload(response)
       if (!response.ok) {
-        throw new Error(payload.error || 'Failed to cancel AI batch job')
+        throw new Error(getAdminAiErrorMessage(payload, 'Failed to cancel AI batch job'))
       }
 
       await loadRecentJobs(jobId)
@@ -341,7 +342,7 @@ export function AdminBlogBatchAiPanel({
 
       const payload = await readApiPayload(response)
       if (!response.ok) {
-        throw new Error(payload.error || 'Failed to cancel queued AI batch jobs')
+        throw new Error(getAdminAiErrorMessage(payload, 'Failed to cancel queued AI batch jobs'))
       }
 
       await loadRecentJobs()
@@ -366,7 +367,7 @@ export function AdminBlogBatchAiPanel({
 
       const payload = await readApiPayload(response)
       if (!response.ok) {
-        throw new Error(payload.error || 'Failed to clear completed AI batch jobs')
+        throw new Error(getAdminAiErrorMessage(payload, 'Failed to clear completed AI batch jobs'))
       }
 
       if (activeJob?.status === 'completed') {
@@ -394,7 +395,7 @@ export function AdminBlogBatchAiPanel({
 
       const payload = await readApiPayload(response)
       if (!response.ok) {
-        throw new Error(payload.error || 'Failed to remove AI batch job')
+        throw new Error(getAdminAiErrorMessage(payload, 'Failed to remove AI batch job'))
       }
 
       if (activeJobId === jobId) {
@@ -657,7 +658,7 @@ export function AdminBlogBatchAiPanel({
                   size="sm"
                   type="button"
                   onClick={() => void applyJobResults()}
-                  disabled={isApplyingJob || !activeJob.items.some((item) => item.status === 'succeeded' && !item.appliedAt)}
+                  disabled={isApplyingJob || !activeJob.items.some((item) => item.fixedHtml && !item.appliedAt)}
                 >
                   {isApplyingJob ? 'Applying...' : 'Apply all successful'}
                 </Button>
@@ -676,7 +677,7 @@ export function AdminBlogBatchAiPanel({
                       <Badge variant="secondary">{item.status}</Badge>
                     </div>
                     {item.error ? <p className="mt-1 text-xs text-red-500">{item.error}</p> : null}
-                    {item.status === 'succeeded' && !item.appliedAt && !activeJob.autoApply ? (
+                    {item.fixedHtml && !item.appliedAt && !activeJob.autoApply ? (
                       <Button size="sm" variant="outline" type="button" className="mt-2" onClick={() => void applyJobResults([item.jobItemId])} disabled={isApplyingJob}>
                         Apply this result
                       </Button>
@@ -736,6 +737,8 @@ function summarizeSelectionTitles(titles: string[]) {
 
 type ApiPayload = Record<string, unknown> & {
   error?: string
+  detail?: string
+  title?: string
   jobId?: string
   cancelled?: number
   cleared?: number

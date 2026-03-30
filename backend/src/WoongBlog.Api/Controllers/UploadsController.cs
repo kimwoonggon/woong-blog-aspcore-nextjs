@@ -48,8 +48,11 @@ public class UploadsController : ControllerBase
         return Ok(new
         {
             id = asset.Id,
+            bucket = asset.Bucket,
             url = asset.PublicUrl,
-            path = asset.Path
+            publicUrl = asset.PublicUrl,
+            path = asset.Path,
+            fileName = Path.GetFileName(asset.Path)
         });
     }
 

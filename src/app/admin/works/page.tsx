@@ -7,9 +7,19 @@ import { fetchAdminWorks, type WorkAdminItem } from '@/lib/api/works'
 
 export const dynamic = 'force-dynamic'
 
-export default async function AdminWorksPage() {
+interface PageProps {
+    searchParams?: Promise<{ query?: string; page?: string; pageSize?: string }>
+}
+
+export default async function AdminWorksPage({ searchParams }: PageProps) {
+    const resolvedSearchParams = await searchParams
     let works: WorkAdminItem[] = []
     let loadFailed = false
+    const returnParams = new URLSearchParams()
+
+    if (resolvedSearchParams?.query) returnParams.set('returnQuery', resolvedSearchParams.query)
+    if (resolvedSearchParams?.page) returnParams.set('returnPage', resolvedSearchParams.page)
+    if (resolvedSearchParams?.pageSize) returnParams.set('returnPageSize', resolvedSearchParams.pageSize)
 
     try {
         works = await fetchAdminWorks()
@@ -26,7 +36,7 @@ export default async function AdminWorksPage() {
                         Click a title to edit directly, or create a new work and return to this list as soon as it saves.
                     </p>
                 </div>
-                <Link href="/admin/works/new">
+                <Link href={`/admin/works/new${returnParams.size > 0 ? `?${returnParams.toString()}` : ''}`}>
                     <Button>
                         <Plus className="mr-2 h-4 w-4" /> Add Work
                     </Button>

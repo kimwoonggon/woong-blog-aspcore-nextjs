@@ -27,13 +27,7 @@ export default async function AdminPagesPage() {
         loadFailed = true
     }
 
-    const resumeAsset = siteSettings?.resume_asset_id
-        ? {
-            id: siteSettings.resume_asset_id,
-            bucket: 'media',
-            path: `resume/${siteSettings.resume_asset_id}.pdf`,
-        }
-        : null
+    const resumeAsset = siteSettings?.resume_asset ?? null
 
     const homePage = pages.find((p) => p.slug === 'home')
     const introPage = pages.find((p) => p.slug === 'introduction')

@@ -86,6 +86,27 @@ public class AdminAiEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
+    public async Task FixBlog_ReturnsJsonError_WhenAiProviderThrows()
+    {
+        using var factory = _factory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureServices(services =>
+            {
+                services.RemoveAll<IBlogAiFixService>();
+                services.AddScoped<IBlogAiFixService, ThrowingBlogAiFixService>();
+            });
+        });
+
+        var client = CreateAuthenticatedClient(factory);
+
+        var response = await client.PostAsJsonAsync("/api/admin/ai/blog-fix", new { html = "<p>Hello</p>" });
+
+        Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+        var payload = await response.Content.ReadAsStringAsync();
+        Assert.Contains("simulated ai failure", payload, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task FixBlogBatch_AppliesUpdatedHtml_WhenRequested()
     {
         using var factory = _factory.WithWebHostBuilder(builder =>
@@ -173,6 +194,30 @@ public class AdminAiEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         var payload = await response.Content.ReadAsStringAsync();
         Assert.Contains("fixed-html", payload, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("fake", payload, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task WorkEnrich_ReturnsJsonError_WhenAiProviderThrows()
+    {
+        using var factory = _factory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureServices(services =>
+            {
+                services.RemoveAll<IBlogAiFixService>();
+                services.AddScoped<IBlogAiFixService, ThrowingBlogAiFixService>();
+            });
+        });
+
+        var client = CreateAuthenticatedClient(factory);
+        var response = await client.PostAsJsonAsync("/api/admin/ai/work-enrich", new
+        {
+            html = "<p>Hello</p>",
+            title = "Sample Work"
+        });
+
+        Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+        var payload = await response.Content.ReadAsStringAsync();
+        Assert.Contains("simulated ai failure", payload, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -546,4 +591,12 @@ public class AdminAiEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         int FailedCount,
         IReadOnlyList<BatchJobItemPayload> Items);
     private sealed record BatchJobItemPayload(Guid JobItemId, Guid BlogId, string Title, string Status, string? FixedHtml, string? Error);
+
+    private sealed class ThrowingBlogAiFixService : IBlogAiFixService
+    {
+        public Task<BlogAiFixResult> FixHtmlAsync(string html, CancellationToken cancellationToken, AiFixRequestOptions? options = null)
+        {
+            throw new InvalidOperationException("simulated ai failure");
+        }
+    }
 }

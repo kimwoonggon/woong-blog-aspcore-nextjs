@@ -95,6 +95,7 @@ public static class AdminAiEndpoints
             AdminAiFailureKind.Validation => Results.BadRequest(new { error = result.Failure.Message }),
             AdminAiFailureKind.NotFound => Results.NotFound(),
             AdminAiFailureKind.Conflict => Results.Conflict(new { error = result.Failure.Message }),
+            AdminAiFailureKind.System => Results.Json(new { error = result.Failure.Message }, statusCode: StatusCodes.Status500InternalServerError),
             _ => Results.BadRequest(new { error = result.Failure.Message })
         };
     }

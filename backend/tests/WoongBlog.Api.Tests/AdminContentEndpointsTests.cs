@@ -71,6 +71,8 @@ public class AdminContentEndpointsTests : IClassFixture<CustomWebApplicationFact
         });
 
         response.EnsureSuccessStatusCode();
+        var responseBody = await response.Content.ReadAsStringAsync();
+        Assert.Contains("owner_name", responseBody, StringComparison.OrdinalIgnoreCase);
 
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
@@ -134,6 +136,44 @@ public class AdminContentEndpointsTests : IClassFixture<CustomWebApplicationFact
         var settings = dbContext.SiteSettings.Single(x => x.Singleton);
 
         Assert.Equal(resumeAssetId, settings.ResumeAssetId);
+    }
+
+    [Fact]
+    public async Task GetAdminSiteSettings_ReturnsResumeAssetSummary_WhenLinked()
+    {
+        var client = _factory.CreateAuthenticatedClient();
+        Guid resumeAssetId;
+
+        using (var initialScope = _factory.Services.CreateScope())
+        {
+            var initialDb = initialScope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
+            var asset = Asset.Create(
+                "public-resume",
+                "public-resume/latest-resume.pdf",
+                "/media/public-resume/latest-resume.pdf",
+                "application/pdf",
+                "pdf",
+                1234,
+                null,
+                DateTimeOffset.UtcNow,
+                Guid.NewGuid());
+            initialDb.Assets.Add(asset);
+            var initialSettings = initialDb.SiteSettings.Single(x => x.Singleton);
+            initialSettings.ApplyUpdate(new SiteSettingUpdateValues(
+                null, null, null, null, null, null, null, asset.Id, true), DateTimeOffset.UtcNow);
+            await initialDb.SaveChangesAsync();
+            resumeAssetId = asset.Id;
+        }
+
+        var response = await client.GetAsync("/api/admin/site-settings");
+
+        response.EnsureSuccessStatusCode();
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.Contains("\"resume_asset_id\"", body, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(resumeAssetId.ToString(), body, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("\"resume_asset\"", body, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("public-resume/latest-resume.pdf", body, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("/media/public-resume/latest-resume.pdf", body, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
