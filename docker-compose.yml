@@ -1,7 +1,7 @@
 services:
   frontend:
     build:
-      context: .
+      context: ${HOST_PROJECT_PATH:-.}
       dockerfile: Dockerfile
     environment:
       NODE_ENV: production
@@ -15,10 +15,10 @@ services:
 
   backend:
     build:
-      context: .
+      context: ${HOST_PROJECT_PATH:-.}
       dockerfile: backend/Dockerfile
     env_file:
-      - .env
+      - ${HOST_PROJECT_PATH:-.}/.env
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://0.0.0.0:8080
@@ -36,7 +36,6 @@ services:
     volumes:
       - data-protection-keys:/app/data-protection
       - media-storage:/app/media
-      - ${HOME}/.codex:/root/.codex:ro
 
   db:
     image: postgres:16-alpine
@@ -51,10 +50,8 @@ services:
     image: nginx:1.27-alpine
     ports:
       - "80:80"
-      - "443:443"
     volumes:
       - ${NGINX_DEFAULT_CONF:-./nginx/default.conf}:/etc/nginx/conf.d/default.conf:ro
-      - ./.local-certs:/etc/nginx/certs:ro
     depends_on:
       - frontend
       - backend

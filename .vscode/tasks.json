@@ -1,0 +1,58 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build:backend",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "-lc",
+        "test -x /usr/bin/dotnet || { echo \"dotnet SDK is not available in this VS Code context. Reopen the repository in the devcontainer before pressing F5.\" >&2; exit 1; }; /usr/bin/dotnet build backend/src/WoongBlog.Api/WoongBlog.Api.csproj"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "compose:baseline",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "-lc",
+        "test -n \"$HOST_PROJECT_PATH\" || { echo \"HOST_PROJECT_PATH is not set. Reopen the repository in Dev Containers.\" >&2; exit 1; }; NGINX_DEFAULT_CONF=\"$HOST_PROJECT_PATH/nginx/default.conf\" docker compose up -d --build"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "compose:https",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "-lc",
+        "test -n \"$HOST_PROJECT_PATH\" || { echo \"HOST_PROJECT_PATH is not set. Reopen the repository in Dev Containers.\" >&2; exit 1; }; test -f .local-certs/localhost.pem && test -f .local-certs/localhost-key.pem || { echo \"Run ./scripts/setup-local-https.sh on the host before starting HTTPS from the devcontainer.\" >&2; exit 1; }; docker compose -f docker-compose.yml -f docker-compose.https.yml up -d --build"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "verify:https",
+      "type": "shell",
+      "dependsOn": [
+        "compose:https"
+      ],
+      "command": "bash",
+      "args": [
+        "-lc",
+        "curl -kfsS https://localhost/api/health && curl -kfsS https://localhost/api/auth/session && PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=https://localhost npx playwright test tests/auth-login.spec.ts tests/public-admin-affordances.spec.ts --workers=1"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "compose:down",
+      "type": "shell",
+      "command": "docker",
+      "args": [
+        "compose",
+        "down"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}

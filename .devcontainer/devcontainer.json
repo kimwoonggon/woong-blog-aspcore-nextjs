@@ -1,0 +1,48 @@
+{
+  "name": "woong-blog",
+  "dockerComposeFile": [
+    "docker-compose.yml"
+  ],
+  "service": "workspace",
+  "remoteUser": "root",
+  "runServices": [
+    "workspace",
+    "db"
+  ],
+  "workspaceFolder": "/workspaces/woong-blog",
+  "shutdownAction": "stopCompose",
+  "overrideCommand": false,
+  "remoteEnv": {
+    "HOST_PROJECT_PATH": "${localWorkspaceFolder}"
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "22"
+    },
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
+  },
+  "forwardPorts": [
+    3000,
+    5121
+  ],
+  "portsAttributes": {
+    "3000": {
+      "label": "Next.js F5"
+    },
+    "5121": {
+      "label": "ASP.NET Core F5"
+    }
+  },
+  "postCreateCommand": "bash -lc 'npm install && dotnet restore backend/WoongBlog.sln'",
+  "postStartCommand": "bash -lc 'mkdir -p .devcontainer-data/data-protection .devcontainer-data/media'",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-dotnettools.csharp",
+        "ms-azuretools.vscode-docker",
+        "ms-vscode.vscode-typescript-next",
+        "dbaeumer.vscode-eslint"
+      ]
+    }
+  }
+}

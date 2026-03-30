@@ -43,9 +43,30 @@ See `ARCHITECTURE.md` for the detailed system view.
 
 - Docker / Docker Compose
 - Node.js 20+ and npm
+- VS Code + Dev Containers extension for the containerized F5 workflow
 
 Optional for direct backend local work:
 - .NET 10 SDK
+
+## VS Code Dev Container + F5
+
+The default interactive development workflow is now:
+
+1. Open the repository in VS Code.
+2. Run `Dev Containers: Reopen in Container`.
+3. Wait for the devcontainer bootstrap to finish.
+4. Press `F5` and choose `Full Stack Debug (HTTP)`.
+
+What this does:
+
+- opens a devcontainer workspace
+- keeps PostgreSQL running as a devcontainer sidecar
+- launches the ASP.NET Core backend directly in the devcontainer on `http://localhost:5121`
+- launches Next.js directly in the devcontainer on `http://localhost:3000`
+- opens a browser debug session against `http://localhost:3000`
+
+The default F5 path is for developer debugging convenience.
+It is **not** the final verification path for auth/cookie/proxy-sensitive behavior.
 
 ## Local Run
 
@@ -75,6 +96,19 @@ docker compose down
 
 ## Local Development Modes
 
+### VS Code full-stack debug mode
+
+- `Dev Containers: Reopen in Container`
+- `F5` → `Full Stack Debug (HTTP)`
+
+Use this mode for:
+- setting breakpoints in Next.js and ASP.NET Core
+- inspecting request/response flow during development
+- editing against a live PostgreSQL-backed workspace
+
+This mode intentionally uses direct dev-server launches inside the devcontainer.
+It does **not** replace the compose-first verification path.
+
 ### Supported full-stack mode
 
 ```bash
@@ -86,6 +120,7 @@ Use this mode for:
 - uploads
 - admin mutation checks
 - e2e stack regression
+- confirming the nginx-backed runtime contract
 
 ### UI-only iteration mode
 
@@ -178,6 +213,10 @@ Compose volumes:
 
 If you want to manually verify real Google login on localhost over HTTPS, use the local mkcert + nginx setup.
 
+Important:
+- run `./scripts/setup-local-https.sh` from the host before starting the HTTPS stack from inside the devcontainer
+- the devcontainer can launch the HTTPS stack, but browser trust still depends on the host environment
+
 ### 1. Generate trusted localhost certs
 
 ```bash
@@ -217,6 +256,30 @@ Notes:
 - this local HTTPS path keeps nginx as the browser-facing reverse proxy
 - the HTTPS override forces secure auth cookies for this local verification path
 - plain HTTP local Compose still works with the default `docker compose up -d --build` path
+
+## VS Code Tasks
+
+Inside the devcontainer, the main VS Code tasks are:
+
+- `compose:baseline` — boot the HTTP compose runtime
+- `compose:https` — boot the HTTPS overlay after host cert bootstrap
+- `verify:https` — run the HTTPS smoke + Playwright verification path
+- `compose:down` — stop the compose runtime
+
+The main launch configurations are:
+
+- `Full Stack Debug (HTTP)` — default F5 experience
+- `Backend Debug (HTTP)`
+- `Frontend Debug (HTTP)`
+
+## Optional Codex Mount
+
+The baseline compose runtime no longer mounts the host `.codex` directory automatically.
+If you need that mount for backend AI workflows, use the opt-in override:
+
+```bash
+CODEX_HOME_DIR="$HOME/.codex" docker compose -f docker-compose.yml -f docker-compose.codex.yml up -d --build
+```
 
 ## Deployment
 

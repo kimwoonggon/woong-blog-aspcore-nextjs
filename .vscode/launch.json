@@ -1,0 +1,56 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Backend Debug (HTTP)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build:backend",
+      "program": "/usr/bin/dotnet",
+      "args": [
+        "${workspaceFolder}/backend/src/WoongBlog.Api/bin/Debug/net10.0/WoongBlog.Api.dll"
+      ],
+      "cwd": "${workspaceFolder}/backend/src/WoongBlog.Api",
+      "stopAtEntry": false,
+      "console": "internalConsole",
+      "justMyCode": true,
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "http://0.0.0.0:5121",
+        "ConnectionStrings__Postgres": "Host=db;Port=5432;Database=portfolio;Username=portfolio;Password=portfolio",
+        "Auth__DataProtectionKeysPath": "${workspaceFolder}/.devcontainer-data/data-protection",
+        "Auth__MediaRoot": "${workspaceFolder}/.devcontainer-data/media"
+      }
+    },
+    {
+      "name": "Frontend Debug (HTTP)",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run dev -- --hostname 0.0.0.0 --port 3000",
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "DEV_PROXY_ORIGIN": "http://localhost:5121",
+        "INTERNAL_API_ORIGIN": "http://localhost:5121",
+        "NEXT_PUBLIC_API_BASE_URL": "/api",
+        "NODE_TLS_REJECT_UNAUTHORIZED": "0"
+      },
+      "serverReadyAction": {
+        "action": "debugWithChrome",
+        "killOnServerStop": true,
+        "pattern": "- Local:\\s+(https?://.+)",
+        "uriFormat": "%s",
+        "webRoot": "${workspaceFolder}"
+      }
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Full Stack Debug (HTTP)",
+      "configurations": [
+        "Backend Debug (HTTP)",
+        "Frontend Debug (HTTP)"
+      ],
+      "stopAll": true
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+services:
+  backend:
+    volumes:
+      - ${CODEX_HOME_DIR:?Set CODEX_HOME_DIR to the host .codex directory}:/root/.codex:ro
