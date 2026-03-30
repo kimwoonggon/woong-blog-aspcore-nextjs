@@ -43,44 +43,21 @@ public sealed class AuthSessionService : IAuthSessionService
 
         if (profile is null)
         {
-            profile = new Profile
-            {
-                Id = Guid.NewGuid(),
-                Provider = "google",
-                ProviderSubject = providerSubject,
-                Email = email,
-                DisplayName = displayName,
-                Role = ResolveRole(email),
-                CreatedAt = now,
-                UpdatedAt = now,
-                LastLoginAt = now
-            };
+            profile = Profile.CreateGoogleProfile(providerSubject, email, displayName, ResolveRole(email), now);
             _dbContext.Profiles.Add(profile);
         }
         else
         {
-            profile.Provider = "google";
-            profile.ProviderSubject = providerSubject;
-            profile.Email = email;
-            profile.DisplayName = displayName;
-            profile.LastLoginAt = now;
-            profile.UpdatedAt = now;
-            if (string.IsNullOrWhiteSpace(profile.Role))
-            {
-                profile.Role = ResolveRole(email);
-            }
+            profile.RefreshGoogleLogin(providerSubject, email, displayName, now);
+            profile.EnsureRole(ResolveRole(email));
         }
 
-        var session = new AuthSession
-        {
-            ProfileId = profile.Id,
-            SessionKey = Guid.NewGuid().ToString("N"),
-            IpAddress = httpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty,
-            UserAgent = httpContext.Request.Headers.UserAgent.ToString(),
-            CreatedAt = now,
-            LastSeenAt = now,
-            ExpiresAt = now.AddHours(_authOptions.AbsoluteExpirationHours)
-        };
+        var session = AuthSession.Create(
+            profile.Id,
+            httpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty,
+            httpContext.Request.Headers.UserAgent.ToString(),
+            now,
+            now.AddHours(_authOptions.AbsoluteExpirationHours));
         _dbContext.AuthSessions.Add(session);
 
         _dbContext.AuthAuditLogs.Add(new AuthAuditLog
@@ -149,7 +126,7 @@ public sealed class AuthSessionService : IAuthSessionService
 
         if (now - session.LastSeenAt >= LastSeenUpdateInterval)
         {
-            session.LastSeenAt = now;
+            session.RecordSeen(now);
             await _dbContext.SaveChangesAsync(cancellationToken);
         }
 
@@ -176,8 +153,7 @@ public sealed class AuthSessionService : IAuthSessionService
         }
 
         var now = DateTimeOffset.UtcNow;
-        session.RevokedAt = now;
-        session.LastSeenAt = now;
+        session.Revoke(now);
 
         _dbContext.AuthAuditLogs.Add(new AuthAuditLog
         {
@@ -199,7 +175,7 @@ public sealed class AuthSessionService : IAuthSessionService
             return;
         }
 
-        session.RevokedAt = now;
+        session.Revoke(now);
         await _dbContext.SaveChangesAsync(cancellationToken);
     }
 

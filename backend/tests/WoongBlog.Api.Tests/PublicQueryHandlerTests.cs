@@ -22,21 +22,16 @@ public class PublicQueryHandlerTests
         return new WoongBlogDbContext(options);
     }
 
-    private static IPublicHomeService CreatePublicHomeService(WoongBlogDbContext dbContext) => new PublicHomeService(dbContext);
-    private static IPublicSiteService CreatePublicSiteService(WoongBlogDbContext dbContext) => new PublicSiteService(dbContext);
-    private static IPublicWorkService CreatePublicWorkService(WoongBlogDbContext dbContext) => new PublicWorkService(dbContext);
-    private static IPublicBlogService CreatePublicBlogService(WoongBlogDbContext dbContext) => new PublicBlogService(dbContext);
+    private static IPublicHomeQueries CreatePublicHomeService(WoongBlogDbContext dbContext) => new PublicHomeQueries(dbContext);
+    private static IPublicSiteQueries CreatePublicSiteService(WoongBlogDbContext dbContext) => new PublicSiteQueries(dbContext);
+    private static IPublicWorkQueries CreatePublicWorkService(WoongBlogDbContext dbContext) => new PublicWorkQueries(dbContext);
+    private static IPublicBlogQueries CreatePublicBlogService(WoongBlogDbContext dbContext) => new PublicBlogQueries(dbContext);
 
     [Fact]
     public async Task GetHomeQueryHandler_ReturnsNull_WhenHomePageMissing()
     {
         await using var dbContext = CreateDbContext();
-        dbContext.SiteSettings.Add(new SiteSetting
-        {
-            Singleton = true,
-            OwnerName = "Owner",
-            Tagline = "Tagline"
-        });
+        dbContext.SiteSettings.Add(SiteSetting.Create("Owner", "Tagline", string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, null, DateTimeOffset.UtcNow));
         await dbContext.SaveChangesAsync();
 
         var handler = new GetHomeQueryHandler(CreatePublicHomeService(dbContext));
@@ -51,22 +46,16 @@ public class PublicQueryHandlerTests
     {
         await using var dbContext = CreateDbContext();
         var resumeAssetId = Guid.NewGuid();
-        dbContext.SiteSettings.Add(new SiteSetting
-        {
-            Singleton = true,
-            OwnerName = "Owner",
-            Tagline = "Tagline",
-            ResumeAssetId = resumeAssetId
-        });
-        dbContext.Assets.Add(new Asset { Id = resumeAssetId, Bucket = "media", Path = "resume.pdf", PublicUrl = "/media/resume.pdf" });
-        dbContext.Pages.Add(new PageEntity { Id = Guid.NewGuid(), Slug = "home", Title = "Home", ContentJson = "{\"headline\":\"Hi\"}" });
+        dbContext.SiteSettings.Add(SiteSetting.Create("Owner", "Tagline", string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, resumeAssetId, DateTimeOffset.UtcNow));
+        dbContext.Assets.Add(Asset.Create("media", "resume.pdf", "/media/resume.pdf", string.Empty, "other", null, null, DateTimeOffset.UtcNow, resumeAssetId));
+        dbContext.Pages.Add(PageEntity.Create("home", "Home", "{\"headline\":\"Hi\"}", Guid.NewGuid(), DateTimeOffset.UtcNow));
         dbContext.Works.AddRange(
-            new Work { Id = Guid.NewGuid(), Title = "Published Work", Slug = "published-work", Excerpt = "published", Category = "cat", ContentJson = "{}", AllPropertiesJson = "{}", Published = true, PublishedAt = DateTimeOffset.UtcNow, CreatedAt = DateTimeOffset.UtcNow, UpdatedAt = DateTimeOffset.UtcNow },
-            new Work { Id = Guid.NewGuid(), Title = "Draft Work", Slug = "draft-work", Excerpt = "draft", Category = "cat", ContentJson = "{}", AllPropertiesJson = "{}", Published = false, CreatedAt = DateTimeOffset.UtcNow, UpdatedAt = DateTimeOffset.UtcNow }
+            Work.Seed(new WorkUpsertValues("Published Work", "cat", null!, Array.Empty<string>(), true, "{}", "{}", null, null), "published-work", "published", DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, Guid.NewGuid(), DateTimeOffset.UtcNow),
+            Work.Seed(new WorkUpsertValues("Draft Work", "cat", null!, Array.Empty<string>(), false, "{}", "{}", null, null), "draft-work", "draft", DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, Guid.NewGuid())
         );
         dbContext.Blogs.AddRange(
-            new Blog { Id = Guid.NewGuid(), Title = "Published Blog", Slug = "published-blog", Excerpt = "published", ContentJson = "{}", Published = true, PublishedAt = DateTimeOffset.UtcNow, CreatedAt = DateTimeOffset.UtcNow, UpdatedAt = DateTimeOffset.UtcNow },
-            new Blog { Id = Guid.NewGuid(), Title = "Draft Blog", Slug = "draft-blog", Excerpt = "draft", ContentJson = "{}", Published = false, CreatedAt = DateTimeOffset.UtcNow, UpdatedAt = DateTimeOffset.UtcNow }
+            Blog.Seed(new BlogUpsertValues("Published Blog", Array.Empty<string>(), true, "{}", null), "published-blog", "published", DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, Guid.NewGuid(), DateTimeOffset.UtcNow),
+            Blog.Seed(new BlogUpsertValues("Draft Blog", Array.Empty<string>(), false, "{}", null), "draft-blog", "draft", DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, Guid.NewGuid())
         );
         await dbContext.SaveChangesAsync();
 
@@ -84,13 +73,7 @@ public class PublicQueryHandlerTests
     public async Task GetResumeQueryHandler_ReturnsNull_WhenResumeAssetMissing()
     {
         await using var dbContext = CreateDbContext();
-        dbContext.SiteSettings.Add(new SiteSetting
-        {
-            Singleton = true,
-            OwnerName = "Owner",
-            Tagline = "Tagline",
-            ResumeAssetId = Guid.NewGuid()
-        });
+        dbContext.SiteSettings.Add(SiteSetting.Create("Owner", "Tagline", string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, Guid.NewGuid(), DateTimeOffset.UtcNow));
         await dbContext.SaveChangesAsync();
 
         var handler = new GetResumeQueryHandler(CreatePublicSiteService(dbContext));
@@ -116,10 +99,10 @@ public class PublicQueryHandlerTests
     {
         await using var dbContext = CreateDbContext();
         var thumbnailId = Guid.NewGuid();
-        dbContext.Assets.Add(new Asset { Id = thumbnailId, Bucket = "media", Path = "thumb.png", PublicUrl = "/media/thumb.png" });
+        dbContext.Assets.Add(Asset.Create("media", "thumb.png", "/media/thumb.png", string.Empty, "other", null, null, DateTimeOffset.UtcNow, thumbnailId));
         dbContext.Works.AddRange(
-            new Work { Id = Guid.NewGuid(), Title = "Visible", Slug = "visible", Excerpt = "visible", Category = "cat", ContentJson = "{}", AllPropertiesJson = "{}", ThumbnailAssetId = thumbnailId, Published = true, PublishedAt = DateTimeOffset.UtcNow, CreatedAt = DateTimeOffset.UtcNow, UpdatedAt = DateTimeOffset.UtcNow },
-            new Work { Id = Guid.NewGuid(), Title = "Hidden", Slug = "hidden", Excerpt = "hidden", Category = "cat", ContentJson = "{}", AllPropertiesJson = "{}", Published = false, CreatedAt = DateTimeOffset.UtcNow, UpdatedAt = DateTimeOffset.UtcNow }
+            Work.Seed(new WorkUpsertValues("Visible", "cat", null!, Array.Empty<string>(), true, "{}", "{}", thumbnailId, null), "visible", "visible", DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, Guid.NewGuid(), DateTimeOffset.UtcNow),
+            Work.Seed(new WorkUpsertValues("Hidden", "cat", null!, Array.Empty<string>(), false, "{}", "{}", null, null), "hidden", "hidden", DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, Guid.NewGuid())
         );
         await dbContext.SaveChangesAsync();
 
@@ -136,8 +119,8 @@ public class PublicQueryHandlerTests
     {
         await using var dbContext = CreateDbContext();
         dbContext.Works.AddRange(
-            new Work { Id = Guid.NewGuid(), Title = "Work A", Slug = "work-a", Excerpt = "a", Category = "cat", ContentJson = "{}", AllPropertiesJson = "{}", Published = true, PublishedAt = DateTimeOffset.UtcNow.AddDays(-1), CreatedAt = DateTimeOffset.UtcNow, UpdatedAt = DateTimeOffset.UtcNow },
-            new Work { Id = Guid.NewGuid(), Title = "Work B", Slug = "work-b", Excerpt = "b", Category = "cat", ContentJson = "{}", AllPropertiesJson = "{}", Published = true, PublishedAt = DateTimeOffset.UtcNow, CreatedAt = DateTimeOffset.UtcNow, UpdatedAt = DateTimeOffset.UtcNow }
+            Work.Seed(new WorkUpsertValues("Work A", "cat", null!, Array.Empty<string>(), true, "{}", "{}", null, null), "work-a", "a", DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, Guid.NewGuid(), DateTimeOffset.UtcNow.AddDays(-1)),
+            Work.Seed(new WorkUpsertValues("Work B", "cat", null!, Array.Empty<string>(), true, "{}", "{}", null, null), "work-b", "b", DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, Guid.NewGuid(), DateTimeOffset.UtcNow)
         );
         await dbContext.SaveChangesAsync();
 
@@ -156,8 +139,8 @@ public class PublicQueryHandlerTests
     {
         await using var dbContext = CreateDbContext();
         dbContext.Blogs.AddRange(
-            new Blog { Id = Guid.NewGuid(), Title = "Blog A", Slug = "blog-a", Excerpt = "a", ContentJson = "{}", Published = true, PublishedAt = DateTimeOffset.UtcNow.AddDays(-1), CreatedAt = DateTimeOffset.UtcNow, UpdatedAt = DateTimeOffset.UtcNow },
-            new Blog { Id = Guid.NewGuid(), Title = "Blog B", Slug = "blog-b", Excerpt = "b", ContentJson = "{}", Published = true, PublishedAt = DateTimeOffset.UtcNow, CreatedAt = DateTimeOffset.UtcNow, UpdatedAt = DateTimeOffset.UtcNow }
+            Blog.Seed(new BlogUpsertValues("Blog A", Array.Empty<string>(), true, "{}", null), "blog-a", "a", DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, Guid.NewGuid(), DateTimeOffset.UtcNow.AddDays(-1)),
+            Blog.Seed(new BlogUpsertValues("Blog B", Array.Empty<string>(), true, "{}", null), "blog-b", "b", DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, Guid.NewGuid(), DateTimeOffset.UtcNow)
         );
         await dbContext.SaveChangesAsync();
 

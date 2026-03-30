@@ -22,17 +22,21 @@ public class TestAuthHandler : AuthenticationHandler<AuthenticationSchemeOptions
     protected override Task<AuthenticateResult> HandleAuthenticateAsync()
     {
         var identityName = Request.Headers[HeaderName].ToString();
-        if (!string.Equals(identityName, "admin", StringComparison.OrdinalIgnoreCase))
+        if (!string.Equals(identityName, "admin", StringComparison.OrdinalIgnoreCase)
+            && !string.Equals(identityName, "user", StringComparison.OrdinalIgnoreCase))
         {
             return Task.FromResult(AuthenticateResult.NoResult());
         }
 
+        var role = string.Equals(identityName, "admin", StringComparison.OrdinalIgnoreCase) ? "admin" : "user";
+        var email = string.Equals(identityName, "admin", StringComparison.OrdinalIgnoreCase) ? "admin@example.com" : "user@example.com";
+
         var identity = new ClaimsIdentity(
         [
-            new Claim(AuthClaimTypes.Role, "admin"),
+            new Claim(AuthClaimTypes.Role, role),
             new Claim(AuthClaimTypes.ProfileId, Guid.Parse("11111111-1111-1111-1111-111111111111").ToString()),
             new Claim(AuthClaimTypes.SessionId, Guid.Parse("22222222-2222-2222-2222-222222222222").ToString()),
-            new Claim(ClaimTypes.Email, "admin@example.com")
+            new Claim(ClaimTypes.Email, email)
         ], Scheme.Name);
 
         var principal = new ClaimsPrincipal(identity);

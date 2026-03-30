@@ -1,6 +1,7 @@
 using MediatR;
 using WoongBlog.Api.Application.Admin.Abstractions;
 using WoongBlog.Api.Application.Admin.Support;
+using WoongBlog.Api.Domain.Entities;
 
 namespace WoongBlog.Api.Application.Admin.UpdateSiteSettings;
 
@@ -21,16 +22,16 @@ public sealed class UpdateSiteSettingsCommandHandler : IRequestHandler<UpdateSit
             return new AdminActionResult(false);
         }
 
-        if (request.OwnerName is not null) settings.OwnerName = request.OwnerName;
-        if (request.Tagline is not null) settings.Tagline = request.Tagline;
-        if (request.FacebookUrl is not null) settings.FacebookUrl = request.FacebookUrl;
-        if (request.InstagramUrl is not null) settings.InstagramUrl = request.InstagramUrl;
-        if (request.TwitterUrl is not null) settings.TwitterUrl = request.TwitterUrl;
-        if (request.LinkedInUrl is not null) settings.LinkedInUrl = request.LinkedInUrl;
-        if (request.GitHubUrl is not null) settings.GitHubUrl = request.GitHubUrl;
-        if (request.HasResumeAssetId) settings.ResumeAssetId = request.ResumeAssetId;
-
-        settings.UpdatedAt = DateTimeOffset.UtcNow;
+        settings.ApplyUpdate(new SiteSettingUpdateValues(
+            request.OwnerName,
+            request.Tagline,
+            request.FacebookUrl,
+            request.InstagramUrl,
+            request.TwitterUrl,
+            request.LinkedInUrl,
+            request.GitHubUrl,
+            request.ResumeAssetId,
+            request.HasResumeAssetId), DateTimeOffset.UtcNow);
         await _siteSettingsWriteStore.SaveChangesAsync(cancellationToken);
         return new AdminActionResult(true);
     }

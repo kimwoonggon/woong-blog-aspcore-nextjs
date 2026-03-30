@@ -4,11 +4,11 @@ using WoongBlog.Api.Application.Public.GetPageBySlug;
 
 namespace WoongBlog.Api.Infrastructure.Persistence.Public;
 
-public sealed class PublicPageService : IPublicPageService
+public sealed class PublicPageQueries : IPublicPageQueries
 {
     private readonly WoongBlogDbContext _dbContext;
 
-    public PublicPageService(WoongBlogDbContext dbContext)
+    public PublicPageQueries(WoongBlogDbContext dbContext)
     {
         _dbContext = dbContext;
     }

@@ -4,11 +4,11 @@ using WoongBlog.Api.Application.Admin.GetAdminMembers;
 
 namespace WoongBlog.Api.Infrastructure.Persistence.Admin;
 
-public sealed class AdminMemberService : IAdminMemberService
+public sealed class AdminMemberQueries : IAdminMemberQueries
 {
     private readonly WoongBlogDbContext _dbContext;
 
-    public AdminMemberService(WoongBlogDbContext dbContext)
+    public AdminMemberQueries(WoongBlogDbContext dbContext)
     {
         _dbContext = dbContext;
     }

@@ -31,25 +31,25 @@ internal static class PersistenceServiceCollectionExtensions
         });
 
         services.AddScoped<IAssetStorageService, AssetStorageService>();
-        services.AddScoped<IAdminDashboardService, AdminDashboardService>();
-        services.AddScoped<IAdminMemberService, AdminMemberService>();
-        services.AddScoped<AdminPageService>();
-        services.AddScoped<IAdminPageQueries>(sp => sp.GetRequiredService<AdminPageService>());
-        services.AddScoped<IAdminPageWriteStore>(sp => sp.GetRequiredService<AdminPageService>());
-        services.AddScoped<AdminSiteSettingsService>();
-        services.AddScoped<IAdminSiteSettingsQueries>(sp => sp.GetRequiredService<AdminSiteSettingsService>());
-        services.AddScoped<IAdminSiteSettingsWriteStore>(sp => sp.GetRequiredService<AdminSiteSettingsService>());
-        services.AddScoped<AdminBlogService>();
-        services.AddScoped<IAdminBlogQueries>(sp => sp.GetRequiredService<AdminBlogService>());
-        services.AddScoped<IAdminBlogWriteStore>(sp => sp.GetRequiredService<AdminBlogService>());
-        services.AddScoped<AdminWorkService>();
-        services.AddScoped<IAdminWorkQueries>(sp => sp.GetRequiredService<AdminWorkService>());
-        services.AddScoped<IAdminWorkWriteStore>(sp => sp.GetRequiredService<AdminWorkService>());
-        services.AddScoped<IPublicHomeService, PublicHomeService>();
-        services.AddScoped<IPublicPageService, PublicPageService>();
-        services.AddScoped<IPublicSiteService, PublicSiteService>();
-        services.AddScoped<IPublicBlogService, PublicBlogService>();
-        services.AddScoped<IPublicWorkService, PublicWorkService>();
+        services.AddScoped<IAdminDashboardQueries, AdminDashboardQueries>();
+        services.AddScoped<IAdminMemberQueries, AdminMemberQueries>();
+        services.AddScoped<AdminPagePersistence>();
+        services.AddScoped<IAdminPageQueries>(sp => sp.GetRequiredService<AdminPagePersistence>());
+        services.AddScoped<IAdminPageWriteStore>(sp => sp.GetRequiredService<AdminPagePersistence>());
+        services.AddScoped<AdminSiteSettingsPersistence>();
+        services.AddScoped<IAdminSiteSettingsQueries>(sp => sp.GetRequiredService<AdminSiteSettingsPersistence>());
+        services.AddScoped<IAdminSiteSettingsWriteStore>(sp => sp.GetRequiredService<AdminSiteSettingsPersistence>());
+        services.AddScoped<AdminBlogPersistence>();
+        services.AddScoped<IAdminBlogQueries>(sp => sp.GetRequiredService<AdminBlogPersistence>());
+        services.AddScoped<IAdminBlogWriteStore>(sp => sp.GetRequiredService<AdminBlogPersistence>());
+        services.AddScoped<AdminWorkPersistence>();
+        services.AddScoped<IAdminWorkQueries>(sp => sp.GetRequiredService<AdminWorkPersistence>());
+        services.AddScoped<IAdminWorkWriteStore>(sp => sp.GetRequiredService<AdminWorkPersistence>());
+        services.AddScoped<IPublicHomeQueries, PublicHomeQueries>();
+        services.AddScoped<IPublicPageQueries, PublicPageQueries>();
+        services.AddScoped<IPublicSiteQueries, PublicSiteQueries>();
+        services.AddScoped<IPublicBlogQueries, PublicBlogQueries>();
+        services.AddScoped<IPublicWorkQueries, PublicWorkQueries>();
 
         return services;
     }

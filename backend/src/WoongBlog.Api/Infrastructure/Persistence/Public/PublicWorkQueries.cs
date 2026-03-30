@@ -6,11 +6,11 @@ using WoongBlog.Api.Application.Public.GetWorks;
 
 namespace WoongBlog.Api.Infrastructure.Persistence.Public;
 
-public sealed class PublicWorkService : IPublicWorkService
+public sealed class PublicWorkQueries : IPublicWorkQueries
 {
     private readonly WoongBlogDbContext _dbContext;
 
-    public PublicWorkService(WoongBlogDbContext dbContext)
+    public PublicWorkQueries(WoongBlogDbContext dbContext)
     {
         _dbContext = dbContext;
     }

@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Net.Http.Headers;
 using Microsoft.Extensions.DependencyInjection;
+using WoongBlog.Api.Domain.Entities;
 using WoongBlog.Api.Infrastructure.Persistence;
 
 namespace WoongBlog.Api.Tests;
@@ -86,7 +87,8 @@ public class AdminContentEndpointsTests : IClassFixture<CustomWebApplicationFact
         {
             var initialDb = initialScope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
             var initialSettings = initialDb.SiteSettings.Single(x => x.Singleton);
-            initialSettings.ResumeAssetId = Guid.NewGuid();
+            initialSettings.ApplyUpdate(new SiteSettingUpdateValues(
+                null, null, null, null, null, null, null, Guid.NewGuid(), true), DateTimeOffset.UtcNow);
             await initialDb.SaveChangesAsync();
             Assert.NotNull(initialSettings.ResumeAssetId);
         }
@@ -115,7 +117,8 @@ public class AdminContentEndpointsTests : IClassFixture<CustomWebApplicationFact
         {
             var initialDb = initialScope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
             var initialSettings = initialDb.SiteSettings.Single(x => x.Singleton);
-            initialSettings.ResumeAssetId = resumeAssetId;
+            initialSettings.ApplyUpdate(new SiteSettingUpdateValues(
+                null, null, null, null, null, null, null, resumeAssetId, true), DateTimeOffset.UtcNow);
             await initialDb.SaveChangesAsync();
         }
 
@@ -290,11 +293,11 @@ public class AdminContentEndpointsTests : IClassFixture<CustomWebApplicationFact
     }
 
     [Fact]
-    public async Task CreateAndReadWork_FallsBackToEmptyObject_ForMalformedMetadata()
+    public async Task CreateWork_ReturnsBadRequest_ForMalformedMetadata()
     {
         var client = _factory.CreateAuthenticatedClient();
 
-        var createResponse = await client.PostAsJsonAsync("/api/admin/works", new
+        var response = await client.PostAsJsonAsync("/api/admin/works", new
         {
             title = "Weird JSON Work",
             category = "platform",
@@ -305,11 +308,36 @@ public class AdminContentEndpointsTests : IClassFixture<CustomWebApplicationFact
             allPropertiesJson = "{not-json}"
         });
 
-        createResponse.EnsureSuccessStatusCode();
-        var created = await createResponse.Content.ReadFromJsonAsync<CreatedResource>();
-        Assert.NotNull(created);
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
 
-        var response = await client.GetAsync($"/api/admin/works/{created!.Id}");
+    [Fact]
+    public async Task ReadWork_FallsBackToEmptyObject_ForMalformedStoredMetadata()
+    {
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
+        var work = Work.Seed(
+            new WorkUpsertValues(
+                "Legacy Metadata Work",
+                "platform",
+                "2026.03",
+                ["legacy"],
+                true,
+                """{"html":"<p>Visible body</p>"}""",
+                "{not-json}",
+                null,
+                null),
+            "legacy-metadata-work",
+            "legacy",
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow,
+            Guid.NewGuid(),
+            DateTimeOffset.UtcNow);
+        dbContext.Works.Add(work);
+        await dbContext.SaveChangesAsync();
+
+        var client = _factory.CreateAuthenticatedClient();
+        var response = await client.GetAsync($"/api/admin/works/{work.Id}");
 
         response.EnsureSuccessStatusCode();
         var body = await response.Content.ReadAsStringAsync();

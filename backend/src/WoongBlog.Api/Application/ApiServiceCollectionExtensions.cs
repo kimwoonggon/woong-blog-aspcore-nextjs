@@ -1,5 +1,7 @@
 using FluentValidation;
 using MediatR;
+using WoongBlog.Api.Application.Admin.Abstractions;
+using WoongBlog.Api.Application.Admin.Support;
 using WoongBlog.Api.Application.Behaviors;
 using WoongBlog.Api.Infrastructure.Validation;
 
@@ -18,6 +20,8 @@ internal static class ApiServiceCollectionExtensions
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<Program>());
         services.AddValidatorsFromAssemblyContaining<Program>();
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+        services.AddScoped<IAdminUniqueSlugService, AdminUniqueSlugService>();
+        services.AddScoped<IAdminExcerptService, AdminExcerptService>();
 
         return services;
     }

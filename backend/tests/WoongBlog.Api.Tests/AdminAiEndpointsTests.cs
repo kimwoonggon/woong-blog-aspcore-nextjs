@@ -19,6 +19,27 @@ public class AdminAiEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
+    public async Task RuntimeConfig_Anonymous_ReturnsUnauthorized()
+    {
+        var client = _factory.CreateClient();
+
+        var response = await client.GetAsync("/api/admin/ai/runtime-config");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task RuntimeConfig_NonAdmin_ReturnsForbidden()
+    {
+        var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Add(TestAuthHandler.HeaderName, "user");
+
+        var response = await client.GetAsync("/api/admin/ai/runtime-config");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
     public async Task FixBlog_ReturnsBadRequest_WhenHtmlMissing()
     {
         using var factory = _factory.WithWebHostBuilder(builder =>
@@ -197,6 +218,39 @@ public class AdminAiEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
+    public async Task CreateBatchJob_ReturnsBadRequest_WhenSelectionMissing()
+    {
+        using var factory = _factory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureServices(services =>
+            {
+                services.RemoveAll<IBlogAiFixService>();
+                services.AddScoped<IBlogAiFixService, FakeBlogAiFixService>();
+            });
+        });
+
+        var client = CreateAuthenticatedClient(factory);
+        var response = await client.PostAsJsonAsync("/api/admin/ai/blog-fix-batch-jobs", new
+        {
+            all = false
+        });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var payload = await response.Content.ReadAsStringAsync();
+        Assert.Contains("Either blogIds or all=true is required", payload, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task GetBatchJob_ReturnsNotFound_WhenMissing()
+    {
+        var client = CreateAuthenticatedClient(_factory);
+
+        var response = await client.GetAsync($"/api/admin/ai/blog-fix-batch-jobs/{Guid.NewGuid()}");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
     public async Task BatchJob_CanBeCancelled()
     {
         using var factory = _factory.WithWebHostBuilder(builder =>
@@ -230,6 +284,40 @@ public class AdminAiEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         cancel.EnsureSuccessStatusCode();
         var payload = await cancel.Content.ReadAsStringAsync();
         Assert.Contains("cancelRequested", payload, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task RemoveBatchJob_ReturnsConflict_WhenRunning()
+    {
+        using var factory = _factory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureServices(services =>
+            {
+                services.RemoveAll<IBlogAiFixService>();
+                services.AddScoped<IBlogAiFixService, FakeBlogAiFixService>();
+            });
+        });
+
+        var client = CreateAuthenticatedClient(factory);
+
+        using var scope = factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
+        var blogId = dbContext.Blogs.OrderBy(x => x.CreatedAt).Select(x => x.Id).First();
+
+        var create = await client.PostAsJsonAsync("/api/admin/ai/blog-fix-batch-jobs", new
+        {
+            blogIds = new[] { blogId },
+            all = false,
+            codexModel = "gpt-5.4",
+            codexReasoningEffort = "medium"
+        });
+
+        create.EnsureSuccessStatusCode();
+        var created = await create.Content.ReadFromJsonAsync<BatchJobDetailPayload>();
+        Assert.NotNull(created);
+
+        var remove = await client.DeleteAsync($"/api/admin/ai/blog-fix-batch-jobs/{created!.JobId}");
+        Assert.Equal(HttpStatusCode.Conflict, remove.StatusCode);
     }
 
     [Fact]

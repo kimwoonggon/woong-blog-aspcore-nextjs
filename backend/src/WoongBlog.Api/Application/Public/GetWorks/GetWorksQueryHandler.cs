@@ -5,15 +5,15 @@ namespace WoongBlog.Api.Application.Public.GetWorks;
 
 public class GetWorksQueryHandler : IRequestHandler<GetWorksQuery, PagedWorksDto>
 {
-    private readonly IPublicWorkService _publicWorkService;
+    private readonly IPublicWorkQueries _publicWorkQueries;
 
-    public GetWorksQueryHandler(IPublicWorkService publicWorkService)
+    public GetWorksQueryHandler(IPublicWorkQueries publicWorkQueries)
     {
-        _publicWorkService = publicWorkService;
+        _publicWorkQueries = publicWorkQueries;
     }
 
     public async Task<PagedWorksDto> Handle(GetWorksQuery request, CancellationToken cancellationToken)
     {
-        return await _publicWorkService.GetWorksAsync(request.Page, request.PageSize, cancellationToken);
+        return await _publicWorkQueries.GetWorksAsync(request.Page, request.PageSize, cancellationToken);
     }
 }

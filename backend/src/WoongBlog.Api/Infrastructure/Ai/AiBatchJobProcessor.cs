@@ -23,8 +23,7 @@ public sealed class AiBatchJobProcessor(IServiceScopeFactory scopeFactory, IOpti
 
             foreach (var job in runningJobs)
             {
-                job.Status = AiBatchJobStates.Queued;
-                job.UpdatedAt = DateTimeOffset.UtcNow;
+                job.MarkQueued(DateTimeOffset.UtcNow);
             }
 
             if (runningJobs.Count > 0)
@@ -49,9 +48,7 @@ public sealed class AiBatchJobProcessor(IServiceScopeFactory scopeFactory, IOpti
 
                 if (nextJob is not null)
                 {
-                    nextJob.Status = AiBatchJobStates.Running;
-                    nextJob.StartedAt = DateTimeOffset.UtcNow;
-                    nextJob.UpdatedAt = DateTimeOffset.UtcNow;
+                    nextJob.Start(DateTimeOffset.UtcNow);
                     await dbContext.SaveChangesAsync(stoppingToken);
                     nextJobId = nextJob.Id;
                 }
@@ -140,8 +137,7 @@ public sealed class AiBatchJobProcessor(IServiceScopeFactory scopeFactory, IOpti
         var job = await dbContext.AiBatchJobs.SingleAsync(x => x.Id == jobId, cancellationToken);
         var blog = await dbContext.Blogs.SingleAsync(x => x.Id == item.EntityId, cancellationToken);
 
-        item.Status = AiBatchJobItemStates.Running;
-        item.StartedAt = DateTimeOffset.UtcNow;
+        item.Start(DateTimeOffset.UtcNow);
         await dbContext.SaveChangesAsync(cancellationToken);
 
         try
@@ -152,33 +148,27 @@ public sealed class AiBatchJobProcessor(IServiceScopeFactory scopeFactory, IOpti
                 CodexModel: job.Model,
                 CodexReasoningEffort: job.ReasoningEffort));
 
-            item.FixedHtml = result.FixedHtml;
-            item.Provider = result.Provider;
-            item.Model = result.Model;
-            item.ReasoningEffort = result.ReasoningEffort;
-            item.Error = null;
-
             if (job.AutoApply)
             {
                 var now = DateTimeOffset.UtcNow;
-                blog.ContentJson = $$"""{"html":{{System.Text.Json.JsonSerializer.Serialize(result.FixedHtml)}}}""";
-                blog.Excerpt = AdminContentText.GenerateExcerpt(result.FixedHtml);
-                blog.UpdatedAt = now;
-                item.AppliedAt = now;
-                item.Status = AiBatchJobItemStates.Applied;
+                blog.ApplyFixedHtml(
+                    $$"""{"html":{{System.Text.Json.JsonSerializer.Serialize(result.FixedHtml)}}}""",
+                    AdminContentText.GenerateExcerpt(result.FixedHtml),
+                    now);
+                item.RecordSuccess(result.FixedHtml, result.Provider, result.Model, result.ReasoningEffort);
+                item.MarkApplied(now);
             }
             else
             {
-                item.Status = AiBatchJobItemStates.Succeeded;
+                item.RecordSuccess(result.FixedHtml, result.Provider, result.Model, result.ReasoningEffort);
             }
         }
         catch (Exception exception)
         {
-            item.Status = AiBatchJobItemStates.Failed;
-            item.Error = exception.Message;
+            item.RecordFailure(exception.Message);
         }
 
-        item.FinishedAt = DateTimeOffset.UtcNow;
+        item.Complete(DateTimeOffset.UtcNow);
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
@@ -199,8 +189,7 @@ public sealed class AiBatchJobProcessor(IServiceScopeFactory scopeFactory, IOpti
         var item = await dbContext.AiBatchJobItems.SingleAsync(x => x.Id == itemId, cancellationToken);
         if (item.Status == AiBatchJobItemStates.Pending)
         {
-            item.Status = AiBatchJobItemStates.Cancelled;
-            item.FinishedAt = DateTimeOffset.UtcNow;
+            item.Cancel(DateTimeOffset.UtcNow);
             await dbContext.SaveChangesAsync(cancellationToken);
         }
     }
@@ -212,11 +201,12 @@ public sealed class AiBatchJobProcessor(IServiceScopeFactory scopeFactory, IOpti
         var job = await dbContext.AiBatchJobs.SingleAsync(x => x.Id == jobId, cancellationToken);
         var items = await dbContext.AiBatchJobItems.Where(x => x.JobId == jobId).ToListAsync(cancellationToken);
 
-        job.TotalCount = items.Count;
-        job.ProcessedCount = items.Count(item => item.Status is AiBatchJobItemStates.Succeeded or AiBatchJobItemStates.Failed or AiBatchJobItemStates.Applied or AiBatchJobItemStates.Cancelled);
-        job.SucceededCount = items.Count(item => item.Status is AiBatchJobItemStates.Succeeded or AiBatchJobItemStates.Applied);
-        job.FailedCount = items.Count(item => item.Status == AiBatchJobItemStates.Failed);
-        job.UpdatedAt = DateTimeOffset.UtcNow;
+        job.RefreshCounts(
+            items.Count,
+            items.Count(item => item.Status is AiBatchJobItemStates.Succeeded or AiBatchJobItemStates.Failed or AiBatchJobItemStates.Applied or AiBatchJobItemStates.Cancelled),
+            items.Count(item => item.Status is AiBatchJobItemStates.Succeeded or AiBatchJobItemStates.Applied),
+            items.Count(item => item.Status == AiBatchJobItemStates.Failed),
+            DateTimeOffset.UtcNow);
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
@@ -227,15 +217,12 @@ public sealed class AiBatchJobProcessor(IServiceScopeFactory scopeFactory, IOpti
         var job = await dbContext.AiBatchJobs.SingleAsync(x => x.Id == jobId, cancellationToken);
         var items = await dbContext.AiBatchJobItems.Where(x => x.JobId == jobId).ToListAsync(cancellationToken);
 
-        job.TotalCount = items.Count;
-        job.ProcessedCount = items.Count(item => item.Status is AiBatchJobItemStates.Succeeded or AiBatchJobItemStates.Failed or AiBatchJobItemStates.Applied or AiBatchJobItemStates.Cancelled);
-        job.SucceededCount = items.Count(item => item.Status is AiBatchJobItemStates.Succeeded or AiBatchJobItemStates.Applied);
-        job.FailedCount = items.Count(item => item.Status == AiBatchJobItemStates.Failed);
-        job.Status = job.CancelRequested ? AiBatchJobStates.Cancelled :
-            job.FailedCount == job.TotalCount && job.TotalCount > 0 ? AiBatchJobStates.Failed :
-            AiBatchJobStates.Completed;
-        job.FinishedAt = DateTimeOffset.UtcNow;
-        job.UpdatedAt = DateTimeOffset.UtcNow;
+        job.Finish(
+            items.Count,
+            items.Count(item => item.Status is AiBatchJobItemStates.Succeeded or AiBatchJobItemStates.Failed or AiBatchJobItemStates.Applied or AiBatchJobItemStates.Cancelled),
+            items.Count(item => item.Status is AiBatchJobItemStates.Succeeded or AiBatchJobItemStates.Applied),
+            items.Count(item => item.Status == AiBatchJobItemStates.Failed),
+            DateTimeOffset.UtcNow);
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 

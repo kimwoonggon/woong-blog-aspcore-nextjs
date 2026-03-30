@@ -3,7 +3,7 @@ using WoongBlog.Api.Application.Public.GetBlogs;
 
 namespace WoongBlog.Api.Application.Public.Abstractions;
 
-public interface IPublicBlogService
+public interface IPublicBlogQueries
 {
     Task<PagedBlogsDto> GetBlogsAsync(int page, int pageSize, CancellationToken cancellationToken);
     Task<BlogDetailDto?> GetBlogBySlugAsync(string slug, CancellationToken cancellationToken);

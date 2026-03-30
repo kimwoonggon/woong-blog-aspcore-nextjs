@@ -6,8 +6,6 @@ using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Mvc;
 using WoongBlog.Api.Infrastructure.Auth;
 using System.Security.Claims;
-using Microsoft.EntityFrameworkCore;
-using WoongBlog.Api.Infrastructure.Persistence;
 using Microsoft.AspNetCore.RateLimiting;
 using WoongBlog.Api.Infrastructure.Security;
 
@@ -20,27 +18,27 @@ public class AuthController : ControllerBase
     private readonly AuthOptions _authOptions;
     private readonly SecurityOptions _securityOptions;
     private readonly IWebHostEnvironment _environment;
-    private readonly WoongBlogDbContext _dbContext;
     private readonly IAntiforgery _antiforgery;
     private readonly IAuthSessionService _authSessionService;
     private readonly IAuthAuditService _authAuditService;
+    private readonly IAuthProfileLookupService _authProfileLookupService;
 
     public AuthController(
         Microsoft.Extensions.Options.IOptions<AuthOptions> authOptions,
         Microsoft.Extensions.Options.IOptions<SecurityOptions> securityOptions,
         IWebHostEnvironment environment,
-        WoongBlogDbContext dbContext,
         IAntiforgery antiforgery,
         IAuthSessionService authSessionService,
-        IAuthAuditService authAuditService)
+        IAuthAuditService authAuditService,
+        IAuthProfileLookupService authProfileLookupService)
     {
         _authOptions = authOptions.Value;
         _securityOptions = securityOptions.Value;
         _environment = environment;
-        _dbContext = dbContext;
         _antiforgery = antiforgery;
         _authSessionService = authSessionService;
         _authAuditService = authAuditService;
+        _authProfileLookupService = authProfileLookupService;
     }
 
     [HttpGet("login")]
@@ -127,7 +125,7 @@ public class AuthController : ControllerBase
             return NotFound();
         }
 
-        var profile = await _dbContext.Profiles.AsNoTracking().SingleOrDefaultAsync(x => x.Email == email);
+        var profile = await _authProfileLookupService.GetByEmailAsync(email, HttpContext.RequestAborted);
         if (profile is null)
         {
             return NotFound(new { message = "Seeded profile not found." });

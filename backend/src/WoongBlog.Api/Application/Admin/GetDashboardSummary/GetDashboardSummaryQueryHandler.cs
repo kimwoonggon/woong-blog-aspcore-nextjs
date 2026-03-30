@@ -5,15 +5,15 @@ namespace WoongBlog.Api.Application.Admin.GetDashboardSummary;
 
 public sealed class GetDashboardSummaryQueryHandler : IRequestHandler<GetDashboardSummaryQuery, AdminDashboardSummaryDto>
 {
-    private readonly IAdminDashboardService _adminDashboardService;
+    private readonly IAdminDashboardQueries _adminDashboardQueries;
 
-    public GetDashboardSummaryQueryHandler(IAdminDashboardService adminDashboardService)
+    public GetDashboardSummaryQueryHandler(IAdminDashboardQueries adminDashboardQueries)
     {
-        _adminDashboardService = adminDashboardService;
+        _adminDashboardQueries = adminDashboardQueries;
     }
 
     public async Task<AdminDashboardSummaryDto> Handle(GetDashboardSummaryQuery request, CancellationToken cancellationToken)
     {
-        return await _adminDashboardService.GetSummaryAsync(cancellationToken);
+        return await _adminDashboardQueries.GetSummaryAsync(cancellationToken);
     }
 }

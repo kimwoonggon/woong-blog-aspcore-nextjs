@@ -5,15 +5,15 @@ namespace WoongBlog.Api.Application.Public.GetWorkBySlug;
 
 public class GetWorkBySlugQueryHandler : IRequestHandler<GetWorkBySlugQuery, WorkDetailDto?>
 {
-    private readonly IPublicWorkService _publicWorkService;
+    private readonly IPublicWorkQueries _publicWorkQueries;
 
-    public GetWorkBySlugQueryHandler(IPublicWorkService publicWorkService)
+    public GetWorkBySlugQueryHandler(IPublicWorkQueries publicWorkQueries)
     {
-        _publicWorkService = publicWorkService;
+        _publicWorkQueries = publicWorkQueries;
     }
 
     public async Task<WorkDetailDto?> Handle(GetWorkBySlugQuery request, CancellationToken cancellationToken)
     {
-        return await _publicWorkService.GetWorkBySlugAsync(request.Slug, cancellationToken);
+        return await _publicWorkQueries.GetWorkBySlugAsync(request.Slug, cancellationToken);
     }
 }

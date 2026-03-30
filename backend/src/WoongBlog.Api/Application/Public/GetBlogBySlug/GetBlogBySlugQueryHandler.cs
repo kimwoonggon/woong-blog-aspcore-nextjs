@@ -5,15 +5,15 @@ namespace WoongBlog.Api.Application.Public.GetBlogBySlug;
 
 public class GetBlogBySlugQueryHandler : IRequestHandler<GetBlogBySlugQuery, BlogDetailDto?>
 {
-    private readonly IPublicBlogService _publicBlogService;
+    private readonly IPublicBlogQueries _publicBlogQueries;
 
-    public GetBlogBySlugQueryHandler(IPublicBlogService publicBlogService)
+    public GetBlogBySlugQueryHandler(IPublicBlogQueries publicBlogQueries)
     {
-        _publicBlogService = publicBlogService;
+        _publicBlogQueries = publicBlogQueries;
     }
 
     public async Task<BlogDetailDto?> Handle(GetBlogBySlugQuery request, CancellationToken cancellationToken)
     {
-        return await _publicBlogService.GetBlogBySlugAsync(request.Slug, cancellationToken);
+        return await _publicBlogQueries.GetBlogBySlugAsync(request.Slug, cancellationToken);
     }
 }

@@ -6,11 +6,11 @@ using WoongBlog.Api.Application.Public.GetHome;
 
 namespace WoongBlog.Api.Infrastructure.Persistence.Public;
 
-public sealed class PublicBlogService : IPublicBlogService
+public sealed class PublicBlogQueries : IPublicBlogQueries
 {
     private readonly WoongBlogDbContext _dbContext;
 
-    public PublicBlogService(WoongBlogDbContext dbContext)
+    public PublicBlogQueries(WoongBlogDbContext dbContext)
     {
         _dbContext = dbContext;
     }

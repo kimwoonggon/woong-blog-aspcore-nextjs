@@ -24,6 +24,12 @@ public class AuthSessionServiceTests
     private static AuthAuditService CreateAuditService(WoongBlogDbContext dbContext)
         => new(dbContext);
 
+    private static WoongBlog.Api.Domain.Entities.Profile SeedProfile(string email, string providerSubject, string role = "user")
+        => WoongBlog.Api.Domain.Entities.Profile.Seed(Guid.NewGuid(), email, email, "google", providerSubject, role);
+
+    private static WoongBlog.Api.Domain.Entities.AuthSession SeedSession(Guid profileId, string sessionKey, DateTimeOffset lastSeenAt, DateTimeOffset? expiresAt, DateTimeOffset? revokedAt = null)
+        => WoongBlog.Api.Domain.Entities.AuthSession.Seed(Guid.NewGuid(), profileId, sessionKey, lastSeenAt, lastSeenAt, expiresAt, revokedAt);
+
     [Fact]
     public async Task RecordSuccessfulLogin_CreatesProfileSessionAndAuditLog()
     {
@@ -126,25 +132,10 @@ public class AuthSessionServiceTests
         await using var dbContext = CreateDbContext();
         var service = CreateSessionService(dbContext);
 
-        var profile = new WoongBlog.Api.Domain.Entities.Profile
-        {
-            Id = Guid.NewGuid(),
-            Email = "user@example.com",
-            Provider = "google",
-            ProviderSubject = "subject-revoked",
-            Role = "user"
-        };
+        var profile = SeedProfile("user@example.com", "subject-revoked");
         var revokedAt = DateTimeOffset.UtcNow.AddMinutes(-1);
         var lastSeenAt = DateTimeOffset.UtcNow.AddMinutes(-2);
-        var session = new WoongBlog.Api.Domain.Entities.AuthSession
-        {
-            Id = Guid.NewGuid(),
-            ProfileId = profile.Id,
-            SessionKey = "revoked",
-            LastSeenAt = lastSeenAt,
-            ExpiresAt = DateTimeOffset.UtcNow.AddHours(1),
-            RevokedAt = revokedAt
-        };
+        var session = SeedSession(profile.Id, "revoked", lastSeenAt, DateTimeOffset.UtcNow.AddHours(1), revokedAt);
         dbContext.Profiles.Add(profile);
         dbContext.AuthSessions.Add(session);
         await dbContext.SaveChangesAsync();
@@ -170,23 +161,9 @@ public class AuthSessionServiceTests
         await using var dbContext = CreateDbContext();
         var service = CreateSessionService(dbContext);
 
-        var profile = new WoongBlog.Api.Domain.Entities.Profile
-        {
-            Id = Guid.NewGuid(),
-            Email = "user@example.com",
-            Provider = "google",
-            ProviderSubject = "subject-valid",
-            Role = "user"
-        };
+        var profile = SeedProfile("user@example.com", "subject-valid");
         var lastSeenAt = DateTimeOffset.UtcNow.AddMinutes(-2);
-        var session = new WoongBlog.Api.Domain.Entities.AuthSession
-        {
-            Id = Guid.NewGuid(),
-            ProfileId = profile.Id,
-            SessionKey = "valid",
-            LastSeenAt = lastSeenAt,
-            ExpiresAt = DateTimeOffset.UtcNow.AddHours(1)
-        };
+        var session = SeedSession(profile.Id, "valid", lastSeenAt, DateTimeOffset.UtcNow.AddHours(1));
         dbContext.Profiles.Add(profile);
         dbContext.AuthSessions.Add(session);
         await dbContext.SaveChangesAsync();
@@ -210,23 +187,9 @@ public class AuthSessionServiceTests
         await using var dbContext = CreateDbContext();
         var service = CreateSessionService(dbContext);
 
-        var profile = new WoongBlog.Api.Domain.Entities.Profile
-        {
-            Id = Guid.NewGuid(),
-            Email = "user@example.com",
-            Provider = "google",
-            ProviderSubject = "subject-throttled",
-            Role = "user"
-        };
+        var profile = SeedProfile("user@example.com", "subject-throttled");
         var lastSeenAt = DateTimeOffset.UtcNow.AddMinutes(-6);
-        var session = new WoongBlog.Api.Domain.Entities.AuthSession
-        {
-            Id = Guid.NewGuid(),
-            ProfileId = profile.Id,
-            SessionKey = "valid-throttled",
-            LastSeenAt = lastSeenAt,
-            ExpiresAt = DateTimeOffset.UtcNow.AddHours(1)
-        };
+        var session = SeedSession(profile.Id, "valid-throttled", lastSeenAt, DateTimeOffset.UtcNow.AddHours(1));
         dbContext.Profiles.Add(profile);
         dbContext.AuthSessions.Add(session);
         await dbContext.SaveChangesAsync();
@@ -254,22 +217,8 @@ public class AuthSessionServiceTests
             AbsoluteExpirationHours = 1
         });
 
-        var profile = new WoongBlog.Api.Domain.Entities.Profile
-        {
-            Id = Guid.NewGuid(),
-            Email = "user@example.com",
-            Provider = "google",
-            ProviderSubject = "subject-expired",
-            Role = "user"
-        };
-        var session = new WoongBlog.Api.Domain.Entities.AuthSession
-        {
-            Id = Guid.NewGuid(),
-            ProfileId = profile.Id,
-            SessionKey = "expired",
-            LastSeenAt = DateTimeOffset.UtcNow.AddMinutes(-5),
-            ExpiresAt = DateTimeOffset.UtcNow.AddHours(1)
-        };
+        var profile = SeedProfile("user@example.com", "subject-expired");
+        var session = SeedSession(profile.Id, "expired", DateTimeOffset.UtcNow.AddMinutes(-5), DateTimeOffset.UtcNow.AddHours(1));
         dbContext.Profiles.Add(profile);
         dbContext.AuthSessions.Add(session);
         await dbContext.SaveChangesAsync();
@@ -293,22 +242,8 @@ public class AuthSessionServiceTests
         await using var dbContext = CreateDbContext();
         var service = CreateSessionService(dbContext);
 
-        var profile = new WoongBlog.Api.Domain.Entities.Profile
-        {
-            Id = Guid.NewGuid(),
-            Email = "user@example.com",
-            Provider = "google",
-            ProviderSubject = "subject-drift",
-            Role = "user"
-        };
-        var session = new WoongBlog.Api.Domain.Entities.AuthSession
-        {
-            Id = Guid.NewGuid(),
-            ProfileId = profile.Id,
-            SessionKey = "role-drift",
-            LastSeenAt = DateTimeOffset.UtcNow,
-            ExpiresAt = DateTimeOffset.UtcNow.AddHours(1)
-        };
+        var profile = SeedProfile("user@example.com", "subject-drift");
+        var session = SeedSession(profile.Id, "role-drift", DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddHours(1));
         dbContext.Profiles.Add(profile);
         dbContext.AuthSessions.Add(session);
         await dbContext.SaveChangesAsync();

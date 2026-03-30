@@ -5,11 +5,11 @@ using WoongBlog.Api.Domain.Entities;
 
 namespace WoongBlog.Api.Infrastructure.Persistence.Admin;
 
-public sealed class AdminSiteSettingsService : IAdminSiteSettingsQueries, IAdminSiteSettingsWriteStore
+public sealed class AdminSiteSettingsPersistence : IAdminSiteSettingsQueries, IAdminSiteSettingsWriteStore
 {
     private readonly WoongBlogDbContext _dbContext;
 
-    public AdminSiteSettingsService(WoongBlogDbContext dbContext)
+    public AdminSiteSettingsPersistence(WoongBlogDbContext dbContext)
     {
         _dbContext = dbContext;
     }

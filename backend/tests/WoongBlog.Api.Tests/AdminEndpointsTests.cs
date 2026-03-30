@@ -167,20 +167,23 @@ public class AdminEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     {
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
-        var work = new WoongBlog.Api.Domain.Entities.Work
-        {
-            Id = Guid.NewGuid(),
-            Title = "Malformed Html Work",
-            Slug = "malformed-html-work",
-            Excerpt = "broken",
-            Category = "integration",
-            ContentJson = "{not-json}",
-            AllPropertiesJson = "{}",
-            Published = true,
-            PublishedAt = DateTimeOffset.UtcNow,
-            CreatedAt = DateTimeOffset.UtcNow,
-            UpdatedAt = DateTimeOffset.UtcNow,
-        };
+        var work = WoongBlog.Api.Domain.Entities.Work.Seed(
+            new WoongBlog.Api.Domain.Entities.WorkUpsertValues(
+                "Malformed Html Work",
+                "integration",
+                string.Empty,
+                Array.Empty<string>(),
+                true,
+                "{not-json}",
+                "{}",
+                null,
+                null),
+            "malformed-html-work",
+            "broken",
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow,
+            Guid.NewGuid(),
+            DateTimeOffset.UtcNow);
         dbContext.Works.Add(work);
         dbContext.SaveChanges();
 

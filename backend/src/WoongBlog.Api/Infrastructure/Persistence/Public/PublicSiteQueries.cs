@@ -5,11 +5,11 @@ using WoongBlog.Api.Application.Public.GetSiteSettings;
 
 namespace WoongBlog.Api.Infrastructure.Persistence.Public;
 
-public sealed class PublicSiteService : IPublicSiteService
+public sealed class PublicSiteQueries : IPublicSiteQueries
 {
     private readonly WoongBlogDbContext _dbContext;
 
-    public PublicSiteService(WoongBlogDbContext dbContext)
+    public PublicSiteQueries(WoongBlogDbContext dbContext)
     {
         _dbContext = dbContext;
     }

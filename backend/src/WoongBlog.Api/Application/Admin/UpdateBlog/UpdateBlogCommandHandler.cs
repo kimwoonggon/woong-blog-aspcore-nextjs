@@ -1,16 +1,24 @@
 using MediatR;
 using WoongBlog.Api.Application.Admin.Abstractions;
 using WoongBlog.Api.Application.Admin.Support;
+using WoongBlog.Api.Domain.Entities;
 
 namespace WoongBlog.Api.Application.Admin.UpdateBlog;
 
 public sealed class UpdateBlogCommandHandler : IRequestHandler<UpdateBlogCommand, AdminMutationResult?>
 {
     private readonly IAdminBlogWriteStore _blogWriteStore;
+    private readonly IAdminUniqueSlugService _uniqueSlugService;
+    private readonly IAdminExcerptService _excerptService;
 
-    public UpdateBlogCommandHandler(IAdminBlogWriteStore blogWriteStore)
+    public UpdateBlogCommandHandler(
+        IAdminBlogWriteStore blogWriteStore,
+        IAdminUniqueSlugService uniqueSlugService,
+        IAdminExcerptService excerptService)
     {
         _blogWriteStore = blogWriteStore;
+        _uniqueSlugService = uniqueSlugService;
+        _excerptService = excerptService;
     }
 
     public async Task<AdminMutationResult?> Handle(UpdateBlogCommand request, CancellationToken cancellationToken)
@@ -21,34 +29,16 @@ public sealed class UpdateBlogCommandHandler : IRequestHandler<UpdateBlogCommand
             return null;
         }
 
-        blog.Title = request.Title;
-        blog.Slug = await GenerateUniqueSlugAsync(request.Title, blog.Id, cancellationToken);
-        blog.Excerpt = AdminContentText.GenerateExcerpt(AdminContentJson.ExtractExcerptText(request.ContentJson));
-        blog.Tags = request.Tags;
-        blog.ContentJson = request.ContentJson;
-        blog.UpdatedAt = DateTimeOffset.UtcNow;
-        blog.Published = request.Published;
-        if (request.Published && blog.PublishedAt is null)
-        {
-            blog.PublishedAt = DateTimeOffset.UtcNow;
-        }
+        var slug = await _uniqueSlugService.GenerateBlogSlugAsync(request.Title, blog.Id, cancellationToken);
+        var excerpt = _excerptService.GenerateBlogExcerpt(request.ContentJson);
+        var values = new BlogUpsertValues(
+            request.Title,
+            request.Tags,
+            request.Published,
+            request.ContentJson);
+        blog.Update(values, slug, excerpt, DateTimeOffset.UtcNow);
 
         await _blogWriteStore.SaveChangesAsync(cancellationToken);
         return new AdminMutationResult(blog.Id, blog.Slug);
-    }
-
-    private async Task<string> GenerateUniqueSlugAsync(string title, Guid? excludingId, CancellationToken cancellationToken)
-    {
-        var baseSlug = AdminContentText.Slugify(title, "post");
-        var slug = baseSlug;
-        var suffix = 2;
-
-        while (await _blogWriteStore.SlugExistsAsync(slug, excludingId, cancellationToken))
-        {
-            slug = $"{baseSlug}-{suffix}";
-            suffix += 1;
-        }
-
-        return slug;
     }
 }

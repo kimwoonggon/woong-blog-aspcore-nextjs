@@ -6,11 +6,11 @@ using WoongBlog.Api.Domain.Entities;
 
 namespace WoongBlog.Api.Infrastructure.Persistence.Admin;
 
-public sealed class AdminPageService : IAdminPageQueries, IAdminPageWriteStore
+public sealed class AdminPagePersistence : IAdminPageQueries, IAdminPageWriteStore
 {
     private readonly WoongBlogDbContext _dbContext;
 
-    public AdminPageService(WoongBlogDbContext dbContext)
+    public AdminPagePersistence(WoongBlogDbContext dbContext)
     {
         _dbContext = dbContext;
     }

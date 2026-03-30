@@ -5,15 +5,15 @@ namespace WoongBlog.Api.Application.Public.GetHome;
 
 public class GetHomeQueryHandler : IRequestHandler<GetHomeQuery, HomeDto?>
 {
-    private readonly IPublicHomeService _publicHomeService;
+    private readonly IPublicHomeQueries _publicHomeQueries;
 
-    public GetHomeQueryHandler(IPublicHomeService publicHomeService)
+    public GetHomeQueryHandler(IPublicHomeQueries publicHomeQueries)
     {
-        _publicHomeService = publicHomeService;
+        _publicHomeQueries = publicHomeQueries;
     }
 
     public async Task<HomeDto?> Handle(GetHomeQuery request, CancellationToken cancellationToken)
     {
-        return await _publicHomeService.GetHomeAsync(cancellationToken);
+        return await _publicHomeQueries.GetHomeAsync(cancellationToken);
     }
 }

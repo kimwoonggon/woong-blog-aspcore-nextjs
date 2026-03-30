@@ -23,6 +23,7 @@ internal static class AuthServiceCollectionExtensions
 
         services.AddScoped<IAuthSessionService, AuthSessionService>();
         services.AddScoped<IAuthAuditService, AuthAuditService>();
+        services.AddScoped<IAuthProfileLookupService, AuthProfileLookupService>();
         services.AddScoped<AppCookieAuthenticationEvents>();
         services.AddScoped<AppOpenIdConnectEvents>();
 

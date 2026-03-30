@@ -4,11 +4,11 @@ using WoongBlog.Api.Application.Public.GetHome;
 
 namespace WoongBlog.Api.Infrastructure.Persistence.Public;
 
-public sealed class PublicHomeService : IPublicHomeService
+public sealed class PublicHomeQueries : IPublicHomeQueries
 {
     private readonly WoongBlogDbContext _dbContext;
 
-    public PublicHomeService(WoongBlogDbContext dbContext)
+    public PublicHomeQueries(WoongBlogDbContext dbContext)
     {
         _dbContext = dbContext;
     }

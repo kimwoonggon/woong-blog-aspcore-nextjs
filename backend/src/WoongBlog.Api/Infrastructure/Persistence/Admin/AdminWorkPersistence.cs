@@ -7,11 +7,11 @@ using WoongBlog.Api.Domain.Entities;
 
 namespace WoongBlog.Api.Infrastructure.Persistence.Admin;
 
-public sealed class AdminWorkService : IAdminWorkQueries, IAdminWorkWriteStore
+public sealed class AdminWorkPersistence : IAdminWorkQueries, IAdminWorkWriteStore
 {
     private readonly WoongBlogDbContext _dbContext;
 
-    public AdminWorkService(WoongBlogDbContext dbContext)
+    public AdminWorkPersistence(WoongBlogDbContext dbContext)
     {
         _dbContext = dbContext;
     }

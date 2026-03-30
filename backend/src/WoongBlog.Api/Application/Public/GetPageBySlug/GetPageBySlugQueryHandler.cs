@@ -5,15 +5,15 @@ namespace WoongBlog.Api.Application.Public.GetPageBySlug;
 
 public class GetPageBySlugQueryHandler : IRequestHandler<GetPageBySlugQuery, PageDto?>
 {
-    private readonly IPublicPageService _publicPageService;
+    private readonly IPublicPageQueries _publicPageQueries;
 
-    public GetPageBySlugQueryHandler(IPublicPageService publicPageService)
+    public GetPageBySlugQueryHandler(IPublicPageQueries publicPageQueries)
     {
-        _publicPageService = publicPageService;
+        _publicPageQueries = publicPageQueries;
     }
 
     public async Task<PageDto?> Handle(GetPageBySlugQuery request, CancellationToken cancellationToken)
     {
-        return await _publicPageService.GetPageBySlugAsync(request.Slug, cancellationToken);
+        return await _publicPageQueries.GetPageBySlugAsync(request.Slug, cancellationToken);
     }
 }

@@ -55,18 +55,15 @@ public sealed class AssetStorageService : IAssetStorageService
             await file.CopyToAsync(stream, cancellationToken);
         }
 
-        var asset = new Asset
-        {
-            Id = Guid.NewGuid(),
-            Bucket = normalizedBucket,
-            Path = relativePath,
-            PublicUrl = $"/media/{relativePath}",
-            MimeType = file.ContentType,
-            Size = file.Length,
-            Kind = GetKind(file.ContentType),
-            CreatedBy = createdBy,
-            CreatedAt = DateTimeOffset.UtcNow
-        };
+        var asset = Asset.Create(
+            normalizedBucket,
+            relativePath,
+            $"/media/{relativePath}",
+            file.ContentType,
+            GetKind(file.ContentType),
+            file.Length,
+            createdBy,
+            DateTimeOffset.UtcNow);
 
         _dbContext.Assets.Add(asset);
         await _dbContext.SaveChangesAsync(cancellationToken);

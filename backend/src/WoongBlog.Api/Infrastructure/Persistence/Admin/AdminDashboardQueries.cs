@@ -4,11 +4,11 @@ using WoongBlog.Api.Application.Admin.GetDashboardSummary;
 
 namespace WoongBlog.Api.Infrastructure.Persistence.Admin;
 
-public sealed class AdminDashboardService : IAdminDashboardService
+public sealed class AdminDashboardQueries : IAdminDashboardQueries
 {
     private readonly WoongBlogDbContext _dbContext;
 
-    public AdminDashboardService(WoongBlogDbContext dbContext)
+    public AdminDashboardQueries(WoongBlogDbContext dbContext)
     {
         _dbContext = dbContext;
     }

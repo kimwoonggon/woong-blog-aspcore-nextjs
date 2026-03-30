@@ -21,9 +21,7 @@ public sealed class UpdatePageCommandHandler : IRequestHandler<UpdatePageCommand
             return new AdminActionResult(false);
         }
 
-        page.Title = request.Title;
-        page.ContentJson = request.ContentJson;
-        page.UpdatedAt = DateTimeOffset.UtcNow;
+        page.UpdateContent(request.Title, request.ContentJson, DateTimeOffset.UtcNow);
 
         await _adminPageWriteStore.SaveChangesAsync(cancellationToken);
         return new AdminActionResult(true);

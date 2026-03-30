@@ -1,16 +1,24 @@
 using MediatR;
 using WoongBlog.Api.Application.Admin.Abstractions;
 using WoongBlog.Api.Application.Admin.Support;
+using WoongBlog.Api.Domain.Entities;
 
 namespace WoongBlog.Api.Application.Admin.UpdateWork;
 
 public sealed class UpdateWorkCommandHandler : IRequestHandler<UpdateWorkCommand, AdminMutationResult?>
 {
     private readonly IAdminWorkWriteStore _workWriteStore;
+    private readonly IAdminUniqueSlugService _uniqueSlugService;
+    private readonly IAdminExcerptService _excerptService;
 
-    public UpdateWorkCommandHandler(IAdminWorkWriteStore workWriteStore)
+    public UpdateWorkCommandHandler(
+        IAdminWorkWriteStore workWriteStore,
+        IAdminUniqueSlugService uniqueSlugService,
+        IAdminExcerptService excerptService)
     {
         _workWriteStore = workWriteStore;
+        _uniqueSlugService = uniqueSlugService;
+        _excerptService = excerptService;
     }
 
     public async Task<AdminMutationResult?> Handle(UpdateWorkCommand request, CancellationToken cancellationToken)
@@ -21,39 +29,21 @@ public sealed class UpdateWorkCommandHandler : IRequestHandler<UpdateWorkCommand
             return null;
         }
 
-        work.Title = request.Title;
-        work.Slug = await GenerateUniqueSlugAsync(request.Title, work.Id, cancellationToken);
-        work.Excerpt = AdminContentText.GenerateExcerpt(AdminContentJson.ExtractHtml(request.ContentJson));
-        work.ThumbnailAssetId = request.ThumbnailAssetId;
-        work.IconAssetId = request.IconAssetId;
-        work.Category = request.Category;
-        work.Period = request.Period;
-        work.Tags = request.Tags;
-        work.ContentJson = request.ContentJson;
-        work.AllPropertiesJson = request.AllPropertiesJson;
-        work.UpdatedAt = DateTimeOffset.UtcNow;
-        work.Published = request.Published;
-        if (request.Published && work.PublishedAt is null)
-        {
-            work.PublishedAt = DateTimeOffset.UtcNow;
-        }
+        var slug = await _uniqueSlugService.GenerateWorkSlugAsync(request.Title, work.Id, cancellationToken);
+        var excerpt = _excerptService.GenerateWorkExcerpt(request.ContentJson);
+        var values = new WorkUpsertValues(
+            request.Title,
+            request.Category,
+            request.Period,
+            request.Tags,
+            request.Published,
+            request.ContentJson,
+            request.AllPropertiesJson,
+            request.ThumbnailAssetId,
+            request.IconAssetId);
+        work.Update(values, slug, excerpt, DateTimeOffset.UtcNow);
 
         await _workWriteStore.SaveChangesAsync(cancellationToken);
         return new AdminMutationResult(work.Id, work.Slug);
-    }
-
-    private async Task<string> GenerateUniqueSlugAsync(string title, Guid? excludingId, CancellationToken cancellationToken)
-    {
-        var baseSlug = AdminContentText.Slugify(title, "work");
-        var slug = baseSlug;
-        var suffix = 2;
-
-        while (await _workWriteStore.SlugExistsAsync(slug, excludingId, cancellationToken))
-        {
-            slug = $"{baseSlug}-{suffix}";
-            suffix += 1;
-        }
-
-        return slug;
     }
 }

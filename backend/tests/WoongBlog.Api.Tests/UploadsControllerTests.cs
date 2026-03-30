@@ -114,16 +114,7 @@ public class UploadsControllerTests : IClassFixture<CustomWebApplicationFactory>
         using (var scope = _factory.Services.CreateScope())
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
-            var asset = new Asset
-            {
-                Id = Guid.NewGuid(),
-                Bucket = "media",
-                Path = "../../escape.txt",
-                PublicUrl = "/media/../../escape.txt",
-                MimeType = "text/plain",
-                Kind = "other",
-                Size = 1
-            };
+            var asset = Asset.Create("media", "../../escape.txt", "/media/../../escape.txt", "text/plain", "other", 1, null, DateTimeOffset.UtcNow);
             dbContext.Assets.Add(asset);
             dbContext.SaveChanges();
             assetId = asset.Id;

@@ -2,6 +2,8 @@ using WoongBlog.Api.Application.Public.GetBlogBySlug;
 using WoongBlog.Api.Application.Public.GetWorkBySlug;
 using WoongBlog.Api.Application.Admin.CreateBlog;
 using WoongBlog.Api.Application.Admin.CreateWork;
+using WoongBlog.Api.Application.Admin.UpdateBlog;
+using WoongBlog.Api.Application.Admin.UpdateWork;
 using WoongBlog.Api.Application.Admin.UpdatePage;
 using WoongBlog.Api.Application.Admin.UpdateSiteSettings;
 using WoongBlog.Api.Controllers.Models;
@@ -45,6 +47,62 @@ public class RequestValidatorTests
 
         Assert.Contains(result.Errors, error => error.PropertyName == nameof(CreateBlogCommand.Title));
         Assert.Contains(result.Errors, error => error.PropertyName == "Tags[0]");
+    }
+
+    [Fact]
+    public void SaveWorkRequestValidator_Rejects_Malformed_Content_And_Metadata_Json()
+    {
+        var validator = new CreateWorkCommandValidator();
+        var result = validator.Validate(new CreateWorkCommand(
+            "Title",
+            "Category",
+            "2026.03",
+            [],
+            false,
+            "{not-json}",
+            "[]",
+            null,
+            null
+        ));
+
+        Assert.Contains(result.Errors, error => error.PropertyName == nameof(CreateWorkCommand.ContentJson));
+        Assert.Contains(result.Errors, error => error.PropertyName == nameof(CreateWorkCommand.AllPropertiesJson));
+    }
+
+    [Fact]
+    public void UpdateBlogCommandValidator_Rejects_Malformed_Content_Json()
+    {
+        var validator = new UpdateBlogCommandValidator();
+        var result = validator.Validate(new UpdateBlogCommand(
+            Guid.NewGuid(),
+            "Title",
+            [],
+            false,
+            "broken"
+        ));
+
+        Assert.Contains(result.Errors, error => error.PropertyName == nameof(UpdateBlogCommand.ContentJson));
+    }
+
+    [Fact]
+    public void UpdateWorkCommandValidator_Rejects_Malformed_Content_And_Metadata_Json()
+    {
+        var validator = new UpdateWorkCommandValidator();
+        var result = validator.Validate(new UpdateWorkCommand(
+            Guid.NewGuid(),
+            "Title",
+            "Category",
+            "2026.03",
+            [],
+            false,
+            "broken",
+            "\"string\"",
+            null,
+            null
+        ));
+
+        Assert.Contains(result.Errors, error => error.PropertyName == nameof(UpdateWorkCommand.ContentJson));
+        Assert.Contains(result.Errors, error => error.PropertyName == nameof(UpdateWorkCommand.AllPropertiesJson));
     }
 
     [Fact]

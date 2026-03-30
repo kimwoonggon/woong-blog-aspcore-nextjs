@@ -1,7 +1,7 @@
 'use client'
 
 import { X } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
@@ -66,6 +66,7 @@ export function AdminBlogBatchAiPanel({
   const [isCancellingJob, setIsCancellingJob] = useState(false)
   const [isCleaningJobs, setIsCleaningJobs] = useState(false)
   const [removingJobId, setRemovingJobId] = useState<string | null>(null)
+  const latestJobDetailRequestId = useRef(0)
 
   const previewJobItem = activeJob?.items.find((item) => item.jobItemId === selectedJobItemId)
     ?? activeJob?.items.find((item) => item.fixedHtml)
@@ -136,8 +137,14 @@ export function AdminBlogBatchAiPanel({
   }, [activeJobId])
 
   const loadJobDetail = useCallback(async (jobId: string) => {
+    const requestId = latestJobDetailRequestId.current + 1
+    latestJobDetailRequestId.current = requestId
+
     try {
       const job = await getBlogAiBatchJobBrowser(jobId)
+      if (latestJobDetailRequestId.current !== requestId) {
+        return
+      }
       setActiveJob(job)
       if (job.items.length > 0 && !selectedJobItemId) {
         const firstPreviewable = job.items.find((item) => item.fixedHtml)
