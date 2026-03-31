@@ -26,7 +26,7 @@ test('work detail page renders seeded detail content and stable related cards', 
 test('blog detail page renders seeded blog content and stable related cards', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 960 })
   await page.goto('/blog/seeded-blog')
-  await expect(page.getByRole('heading', { name: 'Designing a Seed-First Migration Strategy' })).toBeVisible()
+  await expect(page.locator('main h1')).toHaveText('Designing a Seed-First Migration Strategy')
   await expect(page.getByText(/Seed data gives frontend and backend teams/i)).toBeVisible()
 
   const relatedBlogCards = page.getByTestId('related-blog-card')

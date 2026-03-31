@@ -14,12 +14,21 @@ compose=(docker compose)
 
 check_status() {
   local url="$1"
+  if [[ "$url" == https://localhost* ]] || [[ "$url" == https://127.0.0.1* ]]; then
+    curl -kfsS "$url" >/dev/null
+    return
+  fi
+
   curl -fsS "$url" >/dev/null
 }
 
 echo "[backend-http-smoke] health"
 for _ in $(seq 1 30); do
-  if curl -fsS "$base_url/api/health" >/dev/null 2>&1; then
+  if [[ "$base_url" == https://localhost* ]] || [[ "$base_url" == https://127.0.0.1* ]]; then
+    if curl -kfsS "$base_url/api/health" >/dev/null 2>&1; then
+      break
+    fi
+  elif curl -fsS "$base_url/api/health" >/dev/null 2>&1; then
     break
   fi
   sleep 2
@@ -34,13 +43,22 @@ for path in /api/public/home /api/public/site-settings /api/public/works /api/pu
 done
 
 echo "[backend-http-smoke] acquire admin session"
-curl -fsSL -c "$cookie_file" "$base_url/api/auth/test-login?email=admin@example.com&returnUrl=%2Fadmin" >/dev/null
-curl -fsS -b "$cookie_file" "$base_url/api/auth/session" | grep -q '"authenticated":true'
+if [[ "$base_url" == https://localhost* ]] || [[ "$base_url" == https://127.0.0.1* ]]; then
+  curl -kfsSL -c "$cookie_file" "$base_url/api/auth/test-login?email=admin@example.com&returnUrl=%2Fadmin" >/dev/null
+  curl -kfsS -b "$cookie_file" "$base_url/api/auth/session" | grep -q '"authenticated":true'
+else
+  curl -fsSL -c "$cookie_file" "$base_url/api/auth/test-login?email=admin@example.com&returnUrl=%2Fadmin" >/dev/null
+  curl -fsS -b "$cookie_file" "$base_url/api/auth/session" | grep -q '"authenticated":true'
+fi
 
 echo "[backend-http-smoke] admin reads x${admin_iterations}"
 for path in /api/admin/dashboard /api/admin/pages /api/admin/site-settings /api/admin/works /api/admin/blogs; do
   for _ in $(seq 1 "$admin_iterations"); do
-    curl -fsS -b "$cookie_file" "$base_url$path" >/dev/null
+    if [[ "$base_url" == https://localhost* ]] || [[ "$base_url" == https://127.0.0.1* ]]; then
+      curl -kfsS -b "$cookie_file" "$base_url$path" >/dev/null
+    else
+      curl -fsS -b "$cookie_file" "$base_url$path" >/dev/null
+    fi
   done
 done
 

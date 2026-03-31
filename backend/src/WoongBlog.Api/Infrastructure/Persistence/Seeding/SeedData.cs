@@ -9,9 +9,15 @@ public static class SeedData
     {
         if (await dbContext.SiteSettings.AnyAsync())
         {
+            await EnsurePublicDetailSeedsAsync(dbContext);
             return;
         }
 
+        await SeedInitialDataAsync(dbContext);
+    }
+
+    private static async Task SeedInitialDataAsync(WoongBlogDbContext dbContext)
+    {
         var adminId = Guid.Parse("11111111-1111-1111-1111-111111111111");
         var resumeAssetId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
         var workThumb1 = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
@@ -199,5 +205,155 @@ public static class SeedData
         );
 
         await dbContext.SaveChangesAsync();
+    }
+
+    private static async Task EnsurePublicDetailSeedsAsync(WoongBlogDbContext dbContext)
+    {
+        var adminId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+        var workThumb1 = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
+        var workIcon1 = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd");
+        var blogCover1 = Guid.Parse("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee");
+
+        await EnsureAssetAsync(
+            dbContext,
+            workThumb1,
+            adminId,
+            "media",
+            "works/seeded-work-thumb.png",
+            "/media/works/seeded-work-thumb.png",
+            "image/png",
+            "image",
+            48_000);
+
+        await EnsureAssetAsync(
+            dbContext,
+            workIcon1,
+            adminId,
+            "media",
+            "works/seeded-work-icon.png",
+            "/media/works/seeded-work-icon.png",
+            "image/png",
+            "image",
+            8_000);
+
+        await EnsureAssetAsync(
+            dbContext,
+            blogCover1,
+            adminId,
+            "media",
+            "blogs/seeded-blog-cover.png",
+            "/media/blogs/seeded-blog-cover.png",
+            "image/png",
+            "image",
+            31_000);
+
+        var seededWork = await dbContext.Works.SingleOrDefaultAsync(x => x.Slug == "seeded-work");
+        if (seededWork is null)
+        {
+            seededWork = await dbContext.Works
+                .OrderByDescending(x => x.PublishedAt)
+                .FirstOrDefaultAsync(x => x.Title == "Portfolio Platform Rebuild");
+        }
+
+        if (seededWork is null)
+        {
+            dbContext.Works.Add(new Work
+            {
+                Slug = "seeded-work",
+                Title = "Portfolio Platform Rebuild",
+                Excerpt = "Rebuilt the portfolio stack around clearer domain boundaries, richer content modeling, and operational simplicity.",
+                ContentJson = """{"html":"<h2>Overview</h2><p>This seeded case study represents a platform rebuild that spans frontend UX, backend APIs, and deployment ergonomics.</p><h2>Highlights</h2><ul><li>React + TypeScript frontend</li><li>ASP.NET Core backend</li><li>PostgreSQL domain model</li></ul>"}""",
+                ThumbnailAssetId = workThumb1,
+                IconAssetId = workIcon1,
+                Category = "platform",
+                Period = "2025.12 - 2026.03",
+                AllPropertiesJson = """{"teamSize":1,"role":"full-stack","status":"seeded"}""",
+                Tags = new[] { "react", "nextjs", "dotnet", "postgres" },
+                Published = true,
+                PublishedAt = DateTimeOffset.UtcNow.AddDays(-7)
+            });
+        }
+        else
+        {
+            seededWork.Slug = "seeded-work";
+            seededWork.Title = "Portfolio Platform Rebuild";
+            seededWork.Excerpt = "Rebuilt the portfolio stack around clearer domain boundaries, richer content modeling, and operational simplicity.";
+            seededWork.ContentJson = """{"html":"<h2>Overview</h2><p>This seeded case study represents a platform rebuild that spans frontend UX, backend APIs, and deployment ergonomics.</p><h2>Highlights</h2><ul><li>React + TypeScript frontend</li><li>ASP.NET Core backend</li><li>PostgreSQL domain model</li></ul>"}""";
+            seededWork.ThumbnailAssetId = workThumb1;
+            seededWork.IconAssetId = workIcon1;
+            seededWork.Category = "platform";
+            seededWork.Period = "2025.12 - 2026.03";
+            seededWork.AllPropertiesJson = """{"teamSize":1,"role":"full-stack","status":"seeded"}""";
+            seededWork.Tags = new[] { "react", "nextjs", "dotnet", "postgres" };
+            seededWork.Published = true;
+            seededWork.PublishedAt ??= DateTimeOffset.UtcNow.AddDays(-7);
+            seededWork.UpdatedAt = DateTimeOffset.UtcNow;
+        }
+
+        var seededBlog = await dbContext.Blogs.SingleOrDefaultAsync(x => x.Slug == "seeded-blog");
+        if (seededBlog is null)
+        {
+            seededBlog = await dbContext.Blogs
+                .OrderByDescending(x => x.PublishedAt)
+                .FirstOrDefaultAsync(x => x.Title == "Designing a Seed-First Migration Strategy");
+        }
+
+        if (seededBlog is null)
+        {
+            dbContext.Blogs.Add(new Blog
+            {
+                Slug = "seeded-blog",
+                Title = "Designing a Seed-First Migration Strategy",
+                Excerpt = "Why seed data is often the fastest way to stabilize a new architecture before historical migration work is complete.",
+                ContentJson = """{"html":"<p>Seed data gives frontend and backend teams something concrete to build against from day one.</p><p>That reduces ambiguity and improves testability.</p>"}""",
+                CoverAssetId = blogCover1,
+                Tags = new[] { "seed", "migration", "architecture" },
+                Published = true,
+                PublishedAt = DateTimeOffset.UtcNow.AddDays(-5)
+            });
+        }
+        else
+        {
+            seededBlog.Slug = "seeded-blog";
+            seededBlog.Title = "Designing a Seed-First Migration Strategy";
+            seededBlog.Excerpt = "Why seed data is often the fastest way to stabilize a new architecture before historical migration work is complete.";
+            seededBlog.ContentJson = """{"html":"<p>Seed data gives frontend and backend teams something concrete to build against from day one.</p><p>That reduces ambiguity and improves testability.</p>"}""";
+            seededBlog.CoverAssetId = blogCover1;
+            seededBlog.Tags = new[] { "seed", "migration", "architecture" };
+            seededBlog.Published = true;
+            seededBlog.PublishedAt ??= DateTimeOffset.UtcNow.AddDays(-5);
+            seededBlog.UpdatedAt = DateTimeOffset.UtcNow;
+        }
+
+        await dbContext.SaveChangesAsync();
+    }
+
+    private static async Task EnsureAssetAsync(
+        WoongBlogDbContext dbContext,
+        Guid id,
+        Guid createdBy,
+        string bucket,
+        string path,
+        string publicUrl,
+        string mimeType,
+        string kind,
+        long size)
+    {
+        if (await dbContext.Assets.AnyAsync(x => x.Id == id))
+        {
+            return;
+        }
+
+        dbContext.Assets.Add(new Asset
+        {
+            Id = id,
+            Bucket = bucket,
+            Path = path,
+            PublicUrl = publicUrl,
+            MimeType = mimeType,
+            Kind = kind,
+            Size = size,
+            CreatedBy = createdBy
+        });
     }
 }

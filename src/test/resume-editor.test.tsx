@@ -42,7 +42,8 @@ describe('ResumeEditor', () => {
     )
 
     expect(screen.getByText('public-resume/resume.pdf')).toBeInTheDocument()
-    expect(screen.getByRole('link')).toHaveAttribute('href', '/media/public-resume/resume.pdf')
+    expect(screen.getByRole('link', { name: 'Download resume' })).toHaveAttribute('href', '/media/public-resume/resume.pdf')
+    expect(screen.getByRole('link', { name: 'Download resume' })).toHaveAttribute('download')
   })
 
   it('ignores upload events that do not contain a file', () => {
@@ -151,7 +152,7 @@ describe('ResumeEditor', () => {
       />,
     )
 
-    fireEvent.click(screen.getByRole('button'))
+    fireEvent.click(screen.getByRole('button', { name: 'Delete resume' }))
 
     await waitFor(() => {
       expect(mocks.confirm).toHaveBeenCalled()
@@ -173,7 +174,7 @@ describe('ResumeEditor', () => {
       />,
     )
 
-    fireEvent.click(screen.getByRole('button'))
+    fireEvent.click(screen.getByRole('button', { name: 'Delete resume' }))
 
     await waitFor(() => {
       expect(mocks.toast.success).toHaveBeenCalledWith('Resume removed successfully!', { id: 'toast-id' })
@@ -205,7 +206,7 @@ describe('ResumeEditor', () => {
       />,
     )
 
-    fireEvent.click(screen.getByRole('button'))
+    fireEvent.click(screen.getByRole('button', { name: 'Delete resume' }))
 
     await waitFor(() => {
       expect(mocks.toast.error).toHaveBeenCalledWith('Failed to update site settings', { id: 'toast-id' })
@@ -222,7 +223,7 @@ describe('ResumeEditor', () => {
       />,
     )
 
-    fireEvent.click(screen.getByRole('button'))
+    fireEvent.click(screen.getByRole('button', { name: 'Delete resume' }))
 
     await waitFor(() => {
       expect(mocks.toast.error).toHaveBeenCalledWith('Failed to remove', { id: 'toast-id' })

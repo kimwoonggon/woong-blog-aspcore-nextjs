@@ -1,10 +1,9 @@
-using WoongBlog.Api.Application.Public.GetBlogBySlug;
-using WoongBlog.Api.Application.Public.GetWorkBySlug;
-using WoongBlog.Api.Application.Admin.CreateBlog;
-using WoongBlog.Api.Application.Admin.CreateWork;
-using WoongBlog.Api.Application.Admin.UpdatePage;
-using WoongBlog.Api.Application.Admin.UpdateSiteSettings;
-using WoongBlog.Api.Controllers.Models;
+using WoongBlog.Api.Modules.Content.Blogs.Application.CreateBlog;
+using WoongBlog.Api.Modules.Content.Blogs.Application.GetBlogBySlug;
+using WoongBlog.Api.Modules.Content.Pages.Application.UpdatePage;
+using WoongBlog.Api.Modules.Content.Works.Application.CreateWork;
+using WoongBlog.Api.Modules.Content.Works.Application.GetWorkBySlug;
+using WoongBlog.Api.Modules.Site.Application.UpdateSiteSettings;
 
 namespace WoongBlog.Api.Tests;
 

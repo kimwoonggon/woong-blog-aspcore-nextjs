@@ -20,6 +20,6 @@ test('blog editor accepts mixed special-character and Korean input', async ({ pa
   ])
 
   expect(response.status()).toBe(200)
-  await expect(page).toHaveURL(/\/admin\/blog/)
-  await expect(page.getByText(title)).toBeVisible()
+  await page.goto('/blog')
+  await expect(page.getByRole('link', { name: title })).toBeVisible()
 })

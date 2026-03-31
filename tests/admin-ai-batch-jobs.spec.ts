@@ -8,12 +8,12 @@ test('admin can create, observe, and apply a blog AI batch job without blocking 
   await page.goto('/admin/blog')
   await expect(page.getByRole('heading', { name: 'Blog Posts' })).toBeVisible()
 
-  const checkboxes = page.getByRole('checkbox', { name: /Select / })
-  const count = await checkboxes.count()
+  const rows = page.getByTestId('admin-blog-row')
+  const count = await rows.count()
   expect(count).toBeGreaterThan(1)
 
-  await checkboxes.nth(0).click()
-  await checkboxes.nth(1).click()
+  await rows.nth(0).getByRole('checkbox').click()
+  await rows.nth(1).getByRole('checkbox').click()
 
   await expect(page.getByRole('button', { name: 'Delete Selected' })).toBeVisible()
   await expect(page.getByTestId('admin-blog-batch-ai-panel')).toHaveCount(0)

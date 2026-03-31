@@ -23,6 +23,7 @@ interface AdminCollectionSectionProps<T extends CollectionItem> {
   title: string
   emptyMessage: string
   editHrefBase: string
+  returnTo: string
   items: T[]
   desktopPageSize: number
   tabletPageSize: number
@@ -46,6 +47,7 @@ function AdminCollectionSection<T extends CollectionItem>({
   title,
   emptyMessage,
   editHrefBase,
+  returnTo,
   items,
   desktopPageSize,
   tabletPageSize,
@@ -72,6 +74,7 @@ function AdminCollectionSection<T extends CollectionItem>({
   }, [currentPage, filteredItems, pageSize])
 
   const pageWindow = getPageWindow(currentPage, totalPages)
+  const encodedReturnTo = encodeURIComponent(returnTo)
 
   return (
     <section className="space-y-4">
@@ -100,7 +103,7 @@ function AdminCollectionSection<T extends CollectionItem>({
           {visibleItems.map((item) => (
             <Link
               key={item.id}
-              href={`${editHrefBase}/${item.id}`}
+              href={`${editHrefBase}/${item.id}?returnTo=${encodedReturnTo}`}
               className="group block"
               data-testid={`${title.toLowerCase().replace(/\s+/g, '-')}-card-link`}
             >
@@ -188,6 +191,7 @@ export function AdminDashboardCollections({ works, blogs }: AdminDashboardCollec
         title="Works"
         emptyMessage="No works found."
         editHrefBase="/admin/works"
+        returnTo="/admin/dashboard"
         items={works}
         desktopPageSize={6}
         tabletPageSize={4}
@@ -199,6 +203,7 @@ export function AdminDashboardCollections({ works, blogs }: AdminDashboardCollec
         title="Blog Posts"
         emptyMessage="No blog posts found."
         editHrefBase="/admin/blog"
+        returnTo="/admin/dashboard"
         items={blogs}
         desktopPageSize={6}
         tabletPageSize={3}

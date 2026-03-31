@@ -19,6 +19,7 @@ interface AdminWorksTableClientProps {
 
 export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
   const router = useRouter()
+  const returnTo = encodeURIComponent('/admin/works')
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [query, setQuery] = useState('')
   const [page, setPage] = useState(1)
@@ -160,7 +161,7 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
                 </TableCell>
                 <TableCell className="font-medium">
                   <Link
-                    href={`/admin/works/${work.id}`}
+                    href={`/admin/works/${work.id}?returnTo=${returnTo}`}
                     className="transition-colors hover:text-primary hover:underline"
                   >
                     {work.title}
@@ -188,7 +189,7 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
                         <Eye className="h-4 w-4" />
                       </Button>
                     </Link>
-                    <Link href={`/admin/works/${work.id}`}>
+                    <Link href={`/admin/works/${work.id}?returnTo=${returnTo}`}>
                       <Button variant="ghost" size="icon" title="Edit">
                         <Pencil className="h-4 w-4" />
                       </Button>

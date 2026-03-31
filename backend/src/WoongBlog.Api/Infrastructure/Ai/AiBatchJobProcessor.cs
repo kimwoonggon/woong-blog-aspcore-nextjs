@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using WoongBlog.Api.Application.Admin.Support;
+using WoongBlog.Api.Modules.Content.Common.Application.Support;
 using WoongBlog.Api.Domain.Entities;
 using WoongBlog.Api.Infrastructure.Persistence;
 

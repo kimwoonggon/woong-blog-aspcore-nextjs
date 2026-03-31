@@ -32,14 +32,26 @@ describe('public API helper contracts', () => {
     const fetchMock = vi.fn()
       .mockResolvedValueOnce({ ok: false })
       .mockResolvedValueOnce({ ok: true, json: async () => ({ ownerName: 'Woong', tagline: 'Creative Technologist' }) })
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ publicUrl: '/media/resume.pdf', fileName: 'resume.pdf' }) })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          id: 'resume-1',
+          publicUrl: '/media/public-resume/resume.pdf',
+          fileName: 'resume.pdf',
+          path: 'public-resume/resume.pdf',
+        }),
+      })
 
     vi.stubGlobal('fetch', fetchMock)
     const { fetchPublicSiteSettings, fetchResume } = await import('@/lib/api/site-settings')
 
     await expect(fetchPublicSiteSettings()).resolves.toBeNull()
     await expect(fetchPublicSiteSettings()).resolves.toMatchObject({ ownerName: 'Woong' })
-    await expect(fetchResume()).resolves.toMatchObject({ fileName: 'resume.pdf' })
+    await expect(fetchResume()).resolves.toMatchObject({
+      id: 'resume-1',
+      fileName: 'resume.pdf',
+      path: 'public-resume/resume.pdf',
+    })
   })
 
   it('blog and work detail helpers preserve encoded paths and null semantics', async () => {

@@ -221,6 +221,14 @@ describe('admin page success and not-found states', () => {
         { id: 'page-contact', title: 'Contact', slug: 'contact', content: { html: '<p>Contact</p>' } },
       ]),
     }))
+    vi.doMock('@/lib/api/site-settings', () => ({
+      fetchResume: vi.fn(async () => ({
+        id: 'resume-1',
+        publicUrl: '/media/public-resume/resume.pdf',
+        fileName: 'resume.pdf',
+        path: 'public-resume/resume.pdf',
+      })),
+    }))
     vi.doMock('@/components/admin/SiteSettingsEditor', () => ({
       SiteSettingsEditor: ({ initialSettings }: { initialSettings: { owner_name: string } }) => (
         <div>Site settings for {initialSettings.owner_name}</div>
@@ -261,6 +269,9 @@ describe('admin page success and not-found states', () => {
         resume_asset_id: null,
       })),
       fetchAdminPages: vi.fn(async () => []),
+    }))
+    vi.doMock('@/lib/api/site-settings', () => ({
+      fetchResume: vi.fn(async () => null),
     }))
     vi.doMock('@/components/admin/SiteSettingsEditor', () => ({
       SiteSettingsEditor: ({ initialSettings }: { initialSettings: { owner_name: string; tagline: string } }) => (

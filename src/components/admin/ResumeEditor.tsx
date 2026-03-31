@@ -135,11 +135,23 @@ export function ResumeEditor({ resumeAsset }: ResumeEditorProps) {
                         </div>
                         <div className="flex items-center gap-2">
                             <Button size="icon" variant="outline" asChild>
-                                <a href={resumeUrl || '#'} target="_blank" rel="noopener noreferrer">
+                                <a
+                                    aria-label="Download resume"
+                                    href={resumeUrl || '#'}
+                                    download
+                                >
                                     <Download size={16} />
                                 </a>
                             </Button>
-                            <Button size="icon" variant="ghost" className="text-red-500 hover:text-red-600 hover:bg-red-50" onClick={handleDelete} disabled={isDeleting}>
+                            <Button
+                                type="button"
+                                size="icon"
+                                variant="ghost"
+                                aria-label="Delete resume"
+                                className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                                onClick={handleDelete}
+                                disabled={isDeleting}
+                            >
                                 {isDeleting ? <Loader2 className="animate-spin" size={16} /> : <Trash2 size={16} />}
                             </Button>
                         </div>

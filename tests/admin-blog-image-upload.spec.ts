@@ -25,13 +25,14 @@ test('blog editor uploads an inline image and public blog renders it', async ({ 
   await page.locator('.tiptap.ProseMirror').first().click()
   await page.keyboard.type(' 이미지가 포함된 게시물입니다.')
 
-  const [saveResponse] = await Promise.all([
+  await Promise.all([
     page.waitForResponse((res) => res.url().includes('/api/admin/blogs') && res.request().method() === 'POST' && res.ok()),
     page.getByRole('button', { name: 'Create Post' }).click(),
   ])
 
-  const payload = await saveResponse.json()
-  await page.goto(`/blog/${payload.slug}`)
+  await expect(page).toHaveURL(/\/admin\/blog(?:\?.*)?$/)
+  await page.getByRole('link', { name: title }).click()
+  await expect(page).toHaveURL(/\/blog\//)
   const renderedImage = page.locator('img').first()
   await expect(renderedImage).toBeVisible()
   await expect(renderedImage).toHaveAttribute('src', /\/media\//)

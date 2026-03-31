@@ -6,8 +6,8 @@ test.use({ storageState: 'test-results/playwright/admin-storage-state.json' })
 test('admin can create and publish a work that appears on public works page', async ({ page }) => {
   const title = `Playwright Work ${Date.now()}`
 
-  await page.goto('/admin/works/new')
-
+  await page.goto('/admin/works')
+  await page.getByRole('link', { name: /Add Work/i }).click()
   await expect(page).toHaveURL(/\/admin\/works\/new/)
   await expect(page.getByLabel('Category')).toHaveValue('Uncategorized')
   await expect(page.getByLabel('Title')).toBeVisible()
@@ -42,10 +42,9 @@ test('admin can create and publish a work that appears on public works page', as
     page.getByRole('button', { name: /Create Work/i }).click(),
   ])
 
-  await expect(page).toHaveURL(/\/admin\/works(?:\?.*)?$/, { timeout: 20000 })
-  await expect(page.getByText(title)).toBeVisible()
-
   const payload = await saveResponse.json()
+  await expect(page).toHaveURL(/\/admin\/works(?:\?.*)?$/, { timeout: 20000 })
+  await expect(page.getByRole('link', { name: title }).first()).toBeVisible()
 
   await page.goto(`/works/${payload.slug}`)
   await expect(page.getByRole('heading', { name: title })).toBeVisible()

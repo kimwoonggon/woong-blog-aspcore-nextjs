@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { AIFixDialog } from '@/components/admin/AIFixDialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -91,8 +91,13 @@ function buildWorkSnapshot({
 
 export function WorkEditor({ initialWork, inlineMode = false }: WorkEditorProps) {
     const router = useRouter()
+    const searchParams = useSearchParams()
     const isEditing = Boolean(initialWork?.id)
     const defaultPublished = initialWork?.published ?? true
+    const requestedReturnTo = searchParams.get('returnTo')
+    const returnTo = requestedReturnTo && requestedReturnTo.startsWith('/')
+        ? requestedReturnTo
+        : '/admin/works'
 
     const [title, setTitle] = useState(initialWork?.title || '')
     const [category, setCategory] = useState(initialWork?.category || DEFAULT_WORK_CATEGORY)
@@ -239,11 +244,14 @@ export function WorkEditor({ initialWork, inlineMode = false }: WorkEditorProps)
                 return
             }
 
+            await response.json().catch(() => null)
             toast.success(isEditing ? 'Work updated successfully' : 'Work created successfully')
-            if (!inlineMode) {
-                router.push('/admin/works')
+            if (inlineMode) {
+                router.refresh()
+                return
             }
-            router.refresh()
+
+            router.push(returnTo)
         } finally {
             setIsSaving(false)
         }
@@ -473,7 +481,7 @@ export function WorkEditor({ initialWork, inlineMode = false }: WorkEditorProps)
                     </p>
                 )}
                 {!inlineMode && (
-                    <Button type="button" variant="outline" onClick={() => router.back()}>
+                    <Button type="button" variant="outline" onClick={() => router.push(returnTo)}>
                         Cancel
                     </Button>
                 )}

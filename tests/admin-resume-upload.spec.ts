@@ -28,4 +28,19 @@ test('admin can upload a resume pdf and public resume page exposes download', as
   const downloadLink = page.getByRole('link', { name: /download/i }).first()
   await expect(downloadLink).toBeVisible()
   await expect(downloadLink).toHaveAttribute('href', /\/media\/public-resume\//)
+
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    downloadLink.click(),
+  ])
+  expect(await download.suggestedFilename()).toMatch(/\.pdf$/i)
+
+  await page.getByRole('button', { name: '이력서 PDF 업로드' }).click()
+  await expect(page.getByText('Resume Management')).toBeVisible()
+  await page.locator('button:has(svg.lucide-trash-2)').click()
+  await expect(page.locator('main')).toContainText('No resume uploaded yet.', { timeout: 20000 })
+  await expect(page.getByRole('link', { name: /download/i })).toHaveCount(0)
+
+  await page.goto('/admin/pages')
+  await expect(page.locator('#resume-editor').getByText('No resume uploaded yet.')).toBeVisible()
 })

@@ -8,6 +8,7 @@ import { fetchAdminWorks, type WorkAdminItem } from '@/lib/api/works'
 export const dynamic = 'force-dynamic'
 
 export default async function AdminWorksPage() {
+    const returnTo = encodeURIComponent('/admin/works')
     let works: WorkAdminItem[] = []
     let loadFailed = false
 
@@ -26,7 +27,7 @@ export default async function AdminWorksPage() {
                         Click a title to edit directly, or create a new work and return to this list as soon as it saves.
                     </p>
                 </div>
-                <Link href="/admin/works/new">
+                <Link href={`/admin/works/new?returnTo=${returnTo}`}>
                     <Button>
                         <Plus className="mr-2 h-4 w-4" /> Add Work
                     </Button>

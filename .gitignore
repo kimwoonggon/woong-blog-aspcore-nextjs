@@ -44,6 +44,7 @@ yarn-error.log*
 AGENTS.md
 plan-ralph.md
 ralph.config.json
+evolutionary-architecture-by-example/
 
 # typescript
 *.tsbuildinfo
@@ -62,3 +63,4 @@ supabase/
 appsettings.Development.json
 .refs/
 downloads/
+.devcontainer-data/

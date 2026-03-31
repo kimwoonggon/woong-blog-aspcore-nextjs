@@ -11,6 +11,7 @@ import {
     type AdminPageRecord,
     type AdminSiteSettings,
 } from '@/lib/api/admin-pages'
+import { fetchResume } from '@/lib/api/site-settings'
 import { isHtmlPageContent, toHomeContent } from '@/lib/content/page-content'
 
 export const revalidate = 0
@@ -18,20 +19,22 @@ export const revalidate = 0
 export default async function AdminPagesPage() {
     let siteSettings: AdminSiteSettings | null = null
     let pages: AdminPageRecord[] = []
+    let resume = null
     let loadFailed = false
 
     try {
         siteSettings = await fetchAdminSiteSettings()
         pages = await fetchAdminPages(['home', 'introduction', 'contact'])
+        resume = await fetchResume()
     } catch {
         loadFailed = true
     }
 
-    const resumeAsset = siteSettings?.resume_asset_id
+    const resumeAsset = resume
         ? {
-            id: siteSettings.resume_asset_id,
-            bucket: 'media',
-            path: `resume/${siteSettings.resume_asset_id}.pdf`,
+            id: resume.id,
+            bucket: 'public-resume',
+            path: resume.path,
         }
         : null
 

@@ -1,13 +1,21 @@
 using Microsoft.EntityFrameworkCore;
-using WoongBlog.Api.Application.Public.Abstractions;
-using WoongBlog.Api.Application.Public.GetBlogs;
-using WoongBlog.Api.Application.Public.GetHome;
-using WoongBlog.Api.Application.Public.GetResume;
-using WoongBlog.Api.Application.Public.GetSiteSettings;
-using WoongBlog.Api.Application.Public.GetWorks;
 using WoongBlog.Api.Domain.Entities;
 using WoongBlog.Api.Infrastructure.Persistence;
-using WoongBlog.Api.Infrastructure.Persistence.Public;
+using WoongBlog.Api.Modules.Composition.Application.Abstractions;
+using WoongBlog.Api.Modules.Composition.Application.GetHome;
+using WoongBlog.Api.Modules.Composition.Persistence;
+using WoongBlog.Api.Modules.Content.Blogs.Application.Abstractions;
+using WoongBlog.Api.Modules.Content.Blogs.Application.GetBlogs;
+using WoongBlog.Api.Modules.Content.Blogs.Persistence;
+using WoongBlog.Api.Modules.Content.Pages.Application.Abstractions;
+using WoongBlog.Api.Modules.Content.Pages.Persistence;
+using WoongBlog.Api.Modules.Content.Works.Application.Abstractions;
+using WoongBlog.Api.Modules.Content.Works.Application.GetWorks;
+using WoongBlog.Api.Modules.Content.Works.Persistence;
+using WoongBlog.Api.Modules.Site.Application.Abstractions;
+using WoongBlog.Api.Modules.Site.Application.GetResume;
+using WoongBlog.Api.Modules.Site.Application.GetSiteSettings;
+using WoongBlog.Api.Modules.Site.Persistence;
 
 namespace WoongBlog.Api.Tests;
 

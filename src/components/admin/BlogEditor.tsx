@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from 'react'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { AuthoringCapabilityHints } from '@/components/admin/AuthoringCapabilityHints'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -57,6 +57,7 @@ function buildBlogSnapshot({
 export function BlogEditor({ initialBlog, inlineMode = false }: BlogEditorProps) {
     const router = useRouter()
     const pathname = usePathname()
+    const searchParams = useSearchParams()
     const isEditing = Boolean(initialBlog?.id)
     const defaultPublished = initialBlog?.published ?? true
     const [title, setTitle] = useState(initialBlog?.title || '')
@@ -132,6 +133,9 @@ export function BlogEditor({ initialBlog, inlineMode = false }: BlogEditorProps)
             }
 
             if (inlineMode) {
+                const relatedPage = searchParams.get('relatedPage')
+                const relatedPageQuery = relatedPage ? `?relatedPage=${encodeURIComponent(relatedPage)}` : ''
+
                 if (!isEditing && pathname === '/blog' && nextSlug) {
                     window.location.assign(`/blog/${encodeURIComponent(nextSlug)}`)
                     return
@@ -139,7 +143,7 @@ export function BlogEditor({ initialBlog, inlineMode = false }: BlogEditorProps)
 
                 if (isEditing && pathname.startsWith('/blog/')) {
                     if (nextSlug) {
-                        window.location.assign(`/blog/${encodeURIComponent(nextSlug)}`)
+                        window.location.assign(`/blog/${encodeURIComponent(nextSlug)}${relatedPageQuery}`)
                     } else {
                         router.refresh()
                     }
@@ -147,11 +151,6 @@ export function BlogEditor({ initialBlog, inlineMode = false }: BlogEditorProps)
                 }
 
                 router.refresh()
-                return
-            }
-
-            if (typeof window !== 'undefined' && window.history.length > 1) {
-                router.back()
                 return
             }
 

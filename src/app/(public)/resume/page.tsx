@@ -7,6 +7,7 @@ import { Download } from 'lucide-react'
 import { fetchResume } from '@/lib/api/site-settings'
 
 export const revalidate = 60
+export const dynamic = 'force-dynamic'
 
 export default async function ResumePage() {
     const resume = await fetchResume()
@@ -14,9 +15,9 @@ export default async function ResumePage() {
     const resumeUrl = resume?.publicUrl ?? null
     const resumeAsset = resume
         ? {
-            id: resume.fileName,
+            id: resume.id,
             bucket: 'public-resume',
-            path: resume.fileName,
+            path: resume.path,
         }
         : null
 
@@ -26,7 +27,7 @@ export default async function ResumePage() {
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-50">Resume</h1>
                 {resumeUrl && (
                     <Button asChild>
-                        <a href={resumeUrl} download target="_blank" rel="noopener noreferrer">
+                        <a href={resumeUrl} download>
                             <Download className="mr-2 h-4 w-4" /> Download
                         </a>
                     </Button>

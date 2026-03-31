@@ -1,0 +1,13 @@
+using FluentValidation;
+
+namespace WoongBlog.Api.Modules.Content.Blogs.Api.UpdateBlog;
+
+public sealed class UpdateBlogRequestValidator : AbstractValidator<UpdateBlogRequest>
+{
+    public UpdateBlogRequestValidator()
+    {
+        RuleFor(x => x.Title).NotEmpty().MaximumLength(200);
+        RuleFor(x => x.ContentJson).NotEmpty();
+        RuleForEach(x => x.Tags).MaximumLength(50);
+    }
+}

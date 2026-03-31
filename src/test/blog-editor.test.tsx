@@ -17,6 +17,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mocks.push, replace: mocks.replace, refresh: mocks.refresh, back: mocks.back }),
   usePathname: () => '/blog',
+  useSearchParams: () => new URLSearchParams(),
 }))
 
 vi.mock('sonner', () => ({ toast: mocks.toast }))
@@ -73,7 +74,7 @@ describe('BlogEditor', () => {
             tags: [],
             published: true,
             contentJson: JSON.stringify({
-              html: '<h2>저장 제목</h2>\n<ul><li>첫 번째</li></ul>\n<ul><li>두 번째</li></ul>',
+              html: '<h2>저장 제목</h2>\n<ul><li>첫 번째</li><li>두 번째</li></ul>',
             }),
           }),
         }),

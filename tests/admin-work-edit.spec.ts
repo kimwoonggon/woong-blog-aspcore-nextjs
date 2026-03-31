@@ -8,7 +8,7 @@ test('admin can edit an existing work entry with mixed special input', async ({ 
   const updatedBody = `작업 본문 한국어 + English + !!! ${Date.now()}`
 
   await page.goto('/admin/works')
-  await page.locator('tbody tr td').first().getByRole('link').click()
+  await page.getByTestId('admin-work-row').first().getByRole('link').first().click()
   await expect(page.getByRole('heading', { name: 'Edit Work' })).toBeVisible()
 
   await page.getByLabel('Title').fill(updatedTitle)
@@ -20,6 +20,8 @@ test('admin can edit an existing work entry with mixed special input', async ({ 
   ])
 
   const payload = await response.json()
+  await expect(page).toHaveURL(/\/admin\/works(?:\?.*)?$/)
+  await expect(page.getByText(updatedTitle)).toBeVisible()
   await page.goto(`/works/${payload.slug}`)
   await expect(page.getByRole('heading', { name: updatedTitle })).toBeVisible()
   await expect(page.getByText(updatedBody).first()).toBeVisible()

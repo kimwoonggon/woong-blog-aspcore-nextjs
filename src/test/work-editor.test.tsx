@@ -4,6 +4,7 @@ import { WorkEditor } from '@/components/admin/WorkEditor'
 
 const mocks = vi.hoisted(() => ({
   push: vi.fn(),
+  replace: vi.fn(),
   refresh: vi.fn(),
   back: vi.fn(),
   fetchWithCsrf: vi.fn(),
@@ -14,7 +15,8 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: mocks.push, refresh: mocks.refresh, back: mocks.back }),
+  useRouter: () => ({ push: mocks.push, replace: mocks.replace, refresh: mocks.refresh, back: mocks.back }),
+  useSearchParams: () => new URLSearchParams('returnTo=%2Fadmin%2Fworks'),
 }))
 
 vi.mock('sonner', () => ({ toast: mocks.toast }))
@@ -75,7 +77,7 @@ describe('WorkEditor', () => {
     expect(mocks.push).not.toHaveBeenCalled()
   })
 
-  it('creates a work and normalizes tags and metadata before redirecting', async () => {
+  it('creates a work and normalizes tags and metadata before returning to the previous list flow', async () => {
     render(<WorkEditor />)
 
     fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Work title' } })
@@ -113,7 +115,7 @@ describe('WorkEditor', () => {
       }),
     )
     expect(mocks.push).toHaveBeenCalledWith('/admin/works')
-    expect(mocks.refresh).toHaveBeenCalled()
+    expect(mocks.back).not.toHaveBeenCalled()
   })
 
   it('updates an existing work without navigating when inline mode is enabled', async () => {
@@ -219,7 +221,7 @@ describe('WorkEditor', () => {
     expect(screen.queryByAltText('Work icon preview')).not.toBeInTheDocument()
   })
 
-  it('creates new work as published by default and uses router.back when cancel is pressed', async () => {
+  it('creates new work as published by default and returns to the works list when cancel is pressed', async () => {
     render(<WorkEditor />)
 
     fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Work title' } })
@@ -239,7 +241,7 @@ describe('WorkEditor', () => {
     })
 
     fireEvent.click(screen.getByRole('button', { name: /Cancel/i }))
-    expect(mocks.back).toHaveBeenCalled()
+    expect(mocks.push).toHaveBeenCalledWith('/admin/works')
   })
 
   it('falls back to the default category when the user clears it', async () => {

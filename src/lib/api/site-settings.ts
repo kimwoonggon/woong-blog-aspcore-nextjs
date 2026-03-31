@@ -11,8 +11,10 @@ export interface PublicSiteSettings {
 }
 
 export interface ResumePayload {
+  id: string
   publicUrl: string
   fileName: string
+  path: string
 }
 
 export async function fetchPublicSiteSettings() {

@@ -17,12 +17,13 @@ test('admin can create and publish a blog post that appears on public blog page'
   await editor.click()
   await page.keyboard.type(`This is a browser-driven published post for ${title}.`)
 
-  await page.getByRole('button', { name: /Create Post/i }).click()
+  const [saveResponse] = await Promise.all([
+    page.waitForResponse((res) => res.url().includes('/api/admin/blogs') && res.request().method() === 'POST' && res.ok()),
+    page.getByRole('button', { name: /Create Post/i }).click(),
+  ])
 
-  await expect(page).toHaveURL(/\/admin\/blog(?:\?.*)?$/)
-  await expect(page.getByText(title)).toBeVisible()
-
-  await page.goto('/blog')
-  await expect(page.getByRole('link', { name: title })).toBeVisible()
+  const payload = await saveResponse.json()
+  await page.goto(`/blog/${payload.slug}`)
+  await expect(page.getByRole('heading', { name: title })).toBeVisible()
   await page.screenshot({ path: 'test-results/playwright/admin-blog-publish.png', fullPage: true })
 })

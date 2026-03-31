@@ -33,6 +33,6 @@ test('public work detail shows paginated related items', async ({ page }) => {
 
   await expect(page.getByRole('heading', { name: '다른 작업' })).toBeVisible()
   await expect(page.getByTestId('related-work-card').first()).toBeVisible()
-  await expect(page.getByText(/1\s*\/\s*\d+/)).toBeVisible()
+  await expect(page.locator('section').filter({ has: page.getByRole('heading', { name: '다른 작업' }) }).getByText(/^1\s*\/\s*\d+$/)).toBeVisible()
   await expect(page.getByRole('button', { name: '2' })).toBeVisible()
 })

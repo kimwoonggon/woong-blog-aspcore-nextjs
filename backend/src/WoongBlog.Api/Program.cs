@@ -1,21 +1,37 @@
 using Microsoft.AspNetCore.HttpOverrides;
-using WoongBlog.Api.Application;
-using WoongBlog.Api.Infrastructure.Configuration;
-using WoongBlog.Api.Endpoints;
-using WoongBlog.Api.Infrastructure.Ai;
+using WoongBlog.Api.Common;
 using WoongBlog.Api.Infrastructure.Auth;
+using WoongBlog.Api.Infrastructure.Configuration;
 using WoongBlog.Api.Infrastructure.Persistence;
-using WoongBlog.Api.Infrastructure.Proxy;
+using WoongBlog.Api.Modules.AI.Api;
+using WoongBlog.Api.Modules.AI;
+using WoongBlog.Api.Modules.Composition.Api;
+using WoongBlog.Api.Modules.Composition;
+using WoongBlog.Api.Modules.Content.Blogs.Api;
+using WoongBlog.Api.Modules.Content.Blogs;
+using WoongBlog.Api.Modules.Content.Pages.Api;
+using WoongBlog.Api.Modules.Content.Pages;
+using WoongBlog.Api.Modules.Content.Works.Api;
+using WoongBlog.Api.Modules.Content.Works;
+using WoongBlog.Api.Modules.Identity.Api;
+using WoongBlog.Api.Modules.Identity;
+using WoongBlog.Api.Modules.Media.Api;
+using WoongBlog.Api.Modules.Media;
+using WoongBlog.Api.Modules.Site.Api;
+using WoongBlog.Api.Modules.Site;
 using WoongBlog.Api.Infrastructure.Security;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddApiCore();
-builder.Services.AddProxyInfrastructure(builder.Configuration);
-builder.Services.AddSecurityInfrastructure(builder.Configuration, builder.Environment);
-builder.Services.AddPersistenceInfrastructure(builder.Configuration);
-builder.Services.AddAuthInfrastructure(builder.Configuration, builder.Environment);
-builder.Services.AddAiInfrastructure(builder.Configuration);
+builder.Services.AddCommonModule(builder.Configuration, builder.Environment);
+builder.Services.AddPagesModule();
+builder.Services.AddBlogsModule();
+builder.Services.AddWorksModule();
+builder.Services.AddSiteModule();
+builder.Services.AddCompositionModule();
+builder.Services.AddIdentityModule(builder.Configuration, builder.Environment);
+builder.Services.AddMediaModule();
+builder.Services.AddAiModule(builder.Configuration);
 
 var app = builder.Build();
 
@@ -37,7 +53,14 @@ if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Testing"))
 }
 
 app.MapControllers();
-app.MapAdminAiEndpoints();
+app.MapPagesModule();
+app.MapBlogsModule();
+app.MapWorksModule();
+app.MapSiteModule();
+app.MapCompositionModule();
+app.MapIdentityModule();
+app.MapMediaModule();
+app.MapAiModule();
 app.MapGet("/", () => Results.Redirect("/api/health"));
 
 app.Run();
