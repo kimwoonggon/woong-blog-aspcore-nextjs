@@ -7,16 +7,19 @@ using WoongBlog.Api.Modules.Content.Works.Application.CreateWork;
 using WoongBlog.Api.Modules.Content.Works.Application.GetAdminWorkById;
 using WoongBlog.Api.Modules.Content.Works.Application.GetAdminWorks;
 using WoongBlog.Api.Modules.Content.Works.Application.UpdateWork;
+using WoongBlog.Api.Modules.Content.Works.Application.WorkVideos;
 
 namespace WoongBlog.Api.Modules.Content.Works.Persistence;
 
 public sealed class AdminWorkService : IAdminWorkService
 {
     private readonly WoongBlogDbContext _dbContext;
+    private readonly IWorkVideoPlaybackUrlBuilder _playbackUrlBuilder;
 
-    public AdminWorkService(WoongBlogDbContext dbContext)
+    public AdminWorkService(WoongBlogDbContext dbContext, IWorkVideoPlaybackUrlBuilder playbackUrlBuilder)
     {
         _dbContext = dbContext;
+        _playbackUrlBuilder = playbackUrlBuilder;
     }
 
     public async Task<IReadOnlyList<AdminWorkListItemDto>> GetAllAsync(CancellationToken cancellationToken)
@@ -55,6 +58,23 @@ public sealed class AdminWorkService : IAdminWorkService
             .AsNoTracking()
             .Where(x => x.Id == work.ThumbnailAssetId || x.Id == work.IconAssetId)
             .ToDictionaryAsync(x => x.Id, x => x.PublicUrl, cancellationToken);
+        var videoRows = await _dbContext.WorkVideos
+            .AsNoTracking()
+            .Where(x => x.WorkId == work.Id)
+            .OrderBy(x => x.SortOrder)
+            .ThenBy(x => x.CreatedAt)
+            .ToListAsync(cancellationToken);
+        var videos = videoRows.Select(x => new WorkVideoDto(
+            x.Id,
+            x.SourceType,
+            x.SourceKey,
+            _playbackUrlBuilder.BuildPlaybackUrl(x.SourceType, x.SourceKey),
+            x.OriginalFileName,
+            x.MimeType,
+            x.FileSize,
+            x.SortOrder,
+            x.CreatedAt
+        )).ToList();
 
         return new AdminWorkDetailDto(
             work.Id,
@@ -67,12 +87,14 @@ public sealed class AdminWorkService : IAdminWorkService
             work.Published,
             work.PublishedAt,
             work.UpdatedAt,
+            work.VideosVersion,
             AdminContentJson.ParseObject(work.AllPropertiesJson),
             new AdminWorkContentDto(AdminContentJson.ExtractHtml(work.ContentJson)),
             work.ThumbnailAssetId,
             work.IconAssetId,
             ResolveAssetUrl(work.ThumbnailAssetId, assetLookup),
-            ResolveAssetUrl(work.IconAssetId, assetLookup)
+            ResolveAssetUrl(work.IconAssetId, assetLookup),
+            videos
         );
     }
 
@@ -141,6 +163,19 @@ public sealed class AdminWorkService : IAdminWorkService
         if (work is null)
         {
             return new AdminActionResult(false);
+        }
+
+        var workVideos = await _dbContext.WorkVideos.Where(x => x.WorkId == id).ToListAsync(cancellationToken);
+        var uploadSessions = await _dbContext.WorkVideoUploadSessions.Where(x => x.WorkId == id).ToListAsync(cancellationToken);
+
+        if (workVideos.Count > 0)
+        {
+            _dbContext.WorkVideos.RemoveRange(workVideos);
+        }
+
+        if (uploadSessions.Count > 0)
+        {
+            _dbContext.WorkVideoUploadSessions.RemoveRange(uploadSessions);
         }
 
         _dbContext.Works.Remove(work);

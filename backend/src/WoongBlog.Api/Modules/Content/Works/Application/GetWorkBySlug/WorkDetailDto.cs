@@ -1,3 +1,6 @@
+using System.Text.Json.Serialization;
+using WoongBlog.Api.Modules.Content.Works.Application.WorkVideos;
+
 namespace WoongBlog.Api.Modules.Content.Works.Application.GetWorkBySlug;
 
 public sealed record WorkDetailDto(
@@ -11,5 +14,7 @@ public sealed record WorkDetailDto(
     string[] Tags,
     string ThumbnailUrl,
     string IconUrl,
-    DateTimeOffset? PublishedAt
+    DateTimeOffset? PublishedAt,
+    [property: JsonPropertyName("videos_version")] int VideosVersion,
+    IReadOnlyList<WorkVideoDto> Videos
 );

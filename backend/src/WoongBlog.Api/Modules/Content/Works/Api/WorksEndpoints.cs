@@ -6,6 +6,7 @@ using WoongBlog.Api.Modules.Content.Works.Api.GetAdminWorks;
 using WoongBlog.Api.Modules.Content.Works.Api.GetWorkBySlug;
 using WoongBlog.Api.Modules.Content.Works.Api.GetWorks;
 using WoongBlog.Api.Modules.Content.Works.Api.UpdateWork;
+using WoongBlog.Api.Modules.Content.Works.Api.WorkVideos;
 
 namespace WoongBlog.Api.Modules.Content.Works.Api;
 
@@ -18,6 +19,7 @@ internal static class WorksEndpoints
         app.MapCreateWork();
         app.MapUpdateWork();
         app.MapDeleteWork();
+        app.MapWorkVideoEndpoints();
         app.MapGetWorks();
         app.MapGetWorkBySlug();
     }

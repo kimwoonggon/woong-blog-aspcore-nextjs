@@ -6,6 +6,7 @@ import { InlineAdminEditorShell } from '@/components/admin/InlineAdminEditorShel
 import { WorkEditor } from '@/components/admin/WorkEditor'
 import { RelatedContentList } from '@/components/content/RelatedContentList'
 import { InteractiveRenderer } from '@/components/content/InteractiveRenderer'
+import { WorkVideoPlayer } from '@/components/content/WorkVideoPlayer'
 import { Metadata } from 'next'
 import { fetchServerSession } from '@/lib/api/server'
 import { fetchAdminWorkById, fetchAllPublicWorks, fetchPublicWorkBySlug } from '@/lib/api/works'
@@ -93,6 +94,13 @@ export default async function WorkDetailPage({ params }: PageProps) {
                 </header>
 
                 <div className="mt-8">
+                    {work.videos.length > 0 && (
+                        <div className="mb-8 space-y-4">
+                            {work.videos.map((video) => (
+                                <WorkVideoPlayer key={video.id} video={video} />
+                            ))}
+                        </div>
+                    )}
                     {work.contentJson && (
                         <InteractiveRenderer html={JSON.parse(work.contentJson).html ?? ''} />
                     )}

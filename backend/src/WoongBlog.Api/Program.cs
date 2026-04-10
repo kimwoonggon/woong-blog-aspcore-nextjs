@@ -26,7 +26,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddCommonModule(builder.Configuration, builder.Environment);
 builder.Services.AddPagesModule();
 builder.Services.AddBlogsModule();
-builder.Services.AddWorksModule();
+builder.Services.AddWorksModule(builder.Configuration);
 builder.Services.AddSiteModule();
 builder.Services.AddCompositionModule();
 builder.Services.AddIdentityModule(builder.Configuration, builder.Environment);

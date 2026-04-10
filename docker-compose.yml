@@ -25,6 +25,14 @@ services:
       ConnectionStrings__Postgres: Host=db;Port=5432;Database=portfolio;Username=portfolio;Password=portfolio
       Auth__DataProtectionKeysPath: /app/data-protection
       Auth__MediaRoot: /app/media
+      CloudflareR2__AccountId: ${CloudflareR2__AccountId:-}
+      CloudflareR2__AccessKeyId: ${CloudflareR2__AccessKeyId:-}
+      CloudflareR2__SecretAccessKey: ${CloudflareR2__SecretAccessKey:-}
+      CloudflareR2__BucketName: ${CloudflareR2__BucketName:-}
+      CloudflareR2__Endpoint: ${CloudflareR2__Endpoint:-}
+      CloudflareR2__BrowserEndpoint: ${CloudflareR2__BrowserEndpoint:-}
+      CloudflareR2__PublicUrl: ${CloudflareR2__PublicUrl:-}
+      CloudflareR2__ForceEnabledInDevelopment: ${CloudflareR2__ForceEnabledInDevelopment:-}
     ports:
       - "8080:8080"
     expose:

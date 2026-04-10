@@ -20,6 +20,7 @@ internal static class AuthServiceCollectionExtensions
         services.AddSingleton<IValidateOptions<AuthOptions>>(_ => new AuthOptionsValidator(environment));
 
         var authOptions = configuration.GetSection(AuthOptions.SectionName).Get<AuthOptions>() ?? new AuthOptions();
+        authOptions.DataProtectionKeysPath = ResolveDataProtectionKeysPath(authOptions.DataProtectionKeysPath, environment);
 
         services.AddScoped<AuthRecorder>();
         services.AddScoped<AppCookieAuthenticationEvents>();
@@ -80,5 +81,20 @@ internal static class AuthServiceCollectionExtensions
         });
 
         return services;
+    }
+
+    private static string ResolveDataProtectionKeysPath(string configuredPath, IHostEnvironment environment)
+    {
+        if (!environment.IsEnvironment("Testing"))
+        {
+            return configuredPath;
+        }
+
+        if (!string.IsNullOrWhiteSpace(configuredPath) && !configuredPath.StartsWith("/app", StringComparison.OrdinalIgnoreCase))
+        {
+            return configuredPath;
+        }
+
+        return Path.Combine(Path.GetTempPath(), "woongblog-test-data-protection");
     }
 }
