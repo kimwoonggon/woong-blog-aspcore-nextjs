@@ -32,7 +32,7 @@ services:
       CloudflareR2__Endpoint: ${CloudflareR2__Endpoint:-}
       CloudflareR2__BrowserEndpoint: ${CloudflareR2__BrowserEndpoint:-}
       CloudflareR2__PublicUrl: ${CloudflareR2__PublicUrl:-}
-      CloudflareR2__ForceEnabledInDevelopment: ${CloudflareR2__ForceEnabledInDevelopment:-}
+      CloudflareR2__ForceEnabledInDevelopment: ${CloudflareR2__ForceEnabledInDevelopment:-false}
     ports:
       - "8080:8080"
     expose:

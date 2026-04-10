@@ -39,6 +39,7 @@ interface Work {
 interface WorkEditorProps {
     initialWork?: Work
     inlineMode?: boolean
+    onSaved?: (result: { id?: string; slug?: string | null; isEditing: boolean }) => void
 }
 
 interface VideoDraft {
@@ -127,7 +128,17 @@ async function getResponseError(response: Response, fallback: string) {
     return text || fallback
 }
 
-export function WorkEditor({ initialWork, inlineMode = false }: WorkEditorProps) {
+function buildWorkSlugFallback(title: string) {
+    const slug = title.trim().toLowerCase().replace(/\s+/g, '-')
+    const normalized = slug
+        .replace(/[^\p{L}\p{N}-]+/gu, '')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '')
+
+    return normalized || null
+}
+
+export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEditorProps) {
     const router = useRouter()
     const searchParams = useSearchParams()
     const isEditing = Boolean(initialWork?.id)
@@ -578,11 +589,16 @@ export function WorkEditor({ initialWork, inlineMode = false }: WorkEditorProps)
                 return
             }
 
-            const responsePayload = await response.json().catch(() => null) as { id?: string } | null
+            const responsePayload = await response.json().catch(() => null) as { id?: string; slug?: string; Slug?: string } | null
+            const nextSlug = responsePayload?.slug ?? responsePayload?.Slug ?? buildWorkSlugFallback(title) ?? initialWork?.slug ?? null
 
             if (isEditing) {
                 toast.success('Work updated successfully')
                 if (inlineMode) {
+                    if (onSaved) {
+                        onSaved({ id: responsePayload?.id, slug: nextSlug, isEditing })
+                        return
+                    }
                     router.refresh()
                     return
                 }
@@ -595,6 +611,10 @@ export function WorkEditor({ initialWork, inlineMode = false }: WorkEditorProps)
                 try {
                     await processStagedVideos(responsePayload.id)
                     toast.success('Work and videos created successfully')
+                    if (inlineMode && onSaved) {
+                        onSaved({ id: responsePayload.id, slug: nextSlug, isEditing: false })
+                        return
+                    }
                     router.push(returnTo)
                     return
                 } catch (error) {
@@ -605,6 +625,10 @@ export function WorkEditor({ initialWork, inlineMode = false }: WorkEditorProps)
             }
 
             toast.success('Work created successfully')
+            if (inlineMode && onSaved) {
+                onSaved({ id: responsePayload?.id, slug: nextSlug, isEditing: false })
+                return
+            }
             router.push(returnTo)
         } finally {
             setIsSaving(false)

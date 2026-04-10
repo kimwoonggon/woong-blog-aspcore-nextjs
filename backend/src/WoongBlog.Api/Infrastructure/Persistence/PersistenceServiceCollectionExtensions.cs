@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using WoongBlog.Api.Modules.Composition.Application.Abstractions;
 using WoongBlog.Api.Modules.Composition.Persistence;
 using WoongBlog.Api.Modules.Content.Blogs.Application.Abstractions;
@@ -35,6 +36,7 @@ internal static class PersistenceServiceCollectionExtensions
                 ?? "Host=localhost;Port=5432;Database=portfolio;Username=portfolio;Password=portfolio";
 
             options.UseNpgsql(connectionString);
+            options.ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.PendingModelChangesWarning));
         });
 
         services.AddScoped<IAdminPageService, AdminPageService>();
