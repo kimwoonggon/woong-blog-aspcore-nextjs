@@ -34,7 +34,7 @@ test('admin can create and publish a work that appears on public works page', as
   await expect(page.getByText('New works publish immediately when you save.')).toBeVisible()
   await expect(page.getByText(/default to Uncategorized/i)).toBeVisible()
 
-  await page.locator('textarea[name="content"]').fill(`This is a browser-driven published work for ${title}.`)
+  await page.locator('.tiptap.ProseMirror').first().fill(`This is a browser-driven published work for ${title}.`)
 
   await expect(page.getByRole('button', { name: /Create Work/i })).toBeEnabled()
   const [saveResponse] = await Promise.all([

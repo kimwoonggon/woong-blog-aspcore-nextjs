@@ -15,7 +15,7 @@ test('admin can edit a public work detail inline and save in place', async ({ pa
   const saveButton = page.getByRole('button', { name: 'Update Work' })
   await expect(saveButton).toBeDisabled()
 
-  await page.locator('#content').fill(`<p>${updatedBody}</p>`)
+  await page.locator('.tiptap.ProseMirror').first().fill(updatedBody)
   await expect(saveButton).toBeEnabled()
 
   await Promise.all([

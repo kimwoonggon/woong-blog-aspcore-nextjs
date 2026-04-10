@@ -15,8 +15,11 @@ import { ThreeJsBlock } from './tiptap/ThreeJsBlock'
 import { HtmlBlock } from './tiptap/HtmlBlock'
 import { SlashCommand } from './tiptap/SlashCommand'
 import { suggestion } from './tiptap/Commands'
+import { WorkVideoEmbedBlock } from './tiptap/WorkVideoEmbedBlock'
 import { fetchWithCsrf } from '@/lib/api/auth'
 import { getBrowserApiBaseUrl } from '@/lib/api/browser'
+import type { WorkVideo } from '@/lib/api/works'
+import { buildWorkVideoEmbedMarkup, isWorkVideoEmbedded } from '@/lib/content/work-video-embeds'
 import {
     Bold,
     Italic,
@@ -35,19 +38,37 @@ import {
     Redo,
     Box
 } from 'lucide-react'
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 
 interface TiptapEditorProps {
     content: string
     onChange: (html: string) => void
     placeholder?: string
     editable?: boolean
+    workVideos?: WorkVideo[]
+    insertVideoEmbedRequest?: { videoId: string; nonce: number } | null
+    onVideoInsertHandled?: (result: { inserted: boolean; reason?: 'duplicate' | 'missing' }) => void
 }
 
 // Initialize lowlight for syntax highlighting with common languages only
 const lowlight = createLowlight(common)
 
-export function TiptapEditor({ content, onChange, placeholder = "Type '/' for commands, or just start writing...", editable = true }: TiptapEditorProps) {
+export function TiptapEditor({
+    content,
+    onChange,
+    placeholder = "Type '/' for commands, or just start writing...",
+    editable = true,
+    workVideos = [],
+    insertVideoEmbedRequest = null,
+    onVideoInsertHandled,
+}: TiptapEditorProps) {
+    const workVideosRef = useRef(workVideos)
+    const lastHandledInsertNonce = useRef<number | null>(null)
+
+    useEffect(() => {
+        workVideosRef.current = workVideos
+    }, [workVideos])
+
     const editor = useEditor({
         extensions: [
             StarterKit.configure({
@@ -85,6 +106,9 @@ export function TiptapEditor({ content, onChange, placeholder = "Type '/' for co
             }),
             ThreeJsBlock,
             HtmlBlock,
+            WorkVideoEmbedBlock.configure({
+                resolveVideo: (videoId: string) => workVideosRef.current.find((video) => video.id === videoId) ?? null,
+            }),
             SlashCommand.configure({
                 suggestion,
             }),
@@ -179,6 +203,38 @@ export function TiptapEditor({ content, onChange, placeholder = "Type '/' for co
             editor.commands.setContent(content)
         }
     }, [content, editor])
+
+    useEffect(() => {
+        if (!editor || !insertVideoEmbedRequest) {
+            return
+        }
+
+        if (lastHandledInsertNonce.current === insertVideoEmbedRequest.nonce) {
+            return
+        }
+
+        lastHandledInsertNonce.current = insertVideoEmbedRequest.nonce
+        const targetVideo = workVideosRef.current.find((video) => video.id === insertVideoEmbedRequest.videoId)
+
+        if (!targetVideo) {
+            onVideoInsertHandled?.({ inserted: false, reason: 'missing' })
+            return
+        }
+
+        const currentHtml = editor.getHTML()
+        if (isWorkVideoEmbedded(currentHtml, targetVideo.id)) {
+            onVideoInsertHandled?.({ inserted: false, reason: 'duplicate' })
+            return
+        }
+
+        editor
+            .chain()
+            .focus()
+            .insertContent(buildWorkVideoEmbedMarkup(targetVideo.id))
+            .run()
+
+        onVideoInsertHandled?.({ inserted: true })
+    }, [editor, insertVideoEmbedRequest, onVideoInsertHandled])
 
     if (!editor) return null
 

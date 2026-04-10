@@ -11,6 +11,7 @@ using WoongBlog.Api.Modules.Content.Pages.Application.Abstractions;
 using WoongBlog.Api.Modules.Content.Pages.Persistence;
 using WoongBlog.Api.Modules.Content.Works.Application.Abstractions;
 using WoongBlog.Api.Modules.Content.Works.Application.GetWorks;
+using WoongBlog.Api.Modules.Content.Works.Application.WorkVideos;
 using WoongBlog.Api.Modules.Content.Works.Persistence;
 using WoongBlog.Api.Modules.Site.Application.Abstractions;
 using WoongBlog.Api.Modules.Site.Application.GetResume;
@@ -32,8 +33,16 @@ public class PublicQueryHandlerTests
 
     private static IPublicHomeService CreatePublicHomeService(WoongBlogDbContext dbContext) => new PublicHomeService(dbContext);
     private static IPublicSiteService CreatePublicSiteService(WoongBlogDbContext dbContext) => new PublicSiteService(dbContext);
-    private static IPublicWorkService CreatePublicWorkService(WoongBlogDbContext dbContext) => new PublicWorkService(dbContext);
+    private static IPublicWorkService CreatePublicWorkService(WoongBlogDbContext dbContext) => new PublicWorkService(dbContext, new TestPlaybackUrlBuilder());
     private static IPublicBlogService CreatePublicBlogService(WoongBlogDbContext dbContext) => new PublicBlogService(dbContext);
+
+    private sealed class TestPlaybackUrlBuilder : IWorkVideoPlaybackUrlBuilder
+    {
+        public string? BuildPlaybackUrl(string sourceType, string sourceKey)
+        {
+            return sourceType == WorkVideoSourceTypes.YouTube ? null : $"/media/{sourceKey}";
+        }
+    }
 
     [Fact]
     public async Task GetHomeQueryHandler_ReturnsNull_WhenHomePageMissing()

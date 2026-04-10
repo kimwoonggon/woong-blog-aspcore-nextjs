@@ -31,7 +31,7 @@ test('blog editor uploads an inline image and public blog renders it', async ({ 
   ])
 
   await expect(page).toHaveURL(/\/admin\/blog(?:\?.*)?$/)
-  await page.getByRole('link', { name: title }).click()
+  await page.locator('td:nth-child(2) a', { hasText: title }).first().click()
   await expect(page).toHaveURL(/\/blog\//)
   const renderedImage = page.locator('img').first()
   await expect(renderedImage).toBeVisible()

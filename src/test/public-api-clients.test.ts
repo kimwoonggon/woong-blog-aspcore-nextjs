@@ -198,6 +198,13 @@ describe('public/admin api clients', () => {
           published: true,
           content: { html: '<p>World</p>' },
           all_properties: {},
+          videos_version: 2,
+          videos: [{
+            id: 'video-1',
+            sourceType: 'youtube',
+            sourceKey: 'dQw4w9WgXcQ',
+            sortOrder: 0,
+          }],
         }), { status: 200, headers: { 'Content-Type': 'application/json' } }),
       )
     vi.stubGlobal('fetch', fetchMock as typeof fetch)
@@ -206,6 +213,30 @@ describe('public/admin api clients', () => {
     const { fetchAdminWorkById } = await import('@/lib/api/works')
 
     await expect(fetchAdminBlogById('blog-1')).resolves.toMatchObject({ slug: 'blog-title' })
-    await expect(fetchAdminWorkById('work-1')).resolves.toMatchObject({ slug: 'work-title', category: 'platform' })
+    await expect(fetchAdminWorkById('work-1')).resolves.toMatchObject({
+      slug: 'work-title',
+      category: 'platform',
+      videos_version: 2,
+      videos: [{ sourceKey: 'dQw4w9WgXcQ' }],
+    })
+  })
+
+  it('throws when a work detail payload contains malformed videos', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () =>
+      new Response(JSON.stringify({
+        id: 'work-1',
+        slug: 'work-title',
+        title: 'Work title',
+        excerpt: 'excerpt',
+        contentJson: '{}',
+        category: 'platform',
+        tags: [],
+        videos: {},
+      }), { status: 200, headers: { 'Content-Type': 'application/json' } }),
+    ) as typeof fetch)
+
+    const { fetchPublicWorkBySlug } = await import('@/lib/api/works')
+
+    await expect(fetchPublicWorkBySlug('work-title')).rejects.toThrow('Work videos payload must be an array when present.')
   })
 })

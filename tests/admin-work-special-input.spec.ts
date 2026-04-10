@@ -11,7 +11,7 @@ test('work editor accepts Korean and punctuation-heavy input and publishes publi
   await page.getByLabel('Title').fill(title)
   await page.getByLabel('Category').fill('qa-한글')
   await page.getByLabel('Tags (comma separated)').fill('qa,한글,!!!')
-  await page.locator('#content').fill(`<p>${content}</p>`)
+  await page.locator('.tiptap.ProseMirror').first().fill(content)
   await expect(page.getByText('New works publish immediately when you save.')).toBeVisible()
 
   const [response] = await Promise.all([

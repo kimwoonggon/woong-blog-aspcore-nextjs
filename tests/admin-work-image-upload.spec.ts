@@ -13,7 +13,7 @@ test('work editor uploads thumbnail/icon media and reuses them across admin/publ
   await page.getByLabel('Title').fill(title)
   await page.getByLabel('Category').fill('media')
   await expect(page.getByText('New works publish immediately when you save.')).toBeVisible()
-  await page.locator('#content').fill('<p>이미지가 포함된 work입니다.</p>')
+  await page.locator('.tiptap.ProseMirror').first().fill('이미지가 포함된 work입니다.')
 
   await Promise.all([
     page.waitForResponse((res) => res.url().includes('/api/uploads') && res.request().method() === 'POST' && res.ok()),

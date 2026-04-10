@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using WoongBlog.Api.Domain.Entities;
 using WoongBlog.Api.Infrastructure.Persistence;
 using WoongBlog.Api.Modules.Composition.Application.Abstractions;
 using WoongBlog.Api.Modules.Composition.Application.GetHome;
+using WoongBlog.Api.Modules.Content.Works.Persistence;
 
 namespace WoongBlog.Api.Modules.Composition.Persistence;
 
@@ -26,6 +28,7 @@ public sealed class PublicHomeService : IPublicHomeService
 
         var assets = await _dbContext.Assets.AsNoTracking().ToListAsync(cancellationToken);
         var assetById = assets.ToDictionary(x => x.Id, x => x);
+        var assetPublicUrlById = assets.ToDictionary(x => x.Id, x => x.PublicUrl);
 
         var featuredWorks = await _dbContext.Works
             .AsNoTracking()
@@ -33,6 +36,16 @@ public sealed class PublicHomeService : IPublicHomeService
             .OrderByDescending(x => x.PublishedAt)
             .Take(3)
             .ToListAsync(cancellationToken);
+        var featuredWorkIds = featuredWorks.Select(work => work.Id).ToArray();
+        var featuredWorkVideoRows = await _dbContext.WorkVideos
+            .AsNoTracking()
+            .Where(x => featuredWorkIds.Contains(x.WorkId))
+            .OrderBy(x => x.SortOrder)
+            .ThenBy(x => x.CreatedAt)
+            .ToListAsync(cancellationToken);
+        var featuredWorkVideos = featuredWorkVideoRows
+            .GroupBy(x => x.WorkId)
+            .ToDictionary(x => x.Key, x => (IReadOnlyList<WorkVideo>)x.ToList());
 
         var recentPosts = await _dbContext.Blogs
             .AsNoTracking()
@@ -58,7 +71,11 @@ public sealed class PublicHomeService : IPublicHomeService
                 work.Category,
                 work.Period,
                 work.Tags,
-                ResolveAssetUrl(work.ThumbnailAssetId, assetById),
+                WorkThumbnailUrlResolver.ResolveThumbnailUrl(
+                    work.ThumbnailAssetId,
+                    work.ContentJson,
+                    featuredWorkVideos.TryGetValue(work.Id, out var workVideos) ? workVideos : Array.Empty<WorkVideo>(),
+                    assetPublicUrlById),
                 ResolveAssetUrl(work.IconAssetId, assetById),
                 work.PublishedAt
             )).ToList(),

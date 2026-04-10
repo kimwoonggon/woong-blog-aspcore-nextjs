@@ -56,7 +56,7 @@ describe('public API helper contracts', () => {
 
   it('blog and work detail helpers preserve encoded paths and null semantics', async () => {
     const fetchMock = vi.fn()
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ slug: 'seeded-work', title: 'Work' }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ slug: 'seeded-work', title: 'Work', contentJson: '{}', category: 'platform', excerpt: 'excerpt', tags: [], videos: [] }) })
       .mockResolvedValueOnce({ ok: false })
       .mockResolvedValueOnce({ ok: true, json: async () => ({ slug: 'seeded-blog', title: 'Blog' }) })
 
@@ -71,5 +71,23 @@ describe('public API helper contracts', () => {
     expect(fetchMock).toHaveBeenNthCalledWith(1, 'http://localhost/api/public/works/seeded-work', { cache: 'no-store' })
     expect(fetchMock).toHaveBeenNthCalledWith(2, 'http://localhost/api/public/blogs/missing-blog', { cache: 'no-store' })
     expect(fetchMock).toHaveBeenNthCalledWith(3, 'http://localhost/api/public/blogs/seeded-blog', { cache: 'no-store' })
+  })
+
+  it('accepts missing videos fields but rejects malformed video arrays', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ slug: 'seeded-work', title: 'Work', contentJson: '{}', category: 'platform', excerpt: 'excerpt', tags: [] }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ slug: 'broken-work', title: 'Broken', contentJson: '{}', category: 'platform', excerpt: 'excerpt', tags: [], videos: { nope: true } }),
+      })
+
+    vi.stubGlobal('fetch', fetchMock)
+    const { fetchPublicWorkBySlug } = await import('@/lib/api/works')
+
+    await expect(fetchPublicWorkBySlug('seeded-work')).resolves.toMatchObject({ videos: [] })
+    await expect(fetchPublicWorkBySlug('broken-work')).rejects.toThrow('Work videos payload must be an array when present.')
   })
 })

@@ -18,8 +18,12 @@ public class WoongBlogDbContext : DbContext
     public DbSet<PageEntity> Pages => Set<PageEntity>();
     public DbSet<PageView> PageViews => Set<PageView>();
     public DbSet<Profile> Profiles => Set<Profile>();
+    public DbSet<SchemaPatch> SchemaPatches => Set<SchemaPatch>();
     public DbSet<SiteSetting> SiteSettings => Set<SiteSetting>();
+    public DbSet<VideoStorageCleanupJob> VideoStorageCleanupJobs => Set<VideoStorageCleanupJob>();
     public DbSet<Work> Works => Set<Work>();
+    public DbSet<WorkVideo> WorkVideos => Set<WorkVideo>();
+    public DbSet<WorkVideoUploadSession> WorkVideoUploadSessions => Set<WorkVideoUploadSession>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -27,6 +31,12 @@ public class WoongBlogDbContext : DbContext
         {
             entity.HasKey(x => x.Singleton);
             entity.Property(x => x.Singleton).ValueGeneratedNever();
+        });
+
+        modelBuilder.Entity<SchemaPatch>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Id).ValueGeneratedNever();
         });
 
         modelBuilder.Entity<AiBatchJob>(entity =>
@@ -53,6 +63,31 @@ public class WoongBlogDbContext : DbContext
             entity.HasIndex(x => x.Slug).IsUnique();
             entity.Property(x => x.ContentJson).HasColumnType("jsonb");
             entity.Property(x => x.AllPropertiesJson).HasColumnType("jsonb");
+        });
+
+        modelBuilder.Entity<WorkVideo>(entity =>
+        {
+            entity.HasIndex(x => new { x.WorkId, x.SortOrder }).IsUnique();
+            entity.HasOne<Work>()
+                .WithMany()
+                .HasForeignKey(x => x.WorkId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<WorkVideoUploadSession>(entity =>
+        {
+            entity.HasIndex(x => x.WorkId);
+            entity.HasIndex(x => x.ExpiresAt);
+            entity.HasOne<Work>()
+                .WithMany()
+                .HasForeignKey(x => x.WorkId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<VideoStorageCleanupJob>(entity =>
+        {
+            entity.HasIndex(x => x.Status);
+            entity.HasIndex(x => x.CreatedAt);
         });
 
         modelBuilder.Entity<Blog>(entity =>
