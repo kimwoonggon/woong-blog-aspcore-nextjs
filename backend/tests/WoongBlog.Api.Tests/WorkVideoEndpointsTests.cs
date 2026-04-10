@@ -124,6 +124,59 @@ public class WorkVideoEndpointsTests : IClassFixture<CustomWebApplicationFactory
     }
 
     [Fact]
+    public async Task ReorderWorkVideos_PersistsUpdatedPublicAndAdminOrder()
+    {
+        var client = _factory.CreateAuthenticatedClient();
+        var created = await CreateWorkAsync(client, $"Reorder Persisted Work {Guid.NewGuid():N}");
+
+        var firstAdd = await client.PostAsJsonAsync($"/api/admin/works/{created.Id}/videos/youtube", new
+        {
+            youtubeUrlOrId = "dQw4w9WgXcQ",
+            expectedVideosVersion = 0
+        });
+        firstAdd.EnsureSuccessStatusCode();
+        var firstPayload = await firstAdd.Content.ReadFromJsonAsync<MutationPayload>();
+        Assert.NotNull(firstPayload);
+
+        var secondAdd = await client.PostAsJsonAsync($"/api/admin/works/{created.Id}/videos/youtube", new
+        {
+            youtubeUrlOrId = "9bZkp7q19f0",
+            expectedVideosVersion = firstPayload!.VideosVersion
+        });
+        secondAdd.EnsureSuccessStatusCode();
+        var secondPayload = await secondAdd.Content.ReadFromJsonAsync<MutationPayload>();
+        Assert.NotNull(secondPayload);
+        Assert.Equal(2, secondPayload!.Videos.Length);
+
+        var reorderedIds = secondPayload.Videos.Select(video => video.Id).Reverse().ToArray();
+        var reorderResponse = await client.PutAsJsonAsync($"/api/admin/works/{created.Id}/videos/order", new
+        {
+            orderedVideoIds = reorderedIds,
+            expectedVideosVersion = secondPayload.VideosVersion
+        });
+
+        reorderResponse.EnsureSuccessStatusCode();
+        var reorderPayload = await reorderResponse.Content.ReadFromJsonAsync<MutationPayload>();
+        Assert.NotNull(reorderPayload);
+        Assert.Equal(reorderedIds[0], reorderPayload!.Videos[0].Id);
+        Assert.Equal(reorderedIds[1], reorderPayload.Videos[1].Id);
+
+        var adminResponse = await client.GetAsync($"/api/admin/works/{created.Id}");
+        adminResponse.EnsureSuccessStatusCode();
+        var adminBody = await adminResponse.Content.ReadAsStringAsync();
+        var firstIndex = adminBody.IndexOf("9bZkp7q19f0", StringComparison.Ordinal);
+        var secondIndex = adminBody.IndexOf("dQw4w9WgXcQ", StringComparison.Ordinal);
+        Assert.True(firstIndex >= 0 && secondIndex >= 0 && firstIndex < secondIndex);
+
+        var publicResponse = await client.GetAsync($"/api/public/works/{created.Slug}");
+        publicResponse.EnsureSuccessStatusCode();
+        var publicBody = await publicResponse.Content.ReadAsStringAsync();
+        var publicFirstIndex = publicBody.IndexOf("9bZkp7q19f0", StringComparison.Ordinal);
+        var publicSecondIndex = publicBody.IndexOf("dQw4w9WgXcQ", StringComparison.Ordinal);
+        Assert.True(publicFirstIndex >= 0 && publicSecondIndex >= 0 && publicFirstIndex < publicSecondIndex);
+    }
+
+    [Fact]
     public async Task ExpireUploadSessions_MarksSessionAndEnqueuesCleanup()
     {
         var client = _factory.CreateAuthenticatedClient();

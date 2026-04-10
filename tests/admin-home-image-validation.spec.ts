@@ -21,9 +21,11 @@ test('home page image upload shows explicit error when backend upload fails', as
   await page.goto('/admin/pages')
   await expect(page).toHaveURL(/\/admin\/pages/)
 
-  const imageInput = page.locator('input[type="file"]').first()
+  const homeSection = page.locator('#home-page-editor')
+  await expect(homeSection.getByText('Home Page - Hero Section')).toBeVisible()
+  const imageInput = homeSection.locator('input[type="file"]')
   await imageInput.setInputFiles(path.resolve('tests/fixtures/avatar.png'))
 
   await expect.poll(() => alertMessage).toContain('Failed to upload image')
-  await expect(page.getByText('Home Page - Hero Section')).toBeVisible()
+  await expect(homeSection.getByText('Home Page - Hero Section')).toBeVisible()
 })

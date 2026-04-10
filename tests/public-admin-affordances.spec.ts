@@ -40,3 +40,22 @@ test('logout from signed-in menu redirects back to the main page', async ({ page
 
   await expect(page).toHaveURL(/\/$/)
 })
+
+test('unauthenticated visitors do not see public edit or create affordances', async ({ page }) => {
+  await page.goto('/works', { waitUntil: 'networkidle' })
+  await expect(page.getByRole('button', { name: '새 작업 쓰기' })).toHaveCount(0)
+  await expect(page.getByRole('link', { name: '작업 관리' })).toHaveCount(0)
+
+  await page.goto('/blog', { waitUntil: 'networkidle' })
+  await expect(page.getByRole('button', { name: '새 글 쓰기' })).toHaveCount(0)
+  await expect(page.getByRole('link', { name: '글 관리' })).toHaveCount(0)
+
+  await page.goto('/introduction', { waitUntil: 'networkidle' })
+  await expect(page.getByRole('button', { name: '소개글 수정' })).toHaveCount(0)
+
+  await page.goto('/contact', { waitUntil: 'networkidle' })
+  await expect(page.getByRole('button', { name: '문의글 수정' })).toHaveCount(0)
+
+  await page.goto('/resume', { waitUntil: 'networkidle' })
+  await expect(page.getByRole('button', { name: '이력서 PDF 업로드' })).toHaveCount(0)
+})

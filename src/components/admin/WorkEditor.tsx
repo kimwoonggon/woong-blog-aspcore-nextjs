@@ -28,157 +28,30 @@ import {
     shouldReplaceWorkThumbnailSource,
     type WorkThumbnailSourceKind,
 } from '@/lib/content/work-thumbnail-resolution'
+import type {
+    ThumbnailCandidate,
+    StagedVideoResult,
+    UploadedAssetPayload,
+    UploadTargetPayload,
+    VideoDraft,
+    VideoInsertRequest,
+    VideoMutationPayload,
+    WorkEditorProps,
+    WorkSaveResponsePayload,
+} from '@/components/admin/work-editor/types'
+import {
+    buildWorkSnapshot,
+    getNextVideosVersion,
+    getResponseError,
+    inferThumbnailSourceKind,
+    normalizeJsonInput,
+    normalizeTagsInput,
+    resolveWorkSaveSlug,
+    validateFlexibleMetadata,
+} from '@/components/admin/work-editor/utils'
 import { toast } from 'sonner'
 
-interface Work {
-    id?: string
-    title?: string
-    excerpt?: string
-    slug?: string
-    category?: string
-    tags?: string[]
-    published?: boolean
-    publishedAt?: string | null
-    updatedAt?: string
-    content?: { html?: string }
-    period?: string | null
-    all_properties?: Record<string, unknown>
-    thumbnail_asset_id?: string | null
-    icon_asset_id?: string | null
-    thumbnail_url?: string
-    icon_url?: string
-    videos_version?: number
-    videos?: WorkVideo[]
-}
-
-interface WorkEditorProps {
-    initialWork?: Work
-    inlineMode?: boolean
-    onSaved?: (result: { id?: string; slug?: string | null; isEditing: boolean }) => void
-}
-
-interface VideoDraft {
-    tempId: string
-    kind: 'youtube' | 'file'
-    label: string
-    youtubeUrl?: string
-    file?: File
-}
-
-interface VideoMutationPayload {
-    videos_version?: number
-    videosVersion?: number
-    videos?: WorkVideo[]
-}
-
-interface UploadTargetPayload {
-    uploadSessionId: string
-    uploadMethod: 'PUT' | 'POST'
-    uploadUrl: string
-    storageKey: string
-}
-
-interface VideoInsertRequest {
-    videoId: string
-    nonce: number
-}
-
-interface UploadedAssetPayload {
-    id: string
-    url: string
-    path?: string
-}
-
 const DEFAULT_WORK_CATEGORY = 'Uncategorized'
-
-function normalizeTagsInput(tags: string) {
-    return tags.split(',').map((tag) => tag.trim()).filter(Boolean)
-}
-
-function normalizeTextInput(value: string | null | undefined) {
-    return typeof value === 'string' ? value.trim() : ''
-}
-
-function normalizeJsonInput(value: string) {
-    if (!value.trim()) {
-        return '{}'
-    }
-
-    try {
-        return JSON.stringify(JSON.parse(value))
-    } catch {
-        return value.trim()
-    }
-}
-
-function buildWorkSnapshot({
-    title,
-    category,
-    period,
-    tags,
-    published,
-    html,
-    allProperties,
-    thumbnailAssetId,
-    iconAssetId,
-}: {
-    title: string
-    category: string
-    period: string
-    tags: string
-    published: boolean
-    html: string
-    allProperties: string
-    thumbnailAssetId: string
-    iconAssetId: string
-}) {
-    return JSON.stringify({
-        title: title.trim(),
-        category: category.trim(),
-        period: period.trim(),
-        tags: normalizeTagsInput(tags),
-        published,
-        html: html.trim(),
-        allProperties: normalizeJsonInput(allProperties),
-        thumbnailAssetId: normalizeTextInput(thumbnailAssetId),
-        iconAssetId: normalizeTextInput(iconAssetId),
-    })
-}
-
-async function getResponseError(response: Response, fallback: string) {
-    const contentType = response.headers.get('content-type') ?? ''
-    if (contentType.includes('application/json')) {
-        const payload = await response.json().catch(() => null) as { error?: string } | null
-        if (payload?.error) {
-            return payload.error
-        }
-    }
-
-    const text = await response.text().catch(() => '')
-    return text || fallback
-}
-
-function buildWorkSlugFallback(title: string) {
-    const slug = title.trim().toLowerCase().replace(/\s+/g, '-')
-    const normalized = slug
-        .replace(/[^\p{L}\p{N}-]+/gu, '')
-        .replace(/-+/g, '-')
-        .replace(/^-|-$/g, '')
-
-    return normalized || null
-}
-
-function inferThumbnailSourceKind(initialWork?: Work): WorkThumbnailSourceKind {
-    if (initialWork?.thumbnail_asset_id) {
-        return 'manual'
-    }
-
-    return resolveWorkThumbnailSource({
-        thumbnailAssetId: initialWork?.thumbnail_asset_id,
-        videos: initialWork?.videos ?? [],
-        html: initialWork?.content?.html ?? '',
-    }).kind
-}
 
 export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEditorProps) {
     const router = useRouter()
@@ -276,11 +149,7 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
     }
 
     const syncVideos = (payload: VideoMutationPayload) => {
-        const nextVersion = typeof payload.videos_version === 'number'
-            ? payload.videos_version
-            : typeof payload.videosVersion === 'number'
-                ? payload.videosVersion
-                : videosVersion
+        const nextVersion = getNextVideosVersion(payload, videosVersion)
         const nextVideos = Array.isArray(payload.videos) ? payload.videos : videos
 
         setVideosVersion(nextVersion)
@@ -349,11 +218,7 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
         return uploadedThumbnail
     }
 
-    async function maybeApplyAutoThumbnailForCandidate(candidate: {
-        kind: WorkThumbnailSourceKind
-        file?: File
-        youtubeVideoId?: string
-    }) {
+    async function maybeApplyAutoThumbnailForCandidate(candidate: ThumbnailCandidate) {
         if (!shouldReplaceWorkThumbnailSource(thumbnailSourceKind, candidate.kind)) {
             return null
         }
@@ -707,39 +572,63 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
         }
     }
 
+    async function addStagedYoutubeVideo(workId: string, draft: VideoDraft, currentVersion: number): Promise<StagedVideoResult> {
+        const response = await fetchWithCsrf(`${getBrowserApiBaseUrl()}/admin/works/${encodeURIComponent(workId)}/videos/youtube`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                youtubeUrlOrId: draft.youtubeUrl,
+                expectedVideosVersion: currentVersion,
+            }),
+        })
+
+        if (!response.ok) {
+            throw new Error(await getResponseError(response, `Failed to add YouTube video: ${draft.label}`))
+        }
+
+        const payload = await response.json() as VideoMutationPayload
+        return {
+            currentVersion: getNextVideosVersion(payload, currentVersion + 1),
+            latestPayload: payload,
+        }
+    }
+
+    async function addStagedUploadedVideo(workId: string, draft: VideoDraft, currentVersion: number): Promise<StagedVideoResult> {
+        if (!draft.file) {
+            return {
+                currentVersion,
+                latestPayload: null,
+            }
+        }
+
+        const target = await requestUploadTarget(workId, draft.file, currentVersion)
+        await uploadToTarget(workId, draft.file, target)
+        const payload = await confirmVideoUpload(workId, target.uploadSessionId, currentVersion)
+
+        return {
+            currentVersion: getNextVideosVersion(payload, currentVersion + 1),
+            latestPayload: payload,
+        }
+    }
+
     async function processStagedVideos(workId: string) {
         let currentVersion = 0
         let latestPayload: VideoMutationPayload | null = null
 
         for (const draft of stagedVideos) {
             if (draft.kind === 'youtube' && draft.youtubeUrl) {
-                const response = await fetchWithCsrf(`${getBrowserApiBaseUrl()}/admin/works/${encodeURIComponent(workId)}/videos/youtube`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        youtubeUrlOrId: draft.youtubeUrl,
-                        expectedVideosVersion: currentVersion,
-                    }),
-                })
-
-                if (!response.ok) {
-                    throw new Error(await getResponseError(response, `Failed to add YouTube video: ${draft.label}`))
-                }
-
-                const payload = await response.json() as VideoMutationPayload
-                currentVersion = typeof payload.videos_version === 'number' ? payload.videos_version : currentVersion + 1
-                latestPayload = payload
+                const result = await addStagedYoutubeVideo(workId, draft, currentVersion)
+                currentVersion = result.currentVersion
+                latestPayload = result.latestPayload
                 continue
             }
 
             if (draft.kind === 'file' && draft.file) {
-                const target = await requestUploadTarget(workId, draft.file, currentVersion)
-                await uploadToTarget(workId, draft.file, target)
-                const payload = await confirmVideoUpload(workId, target.uploadSessionId, currentVersion)
-                currentVersion = typeof payload.videos_version === 'number' ? payload.videos_version : currentVersion + 1
-                latestPayload = payload
+                const result = await addStagedUploadedVideo(workId, draft, currentVersion)
+                currentVersion = result.currentVersion
+                latestPayload = result.latestPayload
             }
         }
 
@@ -749,9 +638,101 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
         }
     }
 
+    async function submitWorkPayload(payload: ReturnType<typeof buildWorkMutationPayload>) {
+        const apiBaseUrl = getBrowserApiBaseUrl()
+        const response = await fetchWithCsrf(
+            isEditing && initialWork?.id
+                ? `${apiBaseUrl}/admin/works/${encodeURIComponent(initialWork.id)}`
+                : `${apiBaseUrl}/admin/works`,
+            {
+                method: isEditing ? 'PUT' : 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            }
+        )
+
+        if (!response.ok) {
+            toast.error(await getResponseError(response, 'Failed to save work.'))
+            return null
+        }
+
+        return await response.json().catch(() => null) as WorkSaveResponsePayload | null
+    }
+
+    function finishInlineSave(responsePayload: WorkSaveResponsePayload | null, nextSlug: string | null, editing: boolean) {
+        if (!inlineMode) {
+            return false
+        }
+
+        if (onSaved) {
+            onSaved({ id: responsePayload?.id, slug: nextSlug, isEditing: editing })
+            return true
+        }
+
+        router.refresh()
+        return true
+    }
+
+    function finishUpdateSave(responsePayload: WorkSaveResponsePayload | null, nextSlug: string | null) {
+        toast.success('Work updated successfully')
+        if (finishInlineSave(responsePayload, nextSlug, true)) {
+            return
+        }
+
+        router.push(returnTo)
+    }
+
+    function finishCreateSave(responsePayload: WorkSaveResponsePayload | null, nextSlug: string | null) {
+        toast.success('Work created successfully')
+        if (finishInlineSave(responsePayload, nextSlug, false)) {
+            return
+        }
+
+        router.push(returnTo)
+    }
+
+    async function handleCreatedWorkWithVideos(responsePayload: WorkSaveResponsePayload, nextSlug: string | null) {
+        if (!responsePayload.id) {
+            finishCreateSave(responsePayload, nextSlug)
+            return
+        }
+
+        try {
+            const stagedResult = await processStagedVideos(responsePayload.id)
+            if (stagedResult.latestPayload) {
+                syncVideos(stagedResult.latestPayload)
+            }
+
+            const stagedThumbnailCandidate = resolveDraftThumbnailSource(stagedVideos)
+            if (stagedThumbnailCandidate.kind !== 'none') {
+                try {
+                    const uploadedThumbnail = await maybeApplyAutoThumbnailForCandidate(stagedThumbnailCandidate)
+                    if (uploadedThumbnail) {
+                        await persistThumbnailSelectionForWork(responsePayload.id, uploadedThumbnail.id)
+                    }
+                } catch (error) {
+                    toast.error(error instanceof Error ? error.message : 'Failed to auto-generate a work thumbnail.')
+                }
+            }
+
+            toast.success('Work and videos created successfully')
+            if (inlineMode && onSaved) {
+                onSaved({ id: responsePayload.id, slug: nextSlug, isEditing: false })
+                return
+            }
+
+            router.push(`/admin/works/${responsePayload.id}?videoInline=1`)
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Work was created, but some videos failed to attach.')
+            router.push(`/admin/works/${responsePayload.id}`)
+        }
+    }
+
     async function saveWork(mode: 'default' | 'with-videos' = 'default') {
         try {
-            if (allProperties) JSON.parse(allProperties)
+            validateFlexibleMetadata(allProperties)
         } catch {
             toast.error('Invalid JSON in Flexible Metadata field')
             return
@@ -759,85 +740,29 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
 
         setIsSaving(true)
 
-        const payload = buildWorkMutationPayload()
-
         try {
-            const apiBaseUrl = getBrowserApiBaseUrl()
-            const response = await fetchWithCsrf(
-                isEditing && initialWork?.id
-                    ? `${apiBaseUrl}/admin/works/${encodeURIComponent(initialWork.id)}`
-                    : `${apiBaseUrl}/admin/works`,
-                {
-                    method: isEditing ? 'PUT' : 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(payload),
-                }
-            )
-
-            if (!response.ok) {
-                toast.error(await getResponseError(response, 'Failed to save work.'))
+            const responsePayload = await submitWorkPayload(buildWorkMutationPayload())
+            if (!responsePayload) {
                 return
             }
 
-            const responsePayload = await response.json().catch(() => null) as { id?: string; slug?: string; Slug?: string } | null
-            const nextSlug = responsePayload?.slug ?? responsePayload?.Slug ?? buildWorkSlugFallback(title) ?? initialWork?.slug ?? null
+            const nextSlug = resolveWorkSaveSlug({
+                payload: responsePayload,
+                title,
+                initialSlug: initialWork?.slug,
+            })
 
             if (isEditing) {
-                toast.success('Work updated successfully')
-                if (inlineMode) {
-                    if (onSaved) {
-                        onSaved({ id: responsePayload?.id, slug: nextSlug, isEditing })
-                        return
-                    }
-                    router.refresh()
-                    return
-                }
-
-                router.push(returnTo)
+                finishUpdateSave(responsePayload, nextSlug)
                 return
             }
 
-            if (mode === 'with-videos' && stagedVideos.length > 0 && responsePayload?.id) {
-                try {
-                    const stagedResult = await processStagedVideos(responsePayload.id)
-                    if (stagedResult.latestPayload) {
-                        syncVideos(stagedResult.latestPayload)
-                    }
-
-                    const stagedThumbnailCandidate = resolveDraftThumbnailSource(stagedVideos)
-                    if (stagedThumbnailCandidate.kind !== 'none') {
-                        try {
-                            const uploadedThumbnail = await maybeApplyAutoThumbnailForCandidate(stagedThumbnailCandidate)
-                            if (uploadedThumbnail) {
-                                await persistThumbnailSelectionForWork(responsePayload.id, uploadedThumbnail.id)
-                            }
-                        } catch (error) {
-                            toast.error(error instanceof Error ? error.message : 'Failed to auto-generate a work thumbnail.')
-                        }
-                    }
-
-                    toast.success('Work and videos created successfully')
-                    if (inlineMode && onSaved) {
-                        onSaved({ id: responsePayload.id, slug: nextSlug, isEditing: false })
-                        return
-                    }
-                    router.push(`/admin/works/${responsePayload.id}?videoInline=1`)
-                    return
-                } catch (error) {
-                    toast.error(error instanceof Error ? error.message : 'Work was created, but some videos failed to attach.')
-                    router.push(`/admin/works/${responsePayload.id}`)
-                    return
-                }
-            }
-
-            toast.success('Work created successfully')
-            if (inlineMode && onSaved) {
-                onSaved({ id: responsePayload?.id, slug: nextSlug, isEditing: false })
+            if (mode === 'with-videos' && stagedVideos.length > 0) {
+                await handleCreatedWorkWithVideos(responsePayload, nextSlug)
                 return
             }
-            router.push(returnTo)
+
+            finishCreateSave(responsePayload, nextSlug)
         } finally {
             setIsSaving(false)
         }

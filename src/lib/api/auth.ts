@@ -11,6 +11,61 @@ export function getLocalAdminLoginUrl(returnUrl = '/admin', email = 'admin@examp
 let csrfTokenCache: string | null = null
 let csrfHeaderNameCache = 'X-CSRF-TOKEN'
 
+function redirectToLoginForAuthFailure() {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  const returnUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`
+  window.location.assign(`/login?returnUrl=${encodeURIComponent(returnUrl)}`)
+}
+
+async function ensureBrowserAuthenticatedSession() {
+  if (typeof window === 'undefined') {
+    return true
+  }
+
+  try {
+    const response = await fetch(`${getApiBaseUrl()}/auth/session`, {
+      credentials: 'include',
+      cache: 'no-store',
+    })
+
+    if (!response.ok) {
+      redirectToLoginForAuthFailure()
+      return false
+    }
+
+    const payload = await response.json() as { authenticated?: boolean }
+    if (payload.authenticated === true) {
+      return true
+    }
+
+    redirectToLoginForAuthFailure()
+    return false
+  } catch {
+    redirectToLoginForAuthFailure()
+    return false
+  }
+}
+
+function shouldRedirectToLogin(response: Response) {
+  if (response.status === 401 || response.status === 403) {
+    return true
+  }
+
+  if (response.status === 302 || response.status === 307 || response.status === 308) {
+    return true
+  }
+
+  const location = response.headers.get('location') ?? ''
+  if (location.includes('/login')) {
+    return true
+  }
+
+  return response.redirected && response.url.includes('/login')
+}
+
 function isMutationMethod(method?: string) {
   const normalizedMethod = (method ?? 'GET').toUpperCase()
   return ['POST', 'PUT', 'PATCH', 'DELETE'].includes(normalizedMethod)
@@ -43,23 +98,39 @@ export async function getCsrfToken(forceRefresh = false) {
 
 export async function fetchWithCsrf(input: RequestInfo | URL, init: RequestInit = {}, retry = true) {
   const headers = new Headers(init.headers)
+  const mutationRequest = isMutationMethod(init.method)
   const requestInit: RequestInit = {
     ...init,
     credentials: 'include',
     headers,
   }
 
-  if (isMutationMethod(init.method)) {
+  if (mutationRequest) {
+    const sessionIsValid = await ensureBrowserAuthenticatedSession()
+    if (!sessionIsValid) {
+      return new Response('', { status: 401, statusText: 'Session expired' })
+    }
+  }
+
+  if (mutationRequest) {
     const csrf = await getCsrfToken()
     headers.set(csrf.headerName, csrf.requestToken)
   }
 
   const response = await fetch(input, requestInit)
 
-  if (retry && response.status === 400 && isMutationMethod(init.method)) {
+  if (retry && response.status === 400 && mutationRequest) {
     const csrf = await getCsrfToken(true)
     headers.set(csrf.headerName, csrf.requestToken)
-    return fetch(input, requestInit)
+    const retriedResponse = await fetch(input, requestInit)
+    if (mutationRequest && shouldRedirectToLogin(retriedResponse)) {
+      redirectToLoginForAuthFailure()
+    }
+    return retriedResponse
+  }
+
+  if (mutationRequest && shouldRedirectToLogin(response)) {
+    redirectToLoginForAuthFailure()
   }
 
   return response

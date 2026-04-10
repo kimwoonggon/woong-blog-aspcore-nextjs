@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   replace: vi.fn(),
   refresh: vi.fn(),
   back: vi.fn(),
+  pathname: '/blog',
   fetchWithCsrf: vi.fn(),
   toast: {
     error: vi.fn(),
@@ -16,7 +17,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mocks.push, replace: mocks.replace, refresh: mocks.refresh, back: mocks.back }),
-  usePathname: () => '/blog',
+  usePathname: () => mocks.pathname,
   useSearchParams: () => new URLSearchParams(),
 }))
 
@@ -47,6 +48,7 @@ vi.mock('@/components/admin/TiptapEditor', () => ({
 describe('BlogEditor', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mocks.pathname = '/blog'
     mocks.fetchWithCsrf.mockResolvedValue({
       ok: true,
       json: async () => ({}),
@@ -80,5 +82,38 @@ describe('BlogEditor', () => {
         }),
       )
     })
+  })
+
+  it('refreshes the router after an inline save outside the public blog routes', async () => {
+    mocks.pathname = '/admin/blog/new'
+
+    render(<BlogEditor inlineMode />)
+
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Inline Blog' } })
+    fireEvent.change(screen.getByLabelText('Mock blog content'), {
+      target: { value: '<p>Inline body</p>' },
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /Create Post/i }))
+
+    await waitFor(() => {
+      expect(mocks.fetchWithCsrf).toHaveBeenCalledWith(
+        '/api/admin/blogs',
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify({
+            title: 'Inline Blog',
+            tags: [],
+            published: true,
+            contentJson: JSON.stringify({
+              html: '<p>Inline body</p>',
+            }),
+          }),
+        }),
+      )
+    })
+
+    expect(mocks.refresh).toHaveBeenCalled()
+    expect(mocks.push).not.toHaveBeenCalled()
   })
 })

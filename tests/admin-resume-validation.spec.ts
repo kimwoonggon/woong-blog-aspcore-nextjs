@@ -11,6 +11,7 @@ test('resume editor rejects non-pdf uploads and stays on admin page', async ({ p
   await page.goto('/admin/pages')
   await expect(page).toHaveURL(/\/admin\/pages/)
   const resumeSection = page.locator('#resume-editor')
+  await expect(resumeSection.getByText('Resume Management')).toBeVisible()
 
   const removeButton = resumeSection.locator('button:has(svg.lucide-trash-2)')
   if (await resumeSection.getByText('Resume PDF Uploaded').isVisible()) {

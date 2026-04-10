@@ -1,0 +1,69 @@
+import StarterKit from '@tiptap/starter-kit'
+import Image from '@tiptap/extension-image'
+import Placeholder from '@tiptap/extension-placeholder'
+import Highlight from '@tiptap/extension-highlight'
+import { TextStyle } from '@tiptap/extension-text-style'
+import Color from '@tiptap/extension-color'
+import Link from '@tiptap/extension-link'
+import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
+import { common, createLowlight } from 'lowlight'
+import { ThreeJsBlock } from '@/components/admin/tiptap/ThreeJsBlock'
+import { HtmlBlock } from '@/components/admin/tiptap/HtmlBlock'
+import { SlashCommand } from '@/components/admin/tiptap/SlashCommand'
+import { suggestion } from '@/components/admin/tiptap/Commands'
+import { WorkVideoEmbedBlock } from '@/components/admin/tiptap/WorkVideoEmbedBlock'
+import type { WorkVideo } from '@/lib/api/works'
+
+const lowlight = createLowlight(common)
+
+export function createTiptapExtensions({
+  placeholder,
+  resolveVideo,
+}: {
+  placeholder: string
+  resolveVideo: (videoId: string) => WorkVideo | null
+}) {
+  return [
+    StarterKit.configure({
+      heading: {
+        levels: [1, 2, 3],
+      },
+      codeBlock: false,
+    }),
+    CodeBlockLowlight.configure({
+      lowlight,
+      HTMLAttributes: {
+        class: 'rounded-md bg-gray-900 text-gray-100 p-4 font-mono my-4',
+      },
+    }),
+    Image.configure({
+      inline: true,
+      allowBase64: true,
+      HTMLAttributes: {
+        class: 'max-w-full h-auto rounded-lg my-4',
+      },
+    }),
+    Placeholder.configure({
+      placeholder,
+    }),
+    Highlight.configure({
+      multicolor: true,
+    }),
+    TextStyle,
+    Color,
+    Link.configure({
+      openOnClick: false,
+      HTMLAttributes: {
+        class: 'text-blue-600 underline cursor-pointer hover:text-blue-800',
+      },
+    }),
+    ThreeJsBlock,
+    HtmlBlock,
+    WorkVideoEmbedBlock.configure({
+      resolveVideo,
+    }),
+    SlashCommand.configure({
+      suggestion,
+    }),
+  ]
+}

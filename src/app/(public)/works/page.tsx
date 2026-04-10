@@ -8,13 +8,14 @@ import { EdgePaginationNav } from '@/components/layout/EdgePaginationNav'
 import { PublicPagination } from '@/components/layout/PublicPagination'
 import { ResponsivePageSizeSync } from '@/components/layout/ResponsivePageSizeSync'
 import { Badge } from '@/components/ui/badge'
+import { headers } from 'next/headers'
 import { fetchServerSession } from '@/lib/api/server'
 import { fetchPublicWorks } from '@/lib/api/works'
 
 export const dynamic = 'force-dynamic'
 
 interface PageProps {
-    searchParams?: Promise<{ page?: string; pageSize?: string }>
+    searchParams?: Promise<{ page?: string; pageSize?: string; __qaEmpty?: string }>
 }
 
 const DESKTOP_PAGE_SIZE = 8
@@ -32,9 +33,14 @@ function formatPublishedMonth(publishedAt?: string | null) {
 
 export default async function WorksPage({ searchParams }: PageProps) {
     const resolvedSearchParams = await searchParams
+    const headerStore = await headers()
+    const requestHost = (headerStore.get('x-forwarded-host') ?? headerStore.get('host') ?? '').toLowerCase()
+    const qaEmptyWorks = resolvedSearchParams?.__qaEmpty === '1' && /localhost|127\.0\.0\.1/.test(requestHost)
     const currentPage = Math.max(1, Number.parseInt(resolvedSearchParams?.page ?? '1', 10) || 1)
     const currentPageSize = Math.max(1, Number.parseInt(resolvedSearchParams?.pageSize ?? String(DESKTOP_PAGE_SIZE), 10) || DESKTOP_PAGE_SIZE)
-    const worksPayload = await fetchPublicWorks(currentPage, currentPageSize)
+    const worksPayload = qaEmptyWorks
+        ? { items: [], page: 1, pageSize: currentPageSize, totalItems: 0, totalPages: 1 }
+        : await fetchPublicWorks(currentPage, currentPageSize)
     const session = await fetchServerSession()
     const totalPages = Math.max(1, worksPayload.totalPages)
     const page = worksPayload.page

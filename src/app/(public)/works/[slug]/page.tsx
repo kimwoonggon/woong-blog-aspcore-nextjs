@@ -11,6 +11,7 @@ import { Metadata } from 'next'
 import { fetchServerSession } from '@/lib/api/server'
 import { fetchAdminWorkById, fetchAllPublicWorks, fetchPublicWorkBySlug } from '@/lib/api/works'
 import { hasWorkVideoEmbeds } from '@/lib/content/work-video-embeds'
+import { formatDetailPublishDate, parseWorkContentHtml } from './work-detail-helpers'
 
 export const dynamic = 'force-dynamic'
 
@@ -55,18 +56,10 @@ export default async function WorkDetailPage({ params }: PageProps) {
     const relatedWorks = (await fetchAllPublicWorks())
         .filter((item) => item.id !== work.id)
     const contentHtml = parseWorkContentHtml(work.contentJson)
+    const orderedVideos = [...work.videos].sort((left, right) => left.sortOrder - right.sortOrder)
     const hasInlineVideoEmbeds = hasWorkVideoEmbeds(contentHtml)
 
-    // Format date
-    const publishDate = work.publishedAt
-        ? new Date(work.publishedAt).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        })
-        : 'Unknown Date'
+    const publishDate = formatDetailPublishDate(work.publishedAt)
 
     return (
         <article className="container mx-auto max-w-6xl px-4 py-8 md:px-6 md:py-12">
@@ -97,15 +90,15 @@ export default async function WorkDetailPage({ params }: PageProps) {
                 </header>
 
                 <div className="mt-8">
-                    {work.videos.length > 0 && !hasInlineVideoEmbeds && (
+                    {orderedVideos.length > 0 && !hasInlineVideoEmbeds && (
                         <div className="mb-8 space-y-4">
-                            {work.videos.map((video) => (
+                            {orderedVideos.map((video) => (
                                 <WorkVideoPlayer key={video.id} video={video} />
                             ))}
                         </div>
                     )}
                     {contentHtml && (
-                        <InteractiveRenderer html={contentHtml} workVideos={work.videos} />
+                        <InteractiveRenderer html={contentHtml} workVideos={orderedVideos} />
                     )}
                 </div>
 
@@ -140,13 +133,4 @@ export default async function WorkDetailPage({ params }: PageProps) {
             />
         </article>
     )
-}
-
-function parseWorkContentHtml(contentJson: string) {
-    try {
-        const parsed = JSON.parse(contentJson) as { html?: string }
-        return parsed.html ?? ''
-    } catch {
-        return ''
-    }
 }

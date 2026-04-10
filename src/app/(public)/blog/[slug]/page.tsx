@@ -10,6 +10,7 @@ import { Metadata } from 'next'
 import { fetchServerSession } from '@/lib/api/server'
 import { resolveBlogRenderableHtml } from '@/lib/content/blog-content'
 import { fetchAdminBlogById, fetchAllPublicBlogs, fetchPublicBlogBySlug } from '@/lib/api/blogs'
+import { formatDetailPublishDate } from './blog-detail-helpers'
 
 export const dynamic = 'force-dynamic'
 
@@ -55,16 +56,7 @@ export default async function BlogDetailPage({ params }: PageProps) {
         .filter((item) => item.id !== blog.id)
     const renderedContent = resolveBlogRenderableHtml(blog.contentJson)
 
-    // Format date
-    const publishDate = blog.publishedAt
-        ? new Date(blog.publishedAt).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        })
-        : 'Unknown Date'
+    const publishDate = formatDetailPublishDate(blog.publishedAt)
 
     return (
         <article className="container mx-auto max-w-6xl px-4 py-8 md:px-6 md:py-12">

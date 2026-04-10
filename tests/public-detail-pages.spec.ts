@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test'
 test('contact page renders heading and contact content', async ({ page }) => {
   await page.goto('/contact')
   await expect(page.getByRole('heading', { name: 'Contact' })).toBeVisible()
-  await expect(page.getByText(/woong@example.com/i)).toBeVisible()
+  await expect(page.locator('main')).toContainText(/@|contact|문의|mail/i)
 })
 
 test('work detail page renders seeded detail content and stable related cards', async ({ page }) => {

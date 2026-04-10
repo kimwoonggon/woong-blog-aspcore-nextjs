@@ -62,6 +62,35 @@ const parseThreeJsBlocks = (htmlContent: string): { hasBlock: boolean; height: n
     return { hasBlock: false, height: 300 }
 }
 
+function renderProseHtml(html: string) {
+    return <div className="prose prose-lg max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: html }} />
+}
+
+function renderVideoSegments(segments: ReturnType<typeof splitWorkVideoEmbedContent>, workVideos: WorkVideo[]) {
+    return (
+        <div className="prose prose-lg max-w-none space-y-6 dark:prose-invert">
+            {segments.map((segment, index) => {
+                if (segment.type === 'video' && segment.videoId) {
+                    const video = workVideos.find((item) => item.id === segment.videoId)
+                    return video ? <WorkVideoPlayer key={`${segment.videoId}-${index}`} video={video} /> : null
+                }
+
+                if (!segment.html?.trim()) {
+                    return null
+                }
+
+                return (
+                    <InteractiveRenderer
+                        key={`html-${index}`}
+                        html={segment.html}
+                        workVideos={workVideos}
+                    />
+                )
+            })}
+        </div>
+    )
+}
+
 export function InteractiveRenderer({ html, workVideos = [] }: InteractiveRendererProps) {
     const processedHtml = useMemo(() => {
         const sanitized = stripHtmlWrappers(html)
@@ -74,35 +103,12 @@ export function InteractiveRenderer({ html, workVideos = [] }: InteractiveRender
     const hasThreeJsBlock = processedHtml.includes('three-js-block')
 
     if (hasWorkVideoEmbed) {
-        const segments = splitWorkVideoEmbedContent(processedHtml)
-
-        return (
-            <div className="prose prose-lg max-w-none space-y-6 dark:prose-invert">
-                {segments.map((segment, index) => {
-                    if (segment.type === 'video' && segment.videoId) {
-                        const video = workVideos.find((item) => item.id === segment.videoId)
-                        return video ? <WorkVideoPlayer key={`${segment.videoId}-${index}`} video={video} /> : null
-                    }
-
-                    if (!segment.html?.trim()) {
-                        return null
-                    }
-
-                    return (
-                        <InteractiveRenderer
-                            key={`html-${index}`}
-                            html={segment.html}
-                            workVideos={workVideos}
-                        />
-                    )
-                })}
-            </div>
-        )
+        return renderVideoSegments(splitWorkVideoEmbedContent(processedHtml), workVideos)
     }
 
     // Fast path: no custom blocks, render directly
     if (!hasHtmlSnippet && !hasThreeJsBlock) {
-        return <div className="prose prose-lg max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: processedHtml }} />
+        return renderProseHtml(processedHtml)
     }
 
     // Handle three-js-block
@@ -119,15 +125,10 @@ export function InteractiveRenderer({ html, workVideos = [] }: InteractiveRender
     if (hasHtmlSnippet) {
         const snippetContent = extractHtmlSnippetContent(processedHtml)
         if (snippetContent) {
-            return (
-                <div
-                    className="prose prose-lg max-w-none dark:prose-invert"
-                    dangerouslySetInnerHTML={{ __html: snippetContent }}
-                />
-            )
+            return renderProseHtml(snippetContent)
         }
     }
 
     // Fallback
-    return <div className="prose prose-lg max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: processedHtml }} />
+    return renderProseHtml(processedHtml)
 }

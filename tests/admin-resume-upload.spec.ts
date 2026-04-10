@@ -10,6 +10,7 @@ test('admin can upload a resume pdf and public resume page exposes download', as
 
   await page.goto('/admin/pages')
   const resumeSection = page.locator('#resume-editor')
+  await expect(resumeSection.getByText('Resume Management')).toBeVisible()
 
   if (await resumeSection.getByText('Resume PDF Uploaded').isVisible()) {
     await resumeSection.locator('button:has(svg.lucide-trash-2)').click()

@@ -34,6 +34,11 @@ interface NavbarProps {
     }
 }
 
+async function redirectAfterLogout() {
+    const redirectUrl = await logoutWithCsrf('/')
+    window.location.assign(redirectUrl)
+}
+
 function SessionActions({
     authenticated,
     isAdmin,
@@ -85,9 +90,8 @@ function SessionActions({
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                     variant="destructive"
-                    onSelect={async () => {
-                        const redirectUrl = await logoutWithCsrf('/')
-                        window.location.assign(redirectUrl)
+                    onSelect={() => {
+                        void redirectAfterLogout()
                     }}
                 >
                     Logout
@@ -109,6 +113,7 @@ export function Navbar({ ownerName = 'John Doe', session }: NavbarProps) {
     const authenticated = session?.authenticated ?? false
     const isAdmin = session?.role === 'admin'
     const avatarLabel = session?.name || (isAdmin ? 'Admin' : 'User')
+    const closeMenu = () => setIsOpen(false)
 
     return (
         <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75">
@@ -186,7 +191,7 @@ export function Navbar({ ownerName = 'John Doe', session }: NavbarProps) {
                                         <Link
                                             key={item.href}
                                             href={item.href}
-                                            onClick={() => setIsOpen(false)}
+                                            onClick={closeMenu}
                                             className={cn(
                                                 "rounded-2xl px-4 py-3 text-base font-medium transition-colors",
                                                 pathname === item.href
@@ -231,10 +236,9 @@ export function Navbar({ ownerName = 'John Doe', session }: NavbarProps) {
                                                     type="button"
                                                     variant="outline"
                                                     className="w-full justify-start rounded-2xl text-red-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/20"
-                                                    onClick={async () => {
-                                                        setIsOpen(false)
-                                                        const redirectUrl = await logoutWithCsrf('/')
-                                                        window.location.assign(redirectUrl)
+                                                    onClick={() => {
+                                                        closeMenu()
+                                                        void redirectAfterLogout()
                                                     }}
                                                 >
                                                     Logout
