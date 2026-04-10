@@ -8,6 +8,8 @@ const mocks = vi.hoisted(() => ({
   refresh: vi.fn(),
   back: vi.fn(),
   fetchWithCsrf: vi.fn(),
+  extractVideoFrameThumbnailBlob: vi.fn(),
+  fetchRemoteImageBlob: vi.fn(),
   toast: {
     error: vi.fn(),
     success: vi.fn(),
@@ -29,9 +31,62 @@ vi.mock('@/lib/api/auth', () => ({
   fetchWithCsrf: mocks.fetchWithCsrf,
 }))
 
+vi.mock('@/lib/content/work-auto-thumbnail', () => ({
+  extractVideoFrameThumbnailBlob: mocks.extractVideoFrameThumbnailBlob,
+  fetchRemoteImageBlob: mocks.fetchRemoteImageBlob,
+}))
+
+vi.mock('@/components/admin/TiptapEditor', async () => {
+  const React = await import('react')
+
+  return {
+    TiptapEditor: ({
+      content,
+      onChange,
+      workVideos = [],
+      insertVideoEmbedRequest,
+      onVideoInsertHandled,
+    }: {
+      content: string
+      onChange: (value: string) => void
+      workVideos?: Array<{ id: string }>
+      insertVideoEmbedRequest?: { videoId: string; nonce: number } | null
+      onVideoInsertHandled?: (result: { inserted: boolean; reason?: 'duplicate' | 'missing' }) => void
+    }) => {
+      React.useEffect(() => {
+        if (!insertVideoEmbedRequest) {
+          return
+        }
+
+        const videoExists = workVideos.some((video) => video.id === insertVideoEmbedRequest.videoId)
+        if (!videoExists) {
+          onVideoInsertHandled?.({ inserted: false, reason: 'missing' })
+          return
+        }
+
+        if (content.includes(`data-video-id="${insertVideoEmbedRequest.videoId}"`)) {
+          onVideoInsertHandled?.({ inserted: false, reason: 'duplicate' })
+          return
+        }
+
+        onChange(`${content}<work-video-embed data-video-id="${insertVideoEmbedRequest.videoId}"></work-video-embed>`)
+        onVideoInsertHandled?.({ inserted: true })
+      }, [content, insertVideoEmbedRequest, onChange, onVideoInsertHandled, workVideos])
+
+      return (
+        <textarea
+          aria-label="Mock work content"
+          value={content}
+          onChange={(event) => onChange(event.target.value)}
+        />
+      )
+    },
+  }
+})
+
 describe('WorkEditor', () => {
   const changeContent = (value: string) => {
-    fireEvent.change(document.querySelector('#content') as HTMLTextAreaElement, {
+    fireEvent.change(screen.getByLabelText('Mock work content'), {
       target: { value },
     })
   }
@@ -39,6 +94,8 @@ describe('WorkEditor', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.stubGlobal('fetch', vi.fn())
+    mocks.extractVideoFrameThumbnailBlob.mockResolvedValue(new Blob(['thumb'], { type: 'image/jpeg' }))
+    mocks.fetchRemoteImageBlob.mockResolvedValue(new Blob(['thumb'], { type: 'image/jpeg' }))
     mocks.fetchWithCsrf.mockResolvedValue({
       ok: true,
       headers: new Headers({ 'content-type': 'application/json' }),
@@ -180,6 +237,18 @@ describe('WorkEditor', () => {
         json: async () => ({ videos_version: 1, videos: [] }),
         text: async () => '',
       })
+      .mockResolvedValueOnce({
+        ok: true,
+        headers: new Headers({ 'content-type': 'application/json' }),
+        json: async () => ({ id: 'thumb-1', url: '/media/work-thumbnails/thumb-1.jpg' }),
+        text: async () => '',
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        headers: new Headers({ 'content-type': 'application/json' }),
+        json: async () => ({ id: 'work-1', slug: 'work-title' }),
+        text: async () => '',
+      })
 
     render(<WorkEditor />)
 
@@ -213,8 +282,18 @@ describe('WorkEditor', () => {
       '/api/admin/works/work-1/videos/confirm',
       expect.objectContaining({ method: 'POST' }),
     )
+    expect(mocks.fetchWithCsrf).toHaveBeenNthCalledWith(
+      5,
+      '/api/uploads',
+      expect.objectContaining({ method: 'POST', body: expect.any(FormData) }),
+    )
+    expect(mocks.fetchWithCsrf).toHaveBeenNthCalledWith(
+      6,
+      '/api/admin/works/work-1',
+      expect.objectContaining({ method: 'PUT' }),
+    )
     expect(mocks.toast.success).toHaveBeenCalledWith('Work and videos created successfully')
-    expect(mocks.push).toHaveBeenCalledWith('/admin/works')
+    expect(mocks.push).toHaveBeenCalledWith('/admin/works/work-1?videoInline=1')
   })
 
   it('uploads a thumbnail preview and lets the user remove it', async () => {
@@ -301,6 +380,126 @@ describe('WorkEditor', () => {
     expect(screen.getByTitle(/YouTube video/i)).toBeInTheDocument()
   })
 
+  it('auto-generates a thumbnail from an uploaded video when there is no explicit thumbnail', async () => {
+    mocks.fetchWithCsrf
+      .mockResolvedValueOnce({
+        ok: true,
+        headers: new Headers({ 'content-type': 'application/json' }),
+        json: async () => ({
+          uploadSessionId: 'session-1',
+          uploadMethod: 'POST',
+          uploadUrl: '/api/admin/works/work-1/videos/upload?uploadSessionId=session-1',
+          storageKey: 'videos/work-1/session-1.mp4',
+        }),
+        text: async () => '',
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        headers: new Headers({ 'content-type': 'application/json' }),
+        json: async () => ({ success: true }),
+        text: async () => '',
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        headers: new Headers({ 'content-type': 'application/json' }),
+        json: async () => ({
+          videos_version: 1,
+          videos: [{
+            id: 'video-1',
+            sourceType: 'r2',
+            sourceKey: 'videos/work-1/demo.mp4',
+            playbackUrl: 'https://example.com/demo.mp4',
+            mimeType: 'video/mp4',
+            sortOrder: 0,
+          }],
+        }),
+        text: async () => '',
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        headers: new Headers({ 'content-type': 'application/json' }),
+        json: async () => ({ id: 'thumb-1', url: '/media/work-thumbnails/thumb-1.jpg' }),
+        text: async () => '',
+      })
+
+    render(
+      <WorkEditor
+        initialWork={{
+          id: 'work-1',
+          title: 'Existing work',
+          category: 'platform',
+          tags: [],
+          published: true,
+          content: { html: '<p>Existing</p>' },
+          all_properties: {},
+          videos_version: 0,
+          videos: [],
+        }}
+      />,
+    )
+
+    const fileInput = screen.getByLabelText('Upload MP4 Video')
+    const file = new File(['\x00\x00\x00\x18ftypmp42'], 'demo.mp4', { type: 'video/mp4' })
+    fireEvent.change(fileInput, { target: { files: [file] } })
+
+    await waitFor(() => {
+      expect(mocks.fetchWithCsrf).toHaveBeenNthCalledWith(
+        4,
+        '/api/uploads',
+        expect.objectContaining({ method: 'POST', body: expect.any(FormData) }),
+      )
+    })
+
+    expect(mocks.extractVideoFrameThumbnailBlob).toHaveBeenCalledWith(file)
+    expect(screen.getByTestId('work-thumbnail-source')).toHaveTextContent('uploaded video')
+    expect(screen.getByAltText('Work thumbnail preview')).toHaveAttribute('src', '/media/work-thumbnails/thumb-1.jpg')
+  })
+
+  it('does not auto-generate a thumbnail when an explicit thumbnail already exists', async () => {
+    mocks.fetchWithCsrf.mockResolvedValueOnce({
+      ok: true,
+      headers: new Headers({ 'content-type': 'application/json' }),
+      json: async () => ({
+        videos_version: 3,
+        videos: [{
+          id: 'video-1',
+          sourceType: 'youtube',
+          sourceKey: 'dQw4w9WgXcQ',
+          sortOrder: 0,
+        }],
+      }),
+      text: async () => '',
+    })
+
+    render(
+      <WorkEditor
+        initialWork={{
+          id: 'work-1',
+          title: 'Existing work',
+          category: 'platform',
+          tags: [],
+          published: true,
+          content: { html: '<p>Existing</p>' },
+          all_properties: {},
+          thumbnail_asset_id: 'thumb-manual',
+          thumbnail_url: '/media/work-thumbnails/manual.jpg',
+          videos_version: 2,
+          videos: [],
+        }}
+      />,
+    )
+
+    fireEvent.change(screen.getByLabelText('YouTube URL or ID'), { target: { value: 'https://youtu.be/dQw4w9WgXcQ' } })
+    fireEvent.click(screen.getByRole('button', { name: /Add YouTube Video/i }))
+
+    await waitFor(() => {
+      expect(mocks.toast.success).toHaveBeenCalledWith('YouTube video added.')
+    })
+
+    expect(mocks.fetchRemoteImageBlob).not.toHaveBeenCalled()
+    expect(screen.getByTestId('work-thumbnail-source')).toHaveTextContent('manual')
+  })
+
   it('surfaces reorder conflicts for existing videos', async () => {
     mocks.fetchWithCsrf.mockResolvedValueOnce({
       ok: false,
@@ -343,5 +542,69 @@ describe('WorkEditor', () => {
     await waitFor(() => {
       expect(mocks.toast.error).toHaveBeenCalledWith('Videos changed. Refresh and retry.')
     })
+  })
+
+  it('inserts a saved video into the body and marks it as placed', async () => {
+    render(
+      <WorkEditor
+        initialWork={{
+          id: 'work-1',
+          title: 'Existing work',
+          category: 'platform',
+          tags: [],
+          published: true,
+          content: { html: '<p>Existing</p>' },
+          all_properties: {},
+          videos_version: 2,
+          videos: [
+            {
+              id: 'video-1',
+              sourceType: 'youtube',
+              sourceKey: 'dQw4w9WgXcQ',
+              sortOrder: 0,
+            },
+          ],
+        }}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Insert Into Body' }))
+
+    await waitFor(() => {
+      expect(mocks.toast.success).toHaveBeenCalledWith('Video inserted into the body.')
+    })
+
+    expect(screen.getByLabelText('Mock work content')).toHaveValue('<p>Existing</p><work-video-embed data-video-id="video-1"></work-video-embed>')
+    expect(screen.getByText(/Placed in body\. Remove it from the body before deleting the saved video\./i)).toBeInTheDocument()
+  })
+
+  it('blocks deleting a video that is still placed in the body', async () => {
+    render(
+      <WorkEditor
+        initialWork={{
+          id: 'work-1',
+          title: 'Existing work',
+          category: 'platform',
+          tags: [],
+          published: true,
+          content: { html: '<p>Existing</p><work-video-embed data-video-id="video-1"></work-video-embed>' },
+          all_properties: {},
+          videos_version: 2,
+          videos: [
+            {
+              id: 'video-1',
+              sourceType: 'youtube',
+              sourceKey: 'dQw4w9WgXcQ',
+              sortOrder: 0,
+            },
+          ],
+        }}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Remove' }))
+
+    expect(mocks.toast.error).toHaveBeenCalledWith('Remove this video from the body before deleting it.')
+    expect(mocks.fetchWithCsrf).not.toHaveBeenCalled()
   })
 })

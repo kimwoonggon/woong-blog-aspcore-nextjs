@@ -2,9 +2,13 @@
 
 import React, { useMemo } from 'react'
 import { ThreeJsScene } from './ThreeJsScene'
+import { WorkVideoPlayer } from './WorkVideoPlayer'
+import type { WorkVideo } from '@/lib/api/works'
+import { hasWorkVideoEmbeds, splitWorkVideoEmbedContent } from '@/lib/content/work-video-embeds'
 
 interface InteractiveRendererProps {
     html: string
+    workVideos?: WorkVideo[]
 }
 
 // Consistent HTML entity decoding for both SSR and client (no hydration mismatch)
@@ -58,15 +62,43 @@ const parseThreeJsBlocks = (htmlContent: string): { hasBlock: boolean; height: n
     return { hasBlock: false, height: 300 }
 }
 
-export function InteractiveRenderer({ html }: InteractiveRendererProps) {
+export function InteractiveRenderer({ html, workVideos = [] }: InteractiveRendererProps) {
     const processedHtml = useMemo(() => {
         const sanitized = stripHtmlWrappers(html)
         return sanitized
     }, [html])
 
     // Check for custom blocks
+    const hasWorkVideoEmbed = hasWorkVideoEmbeds(processedHtml)
     const hasHtmlSnippet = processedHtml.includes('html-snippet')
     const hasThreeJsBlock = processedHtml.includes('three-js-block')
+
+    if (hasWorkVideoEmbed) {
+        const segments = splitWorkVideoEmbedContent(processedHtml)
+
+        return (
+            <div className="prose prose-lg max-w-none space-y-6 dark:prose-invert">
+                {segments.map((segment, index) => {
+                    if (segment.type === 'video' && segment.videoId) {
+                        const video = workVideos.find((item) => item.id === segment.videoId)
+                        return video ? <WorkVideoPlayer key={`${segment.videoId}-${index}`} video={video} /> : null
+                    }
+
+                    if (!segment.html?.trim()) {
+                        return null
+                    }
+
+                    return (
+                        <InteractiveRenderer
+                            key={`html-${index}`}
+                            html={segment.html}
+                            workVideos={workVideos}
+                        />
+                    )
+                })}
+            </div>
+        )
+    }
 
     // Fast path: no custom blocks, render directly
     if (!hasHtmlSnippet && !hasThreeJsBlock) {

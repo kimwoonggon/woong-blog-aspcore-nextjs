@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using WoongBlog.Api.Domain.Entities;
 using WoongBlog.Api.Infrastructure.Persistence;
 using WoongBlog.Api.Modules.Composition.Application.GetHome;
 using WoongBlog.Api.Modules.Content.Works.Application.Abstractions;
@@ -37,6 +38,16 @@ public sealed class PublicWorkService : IPublicWorkService
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(cancellationToken);
+        var workIds = works.Select(work => work.Id).ToArray();
+        var videoRows = await _dbContext.WorkVideos
+            .AsNoTracking()
+            .Where(x => workIds.Contains(x.WorkId))
+            .OrderBy(x => x.SortOrder)
+            .ThenBy(x => x.CreatedAt)
+            .ToListAsync(cancellationToken);
+        var videoLookup = videoRows
+            .GroupBy(x => x.WorkId)
+            .ToDictionary(x => x.Key, x => (IReadOnlyList<WorkVideo>)x.ToList());
 
         var items = works.Select(work => new WorkCardDto(
             work.Id,
@@ -46,7 +57,11 @@ public sealed class PublicWorkService : IPublicWorkService
             work.Category,
             work.Period,
             work.Tags,
-            work.ThumbnailAssetId is not null && assets.TryGetValue(work.ThumbnailAssetId.Value, out var thumbnailUrl) ? thumbnailUrl : string.Empty,
+            WorkThumbnailUrlResolver.ResolveThumbnailUrl(
+                work.ThumbnailAssetId,
+                work.ContentJson,
+                videoLookup.TryGetValue(work.Id, out var workVideos) ? workVideos : Array.Empty<WorkVideo>(),
+                assets),
             work.IconAssetId is not null && assets.TryGetValue(work.IconAssetId.Value, out var iconUrl) ? iconUrl : string.Empty,
             work.PublishedAt
         )).ToList();
@@ -85,6 +100,12 @@ public sealed class PublicWorkService : IPublicWorkService
             x.CreatedAt
         )).ToList();
 
+        var thumbnailUrl = WorkThumbnailUrlResolver.ResolveThumbnailUrl(
+            work.ThumbnailAssetId,
+            work.ContentJson,
+            videoRows,
+            assets);
+
         return new WorkDetailDto(
             work.Id,
             work.Slug,
@@ -94,7 +115,7 @@ public sealed class PublicWorkService : IPublicWorkService
             work.Category,
             work.Period,
             work.Tags,
-            work.ThumbnailAssetId is not null && assets.TryGetValue(work.ThumbnailAssetId.Value, out var thumbnailUrl) ? thumbnailUrl : string.Empty,
+            thumbnailUrl,
             work.IconAssetId is not null && assets.TryGetValue(work.IconAssetId.Value, out var iconUrl) ? iconUrl : string.Empty,
             work.PublishedAt,
             work.VideosVersion,

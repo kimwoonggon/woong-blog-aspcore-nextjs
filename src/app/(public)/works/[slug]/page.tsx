@@ -10,6 +10,7 @@ import { WorkVideoPlayer } from '@/components/content/WorkVideoPlayer'
 import { Metadata } from 'next'
 import { fetchServerSession } from '@/lib/api/server'
 import { fetchAdminWorkById, fetchAllPublicWorks, fetchPublicWorkBySlug } from '@/lib/api/works'
+import { hasWorkVideoEmbeds } from '@/lib/content/work-video-embeds'
 
 export const dynamic = 'force-dynamic'
 
@@ -53,6 +54,8 @@ export default async function WorkDetailPage({ params }: PageProps) {
 
     const relatedWorks = (await fetchAllPublicWorks())
         .filter((item) => item.id !== work.id)
+    const contentHtml = parseWorkContentHtml(work.contentJson)
+    const hasInlineVideoEmbeds = hasWorkVideoEmbeds(contentHtml)
 
     // Format date
     const publishDate = work.publishedAt
@@ -94,15 +97,15 @@ export default async function WorkDetailPage({ params }: PageProps) {
                 </header>
 
                 <div className="mt-8">
-                    {work.videos.length > 0 && (
+                    {work.videos.length > 0 && !hasInlineVideoEmbeds && (
                         <div className="mb-8 space-y-4">
                             {work.videos.map((video) => (
                                 <WorkVideoPlayer key={video.id} video={video} />
                             ))}
                         </div>
                     )}
-                    {work.contentJson && (
-                        <InteractiveRenderer html={JSON.parse(work.contentJson).html ?? ''} />
+                    {contentHtml && (
+                        <InteractiveRenderer html={contentHtml} workVideos={work.videos} />
                     )}
                 </div>
 
@@ -137,4 +140,13 @@ export default async function WorkDetailPage({ params }: PageProps) {
             />
         </article>
     )
+}
+
+function parseWorkContentHtml(contentJson: string) {
+    try {
+        const parsed = JSON.parse(contentJson) as { html?: string }
+        return parsed.html ?? ''
+    } catch {
+        return ''
+    }
 }

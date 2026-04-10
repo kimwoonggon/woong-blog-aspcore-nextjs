@@ -76,6 +76,12 @@ public sealed class AdminWorkService : IAdminWorkService
             x.CreatedAt
         )).ToList();
 
+        var thumbnailUrl = WorkThumbnailUrlResolver.ResolveThumbnailUrl(
+            work.ThumbnailAssetId,
+            work.ContentJson,
+            videoRows,
+            assetLookup);
+
         return new AdminWorkDetailDto(
             work.Id,
             work.Title,
@@ -92,7 +98,7 @@ public sealed class AdminWorkService : IAdminWorkService
             new AdminWorkContentDto(AdminContentJson.ExtractHtml(work.ContentJson)),
             work.ThumbnailAssetId,
             work.IconAssetId,
-            ResolveAssetUrl(work.ThumbnailAssetId, assetLookup),
+            thumbnailUrl,
             ResolveAssetUrl(work.IconAssetId, assetLookup),
             videos
         );

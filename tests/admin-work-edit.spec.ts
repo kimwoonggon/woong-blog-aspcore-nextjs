@@ -12,7 +12,7 @@ test('admin can edit an existing work entry with mixed special input', async ({ 
   await expect(page.getByRole('heading', { name: 'Edit Work' })).toBeVisible()
 
   await page.getByLabel('Title').fill(updatedTitle)
-  await page.locator('#content').fill(`<p>${updatedBody}</p>`)
+  await page.locator('.tiptap.ProseMirror').first().fill(updatedBody)
 
   const [response] = await Promise.all([
     page.waitForResponse((res) => res.url().includes('/api/admin/works/') && res.request().method() === 'PUT' && res.ok()),
