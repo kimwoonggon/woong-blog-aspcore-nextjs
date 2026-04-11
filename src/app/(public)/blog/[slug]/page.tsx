@@ -66,7 +66,7 @@ export default async function BlogDetailPage({ params }: PageProps) {
                     {blog.title}
                 </h1>
                 <div className="mb-6 flex flex-wrap items-center gap-4 text-gray-500 dark:text-gray-400 font-medium">
-                    <Badge variant="secondary" className="rounded-full bg-brand-accent px-3 text-white hover:bg-brand-accent/90">
+                    <Badge variant="secondary" className="rounded-full bg-brand-navy px-3 text-white hover:bg-brand-navy/90">
                         <time dateTime={blog.publishedAt ?? undefined}>{publishDate}</time>
                     </Badge>
                     <div className="flex flex-wrap gap-2 font-mono text-sm">

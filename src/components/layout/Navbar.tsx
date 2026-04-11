@@ -153,12 +153,6 @@ export function Navbar({ ownerName = 'John Doe', session }: NavbarProps) {
                 </nav>
 
                 <div className="ml-auto hidden items-center gap-3 lg:flex">
-                    <Link
-                        href="/blog"
-                        className="hidden rounded-full border border-border/80 px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/30 hover:text-foreground xl:inline-flex"
-                    >
-                        Latest writing
-                    </Link>
                     <ThemeToggle />
                     <SessionActions authenticated={authenticated} isAdmin={isAdmin} avatarLabel={avatarLabel} />
                 </div>

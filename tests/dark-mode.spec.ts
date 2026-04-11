@@ -1,124 +1,16 @@
-import { expect, test, type Locator, type Page } from '@playwright/test'
-
-async function getStyle(locator: Locator, property: string) {
-  return locator.evaluate(
-    (element, cssProperty) => getComputedStyle(element as HTMLElement).getPropertyValue(cssProperty),
-    property,
-  )
-}
-
-async function getColorChannelsFromCssValue(page: Page, cssValue: string) {
-  return page.evaluate((input) => {
-    const canvas = document.createElement('canvas')
-    canvas.width = 1
-    canvas.height = 1
-    const context = canvas.getContext('2d')
-    if (!context) {
-      throw new Error('Canvas 2D context is unavailable')
-    }
-
-    context.clearRect(0, 0, 1, 1)
-    context.fillStyle = '#000000'
-    context.fillStyle = input
-    context.fillRect(0, 0, 1, 1)
-
-    const [red, green, blue, alpha] = context.getImageData(0, 0, 1, 1).data
-    return [red, green, blue, alpha] as const
-  }, cssValue)
-}
-
-async function getRootVariableChannels(page: Page, variableName: string) {
-  return page.evaluate((name) => {
-    const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim()
-    const canvas = document.createElement('canvas')
-    canvas.width = 1
-    canvas.height = 1
-    const context = canvas.getContext('2d')
-    if (!context) {
-      throw new Error('Canvas 2D context is unavailable')
-    }
-
-    context.clearRect(0, 0, 1, 1)
-    context.fillStyle = '#000000'
-    context.fillStyle = value
-    context.fillRect(0, 0, 1, 1)
-
-    const [red, green, blue, alpha] = context.getImageData(0, 0, 1, 1).data
-    return [red, green, blue, alpha] as const
-  }, variableName)
-}
-
-async function getColorChannels(locator: Locator, property: string) {
-  return locator.evaluate((element, cssProperty) => {
-    const canvas = document.createElement('canvas')
-    canvas.width = 1
-    canvas.height = 1
-    const context = canvas.getContext('2d')
-    if (!context) {
-      throw new Error('Canvas 2D context is unavailable')
-    }
-
-    context.clearRect(0, 0, 1, 1)
-    context.fillStyle = '#000000'
-    context.fillStyle = getComputedStyle(element as HTMLElement).getPropertyValue(cssProperty)
-    context.fillRect(0, 0, 1, 1)
-
-    const [red, green, blue, alpha] = context.getImageData(0, 0, 1, 1).data
-    return [red, green, blue, alpha] as const
-  }, property)
-}
-
-function expectRgbClose(actual: readonly number[], expected: readonly number[], tolerance = 3) {
-  for (let index = 0; index < 3; index += 1) {
-    expect(Math.abs(actual[index] - expected[index])).toBeLessThanOrEqual(tolerance)
-  }
-}
-
-async function openThemeMenu(page: Page) {
-  await page.getByTestId('theme-toggle').click()
-}
-
-async function selectTheme(page: Page, value: 'Light' | 'Dark' | 'System') {
-  await openThemeMenu(page)
-  await page.getByRole('menuitemradio', { name: value }).click()
-}
-
-async function expectDarkHtml(page: Page) {
-  await expect.poll(() => page.evaluate(() => document.documentElement.classList.contains('dark'))).toBe(true)
-}
-
-async function expectLightHtml(page: Page) {
-  await expect.poll(() => page.evaluate(() => document.documentElement.classList.contains('dark'))).toBe(false)
-}
-
-function channelToLinear(channel: number) {
-  const normalized = channel / 255
-  return normalized <= 0.03928
-    ? normalized / 12.92
-    : ((normalized + 0.055) / 1.055) ** 2.4
-}
-
-function rgbToLuminance(rgb: [number, number, number]) {
-  const [red, green, blue] = rgb.map(channelToLinear) as [number, number, number]
-  return (0.2126 * red) + (0.7152 * green) + (0.0722 * blue)
-}
-
-function contrastRatio(foreground: readonly number[], background: readonly number[]) {
-  const foregroundLuminance = rgbToLuminance([foreground[0], foreground[1], foreground[2]])
-  const backgroundLuminance = rgbToLuminance([background[0], background[1], background[2]])
-  const lighter = Math.max(foregroundLuminance, backgroundLuminance)
-  const darker = Math.min(foregroundLuminance, backgroundLuminance)
-
-  return (lighter + 0.05) / (darker + 0.05)
-}
-
-async function gotoWithTheme(page: Page, url: string, theme: 'dark' | 'light' | 'system' = 'dark') {
-  await page.goto(url, { waitUntil: 'networkidle' })
-  await page.evaluate((selectedTheme) => {
-    window.localStorage.setItem('theme', selectedTheme)
-  }, theme)
-  await page.reload({ waitUntil: 'networkidle' })
-}
+import { expect, test } from '@playwright/test'
+import {
+  contrastRatio,
+  expectDarkHtml,
+  expectLightHtml,
+  expectRgbClose,
+  getColorChannels,
+  getColorChannelsFromCssValue,
+  getRootVariableChannels,
+  getStyle,
+  gotoWithTheme,
+  selectTheme,
+} from './helpers/ui-improvement'
 
 test.describe('theme toggle', () => {
   test('DM-01: theme toggle button is visible in the navbar', async ({ page }) => {
@@ -177,7 +69,7 @@ test.describe('public pages', () => {
     await gotoWithTheme(page, '/')
     await expectDarkHtml(page)
 
-    const section = page.getByRole('heading', { name: 'Recent posts' }).locator('..').locator('..')
+    const section = page.getByRole('heading', { name: 'Featured works' }).locator('..').locator('..')
     const sectionBackground = await getStyle(section, 'background-color')
     const expectedBackground = await getStyle(section, 'background-color')
     expect(sectionBackground).toBe(expectedBackground)
@@ -195,13 +87,13 @@ test.describe('public pages', () => {
     expectRgbClose(badgeBackground, expectedBadgeBackground)
   })
 
-  test('DM-08: work detail page uses orange brand accents in dark mode', async ({ page }) => {
+  test('DM-08: work detail page uses navy date badges and orange accents in dark mode', async ({ page }) => {
     await gotoWithTheme(page, '/works/seeded-work')
     const badge = page.locator('article header .rounded-full').first()
     const excerpt = page.locator('article header p').first()
 
     const badgeBackground = await getColorChannels(badge, 'background-color')
-    const expectedBadgeBackground = await getRootVariableChannels(page, '--brand-orange')
+    const expectedBadgeBackground = await getRootVariableChannels(page, '--brand-navy')
     expectRgbClose(badgeBackground, expectedBadgeBackground)
 
     const borderColor = await getColorChannels(excerpt, 'border-left-color')
@@ -218,14 +110,14 @@ test.describe('public pages', () => {
     expect(titleClass).toContain('group-hover/card:text-brand-accent')
   })
 
-  test('DM-10: blog detail page uses accent colors and keeps prose readable', async ({ page }) => {
+  test('DM-10: blog detail page uses navy date badges and keeps prose readable', async ({ page }) => {
     await gotoWithTheme(page, '/blog/seeded-blog')
     const badge = page.locator('article header .rounded-full').first()
     const excerpt = page.locator('article header p').first()
     const prose = page.locator('.prose').first()
 
     const badgeBackground = await getColorChannels(badge, 'background-color')
-    const expectedBadgeBackground = await getRootVariableChannels(page, '--brand-accent')
+    const expectedBadgeBackground = await getRootVariableChannels(page, '--brand-navy')
     expectRgbClose(badgeBackground, expectedBadgeBackground)
 
     const borderColor = await getColorChannels(excerpt, 'border-left-color')
@@ -341,14 +233,14 @@ test.describe('public pages', () => {
     expect(contrastRatio(foreground, background)).toBeGreaterThanOrEqual(4.5)
   })
 
-  test('DM-24: muted text contrast is at least 3:1 in dark mode', async ({ page }) => {
+  test('DM-24: muted text contrast is at least 4.5:1 in dark mode', async ({ page }) => {
     await gotoWithTheme(page, '/')
     const mutedText = page.getByText(/Works, writing, and experiments in one balanced shell\./)
     await expect(mutedText).toBeVisible()
 
     const foreground = await getColorChannels(mutedText, 'color')
     const background = await getColorChannels(page.locator('body'), 'background-color')
-    expect(contrastRatio(foreground, background)).toBeGreaterThanOrEqual(3)
+    expect(contrastRatio(foreground, background)).toBeGreaterThanOrEqual(4.5)
   })
 })
 

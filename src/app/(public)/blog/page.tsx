@@ -85,7 +85,7 @@ export default async function BlogPage({ searchParams }: PageProps) {
                                     <div className="responsive-feed-copy mt-2 flex flex-wrap gap-x-4 gap-y-2 text-sm text-gray-600 dark:text-gray-400">
                                         <span>{formatPublishedDate(blog.publishedAt)}</span>
                                         {blog.tags?.length ? (
-                                            <span className="font-medium text-gray-500 dark:text-gray-500">
+                                            <span className="font-medium text-gray-500 dark:text-gray-400">
                                                 {blog.tags.slice(0, 3).join(' · ')}
                                             </span>
                                         ) : null}

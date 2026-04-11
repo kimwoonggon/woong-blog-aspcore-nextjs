@@ -117,7 +117,7 @@
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
+  --muted-foreground: oklch(0.75 0 0);
   --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
@@ -149,6 +149,14 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+  }
+
+  html {
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
   }
 
   body {
@@ -283,21 +291,21 @@
 }
 @keyframes fadeInUp {
   from {
-    opacity: 0;
     transform: translateY(20px);
   }
   to {
-    opacity: 1;
     transform: translateY(0);
   }
 }
 
 .animate-fade-in-up {
+  opacity: 1;
   animation: fadeInUp 0.8s ease-out forwards;
+  will-change: transform;
 }
 
 .works-feed-card {
-  height: 30rem;
+  min-height: 24rem;
 }
 
 .works-feed-title {
@@ -334,7 +342,7 @@
   }
 
   .works-feed-card {
-    height: 27rem;
+    min-height: 22rem;
   }
 }
 
@@ -356,6 +364,24 @@
   }
 
   .works-feed-card {
-    height: 24rem;
+    min-height: 20rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in-up {
+    animation: none;
+    opacity: 1;
+    transform: none;
+    will-change: auto;
+  }
+}
+
+@media (scripting: none) {
+  .animate-fade-in-up {
+    animation: none;
+    opacity: 1 !important;
+    transform: none !important;
+    will-change: auto;
   }
 }

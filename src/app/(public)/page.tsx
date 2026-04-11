@@ -7,6 +7,15 @@ import { parsePageContentJson, toHomeContent } from '@/lib/content/page-content'
 
 export const dynamic = 'force-dynamic'
 
+function formatPublishedMonth(publishedAt?: string | null) {
+  return publishedAt
+    ? new Date(publishedAt).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+      })
+    : 'Unknown Date'
+}
+
 export default async function HomePage() {
   const payload = await fetchPublicHome()
   const homeContent = toHomeContent(parsePageContentJson(payload?.homePage?.contentJson))
@@ -16,30 +25,57 @@ export default async function HomePage() {
   const profileImageUrl = homeContent.profileImageUrl || ''
   const recentPosts = payload?.recentPosts || []
   const featuredWorks = payload?.featuredWorks || []
+  const ownerName = payload?.siteSettings?.ownerName?.trim()
+  const sanitizedHeadlineName = headline
+    .replace(/^hi,?\s*i\s*am\s*/i, '')
+    .split(',')[0]
+    ?.trim()
+  const profileAltText = ownerName
+    ? `Profile photo of ${ownerName}`
+    : sanitizedHeadlineName
+      ? `Profile photo of ${sanitizedHeadlineName}`
+      : 'Profile photo'
 
   return (
-    <div className="container mx-auto flex flex-col gap-16 px-4 py-8 md:px-6 md:py-12">
+    <div className="container mx-auto max-w-7xl flex flex-col gap-16 px-4 py-8 md:px-6 md:py-12">
       <section className="flex flex-col-reverse items-center justify-between gap-8 md:flex-row md:items-start md:gap-12">
         <div className="flex flex-1 flex-col items-center text-center md:items-start md:text-left">
           <h1
-            className="mb-4 text-4xl font-heading font-bold tracking-tight text-gray-900 md:text-5xl lg:text-6xl dark:text-gray-50 opacity-0 animate-fade-in-up"
+            className="mb-4 text-4xl font-heading font-bold tracking-tight text-gray-900 md:text-5xl lg:text-6xl dark:text-gray-50 animate-fade-in-up [text-wrap:balance]"
             style={{ animationDelay: '100ms' }}
           >
             {headline}
           </h1>
           <p
-            className="mb-8 max-w-[600px] text-lg text-gray-600 dark:text-gray-400 opacity-0 animate-fade-in-up"
+            className="mb-8 max-w-[600px] text-lg text-gray-600 dark:text-gray-400 animate-fade-in-up"
             style={{ animationDelay: '200ms' }}
           >
             {introText}
           </p>
+          <div
+            className="flex flex-wrap gap-4 animate-fade-in-up"
+            style={{ animationDelay: '300ms' }}
+          >
+            <Link
+              href="/works"
+              className="inline-flex min-h-11 items-center rounded-full bg-foreground px-6 py-3 text-sm font-semibold text-background transition-colors hover:bg-foreground/90"
+            >
+              View My Works
+            </Link>
+            <Link
+              href="/blog"
+              className="inline-flex min-h-11 items-center rounded-full border border-border px-6 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
+            >
+              Read Blog
+            </Link>
+          </div>
         </div>
-        <div className="flex-shrink-0 opacity-0 animate-fade-in-up" style={{ animationDelay: '0ms' }}>
+        <div className="flex-shrink-0 animate-fade-in-up" style={{ animationDelay: '0ms' }}>
           <div className="relative h-60 w-60 overflow-hidden rounded-full bg-gray-200 shadow-xl dark:bg-gray-800">
             {profileImageUrl ? (
               <Image
                 src={profileImageUrl}
-                alt="Profile"
+                alt={profileAltText}
                 fill
                 className="object-cover"
                 unoptimized
@@ -53,9 +89,73 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="-mx-4 bg-brand-section-bg px-4 py-8 md:-mx-6 md:px-6">
+      <section data-testid="featured-works-section" className="-mx-4 bg-brand-section-bg px-4 py-8 md:-mx-6 md:px-6">
         <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-xl font-medium text-gray-900 md:text-2xl dark:text-gray-50">
+          <h2 className="text-xl font-bold text-gray-900 md:text-2xl dark:text-gray-50">
+            Featured works
+          </h2>
+          <Link
+            href="/works"
+            className="text-sm font-medium text-brand-cyan transition-colors hover:text-brand-cyan hover:underline"
+          >
+            View all
+          </Link>
+        </div>
+        <div data-testid="featured-works-grid" className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+          {featuredWorks.length > 0 ? (
+            featuredWorks.map((work) => {
+              const thumbnailUrl = work.thumbnailUrl || null
+              const publishDate = formatPublishedMonth(work.publishedAt)
+
+              return (
+                <Link key={work.id} href={`/works/${work.slug}`} data-testid="featured-work-card" className="group block h-full">
+                  <Card className="flex h-full flex-col overflow-hidden rounded-2xl border-border/80 bg-background py-0 shadow-sm transition hover:border-primary/30 hover:shadow-md">
+                    <div className="relative aspect-[4/3] overflow-hidden bg-gray-100 dark:bg-gray-800">
+                      {thumbnailUrl ? (
+                        <Image
+                          src={thumbnailUrl}
+                          alt={work.title}
+                          fill
+                          className="object-cover transition-transform duration-500 group-hover:scale-105"
+                          unoptimized
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-sm font-medium text-gray-400">
+                          No Image
+                        </div>
+                      )}
+                    </div>
+                    <CardContent className="flex flex-1 flex-col p-4 sm:p-5">
+                      <div className="mb-2 flex flex-wrap items-center gap-2">
+                        <span className="rounded-full bg-brand-navy px-2.5 py-0.5 text-xs font-bold text-white">
+                          {publishDate}
+                        </span>
+                        <span className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                          {work.category}
+                        </span>
+                      </div>
+                      <h3 className="line-clamp-2 text-lg font-heading font-bold leading-tight text-gray-900 transition-colors group-hover:text-brand-accent dark:text-gray-50">
+                        {work.title}
+                      </h3>
+                      <p className="mt-2 line-clamp-2 flex-1 text-sm leading-relaxed text-gray-600 dark:text-gray-300">
+                        {work.excerpt || 'Click to view details'}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </Link>
+              )
+            })
+          ) : (
+            <div className="col-span-full py-8 text-center text-gray-500">
+              No featured works found.
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section data-testid="recent-posts-section" className="bg-background">
+        <div className="mb-6 flex items-center justify-between">
+          <h2 className="text-xl font-bold text-gray-900 md:text-2xl dark:text-gray-50">
             Recent posts
           </h2>
           <Link
@@ -77,18 +177,18 @@ export default async function HomePage() {
                 : 'Unknown Date'
 
               return (
-                <Card key={post.id} className="border-none shadow-sm">
+                <Card key={post.id} data-testid="recent-post-card" className="overflow-hidden rounded-2xl border-border/80 bg-background shadow-sm transition hover:border-primary/30 hover:shadow-md">
                   <CardHeader>
                     <CardTitle className="text-xl font-bold">
                       <Link href={`/blog/${post.slug}`} className="transition-colors hover:text-brand-cyan">
                         {post.title}
                       </Link>
                     </CardTitle>
-                    <div className="flex gap-4 text-base text-gray-600 dark:text-gray-400">
+                    <div className="flex flex-wrap items-center gap-3 text-base text-gray-600 dark:text-gray-400">
                       <span>{publishDate}</span>
-                      {post.tags?.[0] && (
-                        <span className="border-l border-gray-400 pl-4">{post.tags[0]}</span>
-                      )}
+                      <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+                        {post.tags?.[0] || 'Untagged'}
+                      </span>
                     </div>
                   </CardHeader>
                   <CardContent>
@@ -102,76 +202,6 @@ export default async function HomePage() {
           ) : (
             <div className="col-span-2 py-8 text-center text-gray-500">
               No recent posts found.
-            </div>
-          )}
-        </div>
-      </section>
-
-      <section>
-        <div className="mb-6">
-          <h2 className="text-xl font-bold text-gray-900 md:text-2xl dark:text-gray-50">
-            Featured works
-          </h2>
-        </div>
-        <div className="flex flex-col gap-6">
-          {featuredWorks.length > 0 ? (
-            featuredWorks.map((work) => {
-              const thumbnailUrl = work.thumbnailUrl || null
-              const publishDate = work.publishedAt
-                ? new Date(work.publishedAt).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  })
-                : 'Unknown Date'
-
-              return (
-                <div key={work.id} className="flex flex-col gap-6 border-b border-gray-200 pb-6 md:flex-row dark:border-gray-800">
-                  <Link
-                    href={`/works/${work.slug}`}
-                    className="h-48 w-full flex-shrink-0 overflow-hidden rounded-md bg-gray-200 md:w-64 dark:bg-gray-800 relative block group border"
-                  >
-                    {thumbnailUrl ? (
-                      <Image
-                        src={thumbnailUrl}
-                        alt={work.title}
-                        fill
-                        className="object-cover transition-transform duration-300 group-hover:scale-105"
-                        unoptimized
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center text-gray-400 font-medium">
-                        No Image
-                      </div>
-                    )}
-                  </Link>
-                  <div className="flex flex-1 flex-col justify-start">
-                    <Link href={`/works/${work.slug}`} className="mb-4 text-2xl font-bold text-gray-900 transition-colors hover:text-brand-accent dark:text-gray-50">
-                      {work.title}
-                    </Link>
-                    <div className="mb-4 flex flex-wrap items-center gap-4">
-                      <span className="rounded-full bg-brand-navy px-3 py-1 text-sm font-bold text-white">
-                        {publishDate}
-                      </span>
-                      <span className="text-gray-500 dark:text-gray-400 font-medium">
-                        {work.category}
-                      </span>
-                      {work.period && (
-                        <span className="text-sm border-l pl-4 text-gray-400 dark:text-gray-500 font-mono">
-                          {work.period}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-gray-600 dark:text-gray-300 line-clamp-2 leading-relaxed">
-                      {work.excerpt || 'Click to view details'}
-                    </p>
-                  </div>
-                </div>
-              )
-            })
-          ) : (
-            <div className="py-8 text-center text-gray-500">
-              No featured works found.
             </div>
           )}
         </div>

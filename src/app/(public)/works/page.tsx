@@ -60,7 +60,7 @@ export default async function WorksPage({ searchParams }: PageProps) {
                 mobilePageSize={MOBILE_PAGE_SIZE}
             />
             <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <h1 className="text-3xl font-heading font-bold md:text-4xl text-gray-900 dark:text-gray-50 opacity-0 animate-fade-in-up" style={{ animationDelay: '100ms' }}>Works</h1>
+                <h1 className="text-3xl font-heading font-bold md:text-4xl text-gray-900 dark:text-gray-50 animate-fade-in-up" style={{ animationDelay: '100ms' }}>Works</h1>
                 <div className="flex flex-wrap gap-2">
                     <PublicAdminLink href="/admin/works" label="작업 관리" variant="manage" />
                 </div>

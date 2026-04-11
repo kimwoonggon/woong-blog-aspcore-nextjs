@@ -69,12 +69,12 @@ export default async function WorkDetailPage({ params }: PageProps) {
                     {work.title}
                 </h1>
                 <div className="flex flex-wrap items-center gap-4 mb-6">
-                    <Badge variant="secondary" className="rounded-full bg-brand-orange px-3 text-white hover:bg-brand-orange/90">
+                    <Badge variant="secondary" className="rounded-full bg-brand-navy px-3 text-white hover:bg-brand-navy/90">
                         {publishDate}
                     </Badge>
                     <span className="text-gray-500 dark:text-gray-400 font-medium">{work.category}</span>
                     {work.period && (
-                        <span className="text-sm border-l pl-4 text-gray-400 dark:text-gray-500 font-mono">
+                        <span className="text-sm border-l pl-4 text-gray-400 dark:text-gray-400 font-mono">
                             {work.period}
                         </span>
                     )}
