@@ -34,6 +34,7 @@ test('works and blog listing cards stay aligned in desktop rows', async ({ page 
   expect(await worksCards.count()).toBeGreaterThanOrEqual(4)
   const workRects = await getRects(worksCards, 3)
   expect(Math.max(...workRects.map((rect) => rect.top)) - Math.min(...workRects.map((rect) => rect.top))).toBeLessThan(4)
+  expect(Math.max(...workRects.map((rect) => rect.height)) - Math.min(...workRects.map((rect) => rect.height))).toBeLessThan(4)
 
   await page.goto('/blog')
   const blogCards = page.getByTestId('blog-card')

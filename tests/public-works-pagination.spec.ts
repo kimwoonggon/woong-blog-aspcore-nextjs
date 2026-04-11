@@ -38,5 +38,5 @@ test('works density changes smoothly at intermediate heights', async ({ page }) 
     elements.map((element) => Math.round(element.getBoundingClientRect().height))
   )
 
-  expect(Math.max(...heights) - Math.min(...heights)).toBeLessThan(80)
+  expect(Math.max(...heights) - Math.min(...heights)).toBeLessThan(4)
 })

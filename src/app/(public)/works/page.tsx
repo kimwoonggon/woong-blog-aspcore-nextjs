@@ -1,9 +1,8 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { InlineAdminEditorShell } from '@/components/admin/InlineAdminEditorShell'
+import { PublicWorksInlineCreateShell } from '@/components/admin/PublicWorksInlineCreateShell'
 import { PublicAdminLink } from '@/components/admin/PublicAdminLink'
-import { WorkEditor } from '@/components/admin/WorkEditor'
 import { EdgePaginationNav } from '@/components/layout/EdgePaginationNav'
 import { PublicPagination } from '@/components/layout/PublicPagination'
 import { ResponsivePageSizeSync } from '@/components/layout/ResponsivePageSizeSync'
@@ -45,6 +44,7 @@ export default async function WorksPage({ searchParams }: PageProps) {
     const totalPages = Math.max(1, worksPayload.totalPages)
     const page = worksPayload.page
     const pagedWorks = worksPayload.items
+    const returnTo = encodeURIComponent(`/works?page=${page}&pageSize=${currentPageSize}`)
 
     return (
         <div className="container mx-auto max-w-7xl px-4 py-8 md:px-6 md:py-12">
@@ -66,13 +66,7 @@ export default async function WorksPage({ searchParams }: PageProps) {
                 </div>
             </div>
             {session.authenticated && session.role === 'admin' && (
-                <InlineAdminEditorShell
-                    triggerLabel="새 작업 쓰기"
-                    title="Works Inline Create"
-                    description="navbar를 유지한 채 현재 페이지 아래에서 새 작업을 작성합니다."
-                >
-                    <WorkEditor inlineMode />
-                </InlineAdminEditorShell>
+                <PublicWorksInlineCreateShell />
             )}
             <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
                 {pagedWorks && pagedWorks.length > 0 ? (
@@ -83,12 +77,12 @@ export default async function WorksPage({ searchParams }: PageProps) {
                         return (
                             <Link
                                 key={work.id}
-                                href={`/works/${work.slug}`}
+                                href={`/works/${work.slug}?returnTo=${returnTo}`}
                                 className="group/card block h-full"
                                 data-testid="work-card"
                             >
                                 <article
-                                    className="responsive-feed-card flex h-full flex-col overflow-hidden rounded-2xl border border-border/80 bg-background shadow-sm transition hover:border-primary/30 hover:shadow-md"
+                                    className="responsive-feed-card works-feed-card flex h-full flex-col overflow-hidden rounded-2xl border border-border/80 bg-background shadow-sm transition hover:border-primary/30 hover:shadow-md"
                                     style={{ animationDelay: `${(index * 100) + 200}ms` }}
                                 >
                                     <div className="relative aspect-[4/3] overflow-hidden bg-gray-100 dark:bg-gray-800">
@@ -116,13 +110,13 @@ export default async function WorksPage({ searchParams }: PageProps) {
                                                 {work.category}
                                             </span>
                                         </div>
-                                        <h2 className="responsive-feed-title line-clamp-2 text-lg font-heading font-bold leading-tight text-gray-900 transition-colors group-hover/card:text-[#F3434F] dark:text-gray-50 sm:text-xl">
+                                        <h2 className="responsive-feed-title works-feed-title line-clamp-2 text-lg font-heading font-bold leading-tight text-gray-900 transition-colors group-hover/card:text-[#F3434F] dark:text-gray-50 sm:text-xl">
                                             {work.title}
                                         </h2>
-                                        <p className="responsive-feed-copy mt-2 line-clamp-3 flex-1 text-sm leading-relaxed text-gray-600 dark:text-gray-300">
+                                        <p className="responsive-feed-copy works-feed-excerpt mt-2 line-clamp-3 flex-1 text-sm leading-relaxed text-gray-600 dark:text-gray-300">
                                             {work.excerpt}
                                         </p>
-                                        <div className="mt-4 flex flex-wrap gap-1.5">
+                                        <div className="works-feed-tags mt-4 flex flex-wrap content-start gap-1.5 overflow-hidden">
                                             {work.tags?.slice(0, 3).map((tag: string) => (
                                                 <span key={tag} className="rounded bg-gray-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-gray-600 dark:bg-gray-800 dark:text-gray-400">
                                                     {tag}

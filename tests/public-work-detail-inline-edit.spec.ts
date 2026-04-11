@@ -3,10 +3,11 @@ import { expect, test } from '@playwright/test'
 test.use({ storageState: 'test-results/playwright/admin-storage-state.json' })
 
 
-test('admin can edit a public work detail inline and save in place', async ({ page }) => {
-  const updatedBody = `inline work body ${Date.now()}`
+test('admin can edit a public work detail inline and return to the originating works page', async ({ page }) => {
+  const updatedTitle = `inline work title ${Date.now()}`
 
-  await page.goto('/works?pageSize=1')
+  await page.goto('/works?page=2&pageSize=2')
+  const originalListUrl = page.url()
   await page.locator('a[href^="/works/"]').first().click()
 
   await expect(page.getByRole('button', { name: '작업 수정' })).toBeVisible()
@@ -15,7 +16,7 @@ test('admin can edit a public work detail inline and save in place', async ({ pa
   const saveButton = page.getByRole('button', { name: 'Update Work' })
   await expect(saveButton).toBeDisabled()
 
-  await page.locator('.tiptap.ProseMirror').first().fill(updatedBody)
+  await page.getByLabel('Title').fill(updatedTitle)
   await expect(saveButton).toBeEnabled()
 
   await Promise.all([
@@ -23,7 +24,8 @@ test('admin can edit a public work detail inline and save in place', async ({ pa
     saveButton.click(),
   ])
 
-  await expect(page.getByText(updatedBody).first()).toBeVisible()
+  await expect(page).toHaveURL(originalListUrl)
+  await expect(page.getByText(updatedTitle)).toBeVisible()
 })
 
 test('public work detail shows paginated related items', async ({ page }) => {

@@ -59,6 +59,14 @@ export function buildWorkSnapshot({
   })
 }
 
+export function isPublicInlineCreateMode(params: {
+  inlineMode: boolean
+  isEditing: boolean
+  hasOnSaved: boolean
+}) {
+  return params.inlineMode && !params.isEditing && params.hasOnSaved
+}
+
 export async function getResponseError(response: Response, fallback: string) {
   const contentType = response.headers.get('content-type') ?? ''
   if (contentType.includes('application/json')) {

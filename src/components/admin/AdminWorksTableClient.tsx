@@ -62,8 +62,12 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
     ))
   }
 
-  function confirmDelete(message: string) {
-    return window.prompt(message, '')?.trim().toLowerCase() === 'yes'
+  function confirmDelete(label: string, mode: 'single' | 'bulk') {
+    if (mode === 'single') {
+      return window.confirm(`Delete "${label}"? This action cannot be undone.`)
+    }
+
+    return window.prompt(`Type yes to delete ${label}. This action cannot be undone.`, '')?.trim().toLowerCase() === 'yes'
   }
 
   function runDelete(ids: string[], label: string) {
@@ -71,7 +75,7 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
       return
     }
 
-    const confirmed = confirmDelete(`Type yes to delete ${label}. This action cannot be undone.`)
+    const confirmed = confirmDelete(label, ids.length === 1 ? 'single' : 'bulk')
     if (!confirmed) {
       return
     }

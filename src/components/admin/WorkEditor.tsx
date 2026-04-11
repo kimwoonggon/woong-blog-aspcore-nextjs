@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import { useMemo, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { AIFixDialog } from '@/components/admin/AIFixDialog'
 import { TiptapEditor } from '@/components/admin/TiptapEditor'
 import { WorkVideoPlayer } from '@/components/content/WorkVideoPlayer'
@@ -44,6 +44,7 @@ import {
     getNextVideosVersion,
     getResponseError,
     inferThumbnailSourceKind,
+    isPublicInlineCreateMode,
     normalizeJsonInput,
     normalizeTagsInput,
     resolveWorkSaveSlug,
@@ -55,6 +56,7 @@ const DEFAULT_WORK_CATEGORY = 'Uncategorized'
 
 export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEditorProps) {
     const router = useRouter()
+    const pathname = usePathname()
     const searchParams = useSearchParams()
     const isEditing = Boolean(initialWork?.id)
     const defaultPublished = initialWork?.published ?? true
@@ -84,9 +86,15 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
     const [isSaving, setIsSaving] = useState(false)
     const [uploadingTarget, setUploadingTarget] = useState<'thumbnail' | 'icon' | null>(null)
     const [isVideoBusy, setIsVideoBusy] = useState(false)
+    const [hasPersistedVideoChanges, setHasPersistedVideoChanges] = useState(false)
     const [isAutoGeneratingThumbnail, setIsAutoGeneratingThumbnail] = useState(false)
     const [insertVideoRequest, setInsertVideoRequest] = useState<VideoInsertRequest | null>(null)
     const shouldContinueInlinePlacement = searchParams.get('videoInline') === '1'
+    const usesPublicInlineCreateFlow = isPublicInlineCreateMode({
+        inlineMode,
+        isEditing,
+        hasOnSaved: Boolean(onSaved),
+    })
     const embeddedVideoIds = useMemo(() => extractWorkVideoEmbedIds(html), [html])
     const embeddedVideoIdSet = useMemo(() => new Set(embeddedVideoIds), [embeddedVideoIds])
     const orphanEmbeddedVideoIds = useMemo(
@@ -136,6 +144,8 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
         iconAssetId,
     })
     const isDirty = !isEditing || initialSnapshot !== currentSnapshot
+    const searchParamsString = searchParams.toString()
+    const currentQuerySuffix = searchParamsString ? `?${searchParamsString}` : ''
 
     const formatDate = (dateString?: string | null) => {
         if (!dateString) return 'Not yet'
@@ -154,6 +164,41 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
 
         setVideosVersion(nextVersion)
         setVideos(nextVideos)
+    }
+
+    function navigateInlineWorkAfterSave(nextSlug: string | null, editing: boolean) {
+        if (!inlineMode) {
+            return false
+        }
+
+        if (!editing && pathname === '/works') {
+            window.location.assign('/works')
+            return true
+        }
+
+        if (editing && pathname.startsWith('/works/')) {
+            if (requestedReturnTo && requestedReturnTo.startsWith('/')) {
+                window.location.assign(requestedReturnTo)
+                return true
+            }
+
+            if (nextSlug) {
+                window.location.assign(`/works/${encodeURIComponent(nextSlug)}${currentQuerySuffix}`)
+            } else {
+                router.refresh()
+            }
+            return true
+        }
+
+        return false
+    }
+
+    function refreshInlinePublicWorkIfNeeded() {
+        if (!inlineMode || !pathname.startsWith('/works/')) {
+            return
+        }
+
+        router.refresh()
     }
 
     function buildWorkMutationPayload(nextThumbnailAssetId: string = thumbnailAssetId, nextIconAssetId: string = iconAssetId) {
@@ -390,15 +435,20 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
 
             const payload = await response.json() as VideoMutationPayload
             syncVideos(payload)
+            setHasPersistedVideoChanges(true)
             setYoutubeUrlInput('')
             const normalizedVideoId = normalizeYouTubeVideoId(youtubeUrlOrId)
             if (normalizedVideoId) {
                 try {
-                    await maybeApplyAutoThumbnailForCandidate({ kind: 'youtube', youtubeVideoId: normalizedVideoId })
+                    const uploadedThumbnail = await maybeApplyAutoThumbnailForCandidate({ kind: 'youtube', youtubeVideoId: normalizedVideoId })
+                    if (uploadedThumbnail) {
+                        await persistThumbnailSelectionForWork(initialWork.id, uploadedThumbnail.id)
+                    }
                 } catch (error) {
                     toast.error(error instanceof Error ? error.message : 'Failed to auto-generate a YouTube thumbnail.')
                 }
             }
+            refreshInlinePublicWorkIfNeeded()
             toast.success('YouTube video added.')
         } catch (error) {
             toast.error(error instanceof Error ? error.message : 'Failed to add YouTube video.')
@@ -492,11 +542,16 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
             await uploadToTarget(initialWork.id, file, target)
             const payload = await confirmVideoUpload(initialWork.id, target.uploadSessionId, videosVersion)
             syncVideos(payload)
+            setHasPersistedVideoChanges(true)
             try {
-                await maybeApplyAutoThumbnailForCandidate({ kind: 'uploaded-video', file })
+                const uploadedThumbnail = await maybeApplyAutoThumbnailForCandidate({ kind: 'uploaded-video', file })
+                if (uploadedThumbnail) {
+                    await persistThumbnailSelectionForWork(initialWork.id, uploadedThumbnail.id)
+                }
             } catch (error) {
                 toast.error(error instanceof Error ? error.message : 'Failed to auto-generate a video thumbnail.')
             }
+            refreshInlinePublicWorkIfNeeded()
             toast.success('Video uploaded.')
         } catch (error) {
             toast.error(error instanceof Error ? error.message : 'Failed to upload video.')
@@ -525,6 +580,8 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
             }
 
             syncVideos(await response.json() as VideoMutationPayload)
+            setHasPersistedVideoChanges(true)
+            refreshInlinePublicWorkIfNeeded()
             toast.success('Video removed.')
         } catch (error) {
             toast.error(error instanceof Error ? error.message : 'Failed to remove video.')
@@ -565,6 +622,8 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
             }
 
             syncVideos(await response.json() as VideoMutationPayload)
+            setHasPersistedVideoChanges(true)
+            refreshInlinePublicWorkIfNeeded()
         } catch (error) {
             toast.error(error instanceof Error ? error.message : 'Failed to reorder videos.')
         } finally {
@@ -666,6 +725,10 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
             return false
         }
 
+        if (navigateInlineWorkAfterSave(nextSlug, editing)) {
+            return true
+        }
+
         if (onSaved) {
             onSaved({ id: responsePayload?.id, slug: nextSlug, isEditing: editing })
             return true
@@ -676,6 +739,7 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
     }
 
     function finishUpdateSave(responsePayload: WorkSaveResponsePayload | null, nextSlug: string | null) {
+        setHasPersistedVideoChanges(false)
         toast.success('Work updated successfully')
         if (finishInlineSave(responsePayload, nextSlug, true)) {
             return
@@ -718,8 +782,7 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
             }
 
             toast.success('Work and videos created successfully')
-            if (inlineMode && onSaved) {
-                onSaved({ id: responsePayload.id, slug: nextSlug, isEditing: false })
+            if (finishInlineSave(responsePayload, nextSlug, false)) {
                 return
             }
 
@@ -741,6 +804,16 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
         setIsSaving(true)
 
         try {
+            if (isEditing && !isDirty && hasPersistedVideoChanges) {
+                const nextSlug = initialWork?.slug ?? resolveWorkSaveSlug({
+                    payload: null,
+                    title,
+                    initialSlug: initialWork?.slug,
+                })
+                finishUpdateSave(null, nextSlug)
+                return
+            }
+
             const responsePayload = await submitWorkPayload(buildWorkMutationPayload())
             if (!responsePayload) {
                 return
@@ -981,9 +1054,16 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                         <p className="text-sm text-gray-500">
                             {isEditing
                                 ? 'You can add YouTube videos and MP4 uploads immediately. Ordering and removal update the work separately from the main form.'
-                                : 'You can stage videos while creating a work. The app creates the work first, then attaches the staged videos in order.'}
+                                : usesPublicInlineCreateFlow
+                                    ? 'You can stage videos while creating a work. Saving stays on this page, closes the create shell, and refreshes the works list after the videos attach.'
+                                    : 'You can stage videos while creating a work. The app creates the work first, then attaches the staged videos in order.'}
                         </p>
                     </div>
+                    {isEditing && (
+                        <div className="rounded-xl border border-sky-300 bg-sky-50 px-4 py-3 text-sm text-sky-900 dark:border-sky-900/60 dark:bg-sky-950/20 dark:text-sky-100">
+                            Videos save immediately. Use <span className="font-medium">Update Work</span> only for text, metadata, thumbnail, or icon changes.
+                        </div>
+                    )}
 
                     <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
                         <div className="space-y-2">
@@ -1163,7 +1243,9 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                     )}
                     {!isEditing && (
                         <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-100 md:ml-auto">
-                            New works publish immediately when you save. If you stage videos, use <span className="font-medium">Create And Add Videos</span> so the work is created first and the videos attach safely after.
+                            {usesPublicInlineCreateFlow
+                                ? <>New works publish immediately when you save. If you stage videos, <span className="font-medium">Create And Add Videos</span> still keeps you on this page and closes the create panel when everything finishes.</>
+                                : <>New works publish immediately when you save. If you stage videos, use <span className="font-medium">Create And Add Videos</span> so the work is created first and the videos attach safely after.</>}
                         </div>
                     )}
                 </div>
@@ -1235,7 +1317,7 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                     <Button
                         type="button"
                         onClick={() => void saveWork('default')}
-                        disabled={isSaving || !isDirty || !title.trim()}
+                        disabled={isSaving || (!isDirty && !hasPersistedVideoChanges) || !title.trim()}
                         className="bg-[#142850] hover:bg-[#142850]/90 text-white font-medium px-8 transition-all hover:scale-[1.02]"
                     >
                         {isSaving ? 'Saving...' : 'Update Work'}

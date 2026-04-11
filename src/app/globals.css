@@ -260,6 +260,23 @@
   animation: fadeInUp 0.8s ease-out forwards;
 }
 
+.works-feed-card {
+  height: 30rem;
+}
+
+.works-feed-title {
+  min-height: calc(1.35em * 2);
+}
+
+.works-feed-excerpt {
+  min-height: calc(1.45em * 3);
+}
+
+.works-feed-tags {
+  min-height: 2.5rem;
+  max-height: 2.5rem;
+}
+
 @media (max-height: 860px) {
   .responsive-feed-card {
     padding: 0.875rem;
@@ -279,6 +296,10 @@
     max-height: 13rem;
     object-fit: cover;
   }
+
+  .works-feed-card {
+    height: 27rem;
+  }
 }
 
 @media (max-height: 720px) {
@@ -296,5 +317,9 @@
 
   .responsive-feed-image {
     max-height: 11rem;
+  }
+
+  .works-feed-card {
+    height: 24rem;
   }
 }

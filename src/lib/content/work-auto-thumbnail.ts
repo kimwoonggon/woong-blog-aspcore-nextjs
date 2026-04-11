@@ -13,14 +13,45 @@ function canvasToBlob(canvas: HTMLCanvasElement, type = 'image/jpeg', quality = 
 
 async function loadVideoForCanvas(sourceUrl: string) {
   const video = document.createElement('video')
-  video.preload = 'metadata'
+  video.preload = 'auto'
   video.muted = true
   video.playsInline = true
+  video.crossOrigin = 'anonymous'
 
   return new Promise<HTMLVideoElement>((resolve, reject) => {
+    const handleLoadedMetadata = async () => {
+      const duration = Number.isFinite(video.duration) ? video.duration : 0
+      const targetTime = duration > 0
+        ? Math.min(Math.max(duration * 0.25, 0.1), Math.max(duration - 0.1, 0.1))
+        : 0.1
+
+      const handleSeeked = () => {
+        cleanup()
+        resolve(video)
+      }
+
+      video.addEventListener('seeked', handleSeeked, { once: true })
+
+      try {
+        video.currentTime = targetTime
+      } catch {
+        cleanup()
+        reject(new Error('Could not seek video for thumbnail extraction.'))
+      }
+    }
+
     const handleLoadedData = () => {
-      cleanup()
-      resolve(video)
+      if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA && video.currentTime > 0) {
+        cleanup()
+        resolve(video)
+      }
+    }
+
+    const handleCanPlay = () => {
+      if (video.currentTime > 0) {
+        cleanup()
+        resolve(video)
+      }
     }
 
     const handleError = () => {
@@ -29,13 +60,19 @@ async function loadVideoForCanvas(sourceUrl: string) {
     }
 
     const cleanup = () => {
+      video.pause()
+      video.removeEventListener('loadedmetadata', handleLoadedMetadata)
       video.removeEventListener('loadeddata', handleLoadedData)
+      video.removeEventListener('canplay', handleCanPlay)
       video.removeEventListener('error', handleError)
     }
 
+    video.addEventListener('loadedmetadata', handleLoadedMetadata, { once: true })
     video.addEventListener('loadeddata', handleLoadedData)
+    video.addEventListener('canplay', handleCanPlay)
     video.addEventListener('error', handleError)
     video.src = sourceUrl
+    void video.play().catch(() => {})
   })
 }
 
