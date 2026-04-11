@@ -1318,7 +1318,7 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                         type="button"
                         onClick={() => void saveWork('default')}
                         disabled={isSaving || (!isDirty && !hasPersistedVideoChanges) || !title.trim()}
-                        className="bg-[#142850] hover:bg-[#142850]/90 text-white font-medium px-8 transition-all hover:scale-[1.02]"
+                        className="bg-brand-navy px-8 font-medium text-white transition-all hover:scale-[1.02] hover:bg-brand-navy/90"
                     >
                         {isSaving ? 'Saving...' : 'Update Work'}
                     </Button>
@@ -1336,7 +1336,7 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                             type="button"
                             onClick={() => void saveWork('with-videos')}
                             disabled={isSaving || !isDirty || !title.trim() || !hasStagedVideos}
-                            className="bg-[#142850] hover:bg-[#142850]/90 text-white font-medium px-8 transition-all hover:scale-[1.02]"
+                            className="bg-brand-navy px-8 font-medium text-white transition-all hover:scale-[1.02] hover:bg-brand-navy/90"
                         >
                             {isSaving ? 'Creating...' : 'Create And Add Videos'}
                         </Button>

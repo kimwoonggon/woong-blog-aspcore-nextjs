@@ -66,17 +66,17 @@ export default async function BlogDetailPage({ params }: PageProps) {
                     {blog.title}
                 </h1>
                 <div className="mb-6 flex flex-wrap items-center gap-4 text-gray-500 dark:text-gray-400 font-medium">
-                    <Badge variant="secondary" className="rounded-full bg-[#F3434F] px-3 text-white hover:bg-[#F3434F]/90">
+                    <Badge variant="secondary" className="rounded-full bg-brand-accent px-3 text-white hover:bg-brand-accent/90">
                         <time dateTime={blog.publishedAt ?? undefined}>{publishDate}</time>
                     </Badge>
                     <div className="flex flex-wrap gap-2 font-mono text-sm">
                         {blog.tags?.map((tag: string) => (
-                            <span key={tag} className="rounded-full border border-border/80 px-2.5 py-1 hover:text-[#F3434F] transition-colors cursor-default">#{tag}</span>
+                            <span key={tag} className="cursor-default rounded-full border border-border/80 px-2.5 py-1 transition-colors hover:text-brand-accent">#{tag}</span>
                         ))}
                     </div>
                 </div>
                 {blog.excerpt && (
-                    <p className="rounded-r-lg border-l-4 border-[#F3434F] bg-gray-50 py-2 pl-4 text-xl leading-relaxed text-gray-600 dark:bg-gray-900 dark:text-gray-300">
+                    <p className="rounded-r-lg border-l-4 border-brand-accent bg-gray-50 py-2 pl-4 text-xl leading-relaxed text-gray-600 dark:bg-gray-900 dark:text-gray-300">
                         {blog.excerpt}
                     </p>
                 )}

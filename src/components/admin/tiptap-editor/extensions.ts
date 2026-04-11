@@ -54,7 +54,7 @@ export function createTiptapExtensions({
     Link.configure({
       openOnClick: false,
       HTMLAttributes: {
-        class: 'text-blue-600 underline cursor-pointer hover:text-blue-800',
+        class: 'cursor-pointer text-blue-600 underline hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300',
       },
     }),
     ThreeJsBlock,

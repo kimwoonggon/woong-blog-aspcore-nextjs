@@ -28,7 +28,7 @@ export default async function ContactPage() {
                     <BlockRenderer blocks={parsedContent.blocks} />
                 ) : (
                     <p>
-                        You can reach me at: <a href="mailto:john@example.com" className="text-blue-600 hover:underline">john@example.com</a>
+                        You can reach me at: <a href="mailto:john@example.com" className="text-blue-600 hover:underline dark:text-blue-400">john@example.com</a>
                     </p>
                 )}
             </div>

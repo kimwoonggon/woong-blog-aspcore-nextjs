@@ -38,7 +38,7 @@ export function Footer({
                                 href={url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-gray-600 transition-colors hover:text-[#F3434F] dark:text-gray-400 dark:hover:text-[#F3434F]"
+                                className="text-gray-600 transition-colors hover:text-brand-accent dark:text-gray-400"
                                 aria-label={label}
                             >
                                 <Icon size={24} />

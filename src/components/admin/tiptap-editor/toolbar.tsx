@@ -240,7 +240,7 @@ export function EditorFormattingBubble({
   return (
     <div
       data-testid="editor-formatting-bubble"
-      className="sticky top-2 z-20 mx-auto mb-2 flex w-fit items-center gap-1 rounded-lg border border-gray-700 bg-gray-900 px-2 py-1 text-white shadow-xl dark:bg-gray-800"
+      className="sticky top-2 z-20 mx-auto mb-2 flex w-fit items-center gap-1 rounded-lg border border-gray-700 bg-gray-900 px-2 py-1 text-white shadow-xl dark:border-gray-700 dark:bg-gray-950"
     >
       <BubbleButton
         onClick={() => editor.chain().focus().toggleBold().run()}

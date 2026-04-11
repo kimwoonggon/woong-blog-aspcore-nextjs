@@ -34,7 +34,7 @@ export function PublicPagination({
             href={`${pathname}?page=${pageNumber}&pageSize=${pageSize}`}
             className={`rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
               pageNumber === currentPage
-                ? 'border-sky-400 bg-sky-500 text-white'
+                ? 'border-sky-400 bg-sky-500 text-white dark:border-sky-600 dark:bg-sky-600'
                 : 'hover:bg-accent'
             }`}
           >

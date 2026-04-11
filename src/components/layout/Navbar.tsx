@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation"
 import { CircleUserRound, LogIn, Menu } from "lucide-react"
 import { useState, useSyncExternalStore } from "react"
 import { Button } from "@/components/ui/button"
+import { ThemeToggle } from "@/components/ui/ThemeToggle"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -158,6 +159,7 @@ export function Navbar({ ownerName = 'John Doe', session }: NavbarProps) {
                     >
                         Latest writing
                     </Link>
+                    <ThemeToggle />
                     <SessionActions authenticated={authenticated} isAdmin={isAdmin} avatarLabel={avatarLabel} />
                 </div>
 
@@ -215,6 +217,18 @@ export function Navbar({ ownerName = 'John Doe', session }: NavbarProps) {
                                             </p>
                                         </div>
                                         <CircleUserRound className="h-5 w-5 text-muted-foreground" />
+                                    </div>
+
+                                    <div className="mb-4 flex items-center justify-between rounded-2xl border border-border/80 bg-background/80 px-4 py-3">
+                                        <div>
+                                            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+                                                Theme
+                                            </p>
+                                            <p className="text-sm font-medium text-foreground">
+                                                Light, dark, or system
+                                            </p>
+                                        </div>
+                                        <ThemeToggle testId={undefined} />
                                     </div>
 
                                     <div className="space-y-2">

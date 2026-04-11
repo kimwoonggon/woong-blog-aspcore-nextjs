@@ -69,7 +69,7 @@ export default async function WorkDetailPage({ params }: PageProps) {
                     {work.title}
                 </h1>
                 <div className="flex flex-wrap items-center gap-4 mb-6">
-                    <Badge variant="secondary" className="bg-[#FF7B54] text-white hover:bg-[#FF7B54]/90 rounded-full px-3">
+                    <Badge variant="secondary" className="rounded-full bg-brand-orange px-3 text-white hover:bg-brand-orange/90">
                         {publishDate}
                     </Badge>
                     <span className="text-gray-500 dark:text-gray-400 font-medium">{work.category}</span>
@@ -79,12 +79,12 @@ export default async function WorkDetailPage({ params }: PageProps) {
                         </span>
                     )}
                 </div>
-                <p className="text-xl text-gray-600 dark:text-gray-300 leading-relaxed border-l-4 border-[#FF7B54] pl-4 py-2 bg-gray-50 dark:bg-gray-900 rounded-r-lg">
+                <p className="rounded-r-lg border-l-4 border-brand-orange bg-gray-50 py-2 pl-4 text-xl leading-relaxed text-gray-600 dark:bg-gray-900 dark:text-gray-300">
                     {work.excerpt}
                 </p>
                 <div className="mt-8 flex flex-wrap gap-2 text-sm text-gray-500 dark:text-gray-400 font-mono">
                     {work.tags?.map((tag: string) => (
-                        <span key={tag} className="hover:text-[#FF7B54] transition-colors cursor-default">#{tag}</span>
+                        <span key={tag} className="cursor-default transition-colors hover:text-brand-orange">#{tag}</span>
                     ))}
                 </div>
                 </header>

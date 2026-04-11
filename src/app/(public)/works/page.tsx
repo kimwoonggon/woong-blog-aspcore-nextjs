@@ -103,14 +103,14 @@ export default async function WorksPage({ searchParams }: PageProps) {
                                     </div>
                                     <div className="flex flex-1 flex-col p-4 sm:p-5">
                                         <div className="mb-3 flex flex-wrap items-center gap-2">
-                                            <Badge variant="secondary" className="rounded-full bg-[#142850] px-2.5 py-0.5 text-xs text-white hover:bg-[#142850]/90">
+                                            <Badge variant="secondary" className="rounded-full bg-brand-navy px-2.5 py-0.5 text-xs text-white hover:bg-brand-navy/90">
                                                 {publishDate}
                                             </Badge>
                                             <span className="responsive-feed-copy text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
                                                 {work.category}
                                             </span>
                                         </div>
-                                        <h2 className="responsive-feed-title works-feed-title line-clamp-2 text-lg font-heading font-bold leading-tight text-gray-900 transition-colors group-hover/card:text-[#F3434F] dark:text-gray-50 sm:text-xl">
+                                        <h2 className="responsive-feed-title works-feed-title line-clamp-2 text-lg font-heading font-bold leading-tight text-gray-900 transition-colors group-hover/card:text-brand-accent dark:text-gray-50 sm:text-xl">
                                             {work.title}
                                         </h2>
                                         <p className="responsive-feed-copy works-feed-excerpt mt-2 line-clamp-3 flex-1 text-sm leading-relaxed text-gray-600 dark:text-gray-300">

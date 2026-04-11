@@ -79,7 +79,7 @@ export default async function BlogPage({ searchParams }: PageProps) {
                         >
                             <Card className="responsive-feed-card !gap-0 !py-0 flex h-full flex-col overflow-hidden rounded-2xl border-border/80 bg-background shadow-sm transition hover:border-primary/30 hover:shadow-md">
                                 <CardHeader className="px-4 pt-4 pb-0 sm:px-5 sm:pt-5">
-                                    <CardTitle className="responsive-feed-title line-clamp-2 text-lg font-heading font-bold leading-tight text-gray-900 transition-colors group-hover/card:text-[#F3434F] dark:text-gray-50 sm:text-xl md:text-2xl">
+                                    <CardTitle className="responsive-feed-title line-clamp-2 text-lg font-heading font-bold leading-tight text-gray-900 transition-colors group-hover/card:text-brand-accent dark:text-gray-50 sm:text-xl md:text-2xl">
                                         {blog.title}
                                     </CardTitle>
                                     <div className="responsive-feed-copy mt-2 flex flex-wrap gap-x-4 gap-y-2 text-sm text-gray-600 dark:text-gray-400">

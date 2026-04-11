@@ -53,14 +53,14 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="bg-[#EDF7FA] -mx-4 px-4 py-8 md:-mx-6 md:px-6 dark:bg-gray-900/50">
+      <section className="-mx-4 bg-brand-section-bg px-4 py-8 md:-mx-6 md:px-6">
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-xl font-medium text-gray-900 md:text-2xl dark:text-gray-50">
             Recent posts
           </h2>
           <Link
             href="/blog"
-            className="text-sm font-medium text-[#00A8CC] hover:underline dark:text-[#00A8CC]"
+            className="text-sm font-medium text-brand-cyan transition-colors hover:text-brand-cyan hover:underline"
           >
             View all
           </Link>
@@ -80,7 +80,7 @@ export default async function HomePage() {
                 <Card key={post.id} className="border-none shadow-sm">
                   <CardHeader>
                     <CardTitle className="text-xl font-bold">
-                      <Link href={`/blog/${post.slug}`} className="hover:text-[#00A8CC] transition-colors">
+                      <Link href={`/blog/${post.slug}`} className="transition-colors hover:text-brand-cyan">
                         {post.title}
                       </Link>
                     </CardTitle>
@@ -146,11 +146,11 @@ export default async function HomePage() {
                     )}
                   </Link>
                   <div className="flex flex-1 flex-col justify-start">
-                    <Link href={`/works/${work.slug}`} className="mb-4 text-2xl font-bold text-gray-900 hover:text-[#F3434F] dark:text-gray-50 transition-colors">
+                    <Link href={`/works/${work.slug}`} className="mb-4 text-2xl font-bold text-gray-900 transition-colors hover:text-brand-accent dark:text-gray-50">
                       {work.title}
                     </Link>
                     <div className="mb-4 flex flex-wrap items-center gap-4">
-                      <span className="rounded-full bg-[#142850] px-3 py-1 text-sm font-bold text-white">
+                      <span className="rounded-full bg-brand-navy px-3 py-1 text-sm font-bold text-white">
                         {publishDate}
                       </span>
                       <span className="text-gray-500 dark:text-gray-400 font-medium">

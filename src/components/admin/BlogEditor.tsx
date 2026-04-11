@@ -233,7 +233,7 @@ export function BlogEditor({ initialBlog, inlineMode = false }: BlogEditorProps)
                 <Button
                     type="submit"
                     disabled={isSaving || !isDirty || !title.trim()}
-                    className="bg-[#142850] px-8 font-medium text-white transition-all hover:scale-[1.02] hover:bg-[#142850]/90"
+                    className="bg-brand-navy px-8 font-medium text-white transition-all hover:scale-[1.02] hover:bg-brand-navy/90"
                 >
                     {isSaving ? 'Saving...' : isEditing ? 'Update Post' : 'Create Post'}
                 </Button>
