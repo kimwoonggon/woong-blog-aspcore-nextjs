@@ -3,6 +3,7 @@ import type { NextConfig } from "next";
 const devProxyOrigin = process.env.DEV_PROXY_ORIGIN?.replace(/\/$/, '')
 
 const nextConfig: NextConfig = {
+  distDir: process.env.NEXT_DIST_DIR ?? '.next',
   images: {
     remotePatterns: [
       {

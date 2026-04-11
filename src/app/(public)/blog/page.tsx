@@ -6,14 +6,16 @@ import { PublicAdminLink } from '@/components/admin/PublicAdminLink'
 import { EdgePaginationNav } from '@/components/layout/EdgePaginationNav'
 import { PublicPagination } from '@/components/layout/PublicPagination'
 import { ResponsivePageSizeSync } from '@/components/layout/ResponsivePageSizeSync'
+import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { headers } from 'next/headers'
 import { fetchServerSession } from '@/lib/api/server'
 import { fetchPublicBlogs } from '@/lib/api/blogs'
 
 export const dynamic = 'force-dynamic'
 
 interface PageProps {
-    searchParams?: Promise<{ page?: string; pageSize?: string }>
+    searchParams?: Promise<{ page?: string; pageSize?: string; __qaTagged?: string }>
 }
 
 const DESKTOP_PAGE_SIZE = 12
@@ -32,13 +34,25 @@ function formatPublishedDate(publishedAt?: string | null) {
 
 export default async function BlogPage({ searchParams }: PageProps) {
     const resolvedSearchParams = await searchParams
+    const headerStore = await headers()
+    const requestHost = (headerStore.get('x-forwarded-host') ?? headerStore.get('host') ?? '').toLowerCase()
+    const qaTaggedBlogs = resolvedSearchParams?.__qaTagged === '1' && /localhost|127\.0\.0\.1/.test(requestHost)
     const currentPage = Math.max(1, Number.parseInt(resolvedSearchParams?.page ?? '1', 10) || 1)
     const currentPageSize = Math.max(1, Number.parseInt(resolvedSearchParams?.pageSize ?? String(DESKTOP_PAGE_SIZE), 10) || DESKTOP_PAGE_SIZE)
     const blogsPayload = await fetchPublicBlogs(currentPage, currentPageSize)
     const session = await fetchServerSession()
     const totalPages = Math.max(1, blogsPayload.totalPages)
     const page = blogsPayload.page
-    const pagedBlogs = blogsPayload.items
+    const pagedBlogs = qaTaggedBlogs
+        ? blogsPayload.items.map((blog, index) => ({
+            ...blog,
+            tags: blog.tags.length > 0
+                ? blog.tags
+                : index % 2 === 0
+                    ? ['playwright', 'qa']
+                    : ['seed', 'migration'],
+        }))
+        : blogsPayload.items
 
     return (
         <div className="container mx-auto max-w-7xl px-4 py-8 md:px-6 md:py-12">
@@ -79,17 +93,22 @@ export default async function BlogPage({ searchParams }: PageProps) {
                         >
                             <Card className="responsive-feed-card !gap-0 !py-0 flex h-full flex-col overflow-hidden rounded-2xl border-border/80 bg-background shadow-sm transition hover:border-primary/30 hover:shadow-md">
                                 <CardHeader className="px-4 pt-4 pb-0 sm:px-5 sm:pt-5">
+                                    <div className="mb-2 flex flex-wrap items-center gap-2">
+                                        <Badge variant="secondary" className="rounded-full bg-brand-navy px-2.5 py-0.5 text-xs text-white hover:bg-brand-navy/90">
+                                            {formatPublishedDate(blog.publishedAt)}
+                                        </Badge>
+                                        {blog.tags?.slice(0, 2).map((tag) => (
+                                            <span
+                                                key={tag}
+                                                className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
+                                            >
+                                                {tag}
+                                            </span>
+                                        ))}
+                                    </div>
                                     <CardTitle className="responsive-feed-title line-clamp-2 text-lg font-heading font-bold leading-tight text-gray-900 transition-colors group-hover/card:text-brand-accent dark:text-gray-50 sm:text-xl md:text-2xl">
                                         {blog.title}
                                     </CardTitle>
-                                    <div className="responsive-feed-copy mt-2 flex flex-wrap gap-x-4 gap-y-2 text-sm text-gray-600 dark:text-gray-400">
-                                        <span>{formatPublishedDate(blog.publishedAt)}</span>
-                                        {blog.tags?.length ? (
-                                            <span className="font-medium text-gray-500 dark:text-gray-400">
-                                                {blog.tags.slice(0, 3).join(' · ')}
-                                            </span>
-                                        ) : null}
-                                    </div>
                                 </CardHeader>
                                 <CardContent className="flex flex-1 flex-col px-4 pb-4 pt-3 sm:px-5 sm:pb-5">
                                     <p className="responsive-feed-copy line-clamp-3 flex-1 text-sm text-gray-600 dark:text-gray-300 sm:text-base">

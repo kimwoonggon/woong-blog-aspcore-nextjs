@@ -25,16 +25,6 @@ export default async function HomePage() {
   const profileImageUrl = homeContent.profileImageUrl || ''
   const recentPosts = payload?.recentPosts || []
   const featuredWorks = payload?.featuredWorks || []
-  const ownerName = payload?.siteSettings?.ownerName?.trim()
-  const sanitizedHeadlineName = headline
-    .replace(/^hi,?\s*i\s*am\s*/i, '')
-    .split(',')[0]
-    ?.trim()
-  const profileAltText = ownerName
-    ? `Profile photo of ${ownerName}`
-    : sanitizedHeadlineName
-      ? `Profile photo of ${sanitizedHeadlineName}`
-      : 'Profile photo'
 
   return (
     <div className="container mx-auto max-w-7xl flex flex-col gap-16 px-4 py-8 md:px-6 md:py-12">
@@ -75,13 +65,19 @@ export default async function HomePage() {
             {profileImageUrl ? (
               <Image
                 src={profileImageUrl}
-                alt={profileAltText}
+                alt={headline}
                 fill
                 className="object-cover"
+                priority
+                sizes="240px"
                 unoptimized
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center text-gray-400">
+              <div
+                role="img"
+                aria-label={headline}
+                className="flex h-full w-full items-center justify-center text-gray-400"
+              >
                 Avatar
               </div>
             )}
@@ -101,7 +97,7 @@ export default async function HomePage() {
             View all
           </Link>
         </div>
-        <div data-testid="featured-works-grid" className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+        <div data-testid="featured-works-grid" className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {featuredWorks.length > 0 ? (
             featuredWorks.map((work) => {
               const thumbnailUrl = work.thumbnailUrl || null

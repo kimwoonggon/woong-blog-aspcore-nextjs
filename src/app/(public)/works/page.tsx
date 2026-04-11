@@ -1,6 +1,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
+import { BriefcaseBusiness } from 'lucide-react'
 import { PublicWorksInlineCreateShell } from '@/components/admin/PublicWorksInlineCreateShell'
 import { PublicAdminLink } from '@/components/admin/PublicAdminLink'
 import { EdgePaginationNav } from '@/components/layout/EdgePaginationNav'
@@ -14,7 +15,7 @@ import { fetchPublicWorks } from '@/lib/api/works'
 export const dynamic = 'force-dynamic'
 
 interface PageProps {
-    searchParams?: Promise<{ page?: string; pageSize?: string; __qaEmpty?: string }>
+    searchParams?: Promise<{ page?: string; pageSize?: string; __qaEmpty?: string; __qaNoImage?: string }>
 }
 
 const DESKTOP_PAGE_SIZE = 8
@@ -35,6 +36,7 @@ export default async function WorksPage({ searchParams }: PageProps) {
     const headerStore = await headers()
     const requestHost = (headerStore.get('x-forwarded-host') ?? headerStore.get('host') ?? '').toLowerCase()
     const qaEmptyWorks = resolvedSearchParams?.__qaEmpty === '1' && /localhost|127\.0\.0\.1/.test(requestHost)
+    const qaNoImageWorks = resolvedSearchParams?.__qaNoImage === '1' && /localhost|127\.0\.0\.1/.test(requestHost)
     const currentPage = Math.max(1, Number.parseInt(resolvedSearchParams?.page ?? '1', 10) || 1)
     const currentPageSize = Math.max(1, Number.parseInt(resolvedSearchParams?.pageSize ?? String(DESKTOP_PAGE_SIZE), 10) || DESKTOP_PAGE_SIZE)
     const worksPayload = qaEmptyWorks
@@ -43,7 +45,12 @@ export default async function WorksPage({ searchParams }: PageProps) {
     const session = await fetchServerSession()
     const totalPages = Math.max(1, worksPayload.totalPages)
     const page = worksPayload.page
-    const pagedWorks = worksPayload.items
+    const pagedWorks = qaNoImageWorks
+        ? worksPayload.items.map((work) => ({
+            ...work,
+            thumbnailUrl: null,
+        }))
+        : worksPayload.items
     const returnTo = encodeURIComponent(`/works?page=${page}&pageSize=${currentPageSize}`)
 
     return (
@@ -60,7 +67,7 @@ export default async function WorksPage({ searchParams }: PageProps) {
                 mobilePageSize={MOBILE_PAGE_SIZE}
             />
             <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <h1 className="text-3xl font-heading font-bold md:text-4xl text-gray-900 dark:text-gray-50 animate-fade-in-up" style={{ animationDelay: '100ms' }}>Works</h1>
+                <h1 className="text-3xl font-heading font-bold text-gray-900 dark:text-gray-50 md:text-4xl">Works</h1>
                 <div className="flex flex-wrap gap-2">
                     <PublicAdminLink href="/admin/works" label="작업 관리" variant="manage" />
                 </div>
@@ -96,8 +103,12 @@ export default async function WorksPage({ searchParams }: PageProps) {
                                                 className="responsive-feed-image object-cover transition-transform duration-500 group-hover/card:scale-105"
                                             />
                                         ) : (
-                                            <div className="flex h-full w-full items-center justify-center text-sm font-medium text-gray-400">
-                                                No Image
+                                            <div
+                                                data-testid="work-card-no-image-placeholder"
+                                                className="flex h-full w-full flex-col items-center justify-center gap-2 bg-gradient-to-br from-gray-100 to-gray-200 text-gray-400 dark:from-gray-800 dark:to-gray-900"
+                                            >
+                                                <BriefcaseBusiness className="h-8 w-8" aria-hidden="true" />
+                                                <span className="text-xs font-medium">No Image</span>
                                             </div>
                                         )}
                                     </div>

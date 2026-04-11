@@ -3,16 +3,13 @@ import { expect, test } from '@playwright/test'
 
 test.use({ storageState: 'test-results/playwright/admin-storage-state.json' })
 
-test('admin work editor rejects invalid metadata json client-side', async ({ page }) => {
+test('admin work editor no longer exposes raw json metadata editing', async ({ page }) => {
   await page.goto('/admin/works/new')
 
-  await page.getByLabel('Title').fill(`Broken Work ${Date.now()}`)
-  await page.getByLabel('Category').fill('qa')
-  await page.getByLabel('Flexible Metadata (JSON)').fill('{broken-json')
-  await page.getByRole('button', { name: /Create Work/i }).click()
-
-  await expect(page.getByText('Invalid JSON in Flexible Metadata field')).toBeVisible()
-  await expect(page).toHaveURL(/\/admin\/works\/new/)
+  await page.getByRole('tab', { name: 'Media & Videos' }).click()
+  await expect(page.getByText('Flexible Metadata')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Add Field' })).toBeVisible()
+  await expect(page.locator('textarea')).toHaveCount(0)
 })
 
 test('admin blog editor surfaces save failure when backend rejects input', async ({ page }) => {

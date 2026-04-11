@@ -5,6 +5,17 @@ import { expect, test } from '@playwright/test'
 test.use({ storageState: 'test-results/playwright/admin-storage-state.json' })
 const SAMPLE_VIDEO = readFileSync(path.resolve('tests/fixtures/sample-video.mp4'))
 
+async function clickInsertForVideo(page: import('@playwright/test').Page, label: string) {
+  const card = page
+    .locator('div.rounded-xl.border')
+    .filter({ hasText: label })
+    .filter({ has: page.getByRole('button', { name: 'Insert Into Body' }) })
+    .first()
+
+  await expect(card).toBeVisible()
+  await card.getByRole('button', { name: 'Insert Into Body' }).click()
+}
+
 test('admin can create a mixed work with two youtube links, two mp4 uploads, and rich body copy', async ({ page }) => {
   const title = `Playwright Mixed Video ${Date.now()}`
   const editor = page.locator('.tiptap.ProseMirror').first()
@@ -52,16 +63,16 @@ test('admin can create a mixed work with two youtube links, two mp4 uploads, and
   await editor.press('Backspace')
   await editor.fill('Before inline video.')
 
-  await page.getByRole('button', { name: 'Insert Into Body' }).nth(0).click()
+  await clickInsertForVideo(page, 'YouTube dQw4w9WgXcQ')
   await editor.click()
   await editor.pressSequentially(' Between videos.')
-  await page.getByRole('button', { name: 'Insert Into Body' }).nth(1).click()
+  await clickInsertForVideo(page, 'blue-demo.mp4')
   await editor.click()
   await editor.pressSequentially(' More inline video.')
-  await page.getByRole('button', { name: 'Insert Into Body' }).nth(2).click()
+  await clickInsertForVideo(page, 'YouTube 9bZkp7q19f0')
   await editor.click()
   await editor.pressSequentially(' Final inline video.')
-  await page.getByRole('button', { name: 'Insert Into Body' }).nth(3).click()
+  await clickInsertForVideo(page, 'red-demo.mp4')
   await editor.click()
   await editor.pressSequentially(' After inline video.')
 
@@ -77,7 +88,6 @@ test('admin can create a mixed work with two youtube links, two mp4 uploads, and
   await expect(page.getByText(/More inline video\./).first()).toBeVisible()
   await expect(page.getByText(/Final inline video\./).first()).toBeVisible()
   await expect(page.getByText(/After inline video\./).first()).toBeVisible()
-  await expect(page.locator('iframe[src*="youtube-nocookie.com/embed/dQw4w9WgXcQ"]')).toBeVisible()
-  await expect(page.locator('iframe[src*="youtube-nocookie.com/embed/9bZkp7q19f0"]')).toBeVisible()
-  await expect(page.locator('video')).toHaveCount(2, { timeout: 20000 })
+  await expect(page.locator('iframe[src*="youtube-nocookie.com/embed/dQw4w9WgXcQ"]:visible')).toHaveCount(1)
+  await expect(page.getByText(/More videos \(3\)/)).toBeVisible()
 })

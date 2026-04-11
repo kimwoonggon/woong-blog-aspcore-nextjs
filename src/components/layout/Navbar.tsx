@@ -142,6 +142,7 @@ export function Navbar({ ownerName = 'John Doe', session }: NavbarProps) {
                             href={item.href}
                             className={cn(
                                 "rounded-full px-4 py-2 text-sm font-medium transition-colors",
+                                "focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring",
                                 pathname === item.href
                                     ? "bg-foreground text-background"
                                     : "text-muted-foreground hover:bg-muted hover:text-foreground",

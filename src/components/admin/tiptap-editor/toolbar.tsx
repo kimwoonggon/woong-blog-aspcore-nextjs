@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import * as Popover from '@radix-ui/react-popover'
+import { forwardRef, useEffect, useState } from 'react'
 import type { Editor } from '@tiptap/react'
 import {
   Bold,
@@ -17,18 +18,18 @@ import {
   Redo,
   Strikethrough,
   Undo,
+  X,
 } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 export function EditorToolbar({
   editor,
   editable,
   addImage,
-  setLink,
 }: {
   editor: Editor
   editable: boolean
   addImage: () => void
-  setLink: () => void
 }) {
   if (!editable) {
     return null
@@ -36,7 +37,10 @@ export function EditorToolbar({
 
   return (
     <>
-      <div className="flex flex-wrap items-center gap-1 border-b px-3 py-2 bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800">
+      <div
+        data-testid="tiptap-toolbar"
+        className="sticky top-0 z-20 flex flex-wrap items-center gap-1 border-b border-border bg-background/95 px-3 py-2 backdrop-blur-sm"
+      >
         <ToolbarButton
           onClick={() => editor.chain().focus().undo().run()}
           disabled={!editor.can().undo()}
@@ -52,7 +56,7 @@ export function EditorToolbar({
           <Redo size={18} />
         </ToolbarButton>
 
-        <div className="w-px h-6 bg-gray-300 dark:bg-gray-700 mx-1" />
+        <div className="mx-1 h-6 w-px bg-border" />
 
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
@@ -76,7 +80,7 @@ export function EditorToolbar({
           <Heading3 size={18} />
         </ToolbarButton>
 
-        <div className="w-px h-6 bg-gray-300 dark:bg-gray-700 mx-1" />
+        <div className="mx-1 h-6 w-px bg-border" />
 
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleBold().run()}
@@ -107,7 +111,7 @@ export function EditorToolbar({
           <Highlighter size={18} />
         </ToolbarButton>
 
-        <div className="w-px h-6 bg-gray-300 dark:bg-gray-700 mx-1" />
+        <div className="mx-1 h-6 w-px bg-border" />
 
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleBulletList().run()}
@@ -138,20 +142,26 @@ export function EditorToolbar({
           <Code size={18} />
         </ToolbarButton>
 
-        <div className="w-px h-6 bg-gray-300 dark:bg-gray-700 mx-1" />
+        <div className="mx-1 h-6 w-px bg-border" />
 
         <ToolbarButton onClick={addImage} title="Insert Image">
           <ImageIcon size={18} />
         </ToolbarButton>
-        <ToolbarButton
-          onClick={setLink}
-          active={editor.isActive('link')}
+        <EditorLinkControl
+          editor={editor}
           title="Add Link"
-        >
-          <LinkIcon size={18} />
-        </ToolbarButton>
+          trigger={(props) => (
+            <ToolbarButton
+              {...props}
+              active={editor.isActive('link')}
+              title="Add Link"
+            >
+              <LinkIcon size={18} />
+            </ToolbarButton>
+          )}
+        />
 
-        <div className="w-px h-6 bg-gray-300 dark:bg-gray-700 mx-1" />
+        <div className="mx-1 h-6 w-px bg-border" />
 
         <ToolbarButton
           onClick={() => editor.chain().focus().insertContent({ type: 'threeJsBlock' }).run()}
@@ -168,8 +178,8 @@ export function EditorToolbar({
         </ToolbarButton>
       </div>
       <div
-        data-testid="tiptap-capability-hint"
-        className="border-b border-dashed border-sky-200 bg-sky-50/70 px-4 py-2 text-xs text-sky-900 dark:border-sky-900 dark:bg-sky-950/20 dark:text-sky-100"
+        data-testid="tiptap-toolbar-hint"
+        className="border-b border-dashed border-border bg-muted/40 px-4 py-2 text-xs text-muted-foreground"
       >
         Type <span className="font-semibold">/</span> for commands, use <span className="font-semibold">Code Block</span> for snippets, and drag/drop or paste images directly into the editor. HTML widgets and 3D blocks stay available from the toolbar.
       </div>
@@ -180,11 +190,9 @@ export function EditorToolbar({
 export function EditorFormattingBubble({
   editor,
   editable,
-  setLink,
 }: {
   editor: Editor
   editable: boolean
-  setLink: () => void
 }) {
   const [isVisible, setIsVisible] = useState(false)
 
@@ -240,100 +248,243 @@ export function EditorFormattingBubble({
   return (
     <div
       data-testid="editor-formatting-bubble"
-      className="sticky top-2 z-20 mx-auto mb-2 flex w-fit items-center gap-1 rounded-lg border border-gray-700 bg-gray-900 px-2 py-1 text-white shadow-xl dark:border-gray-700 dark:bg-gray-950"
+      className="sticky top-2 z-20 mx-auto mb-2 flex w-fit items-center gap-1 rounded-lg border border-border bg-popover px-2 py-1 text-popover-foreground shadow-xl"
     >
       <BubbleButton
         onClick={() => editor.chain().focus().toggleBold().run()}
         active={editor.isActive('bold')}
+        title="Bold"
       >
         <Bold size={16} />
       </BubbleButton>
       <BubbleButton
         onClick={() => editor.chain().focus().toggleItalic().run()}
         active={editor.isActive('italic')}
+        title="Italic"
       >
         <Italic size={16} />
       </BubbleButton>
       <BubbleButton
         onClick={() => editor.chain().focus().toggleStrike().run()}
         active={editor.isActive('strike')}
+        title="Strikethrough"
       >
         <Strikethrough size={16} />
       </BubbleButton>
       <BubbleButton
         onClick={() => editor.chain().focus().toggleHighlight({ color: '#fef08a' }).run()}
         active={editor.isActive('highlight')}
+        title="Highlight"
       >
         <Highlighter size={16} />
       </BubbleButton>
-      <div className="w-px h-4 bg-gray-600 mx-1" />
+      <div className="mx-1 h-4 w-px bg-border" />
       <BubbleButton
         onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
         active={editor.isActive('heading', { level: 1 })}
+        title="Heading 1"
       >
         <Heading1 size={16} />
       </BubbleButton>
       <BubbleButton
         onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
         active={editor.isActive('heading', { level: 2 })}
+        title="Heading 2"
       >
         <Heading2 size={16} />
       </BubbleButton>
-      <BubbleButton onClick={setLink} active={editor.isActive('link')}>
-        <LinkIcon size={16} />
-      </BubbleButton>
+      <EditorLinkControl
+        editor={editor}
+        title="Add Link"
+        trigger={(props) => (
+          <BubbleButton
+            {...props}
+            active={editor.isActive('link')}
+            title="Add Link"
+          >
+            <LinkIcon size={16} />
+          </BubbleButton>
+        )}
+      />
     </div>
   )
 }
 
-function ToolbarButton({
-  children,
-  onClick,
-  active,
-  disabled,
+function EditorLinkControl({
+  editor,
   title,
+  trigger,
 }: {
-  children: React.ReactNode
-  onClick: () => void
-  active?: boolean
-  disabled?: boolean
-  title?: string
+  editor: Editor
+  title: string
+  trigger: (props: { onMouseDown: (event: React.MouseEvent<HTMLButtonElement>) => void }) => React.ReactNode
 }) {
+  const [open, setOpen] = useState(false)
+  const [linkUrl, setLinkUrl] = useState('')
+
+  useEffect(() => {
+    if (!open) {
+      return
+    }
+
+    setLinkUrl(editor.getAttributes('link').href ?? '')
+  }, [editor, open])
+
+  const applyLink = () => {
+    const nextUrl = linkUrl.trim()
+
+    if (nextUrl.length === 0) {
+      editor.chain().focus().extendMarkRange('link').unsetLink().run()
+    } else {
+      editor.chain().focus().extendMarkRange('link').setLink({ href: nextUrl }).run()
+    }
+
+    setOpen(false)
+  }
+
+  const removeLink = () => {
+    editor.chain().focus().extendMarkRange('link').unsetLink().run()
+    setLinkUrl('')
+    setOpen(false)
+  }
+
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      title={title}
-      className={`p-1.5 rounded transition-colors ${active
-        ? 'bg-gray-200 text-gray-900 dark:bg-gray-700 dark:text-white'
-        : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'
-      } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-    >
-      {children}
-    </button>
+    <Popover.Root open={open} onOpenChange={setOpen}>
+      <Popover.Trigger asChild>
+        {trigger({
+          onMouseDown: (event) => {
+            event.preventDefault()
+          },
+        })}
+      </Popover.Trigger>
+      <Popover.Portal>
+        <Popover.Content
+          align="start"
+          sideOffset={8}
+          data-testid="tiptap-link-popover"
+          className="z-50 w-72 rounded-md border border-border bg-popover p-3 text-popover-foreground shadow-md outline-none"
+        >
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <label htmlFor="tiptap-link-url" className="text-xs font-medium text-muted-foreground">
+                URL
+              </label>
+              <input
+                id="tiptap-link-url"
+                name="linkUrl"
+                type="url"
+                inputMode="url"
+                autoComplete="off"
+                spellCheck={false}
+                placeholder="https://…"
+                value={linkUrl}
+                onChange={(event) => setLinkUrl(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    event.preventDefault()
+                    applyLink()
+                  }
+                }}
+                className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+              />
+            </div>
+            <div className="flex items-center justify-end gap-2">
+              {editor.isActive('link') ? (
+                <button
+                  type="button"
+                  onClick={removeLink}
+                  className="inline-flex h-8 items-center rounded-md px-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                >
+                  Remove
+                </button>
+              ) : null}
+              <button
+                type="button"
+                onClick={applyLink}
+                className="inline-flex h-8 items-center rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+              >
+                Apply
+              </button>
+            </div>
+          </div>
+          <Popover.Close
+            aria-label={`Close ${title}`}
+            className="absolute top-2 right-2 inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+          >
+            <X size={14} />
+          </Popover.Close>
+        </Popover.Content>
+      </Popover.Portal>
+    </Popover.Root>
   )
 }
 
-function BubbleButton({
+const ToolbarButton = forwardRef<HTMLButtonElement, {
+  children: React.ReactNode
+  onClick?: () => void
+  onMouseDown?: (event: React.MouseEvent<HTMLButtonElement>) => void
+  active?: boolean
+  disabled?: boolean
+  title?: string
+}>(function ToolbarButton({
   children,
   onClick,
+  onMouseDown,
   active,
-}: {
-  children: React.ReactNode
-  onClick: () => void
-  active?: boolean
-}) {
+  disabled,
+  title,
+}, ref) {
   return (
     <button
+      ref={ref}
       type="button"
       onClick={onClick}
-      className={`p-1 rounded transition-colors ${active
-        ? 'bg-blue-600 text-white'
-        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-      }`}
+      onMouseDown={onMouseDown}
+      disabled={disabled}
+      title={title}
+      aria-label={title}
+      className={cn(
+        'rounded p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        active && 'bg-accent text-accent-foreground',
+        disabled && 'cursor-not-allowed opacity-50',
+      )}
     >
       {children}
     </button>
   )
-}
+})
+
+ToolbarButton.displayName = 'ToolbarButton'
+
+const BubbleButton = forwardRef<HTMLButtonElement, {
+  children: React.ReactNode
+  onClick?: () => void
+  onMouseDown?: (event: React.MouseEvent<HTMLButtonElement>) => void
+  active?: boolean
+  title?: string
+}>(function BubbleButton({
+  children,
+  onClick,
+  onMouseDown,
+  active,
+  title,
+}, ref) {
+  return (
+    <button
+      ref={ref}
+      type="button"
+      onClick={onClick}
+      onMouseDown={onMouseDown}
+      title={title}
+      aria-label={title}
+      className={cn(
+        'rounded p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        active && 'bg-accent text-accent-foreground',
+      )}
+    >
+      {children}
+    </button>
+  )
+})
+
+BubbleButton.displayName = 'BubbleButton'

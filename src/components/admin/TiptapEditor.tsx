@@ -47,7 +47,7 @@ export function TiptapEditor({
         content,
         editorProps: {
             attributes: {
-                class: 'prose prose-lg dark:prose-invert max-w-none min-h-[500px] focus:outline-none px-4 py-8 bg-white dark:bg-gray-950 rounded-b-lg border',
+                class: 'tiptap prose prose-lg dark:prose-invert max-w-none min-h-[500px] rounded-b-lg border border-border bg-background px-4 py-8 focus:outline-none',
             },
             handleDrop: (_view, event, _slice, moved) => {
                 if (!moved && event.dataTransfer?.files?.[0]?.type.startsWith('image/')) {
@@ -95,20 +95,6 @@ export function TiptapEditor({
         input.click()
     }, [handleImageUpload])
 
-    const setLink = useCallback(() => {
-        if (!editor) return
-        const previousUrl = editor.getAttributes('link').href
-        const url = window.prompt('URL', previousUrl)
-
-        if (url === null) return
-        if (url === '') {
-            editor.chain().focus().extendMarkRange('link').unsetLink().run()
-            return
-        }
-
-        editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
-    }, [editor])
-
     useEffect(() => {
         if (editor && content !== editor.getHTML()) {
             editor.commands.setContent(content)
@@ -148,7 +134,8 @@ export function TiptapEditor({
 
     return (
         <div
-            className="rounded-lg bg-white dark:bg-gray-950 border dark:border-gray-800 shadow-sm overflow-hidden"
+            data-testid="tiptap-editor-shell"
+            className="rounded-lg border border-border bg-background shadow-sm"
             onDragOver={(event) => {
                 if (event.dataTransfer?.files?.[0]?.type.startsWith('image/')) {
                     event.preventDefault()
@@ -166,14 +153,12 @@ export function TiptapEditor({
                 editor={editor}
                 editable={editable}
                 addImage={addImage}
-                setLink={setLink}
             />
             <EditorFormattingBubble
                 editor={editor}
                 editable={editable}
-                setLink={setLink}
             />
-            <div className="bg-white dark:bg-gray-950">
+            <div data-testid="tiptap-editor-surface" className="overflow-hidden rounded-b-lg bg-background">
                 <EditorContent editor={editor} />
             </div>
         </div>

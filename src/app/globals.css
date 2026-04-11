@@ -163,6 +163,25 @@
     @apply bg-background text-foreground;
   }
 
+  :where(a[href], button, summary, input, textarea, select, [role="button"], [role="link"]) {
+    -webkit-tap-highlight-color: rgb(15 23 42 / 0.12);
+    touch-action: manipulation;
+  }
+
+  :where(a[href], button, summary, input, textarea, select, [role="button"], [role="link"]):focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 3px;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    scroll-margin-top: 6rem;
+  }
+
   .dark ::-webkit-scrollbar-track {
     background: oklch(0.15 0.02 280);
   }
@@ -321,7 +340,7 @@
   max-height: 2.5rem;
 }
 
-@media (max-height: 860px) {
+@media (max-height: 860px), (max-width: 640px) {
   .responsive-feed-card {
     padding: 0.875rem;
   }
@@ -346,7 +365,7 @@
   }
 }
 
-@media (max-height: 720px) {
+@media (max-height: 720px), (max-width: 480px) {
   .responsive-feed-card {
     padding: 0.75rem;
   }

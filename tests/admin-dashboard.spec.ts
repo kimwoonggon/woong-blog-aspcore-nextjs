@@ -48,9 +48,11 @@ test('admin dashboard cards open edit pages directly and expose pagination contr
   ])
 })
 
-test('admin sidebar exposes a direct public-home shortcut', async ({ page }) => {
+test('admin sidebar exposes a direct public site shortcut', async ({ page }) => {
   await page.goto('/admin/dashboard')
 
-  await page.getByRole('link', { name: 'Public Home' }).click()
-  await expect(page).toHaveURL(/\/$/)
+  const shortcut = page.getByRole('link', { name: 'View Site' })
+  await expect(shortcut).toBeVisible()
+  await expect(shortcut).toHaveAttribute('href', '/')
+  await expect(shortcut).toHaveAttribute('target', '_blank')
 })

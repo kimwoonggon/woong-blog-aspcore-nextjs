@@ -7,6 +7,14 @@ import { Eye, Pencil, Trash2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import type { WorkAdminItem } from '@/lib/api/works'
@@ -17,11 +25,29 @@ interface AdminWorksTableClientProps {
   works: WorkAdminItem[]
 }
 
+interface PendingWorkDelete {
+  ids: string[]
+  title: string
+}
+
+function matchesWorkQuery(work: WorkAdminItem, normalizedQuery: string) {
+  if (!normalizedQuery) {
+    return true
+  }
+
+  return (
+    work.title.toLowerCase().includes(normalizedQuery)
+    || work.category.toLowerCase().includes(normalizedQuery)
+    || work.tags.some((tag) => tag.toLowerCase().includes(normalizedQuery))
+  )
+}
+
 export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
   const router = useRouter()
   const returnTo = encodeURIComponent('/admin/works')
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [query, setQuery] = useState('')
+  const [pendingDelete, setPendingDelete] = useState<PendingWorkDelete | null>(null)
   const [page, setPage] = useState(1)
   const [isPending, startTransition] = useTransition()
   const pageSize = useResponsivePageSize(12, 8, 6)
@@ -31,7 +57,7 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
       return works
     }
 
-    return works.filter((work) => work.title.toLowerCase().includes(normalizedQuery))
+    return works.filter((work) => matchesWorkQuery(work, normalizedQuery))
   }, [works, query])
   const totalPages = Math.max(1, Math.ceil(filteredWorks.length / pageSize))
   const currentPage = Math.min(page, totalPages)
@@ -62,32 +88,28 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
     ))
   }
 
-  function confirmDelete(label: string, mode: 'single' | 'bulk') {
-    if (mode === 'single') {
-      return window.confirm(`Delete "${label}"? This action cannot be undone.`)
-    }
-
-    return window.prompt(`Type yes to delete ${label}. This action cannot be undone.`, '')?.trim().toLowerCase() === 'yes'
-  }
-
-  function runDelete(ids: string[], label: string) {
+  function requestDelete(ids: string[], title: string) {
     if (ids.length === 0 || isPending) {
       return
     }
 
-    const confirmed = confirmDelete(label, ids.length === 1 ? 'single' : 'bulk')
-    if (!confirmed) {
+    setPendingDelete({ ids, title })
+  }
+
+  function runDelete() {
+    if (!pendingDelete || isPending) {
       return
     }
 
     startTransition(async () => {
       try {
-        if (ids.length === 1) {
-          await deleteAdminWork(ids[0])
+        if (pendingDelete.ids.length === 1) {
+          await deleteAdminWork(pendingDelete.ids[0])
         } else {
-          await deleteManyAdminWorks(ids)
+          await deleteManyAdminWorks(pendingDelete.ids)
         }
-        setSelectedIds((current) => current.filter((id) => !ids.includes(id)))
+        setSelectedIds((current) => current.filter((id) => !pendingDelete.ids.includes(id)))
+        setPendingDelete(null)
         router.refresh()
       } catch (error) {
         window.alert(error instanceof Error ? error.message : 'Failed to delete works.')
@@ -110,12 +132,12 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
                 current.filter((id) =>
                   works.some((work) =>
                     work.id === id
-                    && (!normalizedQuery || work.title.toLowerCase().includes(normalizedQuery)),
+                    && matchesWorkQuery(work, normalizedQuery),
                   ),
                 ),
               )
             }}
-            placeholder="Search work titles"
+            placeholder="Search by title, tags, or category..."
             aria-label="Search work titles"
             className="max-w-sm"
           />
@@ -127,7 +149,7 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
           <Button
             variant="destructive"
             size="sm"
-            onClick={() => runDelete(effectiveSelectedIds, `${selectedCount} selected works`)}
+            onClick={() => requestDelete(effectiveSelectedIds, `${selectedCount} selected works`)}
             disabled={isPending}
           >
             <Trash2 className="mr-2 h-4 w-4" />
@@ -203,7 +225,7 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
                       size="icon"
                       className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
                       title="Delete"
-                      onClick={() => runDelete([work.id], work.title)}
+                      onClick={() => requestDelete([work.id], work.title)}
                       disabled={isPending}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -222,22 +244,70 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
         </TableBody>
       </Table>
       <div className="flex flex-wrap items-center justify-center gap-2 border-t border-gray-200 px-4 py-3 dark:border-gray-800">
-        <Button type="button" variant="outline" size="sm" disabled={currentPage <= 1} onClick={() => setPage(1)}>
-          처음
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          aria-label="처음"
+          disabled={currentPage <= 1}
+          onClick={() => setPage(1)}
+        >
+          First
         </Button>
-        <Button type="button" variant="outline" size="sm" disabled={currentPage <= 1} onClick={() => setPage((active) => Math.max(1, active - 1))}>
-          이전
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          aria-label="이전"
+          disabled={currentPage <= 1}
+          onClick={() => setPage((active) => Math.max(1, active - 1))}
+        >
+          Previous
         </Button>
         <span className="text-sm text-muted-foreground">
           {currentPage} / {totalPages}
         </span>
-        <Button type="button" variant="outline" size="sm" disabled={currentPage >= totalPages} onClick={() => setPage((active) => Math.min(totalPages, active + 1))}>
-          다음
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          aria-label="다음"
+          disabled={currentPage >= totalPages}
+          onClick={() => setPage((active) => Math.min(totalPages, active + 1))}
+        >
+          Next
         </Button>
-        <Button type="button" variant="outline" size="sm" disabled={currentPage >= totalPages} onClick={() => setPage(totalPages)}>
-          끝
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          aria-label="끝"
+          disabled={currentPage >= totalPages}
+          onClick={() => setPage(totalPages)}
+        >
+          Last
         </Button>
       </div>
+      <Dialog open={pendingDelete !== null} onOpenChange={(open) => !open && setPendingDelete(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {pendingDelete ? `Delete ${pendingDelete.title}?` : 'Delete item?'}
+            </DialogTitle>
+            <DialogDescription>
+              This action cannot be undone. The selected work will be permanently deleted.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPendingDelete(null)} disabled={isPending}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={runDelete} disabled={isPending}>
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

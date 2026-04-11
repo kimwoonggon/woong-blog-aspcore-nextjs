@@ -111,6 +111,7 @@ test('auto-fills a thumbnail when an existing work without one gets an uploaded 
 
   const created = await createResponse.json()
   await page.goto(`/admin/works/${created.id}`)
+  await page.getByRole('tab', { name: 'Media & Videos' }).click()
   await expect(page.getByTestId('work-thumbnail-source')).toHaveText('Thumbnail source: none')
 
   await page.locator('#work-video-upload').setInputFiles({

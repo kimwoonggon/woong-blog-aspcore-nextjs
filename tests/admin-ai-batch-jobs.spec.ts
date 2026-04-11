@@ -19,6 +19,11 @@ test('admin can create, observe, and apply a blog AI batch job without blocking 
   await expect(page.getByTestId('admin-blog-batch-ai-panel')).toHaveCount(0)
   await page.getByRole('button', { name: 'Batch AI Fix' }).click()
   await expect(page.getByTestId('admin-blog-batch-ai-panel')).toBeVisible()
+  const clearCompleted = page.getByRole('button', { name: /Clear completed/i })
+  if (await clearCompleted.isVisible().catch(() => false)) {
+    await clearCompleted.click()
+    await expect(clearCompleted).toHaveCount(0)
+  }
   await expect(page.getByRole('button', { name: 'Generate AI Fix job' })).toBeEnabled()
 
   await page.getByRole('button', { name: 'Generate AI Fix job' }).click()
@@ -28,9 +33,9 @@ test('admin can create, observe, and apply a blog AI batch job without blocking 
 
   await expect(page.getByTestId('admin-blog-batch-ai-status')).toContainText('completed', { timeout: 180_000 })
   await expect(page.getByTestId('admin-blog-batch-ai-status')).toContainText('2/2 processed', { timeout: 180_000 })
-  await expect(page.getByRole('button', { name: 'Apply all successful' })).toBeVisible()
-
-  await page.getByRole('button', { name: 'Apply all successful' }).click()
+  const applyAll = page.getByRole('button', { name: 'Apply all successful' })
+  await expect(applyAll).toBeVisible({ timeout: 30_000 })
+  await applyAll.click()
 
   await expect(page.getByText('applied').first()).toBeVisible({ timeout: 30_000 })
 })

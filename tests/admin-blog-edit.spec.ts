@@ -39,8 +39,9 @@ test('blog notion view supports list selection and content autosave', async ({ p
   await page.goto('/admin/blog')
   await page.getByRole('main').locator('a[href="/admin/blog/notion"]').click()
   await expect(page.getByRole('heading', { name: 'Blog Notion View' }).first()).toBeVisible()
+  await page.getByTestId('notion-library-trigger').click()
   await expect(page.getByTestId('notion-blog-list-item').first()).toBeVisible()
-  await expect(page.getByTestId('tiptap-capability-hint').last()).toContainText('Type / for commands')
+  await expect(page.getByTestId('tiptap-toolbar-hint')).toContainText('Type / for commands')
 
   const listItems = page.getByTestId('notion-blog-list-item')
   if ((await listItems.count()) > 1) {

@@ -46,6 +46,8 @@ test('Featured works collapses to one column on mobile', async ({ page }) => {
   await page.goto('/')
 
   const cards = page.getByTestId('featured-work-card')
+  await expect(cards.nth(0)).toBeVisible()
+  await expect(cards.nth(1)).toBeVisible()
 
   const firstBox = await cards.nth(0).boundingBox()
   const secondBox = await cards.nth(1).boundingBox()

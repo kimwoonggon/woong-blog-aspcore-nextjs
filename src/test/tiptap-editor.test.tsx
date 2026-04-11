@@ -264,6 +264,6 @@ describe('TiptapEditor', () => {
   it('renders the authoring capability hint when editable', () => {
     render(<TiptapEditor content="<p>Body</p>" onChange={vi.fn()} />)
 
-    expect(screen.getByTestId('tiptap-capability-hint')).toBeInTheDocument()
+    expect(screen.getByTestId('tiptap-toolbar-hint')).toBeInTheDocument()
   })
 })

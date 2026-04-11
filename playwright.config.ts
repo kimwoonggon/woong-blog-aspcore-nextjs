@@ -2,6 +2,7 @@ import { defineConfig, devices } from '@playwright/test'
 
 const AUTHENTICATED_SPECS = [
   /tests\/admin-(?!redirect).*\.spec\.ts$/,
+  /tests\/ui-admin-.*\.spec\.ts$/,
   /tests\/public-inline-editors\.spec\.ts$/,
   /tests\/public-blog-detail-inline-edit\.spec\.ts$/,
   /tests\/public-work-detail-inline-edit\.spec\.ts$/,
@@ -41,6 +42,7 @@ export default defineConfig({
           DEV_PROXY_ORIGIN: 'http://localhost:8080',
           INTERNAL_API_ORIGIN: 'http://localhost:8080',
           NEXT_PUBLIC_API_BASE_URL: '/api',
+          NEXT_DIST_DIR: '.next-playwright',
           NODE_TLS_REJECT_UNAUTHORIZED: '0',
         },
         url: 'http://localhost:3000',

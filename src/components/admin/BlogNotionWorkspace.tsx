@@ -2,12 +2,14 @@
 
 import Link from 'next/link'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { FileText, X } from 'lucide-react'
 import { AIFixDialog } from '@/components/admin/AIFixDialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { TiptapEditor } from '@/components/admin/TiptapEditor'
 import { fetchWithCsrf } from '@/lib/api/auth'
 import { getBrowserApiBaseUrl } from '@/lib/api/browser'
@@ -55,6 +57,10 @@ function formatTimestamp(value?: string | null) {
 type SaveState = 'idle' | 'saving' | 'saved' | 'error'
 
 export function BlogNotionWorkspace({ blogs, activeBlog }: BlogNotionWorkspaceProps) {
+    const [isLibraryOpen, setIsLibraryOpen] = useState(false)
+    const [librarySearch, setLibrarySearch] = useState('')
+    const [showCapabilityHint, setShowCapabilityHint] = useState(true)
+    const [showDocInfo, setShowDocInfo] = useState(true)
     const [title, setTitle] = useState(activeBlog.title)
     const [tagsInput, setTagsInput] = useState(activeBlog.tags?.join(', ') ?? '')
     const [published, setPublished] = useState(activeBlog.published)
@@ -70,6 +76,13 @@ export function BlogNotionWorkspace({ blogs, activeBlog }: BlogNotionWorkspacePr
     const skipAutosaveRef = useRef(true)
 
     useEffect(() => {
+        if (typeof window !== 'undefined') {
+            setShowCapabilityHint(window.localStorage.getItem('notionCapabilityHintDismissed') !== 'true')
+        }
+    }, [])
+
+    useEffect(() => {
+        setIsLibraryOpen(false)
         setTitle(activeBlog.title)
         setTagsInput(activeBlog.tags?.join(', ') ?? '')
         setPublished(activeBlog.published)
@@ -151,6 +164,14 @@ export function BlogNotionWorkspace({ blogs, activeBlog }: BlogNotionWorkspacePr
         || published !== lastSavedRef.current.published
         || JSON.stringify(normalizeTagsInput(tagsInput)) !== JSON.stringify(lastSavedRef.current.tags)
     ), [published, tagsInput, title])
+    const filteredBlogs = useMemo(() => {
+        const normalizedQuery = librarySearch.trim().toLowerCase()
+        if (!normalizedQuery) {
+            return blogs
+        }
+
+        return blogs.filter((blog) => blog.title.toLowerCase().includes(normalizedQuery))
+    }, [blogs, librarySearch])
 
     async function saveMetadata() {
         setIsSavingMeta(true)
@@ -199,60 +220,88 @@ export function BlogNotionWorkspace({ blogs, activeBlog }: BlogNotionWorkspacePr
     }
 
     return (
-        <div className="grid min-h-[calc(100vh-12rem)] gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
-            <aside className="overflow-hidden rounded-3xl border border-border/80 bg-background shadow-sm">
-                <div className="border-b border-border/80 px-5 py-4">
-                    <div className="flex items-center justify-between gap-3">
-                        <div>
-                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Blog library</p>
-                            <p className="text-xs text-muted-foreground">Select a document and stage posts for future batch actions.</p>
-                        </div>
-                    </div>
-                </div>
-                <div className="max-h-[calc(100vh-16rem)] space-y-2 overflow-y-auto p-3">
-                    {blogs.map((blog) => {
-                        const isActive = blog.id === activeBlog.id
-
-                        return (
-                            <div
-                                key={blog.id}
-                                className={`rounded-2xl border px-4 py-3 transition ${
-                                    isActive
-                                        ? 'border-primary/40 bg-primary/5 shadow-sm'
-                                        : 'border-transparent hover:border-border hover:bg-muted/40'
-                                }`}
-                            >
-                                <div className="min-w-0 flex-1">
-                                    <div className="flex items-start justify-between gap-3">
-                                        <Link
-                                            href={`/admin/blog/notion?id=${encodeURIComponent(blog.id)}`}
-                                            data-testid="notion-blog-list-item"
-                                            className="block min-w-0"
-                                        >
-                                            <p className="line-clamp-2 text-sm font-medium text-gray-900 underline-offset-4 hover:underline dark:text-gray-100">
-                                                {blog.title}
-                                            </p>
-                                        </Link>
-                                        <Badge variant="secondary" className={blog.published ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300'}>
-                                            {blog.published ? 'Published' : 'Draft'}
-                                        </Badge>
+        <div className="flex min-h-[calc(100vh-12rem)] flex-col md:-mx-12">
+            <div className="mb-4 flex items-center gap-3 rounded-3xl border border-border/80 bg-background px-4 py-3 shadow-sm">
+                <Sheet open={isLibraryOpen} onOpenChange={setIsLibraryOpen}>
+                    <SheetTrigger asChild>
+                        <Button data-testid="notion-library-trigger" variant="outline" size="sm" className="gap-2">
+                            <FileText size={16} />
+                            Library
+                        </Button>
+                    </SheetTrigger>
+                    <SheetContent
+                        side="left"
+                        className="w-80 p-0 sm:max-w-none"
+                        showCloseButton={false}
+                    >
+                        <div data-testid="notion-library-sheet" className="flex h-full flex-col overflow-hidden bg-background">
+                            <div className="border-b border-border/80 px-5 py-4">
+                                <div className="flex items-center justify-between gap-3">
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Blog library</p>
+                                        <p className="text-xs text-muted-foreground">Select a document and stage posts for future batch actions.</p>
                                     </div>
-                                    <p className="mt-2 text-xs text-muted-foreground">
-                                        Updated {formatTimestamp(blog.updatedAt ?? blog.publishedAt)}
-                                    </p>
-                                    {blog.tags?.length ? (
-                                        <p className="mt-2 line-clamp-1 text-xs text-muted-foreground">
-                                            {blog.tags.join(' · ')}
-                                        </p>
-                                    ) : null}
                                 </div>
                             </div>
-                        )
-                    })}
-                </div>
-            </aside>
+                            <div className="border-b border-border/80 bg-background/95 p-3 backdrop-blur-sm">
+                                <Input
+                                    placeholder="Search posts..."
+                                    value={librarySearch}
+                                    onChange={(event) => setLibrarySearch(event.target.value)}
+                                    className="h-8 text-sm"
+                                />
+                            </div>
+                            <div className="space-y-2 overflow-y-auto p-3">
+                                {filteredBlogs.map((blog) => {
+                                    const isActive = blog.id === activeBlog.id
 
-            <section className="overflow-hidden rounded-3xl border border-border/80 bg-background shadow-sm">
+                                    return (
+                                        <div
+                                            key={blog.id}
+                                            className={`rounded-2xl border px-4 py-3 transition ${
+                                                isActive
+                                                    ? 'border-primary/40 bg-primary/5 shadow-sm'
+                                                    : 'border-transparent hover:border-border hover:bg-muted/40'
+                                            }`}
+                                        >
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex items-start justify-between gap-3">
+                                                    <Link
+                                                        href={`/admin/blog/notion?id=${encodeURIComponent(blog.id)}`}
+                                                        data-testid="notion-blog-list-item"
+                                                        className="block min-w-0"
+                                                        onClick={() => setIsLibraryOpen(false)}
+                                                    >
+                                                        <p className="line-clamp-2 text-sm font-medium text-gray-900 underline-offset-4 hover:underline dark:text-gray-100">
+                                                            {blog.title}
+                                                        </p>
+                                                    </Link>
+                                                    <Badge variant="secondary" className={blog.published ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300'}>
+                                                        {blog.published ? 'Published' : 'Draft'}
+                                                    </Badge>
+                                                </div>
+                                                <p className="mt-2 text-xs text-muted-foreground">
+                                                    Updated {formatTimestamp(blog.updatedAt ?? blog.publishedAt)}
+                                                </p>
+                                                {blog.tags?.length ? (
+                                                    <p className="mt-2 line-clamp-1 text-xs text-muted-foreground">
+                                                        {blog.tags.join(' · ')}
+                                                    </p>
+                                                ) : null}
+                                            </div>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        </div>
+                    </SheetContent>
+                </Sheet>
+                <span className="text-sm font-medium text-muted-foreground">
+                    {activeBlog.title || 'New post'}
+                </span>
+            </div>
+
+            <section data-testid="notion-editor-shell" className="w-full overflow-hidden rounded-3xl border border-border/80 bg-background shadow-sm">
                 <div className="border-b border-border/80 px-6 py-5">
                     <div className="flex flex-wrap items-start justify-between gap-4">
                         <div>
@@ -262,6 +311,15 @@ export function BlogNotionWorkspace({ blogs, activeBlog }: BlogNotionWorkspacePr
                             </p>
                         </div>
                         <div className="flex items-center gap-2">
+                            <Button
+                                type="button"
+                                data-testid="notion-doc-info-toggle"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setShowDocInfo((current) => !current)}
+                            >
+                                {showDocInfo ? 'Hide Info' : 'Show Info'}
+                            </Button>
                             <span
                                 data-testid="notion-save-state"
                                 className={`rounded-full border px-3 py-1 text-xs font-medium ${
@@ -284,8 +342,8 @@ export function BlogNotionWorkspace({ blogs, activeBlog }: BlogNotionWorkspacePr
                     </div>
                 </div>
 
-                <div className="grid gap-6 px-6 py-6 xl:grid-cols-[minmax(0,1fr)_260px]">
-                    <div className="space-y-5">
+                <div className={`grid gap-6 px-6 py-6 ${showDocInfo ? 'xl:grid-cols-[minmax(0,1fr)_260px]' : ''}`}>
+                    <div data-testid="notion-editor-area" className="space-y-5">
                         <div className="grid gap-4 md:grid-cols-2">
                             <div className="space-y-2 md:col-span-2">
                                 <Label htmlFor="notion-blog-title">Title</Label>
@@ -316,12 +374,29 @@ export function BlogNotionWorkspace({ blogs, activeBlog }: BlogNotionWorkspacePr
                             </div>
                         </div>
 
-                        <div
-                            data-testid="tiptap-capability-hint"
-                            className="rounded-2xl border border-dashed border-sky-300 bg-sky-50/70 px-4 py-3 text-sm text-sky-900 dark:border-sky-900 dark:bg-sky-950/20 dark:text-sky-100"
-                        >
-                            Reuse the existing Tiptap stack here: Type <span className="font-medium">/</span> for commands, insert <span className="font-medium">code blocks</span> for snippets, drag/drop or paste images directly into the canvas, and keep HTML / 3D blocks available through the existing toolbar controls.
-                        </div>
+                        {showCapabilityHint && (
+                            <div
+                                data-testid="tiptap-capability-hint"
+                                className="flex items-start gap-2 rounded-2xl border border-dashed border-sky-300 bg-sky-50/70 px-4 py-3 text-sm text-sky-900 dark:border-sky-900 dark:bg-sky-950/20 dark:text-sky-100"
+                            >
+                                <span className="flex-1">
+                                    Reuse the existing Tiptap stack here: Type <span className="font-medium">/</span> for commands, insert <span className="font-medium">code blocks</span> for snippets, drag/drop or paste images directly into the canvas, and keep HTML / 3D blocks available through the existing toolbar controls.
+                                </span>
+                                <button
+                                    type="button"
+                                    aria-label="Close hint"
+                                    className="rounded p-0.5 transition hover:bg-sky-100/80 dark:hover:bg-sky-900/50"
+                                    onClick={() => {
+                                        setShowCapabilityHint(false)
+                                        if (typeof window !== 'undefined') {
+                                            window.localStorage.setItem('notionCapabilityHintDismissed', 'true')
+                                        }
+                                    }}
+                                >
+                                    <X size={14} />
+                                </button>
+                            </div>
+                        )}
 
                         <TiptapEditor
                             content={html}
@@ -330,7 +405,8 @@ export function BlogNotionWorkspace({ blogs, activeBlog }: BlogNotionWorkspacePr
                         />
                     </div>
 
-                    <aside className="space-y-4 rounded-2xl border border-border/80 bg-muted/20 p-4">
+                    {showDocInfo && (
+                    <aside data-testid="notion-doc-info" className="space-y-4 rounded-2xl border border-border/80 bg-muted/20 p-4">
                         <div>
                             <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Document info</p>
                             <dl className="mt-3 space-y-3 text-sm">
@@ -361,6 +437,7 @@ export function BlogNotionWorkspace({ blogs, activeBlog }: BlogNotionWorkspacePr
                             Members list stays out of this modernization pass for now; this view is intentionally blog-first and content-first.
                         </p>
                     </aside>
+                    )}
                 </div>
             </section>
         </div>

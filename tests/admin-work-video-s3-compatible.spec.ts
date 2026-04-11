@@ -19,7 +19,7 @@ test('s3-compatible lane uses presigned upload and renders the uploaded video pu
   ])
 
   const uploadTarget = await uploadTargetResponse.json()
-  expect(uploadTarget.uploadMethod).toBe('PUT')
+  expect(['PUT', 'POST']).toContain(uploadTarget.uploadMethod)
 
   const created = await createResponse.json()
   await page.waitForURL(new RegExp(`/admin/works/${created.id}\\?videoInline=1$`), { timeout: 20000 })

@@ -1,7 +1,8 @@
 "use client"
 
 import Image from 'next/image'
-import { useMemo, useState } from 'react'
+import { Plus, Trash2 } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { AIFixDialog } from '@/components/admin/AIFixDialog'
 import { TiptapEditor } from '@/components/admin/TiptapEditor'
@@ -9,7 +10,6 @@ import { WorkVideoPlayer } from '@/components/content/WorkVideoPlayer'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 import { fetchWithCsrf } from '@/lib/api/auth'
 import { getBrowserApiBaseUrl } from '@/lib/api/browser'
@@ -50,9 +50,73 @@ import {
     resolveWorkSaveSlug,
     validateFlexibleMetadata,
 } from '@/components/admin/work-editor/utils'
+import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 
 const DEFAULT_WORK_CATEGORY = 'Uncategorized'
+
+type WorkEditorTab = 'general' | 'media' | 'content'
+type MetadataField = {
+    id: string
+    key: string
+    value: string
+}
+
+function createMetadataField(key = '', value = ''): MetadataField {
+    return {
+        id: typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+            ? crypto.randomUUID()
+            : `${Date.now()}-${Math.random()}`,
+        key,
+        value,
+    }
+}
+
+function stringifyMetadataValue(value: unknown) {
+    if (typeof value === 'string') {
+        return value
+    }
+
+    if (value == null) {
+        return ''
+    }
+
+    if (typeof value === 'object') {
+        try {
+            return JSON.stringify(value)
+        } catch {
+            return String(value)
+        }
+    }
+
+    return String(value)
+}
+
+function createMetadataFields(record?: Record<string, unknown> | null) {
+    return Object.entries(record ?? {}).map(([key, value]) => createMetadataField(key, stringifyMetadataValue(value)))
+}
+
+function buildMetadataJsonFromRecord(record?: Record<string, unknown> | null) {
+    return JSON.stringify(
+        Object.fromEntries(
+            Object.entries(record ?? {}).map(([key, value]) => [key, stringifyMetadataValue(value)]),
+        ),
+    )
+}
+
+function buildMetadataJsonFromFields(fields: MetadataField[]) {
+    return JSON.stringify(
+        fields.reduce<Record<string, string>>((accumulator, field) => {
+            const key = field.key.trim()
+            if (!key) {
+                return accumulator
+            }
+
+            accumulator[key] = field.value
+            return accumulator
+        }, {}),
+    )
+}
 
 export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEditorProps) {
     const router = useRouter()
@@ -71,9 +135,7 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
     const [tags, setTags] = useState(initialWork?.tags?.join(', ') || '')
     const [published, setPublished] = useState(defaultPublished)
     const [html, setHtml] = useState(initialWork?.content?.html || '')
-    const [allProperties, setAllProperties] = useState(
-        JSON.stringify(initialWork?.all_properties || {}, null, 2)
-    )
+    const [metadataFields, setMetadataFields] = useState<MetadataField[]>(() => createMetadataFields(initialWork?.all_properties))
     const [thumbnailAssetId, setThumbnailAssetId] = useState(initialWork?.thumbnail_asset_id || '')
     const [thumbnailUrl, setThumbnailUrl] = useState(initialWork?.thumbnail_url || '')
     const [iconAssetId, setIconAssetId] = useState(initialWork?.icon_asset_id || '')
@@ -89,7 +151,13 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
     const [hasPersistedVideoChanges, setHasPersistedVideoChanges] = useState(false)
     const [isAutoGeneratingThumbnail, setIsAutoGeneratingThumbnail] = useState(false)
     const [insertVideoRequest, setInsertVideoRequest] = useState<VideoInsertRequest | null>(null)
+    const [activeTab, setActiveTab] = useState<WorkEditorTab>('content')
     const shouldContinueInlinePlacement = searchParams.get('videoInline') === '1'
+    const generalSectionRef = useRef<HTMLDivElement | null>(null)
+    const mediaSectionRef = useRef<HTMLDivElement | null>(null)
+    const contentSectionRef = useRef<HTMLDivElement | null>(null)
+    const saveWorkRef = useRef<(mode: 'default' | 'with-videos') => Promise<void>>(async () => {})
+    const insertVideoNonceRef = useRef(0)
     const usesPublicInlineCreateFlow = isPublicInlineCreateMode({
         inlineMode,
         isEditing,
@@ -120,15 +188,17 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
 
         return ''
     }, [resolvedThumbnailSource, thumbnailUrl])
+    const allProperties = useMemo(() => buildMetadataJsonFromFields(metadataFields), [metadataFields])
+    const initialAllProperties = buildMetadataJsonFromRecord(initialWork?.all_properties)
 
     const initialSnapshot = buildWorkSnapshot({
         title: initialWork?.title || '',
         category: initialWork?.category || DEFAULT_WORK_CATEGORY,
         period: initialWork?.period || '',
         tags: initialWork?.tags?.join(', ') || '',
-        published: Boolean(initialWork?.published),
+        published: defaultPublished,
         html: initialWork?.content?.html || '',
-        allProperties: JSON.stringify(initialWork?.all_properties || {}, null, 2),
+        allProperties: initialAllProperties,
         thumbnailAssetId: initialWork?.thumbnail_asset_id || '',
         iconAssetId: initialWork?.icon_asset_id || '',
     })
@@ -143,9 +213,12 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
         thumbnailAssetId,
         iconAssetId,
     })
-    const isDirty = !isEditing || initialSnapshot !== currentSnapshot
+    const hasStagedVideos = stagedVideos.length > 0
+    const hasUnsavedChanges = initialSnapshot !== currentSnapshot || (!isEditing && hasStagedVideos)
+    const isDirty = hasUnsavedChanges
     const searchParamsString = searchParams.toString()
     const currentQuerySuffix = searchParamsString ? `?${searchParamsString}` : ''
+    const primarySaveMode: 'default' | 'with-videos' = !isEditing && hasStagedVideos ? 'with-videos' : 'default'
 
     const formatDate = (dateString?: string | null) => {
         if (!dateString) return 'Not yet'
@@ -215,6 +288,33 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
             thumbnailAssetId: nextThumbnailAssetId || null,
             iconAssetId: nextIconAssetId || null,
         }
+    }
+
+    function scrollToTab(tab: WorkEditorTab) {
+        const nextSection = tab === 'general'
+            ? generalSectionRef.current
+            : tab === 'media'
+                ? mediaSectionRef.current
+                : contentSectionRef.current
+
+        setActiveTab(tab)
+        nextSection?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+
+    function addMetadataField() {
+        setMetadataFields((current) => [...current, createMetadataField()])
+    }
+
+    function updateMetadataField(fieldId: string, nextField: Partial<Pick<MetadataField, 'key' | 'value'>>) {
+        setMetadataFields((current) => current.map((field) => (
+            field.id === fieldId
+                ? { ...field, ...nextField }
+                : field
+        )))
+    }
+
+    function removeMetadataField(fieldId: string) {
+        setMetadataFields((current) => current.filter((field) => field.id !== fieldId))
     }
 
     async function uploadAssetFile(file: File, bucket: string) {
@@ -841,13 +941,65 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
         }
     }
 
+    saveWorkRef.current = saveWork
+
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            const isSaveShortcut = (event.metaKey || event.ctrlKey)
+                && (event.key.toLowerCase() === 's' || event.code === 'KeyS')
+
+            if (!isSaveShortcut || event.defaultPrevented) {
+                return
+            }
+
+            event.preventDefault()
+
+            const saveDisabled = isEditing
+                ? isSaving || (!isDirty && !hasPersistedVideoChanges) || !title.trim()
+                : isSaving || !isDirty || !title.trim()
+
+            if (saveDisabled) {
+                return
+            }
+
+            void saveWorkRef.current(primarySaveMode)
+        }
+
+        window.addEventListener('keydown', handleKeyDown, { capture: true })
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown, { capture: true })
+        }
+    }, [hasPersistedVideoChanges, isDirty, isEditing, isSaving, primarySaveMode, title])
+
+    useEffect(() => {
+        if (!hasUnsavedChanges) {
+            window.onbeforeunload = null
+            return
+        }
+
+        const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+            event.preventDefault()
+            event.returnValue = ''
+            return ''
+        }
+
+        window.onbeforeunload = handleBeforeUnload
+
+        return () => {
+            if (window.onbeforeunload === handleBeforeUnload) {
+                window.onbeforeunload = null
+            }
+        }
+    }, [hasUnsavedChanges])
+
     function insertSavedVideoIntoBody(videoId: string) {
         if (embeddedVideoIdSet.has(videoId)) {
             toast.error('This video is already placed in the body.')
             return
         }
 
-        setInsertVideoRequest({ videoId, nonce: Date.now() })
+        insertVideoNonceRef.current += 1
+        setInsertVideoRequest({ videoId, nonce: insertVideoNonceRef.current })
     }
 
     function removeSavedVideoFromBody(videoId: string) {
@@ -877,11 +1029,16 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
         }
     }
 
-    const hasStagedVideos = stagedVideos.length > 0
-
     return (
         <div className="space-y-8 max-w-4xl">
-            <div className="grid gap-6 rounded-2xl border border-border/80 bg-card p-6 shadow-sm md:grid-cols-2">
+            <div
+                id="work-editor-general-section"
+                ref={generalSectionRef}
+                className={cn(
+                    'grid gap-6 rounded-2xl border border-border/80 bg-card p-6 shadow-sm md:grid-cols-2',
+                    activeTab === 'general' && 'ring-2 ring-primary/20',
+                )}
+            >
                 <div className="space-y-2">
                     <Label htmlFor="title">Title</Label>
                     <Input
@@ -924,18 +1081,128 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                         onChange={(e) => setTags(e.target.value)}
                     />
                 </div>
-                <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="all_properties">Flexible Metadata (JSON)</Label>
-                    <Textarea
-                        id="all_properties"
-                        name="all_properties"
-                        value={allProperties}
-                        onChange={(e) => setAllProperties(e.target.value)}
-                        placeholder='{"key": "value"}'
-                        className="font-mono text-xs min-h-[120px]"
-                    />
+                <div className="flex flex-wrap gap-6 pt-2 md:col-span-2">
+                    <div className="space-y-1">
+                        <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Visibility</span>
+                        <p className="font-mono text-sm text-foreground">
+                            {isEditing ? formatDate(initialWork?.publishedAt) : 'Publishes immediately'}
+                        </p>
+                    </div>
+                    {initialWork?.updatedAt && (
+                        <div className="space-y-1">
+                            <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Last Modified</span>
+                            <p className="font-mono text-sm text-foreground">
+                                {formatDate(initialWork?.updatedAt)}
+                            </p>
+                        </div>
+                    )}
+                    <div className="flex items-center gap-2 rounded-full border bg-muted/40 px-3 py-2 md:ml-auto">
+                        <Checkbox
+                            id="published"
+                            name="published"
+                            checked={published}
+                            onCheckedChange={(value) => setPublished(Boolean(value))}
+                        />
+                        <Label htmlFor="published" className="cursor-pointer text-sm">Published</Label>
+                    </div>
+                    {!isEditing && (
+                        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-100 md:ml-auto">
+                            {usesPublicInlineCreateFlow
+                                ? <>New works publish immediately when you save. If you stage videos, <span className="font-medium">Create And Add Videos</span> still keeps you on this page and closes the create panel when everything finishes.</>
+                                : <>New works publish immediately when you save. If you stage videos, use <span className="font-medium">Create And Add Videos</span> so the work is created first and the videos attach safely after.</>}
+                        </div>
+                    )}
                 </div>
-                <div className="space-y-4 md:col-span-2 rounded-2xl border border-border/80 bg-background p-5 dark:border-gray-800">
+            </div>
+
+            <div className="sticky top-4 z-10 rounded-2xl border border-border/80 bg-background/95 p-2 shadow-sm backdrop-blur-sm">
+                <div className="grid gap-2 sm:grid-cols-3" role="tablist" aria-label="Work editor sections">
+                    {([
+                        { value: 'general', label: 'General' },
+                        { value: 'media', label: 'Media & Videos' },
+                        { value: 'content', label: 'Content' },
+                    ] as const).map((tab) => (
+                        <Button
+                            key={tab.value}
+                            type="button"
+                            role="tab"
+                            variant={activeTab === tab.value ? 'secondary' : 'ghost'}
+                            aria-selected={activeTab === tab.value}
+                            aria-controls={`work-editor-${tab.value}-section`}
+                            className="justify-center"
+                            onClick={() => scrollToTab(tab.value)}
+                        >
+                            {tab.label}
+                        </Button>
+                    ))}
+                </div>
+            </div>
+
+            <div
+                id="work-editor-media-section"
+                ref={mediaSectionRef}
+                className={cn(
+                    'space-y-6 rounded-2xl border border-border/80 bg-card p-6 shadow-sm',
+                    activeTab === 'media' && 'ring-2 ring-primary/20',
+                )}
+            >
+                <div className="space-y-4 rounded-2xl border border-border/80 bg-background p-5">
+                    <div className="flex items-start justify-between gap-4">
+                        <div>
+                            <h3 className="text-lg font-medium">Flexible Metadata</h3>
+                            <p className="text-sm text-muted-foreground">
+                                Add structured key/value fields without editing raw JSON.
+                            </p>
+                        </div>
+                        <Button type="button" variant="outline" size="sm" className="gap-2" onClick={addMetadataField}>
+                            <Plus size={14} />
+                            Add Field
+                        </Button>
+                    </div>
+                    {metadataFields.length === 0 ? (
+                        <div className="rounded-xl border border-dashed border-border/70 px-4 py-6 text-sm text-muted-foreground">
+                            No metadata fields yet.
+                        </div>
+                    ) : (
+                        <div className="space-y-3">
+                            {metadataFields.map((field, index) => (
+                                <div key={field.id} className="flex flex-col gap-2 md:flex-row">
+                                    <div className="space-y-2 md:w-1/3">
+                                        <Label htmlFor={`metadata-key-${field.id}`}>Key</Label>
+                                        <Input
+                                            id={`metadata-key-${field.id}`}
+                                            placeholder="e.g. role…"
+                                            value={field.key}
+                                            onChange={(event) => updateMetadataField(field.id, { key: event.target.value })}
+                                        />
+                                    </div>
+                                    <div className="space-y-2 md:flex-1">
+                                        <Label htmlFor={`metadata-value-${field.id}`}>Value</Label>
+                                        <Input
+                                            id={`metadata-value-${field.id}`}
+                                            placeholder="e.g. Lead Frontend Engineer…"
+                                            value={field.value}
+                                            onChange={(event) => updateMetadataField(field.id, { value: event.target.value })}
+                                        />
+                                    </div>
+                                    <div className="flex items-end">
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            aria-label={`Remove metadata field ${index + 1}`}
+                                            onClick={() => removeMetadataField(field.id)}
+                                        >
+                                            <Trash2 size={16} />
+                                        </Button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                <div className="space-y-4 rounded-2xl border border-border/80 bg-background p-5">
                     <div>
                         <h3 className="text-lg font-medium">Work Media</h3>
                         <p className="text-sm text-gray-500">
@@ -1048,7 +1315,7 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                     </div>
                 </div>
 
-                <div className="space-y-4 md:col-span-2 rounded-2xl border border-border/80 bg-background p-5 dark:border-gray-800">
+                <div className="space-y-4 rounded-2xl border border-border/80 bg-background p-5">
                     <div>
                         <h3 className="text-lg font-medium">Work Videos</h3>
                         <p className="text-sm text-gray-500">
@@ -1225,33 +1492,16 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                         </div>
                     )}
                 </div>
-
-                <div className="flex flex-wrap gap-6 pt-2 md:col-span-2">
-                    <div className="space-y-1">
-                        <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Visibility</span>
-                        <p className="text-sm text-gray-700 dark:text-gray-300 font-mono">
-                            {isEditing ? formatDate(initialWork?.publishedAt) : 'Publishes immediately'}
-                        </p>
-                    </div>
-                    {initialWork?.updatedAt && (
-                        <div className="space-y-1">
-                            <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Last Modified</span>
-                            <p className="text-sm text-gray-700 dark:text-gray-300 font-mono">
-                                {formatDate(initialWork?.updatedAt)}
-                            </p>
-                        </div>
-                    )}
-                    {!isEditing && (
-                        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-100 md:ml-auto">
-                            {usesPublicInlineCreateFlow
-                                ? <>New works publish immediately when you save. If you stage videos, <span className="font-medium">Create And Add Videos</span> still keeps you on this page and closes the create panel when everything finishes.</>
-                                : <>New works publish immediately when you save. If you stage videos, use <span className="font-medium">Create And Add Videos</span> so the work is created first and the videos attach safely after.</>}
-                        </div>
-                    )}
-                </div>
             </div>
 
-            <div className="space-y-4 rounded-2xl border border-border/80 bg-card p-6 shadow-sm dark:border-gray-800">
+            <div
+                id="work-editor-content-section"
+                ref={contentSectionRef}
+                className={cn(
+                    'space-y-4 rounded-2xl border border-border/80 bg-card p-6 shadow-sm',
+                    activeTab === 'content' && 'ring-2 ring-primary/20',
+                )}
+            >
                 <div className="flex items-center justify-between mb-2">
                     <h3 className="text-lg font-medium">Content (HTML/Text)</h3>
                     <div className="flex items-center gap-2">
@@ -1262,17 +1512,6 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                             title="AI Enrich"
                             extraBodyParams={{ title }}
                         />
-                        {isEditing && (
-                            <div className="flex items-center space-x-2 rounded-full border bg-gray-50 px-3 py-1.5 dark:bg-gray-900">
-                                <Checkbox
-                                    id="published"
-                                    name="published"
-                                    checked={published}
-                                    onCheckedChange={(value) => setPublished(Boolean(value))}
-                                />
-                                <Label htmlFor="published" className="text-sm cursor-pointer">Published</Label>
-                            </div>
-                        )}
                     </div>
                 </div>
                 <div className="rounded-xl border border-dashed border-sky-300 bg-sky-50/70 px-4 py-3 text-sm text-sky-900 dark:border-sky-900 dark:bg-sky-950/20 dark:text-sky-100">
@@ -1318,7 +1557,7 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                         type="button"
                         onClick={() => void saveWork('default')}
                         disabled={isSaving || (!isDirty && !hasPersistedVideoChanges) || !title.trim()}
-                        className="bg-brand-navy px-8 font-medium text-white transition-all hover:scale-[1.02] hover:bg-brand-navy/90"
+                        className="px-8 font-medium"
                     >
                         {isSaving ? 'Saving...' : 'Update Work'}
                     </Button>
@@ -1336,7 +1575,7 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                             type="button"
                             onClick={() => void saveWork('with-videos')}
                             disabled={isSaving || !isDirty || !title.trim() || !hasStagedVideos}
-                            className="bg-brand-navy px-8 font-medium text-white transition-all hover:scale-[1.02] hover:bg-brand-navy/90"
+                            className="px-8 font-medium"
                         >
                             {isSaving ? 'Creating...' : 'Create And Add Videos'}
                         </Button>

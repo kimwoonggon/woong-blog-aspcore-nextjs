@@ -27,7 +27,7 @@ test('home page editor uploads a profile image and public home renders it', asyn
   ])
 
   await page.goto('/')
-  const profileImage = page.locator('img[alt="Profile"]').first()
+  const profileImage = page.locator('main img').first()
   await expect(profileImage).toBeVisible()
   await expect(profileImage).toHaveAttribute('src', /\/media\/public-assets\//)
 })

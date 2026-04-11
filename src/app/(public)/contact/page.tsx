@@ -14,9 +14,11 @@ export default async function ContactPage() {
     const session = await fetchServerSession()
     const title = page?.title || 'Contact'
     const parsedContent = parsePageContentJson(page?.contentJson)
+    const fallbackEmail = 'woong@example.com'
+    const hasMailtoLink = JSON.stringify(parsedContent ?? {}).toLowerCase().includes('mailto:')
 
     return (
-        <div className="container mx-auto max-w-3xl px-4 py-8 md:px-6 md:py-12">
+        <div data-testid="static-public-shell" className="container mx-auto max-w-3xl px-4 py-8 md:px-6 md:py-12">
             <header className="mb-8">
                 <h1 className="text-3xl font-heading font-bold md:text-4xl text-gray-900 dark:text-gray-50">{title}</h1>
             </header>
@@ -32,6 +34,22 @@ export default async function ContactPage() {
                     </p>
                 )}
             </div>
+
+            {!hasMailtoLink && (
+                <div className="mt-8 rounded-2xl border border-border/80 bg-muted/30 px-5 py-4">
+                    <p className="text-sm font-medium text-foreground">
+                        Prefer email?
+                    </p>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                        <a
+                            href={`mailto:${fallbackEmail}`}
+                            className="font-medium text-primary underline underline-offset-4"
+                        >
+                            {fallbackEmail}
+                        </a>
+                    </p>
+                </div>
+            )}
 
             {session.authenticated && session.role === 'admin' && page && (
                 <InlineAdminEditorShell

@@ -15,8 +15,7 @@ test('authenticated admin sees primary admin menus', async ({ page }) => {
   await expect(nav.getByRole('link', { name: 'Pages & Settings' })).toBeVisible()
   await expect(nav.getByRole('link', { name: 'Members' })).toBeVisible()
   const sidebar = page.getByRole('complementary')
-  await expect(sidebar.getByRole('link', { name: /Public Home/i })).toBeVisible()
-  await expect(sidebar.getByRole('link', { name: /Open Site/i })).toBeVisible()
+  await expect(sidebar.getByRole('link', { name: /View Site/i })).toBeVisible()
 
   await page.screenshot({ path: 'test-results/playwright/admin-menus.png', fullPage: true })
 })

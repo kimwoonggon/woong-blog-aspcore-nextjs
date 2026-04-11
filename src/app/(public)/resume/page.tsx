@@ -22,7 +22,10 @@ export default async function ResumePage() {
         : null
 
     return (
-        <div className="container mx-auto px-4 py-8 md:px-6 md:py-12 h-[calc(100vh-64px-72px)] flex flex-col">
+        <div
+            data-testid="resume-shell"
+            className="container mx-auto flex h-[calc(100vh-64px-72px)] flex-col px-4 py-8 md:px-6 md:py-12"
+        >
             <div className="flex items-center justify-between mb-6">
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-50">Resume</h1>
                 {resumeUrl && (

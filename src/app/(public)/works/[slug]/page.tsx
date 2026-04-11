@@ -63,7 +63,7 @@ export default async function WorkDetailPage({ params }: PageProps) {
 
     return (
         <article className="container mx-auto max-w-6xl px-4 py-8 md:px-6 md:py-12">
-            <div className="mx-auto max-w-3xl">
+            <div data-testid="work-detail-body" className="mx-auto max-w-3xl">
                 <header className="mb-8">
                 <h1 className="mb-4 text-3xl font-heading font-bold md:text-4xl text-gray-900 dark:text-gray-50 leading-tight">
                     {work.title}
@@ -79,12 +79,12 @@ export default async function WorkDetailPage({ params }: PageProps) {
                         </span>
                     )}
                 </div>
-                <p className="rounded-r-lg border-l-4 border-brand-orange bg-gray-50 py-2 pl-4 text-xl leading-relaxed text-gray-600 dark:bg-gray-900 dark:text-gray-300">
+                <p className="rounded-r-lg border-l-4 border-brand-navy bg-gray-50 py-2 pl-4 text-xl leading-relaxed text-gray-600 dark:bg-gray-900 dark:text-gray-300">
                     {work.excerpt}
                 </p>
                 <div className="mt-8 flex flex-wrap gap-2 text-sm text-gray-500 dark:text-gray-400 font-mono">
                     {work.tags?.map((tag: string) => (
-                        <span key={tag} className="cursor-default transition-colors hover:text-brand-orange">#{tag}</span>
+                        <span key={tag} className="cursor-default transition-colors hover:text-brand-accent">#{tag}</span>
                     ))}
                 </div>
                 </header>
@@ -92,9 +92,21 @@ export default async function WorkDetailPage({ params }: PageProps) {
                 <div className="mt-8">
                     {orderedVideos.length > 0 && !hasInlineVideoEmbeds && (
                         <div className="mb-8 space-y-4">
-                            {orderedVideos.map((video) => (
-                                <WorkVideoPlayer key={video.id} video={video} />
-                            ))}
+                            <div data-testid="work-lead-video">
+                                <WorkVideoPlayer video={orderedVideos[0]} />
+                            </div>
+                            {orderedVideos.length > 1 && (
+                                <details data-testid="work-more-videos" className="rounded-2xl border border-border/80 p-4">
+                                    <summary className="cursor-pointer text-sm font-medium text-muted-foreground">
+                                        More videos ({orderedVideos.length - 1})
+                                    </summary>
+                                    <div className="mt-4 space-y-4">
+                                        {orderedVideos.slice(1).map((video) => (
+                                            <WorkVideoPlayer key={video.id} video={video} />
+                                        ))}
+                                    </div>
+                                </details>
+                            )}
                         </div>
                     )}
                     {contentHtml && (
@@ -122,15 +134,17 @@ export default async function WorkDetailPage({ params }: PageProps) {
                 )}
             </div>
 
-            <RelatedContentList
-                heading="다른 작업"
-                hrefBase="/works"
-                items={relatedWorks}
-                desktopPageSize={8}
-                tabletPageSize={4}
-                mobilePageSize={2}
-                testIdBase="related-work"
-            />
+            <div data-testid="work-related-shell" className="mx-auto mt-16 max-w-3xl border-t pt-12">
+                <RelatedContentList
+                    heading="다른 작업"
+                    hrefBase="/works"
+                    items={relatedWorks}
+                    desktopPageSize={8}
+                    tabletPageSize={4}
+                    mobilePageSize={2}
+                    testIdBase="related-work"
+                />
+            </div>
         </article>
     )
 }

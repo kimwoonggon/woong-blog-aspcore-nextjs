@@ -1,0 +1,1 @@
+{"version":3,"sources":["../../../../src/app/admin/page.tsx"],"sourcesContent":["\nimport { redirect } from 'next/navigation'\n\nexport default function AdminPage() {\n    redirect('/admin/dashboard')\n}\n"],"names":[],"mappings":"qZACA,EAAA,CAAA,CAAA,OAAA,IAAA,EAAA,EAAA,CAAA,CAAA,OAEe,SAAS,IACpB,CAAA,EAAA,EAAA,QAAA,AAAQ,EAAC,mBACb"}

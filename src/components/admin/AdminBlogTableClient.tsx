@@ -8,6 +8,14 @@ import { AdminBlogBatchAiPanel } from '@/components/admin/AdminBlogBatchAiPanel'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import type { BlogAdminItem } from '@/lib/api/blogs'
@@ -18,11 +26,28 @@ interface AdminBlogTableClientProps {
   blogs: BlogAdminItem[]
 }
 
+interface PendingBlogDelete {
+  ids: string[]
+  title: string
+}
+
+function matchesBlogQuery(blog: BlogAdminItem, normalizedQuery: string) {
+  if (!normalizedQuery) {
+    return true
+  }
+
+  return (
+    blog.title.toLowerCase().includes(normalizedQuery)
+    || blog.tags.some((tag) => tag.toLowerCase().includes(normalizedQuery))
+  )
+}
+
 export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
   const router = useRouter()
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [showBatchAiPanel, setShowBatchAiPanel] = useState(false)
   const [query, setQuery] = useState('')
+  const [pendingDelete, setPendingDelete] = useState<PendingBlogDelete | null>(null)
   const [page, setPage] = useState(1)
   const [isPending, startTransition] = useTransition()
   const pageSize = useResponsivePageSize(12, 8, 6)
@@ -32,7 +57,7 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
       return blogs
     }
 
-    return blogs.filter((blog) => blog.title.toLowerCase().includes(normalizedQuery))
+    return blogs.filter((blog) => matchesBlogQuery(blog, normalizedQuery))
   }, [blogs, query])
   const totalPages = Math.max(1, Math.ceil(filteredBlogs.length / pageSize))
   const currentPage = Math.min(page, totalPages)
@@ -67,28 +92,28 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
     ))
   }
 
-  function confirmDelete(message: string) {
-    return window.prompt(message, '')?.trim().toLowerCase() === 'yes'
-  }
-
-  function runDelete(ids: string[], label: string) {
+  function requestDelete(ids: string[], title: string) {
     if (ids.length === 0 || isPending) {
       return
     }
 
-    const confirmed = confirmDelete(`Type yes to delete ${label}. This action cannot be undone.`)
-    if (!confirmed) {
+    setPendingDelete({ ids, title })
+  }
+
+  function runDelete() {
+    if (!pendingDelete || isPending) {
       return
     }
 
     startTransition(async () => {
       try {
-        if (ids.length === 1) {
-          await deleteAdminBlog(ids[0])
+        if (pendingDelete.ids.length === 1) {
+          await deleteAdminBlog(pendingDelete.ids[0])
         } else {
-          await deleteManyAdminBlogs(ids)
+          await deleteManyAdminBlogs(pendingDelete.ids)
         }
-        setSelectedIds((current) => current.filter((id) => !ids.includes(id)))
+        setSelectedIds((current) => current.filter((id) => !pendingDelete.ids.includes(id)))
+        setPendingDelete(null)
         router.refresh()
       } catch (error) {
         window.alert(error instanceof Error ? error.message : 'Failed to delete blogs.')
@@ -111,12 +136,12 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
                 current.filter((id) =>
                   blogs.some((blog) =>
                     blog.id === id
-                    && (!normalizedQuery || blog.title.toLowerCase().includes(normalizedQuery)),
+                    && matchesBlogQuery(blog, normalizedQuery),
                   ),
                 ),
               )
             }}
-            placeholder="Search blog titles"
+            placeholder="Search by title or tags..."
             aria-label="Search blog titles"
             className="max-w-sm"
           />
@@ -138,7 +163,7 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
             <Button
               variant="destructive"
               size="sm"
-              onClick={() => runDelete(effectiveSelectedIds, `${selectedCount} selected blog posts`)}
+              onClick={() => requestDelete(effectiveSelectedIds, `${selectedCount} selected blog posts`)}
               disabled={isPending}
             >
               <Trash2 className="mr-2 h-4 w-4" />
@@ -229,7 +254,7 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
                       size="icon"
                       className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
                       title="Delete"
-                      onClick={() => runDelete([blog.id], blog.title)}
+                      onClick={() => requestDelete([blog.id], blog.title)}
                       disabled={isPending}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -248,22 +273,70 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
         </TableBody>
       </Table>
       <div className="flex flex-wrap items-center justify-center gap-2 border-t border-gray-200 px-4 py-3 dark:border-gray-800">
-        <Button type="button" variant="outline" size="sm" disabled={currentPage <= 1} onClick={() => setPage(1)}>
-          처음
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          aria-label="처음"
+          disabled={currentPage <= 1}
+          onClick={() => setPage(1)}
+        >
+          First
         </Button>
-        <Button type="button" variant="outline" size="sm" disabled={currentPage <= 1} onClick={() => setPage((active) => Math.max(1, active - 1))}>
-          이전
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          aria-label="이전"
+          disabled={currentPage <= 1}
+          onClick={() => setPage((active) => Math.max(1, active - 1))}
+        >
+          Previous
         </Button>
         <span className="text-sm text-muted-foreground">
           {currentPage} / {totalPages}
         </span>
-        <Button type="button" variant="outline" size="sm" disabled={currentPage >= totalPages} onClick={() => setPage((active) => Math.min(totalPages, active + 1))}>
-          다음
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          aria-label="다음"
+          disabled={currentPage >= totalPages}
+          onClick={() => setPage((active) => Math.min(totalPages, active + 1))}
+        >
+          Next
         </Button>
-        <Button type="button" variant="outline" size="sm" disabled={currentPage >= totalPages} onClick={() => setPage(totalPages)}>
-          끝
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          aria-label="끝"
+          disabled={currentPage >= totalPages}
+          onClick={() => setPage(totalPages)}
+        >
+          Last
         </Button>
       </div>
+      <Dialog open={pendingDelete !== null} onOpenChange={(open) => !open && setPendingDelete(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {pendingDelete ? `Delete ${pendingDelete.title}?` : 'Delete item?'}
+            </DialogTitle>
+            <DialogDescription>
+              This action cannot be undone. The selected post will be permanently deleted.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPendingDelete(null)} disabled={isPending}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={runDelete} disabled={isPending}>
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
