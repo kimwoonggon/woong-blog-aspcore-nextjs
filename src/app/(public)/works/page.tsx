@@ -66,8 +66,30 @@ export default async function WorksPage({ searchParams }: PageProps) {
                 tabletPageSize={TABLET_PAGE_SIZE}
                 mobilePageSize={MOBILE_PAGE_SIZE}
             />
-            <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <h1 className="text-3xl font-heading font-bold text-gray-900 dark:text-gray-50 md:text-4xl">Works</h1>
+            <div className="mb-8 flex flex-col gap-4 rounded-[2rem] border border-border/70 bg-brand-section-bg px-5 py-6 md:px-6">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Project archive</p>
+                        <h1 className="mt-2 text-3xl font-heading font-bold text-foreground md:text-4xl">Works</h1>
+                        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+                            A curated archive of shipped interfaces, experiments, and platform work. Each card is meant to read quickly and still invite a deeper dive.
+                        </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                        <Link
+                            href="/contact"
+                            className="inline-flex min-h-10 items-center rounded-full border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+                        >
+                            Start a conversation
+                        </Link>
+                        <Link
+                            href="/blog"
+                            className="inline-flex min-h-10 items-center rounded-full px-4 py-2 text-sm font-medium text-brand-cyan transition-colors hover:text-brand-cyan hover:underline"
+                        >
+                            Read the notes
+                        </Link>
+                    </div>
+                </div>
                 <div className="flex flex-wrap gap-2">
                     <PublicAdminLink href="/admin/works" label="작업 관리" variant="manage" />
                 </div>
@@ -77,22 +99,19 @@ export default async function WorksPage({ searchParams }: PageProps) {
             )}
             <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
                 {pagedWorks && pagedWorks.length > 0 ? (
-                    pagedWorks.map((work, index) => {
+                    pagedWorks.map((work) => {
                         const thumbnailUrl = work.thumbnailUrl ?? null
                         const publishDate = formatPublishedMonth(work.publishedAt)
 
                         return (
                             <Link
                                 key={work.id}
-                                href={`/works/${work.slug}?returnTo=${returnTo}`}
+                                href={`/works/${work.slug}?returnTo=${returnTo}&relatedPage=${page}`}
                                 className="group/card block h-full"
                                 data-testid="work-card"
                             >
-                                <article
-                                    className="responsive-feed-card works-feed-card flex h-full flex-col overflow-hidden rounded-2xl border border-border/80 bg-background shadow-sm transition hover:border-primary/30 hover:shadow-md"
-                                    style={{ animationDelay: `${(index * 100) + 200}ms` }}
-                                >
-                                    <div className="relative aspect-[4/3] overflow-hidden bg-gray-100 dark:bg-gray-800">
+                                <article className="responsive-feed-card works-feed-card flex h-full flex-col overflow-hidden rounded-2xl border border-border/80 bg-background shadow-sm transition hover:border-primary/30 hover:shadow-md">
+                                    <div className="relative aspect-[4/3] overflow-hidden bg-muted">
                                         {thumbnailUrl ? (
                                             <Image
                                                 src={thumbnailUrl}
@@ -105,7 +124,7 @@ export default async function WorksPage({ searchParams }: PageProps) {
                                         ) : (
                                             <div
                                                 data-testid="work-card-no-image-placeholder"
-                                                className="flex h-full w-full flex-col items-center justify-center gap-2 bg-gradient-to-br from-gray-100 to-gray-200 text-gray-400 dark:from-gray-800 dark:to-gray-900"
+                                                className="flex h-full w-full flex-col items-center justify-center gap-2 bg-gradient-to-br from-muted to-muted/80 text-muted-foreground"
                                             >
                                                 <BriefcaseBusiness className="h-8 w-8" aria-hidden="true" />
                                                 <span className="text-xs font-medium">No Image</span>
@@ -117,19 +136,19 @@ export default async function WorksPage({ searchParams }: PageProps) {
                                             <Badge variant="secondary" className="rounded-full bg-brand-navy px-2.5 py-0.5 text-xs text-white hover:bg-brand-navy/90">
                                                 {publishDate}
                                             </Badge>
-                                            <span className="responsive-feed-copy text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                                            <span className="responsive-feed-copy text-xs font-medium uppercase tracking-wide text-muted-foreground">
                                                 {work.category}
                                             </span>
                                         </div>
-                                        <h2 className="responsive-feed-title works-feed-title line-clamp-2 text-lg font-heading font-bold leading-tight text-gray-900 transition-colors group-hover/card:text-brand-accent dark:text-gray-50 sm:text-xl">
+                                        <h2 className="responsive-feed-title works-feed-title line-clamp-2 text-lg font-heading font-bold leading-tight text-foreground transition-colors group-hover/card:text-brand-accent sm:text-xl">
                                             {work.title}
                                         </h2>
-                                        <p className="responsive-feed-copy works-feed-excerpt mt-2 line-clamp-3 flex-1 text-sm leading-relaxed text-gray-600 dark:text-gray-300">
+                                        <p className="responsive-feed-copy works-feed-excerpt mt-2 line-clamp-3 flex-1 text-sm leading-relaxed text-foreground/80">
                                             {work.excerpt}
                                         </p>
                                         <div className="works-feed-tags mt-4 flex flex-wrap content-start gap-1.5 overflow-hidden">
                                             {work.tags?.slice(0, 3).map((tag: string) => (
-                                                <span key={tag} className="rounded bg-gray-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+                                                <span key={tag} className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
                                                     {tag}
                                                 </span>
                                             ))}
@@ -140,7 +159,7 @@ export default async function WorksPage({ searchParams }: PageProps) {
                         )
                     })
                 ) : (
-                    <div className="py-20 text-center text-gray-500 col-span-full">
+                    <div className="col-span-full rounded-[2rem] border border-dashed border-border/80 bg-muted/30 px-6 py-20 text-center text-muted-foreground">
                         No works found.
                     </div>
                 )}
@@ -154,6 +173,49 @@ export default async function WorksPage({ searchParams }: PageProps) {
                     ariaLabel="Works pagination"
                 />
             </div>
+            <section className="mt-8 rounded-[2rem] border border-border/70 bg-background px-5 py-6 shadow-sm md:px-6">
+                <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+                    <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Keep exploring</p>
+                        <h2 className="mt-2 text-xl font-heading font-bold text-foreground">Use the portfolio like a guided path</h2>
+                    </div>
+                    <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
+                        If you want more context than a card can hold, move into the writing or reach out directly.
+                    </p>
+                </div>
+                <div className="mt-5 grid gap-3 md:grid-cols-3">
+                    {[
+                        {
+                            href: '/blog',
+                            label: 'Blog',
+                            description: 'Read the process notes behind specific product and engineering decisions.',
+                        },
+                        {
+                            href: '/introduction',
+                            label: 'Introduction',
+                            description: 'Get the personal framing behind the type of work I choose to do.',
+                        },
+                        {
+                            href: '/contact',
+                            label: 'Contact',
+                            description: 'Open a conversation if a project here overlaps with what you are building.',
+                        },
+                    ].map(({ href, label, description }) => (
+                        <Link
+                            key={href}
+                            href={href}
+                            className="group rounded-2xl border border-border/80 bg-background p-4 transition hover:border-primary/30 hover:shadow-sm"
+                        >
+                            <p className="text-base font-semibold text-foreground transition-colors group-hover:text-brand-accent">
+                                {label}
+                            </p>
+                            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                                {description}
+                            </p>
+                        </Link>
+                    ))}
+                </div>
+            </section>
         </div>
     )
 }

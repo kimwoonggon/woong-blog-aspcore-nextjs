@@ -71,6 +71,12 @@ function buildBlogSnapshot({
     })
 }
 
+function clearBeforeUnloadWarning() {
+    if (typeof window !== 'undefined') {
+        window.onbeforeunload = null
+    }
+}
+
 export function BlogEditor({ initialBlog, inlineMode = false }: BlogEditorProps) {
     const router = useRouter()
     const pathname = usePathname()
@@ -83,6 +89,7 @@ export function BlogEditor({ initialBlog, inlineMode = false }: BlogEditorProps)
     const [published, setPublished] = useState(defaultPublished)
     const [html, setHtml] = useState<string>(initialBlog?.content?.html || '')
     const [isSaving, setIsSaving] = useState(false)
+    const [isDirty, setIsDirty] = useState(false)
     const saveBlogRef = useRef<() => Promise<void>>(async () => {})
 
     const initialSnapshot = buildBlogSnapshot({
@@ -92,6 +99,7 @@ export function BlogEditor({ initialBlog, inlineMode = false }: BlogEditorProps)
         published: defaultPublished,
         html: initialBlog?.content?.html || '',
     })
+    const [savedSnapshot, setSavedSnapshot] = useState(initialSnapshot)
     const currentSnapshot = buildBlogSnapshot({
         title,
         excerpt,
@@ -99,8 +107,12 @@ export function BlogEditor({ initialBlog, inlineMode = false }: BlogEditorProps)
         published,
         html,
     })
-    const hasUnsavedChanges = initialSnapshot !== currentSnapshot
-    const isDirty = hasUnsavedChanges
+    const hasUnsavedChanges = isDirty || savedSnapshot !== currentSnapshot
+
+    useEffect(() => {
+        setSavedSnapshot(initialSnapshot)
+        setIsDirty(false)
+    }, [initialSnapshot])
 
     const formatDate = (dateString?: string) => {
         if (!dateString) return 'Not yet'
@@ -149,8 +161,18 @@ export function BlogEditor({ initialBlog, inlineMode = false }: BlogEditorProps)
 
             const result = await response.json().catch(() => null) as { id?: string; slug?: string } | null
             const nextSlug = result?.slug ?? initialBlog?.slug ?? null
+            const nextSnapshot = buildBlogSnapshot({
+                title,
+                excerpt,
+                tags: tagsInput,
+                published,
+                html: normalizedHtml,
+            })
 
             toast.success(isEditing ? 'Blog post updated successfully' : 'Blog post created successfully')
+            setSavedSnapshot(nextSnapshot)
+            setIsDirty(false)
+            clearBeforeUnloadWarning()
             if (normalizedHtml !== html) {
                 setHtml(normalizedHtml)
             }
@@ -160,13 +182,14 @@ export function BlogEditor({ initialBlog, inlineMode = false }: BlogEditorProps)
                 const relatedPageQuery = relatedPage ? `?relatedPage=${encodeURIComponent(relatedPage)}` : ''
 
                 if (!isEditing && pathname === '/blog' && nextSlug) {
-                    window.location.assign(`/blog/${encodeURIComponent(nextSlug)}`)
+                    router.push(`/blog/${encodeURIComponent(nextSlug)}`)
                     return
                 }
 
                 if (isEditing && pathname.startsWith('/blog/')) {
                     if (nextSlug) {
-                        window.location.assign(`/blog/${encodeURIComponent(nextSlug)}${relatedPageQuery}`)
+                        router.replace(`/blog/${encodeURIComponent(nextSlug)}${relatedPageQuery}`)
+                        router.refresh()
                     } else {
                         router.refresh()
                     }
@@ -254,7 +277,16 @@ export function BlogEditor({ initialBlog, inlineMode = false }: BlogEditorProps)
             <div className="grid gap-6 rounded-2xl border border-border/80 bg-card p-6 shadow-sm md:grid-cols-2">
                 <div className="space-y-2">
                     <Label htmlFor="title">Title</Label>
-                    <Input id="title" name="title" required value={title} onChange={(event) => setTitle(event.target.value)} />
+                    <Input
+                        id="title"
+                        name="title"
+                        required
+                        value={title}
+                        onChange={(event) => {
+                            setTitle(event.target.value)
+                            setIsDirty(true)
+                        }}
+                    />
                 </div>
                 <div className="space-y-2 md:col-span-2">
                     <Label htmlFor="excerpt">Excerpt</Label>
@@ -263,7 +295,10 @@ export function BlogEditor({ initialBlog, inlineMode = false }: BlogEditorProps)
                         name="excerpt"
                         placeholder="A brief summary of the post (used in previews and SEO)..."
                         value={excerpt}
-                        onChange={(event) => setExcerpt(event.target.value.slice(0, 200))}
+                        onChange={(event) => {
+                            setExcerpt(event.target.value.slice(0, 200))
+                            setIsDirty(true)
+                        }}
                         rows={2}
                         maxLength={200}
                         className="resize-none"
@@ -272,11 +307,27 @@ export function BlogEditor({ initialBlog, inlineMode = false }: BlogEditorProps)
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="tags">Tags (comma separated)</Label>
-                    <Input id="tags" name="tags" value={tagsInput} onChange={(event) => setTagsInput(event.target.value)} />
+                    <Input
+                        id="tags"
+                        name="tags"
+                        value={tagsInput}
+                        onChange={(event) => {
+                            setTagsInput(event.target.value)
+                            setIsDirty(true)
+                        }}
+                    />
                 </div>
                 <div className="flex items-end">
                     <div className="flex items-center space-x-2 rounded-full border bg-muted/40 px-3 py-2">
-                        <Checkbox id="published" name="published" checked={published} onCheckedChange={(value) => setPublished(Boolean(value))} />
+                        <Checkbox
+                            id="published"
+                            name="published"
+                            checked={published}
+                            onCheckedChange={(value) => {
+                                setPublished(Boolean(value))
+                                setIsDirty(true)
+                            }}
+                        />
                         <Label htmlFor="published" className="cursor-pointer text-sm">Published</Label>
                     </div>
                 </div>
@@ -312,7 +363,13 @@ export function BlogEditor({ initialBlog, inlineMode = false }: BlogEditorProps)
                     </div>
                 </div>
                 <AuthoringCapabilityHints />
-                <TiptapEditor content={html} onChange={setHtml} />
+                <TiptapEditor
+                    content={html}
+                    onChange={(nextHtml) => {
+                        setHtml(nextHtml)
+                        setIsDirty(true)
+                    }}
+                />
             </div>
 
             <div className="flex flex-col gap-3 border-t pt-8 sm:flex-row sm:items-center sm:justify-end">

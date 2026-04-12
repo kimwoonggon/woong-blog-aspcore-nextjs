@@ -18,6 +18,7 @@ export const dynamic = 'force-dynamic'
 
 interface PageProps {
     params: Promise<{ slug: string }>
+    searchParams?: Promise<{ relatedPage?: string }>
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -33,8 +34,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     }
 }
 
-export default async function BlogDetailPage({ params }: PageProps) {
+export default async function BlogDetailPage({ params, searchParams }: PageProps) {
     const { slug } = await params
+    const resolvedSearchParams = await searchParams
     const decodedSlug = decodeURIComponent(slug)
     const blog = await fetchPublicBlogBySlug(decodedSlug)
 
@@ -72,30 +74,37 @@ export default async function BlogDetailPage({ params }: PageProps) {
     const currentIndex = sortedBlogs.findIndex((item) => item.id === blog.id)
     const newerBlog = currentIndex > 0 ? sortedBlogs[currentIndex - 1] : null
     const olderBlog = currentIndex >= 0 && currentIndex < sortedBlogs.length - 1 ? sortedBlogs[currentIndex + 1] : null
+    const relatedPageSuffix = resolvedSearchParams?.relatedPage
+        ? `?relatedPage=${encodeURIComponent(resolvedSearchParams.relatedPage)}`
+        : ''
 
     return (
         <article className="container mx-auto max-w-6xl px-4 py-8 md:px-6 md:py-12">
             <div className="mx-auto xl:grid xl:max-w-none xl:grid-cols-[minmax(0,48rem)_16rem] xl:gap-8">
-                <div data-testid="blog-detail-body" className="mx-auto max-w-3xl">
+                <div data-testid="blog-detail-body" className="mx-auto max-w-3xl min-w-0">
                     <header className="mb-8">
-                <h1 className="mb-4 text-3xl font-heading font-bold md:text-4xl text-gray-900 dark:text-gray-50 leading-tight">
-                    {blog.title}
-                </h1>
-                <div className="mb-6 flex flex-wrap items-center gap-4 text-gray-500 dark:text-gray-400 font-medium">
-                    <Badge variant="secondary" className="rounded-full bg-brand-navy px-3 text-white hover:bg-brand-navy/90">
-                        <time dateTime={blog.publishedAt ?? undefined}>{publishDate}</time>
-                    </Badge>
-                    <div className="flex flex-wrap gap-2 font-mono text-sm">
-                        {blog.tags?.map((tag: string) => (
-                            <span key={tag} className="cursor-default rounded-full border border-border/80 px-2.5 py-1 transition-colors hover:text-brand-accent">#{tag}</span>
-                        ))}
-                    </div>
-                </div>
-                {blog.excerpt && (
-                    <p className="rounded-r-lg border-l-4 border-brand-navy bg-gray-50 py-2 pl-4 text-xl leading-relaxed text-gray-600 dark:bg-gray-900 dark:text-gray-300">
-                        {blog.excerpt}
-                    </p>
-                )}
+                        <h1 className="mb-4 text-3xl font-heading font-bold leading-tight text-foreground text-balance md:text-4xl">
+                            {blog.title}
+                        </h1>
+                        <div className="mb-6 flex flex-wrap items-center gap-4 font-medium text-muted-foreground">
+                            <Badge variant="secondary" className="rounded-full bg-brand-navy px-3 text-white hover:bg-brand-navy/90">
+                                <time dateTime={blog.publishedAt ?? undefined}>{publishDate}</time>
+                            </Badge>
+                            <ul aria-label="Post tags" className="flex flex-wrap gap-2 font-mono text-sm">
+                                {blog.tags?.map((tag: string) => (
+                                    <li key={tag}>
+                                        <span className="cursor-default rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground transition-colors hover:text-brand-accent">
+                                            #{tag}
+                                        </span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                        {blog.excerpt && (
+                            <p className="rounded-r-lg border-l-4 border-brand-navy bg-brand-section-bg py-2 pl-4 text-xl leading-relaxed text-foreground/80 text-pretty">
+                                {blog.excerpt}
+                            </p>
+                        )}
                     </header>
 
                     <div id="blog-detail-content" className="mt-8">
@@ -131,22 +140,22 @@ export default async function BlogDetailPage({ params }: PageProps) {
                         >
                             {olderBlog ? (
                                 <Link
-                                    href={`/blog/${olderBlog.slug}`}
-                                    className="rounded-2xl border border-border/80 bg-background p-4 transition hover:border-primary/30 hover:shadow-sm"
+                                    href={`/blog/${olderBlog.slug}${relatedPageSuffix}`}
+                                    className="group rounded-2xl border border-border/80 bg-background p-4 transition hover:border-primary/30 hover:shadow-sm"
                                 >
-                                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Previous Post</p>
-                                    <p className="mt-2 text-base font-semibold text-foreground">{olderBlog.title}</p>
+                                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Previous</p>
+                                    <p className="mt-2 text-base font-semibold text-foreground text-balance transition-colors group-hover:text-brand-accent">{olderBlog.title}</p>
                                 </Link>
                             ) : (
-                                <div />
+                                <div aria-hidden="true" />
                             )}
                             {newerBlog ? (
                                 <Link
-                                    href={`/blog/${newerBlog.slug}`}
-                                    className="rounded-2xl border border-border/80 bg-background p-4 text-left transition hover:border-primary/30 hover:shadow-sm sm:justify-self-end"
+                                    href={`/blog/${newerBlog.slug}${relatedPageSuffix}`}
+                                    className="group rounded-2xl border border-border/80 bg-background p-4 text-left transition hover:border-primary/30 hover:shadow-sm sm:justify-self-end"
                                 >
-                                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Next Post</p>
-                                    <p className="mt-2 text-base font-semibold text-foreground">{newerBlog.title}</p>
+                                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Next</p>
+                                    <p className="mt-2 text-base font-semibold text-foreground text-balance transition-colors group-hover:text-brand-accent">{newerBlog.title}</p>
                                 </Link>
                             ) : null}
                         </nav>
@@ -154,7 +163,7 @@ export default async function BlogDetailPage({ params }: PageProps) {
 
                     <div data-testid="blog-related-shell" className="mx-auto mt-16 max-w-3xl border-t pt-12">
                         <RelatedContentList
-                            heading="다른 게시물"
+                            heading="More Posts"
                             hrefBase="/blog"
                             items={relatedBlogs}
                             desktopPageSize={8}

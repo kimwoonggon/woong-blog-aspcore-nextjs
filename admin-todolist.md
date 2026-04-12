@@ -10,6 +10,9 @@
 - Admin 대상 Playwright 검증은 `chromium-authenticated` + `https://localhost` + headed 기준으로 한다.
 - 기존 `tests/admin-*.spec.ts` 회귀를 깨지 않게 유지한다.
 
+실행 메모:
+- 사용자 지시에 따라 최종 검증 전략은 headless로 전환했다.
+
 ## Infra
 - [x] `INFRA-0-1` `ui-admin-*.spec.ts`가 `chromium-authenticated`에 포함되도록 Playwright 매칭 확장
 - [x] `INFRA-0-2` `https://localhost` headed admin 검증 명령 고정
@@ -76,3 +79,5 @@
 - [x] `NEXT_DIST_DIR=.next-build npm run build` 성공 기록
 - [x] 기존 `tests/admin-*.spec.ts --project=chromium-authenticated` 회귀 기록
 - [x] 신규 `tests/ui-admin-*.spec.ts --project=chromium-authenticated` 전체 기록
+- [x] `tests/ui-admin-*.spec.ts` 최종 결과: `42 passed`
+- [x] `tests/admin-*.spec.ts` 최종 결과: `41 passed`

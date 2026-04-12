@@ -1,11 +1,17 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
+import { ArrowRight, BriefcaseBusiness, FileText, User } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { headers } from 'next/headers'
 import { fetchPublicHome } from '@/lib/api/home'
 import { parsePageContentJson, toHomeContent } from '@/lib/content/page-content'
 
 export const dynamic = 'force-dynamic'
+
+interface PageProps {
+  searchParams?: Promise<{ __qaNoImage?: string }>
+}
 
 function formatPublishedMonth(publishedAt?: string | null) {
   return publishedAt
@@ -16,7 +22,10 @@ function formatPublishedMonth(publishedAt?: string | null) {
     : 'Unknown Date'
 }
 
-export default async function HomePage() {
+export default async function HomePage({ searchParams }: PageProps) {
+  const resolvedSearchParams = await searchParams
+  const headerStore = await headers()
+  const requestHost = (headerStore.get('x-forwarded-host') ?? headerStore.get('host') ?? '').toLowerCase()
   const payload = await fetchPublicHome()
   const homeContent = toHomeContent(parsePageContentJson(payload?.homePage?.contentJson))
 
@@ -25,19 +34,29 @@ export default async function HomePage() {
   const profileImageUrl = homeContent.profileImageUrl || ''
   const recentPosts = payload?.recentPosts || []
   const featuredWorks = payload?.featuredWorks || []
+  const qaNoImageFeaturedWorks = resolvedSearchParams?.__qaNoImage === '1' && /localhost|127\.0\.0\.1/.test(requestHost)
+  const visibleFeaturedWorks = qaNoImageFeaturedWorks
+    ? featuredWorks.map((work) => ({ ...work, thumbnailUrl: null }))
+    : featuredWorks
 
   return (
     <div className="container mx-auto max-w-7xl flex flex-col gap-16 px-4 py-8 md:px-6 md:py-12">
       <section className="flex flex-col-reverse items-center justify-between gap-8 md:flex-row md:items-start md:gap-12">
         <div className="flex flex-1 flex-col items-center text-center md:items-start md:text-left">
+          <p
+            className="mb-3 text-xs font-semibold uppercase tracking-[0.28em] text-muted-foreground animate-fade-in-up"
+            style={{ animationDelay: '50ms' }}
+          >
+            Creative portfolio
+          </p>
           <h1
-            className="mb-4 text-4xl font-heading font-bold tracking-tight text-gray-900 md:text-5xl lg:text-6xl dark:text-gray-50 animate-fade-in-up [text-wrap:balance]"
+            className="mb-4 text-4xl font-heading font-bold tracking-tight text-foreground md:text-5xl lg:text-6xl animate-fade-in-up [text-wrap:balance]"
             style={{ animationDelay: '100ms' }}
           >
             {headline}
           </h1>
           <p
-            className="mb-8 max-w-[600px] text-lg text-gray-600 dark:text-gray-400 animate-fade-in-up"
+            className="mb-8 max-w-[600px] text-lg text-muted-foreground animate-fade-in-up"
             style={{ animationDelay: '200ms' }}
           >
             {introText}
@@ -61,7 +80,7 @@ export default async function HomePage() {
           </div>
         </div>
         <div className="flex-shrink-0 animate-fade-in-up" style={{ animationDelay: '0ms' }}>
-          <div className="relative h-60 w-60 overflow-hidden rounded-full bg-gray-200 shadow-xl dark:bg-gray-800">
+          <div className="relative h-60 w-60 overflow-hidden rounded-full bg-muted shadow-xl">
             {profileImageUrl ? (
               <Image
                 src={profileImageUrl}
@@ -76,37 +95,49 @@ export default async function HomePage() {
               <div
                 role="img"
                 aria-label={headline}
-                className="flex h-full w-full items-center justify-center text-gray-400"
+                className="flex h-full w-full items-center justify-center text-muted-foreground"
               >
-                Avatar
+                <User className="h-16 w-16" aria-hidden="true" />
               </div>
             )}
           </div>
         </div>
       </section>
 
-      <section data-testid="featured-works-section" className="-mx-4 bg-brand-section-bg px-4 py-8 md:-mx-6 md:px-6">
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-gray-900 md:text-2xl dark:text-gray-50">
-            Featured works
-          </h2>
+      <section
+        data-testid="featured-works-section"
+        className="-mx-4 rounded-[2rem] border border-border/60 bg-brand-section-bg px-4 py-8 md:-mx-6 md:px-6"
+      >
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+              Selected work
+            </p>
+            <h2 className="mt-2 text-xl font-heading font-bold text-foreground md:text-2xl">
+              Featured works
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+              Product, platform, and interaction work that best represents how I design and ship.
+            </p>
+          </div>
           <Link
             href="/works"
-            className="text-sm font-medium text-brand-cyan transition-colors hover:text-brand-cyan hover:underline"
+            className="inline-flex items-center gap-2 text-sm font-medium text-brand-cyan transition-colors hover:text-brand-cyan hover:underline"
           >
             View all
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Link>
         </div>
         <div data-testid="featured-works-grid" className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {featuredWorks.length > 0 ? (
-            featuredWorks.map((work) => {
+          {visibleFeaturedWorks.length > 0 ? (
+            visibleFeaturedWorks.map((work) => {
               const thumbnailUrl = work.thumbnailUrl || null
               const publishDate = formatPublishedMonth(work.publishedAt)
 
               return (
                 <Link key={work.id} href={`/works/${work.slug}`} data-testid="featured-work-card" className="group block h-full">
                   <Card className="flex h-full flex-col overflow-hidden rounded-2xl border-border/80 bg-background py-0 shadow-sm transition hover:border-primary/30 hover:shadow-md">
-                    <div className="relative aspect-[4/3] overflow-hidden bg-gray-100 dark:bg-gray-800">
+                    <div className="relative aspect-[4/3] overflow-hidden bg-muted">
                       {thumbnailUrl ? (
                         <Image
                           src={thumbnailUrl}
@@ -116,8 +147,12 @@ export default async function HomePage() {
                           unoptimized
                         />
                       ) : (
-                        <div className="flex h-full w-full items-center justify-center text-sm font-medium text-gray-400">
-                          No Image
+                        <div
+                          data-testid="featured-work-no-image-placeholder"
+                          className="flex h-full w-full flex-col items-center justify-center gap-2 bg-gradient-to-br from-muted to-muted/80 text-muted-foreground"
+                        >
+                          <BriefcaseBusiness className="h-8 w-8" aria-hidden="true" />
+                          <span className="text-xs font-medium">No Image</span>
                         </div>
                       )}
                     </div>
@@ -126,15 +161,15 @@ export default async function HomePage() {
                         <span className="rounded-full bg-brand-navy px-2.5 py-0.5 text-xs font-bold text-white">
                           {publishDate}
                         </span>
-                        <span className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                        <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                           {work.category}
                         </span>
                       </div>
-                      <h3 className="line-clamp-2 text-lg font-heading font-bold leading-tight text-gray-900 transition-colors group-hover:text-brand-accent dark:text-gray-50">
+                      <h3 className="line-clamp-2 text-lg font-heading font-bold leading-tight text-foreground transition-colors group-hover:text-brand-accent sm:text-xl">
                         {work.title}
                       </h3>
-                      <p className="mt-2 line-clamp-2 flex-1 text-sm leading-relaxed text-gray-600 dark:text-gray-300">
-                        {work.excerpt || 'Click to view details'}
+                      <p className="mt-2 line-clamp-2 flex-1 text-sm leading-relaxed text-foreground/80">
+                        {work.excerpt}
                       </p>
                     </CardContent>
                   </Card>
@@ -142,23 +177,35 @@ export default async function HomePage() {
               )
             })
           ) : (
-            <div className="col-span-full py-8 text-center text-gray-500">
+            <div className="col-span-full py-8 text-center text-muted-foreground">
               No featured works found.
             </div>
           )}
         </div>
       </section>
 
-      <section data-testid="recent-posts-section" className="bg-background">
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-gray-900 md:text-2xl dark:text-gray-50">
-            Recent posts
-          </h2>
+      <section
+        data-testid="recent-posts-section"
+        className="rounded-[2rem] border border-border/70 bg-background px-5 py-8 shadow-sm md:px-6"
+      >
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+              Notes and essays
+            </p>
+            <h2 className="mt-2 text-xl font-heading font-bold text-foreground md:text-2xl">
+              Recent posts
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+              Writing about product decisions, implementation details, and the tradeoffs behind them.
+            </p>
+          </div>
           <Link
             href="/blog"
-            className="text-sm font-medium text-brand-cyan transition-colors hover:text-brand-cyan hover:underline"
+            className="inline-flex items-center gap-2 text-sm font-medium text-brand-cyan transition-colors hover:text-brand-cyan hover:underline"
           >
             View all
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Link>
         </div>
         <div className="grid gap-6 md:grid-cols-2">
@@ -173,33 +220,101 @@ export default async function HomePage() {
                 : 'Unknown Date'
 
               return (
-                <Card key={post.id} data-testid="recent-post-card" className="overflow-hidden rounded-2xl border-border/80 bg-background shadow-sm transition hover:border-primary/30 hover:shadow-md">
-                  <CardHeader>
-                    <CardTitle className="text-xl font-bold">
-                      <Link href={`/blog/${post.slug}`} className="transition-colors hover:text-brand-cyan">
+                <Link
+                  key={post.id}
+                  href={`/blog/${post.slug}`}
+                  className="group block h-full"
+                  data-testid="recent-post-card"
+                >
+                  <Card className="flex h-full flex-col gap-0 overflow-hidden rounded-2xl border-border/80 bg-background py-0 shadow-sm transition hover:border-primary/30 hover:shadow-md">
+                    <div className="h-1 w-full rounded-t-2xl bg-gradient-to-r from-brand-accent to-brand-cyan" />
+                    <CardHeader className="px-4 pt-4 pb-0 sm:px-5 sm:pt-5">
+                      <div className="mb-2 flex flex-wrap items-center gap-2">
+                        <span className="rounded-full bg-brand-navy px-2.5 py-0.5 text-xs font-bold text-white">
+                          {publishDate}
+                        </span>
+                        <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+                          {post.tags?.[0] || 'Untagged'}
+                        </span>
+                      </div>
+                      <CardTitle className="text-lg font-heading font-bold leading-tight text-foreground transition-colors group-hover:text-brand-accent sm:text-xl">
                         {post.title}
-                      </Link>
-                    </CardTitle>
-                    <div className="flex flex-wrap items-center gap-3 text-base text-gray-600 dark:text-gray-400">
-                      <span>{publishDate}</span>
-                      <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
-                        {post.tags?.[0] || 'Untagged'}
-                      </span>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="line-clamp-3 text-gray-600 dark:text-gray-300">
-                      {post.excerpt}
-                    </p>
-                  </CardContent>
-                </Card>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex flex-1 flex-col px-4 pb-4 pt-3 sm:px-5 sm:pb-5">
+                      {post.excerpt ? (
+                        <p className="line-clamp-3 flex-1 text-sm leading-relaxed text-foreground/80 sm:text-base">
+                          {post.excerpt}
+                        </p>
+                      ) : null}
+                    </CardContent>
+                  </Card>
+                </Link>
               )
             })
           ) : (
-            <div className="col-span-2 py-8 text-center text-gray-500">
+            <div className="col-span-2 py-8 text-center text-muted-foreground">
               No recent posts found.
             </div>
           )}
+        </div>
+      </section>
+
+      <section className="rounded-[2rem] border border-border/70 bg-background px-5 py-6 shadow-sm md:px-6">
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+              Explore next
+            </p>
+            <h2 className="mt-2 text-xl font-heading font-bold text-foreground">
+              Move through the portfolio with intent
+            </h2>
+          </div>
+          <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
+            Start with the project archive, read the longer notes, or jump into the more personal pages.
+          </p>
+        </div>
+        <div className="mt-5 grid gap-3 md:grid-cols-3">
+          {[
+            {
+              href: '/works',
+              label: 'Works',
+              description: 'Browse the complete archive of shipped work and experiments.',
+              icon: BriefcaseBusiness,
+            },
+            {
+              href: '/blog',
+              label: 'Blog',
+              description: 'Read the rationale, process notes, and technical write-ups.',
+              icon: FileText,
+            },
+            {
+              href: '/introduction',
+              label: 'Introduction',
+              description: 'Get the personal context behind the portfolio and current focus.',
+              icon: User,
+            },
+          ].map(({ href, label, description, icon: Icon }) => (
+            <Link
+              key={href}
+              href={href}
+              className="group rounded-2xl border border-border/80 bg-background p-4 transition hover:border-primary/30 hover:shadow-sm"
+            >
+              <div className="flex items-start gap-3">
+                <span className="rounded-full bg-muted p-2 text-muted-foreground">
+                  <Icon className="h-4 w-4" aria-hidden="true" />
+                </span>
+                <div>
+                  <p className="text-base font-semibold text-foreground transition-colors group-hover:text-brand-accent">
+                    {label}
+                  </p>
+                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                    {description}
+                  </p>
+                </div>
+              </div>
+            </Link>
+          ))}
         </div>
       </section>
     </div>

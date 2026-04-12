@@ -1,4 +1,4 @@
-
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Badge } from '@/components/ui/badge'
 import { AdminErrorPanel } from '@/components/admin/AdminErrorPanel'
@@ -17,6 +17,7 @@ export const dynamic = 'force-dynamic'
 
 interface PageProps {
     params: Promise<{ slug: string }>
+    searchParams?: Promise<{ relatedPage?: string }>
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -32,8 +33,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     }
 }
 
-export default async function WorkDetailPage({ params }: PageProps) {
+export default async function WorkDetailPage({ params, searchParams }: PageProps) {
     const { slug } = await params
+    const resolvedSearchParams = await searchParams
     const decodedSlug = decodeURIComponent(slug)
     const work = await fetchPublicWorkBySlug(decodedSlug)
 
@@ -53,40 +55,64 @@ export default async function WorkDetailPage({ params }: PageProps) {
         }
     }
 
-    const relatedWorks = (await fetchAllPublicWorks())
-        .filter((item) => item.id !== work.id)
+    const allWorks = await fetchAllPublicWorks()
+    const relatedWorks = allWorks.filter((item) => item.id !== work.id)
     const contentHtml = parseWorkContentHtml(work.contentJson)
     const orderedVideos = [...work.videos].sort((left, right) => left.sortOrder - right.sortOrder)
     const hasInlineVideoEmbeds = hasWorkVideoEmbeds(contentHtml)
 
     const publishDate = formatDetailPublishDate(work.publishedAt)
+    const sortedWorks = [...allWorks].sort((left, right) => {
+        const leftTime = left.publishedAt ? new Date(left.publishedAt).getTime() : 0
+        const rightTime = right.publishedAt ? new Date(right.publishedAt).getTime() : 0
+
+        if (leftTime !== rightTime) {
+            return rightTime - leftTime
+        }
+
+        return left.title.localeCompare(right.title)
+    })
+    const currentIndex = sortedWorks.findIndex((item) => item.id === work.id)
+    const newerWork = currentIndex > 0 ? sortedWorks[currentIndex - 1] : null
+    const olderWork = currentIndex >= 0 && currentIndex < sortedWorks.length - 1 ? sortedWorks[currentIndex + 1] : null
+    const relatedPageSuffix = resolvedSearchParams?.relatedPage
+        ? `?relatedPage=${encodeURIComponent(resolvedSearchParams.relatedPage)}`
+        : ''
 
     return (
         <article className="container mx-auto max-w-6xl px-4 py-8 md:px-6 md:py-12">
-            <div data-testid="work-detail-body" className="mx-auto max-w-3xl">
+            <div data-testid="work-detail-body" className="mx-auto max-w-3xl min-w-0">
                 <header className="mb-8">
-                <h1 className="mb-4 text-3xl font-heading font-bold md:text-4xl text-gray-900 dark:text-gray-50 leading-tight">
-                    {work.title}
-                </h1>
-                <div className="flex flex-wrap items-center gap-4 mb-6">
-                    <Badge variant="secondary" className="rounded-full bg-brand-navy px-3 text-white hover:bg-brand-navy/90">
-                        {publishDate}
-                    </Badge>
-                    <span className="text-gray-500 dark:text-gray-400 font-medium">{work.category}</span>
-                    {work.period && (
-                        <span className="text-sm border-l pl-4 text-gray-400 dark:text-gray-400 font-mono">
-                            {work.period}
-                        </span>
-                    )}
-                </div>
-                <p className="rounded-r-lg border-l-4 border-brand-navy bg-gray-50 py-2 pl-4 text-xl leading-relaxed text-gray-600 dark:bg-gray-900 dark:text-gray-300">
-                    {work.excerpt}
-                </p>
-                <div className="mt-8 flex flex-wrap gap-2 text-sm text-gray-500 dark:text-gray-400 font-mono">
-                    {work.tags?.map((tag: string) => (
-                        <span key={tag} className="cursor-default transition-colors hover:text-brand-accent">#{tag}</span>
-                    ))}
-                </div>
+                    <h1 className="mb-4 text-3xl font-heading font-bold leading-tight text-foreground text-balance md:text-4xl">
+                        {work.title}
+                    </h1>
+                    <div className="mb-6 flex flex-wrap items-center gap-4 text-muted-foreground">
+                        <Badge variant="secondary" className="rounded-full bg-brand-navy px-3 text-white hover:bg-brand-navy/90">
+                            <time dateTime={work.publishedAt ?? undefined}>{publishDate}</time>
+                        </Badge>
+                        <span className="font-medium text-muted-foreground">{work.category}</span>
+                        {work.period && (
+                            <span className="border-l border-border pl-4 font-mono text-sm text-muted-foreground">
+                                {work.period}
+                            </span>
+                        )}
+                    </div>
+                    {work.excerpt ? (
+                        <p className="rounded-r-lg border-l-4 border-brand-navy bg-brand-section-bg py-2 pl-4 text-xl leading-relaxed text-foreground/80 text-pretty">
+                            {work.excerpt}
+                        </p>
+                    ) : null}
+                    {work.tags?.length ? (
+                        <ul aria-label="Work tags" className="mt-8 flex flex-wrap gap-2">
+                            {work.tags.map((tag: string) => (
+                                <li key={tag}>
+                                    <span className="cursor-default rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground transition-colors hover:text-brand-accent">
+                                        #{tag}
+                                    </span>
+                                </li>
+                            ))}
+                        </ul>
+                    ) : null}
                 </header>
 
                 <div className="mt-8">
@@ -132,11 +158,40 @@ export default async function WorkDetailPage({ params }: PageProps) {
                         </InlineAdminEditorShell>
                     )
                 )}
+
+                {(olderWork || newerWork) && (
+                    <nav
+                        aria-label="Work navigation"
+                        data-testid="work-prev-next"
+                        className="mt-12 grid gap-3 border-t border-border/70 pt-8 sm:grid-cols-2"
+                    >
+                        {olderWork ? (
+                            <Link
+                                href={`/works/${olderWork.slug}${relatedPageSuffix}`}
+                                className="group rounded-2xl border border-border/80 bg-background p-4 transition hover:border-primary/30 hover:shadow-sm"
+                            >
+                                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Previous</p>
+                                <p className="mt-2 text-base font-semibold text-foreground text-balance transition-colors group-hover:text-brand-accent">{olderWork.title}</p>
+                            </Link>
+                        ) : (
+                            <div aria-hidden="true" />
+                        )}
+                        {newerWork ? (
+                            <Link
+                                href={`/works/${newerWork.slug}${relatedPageSuffix}`}
+                                className="group rounded-2xl border border-border/80 bg-background p-4 text-left transition hover:border-primary/30 hover:shadow-sm sm:justify-self-end"
+                            >
+                                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Next</p>
+                                <p className="mt-2 text-base font-semibold text-foreground text-balance transition-colors group-hover:text-brand-accent">{newerWork.title}</p>
+                            </Link>
+                        ) : null}
+                    </nav>
+                )}
             </div>
 
             <div data-testid="work-related-shell" className="mx-auto mt-16 max-w-3xl border-t pt-12">
                 <RelatedContentList
-                    heading="다른 작업"
+                    heading="More Works"
                     hrefBase="/works"
                     items={relatedWorks}
                     desktopPageSize={8}

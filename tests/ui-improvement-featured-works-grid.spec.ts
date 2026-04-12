@@ -41,6 +41,28 @@ test('featured work cards advertise hover interactions', async ({ page }) => {
   await expect(title).toHaveClass(/group-hover:text-brand-accent/)
 })
 
+test('featured work cards use the richer no-image placeholder treatment', async ({ page }) => {
+  await page.goto('/works?__qaNoImage=1')
+
+  const placeholder = page.getByTestId('work-card-no-image-placeholder').first()
+  await expect(placeholder).toBeVisible()
+  await expect(placeholder).toHaveClass(/bg-gradient-to-br/)
+})
+
+test('home featured works no-image placeholder matches icon plus label pattern', async ({ page }) => {
+  await page.goto('/?__qaNoImage=1')
+
+  const placeholder = page.getByTestId('featured-work-no-image-placeholder').first()
+  await expect(placeholder).toBeVisible()
+  await expect(placeholder.locator('svg')).toBeVisible()
+  await expect(placeholder.getByText('No Image', { exact: true })).toBeVisible()
+})
+
+test('home featured works no longer shows the legacy click-to-view-details fallback copy', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.getByText('Click to view details', { exact: true })).toHaveCount(0)
+})
+
 test('Featured works collapses to one column on mobile', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 667 })
   await page.goto('/')

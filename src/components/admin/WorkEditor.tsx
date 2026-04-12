@@ -118,6 +118,12 @@ function buildMetadataJsonFromFields(fields: MetadataField[]) {
     )
 }
 
+function clearBeforeUnloadWarning() {
+    if (typeof window !== 'undefined') {
+        window.onbeforeunload = null
+    }
+}
+
 export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEditorProps) {
     const router = useRouter()
     const pathname = usePathname()
@@ -202,6 +208,7 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
         thumbnailAssetId: initialWork?.thumbnail_asset_id || '',
         iconAssetId: initialWork?.icon_asset_id || '',
     })
+    const [savedSnapshot, setSavedSnapshot] = useState(initialSnapshot)
     const currentSnapshot = buildWorkSnapshot({
         title,
         category,
@@ -214,7 +221,7 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
         iconAssetId,
     })
     const hasStagedVideos = stagedVideos.length > 0
-    const hasUnsavedChanges = initialSnapshot !== currentSnapshot || (!isEditing && hasStagedVideos)
+    const hasUnsavedChanges = savedSnapshot !== currentSnapshot || (!isEditing && hasStagedVideos)
     const isDirty = hasUnsavedChanges
     const searchParamsString = searchParams.toString()
     const currentQuerySuffix = searchParamsString ? `?${searchParamsString}` : ''
@@ -231,6 +238,10 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
         })
     }
 
+    useEffect(() => {
+        setSavedSnapshot(initialSnapshot)
+    }, [initialSnapshot])
+
     const syncVideos = (payload: VideoMutationPayload) => {
         const nextVersion = getNextVideosVersion(payload, videosVersion)
         const nextVideos = Array.isArray(payload.videos) ? payload.videos : videos
@@ -245,18 +256,19 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
         }
 
         if (!editing && pathname === '/works') {
-            window.location.assign('/works')
+            router.push('/works')
             return true
         }
 
         if (editing && pathname.startsWith('/works/')) {
             if (requestedReturnTo && requestedReturnTo.startsWith('/')) {
-                window.location.assign(requestedReturnTo)
+                router.push(requestedReturnTo)
                 return true
             }
 
             if (nextSlug) {
-                window.location.assign(`/works/${encodeURIComponent(nextSlug)}${currentQuerySuffix}`)
+                router.replace(`/works/${encodeURIComponent(nextSlug)}${currentQuerySuffix}`)
+                router.refresh()
             } else {
                 router.refresh()
             }
@@ -840,6 +852,8 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
 
     function finishUpdateSave(responsePayload: WorkSaveResponsePayload | null, nextSlug: string | null) {
         setHasPersistedVideoChanges(false)
+        setSavedSnapshot(currentSnapshot)
+        clearBeforeUnloadWarning()
         toast.success('Work updated successfully')
         if (finishInlineSave(responsePayload, nextSlug, true)) {
             return
@@ -849,6 +863,8 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
     }
 
     function finishCreateSave(responsePayload: WorkSaveResponsePayload | null, nextSlug: string | null) {
+        setSavedSnapshot(currentSnapshot)
+        clearBeforeUnloadWarning()
         toast.success('Work created successfully')
         if (finishInlineSave(responsePayload, nextSlug, false)) {
             return

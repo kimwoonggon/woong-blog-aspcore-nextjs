@@ -33,8 +33,9 @@ test('public blog detail shows paginated related posts', async ({ page }) => {
   await page.goto('/blog?pageSize=1')
   await page.locator('a[href^="/blog/"]').first().click()
 
-  await expect(page.getByRole('heading', { name: '다른 게시물' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'More Posts' })).toBeVisible()
   await expect(page.getByTestId('related-blog-card').first()).toBeVisible()
-  await expect(page.locator('section').filter({ has: page.getByRole('heading', { name: '다른 게시물' }) }).getByText(/^1\s*\/\s*\d+$/)).toBeVisible()
+  await expect(page.locator('section').filter({ has: page.getByRole('heading', { name: 'More Posts' }) }).getByText(/^Page 1 of \d+$/)).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Next' })).toBeVisible()
   await expect(page.getByRole('button', { name: '2' })).toBeVisible()
 })

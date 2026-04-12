@@ -22,11 +22,57 @@
   - 대상: `tests/ui-improvement-static-public-pages.spec.ts`
   - 반영: `static-public-shell`, `resume-shell`
 
+## Active Multi-Agent Queue
+- [ ] `Q-1` lane A: token migration / home-works-static cleanup
+- [ ] `Q-2` lane B: card system / footer / hover hierarchy
+- [ ] `Q-3` lane C: detail pages / related content / prev-next
+- [ ] `Q-4` lane D: creative audit beyond checklist
+- [ ] `Q-5` verifier lane: single Playwright queue for public
+
+## Public A+ Queue (2026-04-12)
+- [x] `PAT-1` Raw color -> semantic token 전환
+  - 기준: `design-pattern-public-0412.md`, `design-improvement-execution-0412.md` Task 1
+- [x] `PAT-2` Hover 색상 체계 통일
+  - 기준: execution Task 2
+- [x] `PAT-3` Blog 카드 accent stripe + grid 3열 + `!important` 제거
+  - 기준: execution Task 3
+- [x] `PAT-4` Featured Works no-image 폴백 통일
+  - 기준: execution Task 4
+- [x] `PAT-5` Works detail prev/next 네비게이션 추가
+  - 기준: execution Task 5
+- [x] `PAT-6` Footer 네비게이션 확장
+  - 기준: execution Task 6
+- [x] `PAT-7` 태그 스타일 통일
+  - 기준: execution Task 7
+- [x] `PAT-8` 언어 혼용 정리
+  - 기준: execution Task 8
+- [x] `PAT-9` Works 카드 animationDelay dead code 제거
+  - 기준: execution Task 9
+- [x] `PAT-10` `Click to view details` 카피 제거
+  - 기준: execution Task 10
+- [x] `PAT-11` Avatar 폴백 아이콘 전환
+  - 기준: execution Task 11
+- [x] `PAT-12` 카드 제목 타이포 스케일 통일
+  - 기준: execution Task 13
+- [x] `PAT-V1` public 검증용 `ui-pub-*`/회귀 테스트 갱신
+- [x] `PAT-V2` `NEXT_DIST_DIR=.next-build npm run build`
+- [x] `PAT-V3` `tests/ui-pub-*.spec.ts --project=chromium-public`
+- [x] `PAT-T-1` footer nav 검증 스펙 추가
+  - `tests/ui-improvement-footer-nav.spec.ts`
+- [x] `PAT-T-2` blog stripe/grid 검증 스펙 추가
+  - `tests/ui-improvement-blog-stripe-grid.spec.ts`
+- [x] `PAT-T-3` works prev/next 검증 스펙 추가
+  - `tests/ui-improvement-work-prev-next.spec.ts`
+- [x] `PAT-T-4` home fallback copy 제거 검증 스펙 추가
+  - `tests/ui-improvement-home-copy-cleanup.spec.ts`
+
 ## Verification Snapshot
 - [x] `npx eslint src tests next.config.ts playwright.config.ts`
 - [x] `npm run typecheck`
 - [x] `NEXT_DIST_DIR=.next-build npm run build`
 - [x] `PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=https://localhost PLAYWRIGHT_HEADED=1 npx playwright test tests/ui-pub-*.spec.ts --project=chromium-public --headed --workers=1`
+- [x] `PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=https://localhost npx playwright test tests/ui-pub-*.spec.ts tests/public-content.spec.ts tests/public-detail-pages.spec.ts tests/public-edge-nav.spec.ts tests/public-layout-stability.spec.ts tests/public-blog-pagination.spec.ts tests/public-works-pagination.spec.ts tests/public-work-videos.spec.ts tests/home.spec.ts tests/introduction.spec.ts tests/public-blog-detail-inline-edit.spec.ts tests/public-work-detail-inline-edit.spec.ts --workers=1`
+  - 결과: `90 passed`
 
 ## Extra Ops
 - [x] `ADD-0-1` Playwright/Next 런타임 충돌 해소

@@ -68,21 +68,21 @@ export default async function BlogPage({ searchParams }: PageProps) {
                 mobilePageSize={MOBILE_PAGE_SIZE}
             />
             <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <h1 className="text-3xl font-heading font-bold md:text-4xl text-gray-900 dark:text-gray-50">Blog</h1>
+                <h1 className="text-3xl font-heading font-bold text-foreground md:text-4xl">Blog</h1>
                 <div className="flex flex-wrap gap-2">
-                    <PublicAdminLink href="/admin/blog" label="글 관리" variant="manage" />
+                    <PublicAdminLink href="/admin/blog" label="Manage Blog" variant="manage" />
                 </div>
             </div>
             {session.authenticated && session.role === 'admin' && (
                 <InlineAdminEditorShell
-                    triggerLabel="새 글 쓰기"
+                    triggerLabel="New Post"
                     title="Blog Inline Create"
-                    description="navbar를 유지한 채 현재 페이지 아래에서 새 글을 작성합니다."
+                    description="Create a new post inline without leaving the current public page."
                 >
                     <BlogEditor inlineMode />
                 </InlineAdminEditorShell>
             )}
-            <div data-testid="blog-grid" className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+            <div data-testid="blog-grid" className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
                 {pagedBlogs && pagedBlogs.length > 0 ? (
                     pagedBlogs.map((blog) => (
                         <Link
@@ -91,7 +91,11 @@ export default async function BlogPage({ searchParams }: PageProps) {
                             className="group/card block h-full"
                             data-testid="blog-card"
                         >
-                            <Card className="responsive-feed-card !gap-0 !py-0 flex h-full flex-col overflow-hidden rounded-2xl border-border/80 bg-background shadow-sm transition hover:border-primary/30 hover:shadow-md">
+                            <Card className="responsive-feed-card flex h-full flex-col gap-0 overflow-hidden rounded-2xl border-border/80 bg-background py-0 shadow-sm transition hover:border-primary/30 hover:shadow-md">
+                                <div
+                                    data-testid="blog-card-accent-stripe"
+                                    className="h-1 w-full rounded-t-2xl bg-gradient-to-r from-brand-accent to-brand-cyan"
+                                />
                                 <CardHeader className="px-4 pt-4 pb-0 sm:px-5 sm:pt-5">
                                     <div className="mb-2 flex flex-wrap items-center gap-2">
                                         <Badge variant="secondary" className="rounded-full bg-brand-navy px-2.5 py-0.5 text-xs text-white hover:bg-brand-navy/90">
@@ -106,20 +110,22 @@ export default async function BlogPage({ searchParams }: PageProps) {
                                             </span>
                                         ))}
                                     </div>
-                                    <CardTitle className="responsive-feed-title line-clamp-2 text-lg font-heading font-bold leading-tight text-gray-900 transition-colors group-hover/card:text-brand-accent dark:text-gray-50 sm:text-xl md:text-2xl">
+                                    <CardTitle className="responsive-feed-title line-clamp-2 text-lg font-heading font-bold leading-tight text-foreground transition-colors group-hover/card:text-brand-accent sm:text-xl">
                                         {blog.title}
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="flex flex-1 flex-col px-4 pb-4 pt-3 sm:px-5 sm:pb-5">
-                                    <p className="responsive-feed-copy line-clamp-3 flex-1 text-sm text-gray-600 dark:text-gray-300 sm:text-base">
-                                        {blog.excerpt}
-                                    </p>
+                                    {blog.excerpt ? (
+                                        <p className="responsive-feed-copy line-clamp-3 flex-1 text-sm leading-relaxed text-muted-foreground sm:text-base">
+                                            {blog.excerpt}
+                                        </p>
+                                    ) : null}
                                 </CardContent>
                             </Card>
                         </Link>
                     ))
                 ) : (
-                    <div className="py-20 text-center text-gray-500">
+                    <div className="py-20 text-center text-muted-foreground">
                         No blog posts found.
                     </div>
                 )}
