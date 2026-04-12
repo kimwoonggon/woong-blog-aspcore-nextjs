@@ -81,3 +81,20 @@
 - [x] 신규 `tests/ui-admin-*.spec.ts --project=chromium-authenticated` 전체 기록
 - [x] `tests/ui-admin-*.spec.ts` 최종 결과: `42 passed`
 - [x] `tests/admin-*.spec.ts` 최종 결과: `41 passed`
+
+## Phase 5 — 2026-04-12 Work & Blog Polish
+- [x] `ADM-5-1` Admin work/blog list and editor copy cleanup
+  - 파일: `src/app/admin/blog/page.tsx`, `src/app/admin/works/page.tsx`, `src/components/admin/BlogEditor.tsx`, `src/components/admin/WorkEditor.tsx`
+  - 테스트: `tests/ui-admin-copy-cleanup.spec.ts`
+- [x] `ADM-5-2` Admin tables semantic color + delete feedback cleanup
+  - 파일: `src/components/admin/AdminBlogTableClient.tsx`, `src/components/admin/AdminWorksTableClient.tsx`, `src/components/admin/WorkEditor.tsx`
+  - 테스트: `tests/ui-admin-table-polish.spec.ts`
+- [x] `ADM-5-3` Admin tables visual polish (work thumbnails, blog tag badges, simpler pagination)
+  - 파일: `src/components/admin/AdminBlogTableClient.tsx`, `src/components/admin/AdminWorksTableClient.tsx`
+  - 테스트: `tests/ui-admin-table-polish.spec.ts`
+- [x] `ADM-5-4` Work create CTA consolidation
+  - 파일: `src/components/admin/WorkEditor.tsx`
+  - 테스트: `tests/ui-admin-work-create-cta.spec.ts`
+- [x] Phase 5 verification run
+  - 명령: `PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://localhost:3000 npx playwright test tests/ui-admin-copy-cleanup.spec.ts tests/ui-admin-table-polish.spec.ts tests/ui-admin-work-create-cta.spec.ts tests/ui-admin-save-btn.spec.ts tests/ui-admin-table-lang.spec.ts tests/admin-work-video-create-flow.spec.ts tests/admin-work-video-mixed-flow.spec.ts tests/admin-work-auto-thumbnail.spec.ts --workers=1`
+  - 결과: `19 passed`

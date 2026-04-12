@@ -53,5 +53,6 @@ test('D-6 stale editor sessions fail to save cleanly after logout', async ({ pag
     })
   }).toBe(false)
 
+  await expect(page.getByRole('heading', { name: 'Admin Login' })).toBeVisible()
   await expect(page).toHaveURL(/\/login/)
 })

@@ -11,7 +11,7 @@ test('blog editor uploads an inline image and public blog renders it', async ({ 
   await expect(page).toHaveURL(/\/admin\/blog\/new/)
 
   await page.getByLabel('Title').fill(title)
-  await expect(page.getByText('New posts publish immediately when you save.')).toBeVisible()
+  await expect(page.getByText("New posts go live immediately. Toggle 'Published' off to save as draft.")).toBeVisible()
 
   const [fileChooser] = await Promise.all([
     page.waitForEvent('filechooser'),
@@ -25,14 +25,13 @@ test('blog editor uploads an inline image and public blog renders it', async ({ 
   await page.locator('.tiptap.ProseMirror').first().click()
   await page.keyboard.type(' 이미지가 포함된 게시물입니다.')
 
-  await Promise.all([
+  const [saveResponse] = await Promise.all([
     page.waitForResponse((res) => res.url().includes('/api/admin/blogs') && res.request().method() === 'POST' && res.ok()),
     page.getByRole('button', { name: 'Create Post' }).click(),
   ])
 
-  await expect(page).toHaveURL(/\/admin\/blog(?:\?.*)?$/)
-  await page.locator('td:nth-child(2) a', { hasText: title }).first().click()
-  await expect(page).toHaveURL(/\/blog\//)
+  const payload = await saveResponse.json()
+  await page.goto(`/blog/${payload.slug}`)
   const renderedImage = page.locator('img').first()
   await expect(renderedImage).toBeVisible()
   await expect(renderedImage).toHaveAttribute('src', /\/media\//)

@@ -1,7 +1,7 @@
 "use client"
 
 import Image from 'next/image'
-import { Plus, Trash2 } from 'lucide-react'
+import { ChevronDown, ChevronUp, Plus, Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { AIFixDialog } from '@/components/admin/AIFixDialog'
@@ -256,8 +256,7 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
         }
 
         if (!editing && pathname === '/works') {
-            router.push('/works')
-            return true
+            return false
         }
 
         if (editing && pathname.startsWith('/works/')) {
@@ -837,6 +836,11 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
             return false
         }
 
+        if (!editing && usesPublicInlineCreateFlow && onSaved) {
+            onSaved({ id: responsePayload?.id, slug: nextSlug, isEditing: false })
+            return true
+        }
+
         if (navigateInlineWorkAfterSave(nextSlug, editing)) {
             return true
         }
@@ -1074,9 +1078,6 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                         onChange={(e) => setCategory(e.target.value)}
                         placeholder={DEFAULT_WORK_CATEGORY}
                     />
-                    <p className="text-xs text-muted-foreground">
-                        New works default to <span className="font-medium">{DEFAULT_WORK_CATEGORY}</span> so create is never blocked by categorization.
-                    </p>
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="period">Project Period</Label>
@@ -1122,10 +1123,8 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                         <Label htmlFor="published" className="cursor-pointer text-sm">Published</Label>
                     </div>
                     {!isEditing && (
-                        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-100 md:ml-auto">
-                            {usesPublicInlineCreateFlow
-                                ? <>New works publish immediately when you save. If you stage videos, <span className="font-medium">Create And Add Videos</span> still keeps you on this page and closes the create panel when everything finishes.</>
-                                : <>New works publish immediately when you save. If you stage videos, use <span className="font-medium">Create And Add Videos</span> so the work is created first and the videos attach safely after.</>}
+                        <div className="rounded-xl border border-border/80 bg-muted/50 px-4 py-3 text-sm text-muted-foreground md:ml-auto">
+                            New works go live immediately. Staged videos attach automatically after creation.
                         </div>
                     )}
                 </div>
@@ -1221,14 +1220,14 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                 <div className="space-y-4 rounded-2xl border border-border/80 bg-background p-5">
                     <div>
                         <h3 className="text-lg font-medium">Work Media</h3>
-                        <p className="text-sm text-gray-500">
-                            Add thumbnail and icon assets with clear click-to-upload fields. Dragging a file onto the input still works, but it is no longer the only obvious path.
+                        <p className="text-sm text-muted-foreground">
+                            Upload thumbnail and icon images for this work.
                         </p>
                     </div>
                     <div className="grid gap-6 md:grid-cols-2">
                         <div className="space-y-3">
                             <Label htmlFor="work-thumbnail-upload">Thumbnail Image</Label>
-                            <div className="relative h-40 overflow-hidden rounded-md border bg-gray-100 dark:border-gray-800 dark:bg-gray-900">
+                            <div className="relative h-40 overflow-hidden rounded-md border border-border bg-muted">
                                 {effectiveThumbnailPreviewUrl ? (
                                     <Image
                                         src={effectiveThumbnailPreviewUrl}
@@ -1238,7 +1237,7 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                                         className="object-cover"
                                     />
                                 ) : (
-                                    <div className="flex h-full items-center justify-center text-sm text-gray-500">
+                                    <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
                                         No thumbnail uploaded
                                     </div>
                                 )}
@@ -1254,10 +1253,10 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                                                 ? 'Thumbnail source: content image'
                                                 : 'Thumbnail source: none'}
                             </p>
-                            <div className="rounded-xl border border-dashed border-sky-300 bg-sky-50/70 p-4 dark:border-sky-900 dark:bg-sky-950/20">
-                                <p className="mb-2 text-sm font-medium text-sky-900 dark:text-sky-100">Choose a thumbnail image</p>
-                                <p className="mb-3 text-xs text-sky-900/80 dark:text-sky-100/80">
-                                    Best for public cards. Click to browse, or drop an image onto the picker.
+                            <div className="rounded-xl border border-dashed border-border/80 bg-muted/50 p-4">
+                                <p className="mb-2 text-sm font-medium text-foreground">Thumbnail</p>
+                                <p className="mb-3 text-xs text-muted-foreground">
+                                    Recommended size: 800 × 600px
                                 </p>
                                 <Input
                                     id="work-thumbnail-upload"
@@ -1277,16 +1276,16 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                                     Remove Thumbnail
                                 </Button>
                                 {uploadingTarget === 'thumbnail' && (
-                                    <span className="text-sm text-gray-500">Uploading...</span>
+                                    <span className="text-sm text-muted-foreground">Uploading…</span>
                                 )}
                                 {isAutoGeneratingThumbnail && (
-                                    <span className="text-sm text-gray-500">Generating thumbnail...</span>
+                                    <span className="text-sm text-muted-foreground">Generating thumbnail…</span>
                                 )}
                             </div>
                         </div>
                         <div className="space-y-3">
                             <Label htmlFor="work-icon-upload">Icon Image</Label>
-                            <div className="relative h-40 overflow-hidden rounded-md border bg-gray-100 dark:border-gray-800 dark:bg-gray-900">
+                            <div className="relative h-40 overflow-hidden rounded-md border border-border bg-muted">
                                 {iconUrl ? (
                                     <Image
                                         src={iconUrl}
@@ -1296,15 +1295,15 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                                         className="object-cover"
                                     />
                                 ) : (
-                                    <div className="flex h-full items-center justify-center text-sm text-gray-500">
+                                    <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
                                         No icon uploaded
                                     </div>
                                 )}
                             </div>
-                            <div className="rounded-xl border border-dashed border-sky-300 bg-sky-50/70 p-4 dark:border-sky-900 dark:bg-sky-950/20">
-                                <p className="mb-2 text-sm font-medium text-sky-900 dark:text-sky-100">Choose an icon image</p>
-                                <p className="mb-3 text-xs text-sky-900/80 dark:text-sky-100/80">
-                                    Use a square or simple mark for compact surfaces and metadata-driven sections.
+                            <div className="rounded-xl border border-dashed border-border/80 bg-muted/50 p-4">
+                                <p className="mb-2 text-sm font-medium text-foreground">Icon</p>
+                                <p className="mb-3 text-xs text-muted-foreground">
+                                    Square image recommended.
                                 </p>
                                 <Input
                                     id="work-icon-upload"
@@ -1324,7 +1323,7 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                                     Remove Icon
                                 </Button>
                                 {uploadingTarget === 'icon' && (
-                                    <span className="text-sm text-gray-500">Uploading...</span>
+                                    <span className="text-sm text-muted-foreground">Uploading…</span>
                                 )}
                             </div>
                         </div>
@@ -1334,17 +1333,17 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                 <div className="space-y-4 rounded-2xl border border-border/80 bg-background p-5">
                     <div>
                         <h3 className="text-lg font-medium">Work Videos</h3>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-muted-foreground">
                             {isEditing
-                                ? 'You can add YouTube videos and MP4 uploads immediately. Ordering and removal update the work separately from the main form.'
+                                ? 'Add YouTube links or upload MP4 files. Video changes save immediately.'
                                 : usesPublicInlineCreateFlow
-                                    ? 'You can stage videos while creating a work. Saving stays on this page, closes the create shell, and refreshes the works list after the videos attach.'
-                                    : 'You can stage videos while creating a work. The app creates the work first, then attaches the staged videos in order.'}
+                                    ? "Stage videos before saving. They'll be attached automatically."
+                                    : "Stage videos before saving. They'll be attached after the work is created."}
                         </p>
                     </div>
                     {isEditing && (
-                        <div className="rounded-xl border border-sky-300 bg-sky-50 px-4 py-3 text-sm text-sky-900 dark:border-sky-900/60 dark:bg-sky-950/20 dark:text-sky-100">
-                            Videos save immediately. Use <span className="font-medium">Update Work</span> only for text, metadata, thumbnail, or icon changes.
+                        <div className="rounded-xl border border-border/80 bg-muted/50 px-4 py-3 text-sm text-muted-foreground">
+                            Videos save immediately. Use Update Work for text, metadata, thumbnail, or icon changes.
                         </div>
                     )}
 
@@ -1355,7 +1354,7 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                                 id="youtube-video-input"
                                 value={youtubeUrlInput}
                                 onChange={(event) => setYoutubeUrlInput(event.target.value)}
-                                placeholder="https://youtu.be/... or dQw4w9WgXcQ"
+                                placeholder="https://youtu.be/… or dQw4w9WgXcQ"
                                 disabled={isVideoBusy}
                             />
                         </div>
@@ -1411,7 +1410,7 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                                                 <div className="flex flex-wrap gap-2">
                                                     <Button
                                                         type="button"
-                                                        variant="outline"
+                                                        variant="default"
                                                         onClick={() => insertSavedVideoIntoBody(video.id)}
                                                         disabled={isVideoBusy || embeddedVideoIdSet.has(video.id)}
                                                     >
@@ -1427,27 +1426,37 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                                                     </Button>
                                                     <Button
                                                         type="button"
-                                                        variant="outline"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        aria-label={`Move ${getWorkVideoDisplayLabel(video)} up`}
+                                                        title="Move Up"
                                                         onClick={() => void reorderSavedVideo(video.id, -1)}
                                                         disabled={isVideoBusy || index === 0}
                                                     >
-                                                        Move Up
+                                                        <ChevronUp />
                                                     </Button>
                                                     <Button
                                                         type="button"
-                                                        variant="outline"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        aria-label={`Move ${getWorkVideoDisplayLabel(video)} down`}
+                                                        title="Move Down"
                                                         onClick={() => void reorderSavedVideo(video.id, 1)}
                                                         disabled={isVideoBusy || index === videos.length - 1}
                                                     >
-                                                        Move Down
+                                                        <ChevronDown />
                                                     </Button>
                                                     <Button
                                                         type="button"
-                                                        variant="outline"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        aria-label={`Remove ${getWorkVideoDisplayLabel(video)}`}
+                                                        title="Remove Video"
+                                                        className="text-destructive hover:text-destructive"
                                                         onClick={() => void removeSavedVideo(video.id)}
                                                         disabled={isVideoBusy}
                                                     >
-                                                        Remove
+                                                        <Trash2 />
                                                     </Button>
                                                 </div>
                                             </div>
@@ -1480,26 +1489,36 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                                         <div className="flex flex-wrap gap-2">
                                             <Button
                                                 type="button"
-                                                variant="outline"
+                                                variant="ghost"
+                                                size="icon"
+                                                aria-label={`Move ${video.label} up`}
+                                                title="Move Up"
                                                 onClick={() => moveStagedVideo(video.tempId, -1)}
                                                 disabled={index === 0}
                                             >
-                                                Move Up
+                                                <ChevronUp />
                                             </Button>
                                             <Button
                                                 type="button"
-                                                variant="outline"
+                                                variant="ghost"
+                                                size="icon"
+                                                aria-label={`Move ${video.label} down`}
+                                                title="Move Down"
                                                 onClick={() => moveStagedVideo(video.tempId, 1)}
                                                 disabled={index === stagedVideos.length - 1}
                                             >
-                                                Move Down
+                                                <ChevronDown />
                                             </Button>
                                             <Button
                                                 type="button"
-                                                variant="outline"
+                                                variant="ghost"
+                                                size="icon"
+                                                aria-label={`Remove ${video.label}`}
+                                                title="Remove Video"
+                                                className="text-destructive hover:text-destructive"
                                                 onClick={() => removeStagedVideo(video.tempId)}
                                             >
-                                                Remove
+                                                <Trash2 />
                                             </Button>
                                         </div>
                                     </div>
@@ -1530,8 +1549,8 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                         />
                     </div>
                 </div>
-                <div className="rounded-xl border border-dashed border-sky-300 bg-sky-50/70 px-4 py-3 text-sm text-sky-900 dark:border-sky-900 dark:bg-sky-950/20 dark:text-sky-100">
-                    Write the public-facing project story here. New works save live immediately, so keep the summary and body ready before hitting create.
+                <div className="rounded-xl border border-border/80 bg-muted/50 px-4 py-3 text-sm text-muted-foreground">
+                    Write the project description shown on the public site.
                 </div>
                 {shouldContinueInlinePlacement && isEditing && videos.length > 0 && (
                     <div className="rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-900/60 dark:bg-emerald-950/20 dark:text-emerald-100">
@@ -1541,7 +1560,7 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                 <TiptapEditor
                     content={html}
                     onChange={setHtml}
-                    placeholder="Describe the project story and place saved videos inline where they belong..."
+                    placeholder="Describe the project story and place saved videos inline where they belong…"
                     workVideos={videos}
                     insertVideoEmbedRequest={insertVideoRequest}
                     onVideoInsertHandled={handleVideoInsertHandled}
@@ -1551,17 +1570,12 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                         Some inline video references no longer exist in the saved list. Remove those inline blocks before publishing.
                     </p>
                 )}
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-muted-foreground">
                     Use the saved video cards above to place each video inline inside the story.
                 </p>
             </div>
 
             <div className="flex flex-col gap-3 border-t pt-8 sm:flex-row sm:items-center sm:justify-end">
-                {!isEditing && (
-                    <p className="text-sm text-muted-foreground sm:mr-auto">
-                        Saving creates a live work immediately, then returns you to the works list unless you choose the staged video flow.
-                    </p>
-                )}
                 {!inlineMode && (
                     <Button type="button" variant="outline" onClick={() => router.push(returnTo)}>
                         Cancel
@@ -1575,27 +1589,17 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                         disabled={isSaving || (!isDirty && !hasPersistedVideoChanges) || !title.trim()}
                         className="px-8 font-medium"
                     >
-                        {isSaving ? 'Saving...' : 'Update Work'}
+                        {isSaving ? 'Saving…' : 'Update Work'}
                     </Button>
                 ) : (
-                    <>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => void saveWork('default')}
-                            disabled={isSaving || !isDirty || !title.trim() || hasStagedVideos}
-                        >
-                            {isSaving ? 'Saving...' : 'Create Work'}
-                        </Button>
-                        <Button
-                            type="button"
-                            onClick={() => void saveWork('with-videos')}
-                            disabled={isSaving || !isDirty || !title.trim() || !hasStagedVideos}
-                            className="px-8 font-medium"
-                        >
-                            {isSaving ? 'Creating...' : 'Create And Add Videos'}
-                        </Button>
-                    </>
+                    <Button
+                        type="button"
+                        onClick={() => void saveWork(primarySaveMode)}
+                        disabled={isSaving || !isDirty || !title.trim()}
+                        className="px-8 font-medium"
+                    >
+                        {isSaving ? 'Creating…' : hasStagedVideos ? 'Create with Videos' : 'Create Work'}
+                    </Button>
                 )}
             </div>
         </div>

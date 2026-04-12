@@ -9,7 +9,7 @@ test('admin can create and publish a blog post that appears on public blog page'
   await page.goto('/admin/blog/new')
 
   await expect(page).toHaveURL(/\/admin\/blog\/new/)
-  await expect(page.getByText('New posts publish immediately when you save.')).toBeVisible()
+  await expect(page.getByText("New posts go live immediately. Toggle 'Published' off to save as draft.")).toBeVisible()
   await page.getByLabel('Title').fill(title)
   await page.getByLabel('Tags (comma separated)').fill('playwright, regression')
 

@@ -15,7 +15,7 @@ test('s3-compatible lane uses presigned upload and renders the uploaded video pu
   const [createResponse, uploadTargetResponse] = await Promise.all([
     page.waitForResponse((res) => new URL(res.url()).pathname === '/api/admin/works' && res.request().method() === 'POST' && res.ok()),
     page.waitForResponse((res) => res.url().includes('/videos/upload-url') && res.request().method() === 'POST' && res.ok()),
-    page.getByRole('button', { name: 'Create And Add Videos' }).click(),
+    page.getByRole('button', { name: 'Create with Videos' }).click(),
   ])
 
   const uploadTarget = await uploadTargetResponse.json()

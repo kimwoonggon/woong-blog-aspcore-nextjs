@@ -31,8 +31,7 @@ test('admin can create and publish a work that appears on public works page', as
   await expect(page.locator('input[name="category"]')).toHaveValue('Uncategorized')
   await expect(page.locator('input[name="period"]')).toHaveValue('2026.03 - 2026.03')
   await expect(page.locator('input[name="tags"]')).toHaveValue('playwright, works')
-  await expect(page.getByText('New works publish immediately when you save.')).toBeVisible()
-  await expect(page.getByText(/default to Uncategorized/i)).toBeVisible()
+  await expect(page.getByText('New works go live immediately. Staged videos attach automatically after creation.')).toBeVisible()
 
   await page.locator('.tiptap.ProseMirror').first().fill(`This is a browser-driven published work for ${title}.`)
 

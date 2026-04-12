@@ -293,7 +293,7 @@ export function BlogEditor({ initialBlog, inlineMode = false }: BlogEditorProps)
                     <Textarea
                         id="excerpt"
                         name="excerpt"
-                        placeholder="A brief summary of the post (used in previews and SEO)..."
+                        placeholder="A brief summary of the post (used in previews and SEO)…"
                         value={excerpt}
                         onChange={(event) => {
                             setExcerpt(event.target.value.slice(0, 200))
@@ -348,8 +348,8 @@ export function BlogEditor({ initialBlog, inlineMode = false }: BlogEditorProps)
                         </div>
                     )}
                     {!isEditing && (
-                        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-100 md:ml-auto">
-                            New posts publish immediately when you save. You can switch them back to draft later from the edit screen.
+                        <div className="rounded-xl border border-border/80 bg-muted/50 px-4 py-3 text-sm text-muted-foreground md:ml-auto">
+                            New posts go live immediately. Toggle &apos;Published&apos; off to save as draft.
                         </div>
                     )}
                 </div>
@@ -373,11 +373,6 @@ export function BlogEditor({ initialBlog, inlineMode = false }: BlogEditorProps)
             </div>
 
             <div className="flex flex-col gap-3 border-t pt-8 sm:flex-row sm:items-center sm:justify-end">
-                {!isEditing && (
-                    <p className="text-sm text-muted-foreground sm:mr-auto">
-                        Saving creates a live post immediately, then returns you to the blog list so you can keep editing the library.
-                    </p>
-                )}
                 {!inlineMode && (
                     <Button type="button" variant="outline" onClick={() => router.back()}>Cancel</Button>
                 )}
@@ -386,7 +381,7 @@ export function BlogEditor({ initialBlog, inlineMode = false }: BlogEditorProps)
                     disabled={isSaving || !isDirty || !title.trim()}
                     className="px-8 font-medium"
                 >
-                    {isSaving ? 'Saving...' : isEditing ? 'Update Post' : 'Create Post'}
+                    {isSaving ? 'Saving…' : isEditing ? 'Update Post' : 'Create Post'}
                 </Button>
             </div>
         </form>

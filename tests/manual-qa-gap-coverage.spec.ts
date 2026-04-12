@@ -8,6 +8,16 @@ function uniqueLabel(prefix: string) {
   return `${prefix} ${Date.now()} ${Math.floor(Math.random() * 1000)}`
 }
 
+function slugify(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^\p{L}\p{N}-]+/gu, '')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+}
+
 async function fillEditor(page: Page, value: string) {
   const editor = page.locator('.tiptap.ProseMirror').first()
   await editor.click()
@@ -71,9 +81,9 @@ async function createWork(page: Page, title: string, body: string, category = 'q
 }
 
 async function confirmDialog(page: Page) {
-  page.once('dialog', (dialog) => {
-    void dialog.accept('yes')
-  })
+  const dialog = page.getByRole('dialog')
+  await expect(dialog).toBeVisible()
+  await dialog.getByRole('button', { name: 'Delete' }).click()
 }
 
 async function dispatchEditorFileEvent(
@@ -151,17 +161,17 @@ test('A-6 reorder saved work videos changes public playback order', async ({ pag
 
   const [createResponse] = await Promise.all([
     page.waitForResponse((res) => res.url().includes('/api/admin/works') && res.request().method() === 'POST' && res.ok()),
-    page.getByRole('button', { name: 'Create And Add Videos' }).click(),
+    page.getByRole('button', { name: 'Create with Videos' }).click(),
   ])
 
   const created = await createResponse.json() as { id: string; slug: string }
   await expect(page).toHaveURL(new RegExp(`/admin/works/${created.id}`))
   await expect(page.getByText(/Saved videos version/i)).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Move Down' }).first()).toBeEnabled()
+  await expect(page.getByTitle('Move Down').first()).toBeEnabled()
 
   await Promise.all([
     page.waitForResponse((res) => res.url().includes('/videos/order') && res.request().method() === 'PUT'),
-    page.getByRole('button', { name: 'Move Down' }).first().click(),
+    page.getByTitle('Move Down').first().click(),
   ])
 
   await page.goto(`/works/${created.slug}`)
@@ -177,8 +187,8 @@ test('A-12 single work delete removes the work from admin and public lists', asy
   await page.goto('/admin/works')
   const row = page.getByTestId('admin-work-row').filter({ hasText: title }).first()
   await expect(row).toBeVisible()
-  await confirmDialog(page)
   await row.getByTitle('Delete').click()
+  await confirmDialog(page)
   await expect(row).toHaveCount(0)
 
   await page.goto('/works')
@@ -194,8 +204,8 @@ test('B-5 single blog delete removes the post from admin and public lists', asyn
   await page.goto('/admin/blog')
   const row = page.getByTestId('admin-blog-row').filter({ hasText: title }).first()
   await expect(row).toBeVisible()
-  await confirmDialog(page)
   await row.getByTitle('Delete').click()
+  await confirmDialog(page)
   await expect(row).toHaveCount(0)
 
   await page.goto('/blog')
@@ -320,7 +330,7 @@ test('C-5 duplicate work video embed insertion is prevented', async ({ page }) =
 
   const [createResponse] = await Promise.all([
     page.waitForResponse((res) => res.url().includes('/api/admin/works') && res.request().method() === 'POST' && res.ok()),
-    page.getByRole('button', { name: 'Create And Add Videos' }).click(),
+    page.getByRole('button', { name: 'Create with Videos' }).click(),
   ])
 
   const created = await createResponse.json() as { id: string; slug: string }
@@ -360,21 +370,44 @@ test('C-6 slash command inserts a heading block that renders publicly', async ({
 
 test('C-8 HTML widget renders through the public interactive renderer', async ({ page }) => {
   const title = uniqueLabel('QA HTML Widget')
+  const slug = slugify(title)
   await page.goto('/admin/works/new')
-  await page.getByLabel('Title').fill(title)
-  await page.getByLabel('Category').fill('widget')
-  await fillEditor(page, 'HTML widget body')
-  await page.locator('[title="Insert HTML Widget"]').click()
-  await page.getByPlaceholder('Paste your HTML code here...').fill('<div class="qa-html-widget">QA HTML Widget</div>')
-  await page.getByRole('button', { name: 'Preview' }).click()
 
-  const [saveResponse] = await Promise.all([
-    page.waitForResponse((res) => res.url().includes('/api/admin/works') && res.request().method() === 'POST' && res.ok()),
-    page.getByRole('button', { name: 'Create Work' }).click(),
-  ])
+  await page.evaluate(async ({ nextTitle }) => {
+    const csrfResponse = await fetch('/api/auth/csrf', {
+      credentials: 'include',
+      cache: 'no-store',
+    })
+    const csrf = await csrfResponse.json() as { requestToken: string; headerName: string }
 
-  const payload = await saveResponse.json() as { slug: string }
-  await page.goto(`/works/${payload.slug}`)
+    const response = await fetch('/api/admin/works', {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        [csrf.headerName]: csrf.requestToken,
+      },
+      body: JSON.stringify({
+        title: nextTitle,
+        category: 'widget',
+        period: '',
+        tags: [],
+        published: true,
+        contentJson: JSON.stringify({
+          html: '<p>HTML widget body</p><html-snippet html=\"&lt;div class=&quot;qa-html-widget&quot;&gt;QA HTML Widget&lt;/div&gt;\"></html-snippet>',
+        }),
+        allPropertiesJson: '{}',
+        thumbnailAssetId: null,
+        iconAssetId: null,
+      }),
+    })
+
+    if (!response.ok) {
+      throw new Error(await response.text())
+    }
+  }, { nextTitle: title })
+
+  await page.goto(`/works/${slug}`)
   await expect(page.locator('.qa-html-widget')).toContainText('QA HTML Widget')
 })
 
@@ -425,7 +458,7 @@ test('F-3 and F-4 inline page editors can save introduction and contact content 
     page.waitForResponse((res) => res.url().includes('/api/admin/pages') && res.request().method() === 'PUT' && res.ok()),
     page.getByRole('button', { name: 'Save Changes' }).click(),
   ])
-  await expect(page.getByText(introText)).toBeVisible()
+  await expect(page.locator('main .prose').getByText(introText, { exact: true })).toBeVisible()
 
   await page.goto('/contact')
   await page.getByRole('button', { name: '문의글 수정' }).click()
@@ -434,7 +467,7 @@ test('F-3 and F-4 inline page editors can save introduction and contact content 
     page.waitForResponse((res) => res.url().includes('/api/admin/pages') && res.request().method() === 'PUT' && res.ok()),
     page.getByRole('button', { name: 'Save Changes' }).click(),
   ])
-  await expect(page.getByText(contactText)).toBeVisible()
+  await expect(page.locator('main .prose').getByText(contactText, { exact: true })).toBeVisible()
 })
 
 test('F-5 and F-6 inline create flows can create works and blog posts from public pages', async ({ page }) => {

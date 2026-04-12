@@ -1,9 +1,10 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Eye, Pencil, Trash2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Eye, Pencil, Trash2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -20,6 +21,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import type { WorkAdminItem } from '@/lib/api/works'
 import { deleteAdminWork, deleteManyAdminWorks } from '@/lib/api/admin-mutations'
 import { useResponsivePageSize } from '@/hooks/useResponsivePageSize'
+import { toast } from 'sonner'
 
 interface AdminWorksTableClientProps {
   works: WorkAdminItem[]
@@ -112,14 +114,14 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
         setPendingDelete(null)
         router.refresh()
       } catch (error) {
-        window.alert(error instanceof Error ? error.message : 'Failed to delete works.')
+        toast.error(error instanceof Error ? error.message : 'Failed to delete works.')
       }
     })
   }
 
   return (
-    <div className="rounded-md border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 px-4 py-3 dark:border-gray-800">
+    <div className="rounded-md border border-border bg-background">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">
         <div className="flex min-w-[240px] flex-1 items-center gap-3">
           <Input
             value={query}
@@ -137,7 +139,7 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
                 ),
               )
             }}
-            placeholder="Search by title, tags, or category..."
+            placeholder="Search by title, tags, or category…"
             aria-label="Search work titles"
             className="max-w-sm"
           />
@@ -167,6 +169,7 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
                 onCheckedChange={toggleAll}
               />
             </TableHead>
+            <TableHead>Thumbnail</TableHead>
             <TableHead>Title</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Published Date</TableHead>
@@ -185,10 +188,28 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
                     onCheckedChange={() => toggle(work.id)}
                   />
                 </TableCell>
-                <TableCell className="font-medium">
+                <TableCell>
+                  {work.thumbnailUrl ? (
+                    <div className="overflow-hidden rounded-md border border-border bg-muted">
+                      <Image
+                        src={work.thumbnailUrl}
+                        alt={`${work.title} thumbnail`}
+                        width={64}
+                        height={48}
+                        unoptimized
+                        className="h-12 w-16 object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex h-12 w-16 items-center justify-center rounded-md border border-dashed border-border bg-muted px-2 text-center text-[11px] font-medium text-muted-foreground">
+                      No image
+                    </div>
+                  )}
+                </TableCell>
+                <TableCell className="min-w-0 font-medium">
                   <Link
                     href={`/admin/works/${work.id}?returnTo=${returnTo}`}
-                    className="transition-colors hover:text-primary hover:underline"
+                    className="block truncate transition-colors hover:text-primary hover:underline"
                   >
                     {work.title}
                   </Link>
@@ -204,26 +225,37 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
                     </Badge>
                   )}
                 </TableCell>
-                <TableCell className="text-sm text-gray-500">
+                <TableCell className="text-sm tabular-nums text-muted-foreground">
                   {work.publishedAt ? new Date(work.publishedAt).toLocaleDateString() : '—'}
                 </TableCell>
                 <TableCell>{work.category}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
-                    <Link href={`/works/${work.slug}`} target="_blank">
-                      <Button variant="ghost" size="icon" title="View Public">
+                    <Button asChild variant="ghost" size="icon">
+                      <Link
+                        href={`/works/${work.slug}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label={`View public work: ${work.title}`}
+                        title="View Public"
+                      >
                         <Eye className="h-4 w-4" />
-                      </Button>
-                    </Link>
-                    <Link href={`/admin/works/${work.id}?returnTo=${returnTo}`}>
-                      <Button variant="ghost" size="icon" title="Edit">
+                      </Link>
+                    </Button>
+                    <Button asChild variant="ghost" size="icon">
+                      <Link
+                        href={`/admin/works/${work.id}?returnTo=${returnTo}`}
+                        aria-label={`Edit work: ${work.title}`}
+                        title="Edit"
+                      >
                         <Pencil className="h-4 w-4" />
-                      </Button>
-                    </Link>
+                      </Link>
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"
                       className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
+                      aria-label={`Delete work: ${work.title}`}
                       title="Delete"
                       onClick={() => requestDelete([work.id], work.title)}
                       disabled={isPending}
@@ -236,56 +268,38 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={6} className="h-24 text-center">
+              <TableCell colSpan={7} className="h-24 text-center">
                 No works found.
               </TableCell>
             </TableRow>
           )}
         </TableBody>
       </Table>
-      <div className="flex flex-wrap items-center justify-center gap-2 border-t border-gray-200 px-4 py-3 dark:border-gray-800">
+      <div className="flex flex-wrap items-center justify-center gap-3 border-t border-border px-4 py-3 sm:justify-between">
         <Button
           type="button"
           variant="outline"
           size="sm"
-          aria-label="처음"
-          disabled={currentPage <= 1}
-          onClick={() => setPage(1)}
-        >
-          First
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          aria-label="이전"
+          aria-label="Previous page"
           disabled={currentPage <= 1}
           onClick={() => setPage((active) => Math.max(1, active - 1))}
         >
+          <ChevronLeft className="h-4 w-4" aria-hidden="true" />
           Previous
         </Button>
-        <span className="text-sm text-muted-foreground">
-          {currentPage} / {totalPages}
+        <span className="text-sm tabular-nums text-muted-foreground">
+          Page {currentPage} of {totalPages}
         </span>
         <Button
           type="button"
           variant="outline"
           size="sm"
-          aria-label="다음"
+          aria-label="Next page"
           disabled={currentPage >= totalPages}
           onClick={() => setPage((active) => Math.min(totalPages, active + 1))}
         >
           Next
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          aria-label="끝"
-          disabled={currentPage >= totalPages}
-          onClick={() => setPage(totalPages)}
-        >
-          Last
+          <ChevronRight className="h-4 w-4" aria-hidden="true" />
         </Button>
       </div>
       <Dialog open={pendingDelete !== null} onOpenChange={(open) => !open && setPendingDelete(null)}>

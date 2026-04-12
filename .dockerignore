@@ -5,6 +5,7 @@ npm-debug.log
 README.md
 .next
 .next-build
+.next-playwright
 .git
 .codex
 .vercel

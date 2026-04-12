@@ -70,12 +70,12 @@ export default async function BlogPage({ searchParams }: PageProps) {
             <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <h1 className="text-3xl font-heading font-bold text-foreground md:text-4xl">Blog</h1>
                 <div className="flex flex-wrap gap-2">
-                    <PublicAdminLink href="/admin/blog" label="Manage Blog" variant="manage" />
+                    <PublicAdminLink href="/admin/blog" label="글 관리" variant="manage" />
                 </div>
             </div>
             {session.authenticated && session.role === 'admin' && (
                 <InlineAdminEditorShell
-                    triggerLabel="New Post"
+                    triggerLabel="새 글 쓰기"
                     title="Blog Inline Create"
                     description="Create a new post inline without leaving the current public page."
                 >

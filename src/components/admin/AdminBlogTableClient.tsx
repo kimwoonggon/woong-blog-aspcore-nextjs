@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useMemo, useState, useTransition } from 'react'
-import { Eye, Pencil, Sparkles, Trash2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Eye, Pencil, Sparkles, Trash2 } from 'lucide-react'
 import { AdminBlogBatchAiPanel } from '@/components/admin/AdminBlogBatchAiPanel'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -21,6 +21,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import type { BlogAdminItem } from '@/lib/api/blogs'
 import { deleteAdminBlog, deleteManyAdminBlogs } from '@/lib/api/admin-mutations'
 import { useResponsivePageSize } from '@/hooks/useResponsivePageSize'
+import { toast } from 'sonner'
 
 interface AdminBlogTableClientProps {
   blogs: BlogAdminItem[]
@@ -116,14 +117,14 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
         setPendingDelete(null)
         router.refresh()
       } catch (error) {
-        window.alert(error instanceof Error ? error.message : 'Failed to delete blogs.')
+        toast.error(error instanceof Error ? error.message : 'Failed to delete blogs.')
       }
     })
   }
 
   return (
-    <div className="rounded-md border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 px-4 py-3 dark:border-gray-800">
+    <div className="rounded-md border border-border bg-background">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">
         <div className="flex min-w-[240px] flex-1 items-center gap-3">
           <Input
             value={query}
@@ -141,7 +142,7 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
                 ),
               )
             }}
-            placeholder="Search by title or tags..."
+            placeholder="Search by title or tags…"
             aria-label="Search blog titles"
             className="max-w-sm"
           />
@@ -214,10 +215,10 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
                     onCheckedChange={() => toggle(blog.id)}
                   />
                 </TableCell>
-                <TableCell className="font-medium">
+                <TableCell className="min-w-0 font-medium">
                   <Link
                     href={`/admin/blog/${blog.id}`}
-                    className="transition-colors hover:text-primary hover:underline"
+                    className="block truncate transition-colors hover:text-primary hover:underline"
                   >
                     {blog.title}
                   </Link>
@@ -233,26 +234,50 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
                     </Badge>
                   )}
                 </TableCell>
-                <TableCell className="text-sm text-gray-500">
+                <TableCell className="text-sm tabular-nums text-muted-foreground">
                   {blog.publishedAt ? new Date(blog.publishedAt).toLocaleDateString() : '—'}
                 </TableCell>
-                <TableCell>{blog.tags?.join(', ')}</TableCell>
+                <TableCell>
+                  {blog.tags.length > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {blog.tags.slice(0, 3).map((tag) => (
+                        <Badge key={tag} variant="secondary" className="text-xs">
+                          {tag}
+                        </Badge>
+                      ))}
+                      {blog.tags.length > 3 ? (
+                        <Badge variant="outline" className="text-xs">
+                          +{blog.tags.length - 3}
+                        </Badge>
+                      ) : null}
+                    </div>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">No tags</span>
+                  )}
+                </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
-                    <Link href={`/blog/${blog.slug}`} target="_blank">
-                      <Button variant="ghost" size="icon" title="View Public">
+                    <Button asChild variant="ghost" size="icon">
+                      <Link
+                        href={`/blog/${blog.slug}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label={`View public post: ${blog.title}`}
+                        title="View Public"
+                      >
                         <Eye className="h-4 w-4" />
-                      </Button>
-                    </Link>
-                    <Link href={`/admin/blog/${blog.id}`}>
-                      <Button variant="ghost" size="icon" title="Edit">
+                      </Link>
+                    </Button>
+                    <Button asChild variant="ghost" size="icon">
+                      <Link href={`/admin/blog/${blog.id}`} aria-label={`Edit post: ${blog.title}`} title="Edit">
                         <Pencil className="h-4 w-4" />
-                      </Button>
-                    </Link>
+                      </Link>
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"
                       className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
+                      aria-label={`Delete post: ${blog.title}`}
                       title="Delete"
                       onClick={() => requestDelete([blog.id], blog.title)}
                       disabled={isPending}
@@ -272,49 +297,31 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
           )}
         </TableBody>
       </Table>
-      <div className="flex flex-wrap items-center justify-center gap-2 border-t border-gray-200 px-4 py-3 dark:border-gray-800">
+      <div className="flex flex-wrap items-center justify-center gap-3 border-t border-border px-4 py-3 sm:justify-between">
         <Button
           type="button"
           variant="outline"
           size="sm"
-          aria-label="처음"
-          disabled={currentPage <= 1}
-          onClick={() => setPage(1)}
-        >
-          First
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          aria-label="이전"
+          aria-label="Previous page"
           disabled={currentPage <= 1}
           onClick={() => setPage((active) => Math.max(1, active - 1))}
         >
+          <ChevronLeft className="h-4 w-4" aria-hidden="true" />
           Previous
         </Button>
-        <span className="text-sm text-muted-foreground">
-          {currentPage} / {totalPages}
+        <span className="text-sm tabular-nums text-muted-foreground">
+          Page {currentPage} of {totalPages}
         </span>
         <Button
           type="button"
           variant="outline"
           size="sm"
-          aria-label="다음"
+          aria-label="Next page"
           disabled={currentPage >= totalPages}
           onClick={() => setPage((active) => Math.min(totalPages, active + 1))}
         >
           Next
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          aria-label="끝"
-          disabled={currentPage >= totalPages}
-          onClick={() => setPage(totalPages)}
-        >
-          Last
+          <ChevronRight className="h-4 w-4" aria-hidden="true" />
         </Button>
       </div>
       <Dialog open={pendingDelete !== null} onOpenChange={(open) => !open && setPendingDelete(null)}>

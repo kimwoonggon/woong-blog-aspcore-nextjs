@@ -1,9 +1,23 @@
 import { expect, type Page } from '@playwright/test'
 
+async function gotoStable(page: Page, url: string) {
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      await page.goto(url, { waitUntil: 'domcontentloaded' })
+      await page.waitForLoadState('networkidle')
+      return
+    } catch (error) {
+      if (!(error instanceof Error) || !error.message.includes('ERR_ABORTED') || attempt === 1) {
+        throw error
+      }
+    }
+  }
+}
+
 export async function loginAsLocalAdmin(page: Page, returnPath = '/') {
   const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost'
 
-  await page.goto(`${baseUrl}/login`, { waitUntil: 'networkidle' })
+  await gotoStable(page, `${baseUrl}/login`)
   await page.getByRole('button', { name: 'Continue as Local Admin' }).click()
   await expect(page).toHaveURL(/\/admin(?:\/dashboard)?$/, { timeout: 15000 })
   await expect.poll(async () => {
@@ -25,5 +39,5 @@ export async function loginAsLocalAdmin(page: Page, returnPath = '/') {
       return false
     }
   }, { timeout: 15000 }).toBe(true)
-  await page.goto(`${baseUrl}${returnPath}`, { waitUntil: 'networkidle' })
+  await gotoStable(page, `${baseUrl}${returnPath}`)
 }

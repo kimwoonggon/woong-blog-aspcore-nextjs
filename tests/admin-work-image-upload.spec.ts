@@ -12,7 +12,7 @@ test('work editor uploads thumbnail/icon media and reuses them across admin/publ
 
   await page.getByLabel('Title').fill(title)
   await page.getByLabel('Category').fill('media')
-  await expect(page.getByText('New works publish immediately when you save.')).toBeVisible()
+  await expect(page.getByText('New works go live immediately. Staged videos attach automatically after creation.')).toBeVisible()
   await page.locator('.tiptap.ProseMirror').first().fill('이미지가 포함된 work입니다.')
 
   await Promise.all([
@@ -39,6 +39,7 @@ test('work editor uploads thumbnail/icon media and reuses them across admin/publ
   await expect(page.getByAltText('Work icon preview')).toHaveAttribute('src', /\/media\/work-icons\//)
 
   await page.goto('/works')
-  await expect(page.getByRole('heading', { name: title })).toBeVisible()
-  await expect(page.locator(`img[alt="${title}"]`).first()).toHaveAttribute('src', /work-thumbnails/)
+  const publicCardImage = page.locator(`a[href*="/works/${payload.slug}"] img[alt="${title}"]`).first()
+  await expect(publicCardImage).toBeVisible()
+  await expect(publicCardImage).toHaveAttribute('src', /work-thumbnails/)
 })

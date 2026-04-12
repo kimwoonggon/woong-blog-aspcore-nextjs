@@ -87,19 +87,19 @@ test.describe('public pages', () => {
     expectRgbClose(badgeBackground, expectedBadgeBackground)
   })
 
-  test('DM-08: work detail page uses navy date badges and orange accents in dark mode', async ({ page }) => {
-    await gotoWithTheme(page, '/works/seeded-work')
-    const badge = page.locator('article header .rounded-full').first()
-    const excerpt = page.locator('article header p').first()
+test('DM-08: work detail page keeps navy detail anchors in dark mode', async ({ page }) => {
+  await gotoWithTheme(page, '/works/seeded-work')
+  const badge = page.locator('article header .rounded-full').first()
+  const excerpt = page.locator('article header p').first()
 
     const badgeBackground = await getColorChannels(badge, 'background-color')
     const expectedBadgeBackground = await getRootVariableChannels(page, '--brand-navy')
     expectRgbClose(badgeBackground, expectedBadgeBackground)
 
-    const borderColor = await getColorChannels(excerpt, 'border-left-color')
-    const expectedBorderColor = await getRootVariableChannels(page, '--brand-orange')
-    expectRgbClose(borderColor, expectedBorderColor)
-  })
+  const borderColor = await getColorChannels(excerpt, 'border-left-color')
+  const expectedBorderColor = await getRootVariableChannels(page, '--brand-navy')
+  expectRgbClose(borderColor, expectedBorderColor)
+})
 
   test('DM-09: blog listing hover state uses accent color in dark mode', async ({ page }) => {
     await gotoWithTheme(page, '/blog')
@@ -110,37 +110,37 @@ test.describe('public pages', () => {
     expect(titleClass).toContain('group-hover/card:text-brand-accent')
   })
 
-  test('DM-10: blog detail page uses navy date badges and keeps prose readable', async ({ page }) => {
-    await gotoWithTheme(page, '/blog/seeded-blog')
-    const badge = page.locator('article header .rounded-full').first()
-    const excerpt = page.locator('article header p').first()
-    const prose = page.locator('.prose').first()
+test('DM-10: blog detail page uses navy detail anchors and keeps prose readable', async ({ page }) => {
+  await gotoWithTheme(page, '/blog/seeded-blog')
+  const badge = page.locator('article header .rounded-full').first()
+  const excerpt = page.locator('article header p').first()
+  const prose = page.locator('#blog-detail-content .prose').first()
 
     const badgeBackground = await getColorChannels(badge, 'background-color')
     const expectedBadgeBackground = await getRootVariableChannels(page, '--brand-navy')
     expectRgbClose(badgeBackground, expectedBadgeBackground)
 
-    const borderColor = await getColorChannels(excerpt, 'border-left-color')
-    const expectedBorderColor = await getRootVariableChannels(page, '--brand-accent')
-    expectRgbClose(borderColor, expectedBorderColor)
+  const borderColor = await getColorChannels(excerpt, 'border-left-color')
+  const expectedBorderColor = await getRootVariableChannels(page, '--brand-navy')
+  expectRgbClose(borderColor, expectedBorderColor)
 
     await expect(prose).toBeVisible()
     await page.screenshot({ path: 'test-results/playwright/dark-mode-blog-detail-dark.png', fullPage: true })
   })
 
-  test('DM-11: contact page email link uses the dark blue variant', async ({ page }) => {
-    await gotoWithTheme(page, '/contact')
-    const emailLink = page.locator('main a[href^="mailto:"]').first()
-    if (await emailLink.count()) {
-      await expect(emailLink).toBeVisible()
-      const linkColor = await getColorChannels(emailLink, 'color')
-      const expectedColor = await getColorChannelsFromCssValue(page, 'rgb(96 165 250)')
-      expectRgbClose(linkColor, expectedColor)
-      return
-    }
+test('DM-11: contact page email link uses the semantic primary color in dark mode', async ({ page }) => {
+  await gotoWithTheme(page, '/contact')
+  const emailLink = page.locator('main a[href^="mailto:"]').first()
+  if (await emailLink.count()) {
+    await expect(emailLink).toBeVisible()
+    const linkColor = await getColorChannels(emailLink, 'color')
+    const expectedColor = await getRootVariableChannels(page, '--primary')
+    expectRgbClose(linkColor, expectedColor)
+    return
+  }
 
-    await expect(page.locator('main .prose').first()).toBeVisible()
-  })
+  await expect(page.locator('main .prose').first()).toBeVisible()
+})
 
   test('DM-12: footer renders with a dark background and stable links', async ({ page }) => {
     await gotoWithTheme(page, '/')
@@ -170,7 +170,7 @@ test.describe('public pages', () => {
 
     const codeBlock = page.locator('.prose pre').first()
     if (!(await codeBlock.count())) {
-      await expect(page.locator('.prose')).toBeVisible()
+      await expect(page.locator('#blog-detail-content .prose').first()).toBeVisible()
       return
     }
 
@@ -265,25 +265,25 @@ test.describe('login and admin dark mode', () => {
     await page.screenshot({ path: 'test-results/playwright/dark-mode-admin-dashboard-dark.png', fullPage: true })
   })
 
-  test('DM-15: blog editor uses the dark brand button', async ({ page }) => {
+  test('DM-15: blog editor uses the dark primary button token', async ({ page }) => {
     await gotoWithTheme(page, '/admin/blog')
-    await page.getByTestId('admin-blog-row').first().getByRole('link').first().click()
+    await page.getByTestId('admin-blog-row').first().getByTitle('Edit').click()
     const saveButton = page.getByRole('button', { name: /Update Post|Create Post/i })
     await expect(saveButton).toBeVisible()
 
     const background = await getColorChannels(saveButton, 'background-color')
-    const expectedBackground = await getRootVariableChannels(page, '--brand-navy')
+    const expectedBackground = await getRootVariableChannels(page, '--primary')
     expectRgbClose(background, expectedBackground)
   })
 
-  test('DM-16: work editor uses the dark brand button', async ({ page }) => {
+  test('DM-16: work editor uses the dark primary button token', async ({ page }) => {
     await gotoWithTheme(page, '/admin/works')
     await page.getByTestId('admin-work-row').first().getByRole('link').first().click()
-    const saveButton = page.getByRole('button', { name: /Update Work|Create And Add Videos/i }).last()
+    const saveButton = page.getByRole('button', { name: /Update Work|Create Work|Create with Videos/i }).last()
     await expect(saveButton).toBeVisible()
 
     const background = await getColorChannels(saveButton, 'background-color')
-    const expectedBackground = await getRootVariableChannels(page, '--brand-navy')
+    const expectedBackground = await getRootVariableChannels(page, '--primary')
     expectRgbClose(background, expectedBackground)
   })
 

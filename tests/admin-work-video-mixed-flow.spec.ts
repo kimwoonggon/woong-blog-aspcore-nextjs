@@ -51,7 +51,7 @@ test('admin can create a mixed work with two youtube links, two mp4 uploads, and
 
   const [createResponse] = await Promise.all([
     page.waitForResponse((res) => new URL(res.url()).pathname === '/api/admin/works' && res.request().method() === 'POST' && res.ok()),
-    page.getByRole('button', { name: 'Create And Add Videos' }).click(),
+    page.getByRole('button', { name: 'Create with Videos' }).click(),
   ])
 
   const created = await createResponse.json()

@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test'
 
 test.use({ storageState: 'test-results/playwright/admin-storage-state.json' })
 
-test('single work delete uses a simple confirm dialog and removes the row', async ({ page }) => {
+test('single work delete uses the in-app dialog and removes the row', async ({ page }) => {
   const title = `Single Delete UX ${Date.now()}`
 
   await page.goto('/admin/works/new')
@@ -19,17 +19,15 @@ test('single work delete uses a simple confirm dialog and removes the row', asyn
   const row = page.getByTestId('admin-work-row').filter({ hasText: title }).first()
   await expect(row).toBeVisible()
 
-  page.once('dialog', async (dialog) => {
-    expect(dialog.type()).toBe('confirm')
-    expect(dialog.message()).toContain(`Delete "${title}"?`)
-    await dialog.accept()
-  })
+  await row.getByTitle('Delete').click()
+  const dialog = page.getByRole('dialog')
+  await expect(dialog).toBeVisible()
 
   await Promise.all([
     page.waitForResponse((response) =>
       response.url().includes('/api/admin/works/') && response.request().method() === 'DELETE' && response.ok(),
     ),
-    row.getByTitle('Delete').click(),
+    dialog.getByRole('button', { name: 'Delete' }).click(),
   ])
 
   await expect(row).toHaveCount(0)

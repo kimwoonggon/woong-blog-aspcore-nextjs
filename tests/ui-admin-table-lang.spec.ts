@@ -6,15 +6,13 @@ async function expectEnglishTableChrome(page: Page, path: string, searchLabel: s
   await page.goto(path)
 
   await expect(page.getByLabel(searchLabel)).toHaveAttribute('placeholder', /Search by/i)
-  await expect(page.getByText('First', { exact: true })).toBeVisible()
-  await expect(page.getByText('Previous', { exact: true })).toBeVisible()
-  await expect(page.getByText('Next', { exact: true })).toBeVisible()
-  await expect(page.getByText('Last', { exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Previous page' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Next page' })).toBeVisible()
+  await expect(page.getByText(/^Page \d+ of \d+$/)).toBeVisible()
+  await expect(page.getByText('First', { exact: true })).toHaveCount(0)
+  await expect(page.getByText('Last', { exact: true })).toHaveCount(0)
 
-  const paginationText = await page
-    .locator('div.flex.flex-wrap.items-center.justify-center.gap-2')
-    .last()
-    .innerText()
+  const paginationText = await page.getByText(/^Page \d+ of \d+$/).innerText()
 
   expect(paginationText).not.toMatch(/[가-힣]/)
 }

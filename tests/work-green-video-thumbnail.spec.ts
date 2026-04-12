@@ -16,7 +16,7 @@ test('uploaded green-only mp4 generates and persists an automatic thumbnail', as
 
   const [createResponse] = await Promise.all([
     page.waitForResponse((res) => new URL(res.url()).pathname === '/api/admin/works' && res.request().method() === 'POST' && res.ok()),
-    page.getByRole('button', { name: 'Create And Add Videos' }).click(),
+    page.getByRole('button', { name: 'Create with Videos' }).click(),
   ])
 
   const created = await createResponse.json()
@@ -40,7 +40,7 @@ test('uploaded green-only mp4 thumbnail is green at the pixel level', async ({ p
 
   const [createResponse] = await Promise.all([
     page.waitForResponse((res) => new URL(res.url()).pathname === '/api/admin/works' && res.request().method() === 'POST' && res.ok()),
-    page.getByRole('button', { name: 'Create And Add Videos' }).click(),
+    page.getByRole('button', { name: 'Create with Videos' }).click(),
   ])
 
   const created = await createResponse.json()

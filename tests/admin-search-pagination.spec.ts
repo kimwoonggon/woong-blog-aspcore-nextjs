@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test'
 
 test.use({ storageState: 'test-results/playwright/admin-storage-state.json' })
 
-test('admin blog page supports title search and first/last pagination controls', async ({ page }) => {
+test('admin blog page supports title search and compact pagination controls', async ({ page }) => {
   await page.goto('/admin/blog')
 
   const rows = page.getByTestId('admin-blog-row')
@@ -20,51 +20,57 @@ test('admin blog page supports title search and first/last pagination controls',
 
   await page.getByLabel('Search blog titles').clear()
 
-  const counter = page.locator('span.text-sm.text-muted-foreground').filter({ hasText: /\d+ \/ \d+/ }).first()
-  const initialCounter = (await counter.textContent())?.trim() ?? '1 / 1'
-  const [, initialTotal] = initialCounter.split('/').map((value) => Number(value.trim()))
+  const counter = page.getByText(/^Page \d+ of \d+$/).first()
+  const initialCounter = (await counter.textContent())?.trim() ?? 'Page 1 of 1'
+  const match = initialCounter.match(/^Page\s+(\d+)\s+of\s+(\d+)$/)
+  const initialTotal = Number(match?.[2] ?? '1')
 
-  await expect(page.getByRole('button', { name: '처음' })).toBeVisible()
-  await expect(page.getByRole('button', { name: '끝' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Previous page' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Next page' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'First' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Last' })).toHaveCount(0)
 
   if (initialTotal > 1) {
-    await page.getByRole('button', { name: '끝' }).click()
-    await expect(counter).toHaveText(new RegExp(`${initialTotal}\\s*/\\s*${initialTotal}`))
-    await page.getByRole('button', { name: '처음' }).click()
-    await expect(counter).toHaveText(/1\s*\/\s*\d+/)
+    await page.getByRole('button', { name: 'Next page' }).click()
+    await expect(counter).not.toHaveText(initialCounter)
+    await page.getByRole('button', { name: 'Previous page' }).click()
+    await expect(counter).toHaveText(/Page 1 of \d+/)
   }
 })
 
-test('admin works page supports title search and first/last pagination controls', async ({ page }) => {
+test('admin works page supports title search and compact pagination controls', async ({ page }) => {
   await page.goto('/admin/works')
 
   const rows = page.getByTestId('admin-work-row')
   await expect(rows.first()).toBeVisible()
 
-  const titles = await rows.locator('td:nth-child(2) a').allTextContents()
+  const titles = await rows.locator('td:nth-child(3) a').allTextContents()
   const searchTitle = titles.find(Boolean)?.trim() ?? ''
   const hiddenTitle = titles.find((title) => title.trim() && title.trim() !== searchTitle)?.trim() ?? ''
 
   await page.getByLabel('Search work titles').fill(searchTitle)
-  await expect(rows.locator('td:nth-child(2) a', { hasText: searchTitle }).first()).toBeVisible()
+  await expect(rows.locator('td:nth-child(3) a', { hasText: searchTitle }).first()).toBeVisible()
   if (hiddenTitle) {
     await expect(page.getByRole('link', { name: hiddenTitle })).toHaveCount(0)
   }
 
   await page.getByLabel('Search work titles').clear()
 
-  const counter = page.locator('span.text-sm.text-muted-foreground').filter({ hasText: /\d+ \/ \d+/ }).first()
-  const initialCounter = (await counter.textContent())?.trim() ?? '1 / 1'
-  const [, initialTotal] = initialCounter.split('/').map((value) => Number(value.trim()))
+  const counter = page.getByText(/^Page \d+ of \d+$/).first()
+  const initialCounter = (await counter.textContent())?.trim() ?? 'Page 1 of 1'
+  const match = initialCounter.match(/^Page\s+(\d+)\s+of\s+(\d+)$/)
+  const initialTotal = Number(match?.[2] ?? '1')
 
-  await expect(page.getByRole('button', { name: '처음' })).toBeVisible()
-  await expect(page.getByRole('button', { name: '끝' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Previous page' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Next page' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'First' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Last' })).toHaveCount(0)
 
   if (initialTotal > 1) {
-    await page.getByRole('button', { name: '끝' }).click()
-    await expect(counter).toHaveText(new RegExp(`${initialTotal}\\s*/\\s*${initialTotal}`))
-    await page.getByRole('button', { name: '처음' }).click()
-    await expect(counter).toHaveText(/1\s*\/\s*\d+/)
+    await page.getByRole('button', { name: 'Next page' }).click()
+    await expect(counter).not.toHaveText(initialCounter)
+    await page.getByRole('button', { name: 'Previous page' }).click()
+    await expect(counter).toHaveText(/Page 1 of \d+/)
   }
 })
 

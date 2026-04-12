@@ -8,11 +8,11 @@ test('admin blog table can filter by tag', async ({ page }) => {
   const rows = page.getByTestId('admin-blog-row')
   test.skip((await rows.count()) === 0, 'No blog rows available')
 
-  const tagCells = await rows.locator('td:nth-child(5)').allTextContents()
-  const searchTag = tagCells
-    .flatMap((cell) => cell.split(','))
+  const visibleTagBadges = rows.locator('td:nth-child(5) [data-slot="badge"]')
+  const tagTexts = (await visibleTagBadges.allTextContents())
     .map((tag) => tag.trim())
-    .find(Boolean)
+    .filter((tag) => tag.length > 0 && !tag.startsWith('+'))
+  const searchTag = tagTexts.find(Boolean)
 
   test.skip(!searchTag, 'No blog tags available to verify tag search')
 
@@ -31,7 +31,7 @@ test('admin works table can filter by category', async ({ page }) => {
   const rows = page.getByTestId('admin-work-row')
   test.skip((await rows.count()) === 0, 'No work rows available')
 
-  const categoryCells = await rows.locator('td:nth-child(5)').allTextContents()
+  const categoryCells = await rows.locator('td:nth-child(6)').allTextContents()
   const searchCategory = categoryCells.map((value) => value.trim()).find(Boolean)
 
   test.skip(!searchCategory, 'No work categories available to verify category search')
@@ -41,6 +41,6 @@ test('admin works table can filter by category', async ({ page }) => {
   const filteredRows = page.getByTestId('admin-work-row')
   await expect(filteredRows.first()).toBeVisible()
 
-  const visibleCategoryCells = await filteredRows.locator('td:nth-child(5)').allTextContents()
+  const visibleCategoryCells = await filteredRows.locator('td:nth-child(6)').allTextContents()
   expect(visibleCategoryCells.every((cell) => cell.toLowerCase().includes(searchCategory!.toLowerCase()))).toBeTruthy()
 })

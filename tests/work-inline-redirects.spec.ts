@@ -5,7 +5,7 @@ import { expect, test } from '@playwright/test'
 test.use({ storageState: 'test-results/playwright/admin-storage-state.json' })
 const SAMPLE_MP4 = readFileSync(path.resolve('tests/fixtures/sample-video.mp4'))
 
-test('public works inline create returns to the works list front page', async ({ page }) => {
+test('public works inline create returns to the first works page after save', async ({ page }) => {
   const title = `Public Redirect Work ${Date.now()}`
 
   await page.goto('/works?page=2&pageSize=2')
@@ -21,7 +21,9 @@ test('public works inline create returns to the works list front page', async ({
 
   await expect(page).toHaveURL(/\/works(?:\?|$)/)
   await expect.poll(() => new URL(page.url()).searchParams.get('page')).toBe('1')
-  await expect(page.getByText(title)).toBeVisible()
+  await expect.poll(() => new URL(page.url()).searchParams.get('pageSize')).toBe('2')
+  await expect(page.getByRole('button', { name: '뒤로가기' })).toHaveCount(0)
+  await expect(page.getByLabel('Title')).toHaveCount(0)
 })
 
 test('public work detail inline edit returns the user to the originating works page after save', async ({ page }) => {

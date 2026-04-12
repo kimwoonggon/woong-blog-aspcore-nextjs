@@ -44,7 +44,7 @@ test('public works inline create with staged videos stays on /works and refreshe
 
   await Promise.all([
     page.waitForResponse((res) => res.url().includes('/api/admin/works') && res.request().method() === 'POST' && res.ok()),
-    page.getByRole('button', { name: 'Create And Add Videos' }).click(),
+    page.getByRole('button', { name: 'Create with Videos' }).click(),
   ])
 
   await expect(page).toHaveURL(/\/works(?:\?|$)/)

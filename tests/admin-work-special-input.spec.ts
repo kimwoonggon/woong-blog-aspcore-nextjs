@@ -12,7 +12,7 @@ test('work editor accepts Korean and punctuation-heavy input and publishes publi
   await page.getByLabel('Category').fill('qa-한글')
   await page.getByLabel('Tags (comma separated)').fill('qa,한글,!!!')
   await page.locator('.tiptap.ProseMirror').first().fill(content)
-  await expect(page.getByText('New works publish immediately when you save.')).toBeVisible()
+  await expect(page.getByText('New works go live immediately. Staged videos attach automatically after creation.')).toBeVisible()
 
   const [response] = await Promise.all([
     page.waitForResponse((res) => res.url().includes('/api/admin/works') && res.request().method() === 'POST' && res.ok()),
