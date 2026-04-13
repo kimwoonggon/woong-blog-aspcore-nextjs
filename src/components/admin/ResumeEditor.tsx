@@ -148,7 +148,7 @@ export function ResumeEditor({ resumeAsset }: ResumeEditorProps) {
                                 size="icon"
                                 variant="ghost"
                                 aria-label="Delete resume"
-                                className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                                className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
                                 onClick={handleDelete}
                                 disabled={isDeleting}
                             >

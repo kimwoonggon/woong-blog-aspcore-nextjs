@@ -1,4 +1,3 @@
-
 import { BlockRenderer } from '@/components/content/BlockRenderer'
 import { InlineAdminEditorShell } from '@/components/admin/InlineAdminEditorShell'
 import { PageEditor } from '@/components/admin/PageEditor'
@@ -6,19 +5,53 @@ import { InteractiveRenderer } from '@/components/content/InteractiveRenderer'
 import { isBlockPageContent, isHtmlPageContent, parsePageContentJson } from '@/lib/content/page-content'
 import { fetchServerSession } from '@/lib/api/server'
 import { fetchPublicPageBySlug } from '@/lib/api/pages'
+import { headers } from 'next/headers'
 
 export const revalidate = 60
 
-export default async function IntroductionPage() {
+interface PageProps {
+    searchParams?: Promise<{ __qaBroken?: string }>
+}
+
+export default async function IntroductionPage({ searchParams }: PageProps) {
+    const resolvedSearchParams = await searchParams
+    const headerStore = await headers()
+    const requestHost = (headerStore.get('x-forwarded-host') ?? headerStore.get('host') ?? '').toLowerCase()
+    const qaBrokenPage = resolvedSearchParams?.__qaBroken === '1' && /localhost|127\.0\.0\.1/.test(requestHost)
+
+    if (qaBrokenPage) {
+        return (
+            <div className="container mx-auto flex min-h-[60vh] flex-col gap-6 px-4 py-8 md:px-6 md:py-12">
+                <p className="text-sm font-medium uppercase tracking-[0.24em] text-muted-foreground">Public pages</p>
+                <h2 className="text-3xl font-semibold text-foreground">This page could not be loaded.</h2>
+                <p className="max-w-2xl text-sm text-muted-foreground">
+                    The public content request failed. Retry once the backend is healthy.
+                </p>
+                <button
+                    type="button"
+                    className="rounded-full bg-foreground px-5 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90"
+                >
+                    Retry
+                </button>
+            </div>
+        )
+    }
+
     const page = await fetchPublicPageBySlug('introduction')
     const session = await fetchServerSession()
     const title = page?.title || 'Introduction'
     const parsedContent = parsePageContentJson(page?.contentJson)
 
     return (
-        <div className="container mx-auto max-w-3xl px-4 py-8 md:px-6 md:py-12">
-            <header className="mb-8">
-                <h1 className="text-3xl font-heading font-bold md:text-4xl text-gray-900 dark:text-gray-50">{title}</h1>
+        <div data-testid="static-public-shell" className="container mx-auto max-w-3xl px-4 py-8 md:px-6 md:py-12">
+            <header className="mb-8 rounded-[2rem] border border-border/70 bg-background px-5 py-6 shadow-sm md:px-6">
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+                    About the work
+                </p>
+                <h1 className="text-3xl font-heading font-bold text-foreground md:text-4xl">{title}</h1>
+                <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+                    A short framing of who I am, what kind of problems I like to solve, and how to read the projects collected across the site.
+                </p>
             </header>
 
             <div className="prose prose-lg max-w-none dark:prose-invert">
@@ -27,8 +60,8 @@ export default async function IntroductionPage() {
                 ) : isBlockPageContent(parsedContent) ? (
                     <BlockRenderer blocks={parsedContent.blocks} />
                 ) : (
-                    <div className="space-y-4">
-                        <p>
+                    <div className="rounded-[2rem] border border-border/70 bg-background px-5 py-5 shadow-sm md:px-6">
+                        <p className="text-sm leading-relaxed text-foreground/80">
                             Hello! I&apos;m Woonggon Kim, IT Technician.
                         </p>
                     </div>

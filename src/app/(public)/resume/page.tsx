@@ -1,4 +1,3 @@
-
 import { InlineAdminEditorShell } from '@/components/admin/InlineAdminEditorShell'
 import { ResumeEditor } from '@/components/admin/ResumeEditor'
 import { Button } from '@/components/ui/button'
@@ -9,9 +8,15 @@ import { fetchResume } from '@/lib/api/site-settings'
 export const revalidate = 60
 export const dynamic = 'force-dynamic'
 
-export default async function ResumePage() {
-    const resume = await fetchResume()
+interface PageProps {
+    searchParams?: Promise<{ __qaEmpty?: string }>
+}
+
+export default async function ResumePage({ searchParams }: PageProps) {
+    const resolvedSearchParams = await searchParams
     const session = await fetchServerSession()
+    const qaEmptyResume = resolvedSearchParams?.__qaEmpty === '1'
+    const resume = qaEmptyResume ? null : await fetchResume()
     const resumeUrl = resume?.publicUrl ?? null
     const resumeAsset = resume
         ? {
@@ -22,19 +27,34 @@ export default async function ResumePage() {
         : null
 
     return (
-        <div className="container mx-auto px-4 py-8 md:px-6 md:py-12 h-[calc(100vh-64px-72px)] flex flex-col">
-            <div className="flex items-center justify-between mb-6">
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-50">Resume</h1>
-                {resumeUrl && (
-                    <Button asChild>
-                        <a href={resumeUrl} download>
-                            <Download className="mr-2 h-4 w-4" /> Download
-                        </a>
-                    </Button>
-                )}
-            </div>
+        <div
+            data-testid="resume-shell"
+            className="container mx-auto flex h-[calc(100vh-64px-72px)] flex-col px-4 py-8 md:px-6 md:py-12"
+        >
+            <header className="mb-6 rounded-[2rem] border border-border/70 bg-background px-5 py-6 shadow-sm md:px-6">
+                <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+                    <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+                            Resume
+                        </p>
+                        <h1 className="text-3xl font-heading font-bold text-foreground md:text-4xl">Resume</h1>
+                        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+                            A quick overview of experience, responsibilities, and the contexts behind the portfolio work collected here.
+                        </p>
+                    </div>
+                    {resumeUrl && (
+                        <div className="rounded-2xl border border-border/70 bg-muted/30 p-1">
+                            <Button asChild>
+                                <a href={resumeUrl} download>
+                                    <Download className="mr-2 h-4 w-4" /> Download PDF
+                                </a>
+                            </Button>
+                        </div>
+                    )}
+                </div>
+            </header>
 
-            <div className="flex-1 w-full bg-gray-100 rounded-lg overflow-hidden border border-gray-200 dark:bg-gray-800 dark:border-gray-700">
+            <div className="flex-1 w-full overflow-hidden rounded-[2rem] border border-border/70 bg-muted/30 shadow-sm">
                 {resumeUrl ? (
                     <iframe
                         src={`${resumeUrl}#toolbar=0`}
@@ -42,8 +62,13 @@ export default async function ResumePage() {
                         title="Resume PDF"
                     />
                 ) : (
-                    <div className="flex h-full items-center justify-center text-gray-500">
-                        No resume uploaded yet.
+                    <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center">
+                        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+                            Resume unavailable
+                        </p>
+                        <p className="text-sm leading-relaxed text-muted-foreground">
+                            No resume has been published yet. Use the contact page if you need one directly.
+                        </p>
                     </div>
                 )}
             </div>

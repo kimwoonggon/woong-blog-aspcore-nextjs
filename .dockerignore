@@ -4,6 +4,8 @@ node_modules
 npm-debug.log
 README.md
 .next
+.next-build
+.next-playwright
 .git
 .codex
 .vercel
@@ -12,5 +14,11 @@ test-results
 playwright-report
 .env*.local
 .env
+downloads
+docs
+db_status
+.devcontainer-data
+.refs
+.local-certs
 backend/**/bin
 backend/**/obj

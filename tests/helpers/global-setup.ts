@@ -7,7 +7,11 @@ function shouldIgnoreHttpsErrors(baseURL: string) {
 }
 
 function resolveAuthBaseUrl(baseURL: string) {
-  if (/^https?:\/\/(localhost|127\.0\.0\.1):3000$/i.test(baseURL)) {
+  if (/^http:\/\/(localhost|127\.0\.0\.1):3000$/i.test(baseURL)) {
+    return 'http://localhost:8080'
+  }
+
+  if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(baseURL)) {
     return 'http://localhost:8080'
   }
 
@@ -38,7 +42,7 @@ async function getReadyLoginPage(apiContext: APIRequestContext) {
   const body = await response.text()
 
   return {
-    ok: response.ok() && body.includes('Continue as Local Admin'),
+    ok: response.ok() && body.includes('Sign in with Google'),
     status: response.status(),
   }
 }
@@ -48,6 +52,8 @@ export default async function globalSetup(config: FullConfig) {
   if (!baseURL) {
     return
   }
+
+  const skipAuthBootstrap = process.env.PLAYWRIGHT_SKIP_AUTH_BOOTSTRAP === '1'
 
   const ignoreHTTPSErrors = shouldIgnoreHttpsErrors(baseURL)
   const deadline = Date.now() + 60_000
@@ -62,6 +68,11 @@ export default async function globalSetup(config: FullConfig) {
       const readiness = await getReadyLoginPage(uiContext)
       if (!readiness.ok) {
         throw new Error(`Unexpected login readiness response: ${readiness.status}`)
+      }
+
+      if (skipAuthBootstrap) {
+        await uiContext.dispose()
+        return
       }
 
       const authBaseURL = resolveAuthBaseUrl(baseURL)

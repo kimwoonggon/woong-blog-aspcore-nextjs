@@ -1,4 +1,3 @@
-
 import { BlockRenderer } from '@/components/content/BlockRenderer'
 import { InlineAdminEditorShell } from '@/components/admin/InlineAdminEditorShell'
 import { PageEditor } from '@/components/admin/PageEditor'
@@ -14,11 +13,19 @@ export default async function ContactPage() {
     const session = await fetchServerSession()
     const title = page?.title || 'Contact'
     const parsedContent = parsePageContentJson(page?.contentJson)
+    const fallbackEmail = 'woong@example.com'
+    const hasMailtoLink = JSON.stringify(parsedContent ?? {}).toLowerCase().includes('mailto:')
 
     return (
-        <div className="container mx-auto max-w-3xl px-4 py-8 md:px-6 md:py-12">
-            <header className="mb-8">
-                <h1 className="text-3xl font-heading font-bold md:text-4xl text-gray-900 dark:text-gray-50">{title}</h1>
+        <div data-testid="static-public-shell" className="container mx-auto max-w-3xl px-4 py-8 md:px-6 md:py-12">
+            <header className="mb-8 rounded-[2rem] border border-border/70 bg-background px-5 py-6 shadow-sm md:px-6">
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+                    Get in touch
+                </p>
+                <h1 className="text-3xl font-heading font-bold text-foreground md:text-4xl">{title}</h1>
+                <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+                    Use this page for a direct introduction, a project inquiry, or a quick follow-up after reading through the work.
+                </p>
             </header>
 
             <div className="prose prose-lg max-w-none dark:prose-invert">
@@ -27,11 +34,39 @@ export default async function ContactPage() {
                 ) : isBlockPageContent(parsedContent) ? (
                     <BlockRenderer blocks={parsedContent.blocks} />
                 ) : (
-                    <p>
-                        You can reach me at: <a href="mailto:john@example.com" className="text-blue-600 hover:underline">john@example.com</a>
-                    </p>
+                    <div className="rounded-[2rem] border border-border/70 bg-background px-5 py-5 shadow-sm md:px-6">
+                        <p className="text-sm leading-relaxed text-foreground/80">
+                            You can reach me directly at{' '}
+                            <a
+                                href="mailto:john@example.com"
+                                className="font-medium text-primary underline underline-offset-4 transition-colors hover:text-brand-cyan"
+                            >
+                                john@example.com
+                            </a>
+                            .
+                        </p>
+                    </div>
                 )}
             </div>
+
+            {!hasMailtoLink && (
+                <div className="mt-8 rounded-[2rem] border border-border/70 bg-muted/30 px-5 py-5 shadow-sm md:px-6">
+                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+                        Direct email
+                    </p>
+                    <p className="mt-2 text-sm font-medium text-foreground">
+                        Prefer a plain email thread?
+                    </p>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                        <a
+                            href={`mailto:${fallbackEmail}`}
+                            className="font-medium text-primary underline underline-offset-4 transition-colors hover:text-brand-cyan"
+                        >
+                            {fallbackEmail}
+                        </a>
+                    </p>
+                </div>
+            )}
 
             {session.authenticated && session.role === 'admin' && page && (
                 <InlineAdminEditorShell

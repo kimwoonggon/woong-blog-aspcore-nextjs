@@ -27,7 +27,7 @@ export function DeleteButton({ id, action }: DeleteButtonProps) {
         <Button
             variant="ghost"
             size="icon"
-            className="text-red-500 hover:text-red-600 hover:bg-red-50"
+            className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
             title="Delete"
             onClick={handleDelete}
             disabled={isPending}

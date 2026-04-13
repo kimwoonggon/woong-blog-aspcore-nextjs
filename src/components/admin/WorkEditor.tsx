@@ -1,16 +1,17 @@
 "use client"
 
 import Image from 'next/image'
-import { useMemo, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { AlertTriangle, ChevronDown, ChevronUp, Plus, Trash2 } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { AIFixDialog } from '@/components/admin/AIFixDialog'
 import { TiptapEditor } from '@/components/admin/TiptapEditor'
 import { WorkVideoPlayer } from '@/components/content/WorkVideoPlayer'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { fetchWithCsrf } from '@/lib/api/auth'
 import { getBrowserApiBaseUrl } from '@/lib/api/browser'
 import type { WorkVideo } from '@/lib/api/works'
@@ -28,160 +29,105 @@ import {
     shouldReplaceWorkThumbnailSource,
     type WorkThumbnailSourceKind,
 } from '@/lib/content/work-thumbnail-resolution'
+import type {
+    ThumbnailCandidate,
+    StagedVideoResult,
+    UploadedAssetPayload,
+    UploadTargetPayload,
+    VideoDraft,
+    VideoInsertRequest,
+    VideoMutationPayload,
+    WorkEditorProps,
+    WorkSaveResponsePayload,
+} from '@/components/admin/work-editor/types'
+import {
+    buildWorkSnapshot,
+    getNextVideosVersion,
+    getResponseError,
+    inferThumbnailSourceKind,
+    isPublicInlineCreateMode,
+    normalizeJsonInput,
+    normalizeTagsInput,
+    resolveWorkSaveSlug,
+    validateFlexibleMetadata,
+} from '@/components/admin/work-editor/utils'
+import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
-
-interface Work {
-    id?: string
-    title?: string
-    excerpt?: string
-    slug?: string
-    category?: string
-    tags?: string[]
-    published?: boolean
-    publishedAt?: string | null
-    updatedAt?: string
-    content?: { html?: string }
-    period?: string | null
-    all_properties?: Record<string, unknown>
-    thumbnail_asset_id?: string | null
-    icon_asset_id?: string | null
-    thumbnail_url?: string
-    icon_url?: string
-    videos_version?: number
-    videos?: WorkVideo[]
-}
-
-interface WorkEditorProps {
-    initialWork?: Work
-    inlineMode?: boolean
-    onSaved?: (result: { id?: string; slug?: string | null; isEditing: boolean }) => void
-}
-
-interface VideoDraft {
-    tempId: string
-    kind: 'youtube' | 'file'
-    label: string
-    youtubeUrl?: string
-    file?: File
-}
-
-interface VideoMutationPayload {
-    videos_version?: number
-    videosVersion?: number
-    videos?: WorkVideo[]
-}
-
-interface UploadTargetPayload {
-    uploadSessionId: string
-    uploadMethod: 'PUT' | 'POST'
-    uploadUrl: string
-    storageKey: string
-}
-
-interface VideoInsertRequest {
-    videoId: string
-    nonce: number
-}
-
-interface UploadedAssetPayload {
-    id: string
-    url: string
-    path?: string
-}
 
 const DEFAULT_WORK_CATEGORY = 'Uncategorized'
 
-function normalizeTagsInput(tags: string) {
-    return tags.split(',').map((tag) => tag.trim()).filter(Boolean)
+type WorkEditorTab = 'general' | 'media' | 'content'
+type MetadataField = {
+    id: string
+    key: string
+    value: string
 }
 
-function normalizeTextInput(value: string | null | undefined) {
-    return typeof value === 'string' ? value.trim() : ''
-}
-
-function normalizeJsonInput(value: string) {
-    if (!value.trim()) {
-        return '{}'
-    }
-
-    try {
-        return JSON.stringify(JSON.parse(value))
-    } catch {
-        return value.trim()
+function createMetadataField(key = '', value = ''): MetadataField {
+    return {
+        id: typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+            ? crypto.randomUUID()
+            : `${Date.now()}-${Math.random()}`,
+        key,
+        value,
     }
 }
 
-function buildWorkSnapshot({
-    title,
-    category,
-    period,
-    tags,
-    published,
-    html,
-    allProperties,
-    thumbnailAssetId,
-    iconAssetId,
-}: {
-    title: string
-    category: string
-    period: string
-    tags: string
-    published: boolean
-    html: string
-    allProperties: string
-    thumbnailAssetId: string
-    iconAssetId: string
-}) {
-    return JSON.stringify({
-        title: title.trim(),
-        category: category.trim(),
-        period: period.trim(),
-        tags: normalizeTagsInput(tags),
-        published,
-        html: html.trim(),
-        allProperties: normalizeJsonInput(allProperties),
-        thumbnailAssetId: normalizeTextInput(thumbnailAssetId),
-        iconAssetId: normalizeTextInput(iconAssetId),
-    })
-}
+function stringifyMetadataValue(value: unknown) {
+    if (typeof value === 'string') {
+        return value
+    }
 
-async function getResponseError(response: Response, fallback: string) {
-    const contentType = response.headers.get('content-type') ?? ''
-    if (contentType.includes('application/json')) {
-        const payload = await response.json().catch(() => null) as { error?: string } | null
-        if (payload?.error) {
-            return payload.error
+    if (value == null) {
+        return ''
+    }
+
+    if (typeof value === 'object') {
+        try {
+            return JSON.stringify(value)
+        } catch {
+            return String(value)
         }
     }
 
-    const text = await response.text().catch(() => '')
-    return text || fallback
+    return String(value)
 }
 
-function buildWorkSlugFallback(title: string) {
-    const slug = title.trim().toLowerCase().replace(/\s+/g, '-')
-    const normalized = slug
-        .replace(/[^\p{L}\p{N}-]+/gu, '')
-        .replace(/-+/g, '-')
-        .replace(/^-|-$/g, '')
-
-    return normalized || null
+function createMetadataFields(record?: Record<string, unknown> | null) {
+    return Object.entries(record ?? {}).map(([key, value]) => createMetadataField(key, stringifyMetadataValue(value)))
 }
 
-function inferThumbnailSourceKind(initialWork?: Work): WorkThumbnailSourceKind {
-    if (initialWork?.thumbnail_asset_id) {
-        return 'manual'
+function buildMetadataJsonFromRecord(record?: Record<string, unknown> | null) {
+    return JSON.stringify(
+        Object.fromEntries(
+            Object.entries(record ?? {}).map(([key, value]) => [key, stringifyMetadataValue(value)]),
+        ),
+    )
+}
+
+function buildMetadataJsonFromFields(fields: MetadataField[]) {
+    return JSON.stringify(
+        fields.reduce<Record<string, string>>((accumulator, field) => {
+            const key = field.key.trim()
+            if (!key) {
+                return accumulator
+            }
+
+            accumulator[key] = field.value
+            return accumulator
+        }, {}),
+    )
+}
+
+function clearBeforeUnloadWarning() {
+    if (typeof window !== 'undefined') {
+        window.onbeforeunload = null
     }
-
-    return resolveWorkThumbnailSource({
-        thumbnailAssetId: initialWork?.thumbnail_asset_id,
-        videos: initialWork?.videos ?? [],
-        html: initialWork?.content?.html ?? '',
-    }).kind
 }
 
 export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEditorProps) {
     const router = useRouter()
+    const pathname = usePathname()
     const searchParams = useSearchParams()
     const isEditing = Boolean(initialWork?.id)
     const defaultPublished = initialWork?.published ?? true
@@ -196,9 +142,7 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
     const [tags, setTags] = useState(initialWork?.tags?.join(', ') || '')
     const [published, setPublished] = useState(defaultPublished)
     const [html, setHtml] = useState(initialWork?.content?.html || '')
-    const [allProperties, setAllProperties] = useState(
-        JSON.stringify(initialWork?.all_properties || {}, null, 2)
-    )
+    const [metadataFields, setMetadataFields] = useState<MetadataField[]>(() => createMetadataFields(initialWork?.all_properties))
     const [thumbnailAssetId, setThumbnailAssetId] = useState(initialWork?.thumbnail_asset_id || '')
     const [thumbnailUrl, setThumbnailUrl] = useState(initialWork?.thumbnail_url || '')
     const [iconAssetId, setIconAssetId] = useState(initialWork?.icon_asset_id || '')
@@ -209,11 +153,25 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
     const [stagedVideos, setStagedVideos] = useState<VideoDraft[]>([])
     const [youtubeUrlInput, setYoutubeUrlInput] = useState('')
     const [isSaving, setIsSaving] = useState(false)
+    const [saveError, setSaveError] = useState<string | null>(null)
+    const [showUnsavedDialog, setShowUnsavedDialog] = useState(false)
     const [uploadingTarget, setUploadingTarget] = useState<'thumbnail' | 'icon' | null>(null)
     const [isVideoBusy, setIsVideoBusy] = useState(false)
+    const [hasPersistedVideoChanges, setHasPersistedVideoChanges] = useState(false)
     const [isAutoGeneratingThumbnail, setIsAutoGeneratingThumbnail] = useState(false)
     const [insertVideoRequest, setInsertVideoRequest] = useState<VideoInsertRequest | null>(null)
+    const [activeTab, setActiveTab] = useState<WorkEditorTab>('content')
     const shouldContinueInlinePlacement = searchParams.get('videoInline') === '1'
+    const generalSectionRef = useRef<HTMLDivElement | null>(null)
+    const mediaSectionRef = useRef<HTMLDivElement | null>(null)
+    const contentSectionRef = useRef<HTMLDivElement | null>(null)
+    const saveWorkRef = useRef<(mode: 'default' | 'with-videos') => Promise<void>>(async () => {})
+    const insertVideoNonceRef = useRef(0)
+    const usesPublicInlineCreateFlow = isPublicInlineCreateMode({
+        inlineMode,
+        isEditing,
+        hasOnSaved: Boolean(onSaved),
+    })
     const embeddedVideoIds = useMemo(() => extractWorkVideoEmbedIds(html), [html])
     const embeddedVideoIdSet = useMemo(() => new Set(embeddedVideoIds), [embeddedVideoIds])
     const orphanEmbeddedVideoIds = useMemo(
@@ -239,18 +197,21 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
 
         return ''
     }, [resolvedThumbnailSource, thumbnailUrl])
+    const allProperties = useMemo(() => buildMetadataJsonFromFields(metadataFields), [metadataFields])
+    const initialAllProperties = buildMetadataJsonFromRecord(initialWork?.all_properties)
 
     const initialSnapshot = buildWorkSnapshot({
         title: initialWork?.title || '',
         category: initialWork?.category || DEFAULT_WORK_CATEGORY,
         period: initialWork?.period || '',
         tags: initialWork?.tags?.join(', ') || '',
-        published: Boolean(initialWork?.published),
+        published: defaultPublished,
         html: initialWork?.content?.html || '',
-        allProperties: JSON.stringify(initialWork?.all_properties || {}, null, 2),
+        allProperties: initialAllProperties,
         thumbnailAssetId: initialWork?.thumbnail_asset_id || '',
         iconAssetId: initialWork?.icon_asset_id || '',
     })
+    const [savedSnapshot, setSavedSnapshot] = useState(initialSnapshot)
     const currentSnapshot = buildWorkSnapshot({
         title,
         category,
@@ -262,7 +223,12 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
         thumbnailAssetId,
         iconAssetId,
     })
-    const isDirty = !isEditing || initialSnapshot !== currentSnapshot
+    const hasStagedVideos = stagedVideos.length > 0
+    const hasUnsavedChanges = savedSnapshot !== currentSnapshot || (!isEditing && hasStagedVideos)
+    const isDirty = hasUnsavedChanges
+    const searchParamsString = searchParams.toString()
+    const currentQuerySuffix = searchParamsString ? `?${searchParamsString}` : ''
+    const primarySaveMode: 'default' | 'with-videos' = !isEditing && hasStagedVideos ? 'with-videos' : 'default'
 
     const formatDate = (dateString?: string | null) => {
         if (!dateString) return 'Not yet'
@@ -275,16 +241,51 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
         })
     }
 
+    useEffect(() => {
+        setSavedSnapshot(initialSnapshot)
+    }, [initialSnapshot])
+
     const syncVideos = (payload: VideoMutationPayload) => {
-        const nextVersion = typeof payload.videos_version === 'number'
-            ? payload.videos_version
-            : typeof payload.videosVersion === 'number'
-                ? payload.videosVersion
-                : videosVersion
+        const nextVersion = getNextVideosVersion(payload, videosVersion)
         const nextVideos = Array.isArray(payload.videos) ? payload.videos : videos
 
         setVideosVersion(nextVersion)
         setVideos(nextVideos)
+    }
+
+    function navigateInlineWorkAfterSave(nextSlug: string | null, editing: boolean) {
+        if (!inlineMode) {
+            return false
+        }
+
+        if (!editing && pathname === '/works') {
+            return false
+        }
+
+        if (editing && pathname.startsWith('/works/')) {
+            if (requestedReturnTo && requestedReturnTo.startsWith('/')) {
+                router.push(requestedReturnTo)
+                return true
+            }
+
+            if (nextSlug) {
+                router.replace(`/works/${encodeURIComponent(nextSlug)}${currentQuerySuffix}`)
+                router.refresh()
+            } else {
+                router.refresh()
+            }
+            return true
+        }
+
+        return false
+    }
+
+    function refreshInlinePublicWorkIfNeeded() {
+        if (!inlineMode || !pathname.startsWith('/works/')) {
+            return
+        }
+
+        router.refresh()
     }
 
     function buildWorkMutationPayload(nextThumbnailAssetId: string = thumbnailAssetId, nextIconAssetId: string = iconAssetId) {
@@ -301,6 +302,33 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
             thumbnailAssetId: nextThumbnailAssetId || null,
             iconAssetId: nextIconAssetId || null,
         }
+    }
+
+    function scrollToTab(tab: WorkEditorTab) {
+        const nextSection = tab === 'general'
+            ? generalSectionRef.current
+            : tab === 'media'
+                ? mediaSectionRef.current
+                : contentSectionRef.current
+
+        setActiveTab(tab)
+        nextSection?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+
+    function addMetadataField() {
+        setMetadataFields((current) => [...current, createMetadataField()])
+    }
+
+    function updateMetadataField(fieldId: string, nextField: Partial<Pick<MetadataField, 'key' | 'value'>>) {
+        setMetadataFields((current) => current.map((field) => (
+            field.id === fieldId
+                ? { ...field, ...nextField }
+                : field
+        )))
+    }
+
+    function removeMetadataField(fieldId: string) {
+        setMetadataFields((current) => current.filter((field) => field.id !== fieldId))
     }
 
     async function uploadAssetFile(file: File, bucket: string) {
@@ -349,11 +377,7 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
         return uploadedThumbnail
     }
 
-    async function maybeApplyAutoThumbnailForCandidate(candidate: {
-        kind: WorkThumbnailSourceKind
-        file?: File
-        youtubeVideoId?: string
-    }) {
+    async function maybeApplyAutoThumbnailForCandidate(candidate: ThumbnailCandidate) {
         if (!shouldReplaceWorkThumbnailSource(thumbnailSourceKind, candidate.kind)) {
             return null
         }
@@ -498,6 +522,20 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
         })
     }
 
+    function reorderStagedVideoToIndex(tempId: string, targetIndex: number) {
+        setStagedVideos((current) => {
+            const index = current.findIndex((item) => item.tempId === tempId)
+            if (index < 0 || targetIndex < 0 || targetIndex >= current.length || index === targetIndex) {
+                return current
+            }
+
+            const next = [...current]
+            const [item] = next.splice(index, 1)
+            next.splice(targetIndex, 0, item)
+            return next
+        })
+    }
+
     function removeStagedVideo(tempId: string) {
         setStagedVideos((current) => current.filter((item) => item.tempId !== tempId))
     }
@@ -525,15 +563,20 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
 
             const payload = await response.json() as VideoMutationPayload
             syncVideos(payload)
+            setHasPersistedVideoChanges(true)
             setYoutubeUrlInput('')
             const normalizedVideoId = normalizeYouTubeVideoId(youtubeUrlOrId)
             if (normalizedVideoId) {
                 try {
-                    await maybeApplyAutoThumbnailForCandidate({ kind: 'youtube', youtubeVideoId: normalizedVideoId })
+                    const uploadedThumbnail = await maybeApplyAutoThumbnailForCandidate({ kind: 'youtube', youtubeVideoId: normalizedVideoId })
+                    if (uploadedThumbnail) {
+                        await persistThumbnailSelectionForWork(initialWork.id, uploadedThumbnail.id)
+                    }
                 } catch (error) {
                     toast.error(error instanceof Error ? error.message : 'Failed to auto-generate a YouTube thumbnail.')
                 }
             }
+            refreshInlinePublicWorkIfNeeded()
             toast.success('YouTube video added.')
         } catch (error) {
             toast.error(error instanceof Error ? error.message : 'Failed to add YouTube video.')
@@ -627,11 +670,16 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
             await uploadToTarget(initialWork.id, file, target)
             const payload = await confirmVideoUpload(initialWork.id, target.uploadSessionId, videosVersion)
             syncVideos(payload)
+            setHasPersistedVideoChanges(true)
             try {
-                await maybeApplyAutoThumbnailForCandidate({ kind: 'uploaded-video', file })
+                const uploadedThumbnail = await maybeApplyAutoThumbnailForCandidate({ kind: 'uploaded-video', file })
+                if (uploadedThumbnail) {
+                    await persistThumbnailSelectionForWork(initialWork.id, uploadedThumbnail.id)
+                }
             } catch (error) {
                 toast.error(error instanceof Error ? error.message : 'Failed to auto-generate a video thumbnail.')
             }
+            refreshInlinePublicWorkIfNeeded()
             toast.success('Video uploaded.')
         } catch (error) {
             toast.error(error instanceof Error ? error.message : 'Failed to upload video.')
@@ -660,6 +708,8 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
             }
 
             syncVideos(await response.json() as VideoMutationPayload)
+            setHasPersistedVideoChanges(true)
+            refreshInlinePublicWorkIfNeeded()
             toast.success('Video removed.')
         } catch (error) {
             toast.error(error instanceof Error ? error.message : 'Failed to remove video.')
@@ -700,10 +750,93 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
             }
 
             syncVideos(await response.json() as VideoMutationPayload)
+            setHasPersistedVideoChanges(true)
+            refreshInlinePublicWorkIfNeeded()
         } catch (error) {
             toast.error(error instanceof Error ? error.message : 'Failed to reorder videos.')
         } finally {
             setIsVideoBusy(false)
+        }
+    }
+
+    async function reorderSavedVideoToIndex(videoId: string, targetIndex: number) {
+        if (!initialWork?.id) return
+
+        const index = videos.findIndex((video) => video.id === videoId)
+        if (index < 0 || targetIndex < 0 || targetIndex >= videos.length || index === targetIndex) {
+            return
+        }
+
+        const reordered = [...videos]
+        const [item] = reordered.splice(index, 1)
+        reordered.splice(targetIndex, 0, item)
+
+        setIsVideoBusy(true)
+
+        try {
+            const response = await fetchWithCsrf(`${getBrowserApiBaseUrl()}/admin/works/${encodeURIComponent(initialWork.id)}/videos/order`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    orderedVideoIds: reordered.map((video) => video.id),
+                    expectedVideosVersion: videosVersion,
+                }),
+            })
+
+            if (!response.ok) {
+                throw new Error(await getResponseError(response, 'Failed to reorder videos.'))
+            }
+
+            syncVideos(await response.json() as VideoMutationPayload)
+            setHasPersistedVideoChanges(true)
+            refreshInlinePublicWorkIfNeeded()
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Failed to reorder videos.')
+        } finally {
+            setIsVideoBusy(false)
+        }
+    }
+
+    async function addStagedYoutubeVideo(workId: string, draft: VideoDraft, currentVersion: number): Promise<StagedVideoResult> {
+        const response = await fetchWithCsrf(`${getBrowserApiBaseUrl()}/admin/works/${encodeURIComponent(workId)}/videos/youtube`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                youtubeUrlOrId: draft.youtubeUrl,
+                expectedVideosVersion: currentVersion,
+            }),
+        })
+
+        if (!response.ok) {
+            throw new Error(await getResponseError(response, `Failed to add YouTube video: ${draft.label}`))
+        }
+
+        const payload = await response.json() as VideoMutationPayload
+        return {
+            currentVersion: getNextVideosVersion(payload, currentVersion + 1),
+            latestPayload: payload,
+        }
+    }
+
+    async function addStagedUploadedVideo(workId: string, draft: VideoDraft, currentVersion: number): Promise<StagedVideoResult> {
+        if (!draft.file) {
+            return {
+                currentVersion,
+                latestPayload: null,
+            }
+        }
+
+        const target = await requestUploadTarget(workId, draft.file, currentVersion)
+        await uploadToTarget(workId, draft.file, target)
+        const payload = await confirmVideoUpload(workId, target.uploadSessionId, currentVersion)
+
+        return {
+            currentVersion: getNextVideosVersion(payload, currentVersion + 1),
+            latestPayload: payload,
         }
     }
 
@@ -713,33 +846,16 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
 
         for (const draft of stagedVideos) {
             if (draft.kind === 'youtube' && draft.youtubeUrl) {
-                const response = await fetchWithCsrf(`${getBrowserApiBaseUrl()}/admin/works/${encodeURIComponent(workId)}/videos/youtube`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        youtubeUrlOrId: draft.youtubeUrl,
-                        expectedVideosVersion: currentVersion,
-                    }),
-                })
-
-                if (!response.ok) {
-                    throw new Error(await getResponseError(response, `Failed to add YouTube video: ${draft.label}`))
-                }
-
-                const payload = await response.json() as VideoMutationPayload
-                currentVersion = typeof payload.videos_version === 'number' ? payload.videos_version : currentVersion + 1
-                latestPayload = payload
+                const result = await addStagedYoutubeVideo(workId, draft, currentVersion)
+                currentVersion = result.currentVersion
+                latestPayload = result.latestPayload
                 continue
             }
 
             if (draft.kind === 'file' && draft.file) {
-                const target = await requestUploadTarget(workId, draft.file, currentVersion)
-                await uploadToTarget(workId, draft.file, target)
-                const payload = await confirmVideoUpload(workId, target.uploadSessionId, currentVersion)
-                currentVersion = typeof payload.videos_version === 'number' ? payload.videos_version : currentVersion + 1
-                latestPayload = payload
+                const result = await addStagedUploadedVideo(workId, draft, currentVersion)
+                currentVersion = result.currentVersion
+                latestPayload = result.latestPayload
             }
         }
 
@@ -749,99 +865,216 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
         }
     }
 
+    async function submitWorkPayload(payload: ReturnType<typeof buildWorkMutationPayload>) {
+        const apiBaseUrl = getBrowserApiBaseUrl()
+        const response = await fetchWithCsrf(
+            isEditing && initialWork?.id
+                ? `${apiBaseUrl}/admin/works/${encodeURIComponent(initialWork.id)}`
+                : `${apiBaseUrl}/admin/works`,
+            {
+                method: isEditing ? 'PUT' : 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            }
+        )
+
+        if (!response.ok) {
+            const message = await getResponseError(response, 'Failed to save work.')
+            setSaveError(message)
+            toast.error(message)
+            return null
+        }
+
+        setSaveError(null)
+        return await response.json().catch(() => null) as WorkSaveResponsePayload | null
+    }
+
+    function finishInlineSave(responsePayload: WorkSaveResponsePayload | null, nextSlug: string | null, editing: boolean) {
+        if (!inlineMode) {
+            return false
+        }
+
+        if (!editing && usesPublicInlineCreateFlow && onSaved) {
+            onSaved({ id: responsePayload?.id, slug: nextSlug, isEditing: false })
+            return true
+        }
+
+        if (navigateInlineWorkAfterSave(nextSlug, editing)) {
+            return true
+        }
+
+        if (onSaved) {
+            onSaved({ id: responsePayload?.id, slug: nextSlug, isEditing: editing })
+            return true
+        }
+
+        router.refresh()
+        return true
+    }
+
+    function finishUpdateSave(responsePayload: WorkSaveResponsePayload | null, nextSlug: string | null) {
+        setHasPersistedVideoChanges(false)
+        setSavedSnapshot(currentSnapshot)
+        clearBeforeUnloadWarning()
+        setSaveError(null)
+        toast.success('Work updated successfully')
+        if (finishInlineSave(responsePayload, nextSlug, true)) {
+            return
+        }
+
+        router.push(returnTo)
+    }
+
+    function finishCreateSave(responsePayload: WorkSaveResponsePayload | null, nextSlug: string | null) {
+        setSavedSnapshot(currentSnapshot)
+        clearBeforeUnloadWarning()
+        setSaveError(null)
+        toast.success('Work created successfully')
+        if (finishInlineSave(responsePayload, nextSlug, false)) {
+            return
+        }
+
+        router.push(returnTo)
+    }
+
+    async function handleCreatedWorkWithVideos(responsePayload: WorkSaveResponsePayload, nextSlug: string | null) {
+        if (!responsePayload.id) {
+            finishCreateSave(responsePayload, nextSlug)
+            return
+        }
+
+        try {
+            const stagedResult = await processStagedVideos(responsePayload.id)
+            if (stagedResult.latestPayload) {
+                syncVideos(stagedResult.latestPayload)
+            }
+
+            const stagedThumbnailCandidate = resolveDraftThumbnailSource(stagedVideos)
+            if (stagedThumbnailCandidate.kind !== 'none') {
+                try {
+                    const uploadedThumbnail = await maybeApplyAutoThumbnailForCandidate(stagedThumbnailCandidate)
+                    if (uploadedThumbnail) {
+                        await persistThumbnailSelectionForWork(responsePayload.id, uploadedThumbnail.id)
+                    }
+                } catch (error) {
+                    toast.error(error instanceof Error ? error.message : 'Failed to auto-generate a work thumbnail.')
+                }
+            }
+
+            toast.success('Work and videos created successfully')
+            if (finishInlineSave(responsePayload, nextSlug, false)) {
+                return
+            }
+
+            router.push(`/admin/works/${responsePayload.id}?videoInline=1`)
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Work was created, but some videos failed to attach.')
+            router.push(`/admin/works/${responsePayload.id}`)
+        }
+    }
+
     async function saveWork(mode: 'default' | 'with-videos' = 'default') {
         try {
-            if (allProperties) JSON.parse(allProperties)
+            validateFlexibleMetadata(allProperties)
         } catch {
+            setSaveError('Invalid JSON in Flexible Metadata field')
             toast.error('Invalid JSON in Flexible Metadata field')
             return
         }
 
         setIsSaving(true)
-
-        const payload = buildWorkMutationPayload()
+        setSaveError(null)
 
         try {
-            const apiBaseUrl = getBrowserApiBaseUrl()
-            const response = await fetchWithCsrf(
-                isEditing && initialWork?.id
-                    ? `${apiBaseUrl}/admin/works/${encodeURIComponent(initialWork.id)}`
-                    : `${apiBaseUrl}/admin/works`,
-                {
-                    method: isEditing ? 'PUT' : 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(payload),
-                }
-            )
-
-            if (!response.ok) {
-                toast.error(await getResponseError(response, 'Failed to save work.'))
+            if (isEditing && !isDirty && hasPersistedVideoChanges) {
+                const nextSlug = initialWork?.slug ?? resolveWorkSaveSlug({
+                    payload: null,
+                    title,
+                    initialSlug: initialWork?.slug,
+                })
+                finishUpdateSave(null, nextSlug)
                 return
             }
 
-            const responsePayload = await response.json().catch(() => null) as { id?: string; slug?: string; Slug?: string } | null
-            const nextSlug = responsePayload?.slug ?? responsePayload?.Slug ?? buildWorkSlugFallback(title) ?? initialWork?.slug ?? null
+            const responsePayload = await submitWorkPayload(buildWorkMutationPayload())
+            if (!responsePayload) {
+                return
+            }
+
+            const nextSlug = resolveWorkSaveSlug({
+                payload: responsePayload,
+                title,
+                initialSlug: initialWork?.slug,
+            })
 
             if (isEditing) {
-                toast.success('Work updated successfully')
-                if (inlineMode) {
-                    if (onSaved) {
-                        onSaved({ id: responsePayload?.id, slug: nextSlug, isEditing })
-                        return
-                    }
-                    router.refresh()
-                    return
-                }
-
-                router.push(returnTo)
+                finishUpdateSave(responsePayload, nextSlug)
                 return
             }
 
-            if (mode === 'with-videos' && stagedVideos.length > 0 && responsePayload?.id) {
-                try {
-                    const stagedResult = await processStagedVideos(responsePayload.id)
-                    if (stagedResult.latestPayload) {
-                        syncVideos(stagedResult.latestPayload)
-                    }
-
-                    const stagedThumbnailCandidate = resolveDraftThumbnailSource(stagedVideos)
-                    if (stagedThumbnailCandidate.kind !== 'none') {
-                        try {
-                            const uploadedThumbnail = await maybeApplyAutoThumbnailForCandidate(stagedThumbnailCandidate)
-                            if (uploadedThumbnail) {
-                                await persistThumbnailSelectionForWork(responsePayload.id, uploadedThumbnail.id)
-                            }
-                        } catch (error) {
-                            toast.error(error instanceof Error ? error.message : 'Failed to auto-generate a work thumbnail.')
-                        }
-                    }
-
-                    toast.success('Work and videos created successfully')
-                    if (inlineMode && onSaved) {
-                        onSaved({ id: responsePayload.id, slug: nextSlug, isEditing: false })
-                        return
-                    }
-                    router.push(`/admin/works/${responsePayload.id}?videoInline=1`)
-                    return
-                } catch (error) {
-                    toast.error(error instanceof Error ? error.message : 'Work was created, but some videos failed to attach.')
-                    router.push(`/admin/works/${responsePayload.id}`)
-                    return
-                }
-            }
-
-            toast.success('Work created successfully')
-            if (inlineMode && onSaved) {
-                onSaved({ id: responsePayload?.id, slug: nextSlug, isEditing: false })
+            if (mode === 'with-videos' && stagedVideos.length > 0) {
+                await handleCreatedWorkWithVideos(responsePayload, nextSlug)
                 return
             }
-            router.push(returnTo)
+
+            finishCreateSave(responsePayload, nextSlug)
         } finally {
             setIsSaving(false)
         }
     }
+
+    saveWorkRef.current = saveWork
+
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            const isSaveShortcut = (event.metaKey || event.ctrlKey)
+                && (event.key.toLowerCase() === 's' || event.code === 'KeyS')
+
+            if (!isSaveShortcut || event.defaultPrevented) {
+                return
+            }
+
+            event.preventDefault()
+
+            const saveDisabled = isEditing
+                ? isSaving || (!isDirty && !hasPersistedVideoChanges) || !title.trim()
+                : isSaving || !isDirty || !title.trim()
+
+            if (saveDisabled) {
+                return
+            }
+
+            void saveWorkRef.current(primarySaveMode)
+        }
+
+        window.addEventListener('keydown', handleKeyDown, { capture: true })
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown, { capture: true })
+        }
+    }, [hasPersistedVideoChanges, isDirty, isEditing, isSaving, primarySaveMode, title])
+
+    useEffect(() => {
+        if (!hasUnsavedChanges) {
+            window.onbeforeunload = null
+            return
+        }
+
+        const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+            event.preventDefault()
+            event.returnValue = ''
+            return ''
+        }
+
+        window.onbeforeunload = handleBeforeUnload
+
+        return () => {
+            if (window.onbeforeunload === handleBeforeUnload) {
+                window.onbeforeunload = null
+            }
+        }
+    }, [hasUnsavedChanges])
 
     function insertSavedVideoIntoBody(videoId: string) {
         if (embeddedVideoIdSet.has(videoId)) {
@@ -849,7 +1082,8 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
             return
         }
 
-        setInsertVideoRequest({ videoId, nonce: Date.now() })
+        insertVideoNonceRef.current += 1
+        setInsertVideoRequest({ videoId, nonce: insertVideoNonceRef.current })
     }
 
     function removeSavedVideoFromBody(videoId: string) {
@@ -879,11 +1113,16 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
         }
     }
 
-    const hasStagedVideos = stagedVideos.length > 0
-
     return (
         <div className="space-y-8 max-w-4xl">
-            <div className="grid gap-6 rounded-2xl border border-border/80 bg-card p-6 shadow-sm md:grid-cols-2">
+            <div
+                id="work-editor-general-section"
+                ref={generalSectionRef}
+                className={cn(
+                    'grid gap-6 rounded-2xl border border-border/80 bg-card p-6 shadow-sm md:grid-cols-2',
+                    activeTab === 'general' && 'ring-2 ring-primary/20',
+                )}
+            >
                 <div className="space-y-2">
                     <Label htmlFor="title">Title</Label>
                     <Input
@@ -891,7 +1130,10 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                         name="title"
                         required
                         value={title}
-                        onChange={(e) => setTitle(e.target.value)}
+                        onChange={(e) => {
+                            setTitle(e.target.value)
+                            setSaveError(null)
+                        }}
                     />
                 </div>
                 <div className="space-y-2">
@@ -900,12 +1142,12 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                         id="category"
                         name="category"
                         value={category}
-                        onChange={(e) => setCategory(e.target.value)}
+                        onChange={(e) => {
+                            setCategory(e.target.value)
+                            setSaveError(null)
+                        }}
                         placeholder={DEFAULT_WORK_CATEGORY}
                     />
-                    <p className="text-xs text-muted-foreground">
-                        New works default to <span className="font-medium">{DEFAULT_WORK_CATEGORY}</span> so create is never blocked by categorization.
-                    </p>
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="period">Project Period</Label>
@@ -913,7 +1155,10 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                         id="period"
                         name="period"
                         value={period}
-                        onChange={(e) => setPeriod(e.target.value)}
+                        onChange={(e) => {
+                            setPeriod(e.target.value)
+                            setSaveError(null)
+                        }}
                         placeholder="YYYY.MM - YYYY.MM"
                     />
                 </div>
@@ -923,31 +1168,145 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                         id="tags"
                         name="tags"
                         value={tags}
-                        onChange={(e) => setTags(e.target.value)}
+                        onChange={(e) => {
+                            setTags(e.target.value)
+                            setSaveError(null)
+                        }}
                     />
                 </div>
-                <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="all_properties">Flexible Metadata (JSON)</Label>
-                    <Textarea
-                        id="all_properties"
-                        name="all_properties"
-                        value={allProperties}
-                        onChange={(e) => setAllProperties(e.target.value)}
-                        placeholder='{"key": "value"}'
-                        className="font-mono text-xs min-h-[120px]"
-                    />
+                <div className="flex flex-wrap gap-6 pt-2 md:col-span-2">
+                    <div className="space-y-1">
+                        <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Visibility</span>
+                        <p className="font-mono text-sm text-foreground">
+                            {isEditing ? formatDate(initialWork?.publishedAt) : 'Publishes immediately'}
+                        </p>
+                    </div>
+                    {initialWork?.updatedAt && (
+                        <div className="space-y-1">
+                            <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Last Modified</span>
+                            <p className="font-mono text-sm text-foreground">
+                                {formatDate(initialWork?.updatedAt)}
+                            </p>
+                        </div>
+                    )}
+                    <div className="flex items-center gap-2 rounded-full border bg-muted/40 px-3 py-2 md:ml-auto">
+                        <Checkbox
+                            id="published"
+                            name="published"
+                            checked={published}
+                            onCheckedChange={(value) => {
+                                setPublished(Boolean(value))
+                                setSaveError(null)
+                            }}
+                        />
+                        <Label htmlFor="published" className="cursor-pointer text-sm">Published</Label>
+                    </div>
+                    {!isEditing && (
+                        <div className="rounded-xl border border-border/80 bg-muted/50 px-4 py-3 text-sm text-muted-foreground md:ml-auto">
+                            New works go live immediately. Staged videos attach automatically after creation.
+                        </div>
+                    )}
                 </div>
-                <div className="space-y-4 md:col-span-2 rounded-2xl border border-border/80 bg-background p-5 dark:border-gray-800">
+            </div>
+
+            <div className="sticky top-4 z-10 rounded-2xl border border-border/80 bg-background/95 p-2 shadow-sm backdrop-blur-sm">
+                <div className="grid gap-2 sm:grid-cols-3" role="tablist" aria-label="Work editor sections">
+                    {([
+                        { value: 'general', label: 'General' },
+                        { value: 'media', label: 'Media & Videos' },
+                        { value: 'content', label: 'Content' },
+                    ] as const).map((tab) => (
+                        <Button
+                            key={tab.value}
+                            type="button"
+                            role="tab"
+                            variant={activeTab === tab.value ? 'secondary' : 'ghost'}
+                            aria-selected={activeTab === tab.value}
+                            aria-controls={`work-editor-${tab.value}-section`}
+                            className="justify-center"
+                            onClick={() => scrollToTab(tab.value)}
+                        >
+                            {tab.label}
+                        </Button>
+                    ))}
+                </div>
+            </div>
+
+            <div
+                id="work-editor-media-section"
+                ref={mediaSectionRef}
+                className={cn(
+                    'space-y-6 rounded-2xl border border-border/80 bg-card p-6 shadow-sm',
+                    activeTab === 'media' && 'ring-2 ring-primary/20',
+                )}
+            >
+                <div className="space-y-4 rounded-2xl border border-border/80 bg-background p-5">
+                    <div className="flex items-start justify-between gap-4">
+                        <div>
+                            <h3 className="text-lg font-medium">Flexible Metadata</h3>
+                            <p className="text-sm text-muted-foreground">
+                                Add structured key/value fields without editing raw JSON.
+                            </p>
+                        </div>
+                        <Button type="button" variant="outline" size="sm" className="gap-2" onClick={addMetadataField}>
+                            <Plus size={14} />
+                            Add Field
+                        </Button>
+                    </div>
+                    {metadataFields.length === 0 ? (
+                        <div className="rounded-xl border border-dashed border-border/70 px-4 py-6 text-sm text-muted-foreground">
+                            No metadata fields yet.
+                        </div>
+                    ) : (
+                        <div className="space-y-3">
+                            {metadataFields.map((field, index) => (
+                                <div key={field.id} className="flex flex-col gap-2 md:flex-row">
+                                    <div className="space-y-2 md:w-1/3">
+                                        <Label htmlFor={`metadata-key-${field.id}`}>Key</Label>
+                                        <Input
+                                            id={`metadata-key-${field.id}`}
+                                            placeholder="e.g. role…"
+                                            value={field.key}
+                                            onChange={(event) => updateMetadataField(field.id, { key: event.target.value })}
+                                        />
+                                    </div>
+                                    <div className="space-y-2 md:flex-1">
+                                        <Label htmlFor={`metadata-value-${field.id}`}>Value</Label>
+                                        <Input
+                                            id={`metadata-value-${field.id}`}
+                                            placeholder="e.g. Lead Frontend Engineer…"
+                                            value={field.value}
+                                            onChange={(event) => updateMetadataField(field.id, { value: event.target.value })}
+                                        />
+                                    </div>
+                                    <div className="flex items-end">
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            aria-label={`Remove metadata field ${index + 1}`}
+                                            onClick={() => removeMetadataField(field.id)}
+                                        >
+                                            <Trash2 size={16} />
+                                        </Button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                <div className="space-y-4 rounded-2xl border border-border/80 bg-background p-5">
                     <div>
                         <h3 className="text-lg font-medium">Work Media</h3>
-                        <p className="text-sm text-gray-500">
-                            Add thumbnail and icon assets with clear click-to-upload fields. Dragging a file onto the input still works, but it is no longer the only obvious path.
+                        <p className="text-sm text-muted-foreground">
+                            Upload thumbnail and icon images for this work.
                         </p>
                     </div>
                     <div className="grid gap-6 md:grid-cols-2">
                         <div className="space-y-3">
                             <Label htmlFor="work-thumbnail-upload">Thumbnail Image</Label>
-                            <div className="relative h-40 overflow-hidden rounded-md border bg-gray-100 dark:border-gray-800 dark:bg-gray-900">
+                            <div className="relative h-40 overflow-hidden rounded-md border border-border bg-muted">
                                 {effectiveThumbnailPreviewUrl ? (
                                     <Image
                                         src={effectiveThumbnailPreviewUrl}
@@ -957,7 +1316,7 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                                         className="object-cover"
                                     />
                                 ) : (
-                                    <div className="flex h-full items-center justify-center text-sm text-gray-500">
+                                    <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
                                         No thumbnail uploaded
                                     </div>
                                 )}
@@ -973,10 +1332,10 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                                                 ? 'Thumbnail source: content image'
                                                 : 'Thumbnail source: none'}
                             </p>
-                            <div className="rounded-xl border border-dashed border-sky-300 bg-sky-50/70 p-4 dark:border-sky-900 dark:bg-sky-950/20">
-                                <p className="mb-2 text-sm font-medium text-sky-900 dark:text-sky-100">Choose a thumbnail image</p>
-                                <p className="mb-3 text-xs text-sky-900/80 dark:text-sky-100/80">
-                                    Best for public cards. Click to browse, or drop an image onto the picker.
+                            <div className="rounded-xl border border-dashed border-border/80 bg-muted/50 p-4">
+                                <p className="mb-2 text-sm font-medium text-foreground">Thumbnail</p>
+                                <p className="mb-3 text-xs text-muted-foreground">
+                                    Recommended size: 800 × 600px
                                 </p>
                                 <Input
                                     id="work-thumbnail-upload"
@@ -996,16 +1355,16 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                                     Remove Thumbnail
                                 </Button>
                                 {uploadingTarget === 'thumbnail' && (
-                                    <span className="text-sm text-gray-500">Uploading...</span>
+                                    <span className="text-sm text-muted-foreground">Uploading…</span>
                                 )}
                                 {isAutoGeneratingThumbnail && (
-                                    <span className="text-sm text-gray-500">Generating thumbnail...</span>
+                                    <span className="text-sm text-muted-foreground">Generating thumbnail…</span>
                                 )}
                             </div>
                         </div>
                         <div className="space-y-3">
                             <Label htmlFor="work-icon-upload">Icon Image</Label>
-                            <div className="relative h-40 overflow-hidden rounded-md border bg-gray-100 dark:border-gray-800 dark:bg-gray-900">
+                            <div className="relative h-40 overflow-hidden rounded-md border border-border bg-muted">
                                 {iconUrl ? (
                                     <Image
                                         src={iconUrl}
@@ -1015,15 +1374,15 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                                         className="object-cover"
                                     />
                                 ) : (
-                                    <div className="flex h-full items-center justify-center text-sm text-gray-500">
+                                    <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
                                         No icon uploaded
                                     </div>
                                 )}
                             </div>
-                            <div className="rounded-xl border border-dashed border-sky-300 bg-sky-50/70 p-4 dark:border-sky-900 dark:bg-sky-950/20">
-                                <p className="mb-2 text-sm font-medium text-sky-900 dark:text-sky-100">Choose an icon image</p>
-                                <p className="mb-3 text-xs text-sky-900/80 dark:text-sky-100/80">
-                                    Use a square or simple mark for compact surfaces and metadata-driven sections.
+                            <div className="rounded-xl border border-dashed border-border/80 bg-muted/50 p-4">
+                                <p className="mb-2 text-sm font-medium text-foreground">Icon</p>
+                                <p className="mb-3 text-xs text-muted-foreground">
+                                    Square image recommended.
                                 </p>
                                 <Input
                                     id="work-icon-upload"
@@ -1043,22 +1402,29 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                                     Remove Icon
                                 </Button>
                                 {uploadingTarget === 'icon' && (
-                                    <span className="text-sm text-gray-500">Uploading...</span>
+                                    <span className="text-sm text-muted-foreground">Uploading…</span>
                                 )}
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div className="space-y-4 md:col-span-2 rounded-2xl border border-border/80 bg-background p-5 dark:border-gray-800">
+                <div className="space-y-4 rounded-2xl border border-border/80 bg-background p-5">
                     <div>
                         <h3 className="text-lg font-medium">Work Videos</h3>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-muted-foreground">
                             {isEditing
-                                ? 'You can add YouTube videos and MP4 uploads immediately. Ordering and removal update the work separately from the main form.'
-                                : 'You can stage videos while creating a work. The app creates the work first, then attaches the staged videos in order.'}
+                                ? 'Add YouTube links or upload MP4 files. Video changes save immediately.'
+                                : usesPublicInlineCreateFlow
+                                    ? "Stage videos before saving. They'll be attached automatically."
+                                    : "Stage videos before saving. They'll be attached after the work is created."}
                         </p>
                     </div>
+                    {isEditing && (
+                        <div className="rounded-xl border border-border/80 bg-muted/50 px-4 py-3 text-sm text-muted-foreground">
+                            Videos save immediately. Use Update Work for text, metadata, thumbnail, or icon changes.
+                        </div>
+                    )}
 
                     <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
                         <div className="space-y-2">
@@ -1067,7 +1433,7 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                                 id="youtube-video-input"
                                 value={youtubeUrlInput}
                                 onChange={(event) => setYoutubeUrlInput(event.target.value)}
-                                placeholder="https://youtu.be/... or dQw4w9WgXcQ"
+                                placeholder="https://youtu.be/… or dQw4w9WgXcQ"
                                 disabled={isVideoBusy}
                             />
                         </div>
@@ -1107,7 +1473,27 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                             ) : (
                                 <div className="space-y-4">
                                     {videos.map((video, index) => (
-                                        <div key={video.id} className="space-y-3 rounded-xl border border-border/70 p-4">
+                                        <div
+                                            key={video.id}
+                                            data-testid="saved-video-card"
+                                            draggable={!isVideoBusy}
+                                            onDragStart={(event) => {
+                                                event.dataTransfer.setData('text/saved-video-id', video.id)
+                                                event.dataTransfer.effectAllowed = 'move'
+                                            }}
+                                            onDragOver={(event) => {
+                                                event.preventDefault()
+                                                event.dataTransfer.dropEffect = 'move'
+                                            }}
+                                            onDrop={(event) => {
+                                                event.preventDefault()
+                                                const sourceId = event.dataTransfer.getData('text/saved-video-id')
+                                                if (sourceId) {
+                                                    void reorderSavedVideoToIndex(sourceId, index)
+                                                }
+                                            }}
+                                            className="space-y-3 rounded-xl border border-border/70 p-4"
+                                        >
                                             {embeddedVideoIdSet.has(video.id) && (
                                                 <div className="rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs text-emerald-900 dark:border-emerald-900/60 dark:bg-emerald-950/20 dark:text-emerald-100">
                                                     Placed in body. Remove it from the body before deleting the saved video.
@@ -1123,7 +1509,7 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                                                 <div className="flex flex-wrap gap-2">
                                                     <Button
                                                         type="button"
-                                                        variant="outline"
+                                                        variant="default"
                                                         onClick={() => insertSavedVideoIntoBody(video.id)}
                                                         disabled={isVideoBusy || embeddedVideoIdSet.has(video.id)}
                                                     >
@@ -1139,27 +1525,37 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                                                     </Button>
                                                     <Button
                                                         type="button"
-                                                        variant="outline"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        aria-label={`Move ${getWorkVideoDisplayLabel(video)} up`}
+                                                        title="Move Up"
                                                         onClick={() => void reorderSavedVideo(video.id, -1)}
                                                         disabled={isVideoBusy || index === 0}
                                                     >
-                                                        Move Up
+                                                        <ChevronUp />
                                                     </Button>
                                                     <Button
                                                         type="button"
-                                                        variant="outline"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        aria-label={`Move ${getWorkVideoDisplayLabel(video)} down`}
+                                                        title="Move Down"
                                                         onClick={() => void reorderSavedVideo(video.id, 1)}
                                                         disabled={isVideoBusy || index === videos.length - 1}
                                                     >
-                                                        Move Down
+                                                        <ChevronDown />
                                                     </Button>
                                                     <Button
                                                         type="button"
-                                                        variant="outline"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        aria-label={`Remove ${getWorkVideoDisplayLabel(video)}`}
+                                                        title="Remove Video"
+                                                        className="text-destructive hover:text-destructive"
                                                         onClick={() => void removeSavedVideo(video.id)}
                                                         disabled={isVideoBusy}
                                                     >
-                                                        Remove
+                                                        <Trash2 />
                                                     </Button>
                                                 </div>
                                             </div>
@@ -1182,7 +1578,27 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                                 </div>
                             ) : (
                                 stagedVideos.map((video, index) => (
-                                    <div key={video.tempId} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/70 p-4">
+                                    <div
+                                        key={video.tempId}
+                                        data-testid="staged-video-card"
+                                        draggable
+                                        onDragStart={(event) => {
+                                            event.dataTransfer.setData('text/staged-video-id', video.tempId)
+                                            event.dataTransfer.effectAllowed = 'move'
+                                        }}
+                                        onDragOver={(event) => {
+                                            event.preventDefault()
+                                            event.dataTransfer.dropEffect = 'move'
+                                        }}
+                                        onDrop={(event) => {
+                                            event.preventDefault()
+                                            const sourceId = event.dataTransfer.getData('text/staged-video-id')
+                                            if (sourceId) {
+                                                reorderStagedVideoToIndex(sourceId, index)
+                                            }
+                                        }}
+                                        className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/70 p-4"
+                                    >
                                         <div>
                                             <p className="text-sm font-medium">{video.label}</p>
                                             <p className="text-xs text-muted-foreground">
@@ -1192,26 +1608,36 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                                         <div className="flex flex-wrap gap-2">
                                             <Button
                                                 type="button"
-                                                variant="outline"
+                                                variant="ghost"
+                                                size="icon"
+                                                aria-label={`Move ${video.label} up`}
+                                                title="Move Up"
                                                 onClick={() => moveStagedVideo(video.tempId, -1)}
                                                 disabled={index === 0}
                                             >
-                                                Move Up
+                                                <ChevronUp />
                                             </Button>
                                             <Button
                                                 type="button"
-                                                variant="outline"
+                                                variant="ghost"
+                                                size="icon"
+                                                aria-label={`Move ${video.label} down`}
+                                                title="Move Down"
                                                 onClick={() => moveStagedVideo(video.tempId, 1)}
                                                 disabled={index === stagedVideos.length - 1}
                                             >
-                                                Move Down
+                                                <ChevronDown />
                                             </Button>
                                             <Button
                                                 type="button"
-                                                variant="outline"
+                                                variant="ghost"
+                                                size="icon"
+                                                aria-label={`Remove ${video.label}`}
+                                                title="Remove Video"
+                                                className="text-destructive hover:text-destructive"
                                                 onClick={() => removeStagedVideo(video.tempId)}
                                             >
-                                                Remove
+                                                <Trash2 />
                                             </Button>
                                         </div>
                                     </div>
@@ -1220,31 +1646,16 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                         </div>
                     )}
                 </div>
-
-                <div className="flex flex-wrap gap-6 pt-2 md:col-span-2">
-                    <div className="space-y-1">
-                        <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Visibility</span>
-                        <p className="text-sm text-gray-700 dark:text-gray-300 font-mono">
-                            {isEditing ? formatDate(initialWork?.publishedAt) : 'Publishes immediately'}
-                        </p>
-                    </div>
-                    {initialWork?.updatedAt && (
-                        <div className="space-y-1">
-                            <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Last Modified</span>
-                            <p className="text-sm text-gray-700 dark:text-gray-300 font-mono">
-                                {formatDate(initialWork?.updatedAt)}
-                            </p>
-                        </div>
-                    )}
-                    {!isEditing && (
-                        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-100 md:ml-auto">
-                            New works publish immediately when you save. If you stage videos, use <span className="font-medium">Create And Add Videos</span> so the work is created first and the videos attach safely after.
-                        </div>
-                    )}
-                </div>
             </div>
 
-            <div className="space-y-4 rounded-2xl border border-border/80 bg-card p-6 shadow-sm dark:border-gray-800">
+            <div
+                id="work-editor-content-section"
+                ref={contentSectionRef}
+                className={cn(
+                    'space-y-4 rounded-2xl border border-border/80 bg-card p-6 shadow-sm',
+                    activeTab === 'content' && 'ring-2 ring-primary/20',
+                )}
+            >
                 <div className="flex items-center justify-between mb-2">
                     <h3 className="text-lg font-medium">Content (HTML/Text)</h3>
                     <div className="flex items-center gap-2">
@@ -1255,21 +1666,10 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                             title="AI Enrich"
                             extraBodyParams={{ title }}
                         />
-                        {isEditing && (
-                            <div className="flex items-center space-x-2 rounded-full border bg-gray-50 px-3 py-1.5 dark:bg-gray-900">
-                                <Checkbox
-                                    id="published"
-                                    name="published"
-                                    checked={published}
-                                    onCheckedChange={(value) => setPublished(Boolean(value))}
-                                />
-                                <Label htmlFor="published" className="text-sm cursor-pointer">Published</Label>
-                            </div>
-                        )}
                     </div>
                 </div>
-                <div className="rounded-xl border border-dashed border-sky-300 bg-sky-50/70 px-4 py-3 text-sm text-sky-900 dark:border-sky-900 dark:bg-sky-950/20 dark:text-sky-100">
-                    Write the public-facing project story here. New works save live immediately, so keep the summary and body ready before hitting create.
+                <div className="rounded-xl border border-border/80 bg-muted/50 px-4 py-3 text-sm text-muted-foreground">
+                    Write the project description shown on the public site.
                 </div>
                 {shouldContinueInlinePlacement && isEditing && videos.length > 0 && (
                     <div className="rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-900/60 dark:bg-emerald-950/20 dark:text-emerald-100">
@@ -1278,8 +1678,11 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                 )}
                 <TiptapEditor
                     content={html}
-                    onChange={setHtml}
-                    placeholder="Describe the project story and place saved videos inline where they belong..."
+                    onChange={(nextHtml) => {
+                        setHtml(nextHtml)
+                        setSaveError(null)
+                    }}
+                    placeholder="Describe the project story and place saved videos inline where they belong…"
                     workVideos={videos}
                     insertVideoEmbedRequest={insertVideoRequest}
                     onVideoInsertHandled={handleVideoInsertHandled}
@@ -1289,19 +1692,29 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                         Some inline video references no longer exist in the saved list. Remove those inline blocks before publishing.
                     </p>
                 )}
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-muted-foreground">
                     Use the saved video cards above to place each video inline inside the story.
                 </p>
             </div>
 
             <div className="flex flex-col gap-3 border-t pt-8 sm:flex-row sm:items-center sm:justify-end">
-                {!isEditing && (
-                    <p className="text-sm text-muted-foreground sm:mr-auto">
-                        Saving creates a live work immediately, then returns you to the works list unless you choose the staged video flow.
+                {saveError ? (
+                    <p role="alert" aria-live="polite" data-testid="admin-work-form-error" className="text-sm text-red-600 sm:mr-auto">
+                        {saveError}
                     </p>
-                )}
+                ) : null}
                 {!inlineMode && (
-                    <Button type="button" variant="outline" onClick={() => router.push(returnTo)}>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                            if (hasUnsavedChanges) {
+                                setShowUnsavedDialog(true)
+                                return
+                            }
+                            router.push(returnTo)
+                        }}
+                    >
                         Cancel
                     </Button>
                 )}
@@ -1310,32 +1723,51 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                     <Button
                         type="button"
                         onClick={() => void saveWork('default')}
-                        disabled={isSaving || !isDirty || !title.trim()}
-                        className="bg-[#142850] hover:bg-[#142850]/90 text-white font-medium px-8 transition-all hover:scale-[1.02]"
+                        disabled={isSaving || (!isDirty && !hasPersistedVideoChanges) || !title.trim()}
+                        className="px-8 font-medium"
                     >
-                        {isSaving ? 'Saving...' : 'Update Work'}
+                        {isSaving ? 'Saving…' : 'Update Work'}
                     </Button>
                 ) : (
-                    <>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => void saveWork('default')}
-                            disabled={isSaving || !isDirty || !title.trim() || hasStagedVideos}
-                        >
-                            {isSaving ? 'Saving...' : 'Create Work'}
-                        </Button>
-                        <Button
-                            type="button"
-                            onClick={() => void saveWork('with-videos')}
-                            disabled={isSaving || !isDirty || !title.trim() || !hasStagedVideos}
-                            className="bg-[#142850] hover:bg-[#142850]/90 text-white font-medium px-8 transition-all hover:scale-[1.02]"
-                        >
-                            {isSaving ? 'Creating...' : 'Create And Add Videos'}
-                        </Button>
-                    </>
+                    <Button
+                        type="button"
+                        onClick={() => void saveWork(primarySaveMode)}
+                        disabled={isSaving || !isDirty || !title.trim()}
+                        className="px-8 font-medium"
+                    >
+                        {isSaving ? 'Creating…' : hasStagedVideos ? 'Create with Videos' : 'Create Work'}
+                    </Button>
                 )}
             </div>
+            <Dialog open={showUnsavedDialog} onOpenChange={setShowUnsavedDialog}>
+                <DialogContent data-testid="admin-unsaved-dialog">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <AlertTriangle className="h-5 w-5 text-amber-600" aria-hidden="true" />
+                            Unsaved changes
+                        </DialogTitle>
+                        <DialogDescription>
+                            Leave this editor and discard the changes you have not saved yet.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button type="button" variant="outline" onClick={() => setShowUnsavedDialog(false)}>
+                            Keep editing
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="destructive"
+                            onClick={() => {
+                                clearBeforeUnloadWarning()
+                                setShowUnsavedDialog(false)
+                                router.push(returnTo)
+                            }}
+                        >
+                            Discard changes
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }

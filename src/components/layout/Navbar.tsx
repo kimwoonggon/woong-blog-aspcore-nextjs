@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation"
 import { CircleUserRound, LogIn, Menu } from "lucide-react"
 import { useState, useSyncExternalStore } from "react"
 import { Button } from "@/components/ui/button"
+import { ThemeToggle } from "@/components/ui/ThemeToggle"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -32,6 +33,11 @@ interface NavbarProps {
         name?: string
         role?: string
     }
+}
+
+async function redirectAfterLogout() {
+    const redirectUrl = await logoutWithCsrf('/')
+    window.location.assign(redirectUrl)
 }
 
 function SessionActions({
@@ -69,7 +75,13 @@ function SessionActions({
                     </span>
                 </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-48">
+            <DropdownMenuContent
+                align="end"
+                side="bottom"
+                sideOffset={10}
+                collisionPadding={16}
+                className="min-w-48"
+            >
                 <DropdownMenuItem asChild>
                     <Link href={isAdmin ? "/admin/dashboard" : "/"}>
                         My Page
@@ -85,9 +97,8 @@ function SessionActions({
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                     variant="destructive"
-                    onSelect={async () => {
-                        const redirectUrl = await logoutWithCsrf('/')
-                        window.location.assign(redirectUrl)
+                    onSelect={() => {
+                        void redirectAfterLogout()
                     }}
                 >
                     Logout
@@ -109,33 +120,35 @@ export function Navbar({ ownerName = 'John Doe', session }: NavbarProps) {
     const authenticated = session?.authenticated ?? false
     const isAdmin = session?.role === 'admin'
     const avatarLabel = session?.name || (isAdmin ? 'Admin' : 'User')
+    const closeMenu = () => setIsOpen(false)
 
     return (
-        <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75">
-            <div className="container flex h-20 items-center gap-3 px-4 md:px-6">
-                <div className="flex min-w-0 flex-1 items-center gap-4 lg:min-w-[320px] lg:flex-none">
+        <header className="sticky top-0 z-[50] border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75">
+            <div className="container flex h-20 items-center gap-3 px-4 md:px-6 xl:grid xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] xl:gap-6">
+                <div className="flex min-w-0 items-center gap-4 xl:col-start-1 xl:justify-self-start">
                     <Link href="/" className="min-w-0 rounded-2xl px-1 py-1 transition-colors hover:text-primary">
                         <div className="flex flex-col">
                             <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
                                 Portfolio
                             </span>
-                            <span className="truncate text-xl font-semibold text-foreground md:text-2xl">
+                            <span className="max-w-[12rem] truncate text-xl font-semibold text-foreground md:max-w-[16rem] md:text-2xl xl:max-w-[14rem] 2xl:max-w-[18rem]">
                                 {ownerName}
                             </span>
                         </div>
                     </Link>
-                    <p className="hidden max-w-[220px] text-sm text-muted-foreground xl:block">
+                    <p className="hidden min-w-0 max-w-[15rem] truncate text-sm text-muted-foreground 2xl:block">
                         Works, writing, and experiments in one balanced shell.
                     </p>
                 </div>
 
-                <nav className="hidden min-w-0 flex-1 items-center justify-center gap-2 lg:flex">
+                <nav className="hidden items-center justify-center gap-2 whitespace-nowrap xl:absolute xl:left-1/2 xl:top-1/2 xl:z-[65] xl:flex xl:-translate-x-1/2 xl:-translate-y-1/2">
                     {navItems.map((item) => (
                         <Link
                             key={item.href}
                             href={item.href}
                             className={cn(
-                                "rounded-full px-4 py-2 text-sm font-medium transition-colors",
+                                "whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-colors",
+                                "focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring",
                                 pathname === item.href
                                     ? "bg-foreground text-background"
                                     : "text-muted-foreground hover:bg-muted hover:text-foreground",
@@ -146,13 +159,8 @@ export function Navbar({ ownerName = 'John Doe', session }: NavbarProps) {
                     ))}
                 </nav>
 
-                <div className="ml-auto hidden items-center gap-3 lg:flex">
-                    <Link
-                        href="/blog"
-                        className="hidden rounded-full border border-border/80 px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/30 hover:text-foreground xl:inline-flex"
-                    >
-                        Latest writing
-                    </Link>
+                <div className="hidden min-w-0 items-center justify-end gap-3 xl:col-start-3 xl:flex xl:justify-self-end">
+                    <ThemeToggle />
                     <SessionActions authenticated={authenticated} isAdmin={isAdmin} avatarLabel={avatarLabel} />
                 </div>
 
@@ -161,7 +169,7 @@ export function Navbar({ ownerName = 'John Doe', session }: NavbarProps) {
                         <SheetTrigger asChild>
                             <Button
                                 variant="ghost"
-                                className="h-11 rounded-full px-3 lg:hidden"
+                                className="ml-auto h-11 rounded-full px-3 xl:hidden"
                             >
                                 <Menu className="h-5 w-5" />
                                 <span className="sr-only">Toggle Menu</span>
@@ -186,7 +194,7 @@ export function Navbar({ ownerName = 'John Doe', session }: NavbarProps) {
                                         <Link
                                             key={item.href}
                                             href={item.href}
-                                            onClick={() => setIsOpen(false)}
+                                            onClick={closeMenu}
                                             className={cn(
                                                 "rounded-2xl px-4 py-3 text-base font-medium transition-colors",
                                                 pathname === item.href
@@ -212,6 +220,18 @@ export function Navbar({ ownerName = 'John Doe', session }: NavbarProps) {
                                         <CircleUserRound className="h-5 w-5 text-muted-foreground" />
                                     </div>
 
+                                    <div className="mb-4 flex items-center justify-between rounded-2xl border border-border/80 bg-background/80 px-4 py-3">
+                                        <div>
+                                            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+                                                Theme
+                                            </p>
+                                            <p className="text-sm font-medium text-foreground">
+                                                Light, dark, or system
+                                            </p>
+                                        </div>
+                                        <ThemeToggle testId={undefined} />
+                                    </div>
+
                                     <div className="space-y-2">
                                         {authenticated ? (
                                             <>
@@ -231,10 +251,9 @@ export function Navbar({ ownerName = 'John Doe', session }: NavbarProps) {
                                                     type="button"
                                                     variant="outline"
                                                     className="w-full justify-start rounded-2xl text-red-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/20"
-                                                    onClick={async () => {
-                                                        setIsOpen(false)
-                                                        const redirectUrl = await logoutWithCsrf('/')
-                                                        window.location.assign(redirectUrl)
+                                                    onClick={() => {
+                                                        closeMenu()
+                                                        void redirectAfterLogout()
                                                     }}
                                                 >
                                                     Logout
@@ -254,7 +273,7 @@ export function Navbar({ ownerName = 'John Doe', session }: NavbarProps) {
                         </SheetContent>
                     </Sheet>
                 ) : (
-                    <div className="h-11 w-11 lg:hidden" />
+                    <div className="col-start-3 justify-self-end h-11 w-11 xl:hidden" />
                 )}
             </div>
         </header>

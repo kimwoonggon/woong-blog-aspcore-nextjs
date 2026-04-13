@@ -11,8 +11,9 @@ Woong Blog is a split-stack portfolio/blog application:
 
 The current repository standard is **compose-first**:
 
-- use `docker compose up -d --build` for full-stack work
-- use `npm run test:e2e:stack` for real regression checks
+- local development runs through `docker-compose.dev.yml`
+- production/runtime deployment runs through `docker-compose.prod.yml`
+- GitHub Actions validates the same runtime shapes before merge or publish
 - `npm run dev` may still help with isolated UI work, but it is **not** the supported verification path for auth, admin mutations, uploads, or final release checks
 
 ## Main URLs
@@ -49,10 +50,10 @@ Optional for direct backend local work:
 
 ## Local Run
 
-### 1. Start the full stack
+### 1. Start the dev stack
 
 ```bash
-docker compose up -d --build
+docker compose -f docker-compose.dev.yml up -d --build
 ```
 
 ### 2. Check health
@@ -75,10 +76,16 @@ docker compose down
 
 ## Local Development Modes
 
-### Supported full-stack mode
+### Supported dev full-stack mode
 
 ```bash
-docker compose up -d --build
+docker compose -f docker-compose.dev.yml up -d --build
+```
+
+### Dev mode with local-admin shortcut enabled
+
+```bash
+./scripts/dev-up.sh
 ```
 
 Use this mode for:
@@ -103,6 +110,360 @@ Do **not** treat it as the source of truth for:
 - admin API ownership
 - upload routing
 - final regression sign-off
+
+## Branch Strategy
+
+This repository now treats `dev` as the default integration branch and `main` as the production branch.
+
+- `feature/*` branches merge into `dev`
+- `dev` is the branch where full-stack development continues
+- `main` is the branch that should be safe to deploy
+- `main` must not expose dev-only affordances such as `Continue as Local Admin`
+
+### Dev-only auth behavior
+
+Two flags control the local admin shortcut:
+
+- `ENABLE_LOCAL_ADMIN_SHORTCUT`
+- `Auth__EnableTestLoginEndpoint`
+
+Defaults:
+
+- `docker-compose.dev.yml` enables local admin shortcut and test-login
+- `docker-compose.prod.yml` disables local admin shortcut and test-login
+- `./scripts/dev-up.sh` turns both flags `true`
+- `./scripts/main-up.sh` simulates the production stack locally with local-tag images
+- `.github/workflows/ci-dev.yml` validates source-build dev integration
+- `.github/workflows/ci-main-runtime.yml` validates image-based production shape
+- `.github/workflows/publish-ghcr-main.yml` runs only after `CI Main Runtime` succeeds on `main`
+
+This means:
+
+- `main` / production-safe runs do **not** expose the local admin shortcut
+- local development can still opt in explicitly
+- CI proves the policy through the full compose stack:
+  - `dev` mode must expose `Continue as Local Admin` and keep `test-login` enabled
+  - `main` mode must hide `Continue as Local Admin` and return `404` from `test-login`
+
+### Compose-first CI policy
+
+The repository no longer treats standalone image builds as sufficient release evidence.
+
+- `CI Dev` boots `docker-compose.dev.yml`
+- `CI Main Runtime` boots `docker-compose.prod.yml`
+- `CI Main Runtime` uses locally tagged images to prove the production compose contract before publish
+- `Publish GHCR Main` only runs after `CI Main Runtime` succeeds on `main`
+
+The shared smoke entrypoint is:
+
+```bash
+./scripts/ci-compose-smoke.sh dev
+./scripts/ci-compose-smoke.sh main
+```
+
+It verifies:
+
+- compose config for the selected runtime file
+- dev: source build via `docker-compose.dev.yml`
+- main: image-based launch via `docker-compose.prod.yml`
+- backend health via `/api/health`
+- frontend routing via `/` and `/login`
+- db-backed public pages via `/blog` and `/works`
+- branch-policy auth behavior on `/login`
+- branch-policy auth behavior on `/api/auth/test-login`
+
+### Daily development flow
+
+1. Start from `dev`
+2. Create a feature branch from `dev`
+3. Push the feature branch
+4. Open a PR into `dev`
+5. Merge into `dev` after checks pass
+
+Example:
+
+```bash
+git switch dev
+git pull origin dev
+git switch -c feature/my-change
+git push -u origin feature/my-change
+```
+
+### CI and publish flow
+
+1. `feature/*` push or PR to `dev`
+   - runs `CI Dev`
+2. `dev` push
+   - runs `CI Dev`
+3. successful `CI Dev` completion on `dev`
+   - triggers `Publish GHCR Dev`
+   - publishes staging images with `:dev` and `:dev-sha-<sha>` tags
+3. `release/main-promote -> main` PR
+   - runs `CI Main Runtime`
+4. `main` push
+   - runs `CI Main Runtime`
+5. successful `CI Main Runtime` completion on `main`
+   - triggers `Publish GHCR Main`
+   - reruns prod compose smoke
+   - publishes runtime images to GHCR only after the `main` smoke passes
+
+### Promote `dev` into `main`
+
+`main` is promoted from `dev` through a runtime-only export so production does not accumulate test files, planning notes, or agent assets.
+
+Prepare the promotion worktree:
+
+```bash
+./scripts/promote-main-runtime.sh
+```
+
+This creates a runtime-only worktree on `release/main-promote` using the allowlist in:
+
+- [`scripts/main-runtime-allowlist.txt`](./scripts/main-runtime-allowlist.txt)
+
+Then push the promotion branch:
+
+```bash
+git -C ../woong-blog-main-runtime push origin HEAD:release/main-promote
+```
+
+Then open a PR:
+
+```text
+release/main-promote -> main
+```
+
+If you want GitHub Actions to prepare and push the promotion branch for you:
+
+```text
+Actions -> Promote Main Runtime -> Run workflow
+```
+
+### What stays out of `main`
+
+The promotion allowlist is designed so `main` can stay focused on runtime/deploy assets.
+
+Examples of content that should not be promoted:
+
+- `tests/`
+- `.codex/`
+- `.agents/`
+- planning / todo markdown
+- local QA artifacts
+
+The intent is:
+
+- `dev` keeps the full engineering surface
+- `main` keeps the runtime surface
+
+Production deployment details live in [DEPLOYMENT.md](./DEPLOYMENT.md).
+Staging pull/up details live in [STAGING.md](./STAGING.md).
+
+## Operator Flow
+
+이 저장소는 아래 3단계 흐름으로 운영한다.
+
+1. `dev`
+   - source-build 개발 및 검증 브랜치
+   - `docker-compose.dev.yml`
+   - `CI Dev`
+2. `staging`
+   - `dev`에서 publish된 `:dev` 이미지 검증 환경
+   - `docker-compose.staging.yml`
+   - 별도 폴더에서 `pull && up -d`
+3. `main`
+   - production runtime-only 브랜치
+   - `docker-compose.prod.yml`
+   - `CI Main Runtime`
+   - `Publish GHCR Main`
+
+## Dev Start
+
+### 1. 브랜치 준비
+
+```bash
+git switch dev
+git pull origin dev
+git switch -c feature/my-change
+```
+
+### 2. 로컬 dev stack 기동
+
+권장:
+
+```bash
+./scripts/dev-up.sh
+```
+
+동등 명령:
+
+```bash
+docker compose --env-file .env -f docker-compose.dev.yml up -d --build
+```
+
+### 3. 로컬 dev 확인
+
+```bash
+curl -fsS http://localhost/api/health
+curl -fsS http://localhost/login | head
+curl -fsS http://localhost/works | head
+curl -fsS http://localhost/blog | head
+```
+
+dev 기대값:
+- `/login`에 `Continue as Local Admin`가 보여야 함
+- `/api/auth/test-login`이 동작해야 함
+- `backend`는 필요 시 `8080`으로 직접 확인 가능
+
+### 4. dev 품질 게이트
+
+```bash
+npm run lint
+npm run typecheck
+npm run test -- --run
+./scripts/ci-compose-smoke.sh dev
+PLAYWRIGHT_SKIP_AUTH_BOOTSTRAP=1 PLAYWRIGHT_EXPECT_LOCAL_ADMIN_SHORTCUT=visible PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://localhost npx playwright test tests/ci-compose-public.spec.ts --project=chromium-public --workers=1
+PLAYWRIGHT_EXPECT_LOCAL_ADMIN_SHORTCUT=visible PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://localhost npx playwright test tests/test-server-runtime.spec.ts tests/auth-security-browser.spec.ts tests/public-admin-affordances.spec.ts tests/ui-header-overlays.spec.ts --project=chromium-runtime-auth --workers=1
+```
+
+### 5. dev 반영
+
+```bash
+git push -u origin feature/my-change
+```
+
+PR:
+
+```text
+feature/my-change -> dev
+```
+
+## Staging Validation
+
+### 목적
+
+`main`으로 올리기 전에, `dev`에서 publish된 이미지를 **별도 폴더**에서 `pull && up -d`로 띄워서 실제 홈서버/스테이징 운용 흐름을 검증한다.
+
+### 1. staging 이미지 publish
+
+`dev`가 green이면 `Publish GHCR Dev`가 `:dev`, `:dev-sha-<sha>` 태그를 publish한다.
+
+예시:
+
+```text
+ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-frontend:dev
+ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-backend:dev
+```
+
+### 2. staging 폴더 준비
+
+```bash
+mkdir -p ~/woong-blog-staging
+cd ~/woong-blog-staging
+cp /path/to/repo/docker-compose.staging.yml .
+cp /path/to/repo/.env.staging.example .env.staging
+cp -r /path/to/repo/nginx ./nginx
+mkdir -p certbot/www certbot/conf/live/current
+```
+
+### 3. `.env.staging` 수정
+
+최소:
+
+```env
+FRONTEND_IMAGE=ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-frontend:dev
+BACKEND_IMAGE=ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-backend:dev
+POSTGRES_PASSWORD=change-me
+Auth__ClientId=replace-me
+Auth__ClientSecret=replace-me
+Auth__AdminEmails__0=admin@example.com
+```
+
+### 4. pull / up
+
+```bash
+echo "$GHCR_TOKEN" | docker login ghcr.io -u YOUR_GITHUB_USERNAME --password-stdin
+docker compose --env-file .env.staging -f docker-compose.staging.yml pull
+docker compose --env-file .env.staging -f docker-compose.staging.yml up -d
+docker compose --env-file .env.staging -f docker-compose.staging.yml ps
+```
+
+### 5. staging 기능 확인
+
+빠른 확인:
+
+```bash
+curl -I http://localhost/
+curl -I http://localhost/login
+curl -I http://localhost/works
+curl -I http://localhost/blog
+```
+
+브라우저 검증:
+
+```bash
+PLAYWRIGHT_HEADED=1 PLAYWRIGHT_SKIP_AUTH_BOOTSTRAP=1 PLAYWRIGHT_EXPECT_LOCAL_ADMIN_SHORTCUT=hidden PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://localhost npx playwright test tests/ci-compose-public.spec.ts --project=chromium-public --headed --workers=1
+```
+
+추가 public 검증:
+
+```bash
+PLAYWRIGHT_HEADED=1 PLAYWRIGHT_SKIP_AUTH_BOOTSTRAP=1 PLAYWRIGHT_EXPECT_LOCAL_ADMIN_SHORTCUT=hidden PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://localhost npx playwright test tests/home.spec.ts tests/public-content.spec.ts --project=chromium-public --headed --workers=1
+```
+
+staging 기대값:
+- `/login`에 `Continue as Local Admin`가 없어야 함
+- `/api/auth/test-login`은 `404`여야 함
+- `frontend/backend`는 외부 포트를 직접 열지 않아야 함
+- 홈/works/blog가 정상 렌더돼야 함
+
+## Main Promotion
+
+### 1. runtime-only promotion branch 생성
+
+```bash
+./scripts/promote-main-runtime.sh
+git -C ../woong-blog-main-runtime status --short
+git -C ../woong-blog-main-runtime push origin HEAD:release/main-promote
+```
+
+### 2. PR 생성
+
+```text
+release/main-promote -> main
+```
+
+### 3. main 검증
+
+PR 또는 merge 뒤 기대 흐름:
+- `CI Main Runtime` green
+- `Publish GHCR Main` green
+
+main 기대값:
+- `Continue as Local Admin` hidden
+- `/api/auth/test-login` 404
+- `docker-compose.prod.yml`는 `image:`만 사용
+- 운영 이미지는 GHCR `:main`, `:latest`, `:sha-<sha>`로 publish
+
+### 4. 운영 배포
+
+```bash
+docker compose --env-file .env.prod -f docker-compose.prod.yml pull
+docker compose --env-file .env.prod -f docker-compose.prod.yml up -d
+```
+
+### Hotfix rule
+
+If a hotfix lands on `main`, it must be replayed back to `dev` immediately so the branches do not drift.
+
+Recommended sequence:
+
+```bash
+git switch dev
+git pull origin dev
+git merge origin/main
+git push origin dev
+```
 
 ## Test and Verification Commands
 
@@ -238,6 +599,23 @@ So today:
 For the actual deployment checklist and step-by-step runbook, see:
 
 - [`DEPLOYMENT.md`](./DEPLOYMENT.md)
+
+## CI / CD Branch Rules
+
+Current workflow intent:
+
+- pushes and PRs to `feature/*`, `dev`, and `main` run CI/build checks
+- pushes to `main` are the only path that publish runtime images to GHCR
+- runtime-only promotion can be triggered manually through `Promote Main Runtime`
+
+So the normal release path is:
+
+1. `feature/* -> dev`
+2. verify on `dev`
+3. promote runtime-only tree to `release/main-promote`
+4. merge `release/main-promote -> main`
+5. publish runtime images from `main` to GHCR
+6. pull those images from the cloud host and launch the docker services
 
 ## Repository Highlights
 

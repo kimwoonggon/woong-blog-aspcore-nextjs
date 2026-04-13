@@ -32,9 +32,9 @@ export function PublicPagination({
           <Link
             key={pageNumber}
             href={`${pathname}?page=${pageNumber}&pageSize=${pageSize}`}
-            className={`rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+            className={`inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
               pageNumber === currentPage
-                ? 'border-sky-400 bg-sky-500 text-white'
+                ? 'border-sky-400 bg-sky-500 text-white dark:border-sky-600 dark:bg-sky-600'
                 : 'hover:bg-accent'
             }`}
           >
@@ -46,22 +46,22 @@ export function PublicPagination({
         {currentPage > 1 ? (
           <Link
             href={`${pathname}?page=1&pageSize=${pageSize}`}
-            className="rounded-full border px-4 py-2 text-sm font-medium hover:bg-accent"
+            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border px-4 py-2 text-sm font-medium hover:bg-accent"
           >
             처음
           </Link>
         ) : (
-          <span className="rounded-full border px-4 py-2 text-sm text-muted-foreground">처음</span>
+          <span className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border px-4 py-2 text-sm text-muted-foreground">처음</span>
         )}
         {currentPage > 1 ? (
           <Link
             href={`${pathname}?page=${currentPage - 1}&pageSize=${pageSize}`}
-            className="rounded-full border px-4 py-2 text-sm font-medium hover:bg-accent"
+            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border px-4 py-2 text-sm font-medium hover:bg-accent"
           >
             이전
           </Link>
         ) : (
-          <span className="rounded-full border px-4 py-2 text-sm text-muted-foreground">이전</span>
+          <span className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border px-4 py-2 text-sm text-muted-foreground">이전</span>
         )}
         <span className="text-sm text-muted-foreground">
           {currentPage} / {totalPages}
@@ -69,22 +69,22 @@ export function PublicPagination({
         {currentPage < totalPages ? (
           <Link
             href={`${pathname}?page=${currentPage + 1}&pageSize=${pageSize}`}
-            className="rounded-full border px-4 py-2 text-sm font-medium hover:bg-accent"
+            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border px-4 py-2 text-sm font-medium hover:bg-accent"
           >
             다음
           </Link>
         ) : (
-          <span className="rounded-full border px-4 py-2 text-sm text-muted-foreground">다음</span>
+          <span className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border px-4 py-2 text-sm text-muted-foreground">다음</span>
         )}
         {currentPage < totalPages ? (
           <Link
             href={`${pathname}?page=${totalPages}&pageSize=${pageSize}`}
-            className="rounded-full border px-4 py-2 text-sm font-medium hover:bg-accent"
+            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border px-4 py-2 text-sm font-medium hover:bg-accent"
           >
             마지막
           </Link>
         ) : (
-          <span className="rounded-full border px-4 py-2 text-sm text-muted-foreground">마지막</span>
+          <span className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border px-4 py-2 text-sm text-muted-foreground">마지막</span>
         )}
       </div>
     </nav>

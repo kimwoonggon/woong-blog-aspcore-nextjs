@@ -40,6 +40,11 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-brand-accent: var(--brand-accent);
+  --color-brand-navy: var(--brand-navy);
+  --color-brand-cyan: var(--brand-cyan);
+  --color-brand-orange: var(--brand-orange);
+  --color-brand-section-bg: var(--brand-section-bg);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -88,6 +93,13 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  --brand-accent: oklch(0.60 0.22 25);
+  --brand-navy: oklch(0.25 0.08 260);
+  --brand-cyan: oklch(0.65 0.14 220);
+  --brand-orange: oklch(0.72 0.17 45);
+  --brand-section-bg: oklch(0.97 0.01 220);
+  --code-block-bg: #111827;
+  --code-block-fg: #f9fafb;
 }
 
 .dark {
@@ -105,7 +117,7 @@
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
+  --muted-foreground: oklch(0.75 0 0);
   --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
@@ -125,6 +137,13 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+  --brand-accent: oklch(0.65 0.22 25);
+  --brand-navy: oklch(0.55 0.15 260);
+  --brand-cyan: oklch(0.75 0.14 220);
+  --brand-orange: oklch(0.78 0.17 45);
+  --brand-section-bg: oklch(0.22 0.02 220);
+  --code-block-bg: #0d1117;
+  --code-block-fg: #e6edf3;
 }
 
 @layer base {
@@ -132,8 +151,52 @@
     @apply border-border outline-ring/50;
   }
 
+  html {
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
   body {
     @apply bg-background text-foreground;
+  }
+
+  :where(a[href], button, summary, input, textarea, select, [role="button"], [role="link"]) {
+    -webkit-tap-highlight-color: rgb(15 23 42 / 0.12);
+    touch-action: manipulation;
+  }
+
+  :where(a[href], button, summary, input, textarea, select, [role="button"], [role="link"]):focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 3px;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    scroll-margin-top: 6rem;
+  }
+
+  .dark ::-webkit-scrollbar-track {
+    background: oklch(0.15 0.02 280);
+  }
+
+  .dark ::-webkit-scrollbar-thumb {
+    background: oklch(0.35 0.02 280);
+  }
+
+  ::selection {
+    background: oklch(0.60 0.22 25 / 30%);
+  }
+
+  .dark ::selection {
+    background: oklch(0.60 0.22 25 / 40%);
+    color: white;
   }
 }
 
@@ -220,9 +283,9 @@
   }
 
   .prose pre {
-    background: #111827;
+    background: var(--code-block-bg, #111827);
     border-radius: 1rem;
-    color: #f9fafb;
+    color: var(--code-block-fg, #f9fafb);
     margin: 1.25rem 0;
     overflow-x: auto;
     padding: 1rem 1.1rem;
@@ -247,20 +310,37 @@
 }
 @keyframes fadeInUp {
   from {
-    opacity: 0;
     transform: translateY(20px);
   }
   to {
-    opacity: 1;
     transform: translateY(0);
   }
 }
 
 .animate-fade-in-up {
+  opacity: 1;
   animation: fadeInUp 0.8s ease-out forwards;
+  will-change: transform;
 }
 
-@media (max-height: 860px) {
+.works-feed-card {
+  min-height: 24rem;
+}
+
+.works-feed-title {
+  min-height: calc(1.35em * 2);
+}
+
+.works-feed-excerpt {
+  min-height: calc(1.45em * 3);
+}
+
+.works-feed-tags {
+  min-height: 2.5rem;
+  max-height: 2.5rem;
+}
+
+@media (max-height: 860px), (max-width: 640px) {
   .responsive-feed-card {
     padding: 0.875rem;
   }
@@ -279,9 +359,13 @@
     max-height: 13rem;
     object-fit: cover;
   }
+
+  .works-feed-card {
+    min-height: 22rem;
+  }
 }
 
-@media (max-height: 720px) {
+@media (max-height: 720px), (max-width: 480px) {
   .responsive-feed-card {
     padding: 0.75rem;
   }
@@ -296,5 +380,27 @@
 
   .responsive-feed-image {
     max-height: 11rem;
+  }
+
+  .works-feed-card {
+    min-height: 20rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in-up {
+    animation: none;
+    opacity: 1;
+    transform: none;
+    will-change: auto;
+  }
+}
+
+@media (scripting: none) {
+  .animate-fade-in-up {
+    animation: none;
+    opacity: 1 !important;
+    transform: none !important;
+    will-change: auto;
   }
 }

@@ -42,7 +42,7 @@ describe('admin bulk selection tables', () => {
     expect(screen.queryByRole('button', { name: 'Generate AI Fix job' })).not.toBeInTheDocument()
   })
 
-  it('filters blog rows by title and exposes first/last pagination controls', async () => {
+  it('filters blog rows by title and exposes previous/next pagination controls', async () => {
     vi.stubGlobal('prompt', promptMock)
 
     render(
@@ -57,8 +57,8 @@ describe('admin bulk selection tables', () => {
     fireEvent.change(screen.getByLabelText('Search blog titles'), { target: { value: 'beta' } })
     expect(screen.getByText('Beta Blog')).toBeInTheDocument()
     expect(screen.queryByText('Alpha Blog')).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '처음' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '끝' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Previous page' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Next page' })).toBeInTheDocument()
   })
 
   it('shows works bulk delete button when rows are selected', async () => {
@@ -79,7 +79,7 @@ describe('admin bulk selection tables', () => {
     })
   })
 
-  it('filters works by title and exposes first/last pagination controls', () => {
+  it('filters works by title and exposes previous/next pagination controls', () => {
     vi.stubGlobal('prompt', promptMock)
 
     render(
@@ -94,7 +94,7 @@ describe('admin bulk selection tables', () => {
     fireEvent.change(screen.getByLabelText('Search work titles'), { target: { value: 'beta' } })
     expect(screen.getByText('Beta Work')).toBeInTheDocument()
     expect(screen.queryByText('Alpha Work')).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '처음' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '끝' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Previous page' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Next page' })).toBeInTheDocument()
   })
 })
