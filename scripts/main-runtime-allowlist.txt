@@ -17,6 +17,9 @@ backend
 package.json
 package-lock.json
 playwright.config.ts
+scripts/notion-api-lib.mjs
+scripts/notion-db-import-lib.mjs
+scripts/notion-export-lib.mjs
 tsconfig.json
 next.config.ts
 tests/ci-compose-public.spec.ts
