@@ -3,6 +3,7 @@ set -euo pipefail
 
 SOURCE_BRANCH="${SOURCE_BRANCH:-dev}"
 TARGET_BRANCH="${TARGET_BRANCH:-main}"
+SOURCE_REF="${SOURCE_REF:-${SOURCE_BRANCH}}"
 WORKTREE_DIR="${WORKTREE_DIR:-../woong-blog-main-runtime}"
 ALLOWLIST_FILE="${ALLOWLIST_FILE:-scripts/main-runtime-allowlist.txt}"
 PROMOTION_BRANCH="${PROMOTION_BRANCH:-release/main-promote}"
@@ -29,6 +30,15 @@ fi
 
 git fetch origin "${SOURCE_BRANCH}" "${TARGET_BRANCH}"
 
+if ! git rev-parse --verify --quiet "${SOURCE_REF}" >/dev/null; then
+  if git rev-parse --verify --quiet "origin/${SOURCE_BRANCH}" >/dev/null; then
+    SOURCE_REF="origin/${SOURCE_BRANCH}"
+  else
+    echo "Source ref not found: ${SOURCE_REF}" >&2
+    exit 1
+  fi
+fi
+
 if [[ -d "${WORKTREE_DIR}" ]]; then
   git worktree remove --force "${WORKTREE_DIR}"
 fi
@@ -37,7 +47,7 @@ git worktree add -B "${PROMOTION_BRANCH}" "${WORKTREE_DIR}" "origin/${TARGET_BRA
 
 find "${WORKTREE_DIR}" -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
 
-git archive --format=tar "origin/${SOURCE_BRANCH}" "${ALLOWLIST[@]}" | tar -xf - -C "${WORKTREE_DIR}"
+git archive --format=tar "${SOURCE_REF}" "${ALLOWLIST[@]}" | tar -xf - -C "${WORKTREE_DIR}"
 
 (
   cd "${WORKTREE_DIR}"

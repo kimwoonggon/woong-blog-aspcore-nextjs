@@ -1,16 +1,22 @@
 import { expect, test } from '@playwright/test'
 import { loginAsLocalAdmin } from './helpers/auth'
 
+const expectedShortcut = process.env.PLAYWRIGHT_EXPECT_LOCAL_ADMIN_SHORTCUT ?? 'hidden'
 
 async function gotoAndExpectButton(page: import('@playwright/test').Page, url: string, buttonName: string) {
   await page.goto(url, { waitUntil: 'networkidle' })
   await expect(page.getByRole('button', { name: buttonName })).toBeVisible({ timeout: 15000 })
 }
 
-test('login page hides the local admin shortcut by default', async ({ page }) => {
+test('login page reflects the expected local admin shortcut policy', async ({ page }) => {
   await page.goto('/login')
 
-  await expect(page.getByRole('link', { name: 'Continue as Local Admin' })).toHaveCount(0)
+  const shortcut = page.getByRole('link', { name: 'Continue as Local Admin' })
+  if (expectedShortcut === 'visible') {
+    await expect(shortcut).toBeVisible()
+  } else {
+    await expect(shortcut).toHaveCount(0)
+  }
 })
 
 test('admin session sees navbar status and public edit affordances', async ({ page }) => {

@@ -35,7 +35,7 @@ describe('admin page success and not-found states', () => {
     }))
 
     const DashboardPage = (await import('@/app/admin/dashboard/page')).default
-    render(await DashboardPage())
+    render(await DashboardPage({}))
 
     expect(screen.getByText('99')).toBeInTheDocument()
     expect(screen.getByText('3')).toBeInTheDocument()
@@ -61,7 +61,7 @@ describe('admin page success and not-found states', () => {
     }))
 
     const DashboardPage = (await import('@/app/admin/dashboard/page')).default
-    render(await DashboardPage())
+    render(await DashboardPage({}))
 
     expect(screen.getAllByText('Dashboard content lists are unavailable')[0]).toBeInTheDocument()
   }, 15000)
@@ -90,8 +90,9 @@ describe('admin page success and not-found states', () => {
 
     expect(screen.getByText('First blog')).toBeInTheDocument()
     expect(screen.getByText('Published')).toBeInTheDocument()
-    expect(screen.getByText('tag-a, tag-b')).toBeInTheDocument()
-    expect(screen.getByText(/batch-selection scaffolding/i)).toBeInTheDocument()
+    expect(screen.getByText('tag-a')).toBeInTheDocument()
+    expect(screen.getByText('tag-b')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Batch AI Fix/i })).toBeInTheDocument()
   }, 30000)
 
   it('renders draft blog rows without published dates or tags', async () => {

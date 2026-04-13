@@ -1,0 +1,81 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+      INTERNAL_API_ORIGIN: http://backend:8080
+      ENABLE_LOCAL_ADMIN_SHORTCUT: "true"
+    expose:
+      - "3000"
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    env_file:
+      - ${APP_ENV_FILE:-.env}
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://0.0.0.0:8080
+      ConnectionStrings__Postgres: Host=db;Port=5432;Database=${POSTGRES_DB:-portfolio};Username=${POSTGRES_USER:-portfolio};Password=${POSTGRES_PASSWORD:-portfolio}
+      Auth__Enabled: ${Auth__Enabled:-true}
+      Auth__DataProtectionKeysPath: /app/data-protection
+      Auth__MediaRoot: /app/media
+      Auth__EnableTestLoginEndpoint: "true"
+      Auth__SecureCookies: "false"
+      Auth__RequireHttpsMetadata: "false"
+      Proxy__KnownNetworks__0: ${PROXY_KNOWN_NETWORK:-172.16.0.0/12}
+      Security__UseHttpsRedirection: "false"
+      Security__UseHsts: "false"
+      CloudflareR2__AccountId: ${CloudflareR2__AccountId:-}
+      CloudflareR2__AccessKeyId: ${CloudflareR2__AccessKeyId:-}
+      CloudflareR2__SecretAccessKey: ${CloudflareR2__SecretAccessKey:-}
+      CloudflareR2__BucketName: ${CloudflareR2__BucketName:-}
+      CloudflareR2__Endpoint: ${CloudflareR2__Endpoint:-}
+      CloudflareR2__BrowserEndpoint: ${CloudflareR2__BrowserEndpoint:-}
+      CloudflareR2__PublicUrl: ${CloudflareR2__PublicUrl:-}
+      CloudflareR2__ForceEnabledInDevelopment: ${CloudflareR2__ForceEnabledInDevelopment:-false}
+    ports:
+      - "${BACKEND_PUBLISH_PORT:-8080}:8080"
+    expose:
+      - "8080"
+    depends_on:
+      - db
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - data-protection-keys:/app/data-protection
+      - media-storage:/app/media
+      - ${HOME}/.codex:/root/.codex:ro
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-portfolio}
+      POSTGRES_USER: ${POSTGRES_USER:-portfolio}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-portfolio}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  nginx:
+    image: nginx:1.27-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ${NGINX_DEFAULT_CONF:-./nginx/local-https.conf}:/etc/nginx/conf.d/default.conf:ro
+      - ${LOCAL_CERTS_DIR:-./.local-certs}:/etc/nginx/certs:ro
+    depends_on:
+      - frontend
+      - backend
+
+volumes:
+  postgres-data:
+  data-protection-keys:
+  media-storage:

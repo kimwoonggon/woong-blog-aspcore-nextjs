@@ -1,6 +1,6 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Locator } from '@playwright/test'
 
-async function countColumns(locator: any) {
+async function countColumns(locator: Locator) {
   const template = await locator.evaluate((element: HTMLElement) => getComputedStyle(element).gridTemplateColumns)
   return template.split(' ').filter(Boolean).length
 }

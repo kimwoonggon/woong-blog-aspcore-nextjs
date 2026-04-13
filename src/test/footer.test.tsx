@@ -25,7 +25,7 @@ describe('Footer', () => {
       />
     )
 
-    expect(screen.getByText(/Woonggon Kim/)).toBeInTheDocument()
+    expect(screen.getAllByText(/Woonggon Kim/)).toHaveLength(2)
     expect(screen.getByLabelText('GitHub')).toHaveAttribute('href', 'https://github.com/woong')
     expect(screen.getByLabelText('LinkedIn')).toHaveAttribute('href', 'https://linkedin.com/in/woong')
     expect(screen.queryByLabelText('Facebook')).not.toBeInTheDocument()

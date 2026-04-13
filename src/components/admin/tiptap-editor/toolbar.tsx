@@ -322,14 +322,6 @@ function EditorLinkControl({
   const [open, setOpen] = useState(false)
   const [linkUrl, setLinkUrl] = useState('')
 
-  useEffect(() => {
-    if (!open) {
-      return
-    }
-
-    setLinkUrl(editor.getAttributes('link').href ?? '')
-  }, [editor, open])
-
   const applyLink = () => {
     const nextUrl = linkUrl.trim()
 
@@ -349,7 +341,15 @@ function EditorLinkControl({
   }
 
   return (
-    <Popover.Root open={open} onOpenChange={setOpen}>
+    <Popover.Root
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (nextOpen) {
+          setLinkUrl(editor.getAttributes('link').href ?? '')
+        }
+        setOpen(nextOpen)
+      }}
+    >
       <Popover.Trigger asChild>
         {trigger({
           onMouseDown: (event) => {

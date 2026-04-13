@@ -1,16 +1,14 @@
-name: CI
+name: CI Dev
 
 on:
   workflow_dispatch:
   push:
     branches:
       - dev
-      - main
-      - 'feature/**'
+      - "feature/**"
   pull_request:
     branches:
       - dev
-      - main
 
 permissions:
   contents: read
@@ -52,31 +50,14 @@ jobs:
         run: docker run --pull=always --rm -v "$PWD/backend:/src" -w /src mcr.microsoft.com/dotnet/sdk:10.0 dotnet test tests/WoongBlog.Api.Tests/WoongBlog.Api.Tests.csproj
 
   compose-verify:
-    name: Compose Full Stack Verification
+    name: Compose Dev Verification
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Resolve branch policy mode
-        id: policy
-        run: |
-          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
-            target_branch="${GITHUB_BASE_REF}"
-          else
-            target_branch="${GITHUB_REF_NAME}"
-          fi
-
-          if [[ "${target_branch}" == "main" ]]; then
-            echo "mode=main" >> "${GITHUB_OUTPUT}"
-            echo "shortcut_expectation=hidden" >> "${GITHUB_OUTPUT}"
-          else
-            echo "mode=dev" >> "${GITHUB_OUTPUT}"
-            echo "shortcut_expectation=visible" >> "${GITHUB_OUTPUT}"
-          fi
-
       - name: Compose config and smoke
-        run: ./scripts/ci-compose-smoke.sh "${{ steps.policy.outputs.mode }}"
+        run: ./scripts/ci-compose-smoke.sh dev
 
   browser-smoke:
     name: Browser smoke
@@ -101,41 +82,24 @@ jobs:
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
 
-      - name: Resolve branch policy mode
-        id: policy
-        run: |
-          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
-            target_branch="${GITHUB_BASE_REF}"
-          else
-            target_branch="${GITHUB_REF_NAME}"
-          fi
-
-          if [[ "${target_branch}" == "main" ]]; then
-            echo "mode=main" >> "${GITHUB_OUTPUT}"
-            echo "shortcut_expectation=hidden" >> "${GITHUB_OUTPUT}"
-          else
-            echo "mode=dev" >> "${GITHUB_OUTPUT}"
-            echo "shortcut_expectation=visible" >> "${GITHUB_OUTPUT}"
-          fi
-
-      - name: Start compose stack
-        run: KEEP_RUNNING=1 ./scripts/ci-compose-smoke.sh "${{ steps.policy.outputs.mode }}"
+      - name: Start dev compose stack
+        run: KEEP_RUNNING=1 ./scripts/ci-compose-smoke.sh dev
 
       - name: Run public browser smoke
         env:
           PLAYWRIGHT_SKIP_AUTH_BOOTSTRAP: "1"
-          PLAYWRIGHT_EXPECT_LOCAL_ADMIN_SHORTCUT: ${{ steps.policy.outputs.shortcut_expectation }}
+          PLAYWRIGHT_EXPECT_LOCAL_ADMIN_SHORTCUT: visible
           PLAYWRIGHT_EXTERNAL_SERVER: "1"
           PLAYWRIGHT_BASE_URL: http://localhost
         run: npx playwright test tests/ci-compose-public.spec.ts --project=chromium-public --workers=1
 
-      - name: Run dev-only runtime auth smoke
-        if: steps.policy.outputs.mode == 'dev'
+      - name: Run runtime auth smoke
         env:
+          PLAYWRIGHT_EXPECT_LOCAL_ADMIN_SHORTCUT: visible
           PLAYWRIGHT_EXTERNAL_SERVER: "1"
           PLAYWRIGHT_BASE_URL: http://localhost
         run: npx playwright test tests/test-server-runtime.spec.ts tests/auth-security-browser.spec.ts tests/public-admin-affordances.spec.ts tests/ui-header-overlays.spec.ts --project=chromium-runtime-auth --workers=1
 
       - name: Tear down compose stack
         if: always()
-        run: docker compose down --remove-orphans --volumes
+        run: docker compose -f docker-compose.dev.yml down --remove-orphans --volumes

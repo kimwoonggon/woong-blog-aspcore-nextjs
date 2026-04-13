@@ -1,6 +1,6 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Locator } from '@playwright/test'
 
-async function measureLineLength(locator: any) {
+async function measureLineLength(locator: Locator) {
   return locator.evaluate((element: HTMLElement) => {
     const clone = document.createElement('span')
     const style = getComputedStyle(element)

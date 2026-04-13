@@ -11,10 +11,10 @@ Woong Blog is a split-stack portfolio/blog application:
 
 The current repository standard is **compose-first**:
 
-- use `docker compose up -d --build` for full-stack work
-- use `npm run test:e2e:stack` for real regression checks
+- local development runs through `docker-compose.dev.yml`
+- production/runtime deployment runs through `docker-compose.prod.yml`
+- GitHub Actions validates the same runtime shapes before merge or publish
 - `npm run dev` may still help with isolated UI work, but it is **not** the supported verification path for auth, admin mutations, uploads, or final release checks
-- GitHub Actions must validate the same compose scenario, not isolated `docker build` steps
 
 ## Main URLs
 
@@ -50,10 +50,10 @@ Optional for direct backend local work:
 
 ## Local Run
 
-### 1. Start the full stack
+### 1. Start the dev stack
 
 ```bash
-docker compose up -d --build
+docker compose -f docker-compose.dev.yml up -d --build
 ```
 
 ### 2. Check health
@@ -76,10 +76,10 @@ docker compose down
 
 ## Local Development Modes
 
-### Supported full-stack mode
+### Supported dev full-stack mode
 
 ```bash
-docker compose up -d --build
+docker compose -f docker-compose.dev.yml up -d --build
 ```
 
 ### Dev mode with local-admin shortcut enabled
@@ -129,13 +129,13 @@ Two flags control the local admin shortcut:
 
 Defaults:
 
-- `docker-compose.yml` keeps both flags `false`
+- `docker-compose.dev.yml` enables local admin shortcut and test-login
+- `docker-compose.prod.yml` disables local admin shortcut and test-login
 - `./scripts/dev-up.sh` turns both flags `true`
-- `./scripts/main-up.sh` keeps both flags `false`
-- `.github/workflows/ci.yml` resolves branch policy automatically:
-  - `feature/*`, `dev`, and PRs targeting `dev` run in `dev` mode
-  - `main` and PRs targeting `main` run in `main` mode
-- `.github/workflows/publish-ghcr-main.yml` runs only after the `CI` workflow succeeds on `main`, then reruns the `main` compose smoke before GHCR push
+- `./scripts/main-up.sh` simulates the production stack locally with local-tag images
+- `.github/workflows/ci-dev.yml` validates source-build dev integration
+- `.github/workflows/ci-main-runtime.yml` validates image-based production shape
+- `.github/workflows/publish-ghcr-main.yml` runs only after `CI Main Runtime` succeeds on `main`
 
 This means:
 
@@ -149,14 +149,10 @@ This means:
 
 The repository no longer treats standalone image builds as sufficient release evidence.
 
-- CI must boot the compose stack: `db`, `backend`, `frontend`, `nginx`
-- CI must pass branch-policy auth flags into the runtime
-- `dev` mode:
-  - `ENABLE_LOCAL_ADMIN_SHORTCUT=true`
-  - `Auth__EnableTestLoginEndpoint=true`
-- `main` mode:
-  - `ENABLE_LOCAL_ADMIN_SHORTCUT=false`
-  - `Auth__EnableTestLoginEndpoint=false`
+- `CI Dev` boots `docker-compose.dev.yml`
+- `CI Main Runtime` boots `docker-compose.prod.yml`
+- `CI Main Runtime` uses locally tagged images to prove the production compose contract before publish
+- `Publish GHCR Main` only runs after `CI Main Runtime` succeeds on `main`
 
 The shared smoke entrypoint is:
 
@@ -167,8 +163,9 @@ The shared smoke entrypoint is:
 
 It verifies:
 
-- `docker compose config`
-- `docker compose up -d --build db backend frontend nginx`
+- compose config for the selected runtime file
+- dev: source build via `docker-compose.dev.yml`
+- main: image-based launch via `docker-compose.prod.yml`
 - backend health via `/api/health`
 - frontend routing via `/` and `/login`
 - db-backed public pages via `/blog` and `/works`
@@ -195,16 +192,16 @@ git push -u origin feature/my-change
 ### CI and publish flow
 
 1. `feature/*` push or PR to `dev`
-   - runs compose-first CI in `dev` mode
+   - runs `CI Dev`
 2. `dev` push
-   - runs compose-first CI in `dev` mode
+   - runs `CI Dev`
 3. `release/main-promote -> main` PR
-   - runs compose-first CI in `main` mode
+   - runs `CI Main Runtime`
 4. `main` push
-   - runs compose-first CI in `main` mode
-5. successful `CI` completion on `main`
-   - triggers `publish-ghcr-main.yml`
-   - reruns `main` compose smoke
+   - runs `CI Main Runtime`
+5. successful `CI Main Runtime` completion on `main`
+   - triggers `Publish GHCR Main`
+   - reruns prod compose smoke
    - publishes runtime images to GHCR only after the `main` smoke passes
 
 ### Promote `dev` into `main`
@@ -255,6 +252,8 @@ The intent is:
 
 - `dev` keeps the full engineering surface
 - `main` keeps the runtime surface
+
+Production deployment details live in [DEPLOYMENT.md](./DEPLOYMENT.md).
 
 ### Hotfix rule
 

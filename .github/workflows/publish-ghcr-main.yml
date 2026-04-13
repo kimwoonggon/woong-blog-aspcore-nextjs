@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   workflow_run:
     workflows:
-      - CI
+      - CI Main Runtime
     types:
       - completed
 
@@ -37,7 +37,15 @@ jobs:
         with:
           ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
 
-      - name: Verify main-safe compose policy
+      - name: Build local runtime images for smoke
+        run: |
+          docker build -f Dockerfile -t local/woong-blog-frontend:publish .
+          docker build -f backend/Dockerfile -t local/woong-blog-backend:publish .
+
+      - name: Verify main-safe prod compose policy
+        env:
+          FRONTEND_IMAGE: local/woong-blog-frontend:publish
+          BACKEND_IMAGE: local/woong-blog-backend:publish
         run: ./scripts/ci-compose-smoke.sh main
 
       - name: Normalize image names

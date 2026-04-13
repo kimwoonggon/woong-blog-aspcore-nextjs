@@ -6,7 +6,7 @@ test('WQ-025 root layout loads Next fonts with swap display behavior', async ({ 
   const cssLinks = await page.locator('link[rel="preload"][as="style"], link[rel="stylesheet"]').evaluateAll((links) =>
     links
       .map((link) => link.getAttribute('href'))
-      .filter((href): href is string => Boolean(href) && href.startsWith('/_next/static/')),
+      .filter((href): href is string => typeof href === 'string' && href.startsWith('/_next/static/')),
   )
 
   expect(cssLinks.length).toBeGreaterThan(0)

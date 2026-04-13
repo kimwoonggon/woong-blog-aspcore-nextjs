@@ -73,6 +73,7 @@ describe('BlogEditor', () => {
           method: 'POST',
           body: JSON.stringify({
             title: 'Markdown Blog',
+            excerpt: '',
             tags: [],
             published: true,
             contentJson: JSON.stringify({
@@ -103,6 +104,7 @@ describe('BlogEditor', () => {
           method: 'POST',
           body: JSON.stringify({
             title: 'Inline Blog',
+            excerpt: '',
             tags: [],
             published: true,
             contentJson: JSON.stringify({

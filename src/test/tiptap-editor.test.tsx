@@ -101,12 +101,17 @@ vi.mock('@tiptap/react', () => {
 
   const editor = {
     getHTML: () => mocks.state.currentHtml,
+    view: {
+      dom: document.createElement('div'),
+    },
     commands: {
       setContent: (value: string) => {
         mocks.state.currentHtml = value
         mocks.state.setContent(value)
       },
     },
+    on: vi.fn(),
+    off: vi.fn(),
     chain: () => createChain(),
     can: () => ({
       undo: () => true,

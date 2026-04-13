@@ -1,12 +1,12 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 
-async function installLayoutShiftObserver(page: any) {
+async function installLayoutShiftObserver(page: Page) {
   await page.addInitScript(() => {
-    ;(window as any).__qaClsValue = 0
+    ;(window as Window & { __qaClsValue?: number }).__qaClsValue = 0
     const observer = new PerformanceObserver((list) => {
-      for (const entry of list.getEntries() as any) {
+      for (const entry of list.getEntries() as Array<PerformanceEntry & { hadRecentInput?: boolean; value?: number }>) {
         if (!entry.hadRecentInput) {
-          ;(window as any).__qaClsValue += entry.value
+          ;(window as Window & { __qaClsValue?: number }).__qaClsValue = ((window as Window & { __qaClsValue?: number }).__qaClsValue ?? 0) + (entry.value ?? 0)
         }
       }
     })
@@ -27,10 +27,10 @@ test('WQ-023 public slow route transition keeps cumulative layout shift below 0.
   const skeleton = page.locator('.animate-pulse').first()
   await expect(skeleton).toBeVisible()
   await page.evaluate(() => {
-    ;(window as any).__qaClsValue = 0
+    ;(window as Window & { __qaClsValue?: number }).__qaClsValue = 0
   })
   await expect(page.getByRole('heading', { name: /Featured works/i })).toBeVisible()
-  const cls = await page.evaluate(() => (window as any).__qaClsValue ?? 0)
+  const cls = await page.evaluate(() => (window as Window & { __qaClsValue?: number }).__qaClsValue ?? 0)
   expect(cls).toBeLessThanOrEqual(0.105)
 })
 
@@ -47,6 +47,6 @@ test('WQ-023 admin slow dashboard transition keeps cumulative layout shift below
   await dashboardLink.click()
 
   await expect(page.getByRole('heading', { name: 'Dashboard', exact: true })).toBeVisible()
-  const cls = await page.evaluate(() => (window as any).__qaClsValue ?? 0)
+  const cls = await page.evaluate(() => (window as Window & { __qaClsValue?: number }).__qaClsValue ?? 0)
   expect(cls).toBeLessThanOrEqual(0.105)
 })
