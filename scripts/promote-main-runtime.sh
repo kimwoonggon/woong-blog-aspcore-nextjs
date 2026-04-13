@@ -49,6 +49,12 @@ find "${WORKTREE_DIR}" -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
 
 git archive --format=tar "${SOURCE_REF}" "${ALLOWLIST[@]}" | tar -xf - -C "${WORKTREE_DIR}"
 
+if [[ -d "${WORKTREE_DIR}/scripts" ]]; then
+  while IFS= read -r -d '' script_path; do
+    chmod +x "${script_path}"
+  done < <(find "${WORKTREE_DIR}/scripts" -maxdepth 1 -type f -name '*.sh' -print0)
+fi
+
 (
   cd "${WORKTREE_DIR}"
   git config user.name "${GIT_USER_NAME}"
