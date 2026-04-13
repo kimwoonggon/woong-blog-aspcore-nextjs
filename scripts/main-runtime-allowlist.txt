@@ -1,4 +1,5 @@
 # Runtime tree for main promotion
+.dockerignore
 .github/workflows/ci-main-runtime.yml
 .github/workflows/publish-ghcr-main.yml
 README.md
@@ -7,6 +8,7 @@ DEPLOYMENT.md
 Dockerfile
 backend/Dockerfile
 docker-compose.prod.yml
+eslint.config.mjs
 nginx/prod-bootstrap.conf
 nginx/prod.conf
 public
@@ -14,5 +16,10 @@ src
 backend
 package.json
 package-lock.json
+playwright.config.ts
 tsconfig.json
 next.config.ts
+tests/ci-compose-public.spec.ts
+tests/helpers/global-setup.ts
+vitest.config.ts
+vitest.setup.ts
