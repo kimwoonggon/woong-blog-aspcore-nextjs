@@ -9,6 +9,8 @@ interface InlineAdminEditorShellProps {
   title: string
   description?: string
   backLabel?: string
+  open?: boolean
+  onOpenChange?: (next: boolean) => void
   children: React.ReactNode
 }
 
@@ -17,9 +19,24 @@ export function InlineAdminEditorShell({
   title,
   description,
   backLabel = '뒤로가기',
+  open,
+  onOpenChange,
   children,
 }: InlineAdminEditorShellProps) {
-  const [open, setOpen] = useState(false)
+  const [internalOpen, setInternalOpen] = useState(false)
+  const isControlled = typeof open === 'boolean'
+  const resolvedOpen = isControlled ? open : internalOpen
+
+  const setOpen = (next: boolean | ((value: boolean) => boolean)) => {
+    const current = resolvedOpen
+    const value = typeof next === 'function' ? next(current) : next
+
+    if (!isControlled) {
+      setInternalOpen(value)
+    }
+
+    onOpenChange?.(value)
+  }
 
   return (
     <section className="mt-6 space-y-4 rounded-3xl border border-border/80 bg-card/90 p-5 shadow-sm">
@@ -39,9 +56,9 @@ export function InlineAdminEditorShell({
           >
             <PencilLine className="h-4 w-4" />
             {triggerLabel}
-            {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            {resolvedOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
           </Button>
-          {open && (
+          {resolvedOpen && (
             <Button
               type="button"
               variant="ghost"
@@ -54,7 +71,7 @@ export function InlineAdminEditorShell({
         </div>
       </div>
 
-      {open && (
+      {resolvedOpen && (
         <div className="rounded-2xl border border-border/80 bg-background p-4 shadow-sm">
           {children}
         </div>

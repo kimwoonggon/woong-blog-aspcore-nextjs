@@ -12,7 +12,7 @@ export function WorkVideoEmbedComponent(props: NodeViewProps) {
 
   return (
     <NodeViewWrapper
-      className={`my-6 rounded-2xl border border-border/70 bg-card p-4 ${props.selected ? 'ring-2 ring-[#FF7B54]' : ''}`}
+      className={`my-6 rounded-2xl border border-border/70 bg-card p-4 ${props.selected ? 'ring-2 ring-brand-orange' : ''}`}
       data-video-id={props.node.attrs.videoId}
       data-testid="work-video-embed-node"
     >

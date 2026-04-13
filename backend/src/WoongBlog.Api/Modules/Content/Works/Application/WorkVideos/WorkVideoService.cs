@@ -290,6 +290,14 @@ public sealed class WorkVideoService(
             return WorkVideoServiceResult<WorkVideosMutationResult>.BadRequest("Reorder payload must include every video exactly once.");
         }
 
+        // Avoid unique index collisions on (WorkId, SortOrder) while swapping rows.
+        for (var index = 0; index < videos.Count; index += 1)
+        {
+            videos[index].SortOrder = orderedVideoIds.Count + index;
+        }
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
         for (var index = 0; index < orderedVideoIds.Count; index += 1)
         {
             videos.Single(video => video.Id == orderedVideoIds[index]).SortOrder = index;

@@ -1,20 +1,24 @@
 
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { AdminErrorPanel } from '@/components/admin/AdminErrorPanel'
 import { BlogEditor } from '@/components/admin/BlogEditor'
 import { InlineAdminEditorShell } from '@/components/admin/InlineAdminEditorShell'
 import { RelatedContentList } from '@/components/content/RelatedContentList'
 import { InteractiveRenderer } from '@/components/content/InteractiveRenderer'
+import { TableOfContents } from '@/components/content/TableOfContents'
 import { Badge } from '@/components/ui/badge'
 import { Metadata } from 'next'
 import { fetchServerSession } from '@/lib/api/server'
 import { resolveBlogRenderableHtml } from '@/lib/content/blog-content'
 import { fetchAdminBlogById, fetchAllPublicBlogs, fetchPublicBlogBySlug } from '@/lib/api/blogs'
+import { formatDetailPublishDate } from './blog-detail-helpers'
 
 export const dynamic = 'force-dynamic'
 
 interface PageProps {
     params: Promise<{ slug: string }>
+    searchParams?: Promise<{ relatedPage?: string }>
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -30,8 +34,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     }
 }
 
-export default async function BlogDetailPage({ params }: PageProps) {
+export default async function BlogDetailPage({ params, searchParams }: PageProps) {
     const { slug } = await params
+    const resolvedSearchParams = await searchParams
     const decodedSlug = decodeURIComponent(slug)
     const blog = await fetchPublicBlogBySlug(decodedSlug)
 
@@ -51,80 +56,128 @@ export default async function BlogDetailPage({ params }: PageProps) {
         }
     }
 
-    const relatedBlogs = (await fetchAllPublicBlogs())
-        .filter((item) => item.id !== blog.id)
+    const allBlogs = await fetchAllPublicBlogs()
+    const relatedBlogs = allBlogs.filter((item) => item.id !== blog.id)
     const renderedContent = resolveBlogRenderableHtml(blog.contentJson)
 
-    // Format date
-    const publishDate = blog.publishedAt
-        ? new Date(blog.publishedAt).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        })
-        : 'Unknown Date'
+    const publishDate = formatDetailPublishDate(blog.publishedAt)
+    const sortedBlogs = [...allBlogs].sort((left, right) => {
+        const leftTime = left.publishedAt ? new Date(left.publishedAt).getTime() : 0
+        const rightTime = right.publishedAt ? new Date(right.publishedAt).getTime() : 0
+
+        if (leftTime !== rightTime) {
+            return rightTime - leftTime
+        }
+
+        return left.title.localeCompare(right.title)
+    })
+    const currentIndex = sortedBlogs.findIndex((item) => item.id === blog.id)
+    const newerBlog = currentIndex > 0 ? sortedBlogs[currentIndex - 1] : null
+    const olderBlog = currentIndex >= 0 && currentIndex < sortedBlogs.length - 1 ? sortedBlogs[currentIndex + 1] : null
+    const relatedPageSuffix = resolvedSearchParams?.relatedPage
+        ? `?relatedPage=${encodeURIComponent(resolvedSearchParams.relatedPage)}`
+        : ''
 
     return (
         <article className="container mx-auto max-w-6xl px-4 py-8 md:px-6 md:py-12">
-            <div className="mx-auto max-w-3xl">
-                <header className="mb-8">
-                <h1 className="mb-4 text-3xl font-heading font-bold md:text-4xl text-gray-900 dark:text-gray-50 leading-tight">
-                    {blog.title}
-                </h1>
-                <div className="mb-6 flex flex-wrap items-center gap-4 text-gray-500 dark:text-gray-400 font-medium">
-                    <Badge variant="secondary" className="rounded-full bg-[#F3434F] px-3 text-white hover:bg-[#F3434F]/90">
-                        <time dateTime={blog.publishedAt ?? undefined}>{publishDate}</time>
-                    </Badge>
-                    <div className="flex flex-wrap gap-2 font-mono text-sm">
-                        {blog.tags?.map((tag: string) => (
-                            <span key={tag} className="rounded-full border border-border/80 px-2.5 py-1 hover:text-[#F3434F] transition-colors cursor-default">#{tag}</span>
-                        ))}
+            <div className="relative mx-auto max-w-6xl">
+                <div data-testid="blog-detail-body" className="mx-auto max-w-3xl min-w-0">
+                    <header className="mb-8">
+                        <h1 className="mb-4 text-3xl font-heading font-bold leading-tight text-foreground text-balance md:text-4xl">
+                            {blog.title}
+                        </h1>
+                        <div className="mb-6 flex flex-wrap items-center gap-4 font-medium text-muted-foreground">
+                            <Badge variant="secondary" className="rounded-full bg-brand-navy px-3 text-white hover:bg-brand-navy/90">
+                                <time dateTime={blog.publishedAt ?? undefined}>{publishDate}</time>
+                            </Badge>
+                            <ul aria-label="Post tags" className="flex flex-wrap gap-2 font-mono text-sm">
+                                {blog.tags?.map((tag: string) => (
+                                    <li key={tag}>
+                                        <span className="cursor-default rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground transition-colors hover:text-brand-accent">
+                                            #{tag}
+                                        </span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                        {blog.excerpt && (
+                            <p className="rounded-r-lg border-l-4 border-brand-navy bg-brand-section-bg py-2 pl-4 text-xl leading-relaxed text-foreground/80 text-pretty">
+                                {blog.excerpt}
+                            </p>
+                        )}
+                    </header>
+
+                    <div id="blog-detail-content" className="mt-8">
+                        {renderedContent && (
+                            <InteractiveRenderer html={renderedContent} />
+                        )}
+                    </div>
+
+                    {session.authenticated && session.role === 'admin' && (
+                        adminLoadFailed || !adminBlog ? (
+                            <div className="mt-8">
+                                <AdminErrorPanel
+                                    title="Inline blog editor is unavailable"
+                                    message="The public blog view loaded, but the admin edit payload could not be loaded. Please retry after the backend is healthy."
+                                />
+                            </div>
+                        ) : (
+                            <InlineAdminEditorShell
+                                triggerLabel="글 수정"
+                                title="Blog Inline Editor"
+                                description="현재 게시물 뷰를 유지한 채 바로 수정합니다."
+                            >
+                                <BlogEditor initialBlog={adminBlog} inlineMode />
+                            </InlineAdminEditorShell>
+                        )
+                    )}
+
+                    {(olderBlog || newerBlog) && (
+                        <nav
+                            aria-label="Blog post navigation"
+                            data-testid="blog-prev-next"
+                            className="mt-12 grid gap-3 border-t border-border/70 pt-8 sm:grid-cols-2"
+                        >
+                            {olderBlog ? (
+                                <Link
+                                    href={`/blog/${olderBlog.slug}${relatedPageSuffix}`}
+                                    className="group rounded-2xl border border-border/80 bg-background p-4 transition hover:border-primary/30 hover:shadow-sm"
+                                >
+                                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Previous</p>
+                                    <p className="mt-2 text-base font-semibold text-foreground text-balance transition-colors group-hover:text-brand-accent">{olderBlog.title}</p>
+                                </Link>
+                            ) : (
+                                <div aria-hidden="true" />
+                            )}
+                            {newerBlog ? (
+                                <Link
+                                    href={`/blog/${newerBlog.slug}${relatedPageSuffix}`}
+                                    className="group rounded-2xl border border-border/80 bg-background p-4 text-left transition hover:border-primary/30 hover:shadow-sm sm:justify-self-end"
+                                >
+                                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Next</p>
+                                    <p className="mt-2 text-base font-semibold text-foreground text-balance transition-colors group-hover:text-brand-accent">{newerBlog.title}</p>
+                                </Link>
+                            ) : null}
+                        </nav>
+                    )}
+
+                    <div data-testid="blog-related-shell" className="mx-auto mt-16 max-w-3xl border-t pt-12">
+                        <RelatedContentList
+                            heading="More Posts"
+                            hrefBase="/blog"
+                            items={relatedBlogs}
+                            desktopPageSize={8}
+                            tabletPageSize={4}
+                            mobilePageSize={2}
+                            testIdBase="related-blog"
+                        />
                     </div>
                 </div>
-                {blog.excerpt && (
-                    <p className="rounded-r-lg border-l-4 border-[#F3434F] bg-gray-50 py-2 pl-4 text-xl leading-relaxed text-gray-600 dark:bg-gray-900 dark:text-gray-300">
-                        {blog.excerpt}
-                    </p>
-                )}
-                </header>
 
-                <div className="mt-8">
-                    {renderedContent && (
-                        <InteractiveRenderer html={renderedContent} />
-                    )}
-                </div>
-
-                {session.authenticated && session.role === 'admin' && (
-                    adminLoadFailed || !adminBlog ? (
-                        <div className="mt-8">
-                            <AdminErrorPanel
-                                title="Inline blog editor is unavailable"
-                                message="The public blog view loaded, but the admin edit payload could not be loaded. Please retry after the backend is healthy."
-                            />
-                        </div>
-                    ) : (
-                        <InlineAdminEditorShell
-                            triggerLabel="글 수정"
-                            title="Blog Inline Editor"
-                            description="현재 게시물 뷰를 유지한 채 바로 수정합니다."
-                        >
-                            <BlogEditor initialBlog={adminBlog} inlineMode />
-                        </InlineAdminEditorShell>
-                    )
-                )}
+                <aside className="hidden xl:absolute xl:right-0 xl:top-0 xl:block xl:w-64">
+                    <TableOfContents contentRootId="blog-detail-content" />
+                </aside>
             </div>
-
-            <RelatedContentList
-                heading="다른 게시물"
-                hrefBase="/blog"
-                items={relatedBlogs}
-                desktopPageSize={8}
-                tabletPageSize={4}
-                mobilePageSize={2}
-                testIdBase="related-blog"
-            />
         </article>
     )
 }

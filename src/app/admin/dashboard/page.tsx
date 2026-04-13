@@ -10,29 +10,46 @@ import { fetchAdminWorks, type WorkAdminItem } from '@/lib/api/works'
 
 export const dynamic = 'force-dynamic'
 
-export default async function AdminDashboard() {
+interface PageProps {
+    searchParams?: Promise<{ __qaSummaryFail?: string; __qaCollectionsFail?: string; __qaSlow?: string }>
+}
+
+export default async function AdminDashboard({ searchParams }: PageProps) {
+    const resolvedSearchParams = await searchParams
+    if (resolvedSearchParams?.__qaSlow === '1') {
+        await new Promise((resolve) => setTimeout(resolve, 600))
+    }
     let summary: { worksCount: number; blogsCount: number; viewsCount: number } | null = null
     let works: WorkAdminItem[] = []
     let blogs: BlogAdminItem[] = []
     let workLoadFailed = false
     let blogLoadFailed = false
 
-    try {
-        summary = await fetchAdminDashboardSummary()
-    } catch {
+    if (resolvedSearchParams?.__qaSummaryFail === '1') {
         summary = null
+    } else {
+        try {
+            summary = await fetchAdminDashboardSummary()
+        } catch {
+            summary = null
+        }
     }
 
-    try {
-        works = await fetchAdminWorks()
-    } catch {
+    if (resolvedSearchParams?.__qaCollectionsFail === '1') {
         workLoadFailed = true
-    }
-
-    try {
-        blogs = await fetchAdminBlogs()
-    } catch {
         blogLoadFailed = true
+    } else {
+        try {
+            works = await fetchAdminWorks()
+        } catch {
+            workLoadFailed = true
+        }
+
+        try {
+            blogs = await fetchAdminBlogs()
+        } catch {
+            blogLoadFailed = true
+        }
     }
 
     return (

@@ -25,6 +25,8 @@ public static class SeedData
         var workIcon1 = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd");
         var blogCover1 = Guid.Parse("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee");
         var blogCover2 = Guid.Parse("ffffffff-ffff-ffff-ffff-ffffffffffff");
+        var seededWorkVideo1 = Guid.Parse("12121212-1212-1212-1212-121212121212");
+        var seededWorkVideo2 = Guid.Parse("34343434-3434-3434-3434-343434343434");
 
         dbContext.Assets.AddRange(
             new Asset
@@ -147,35 +149,55 @@ public static class SeedData
             }
         );
 
-        dbContext.Works.AddRange(
-            new Work
+        var seededWork = new Work
+        {
+            Slug = "seeded-work",
+            Title = "Portfolio Platform Rebuild",
+            Excerpt = "Rebuilt the portfolio stack around clearer domain boundaries, richer content modeling, and operational simplicity.",
+            ContentJson = """{"html":"<h2>Overview</h2><p>This seeded case study represents a platform rebuild that spans frontend UX, backend APIs, and deployment ergonomics.</p><h2>Highlights</h2><ul><li>React + TypeScript frontend</li><li>ASP.NET Core backend</li><li>PostgreSQL domain model</li></ul>"}""",
+            ThumbnailAssetId = workThumb1,
+            IconAssetId = workIcon1,
+            Category = "platform",
+            Period = "2025.12 - 2026.03",
+            AllPropertiesJson = """{"teamSize":1,"role":"full-stack","status":"seeded"}""",
+            Tags = new[] { "react", "nextjs", "dotnet", "postgres" },
+            Published = true,
+            PublishedAt = DateTimeOffset.UtcNow.AddDays(-7)
+        };
+        var internalAdminWorkbench = new Work
+        {
+            Slug = "internal-admin-workbench",
+            Title = "Internal Admin Workbench",
+            Excerpt = "Designed a cleaner admin workflow with shared editor chrome, preview-first ergonomics, and better information architecture.",
+            ContentJson = """{"html":"<h2>Problem</h2><p>The admin experience felt like a separate product with weak draft preview.</p><h2>Result</h2><p>The workbench concept unified list, edit, preview, and publishing workflows.</p>"}""",
+            ThumbnailAssetId = workThumb2,
+            Category = "admin",
+            Period = "2026.01 - 2026.03",
+            AllPropertiesJson = """{"teamSize":1,"role":"ux-engineering","status":"seeded"}""",
+            Tags = new[] { "admin", "ux", "workflow" },
+            Published = true,
+            PublishedAt = DateTimeOffset.UtcNow.AddDays(-3)
+        };
+        dbContext.Works.AddRange(seededWork, internalAdminWorkbench);
+
+        dbContext.WorkVideos.AddRange(
+            new WorkVideo
             {
-                Slug = "seeded-work",
-                Title = "Portfolio Platform Rebuild",
-                Excerpt = "Rebuilt the portfolio stack around clearer domain boundaries, richer content modeling, and operational simplicity.",
-                ContentJson = """{"html":"<h2>Overview</h2><p>This seeded case study represents a platform rebuild that spans frontend UX, backend APIs, and deployment ergonomics.</p><h2>Highlights</h2><ul><li>React + TypeScript frontend</li><li>ASP.NET Core backend</li><li>PostgreSQL domain model</li></ul>"}""",
-                ThumbnailAssetId = workThumb1,
-                IconAssetId = workIcon1,
-                Category = "platform",
-                Period = "2025.12 - 2026.03",
-                AllPropertiesJson = """{"teamSize":1,"role":"full-stack","status":"seeded"}""",
-                Tags = new[] { "react", "nextjs", "dotnet", "postgres" },
-                Published = true,
-                PublishedAt = DateTimeOffset.UtcNow.AddDays(-7)
+                Id = seededWorkVideo1,
+                WorkId = seededWork.Id,
+                SourceType = "youtube",
+                SourceKey = "dQw4w9WgXcQ",
+                OriginalFileName = "Seed Overview",
+                SortOrder = 0
             },
-            new Work
+            new WorkVideo
             {
-                Slug = "internal-admin-workbench",
-                Title = "Internal Admin Workbench",
-                Excerpt = "Designed a cleaner admin workflow with shared editor chrome, preview-first ergonomics, and better information architecture.",
-                ContentJson = """{"html":"<h2>Problem</h2><p>The admin experience felt like a separate product with weak draft preview.</p><h2>Result</h2><p>The workbench concept unified list, edit, preview, and publishing workflows.</p>"}""",
-                ThumbnailAssetId = workThumb2,
-                Category = "admin",
-                Period = "2026.01 - 2026.03",
-                AllPropertiesJson = """{"teamSize":1,"role":"ux-engineering","status":"seeded"}""",
-                Tags = new[] { "admin", "ux", "workflow" },
-                Published = true,
-                PublishedAt = DateTimeOffset.UtcNow.AddDays(-3)
+                Id = seededWorkVideo2,
+                WorkId = seededWork.Id,
+                SourceType = "youtube",
+                SourceKey = "M7lc1UVf-VE",
+                OriginalFileName = "Seed Demo",
+                SortOrder = 1
             }
         );
 
@@ -185,7 +207,7 @@ public static class SeedData
                 Slug = "seeded-blog",
                 Title = "Designing a Seed-First Migration Strategy",
                 Excerpt = "Why seed data is often the fastest way to stabilize a new architecture before historical migration work is complete.",
-                ContentJson = """{"html":"<p>Seed data gives frontend and backend teams something concrete to build against from day one.</p><p>That reduces ambiguity and improves testability.</p>"}""",
+                ContentJson = """{"html":"<h2>Why Start With Seed Data</h2><p>Seed data gives frontend and backend teams something concrete to build against from day one.</p><h3>Reduce Coordination Cost</h3><p>That reduces ambiguity and improves testability.</p><h2>What To Stabilize First</h2><p>Lock the happy path before historical backfill.</p>"}""",
                 CoverAssetId = blogCover1,
                 Tags = new[] { "seed", "migration", "architecture" },
                 Published = true,
@@ -196,7 +218,7 @@ public static class SeedData
                 Slug = "engineering-notes-on-bff-auth",
                 Title = "Engineering Notes on BFF-Style Auth",
                 Excerpt = "Keeping authentication in the backend simplifies session handling and reduces token sprawl in the browser.",
-                ContentJson = """{"html":"<p>BFF auth centralizes session ownership in the backend and keeps the browser thinner.</p>"}""",
+                ContentJson = """{"html":"<h2>Why BFF Works</h2><p>BFF auth centralizes session ownership in the backend and keeps the browser thinner.</p>"}""",
                 CoverAssetId = blogCover2,
                 Tags = new[] { "auth", "bff", "security" },
                 Published = true,
@@ -213,6 +235,8 @@ public static class SeedData
         var workThumb1 = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
         var workIcon1 = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd");
         var blogCover1 = Guid.Parse("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee");
+        var seededWorkVideo1 = Guid.Parse("12121212-1212-1212-1212-121212121212");
+        var seededWorkVideo2 = Guid.Parse("34343434-3434-3434-3434-343434343434");
 
         await EnsureAssetAsync(
             dbContext,
@@ -257,7 +281,7 @@ public static class SeedData
 
         if (seededWork is null)
         {
-            dbContext.Works.Add(new Work
+            seededWork = new Work
             {
                 Slug = "seeded-work",
                 Title = "Portfolio Platform Rebuild",
@@ -271,7 +295,8 @@ public static class SeedData
                 Tags = new[] { "react", "nextjs", "dotnet", "postgres" },
                 Published = true,
                 PublishedAt = DateTimeOffset.UtcNow.AddDays(-7)
-            });
+            };
+            dbContext.Works.Add(seededWork);
         }
         else
         {
@@ -290,6 +315,23 @@ public static class SeedData
             seededWork.UpdatedAt = DateTimeOffset.UtcNow;
         }
 
+        await EnsureSeededWorkVideoAsync(
+            dbContext,
+            seededWork.Id,
+            seededWorkVideo1,
+            "youtube",
+            "dQw4w9WgXcQ",
+            "Seed Overview",
+            0);
+        await EnsureSeededWorkVideoAsync(
+            dbContext,
+            seededWork.Id,
+            seededWorkVideo2,
+            "youtube",
+            "M7lc1UVf-VE",
+            "Seed Demo",
+            1);
+
         var seededBlog = await dbContext.Blogs.SingleOrDefaultAsync(x => x.Slug == "seeded-blog");
         if (seededBlog is null)
         {
@@ -300,24 +342,25 @@ public static class SeedData
 
         if (seededBlog is null)
         {
-            dbContext.Blogs.Add(new Blog
+            seededBlog = new Blog
             {
                 Slug = "seeded-blog",
                 Title = "Designing a Seed-First Migration Strategy",
                 Excerpt = "Why seed data is often the fastest way to stabilize a new architecture before historical migration work is complete.",
-                ContentJson = """{"html":"<p>Seed data gives frontend and backend teams something concrete to build against from day one.</p><p>That reduces ambiguity and improves testability.</p>"}""",
+                ContentJson = """{"html":"<h2>Why Start With Seed Data</h2><p>Seed data gives frontend and backend teams something concrete to build against from day one.</p><h3>Reduce Coordination Cost</h3><p>That reduces ambiguity and improves testability.</p><h2>What To Stabilize First</h2><p>Lock the happy path before historical backfill.</p>"}""",
                 CoverAssetId = blogCover1,
                 Tags = new[] { "seed", "migration", "architecture" },
                 Published = true,
                 PublishedAt = DateTimeOffset.UtcNow.AddDays(-5)
-            });
+            };
+            dbContext.Blogs.Add(seededBlog);
         }
         else
         {
             seededBlog.Slug = "seeded-blog";
             seededBlog.Title = "Designing a Seed-First Migration Strategy";
             seededBlog.Excerpt = "Why seed data is often the fastest way to stabilize a new architecture before historical migration work is complete.";
-            seededBlog.ContentJson = """{"html":"<p>Seed data gives frontend and backend teams something concrete to build against from day one.</p><p>That reduces ambiguity and improves testability.</p>"}""";
+            seededBlog.ContentJson = """{"html":"<h2>Why Start With Seed Data</h2><p>Seed data gives frontend and backend teams something concrete to build against from day one.</p><h3>Reduce Coordination Cost</h3><p>That reduces ambiguity and improves testability.</p><h2>What To Stabilize First</h2><p>Lock the happy path before historical backfill.</p>"}""";
             seededBlog.CoverAssetId = blogCover1;
             seededBlog.Tags = new[] { "seed", "migration", "architecture" };
             seededBlog.Published = true;
@@ -326,6 +369,41 @@ public static class SeedData
         }
 
         await dbContext.SaveChangesAsync();
+    }
+
+    private static async Task EnsureSeededWorkVideoAsync(
+        WoongBlogDbContext dbContext,
+        Guid workId,
+        Guid videoId,
+        string sourceType,
+        string sourceKey,
+        string originalFileName,
+        int sortOrder)
+    {
+        var existingVideo = dbContext.WorkVideos.Local.FirstOrDefault(x => x.WorkId == workId && x.SortOrder == sortOrder)
+            ?? dbContext.WorkVideos.Local.FirstOrDefault(x => x.Id == videoId)
+            ?? await dbContext.WorkVideos.SingleOrDefaultAsync(x => x.WorkId == workId && x.SortOrder == sortOrder)
+            ?? await dbContext.WorkVideos.SingleOrDefaultAsync(x => x.Id == videoId);
+        if (existingVideo is null)
+        {
+            dbContext.WorkVideos.Add(new WorkVideo
+            {
+                Id = videoId,
+                WorkId = workId,
+                SourceType = sourceType,
+                SourceKey = sourceKey,
+                OriginalFileName = originalFileName,
+                SortOrder = sortOrder
+            });
+
+            return;
+        }
+
+        existingVideo.WorkId = workId;
+        existingVideo.SourceType = sourceType;
+        existingVideo.SourceKey = sourceKey;
+        existingVideo.OriginalFileName = originalFileName;
+        existingVideo.SortOrder = sortOrder;
     }
 
     private static async Task EnsureAssetAsync(

@@ -22,7 +22,7 @@ describe('admin page error states', () => {
     }))
 
     const DashboardPage = (await import('@/app/admin/dashboard/page')).default
-    render(await DashboardPage())
+    render(await DashboardPage({}))
 
     expect(await screen.findByText('Dashboard data is unavailable')).toBeInTheDocument()
     expect(screen.getByText(/could not be loaded/i)).toBeInTheDocument()

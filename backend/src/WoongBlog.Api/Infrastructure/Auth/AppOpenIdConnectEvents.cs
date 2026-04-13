@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Http;
 
 namespace WoongBlog.Api.Infrastructure.Auth;
 
@@ -15,6 +16,24 @@ internal sealed class AppOpenIdConnectEvents(
             context.Principal!,
             context.HttpContext,
             context.HttpContext.RequestAborted);
+
+        if (!string.Equals(result.Role, "admin", StringComparison.OrdinalIgnoreCase))
+        {
+            await recorder.RecordDeniedAccessAsync(
+                context.Principal!,
+                context.HttpContext,
+                "Admin role required for login.",
+                context.HttpContext.RequestAborted);
+
+            await recorder.RevokeSessionAsync(
+                result.SessionId,
+                "non_admin_login_blocked",
+                context.HttpContext.RequestAborted);
+
+            context.Response.Redirect("/login?error=admin_only");
+            context.HandleResponse();
+            return;
+        }
 
         context.Properties ??= new AuthenticationProperties();
 

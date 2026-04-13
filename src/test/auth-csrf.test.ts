@@ -4,6 +4,9 @@ function mockJsonResponse(body: unknown, status = 200) {
   return {
     ok: status >= 200 && status < 300,
     status,
+    headers: new Headers(),
+    redirected: false,
+    url: 'http://localhost/api/mock',
     json: vi.fn().mockResolvedValue(body),
   }
 }
@@ -46,10 +49,11 @@ describe('auth csrf helpers', () => {
 
   it('retries mutation requests with a refreshed csrf token after a 400 response', async () => {
     const fetchMock = vi.fn()
+      .mockResolvedValueOnce(mockJsonResponse({ authenticated: true }))
       .mockResolvedValueOnce(mockJsonResponse({ requestToken: 'token-1', headerName: 'X-CSRF-1' }))
-      .mockResolvedValueOnce({ ok: false, status: 400 })
+      .mockResolvedValueOnce(mockJsonResponse({}, 400))
       .mockResolvedValueOnce(mockJsonResponse({ requestToken: 'token-2', headerName: 'X-CSRF-2' }))
-      .mockResolvedValueOnce({ ok: true, status: 200 })
+      .mockResolvedValueOnce(mockJsonResponse({}, 200))
     vi.stubGlobal('fetch', fetchMock)
 
     const { fetchWithCsrf } = await import('@/lib/api/auth')
@@ -60,16 +64,17 @@ describe('auth csrf helpers', () => {
     })
 
     expect(response.status).toBe(200)
-    expect(fetchMock).toHaveBeenCalledTimes(4)
-    expect(fetchMock.mock.calls[1][1]?.headers).toBeInstanceOf(Headers)
-    expect((fetchMock.mock.calls[1][1]?.headers as Headers).get('X-CSRF-1')).toBe('token-1')
-    expect((fetchMock.mock.calls[3][1]?.headers as Headers).get('X-CSRF-2')).toBe('token-2')
+    expect(fetchMock).toHaveBeenCalledTimes(5)
+    expect(fetchMock.mock.calls[2][1]?.headers).toBeInstanceOf(Headers)
+    expect((fetchMock.mock.calls[2][1]?.headers as Headers).get('X-CSRF-1')).toBe('token-1')
+    expect((fetchMock.mock.calls[4][1]?.headers as Headers).get('X-CSRF-2')).toBe('token-2')
   })
 
   it('adds csrf headers to PATCH requests without retrying when retry is disabled', async () => {
     const fetchMock = vi.fn()
+      .mockResolvedValueOnce(mockJsonResponse({ authenticated: true }))
       .mockResolvedValueOnce(mockJsonResponse({ requestToken: 'token-1', headerName: 'X-CSRF-1' }))
-      .mockResolvedValueOnce({ ok: false, status: 400 })
+      .mockResolvedValueOnce(mockJsonResponse({}, 400))
     vi.stubGlobal('fetch', fetchMock)
 
     const { fetchWithCsrf } = await import('@/lib/api/auth')
@@ -79,12 +84,13 @@ describe('auth csrf helpers', () => {
     }, false)
 
     expect(response.status).toBe(400)
-    expect(fetchMock).toHaveBeenCalledTimes(2)
-    expect((fetchMock.mock.calls[1][1]?.headers as Headers).get('X-CSRF-1')).toBe('token-1')
+    expect(fetchMock).toHaveBeenCalledTimes(3)
+    expect((fetchMock.mock.calls[2][1]?.headers as Headers).get('X-CSRF-1')).toBe('token-1')
   })
 
   it('posts logout with csrf and returns redirect url', async () => {
     const fetchMock = vi.fn()
+      .mockResolvedValueOnce(mockJsonResponse({ authenticated: true }))
       .mockResolvedValueOnce(mockJsonResponse({ requestToken: 'logout-token', headerName: 'X-CSRF-TOKEN' }))
       .mockResolvedValueOnce(mockJsonResponse({ redirectUrl: '/signed-out' }))
     vi.stubGlobal('fetch', fetchMock)
@@ -93,9 +99,9 @@ describe('auth csrf helpers', () => {
     const redirectUrl = await logoutWithCsrf('/signed-out')
 
     expect(redirectUrl).toBe('/signed-out')
-    expect(fetchMock).toHaveBeenCalledTimes(2)
-    expect(fetchMock.mock.calls[1][0]).toContain('/api/auth/logout?returnUrl=%2Fsigned-out')
-    expect(fetchMock.mock.calls[1][1]?.method).toBe('POST')
+    expect(fetchMock).toHaveBeenCalledTimes(3)
+    expect(fetchMock.mock.calls[2][0]).toContain('/api/auth/logout?returnUrl=%2Fsigned-out')
+    expect(fetchMock.mock.calls[2][1]?.method).toBe('POST')
   })
 
   it('throws when csrf token bootstrap fails', async () => {
@@ -140,10 +146,14 @@ describe('auth csrf helpers', () => {
 
   it('falls back to the requested logout return url when response json parsing fails', async () => {
     const fetchMock = vi.fn()
+      .mockResolvedValueOnce(mockJsonResponse({ authenticated: true }))
       .mockResolvedValueOnce(mockJsonResponse({ requestToken: 'logout-token', headerName: 'X-CSRF-TOKEN' }))
       .mockResolvedValueOnce({
         ok: true,
         status: 200,
+        headers: new Headers(),
+        redirected: false,
+        url: 'http://localhost/api/mock',
         json: vi.fn().mockRejectedValue(new Error('bad json')),
       })
     vi.stubGlobal('fetch', fetchMock)

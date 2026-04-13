@@ -4,6 +4,7 @@ import { Archivo, Space_Grotesk } from "next/font/google"
 import "./globals.css"
 import { cn } from "@/lib/utils"
 import { fetchPublicSiteSettings } from "@/lib/api/site-settings"
+import { ThemeProvider } from "@/components/providers/ThemeProvider"
 
 const archivo = Archivo({
   subsets: ["latin"],
@@ -36,10 +37,12 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={cn(archivo.variable, spaceGrotesk.variable, "antialiased font-sans bg-background text-foreground")}>
-        {children}
-        <Toaster position="top-right" richColors />
+        <ThemeProvider>
+          {children}
+          <Toaster position="top-right" richColors />
+        </ThemeProvider>
       </body>
     </html>
   )

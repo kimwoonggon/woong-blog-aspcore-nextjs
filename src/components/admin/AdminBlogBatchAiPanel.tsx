@@ -16,14 +16,15 @@ import {
   type BlogAiBatchJobListPayload,
   type BlogAiBatchJobSummary,
 } from '@/lib/api/admin-ai'
+import {
+  rankStatus,
+  readApiPayload,
+  resolveBlogDate,
+  summarizeSelectionTitles,
+  type BlogBatchCandidate,
+} from '@/components/admin/admin-blog-batch-ai-panel/helpers'
+import { useBatchJobPolling } from '@/components/admin/admin-blog-batch-ai-panel/useBatchJobPolling'
 import { toast } from 'sonner'
-
-interface BlogBatchCandidate {
-  id: string
-  title: string
-  publishedAt?: string | null
-  updatedAt?: string | null
-}
 
 interface AdminBlogBatchAiPanelProps {
   isOpen: boolean
@@ -192,20 +193,13 @@ export function AdminBlogBatchAiPanel({
     void loadJobDetail(activeJobId)
   }, [activeJobId, loadJobDetail])
 
-  useEffect(() => {
-    if (!isOpen || !activeJobId || !activeJob || !['queued', 'running'].includes(activeJob.status)) {
-      return
-    }
-
-    const timer = window.setInterval(() => {
-      void loadRecentJobs(activeJobId)
-      void loadJobDetail(activeJobId)
-    }, 2000)
-
-    return () => {
-      window.clearInterval(timer)
-    }
-  }, [activeJob, activeJobId, isOpen, loadJobDetail, loadRecentJobs])
+  useBatchJobPolling({
+    isOpen,
+    activeJobId,
+    activeJobStatus: activeJob?.status,
+    loadRecentJobs,
+    loadJobDetail,
+  })
 
   async function createBatchAiJob() {
     if (mode === 'date' && !dateStart && !dateEnd) {
@@ -579,13 +573,21 @@ export function AdminBlogBatchAiPanel({
           {recentJobs.length === 0 ? (
             <p className="text-xs text-muted-foreground">No AI jobs yet.</p>
           ) : recentJobs.map((job) => (
-            <button
+            <div
               key={job.jobId}
-              type="button"
               onClick={() => {
                 setActiveJobId(job.jobId)
                 setSelectedJobItemId(null)
               }}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault()
+                  setActiveJobId(job.jobId)
+                  setSelectedJobItemId(null)
+                }
+              }}
+              role="button"
+              tabIndex={0}
               className={`w-full rounded-xl border px-3 py-2 text-left text-sm transition ${
                 activeJobId === job.jobId ? 'border-primary/40 bg-primary/5' : 'border-border/80 hover:bg-muted/30'
               }`}
@@ -632,7 +634,7 @@ export function AdminBlogBatchAiPanel({
                   Cancel queued/running
                 </Button>
               ) : null}
-            </button>
+            </div>
           ))}
         </aside>
 
@@ -691,58 +693,4 @@ export function AdminBlogBatchAiPanel({
       </div>
     </div>
   )
-}
-
-function rankStatus(status: string) {
-  switch (status) {
-    case 'running':
-      return 0
-    case 'queued':
-      return 1
-    case 'completed':
-      return 2
-    case 'failed':
-      return 3
-    case 'cancelled':
-      return 4
-    default:
-      return 5
-  }
-}
-
-function resolveBlogDate(blog: BlogBatchCandidate) {
-  const value = blog.publishedAt ?? blog.updatedAt ?? null
-  return value ? value.slice(0, 10) : null
-}
-
-function summarizeSelectionTitles(titles: string[]) {
-  if (titles.length === 0) {
-    return ''
-  }
-
-  if (titles.length <= 5) {
-    return titles.join(' · ')
-  }
-
-  return `${titles.slice(0, 5).join(' · ')} · +${titles.length - 5} more`
-}
-
-type ApiPayload = Record<string, unknown> & {
-  error?: string
-  jobId?: string
-  cancelled?: number
-  cleared?: number
-}
-
-async function readApiPayload(response: Response): Promise<ApiPayload> {
-  const text = await response.text()
-  if (!text) {
-    return {}
-  }
-
-  try {
-    return JSON.parse(text) as ApiPayload
-  } catch {
-    return { error: text }
-  }
 }

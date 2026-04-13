@@ -1,13 +1,35 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
+import { ArrowRight, BriefcaseBusiness, FileText, User } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { headers } from 'next/headers'
 import { fetchPublicHome } from '@/lib/api/home'
 import { parsePageContentJson, toHomeContent } from '@/lib/content/page-content'
 
 export const dynamic = 'force-dynamic'
 
-export default async function HomePage() {
+interface PageProps {
+  searchParams?: Promise<{ __qaNoImage?: string; __qaSlow?: string }>
+}
+
+function formatPublishedMonth(publishedAt?: string | null) {
+  return publishedAt
+    ? new Date(publishedAt).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+      })
+    : 'Unknown Date'
+}
+
+export default async function HomePage({ searchParams }: PageProps) {
+  const resolvedSearchParams = await searchParams
+  const headerStore = await headers()
+  const requestHost = (headerStore.get('x-forwarded-host') ?? headerStore.get('host') ?? '').toLowerCase()
+  const isLocalQaRequest = /localhost|127\.0\.0\.1/.test(requestHost)
+  if (resolvedSearchParams?.__qaSlow === '1' && isLocalQaRequest) {
+    await new Promise((resolve) => setTimeout(resolve, 600))
+  }
   const payload = await fetchPublicHome()
   const homeContent = toHomeContent(parsePageContentJson(payload?.homePage?.contentJson))
 
@@ -16,53 +38,180 @@ export default async function HomePage() {
   const profileImageUrl = homeContent.profileImageUrl || ''
   const recentPosts = payload?.recentPosts || []
   const featuredWorks = payload?.featuredWorks || []
+  const qaNoImageFeaturedWorks = resolvedSearchParams?.__qaNoImage === '1' && isLocalQaRequest
+  const visibleFeaturedWorks = qaNoImageFeaturedWorks
+    ? featuredWorks.map((work) => ({ ...work, thumbnailUrl: null }))
+    : featuredWorks
 
   return (
-    <div className="container mx-auto flex flex-col gap-16 px-4 py-8 md:px-6 md:py-12">
-      <section className="flex flex-col-reverse items-center justify-between gap-8 md:flex-row md:items-start md:gap-12">
-        <div className="flex flex-1 flex-col items-center text-center md:items-start md:text-left">
+    <div className="container mx-auto max-w-7xl flex flex-col gap-16 px-4 py-8 md:px-6 md:py-12">
+      <section className="animate-fade-in-up mx-auto flex w-full max-w-5xl flex-col-reverse items-center gap-8 md:grid md:grid-cols-[minmax(0,40rem)_15rem] md:items-center md:justify-center md:gap-12" style={{ animationDelay: '0ms' }}>
+        <div className="flex flex-col items-center text-center md:items-start md:text-left">
+          <p
+            className="mb-3 text-xs font-semibold uppercase tracking-[0.28em] text-muted-foreground animate-fade-in-up"
+            style={{ animationDelay: '50ms' }}
+          >
+            Creative portfolio
+          </p>
           <h1
-            className="mb-4 text-4xl font-heading font-bold tracking-tight text-gray-900 md:text-5xl lg:text-6xl dark:text-gray-50 opacity-0 animate-fade-in-up"
+            className="mb-4 text-4xl font-heading font-bold tracking-tight text-foreground md:text-5xl lg:text-6xl animate-fade-in-up [text-wrap:balance]"
             style={{ animationDelay: '100ms' }}
           >
             {headline}
           </h1>
           <p
-            className="mb-8 max-w-[600px] text-lg text-gray-600 dark:text-gray-400 opacity-0 animate-fade-in-up"
+            className="mb-8 max-w-[600px] text-lg text-muted-foreground animate-fade-in-up"
             style={{ animationDelay: '200ms' }}
           >
             {introText}
           </p>
+          <div
+            className="flex flex-wrap gap-4 animate-fade-in-up"
+            style={{ animationDelay: '300ms' }}
+          >
+            <Link
+              href="/works"
+              className="inline-flex min-h-11 items-center rounded-full bg-foreground px-6 py-3 text-sm font-semibold text-background transition-colors hover:bg-foreground/90"
+            >
+              View My Works
+            </Link>
+            <Link
+              href="/blog"
+              className="inline-flex min-h-11 items-center rounded-full border border-border px-6 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
+            >
+              Read Blog
+            </Link>
+          </div>
         </div>
-        <div className="flex-shrink-0 opacity-0 animate-fade-in-up" style={{ animationDelay: '0ms' }}>
-          <div className="relative h-60 w-60 overflow-hidden rounded-full bg-gray-200 shadow-xl dark:bg-gray-800">
+        <div className="flex-shrink-0 animate-fade-in-up" style={{ animationDelay: '0ms' }}>
+          <div className="relative h-60 w-60 overflow-hidden rounded-full bg-muted shadow-xl">
             {profileImageUrl ? (
               <Image
                 src={profileImageUrl}
-                alt="Profile"
+                alt={headline}
                 fill
                 className="object-cover"
+                priority
+                sizes="240px"
                 unoptimized
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center text-gray-400">
-                Avatar
+              <div
+                role="img"
+                aria-label={headline}
+                className="flex h-full w-full items-center justify-center text-muted-foreground"
+              >
+                <User className="h-16 w-16" aria-hidden="true" />
               </div>
             )}
           </div>
         </div>
       </section>
 
-      <section className="bg-[#EDF7FA] -mx-4 px-4 py-8 md:-mx-6 md:px-6 dark:bg-gray-900/50">
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-xl font-medium text-gray-900 md:text-2xl dark:text-gray-50">
-            Recent posts
-          </h2>
+      <section
+        data-testid="featured-works-section"
+        className="animate-fade-in-up -mx-4 rounded-[2rem] border border-border/60 bg-brand-section-bg px-4 py-8 md:-mx-6 md:px-6"
+        style={{ animationDelay: '350ms' }}
+      >
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+              Selected work
+            </p>
+            <h2 className="mt-2 text-xl font-heading font-bold text-foreground md:text-2xl">
+              Featured works
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+              Product, platform, and interaction work that best represents how I design and ship.
+            </p>
+          </div>
           <Link
-            href="/blog"
-            className="text-sm font-medium text-[#00A8CC] hover:underline dark:text-[#00A8CC]"
+            href="/works"
+            className="inline-flex items-center gap-2 text-sm font-medium text-brand-cyan transition-colors hover:text-brand-cyan hover:underline"
           >
             View all
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </Link>
+        </div>
+        <div data-testid="featured-works-grid" className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+          {visibleFeaturedWorks.length > 0 ? (
+            visibleFeaturedWorks.map((work) => {
+              const thumbnailUrl = work.thumbnailUrl || null
+              const publishDate = formatPublishedMonth(work.publishedAt)
+
+              return (
+                <Link key={work.id} href={`/works/${work.slug}`} data-testid="featured-work-card" className="group block h-full">
+                  <Card className="flex h-full flex-col overflow-hidden rounded-2xl border-border/80 bg-background py-0 shadow-sm transition hover:border-primary/30 hover:shadow-md">
+                    <div className="relative aspect-[4/3] overflow-hidden bg-muted">
+                      {thumbnailUrl ? (
+                        <Image
+                          src={thumbnailUrl}
+                          alt={work.title}
+                          fill
+                          className="object-cover transition-transform duration-500 group-hover:scale-105"
+                          unoptimized
+                        />
+                      ) : (
+                        <div
+                          data-testid="featured-work-no-image-placeholder"
+                          className="flex h-full w-full flex-col items-center justify-center gap-2 bg-gradient-to-br from-muted to-muted/80 text-muted-foreground"
+                        >
+                          <BriefcaseBusiness className="h-8 w-8" aria-hidden="true" />
+                          <span className="text-xs font-medium">No Image</span>
+                        </div>
+                      )}
+                    </div>
+                    <CardContent className="flex flex-1 flex-col p-4 sm:p-5">
+                      <div className="mb-2 flex flex-wrap items-center gap-2">
+                        <span className="rounded-full bg-brand-navy px-2.5 py-0.5 text-xs font-bold text-white">
+                          {publishDate}
+                        </span>
+                        <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                          {work.category}
+                        </span>
+                      </div>
+                      <h3 className="line-clamp-2 text-lg font-heading font-bold leading-tight text-foreground transition-colors group-hover:text-brand-accent sm:text-xl">
+                        {work.title}
+                      </h3>
+                      <p className="mt-2 line-clamp-2 flex-1 text-sm leading-relaxed text-foreground/80">
+                        {work.excerpt}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </Link>
+              )
+            })
+          ) : (
+            <div className="col-span-full py-8 text-center text-muted-foreground">
+              No featured works found.
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section
+        data-testid="recent-posts-section"
+        className="animate-fade-in-up rounded-[2rem] border border-border/70 bg-background px-5 py-8 shadow-sm dark:bg-card md:px-6"
+        style={{ animationDelay: '450ms' }}
+      >
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+              Notes and essays
+            </p>
+            <h2 className="mt-2 text-xl font-heading font-bold text-foreground md:text-2xl">
+              Recent posts
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+              Writing about product decisions, implementation details, and the tradeoffs behind them.
+            </p>
+          </div>
+          <Link
+            href="/blog"
+            className="inline-flex items-center gap-2 text-sm font-medium text-brand-cyan transition-colors hover:text-brand-cyan hover:underline"
+          >
+            View all
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Link>
         </div>
         <div className="grid gap-6 md:grid-cols-2">
@@ -77,103 +226,101 @@ export default async function HomePage() {
                 : 'Unknown Date'
 
               return (
-                <Card key={post.id} className="border-none shadow-sm">
-                  <CardHeader>
-                    <CardTitle className="text-xl font-bold">
-                      <Link href={`/blog/${post.slug}`} className="hover:text-[#00A8CC] transition-colors">
+                <Link
+                  key={post.id}
+                  href={`/blog/${post.slug}`}
+                  className="group block h-full"
+                  data-testid="recent-post-card"
+                >
+                  <Card className="flex h-full flex-col gap-0 overflow-hidden rounded-2xl border-border/80 bg-background py-0 shadow-sm transition hover:border-primary/30 hover:shadow-md">
+                    <div className="h-1 w-full rounded-t-2xl bg-gradient-to-r from-brand-accent to-brand-cyan" />
+                    <CardHeader className="px-4 pt-4 pb-0 sm:px-5 sm:pt-5">
+                      <div className="mb-2 flex flex-wrap items-center gap-2">
+                        <span className="rounded-full bg-brand-navy px-2.5 py-0.5 text-xs font-bold text-white">
+                          {publishDate}
+                        </span>
+                        <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+                          {post.tags?.[0] || 'Untagged'}
+                        </span>
+                      </div>
+                      <CardTitle className="text-lg font-heading font-bold leading-tight text-foreground transition-colors group-hover:text-brand-accent sm:text-xl">
                         {post.title}
-                      </Link>
-                    </CardTitle>
-                    <div className="flex gap-4 text-base text-gray-600 dark:text-gray-400">
-                      <span>{publishDate}</span>
-                      {post.tags?.[0] && (
-                        <span className="border-l border-gray-400 pl-4">{post.tags[0]}</span>
-                      )}
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="line-clamp-3 text-gray-600 dark:text-gray-300">
-                      {post.excerpt}
-                    </p>
-                  </CardContent>
-                </Card>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex flex-1 flex-col px-4 pb-4 pt-3 sm:px-5 sm:pb-5">
+                      {post.excerpt ? (
+                        <p className="line-clamp-3 flex-1 text-sm leading-relaxed text-foreground/80 sm:text-base">
+                          {post.excerpt}
+                        </p>
+                      ) : null}
+                    </CardContent>
+                  </Card>
+                </Link>
               )
             })
           ) : (
-            <div className="col-span-2 py-8 text-center text-gray-500">
+            <div className="col-span-2 py-8 text-center text-muted-foreground">
               No recent posts found.
             </div>
           )}
         </div>
       </section>
 
-      <section>
-        <div className="mb-6">
-          <h2 className="text-xl font-bold text-gray-900 md:text-2xl dark:text-gray-50">
-            Featured works
-          </h2>
+      <section className="animate-fade-in-up rounded-[2rem] border border-border/70 bg-background px-5 py-6 shadow-sm md:px-6" style={{ animationDelay: '550ms' }}>
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+              Explore next
+            </p>
+            <h2 className="mt-2 text-xl font-heading font-bold text-foreground">
+              Move through the portfolio with intent
+            </h2>
+          </div>
+          <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
+            Start with the project archive, read the longer notes, or jump into the more personal pages.
+          </p>
         </div>
-        <div className="flex flex-col gap-6">
-          {featuredWorks.length > 0 ? (
-            featuredWorks.map((work) => {
-              const thumbnailUrl = work.thumbnailUrl || null
-              const publishDate = work.publishedAt
-                ? new Date(work.publishedAt).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  })
-                : 'Unknown Date'
-
-              return (
-                <div key={work.id} className="flex flex-col gap-6 border-b border-gray-200 pb-6 md:flex-row dark:border-gray-800">
-                  <Link
-                    href={`/works/${work.slug}`}
-                    className="h-48 w-full flex-shrink-0 overflow-hidden rounded-md bg-gray-200 md:w-64 dark:bg-gray-800 relative block group border"
-                  >
-                    {thumbnailUrl ? (
-                      <Image
-                        src={thumbnailUrl}
-                        alt={work.title}
-                        fill
-                        className="object-cover transition-transform duration-300 group-hover:scale-105"
-                        unoptimized
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center text-gray-400 font-medium">
-                        No Image
-                      </div>
-                    )}
-                  </Link>
-                  <div className="flex flex-1 flex-col justify-start">
-                    <Link href={`/works/${work.slug}`} className="mb-4 text-2xl font-bold text-gray-900 hover:text-[#F3434F] dark:text-gray-50 transition-colors">
-                      {work.title}
-                    </Link>
-                    <div className="mb-4 flex flex-wrap items-center gap-4">
-                      <span className="rounded-full bg-[#142850] px-3 py-1 text-sm font-bold text-white">
-                        {publishDate}
-                      </span>
-                      <span className="text-gray-500 dark:text-gray-400 font-medium">
-                        {work.category}
-                      </span>
-                      {work.period && (
-                        <span className="text-sm border-l pl-4 text-gray-400 dark:text-gray-500 font-mono">
-                          {work.period}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-gray-600 dark:text-gray-300 line-clamp-2 leading-relaxed">
-                      {work.excerpt || 'Click to view details'}
-                    </p>
-                  </div>
+        <div className="mt-5 grid gap-3 md:grid-cols-3">
+          {[
+            {
+              href: '/works',
+              label: 'Works',
+              description: 'Browse the complete archive of shipped work and experiments.',
+              icon: BriefcaseBusiness,
+            },
+            {
+              href: '/blog',
+              label: 'Blog',
+              description: 'Read the rationale, process notes, and technical write-ups.',
+              icon: FileText,
+            },
+            {
+              href: '/introduction',
+              label: 'Introduction',
+              description: 'Get the personal context behind the portfolio and current focus.',
+              icon: User,
+            },
+          ].map(({ href, label, description, icon: Icon }) => (
+            <Link
+              key={href}
+              href={href}
+              className="group rounded-2xl border border-border/80 bg-background p-4 transition hover:border-primary/30 hover:shadow-sm"
+            >
+              <div className="flex items-start gap-3">
+                <span className="rounded-full bg-muted p-2 text-muted-foreground">
+                  <Icon className="h-4 w-4" aria-hidden="true" />
+                </span>
+                <div>
+                  <p className="text-base font-semibold text-foreground transition-colors group-hover:text-brand-accent">
+                    {label}
+                  </p>
+                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                    {description}
+                  </p>
                 </div>
-              )
-            })
-          ) : (
-            <div className="py-8 text-center text-gray-500">
-              No featured works found.
-            </div>
-          )}
+              </div>
+            </Link>
+          ))}
         </div>
       </section>
     </div>

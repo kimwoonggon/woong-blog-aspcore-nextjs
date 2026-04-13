@@ -3,19 +3,44 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useMemo, useState, useTransition } from 'react'
-import { Eye, Pencil, Sparkles, Trash2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Eye, Pencil, Sparkles, Trash2 } from 'lucide-react'
 import { AdminBlogBatchAiPanel } from '@/components/admin/AdminBlogBatchAiPanel'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import type { BlogAdminItem } from '@/lib/api/blogs'
 import { deleteAdminBlog, deleteManyAdminBlogs } from '@/lib/api/admin-mutations'
 import { useResponsivePageSize } from '@/hooks/useResponsivePageSize'
+import { toast } from 'sonner'
 
 interface AdminBlogTableClientProps {
   blogs: BlogAdminItem[]
+}
+
+interface PendingBlogDelete {
+  ids: string[]
+  title: string
+}
+
+function matchesBlogQuery(blog: BlogAdminItem, normalizedQuery: string) {
+  if (!normalizedQuery) {
+    return true
+  }
+
+  return (
+    blog.title.toLowerCase().includes(normalizedQuery)
+    || blog.tags.some((tag) => tag.toLowerCase().includes(normalizedQuery))
+  )
 }
 
 export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
@@ -23,6 +48,7 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [showBatchAiPanel, setShowBatchAiPanel] = useState(false)
   const [query, setQuery] = useState('')
+  const [pendingDelete, setPendingDelete] = useState<PendingBlogDelete | null>(null)
   const [page, setPage] = useState(1)
   const [isPending, startTransition] = useTransition()
   const pageSize = useResponsivePageSize(12, 8, 6)
@@ -32,7 +58,7 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
       return blogs
     }
 
-    return blogs.filter((blog) => blog.title.toLowerCase().includes(normalizedQuery))
+    return blogs.filter((blog) => matchesBlogQuery(blog, normalizedQuery))
   }, [blogs, query])
   const totalPages = Math.max(1, Math.ceil(filteredBlogs.length / pageSize))
   const currentPage = Math.min(page, totalPages)
@@ -67,38 +93,38 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
     ))
   }
 
-  function confirmDelete(message: string) {
-    return window.prompt(message, '')?.trim().toLowerCase() === 'yes'
-  }
-
-  function runDelete(ids: string[], label: string) {
+  function requestDelete(ids: string[], title: string) {
     if (ids.length === 0 || isPending) {
       return
     }
 
-    const confirmed = confirmDelete(`Type yes to delete ${label}. This action cannot be undone.`)
-    if (!confirmed) {
+    setPendingDelete({ ids, title })
+  }
+
+  function runDelete() {
+    if (!pendingDelete || isPending) {
       return
     }
 
     startTransition(async () => {
       try {
-        if (ids.length === 1) {
-          await deleteAdminBlog(ids[0])
+        if (pendingDelete.ids.length === 1) {
+          await deleteAdminBlog(pendingDelete.ids[0])
         } else {
-          await deleteManyAdminBlogs(ids)
+          await deleteManyAdminBlogs(pendingDelete.ids)
         }
-        setSelectedIds((current) => current.filter((id) => !ids.includes(id)))
+        setSelectedIds((current) => current.filter((id) => !pendingDelete.ids.includes(id)))
+        setPendingDelete(null)
         router.refresh()
       } catch (error) {
-        window.alert(error instanceof Error ? error.message : 'Failed to delete blogs.')
+        toast.error(error instanceof Error ? error.message : 'Failed to delete blogs.')
       }
     })
   }
 
   return (
-    <div className="rounded-md border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 px-4 py-3 dark:border-gray-800">
+    <div className="rounded-md border border-border bg-background">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">
         <div className="flex min-w-[240px] flex-1 items-center gap-3">
           <Input
             value={query}
@@ -111,12 +137,12 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
                 current.filter((id) =>
                   blogs.some((blog) =>
                     blog.id === id
-                    && (!normalizedQuery || blog.title.toLowerCase().includes(normalizedQuery)),
+                    && matchesBlogQuery(blog, normalizedQuery),
                   ),
                 ),
               )
             }}
-            placeholder="Search blog titles"
+            placeholder="Search by title or tags…"
             aria-label="Search blog titles"
             className="max-w-sm"
           />
@@ -138,7 +164,7 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
             <Button
               variant="destructive"
               size="sm"
-              onClick={() => runDelete(effectiveSelectedIds, `${selectedCount} selected blog posts`)}
+              onClick={() => requestDelete(effectiveSelectedIds, `${selectedCount} selected blog posts`)}
               disabled={isPending}
             >
               <Trash2 className="mr-2 h-4 w-4" />
@@ -181,7 +207,11 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
         <TableBody>
           {visibleBlogs.length > 0 ? (
             visibleBlogs.map((blog) => (
-              <TableRow key={blog.id} data-testid="admin-blog-row">
+              <TableRow
+                key={blog.id}
+                data-testid="admin-blog-row"
+                data-state={selectedSet.has(blog.id) ? 'selected' : undefined}
+              >
                 <TableCell>
                   <Checkbox
                     aria-label={`Select ${blog.title}`}
@@ -189,10 +219,10 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
                     onCheckedChange={() => toggle(blog.id)}
                   />
                 </TableCell>
-                <TableCell className="font-medium">
+                <TableCell className="min-w-0 font-medium">
                   <Link
                     href={`/admin/blog/${blog.id}`}
-                    className="transition-colors hover:text-primary hover:underline"
+                    className="block truncate transition-colors hover:text-primary hover:underline"
                   >
                     {blog.title}
                   </Link>
@@ -208,28 +238,52 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
                     </Badge>
                   )}
                 </TableCell>
-                <TableCell className="text-sm text-gray-500">
+                <TableCell className="text-sm tabular-nums text-muted-foreground">
                   {blog.publishedAt ? new Date(blog.publishedAt).toLocaleDateString() : '—'}
                 </TableCell>
-                <TableCell>{blog.tags?.join(', ')}</TableCell>
+                <TableCell>
+                  {blog.tags.length > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {blog.tags.slice(0, 3).map((tag) => (
+                        <Badge key={tag} variant="secondary" className="text-xs">
+                          {tag}
+                        </Badge>
+                      ))}
+                      {blog.tags.length > 3 ? (
+                        <Badge variant="outline" className="text-xs">
+                          +{blog.tags.length - 3}
+                        </Badge>
+                      ) : null}
+                    </div>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">No tags</span>
+                  )}
+                </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
-                    <Link href={`/blog/${blog.slug}`} target="_blank">
-                      <Button variant="ghost" size="icon" title="View Public">
+                    <Button asChild variant="ghost" size="icon">
+                      <Link
+                        href={`/blog/${blog.slug}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label={`View public post: ${blog.title}`}
+                        title="View Public"
+                      >
                         <Eye className="h-4 w-4" />
-                      </Button>
-                    </Link>
-                    <Link href={`/admin/blog/${blog.id}`}>
-                      <Button variant="ghost" size="icon" title="Edit">
+                      </Link>
+                    </Button>
+                    <Button asChild variant="ghost" size="icon">
+                      <Link href={`/admin/blog/${blog.id}`} aria-label={`Edit post: ${blog.title}`} title="Edit">
                         <Pencil className="h-4 w-4" />
-                      </Button>
-                    </Link>
+                      </Link>
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                      className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
+                      aria-label={`Delete post: ${blog.title}`}
                       title="Delete"
-                      onClick={() => runDelete([blog.id], blog.title)}
+                      onClick={() => requestDelete([blog.id], blog.title)}
                       disabled={isPending}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -247,23 +301,53 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
           )}
         </TableBody>
       </Table>
-      <div className="flex flex-wrap items-center justify-center gap-2 border-t border-gray-200 px-4 py-3 dark:border-gray-800">
-        <Button type="button" variant="outline" size="sm" disabled={currentPage <= 1} onClick={() => setPage(1)}>
-          처음
+      <div className="flex flex-wrap items-center justify-center gap-3 border-t border-border px-4 py-3 sm:justify-between">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          aria-label="Previous page"
+          disabled={currentPage <= 1}
+          onClick={() => setPage((active) => Math.max(1, active - 1))}
+        >
+          <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+          Previous
         </Button>
-        <Button type="button" variant="outline" size="sm" disabled={currentPage <= 1} onClick={() => setPage((active) => Math.max(1, active - 1))}>
-          이전
-        </Button>
-        <span className="text-sm text-muted-foreground">
-          {currentPage} / {totalPages}
+        <span className="text-sm tabular-nums text-muted-foreground">
+          Page {currentPage} of {totalPages}
         </span>
-        <Button type="button" variant="outline" size="sm" disabled={currentPage >= totalPages} onClick={() => setPage((active) => Math.min(totalPages, active + 1))}>
-          다음
-        </Button>
-        <Button type="button" variant="outline" size="sm" disabled={currentPage >= totalPages} onClick={() => setPage(totalPages)}>
-          끝
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          aria-label="Next page"
+          disabled={currentPage >= totalPages}
+          onClick={() => setPage((active) => Math.min(totalPages, active + 1))}
+        >
+          Next
+          <ChevronRight className="h-4 w-4" aria-hidden="true" />
         </Button>
       </div>
+      <Dialog open={pendingDelete !== null} onOpenChange={(open) => !open && setPendingDelete(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {pendingDelete ? `Delete ${pendingDelete.title}?` : 'Delete item?'}
+            </DialogTitle>
+            <DialogDescription>
+              This action cannot be undone. The selected post will be permanently deleted.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPendingDelete(null)} disabled={isPending}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={runDelete} disabled={isPending}>
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
