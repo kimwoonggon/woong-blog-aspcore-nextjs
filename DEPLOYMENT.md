@@ -109,3 +109,35 @@ docker compose --env-file .env.prod -f docker-compose.prod.yml exec nginx nginx 
 - 외부 공개는 `nginx`만 `80/443`으로 처리한다.
 - `data-protection-keys` volume을 삭제하면 로그인 세션과 antiforgery가 끊길 수 있다.
 - `media-storage`와 `postgres-data`는 운영 데이터이므로 재배포 중 삭제하면 안 된다.
+
+## Staging Deployment
+
+`dev` CI 성공 후에는 staging용 GHCR 이미지가 별도 workflow로 publish된다.
+
+예시 태그:
+
+- `ghcr.io/<owner>/woong-blog-aspcore-nextjs-frontend:dev`
+- `ghcr.io/<owner>/woong-blog-aspcore-nextjs-backend:dev`
+- `ghcr.io/<owner>/woong-blog-aspcore-nextjs-frontend:dev-sha-<sha>`
+- `ghcr.io/<owner>/woong-blog-aspcore-nextjs-backend:dev-sha-<sha>`
+
+다른 폴더에서 staging 런타임을 올릴 때는 아래처럼 시작한다.
+
+```bash
+mkdir -p ~/woong-blog-staging
+cd ~/woong-blog-staging
+cp /path/to/repo/docker-compose.staging.yml .
+cp /path/to/repo/.env.staging.example .env.staging
+cp -r /path/to/repo/nginx ./nginx
+mkdir -p certbot/www certbot/conf/live/current
+```
+
+`.env.staging`를 수정한 뒤 실행:
+
+```bash
+echo "$GHCR_TOKEN" | docker login ghcr.io -u YOUR_GITHUB_USERNAME --password-stdin
+docker compose --env-file .env.staging -f docker-compose.staging.yml pull
+docker compose --env-file .env.staging -f docker-compose.staging.yml up -d
+```
+
+로컬 홈서버에서 먼저 staging 검증을 하고, 그 다음에만 `main` promotion을 진행하는 흐름을 권장한다.

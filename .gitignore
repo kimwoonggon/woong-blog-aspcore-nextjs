@@ -38,6 +38,7 @@ yarn-error.log*
 .env*
 !.env.example
 !.env.prod.example
+!.env.staging.example
 .env.prod.ci
 .env.prod.local
 

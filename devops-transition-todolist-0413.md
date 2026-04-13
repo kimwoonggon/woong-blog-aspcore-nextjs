@@ -63,4 +63,12 @@
 - [x] `G3` `docker-compose.prod.yml` 기준 smoke를 통과시킨다.
 - [x] `G4` prod bootstrap nginx 기준 HTTPS 발급 전 동작을 검증한다.
 - [x] `G5` prod nginx 기준 reverse proxy / auth / public page smoke를 검증한다.
-- [ ] `G6` CI 전체가 green이어야만 `main` publish가 가능함을 확인한다.
+- [x] `G6` CI 전체가 green이어야만 `main` publish가 가능함을 확인한다.
+
+## H. Staging
+
+- [x] `H1` `docker-compose.staging.yml`를 추가한다.
+- [x] `H2` `.env.staging.example`를 추가한다.
+- [x] `H3` `CI Dev` 성공 후 `dev` 이미지 publish workflow를 추가한다.
+- [x] `H4` staging 이미지 태그를 `:dev`, `:dev-sha-<sha>`로 고정한다.
+- [x] `H5` 다른 폴더에서 `docker compose pull && up -d`로 staging을 올리는 절차를 문서화한다.

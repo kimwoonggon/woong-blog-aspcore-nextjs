@@ -16,7 +16,7 @@ fi
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${ROOT_DIR}"
 
-compose_file=""
+compose_file="${COMPOSE_FILE_OVERRIDE:-}"
 compose_env_file=""
 compose_cmd=()
 created_env=0
@@ -57,7 +57,7 @@ trap on_error ERR
 
 case "${MODE}" in
   dev)
-    compose_file="docker-compose.dev.yml"
+    compose_file="${compose_file:-docker-compose.dev.yml}"
     compose_env_file="${APP_ENV_FILE:-.env}"
     if [[ ! -f "${compose_env_file}" && -f .env.example ]]; then
       cp .env.example "${compose_env_file}"
@@ -69,7 +69,7 @@ case "${MODE}" in
     expected_test_login_status=302
     ;;
   main)
-    compose_file="docker-compose.prod.yml"
+    compose_file="${compose_file:-docker-compose.prod.yml}"
     compose_env_file="${APP_ENV_FILE:-.env.prod.ci}"
     if [[ -z "${FRONTEND_IMAGE:-}" ]]; then
       FRONTEND_IMAGE="local/woong-blog-frontend:smoke"

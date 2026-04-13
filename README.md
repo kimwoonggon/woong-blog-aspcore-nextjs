@@ -195,6 +195,9 @@ git push -u origin feature/my-change
    - runs `CI Dev`
 2. `dev` push
    - runs `CI Dev`
+3. successful `CI Dev` completion on `dev`
+   - triggers `Publish GHCR Dev`
+   - publishes staging images with `:dev` and `:dev-sha-<sha>` tags
 3. `release/main-promote -> main` PR
    - runs `CI Main Runtime`
 4. `main` push
