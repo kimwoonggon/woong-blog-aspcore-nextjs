@@ -6,7 +6,7 @@
 - [x] `A2` `main`에서만 GHCR publish가 실행되도록 workflow를 분리한다.
 - [x] `A3` `main` promotion용 runtime worktree 스크립트를 유지한다.
 - [x] `A4` `main` promotion allowlist를 prod artifact 기준으로 재정렬한다.
-- [ ] `A5` `release/main-promote -> main` 기준으로 prod artifact만 승격되게 만든다.
+- [x] `A5` `release/main-promote -> main` 기준으로 prod artifact만 승격되게 만든다.
 
 ## B. Compose Split
 
