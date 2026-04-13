@@ -17,8 +17,10 @@ async function gotoStable(page: Page, url: string) {
 export async function loginAsLocalAdmin(page: Page, returnPath = '/') {
   const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost'
 
-  await gotoStable(page, `${baseUrl}/login`)
-  await page.getByRole('button', { name: 'Continue as Local Admin' }).click()
+  await gotoStable(
+    page,
+    `${baseUrl}/api/auth/test-login?email=admin%40example.com&returnUrl=%2Fadmin%2Fdashboard`,
+  )
   await expect(page).toHaveURL(/\/admin(?:\/dashboard)?$/, { timeout: 15000 })
   await expect.poll(async () => {
     try {

@@ -42,7 +42,7 @@ async function getReadyLoginPage(apiContext: APIRequestContext) {
   const body = await response.text()
 
   return {
-    ok: response.ok() && body.includes('Continue as Local Admin'),
+    ok: response.ok() && body.includes('Sign in with Google'),
     status: response.status(),
   }
 }

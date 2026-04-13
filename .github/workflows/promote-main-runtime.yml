@@ -1,0 +1,44 @@
+name: Promote Main Runtime
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_branch:
+        description: Source branch to promote
+        required: true
+        default: dev
+      target_branch:
+        description: Target branch
+        required: true
+        default: main
+      promotion_branch:
+        description: Release branch to push
+        required: true
+        default: release/main-promote
+
+permissions:
+  contents: write
+
+jobs:
+  promote:
+    name: Prepare runtime-only main promotion branch
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Build runtime-only promotion branch
+        env:
+          SOURCE_BRANCH: ${{ inputs.source_branch }}
+          TARGET_BRANCH: ${{ inputs.target_branch }}
+          PROMOTION_BRANCH: ${{ inputs.promotion_branch }}
+          AUTO_COMMIT: "true"
+          AUTO_PUSH: "true"
+        run: ./scripts/promote-main-runtime.sh

@@ -3,7 +3,7 @@ import { loginAsLocalAdmin } from './helpers/auth'
 
 test('managed test server exposes proxied auth session and local admin bootstrap', async ({ page, request }) => {
   await page.goto('/login', { waitUntil: 'networkidle' })
-  await expect(page.getByRole('button', { name: 'Continue as Local Admin' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Sign in with Google' })).toBeVisible()
 
   const anonymousSession = await request.get('/api/auth/session')
   expect(anonymousSession.ok()).toBeTruthy()

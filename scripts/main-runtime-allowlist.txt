@@ -1,0 +1,15 @@
+# Runtime tree for main promotion
+.github/workflows/ci.yml
+.github/workflows/publish-ghcr-main.yml
+README.md
+Dockerfile
+docker-compose.yml
+nginx
+public
+src
+backend
+package.json
+package-lock.json
+tsconfig.json
+next.config.ts
+next-env.d.ts

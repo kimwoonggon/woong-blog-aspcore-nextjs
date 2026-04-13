@@ -1,18 +1,14 @@
-
-"use client"
-
 import { Button } from '@/components/ui/button'
-import { getLocalAdminLoginUrl, getLoginUrl } from '@/lib/api/auth'
 import { ShieldCheck } from 'lucide-react'
 
-export default function LoginPage() {
-    const handleLogin = () => {
-        window.location.href = getLoginUrl('/admin')
-    }
+interface LoginPageProps {
+    searchParams?: Promise<{ error?: string }>
+}
 
-    const handleLocalAdminLogin = () => {
-        window.location.href = getLocalAdminLoginUrl('/admin')
-    }
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+    const showLocalAdminShortcut = process.env.ENABLE_LOCAL_ADMIN_SHORTCUT === 'true'
+    const resolvedSearchParams = await searchParams
+    const adminOnlyLogin = resolvedSearchParams?.error === 'admin_only'
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-950">
@@ -23,27 +19,34 @@ export default function LoginPage() {
                         Sign in to manage your portfolio content.
                     </p>
                 </div>
+                {adminOnlyLogin ? (
+                    <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100">
+                        This admin area is restricted to accounts explicitly allowed as administrators.
+                    </div>
+                ) : null}
                 <div className="mt-8">
-                    <Button onClick={handleLogin} className="w-full" size="lg">
-                        Sign in with Google
+                    <Button asChild className="w-full" size="lg">
+                        <a href="/api/auth/login?returnUrl=%2Fadmin">Sign in with Google</a>
                     </Button>
                 </div>
-                <div className="space-y-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm dark:border-emerald-900/60 dark:bg-emerald-950/30">
-                    <div className="flex items-start gap-3">
-                        <ShieldCheck className="mt-0.5 h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                        <div className="space-y-2">
-                            <p className="font-medium text-emerald-900 dark:text-emerald-100">
-                                Local development shortcut
-                            </p>
-                            <p className="text-emerald-800/80 dark:text-emerald-200/80">
-                                If Google login does not resolve to an admin role locally, use the seeded local admin session shortcut.
-                            </p>
-                            <Button type="button" variant="outline" className="w-full border-emerald-300 bg-white hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950 dark:hover:bg-emerald-900/50" onClick={handleLocalAdminLogin}>
-                                Continue as Local Admin
-                            </Button>
+                {showLocalAdminShortcut ? (
+                    <div className="space-y-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm dark:border-emerald-900/60 dark:bg-emerald-950/30">
+                        <div className="flex items-start gap-3">
+                            <ShieldCheck className="mt-0.5 h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                            <div className="space-y-2">
+                                <p className="font-medium text-emerald-900 dark:text-emerald-100">
+                                    Local development shortcut
+                                </p>
+                                <p className="text-emerald-800/80 dark:text-emerald-200/80">
+                                    If Google login does not resolve to an admin role locally, use the seeded local admin session shortcut.
+                                </p>
+                                <Button asChild variant="outline" className="w-full border-emerald-300 bg-white hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950 dark:hover:bg-emerald-900/50">
+                                    <a href="/api/auth/test-login?email=admin%40example.com&returnUrl=%2Fadmin">Continue as Local Admin</a>
+                                </Button>
+                            </div>
                         </div>
                     </div>
-                </div>
+                ) : null}
             </div>
         </div>
     )

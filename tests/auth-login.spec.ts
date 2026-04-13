@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test'
 test('login page renders and sign-in CTA targets backend auth launcher', async ({ page }) => {
   await page.goto('/login')
 
-  const button = page.getByRole('button', { name: 'Sign in with Google' })
+  const button = page.getByRole('link', { name: 'Sign in with Google' })
   await expect(button).toBeVisible()
 
   await button.click()

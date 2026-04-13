@@ -81,6 +81,12 @@ docker compose down
 docker compose up -d --build
 ```
 
+### Dev mode with local-admin shortcut enabled
+
+```bash
+./scripts/dev-up.sh
+```
+
 Use this mode for:
 - login/auth validation
 - uploads
@@ -103,6 +109,112 @@ Do **not** treat it as the source of truth for:
 - admin API ownership
 - upload routing
 - final regression sign-off
+
+## Branch Strategy
+
+This repository now treats `dev` as the default integration branch and `main` as the production branch.
+
+- `feature/*` branches merge into `dev`
+- `dev` is the branch where full-stack development continues
+- `main` is the branch that should be safe to deploy
+- `main` must not expose dev-only affordances such as `Continue as Local Admin`
+
+### Dev-only auth behavior
+
+Two flags control the local admin shortcut:
+
+- `ENABLE_LOCAL_ADMIN_SHORTCUT`
+- `Auth__EnableTestLoginEndpoint`
+
+Defaults:
+
+- `docker-compose.yml` keeps both flags `false`
+- `./scripts/dev-up.sh` turns both flags `true`
+- `./scripts/main-up.sh` keeps both flags `false`
+
+This means:
+
+- `main` / production-safe runs do **not** expose the local admin shortcut
+- local development can still opt in explicitly
+
+### Daily development flow
+
+1. Start from `dev`
+2. Create a feature branch from `dev`
+3. Push the feature branch
+4. Open a PR into `dev`
+5. Merge into `dev` after checks pass
+
+Example:
+
+```bash
+git switch dev
+git pull origin dev
+git switch -c feature/my-change
+git push -u origin feature/my-change
+```
+
+### Promote `dev` into `main`
+
+`main` is promoted from `dev` through a runtime-only export so production does not accumulate test files, planning notes, or agent assets.
+
+Prepare the promotion worktree:
+
+```bash
+./scripts/promote-main-runtime.sh
+```
+
+This creates a runtime-only worktree on `release/main-promote` using the allowlist in:
+
+- [`scripts/main-runtime-allowlist.txt`](./scripts/main-runtime-allowlist.txt)
+
+Then push the promotion branch:
+
+```bash
+git -C ../woong-blog-main-runtime push origin HEAD:release/main-promote
+```
+
+Then open a PR:
+
+```text
+release/main-promote -> main
+```
+
+If you want GitHub Actions to prepare and push the promotion branch for you:
+
+```text
+Actions -> Promote Main Runtime -> Run workflow
+```
+
+### What stays out of `main`
+
+The promotion allowlist is designed so `main` can stay focused on runtime/deploy assets.
+
+Examples of content that should not be promoted:
+
+- `tests/`
+- `.codex/`
+- `.agents/`
+- planning / todo markdown
+- local QA artifacts
+
+The intent is:
+
+- `dev` keeps the full engineering surface
+- `main` keeps the runtime surface
+
+### Hotfix rule
+
+If a hotfix lands on `main`, it must be replayed back to `dev` immediately so the branches do not drift.
+
+Recommended sequence:
+
+```bash
+git switch dev
+git pull origin dev
+git merge origin/main
+git push origin dev
+```
 
 ## Test and Verification Commands
 
@@ -238,6 +350,23 @@ So today:
 For the actual deployment checklist and step-by-step runbook, see:
 
 - [`DEPLOYMENT.md`](./DEPLOYMENT.md)
+
+## CI / CD Branch Rules
+
+Current workflow intent:
+
+- pushes and PRs to `feature/*`, `dev`, and `main` run CI/build checks
+- pushes to `main` are the only path that publish runtime images to GHCR
+- runtime-only promotion can be triggered manually through `Promote Main Runtime`
+
+So the normal release path is:
+
+1. `feature/* -> dev`
+2. verify on `dev`
+3. promote runtime-only tree to `release/main-promote`
+4. merge `release/main-promote -> main`
+5. publish runtime images from `main` to GHCR
+6. pull those images from the cloud host and launch the docker services
 
 ## Repository Highlights
 

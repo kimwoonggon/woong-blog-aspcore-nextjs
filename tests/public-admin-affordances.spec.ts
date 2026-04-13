@@ -7,10 +7,10 @@ async function gotoAndExpectButton(page: import('@playwright/test').Page, url: s
   await expect(page.getByRole('button', { name: buttonName })).toBeVisible({ timeout: 15000 })
 }
 
-test('login page exposes a local admin shortcut in local development', async ({ page }) => {
+test('login page hides the local admin shortcut by default', async ({ page }) => {
   await page.goto('/login')
 
-  await expect(page.getByRole('button', { name: 'Continue as Local Admin' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Continue as Local Admin' })).toHaveCount(0)
 })
 
 test('admin session sees navbar status and public edit affordances', async ({ page }) => {

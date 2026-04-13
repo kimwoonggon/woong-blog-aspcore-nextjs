@@ -80,7 +80,7 @@ export default async function BlogDetailPage({ params, searchParams }: PageProps
 
     return (
         <article className="container mx-auto max-w-6xl px-4 py-8 md:px-6 md:py-12">
-            <div className="mx-auto xl:grid xl:max-w-none xl:grid-cols-[minmax(0,48rem)_16rem] xl:gap-8">
+            <div className="relative mx-auto max-w-6xl">
                 <div data-testid="blog-detail-body" className="mx-auto max-w-3xl min-w-0">
                     <header className="mb-8">
                         <h1 className="mb-4 text-3xl font-heading font-bold leading-tight text-foreground text-balance md:text-4xl">
@@ -174,7 +174,7 @@ export default async function BlogDetailPage({ params, searchParams }: PageProps
                     </div>
                 </div>
 
-                <aside className="hidden xl:block">
+                <aside className="hidden xl:absolute xl:right-0 xl:top-0 xl:block xl:w-64">
                     <TableOfContents contentRootId="blog-detail-content" />
                 </aside>
             </div>

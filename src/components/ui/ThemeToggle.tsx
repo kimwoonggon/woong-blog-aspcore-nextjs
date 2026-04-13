@@ -67,7 +67,13 @@ export function ThemeToggle({ className, testId = "theme-toggle" }: { className?
           <CurrentThemeIcon theme={currentTheme} />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="min-w-40">
+      <DropdownMenuContent
+        align="end"
+        side="bottom"
+        sideOffset={10}
+        collisionPadding={16}
+        className="min-w-40"
+      >
         <DropdownMenuLabel>Theme</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuRadioGroup value={currentTheme} onValueChange={(value) => setTheme(value)}>
