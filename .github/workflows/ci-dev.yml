@@ -58,7 +58,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Compose config and smoke
-        run: ./scripts/ci-compose-smoke.sh dev
+        run: bash ./scripts/ci-compose-smoke.sh dev
 
   browser-smoke:
     name: Browser smoke
@@ -84,7 +84,7 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Start dev compose stack
-        run: KEEP_RUNNING=1 ./scripts/ci-compose-smoke.sh dev
+        run: KEEP_RUNNING=1 bash ./scripts/ci-compose-smoke.sh dev
 
       - name: Run public browser smoke
         env:

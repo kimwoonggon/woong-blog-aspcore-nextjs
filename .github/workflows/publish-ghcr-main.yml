@@ -46,7 +46,7 @@ jobs:
         env:
           FRONTEND_IMAGE: local/woong-blog-frontend:publish
           BACKEND_IMAGE: local/woong-blog-backend:publish
-        run: ./scripts/ci-compose-smoke.sh main
+        run: bash ./scripts/ci-compose-smoke.sh main
 
       - name: Normalize image names
         id: vars

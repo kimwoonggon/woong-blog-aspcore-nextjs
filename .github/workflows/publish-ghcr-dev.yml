@@ -48,7 +48,7 @@ jobs:
           BACKEND_IMAGE: local/woong-blog-backend:staging
           APP_ENV_FILE: .env.staging.ci
           COMPOSE_FILE_OVERRIDE: docker-compose.staging.yml
-        run: ./scripts/ci-compose-smoke.sh main
+        run: bash ./scripts/ci-compose-smoke.sh main
 
       - name: Normalize image names
         id: vars

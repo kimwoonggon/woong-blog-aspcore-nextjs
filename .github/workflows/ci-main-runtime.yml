@@ -65,7 +65,7 @@ jobs:
         env:
           FRONTEND_IMAGE: local/woong-blog-frontend:ci
           BACKEND_IMAGE: local/woong-blog-backend:ci
-        run: ./scripts/ci-compose-smoke.sh main
+        run: bash ./scripts/ci-compose-smoke.sh main
 
   browser-smoke:
     name: Browser smoke
@@ -99,7 +99,7 @@ jobs:
         env:
           FRONTEND_IMAGE: local/woong-blog-frontend:ci
           BACKEND_IMAGE: local/woong-blog-backend:ci
-        run: KEEP_RUNNING=1 ./scripts/ci-compose-smoke.sh main
+        run: KEEP_RUNNING=1 bash ./scripts/ci-compose-smoke.sh main
 
       - name: Run public browser smoke
         env:
