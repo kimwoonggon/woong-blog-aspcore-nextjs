@@ -23,3 +23,33 @@ test('resume page keeps a tall viewer shell without clipping the document area',
   const shellHeight = await page.getByTestId('resume-shell').evaluate((element) => element.getBoundingClientRect().height)
   expect(shellHeight).toBeGreaterThanOrEqual(540)
 })
+
+test('static public pages keep a consistent header pattern', async ({ page }) => {
+  const cases = [
+    { path: '/introduction', eyebrow: 'About the work' },
+    { path: '/contact', eyebrow: 'Get in touch' },
+    { path: '/resume', eyebrow: 'Resume' },
+  ]
+
+  for (const item of cases) {
+    await page.goto(item.path)
+
+    const header = page.locator('main header').first()
+    await expect(header).toBeVisible()
+    await expect(header.locator('p').first()).toHaveText(item.eyebrow)
+    await expect(header.locator('h1').first()).toBeVisible()
+
+    const metrics = await header.evaluate((element) => {
+      const style = getComputedStyle(element)
+      return {
+        borderTopWidth: Number.parseFloat(style.borderTopWidth),
+        borderRadius: Number.parseFloat(style.borderTopLeftRadius),
+        boxShadow: style.boxShadow,
+      }
+    })
+
+    expect(metrics.borderTopWidth).toBeGreaterThan(0)
+    expect(metrics.borderRadius).toBeGreaterThanOrEqual(24)
+    expect(metrics.boxShadow).not.toBe('none')
+  }
+})

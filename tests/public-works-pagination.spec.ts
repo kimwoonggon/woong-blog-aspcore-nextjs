@@ -4,16 +4,21 @@ async function expectPageSize(page: import('@playwright/test').Page, expectedPag
   await expect.poll(() => new URL(page.url()).searchParams.get('pageSize')).toBe(expectedPageSize)
 }
 
-test('works pagination uses desktop page size and exposes navigation controls', async ({ page }) => {
+test('works pagination uses desktop page size and exposes first/prev/next/last controls', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1800 })
   await page.goto('/works')
 
-  await expect(page.getByLabel('Works pagination')).toBeVisible()
-  await expect(page.getByLabel('Works pagination').getByText(/\d+\s*\/\s*\d+/)).toBeVisible()
+  const pagination = page.getByLabel('Works pagination')
+
+  await expect(pagination).toBeVisible()
+  await expect(pagination.getByText(/\d+\s*\/\s*\d+/)).toBeVisible()
   await expectPageSize(page, '8')
-  await expect(page.locator('nav[aria-label="Works pagination"] a[href="/works?page=1&pageSize=8"]')).toBeVisible()
-  await expect(page.getByLabel('Works pagination').getByText('이전')).toBeVisible()
-  await expect(page.getByLabel('Works pagination').getByText('다음')).toBeVisible()
+  await expect(page.locator('nav[aria-label="Works pagination"] a[href="/works?page=1&pageSize=8"]').first()).toHaveText('1')
+  await expect(pagination.getByText('처음')).toBeVisible()
+  await expect(pagination.getByText('이전')).toBeVisible()
+  await expect(pagination.getByRole('link', { name: '다음' })).toHaveAttribute('href', /\/works\?page=2&pageSize=8$/)
+  await expect(pagination.getByRole('link', { name: '마지막' })).toHaveAttribute('href', /\/works\?page=\d+&pageSize=8$/)
+  await expect(pagination.getByRole('link', { name: '1', exact: true })).toHaveClass(/bg-sky-500/)
 })
 
 test('works pagination comes up earlier on shorter viewports by reducing the page size', async ({ page }) => {
@@ -25,6 +30,23 @@ test('works pagination comes up earlier on shorter viewports by reducing the pag
   const compactHeight = await page.getByTestId('work-card').first().evaluate((element) => element.getBoundingClientRect().height)
 
   expect(compactHeight).toBeLessThan(500)
+})
+
+test('works pagination hydrates page and pageSize query params without rewriting the requested page', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 })
+  await page.goto('/works?page=2&pageSize=2')
+
+  const pagination = page.getByLabel('Works pagination')
+
+  await expect.poll(() => new URL(page.url()).searchParams.get('page')).toBe('2')
+  await expectPageSize(page, '2')
+  await expect(pagination.getByText('2 /')).toBeVisible()
+  await expect(pagination.getByRole('link', { name: '1', exact: true })).toHaveAttribute('href', '/works?page=1&pageSize=2')
+  await expect(pagination.getByRole('link', { name: '이전' })).toHaveAttribute('href', '/works?page=1&pageSize=2')
+  await expect(pagination.getByRole('link', { name: '다음' })).toHaveAttribute('href', '/works?page=3&pageSize=2')
+  await expect(pagination.getByRole('link', { name: '마지막' })).toHaveAttribute('href', /\/works\?page=\d+&pageSize=2$/)
+  await expect(pagination.getByRole('link', { name: '2', exact: true })).toHaveClass(/bg-sky-500/)
+  await expect(page.getByTestId('work-card')).toHaveCount(2)
 })
 
 test('works density changes smoothly at intermediate heights', async ({ page }) => {

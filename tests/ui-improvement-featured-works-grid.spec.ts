@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { getStyle } from './helpers/ui-improvement'
+import { getColorChannels, getStyle } from './helpers/ui-improvement'
 
 test('Featured works renders as a grid card layout', async ({ page }) => {
   await page.goto('/')
@@ -92,4 +92,61 @@ test('Featured works uses two columns on tablet and three on desktop', async ({ 
 
   expect(await measureColumns(768, 1024)).toBe(2)
   expect(await measureColumns(1280, 800)).toBe(3)
+})
+
+test('hero CTAs keep a clear primary-versus-secondary visual hierarchy', async ({ page }) => {
+  await page.goto('/')
+
+  const primary = page.getByRole('link', { name: 'View My Works' })
+  const secondary = page.getByRole('link', { name: 'Read Blog' })
+  await expect(primary).toBeVisible()
+  await expect(secondary).toBeVisible()
+
+  await expect(primary).toHaveClass(/bg-foreground/)
+  await expect(primary).toHaveClass(/text-background/)
+  await expect(secondary).toHaveClass(/border/)
+  await expect(secondary).not.toHaveClass(/bg-foreground/)
+})
+
+test('featured work media keeps a 4:3 ratio and cards keep consistent heights', async ({ page }) => {
+  await page.goto('/')
+
+  const cards = page.getByTestId('featured-work-card')
+  await expect(cards.nth(0)).toBeVisible()
+  await expect(cards.nth(1)).toBeVisible()
+
+  const mediaBoxes = await Promise.all([0, 1].map(async (index) => {
+    const box = await cards.nth(index).locator('.aspect-\\[4\\/3\\]').first().boundingBox()
+    expect(box).toBeTruthy()
+    return box!
+  }))
+  const cardBoxes = await Promise.all([0, 1].map(async (index) => {
+    const box = await cards.nth(index).locator('[data-slot="card"]').first().boundingBox()
+    expect(box).toBeTruthy()
+    return box!
+  }))
+
+  for (const box of mediaBoxes) {
+    expect(Math.abs((box.width / box.height) - (4 / 3))).toBeLessThan(0.08)
+  }
+
+  expect(Math.abs(cardBoxes[0].height - cardBoxes[1].height)).toBeLessThanOrEqual(6)
+})
+
+test('featured work cards keep a shared resting shadow and a stronger hover elevation', async ({ page }) => {
+  await page.goto('/')
+
+  const firstCard = page.getByTestId('featured-work-card').nth(0).locator('[data-slot="card"]').first()
+  const secondCard = page.getByTestId('featured-work-card').nth(1).locator('[data-slot="card"]').first()
+  await expect(firstCard).toBeVisible()
+  await expect(secondCard).toBeVisible()
+
+  const firstShadow = await getStyle(firstCard, 'box-shadow')
+  const secondShadow = await getStyle(secondCard, 'box-shadow')
+  expect(firstShadow).toBe(secondShadow)
+  expect(firstShadow).not.toBe('none')
+
+  await firstCard.hover()
+  const hoveredShadow = await getStyle(firstCard, 'box-shadow')
+  expect(hoveredShadow).not.toBe('none')
 })

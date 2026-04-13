@@ -180,7 +180,11 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
         <TableBody>
           {visibleWorks.length > 0 ? (
             visibleWorks.map((work) => (
-              <TableRow key={work.id} data-testid="admin-work-row">
+              <TableRow
+                key={work.id}
+                data-testid="admin-work-row"
+                data-state={selectedSet.has(work.id) ? 'selected' : undefined}
+              >
                 <TableCell>
                   <Checkbox
                     aria-label={`Select ${work.title}`}

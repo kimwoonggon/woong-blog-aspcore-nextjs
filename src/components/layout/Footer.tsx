@@ -79,7 +79,7 @@ export function Footer({
                                     href={url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-muted-foreground transition-colors hover:text-brand-accent"
+                                    className="inline-flex h-11 w-11 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-brand-accent"
                                     aria-label={label}
                                 >
                                     <Icon size={24} />

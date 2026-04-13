@@ -33,7 +33,7 @@ test('admin blog editor surfaces save failure when backend rejects input', async
   await page.keyboard.type('Body that should trigger save failure')
   await page.getByRole('button', { name: /Create Post/i }).click()
 
-  await expect(page.getByText('Save failed from forced playwright route')).toBeVisible()
+  await expect(page.getByTestId('admin-blog-form-error')).toContainText('Save failed from forced playwright route')
   await expect(page).toHaveURL(/\/admin\/blog\/new/)
 })
 

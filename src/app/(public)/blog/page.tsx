@@ -15,7 +15,7 @@ import { fetchPublicBlogs } from '@/lib/api/blogs'
 export const dynamic = 'force-dynamic'
 
 interface PageProps {
-    searchParams?: Promise<{ page?: string; pageSize?: string; __qaTagged?: string }>
+    searchParams?: Promise<{ page?: string; pageSize?: string; __qaTagged?: string; __qaEmpty?: string }>
 }
 
 const DESKTOP_PAGE_SIZE = 12
@@ -36,10 +36,13 @@ export default async function BlogPage({ searchParams }: PageProps) {
     const resolvedSearchParams = await searchParams
     const headerStore = await headers()
     const requestHost = (headerStore.get('x-forwarded-host') ?? headerStore.get('host') ?? '').toLowerCase()
+    const qaEmptyBlogs = resolvedSearchParams?.__qaEmpty === '1' && /localhost|127\.0\.0\.1/.test(requestHost)
     const qaTaggedBlogs = resolvedSearchParams?.__qaTagged === '1' && /localhost|127\.0\.0\.1/.test(requestHost)
     const currentPage = Math.max(1, Number.parseInt(resolvedSearchParams?.page ?? '1', 10) || 1)
     const currentPageSize = Math.max(1, Number.parseInt(resolvedSearchParams?.pageSize ?? String(DESKTOP_PAGE_SIZE), 10) || DESKTOP_PAGE_SIZE)
-    const blogsPayload = await fetchPublicBlogs(currentPage, currentPageSize)
+    const blogsPayload = qaEmptyBlogs
+        ? { items: [], page: 1, pageSize: currentPageSize, totalItems: 0, totalPages: 1 }
+        : await fetchPublicBlogs(currentPage, currentPageSize)
     const session = await fetchServerSession()
     const totalPages = Math.max(1, blogsPayload.totalPages)
     const page = blogsPayload.page

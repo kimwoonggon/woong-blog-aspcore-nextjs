@@ -207,7 +207,11 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
         <TableBody>
           {visibleBlogs.length > 0 ? (
             visibleBlogs.map((blog) => (
-              <TableRow key={blog.id} data-testid="admin-blog-row">
+              <TableRow
+                key={blog.id}
+                data-testid="admin-blog-row"
+                data-state={selectedSet.has(blog.id) ? 'selected' : undefined}
+              >
                 <TableCell>
                   <Checkbox
                     aria-label={`Select ${blog.title}`}

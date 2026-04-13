@@ -7,7 +7,11 @@ function shouldIgnoreHttpsErrors(baseURL: string) {
 }
 
 function resolveAuthBaseUrl(baseURL: string) {
-  if (/^https?:\/\/(localhost|127\.0\.0\.1):3000$/i.test(baseURL)) {
+  if (/^http:\/\/(localhost|127\.0\.0\.1):3000$/i.test(baseURL)) {
+    return 'http://localhost:8080'
+  }
+
+  if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(baseURL)) {
     return 'http://localhost:8080'
   }
 

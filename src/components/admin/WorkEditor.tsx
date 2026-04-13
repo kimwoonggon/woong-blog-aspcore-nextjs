@@ -1,7 +1,7 @@
 "use client"
 
 import Image from 'next/image'
-import { ChevronDown, ChevronUp, Plus, Trash2 } from 'lucide-react'
+import { AlertTriangle, ChevronDown, ChevronUp, Plus, Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { AIFixDialog } from '@/components/admin/AIFixDialog'
@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { fetchWithCsrf } from '@/lib/api/auth'
 import { getBrowserApiBaseUrl } from '@/lib/api/browser'
 import type { WorkVideo } from '@/lib/api/works'
@@ -152,6 +153,8 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
     const [stagedVideos, setStagedVideos] = useState<VideoDraft[]>([])
     const [youtubeUrlInput, setYoutubeUrlInput] = useState('')
     const [isSaving, setIsSaving] = useState(false)
+    const [saveError, setSaveError] = useState<string | null>(null)
+    const [showUnsavedDialog, setShowUnsavedDialog] = useState(false)
     const [uploadingTarget, setUploadingTarget] = useState<'thumbnail' | 'icon' | null>(null)
     const [isVideoBusy, setIsVideoBusy] = useState(false)
     const [hasPersistedVideoChanges, setHasPersistedVideoChanges] = useState(false)
@@ -519,6 +522,20 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
         })
     }
 
+    function reorderStagedVideoToIndex(tempId: string, targetIndex: number) {
+        setStagedVideos((current) => {
+            const index = current.findIndex((item) => item.tempId === tempId)
+            if (index < 0 || targetIndex < 0 || targetIndex >= current.length || index === targetIndex) {
+                return current
+            }
+
+            const next = [...current]
+            const [item] = next.splice(index, 1)
+            next.splice(targetIndex, 0, item)
+            return next
+        })
+    }
+
     function removeStagedVideo(tempId: string) {
         setStagedVideos((current) => current.filter((item) => item.tempId !== tempId))
     }
@@ -742,6 +759,46 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
         }
     }
 
+    async function reorderSavedVideoToIndex(videoId: string, targetIndex: number) {
+        if (!initialWork?.id) return
+
+        const index = videos.findIndex((video) => video.id === videoId)
+        if (index < 0 || targetIndex < 0 || targetIndex >= videos.length || index === targetIndex) {
+            return
+        }
+
+        const reordered = [...videos]
+        const [item] = reordered.splice(index, 1)
+        reordered.splice(targetIndex, 0, item)
+
+        setIsVideoBusy(true)
+
+        try {
+            const response = await fetchWithCsrf(`${getBrowserApiBaseUrl()}/admin/works/${encodeURIComponent(initialWork.id)}/videos/order`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    orderedVideoIds: reordered.map((video) => video.id),
+                    expectedVideosVersion: videosVersion,
+                }),
+            })
+
+            if (!response.ok) {
+                throw new Error(await getResponseError(response, 'Failed to reorder videos.'))
+            }
+
+            syncVideos(await response.json() as VideoMutationPayload)
+            setHasPersistedVideoChanges(true)
+            refreshInlinePublicWorkIfNeeded()
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Failed to reorder videos.')
+        } finally {
+            setIsVideoBusy(false)
+        }
+    }
+
     async function addStagedYoutubeVideo(workId: string, draft: VideoDraft, currentVersion: number): Promise<StagedVideoResult> {
         const response = await fetchWithCsrf(`${getBrowserApiBaseUrl()}/admin/works/${encodeURIComponent(workId)}/videos/youtube`, {
             method: 'POST',
@@ -824,10 +881,13 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
         )
 
         if (!response.ok) {
-            toast.error(await getResponseError(response, 'Failed to save work.'))
+            const message = await getResponseError(response, 'Failed to save work.')
+            setSaveError(message)
+            toast.error(message)
             return null
         }
 
+        setSaveError(null)
         return await response.json().catch(() => null) as WorkSaveResponsePayload | null
     }
 
@@ -858,6 +918,7 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
         setHasPersistedVideoChanges(false)
         setSavedSnapshot(currentSnapshot)
         clearBeforeUnloadWarning()
+        setSaveError(null)
         toast.success('Work updated successfully')
         if (finishInlineSave(responsePayload, nextSlug, true)) {
             return
@@ -869,6 +930,7 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
     function finishCreateSave(responsePayload: WorkSaveResponsePayload | null, nextSlug: string | null) {
         setSavedSnapshot(currentSnapshot)
         clearBeforeUnloadWarning()
+        setSaveError(null)
         toast.success('Work created successfully')
         if (finishInlineSave(responsePayload, nextSlug, false)) {
             return
@@ -917,11 +979,13 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
         try {
             validateFlexibleMetadata(allProperties)
         } catch {
+            setSaveError('Invalid JSON in Flexible Metadata field')
             toast.error('Invalid JSON in Flexible Metadata field')
             return
         }
 
         setIsSaving(true)
+        setSaveError(null)
 
         try {
             if (isEditing && !isDirty && hasPersistedVideoChanges) {
@@ -1066,7 +1130,10 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                         name="title"
                         required
                         value={title}
-                        onChange={(e) => setTitle(e.target.value)}
+                        onChange={(e) => {
+                            setTitle(e.target.value)
+                            setSaveError(null)
+                        }}
                     />
                 </div>
                 <div className="space-y-2">
@@ -1075,7 +1142,10 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                         id="category"
                         name="category"
                         value={category}
-                        onChange={(e) => setCategory(e.target.value)}
+                        onChange={(e) => {
+                            setCategory(e.target.value)
+                            setSaveError(null)
+                        }}
                         placeholder={DEFAULT_WORK_CATEGORY}
                     />
                 </div>
@@ -1085,7 +1155,10 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                         id="period"
                         name="period"
                         value={period}
-                        onChange={(e) => setPeriod(e.target.value)}
+                        onChange={(e) => {
+                            setPeriod(e.target.value)
+                            setSaveError(null)
+                        }}
                         placeholder="YYYY.MM - YYYY.MM"
                     />
                 </div>
@@ -1095,7 +1168,10 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                         id="tags"
                         name="tags"
                         value={tags}
-                        onChange={(e) => setTags(e.target.value)}
+                        onChange={(e) => {
+                            setTags(e.target.value)
+                            setSaveError(null)
+                        }}
                     />
                 </div>
                 <div className="flex flex-wrap gap-6 pt-2 md:col-span-2">
@@ -1118,7 +1194,10 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                             id="published"
                             name="published"
                             checked={published}
-                            onCheckedChange={(value) => setPublished(Boolean(value))}
+                            onCheckedChange={(value) => {
+                                setPublished(Boolean(value))
+                                setSaveError(null)
+                            }}
                         />
                         <Label htmlFor="published" className="cursor-pointer text-sm">Published</Label>
                     </div>
@@ -1394,7 +1473,27 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                             ) : (
                                 <div className="space-y-4">
                                     {videos.map((video, index) => (
-                                        <div key={video.id} className="space-y-3 rounded-xl border border-border/70 p-4">
+                                        <div
+                                            key={video.id}
+                                            data-testid="saved-video-card"
+                                            draggable={!isVideoBusy}
+                                            onDragStart={(event) => {
+                                                event.dataTransfer.setData('text/saved-video-id', video.id)
+                                                event.dataTransfer.effectAllowed = 'move'
+                                            }}
+                                            onDragOver={(event) => {
+                                                event.preventDefault()
+                                                event.dataTransfer.dropEffect = 'move'
+                                            }}
+                                            onDrop={(event) => {
+                                                event.preventDefault()
+                                                const sourceId = event.dataTransfer.getData('text/saved-video-id')
+                                                if (sourceId) {
+                                                    void reorderSavedVideoToIndex(sourceId, index)
+                                                }
+                                            }}
+                                            className="space-y-3 rounded-xl border border-border/70 p-4"
+                                        >
                                             {embeddedVideoIdSet.has(video.id) && (
                                                 <div className="rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs text-emerald-900 dark:border-emerald-900/60 dark:bg-emerald-950/20 dark:text-emerald-100">
                                                     Placed in body. Remove it from the body before deleting the saved video.
@@ -1479,7 +1578,27 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                                 </div>
                             ) : (
                                 stagedVideos.map((video, index) => (
-                                    <div key={video.tempId} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/70 p-4">
+                                    <div
+                                        key={video.tempId}
+                                        data-testid="staged-video-card"
+                                        draggable
+                                        onDragStart={(event) => {
+                                            event.dataTransfer.setData('text/staged-video-id', video.tempId)
+                                            event.dataTransfer.effectAllowed = 'move'
+                                        }}
+                                        onDragOver={(event) => {
+                                            event.preventDefault()
+                                            event.dataTransfer.dropEffect = 'move'
+                                        }}
+                                        onDrop={(event) => {
+                                            event.preventDefault()
+                                            const sourceId = event.dataTransfer.getData('text/staged-video-id')
+                                            if (sourceId) {
+                                                reorderStagedVideoToIndex(sourceId, index)
+                                            }
+                                        }}
+                                        className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/70 p-4"
+                                    >
                                         <div>
                                             <p className="text-sm font-medium">{video.label}</p>
                                             <p className="text-xs text-muted-foreground">
@@ -1559,7 +1678,10 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                 )}
                 <TiptapEditor
                     content={html}
-                    onChange={setHtml}
+                    onChange={(nextHtml) => {
+                        setHtml(nextHtml)
+                        setSaveError(null)
+                    }}
                     placeholder="Describe the project story and place saved videos inline where they belong…"
                     workVideos={videos}
                     insertVideoEmbedRequest={insertVideoRequest}
@@ -1576,8 +1698,23 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
             </div>
 
             <div className="flex flex-col gap-3 border-t pt-8 sm:flex-row sm:items-center sm:justify-end">
+                {saveError ? (
+                    <p role="alert" aria-live="polite" data-testid="admin-work-form-error" className="text-sm text-red-600 sm:mr-auto">
+                        {saveError}
+                    </p>
+                ) : null}
                 {!inlineMode && (
-                    <Button type="button" variant="outline" onClick={() => router.push(returnTo)}>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                            if (hasUnsavedChanges) {
+                                setShowUnsavedDialog(true)
+                                return
+                            }
+                            router.push(returnTo)
+                        }}
+                    >
                         Cancel
                     </Button>
                 )}
@@ -1602,6 +1739,35 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                     </Button>
                 )}
             </div>
+            <Dialog open={showUnsavedDialog} onOpenChange={setShowUnsavedDialog}>
+                <DialogContent data-testid="admin-unsaved-dialog">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <AlertTriangle className="h-5 w-5 text-amber-600" aria-hidden="true" />
+                            Unsaved changes
+                        </DialogTitle>
+                        <DialogDescription>
+                            Leave this editor and discard the changes you have not saved yet.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button type="button" variant="outline" onClick={() => setShowUnsavedDialog(false)}>
+                            Keep editing
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="destructive"
+                            onClick={() => {
+                                clearBeforeUnloadWarning()
+                                setShowUnsavedDialog(false)
+                                router.push(returnTo)
+                            }}
+                        >
+                            Discard changes
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }

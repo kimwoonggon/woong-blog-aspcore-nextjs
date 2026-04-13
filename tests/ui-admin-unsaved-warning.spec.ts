@@ -30,7 +30,9 @@ test('blog editor clears beforeunload after a successful save', async ({ page })
   }
 
   await page.goto(editHref)
-  await page.getByLabel('Title').fill(updatedTitle)
+  const titleInput = page.getByLabel('Title')
+  await titleInput.fill('')
+  await titleInput.fill(updatedTitle)
   await expect.poll(async () => page.evaluate(() => typeof window.onbeforeunload)).toBe('function')
 
   await Promise.all([
@@ -51,7 +53,9 @@ test('work editor clears beforeunload after a successful save', async ({ page })
   }
 
   await page.goto(editHref)
-  await page.getByLabel('Title').fill(updatedTitle)
+  const titleInput = page.getByLabel('Title')
+  await titleInput.fill('')
+  await titleInput.fill(updatedTitle)
   await expect.poll(async () => page.evaluate(() => typeof window.onbeforeunload)).toBe('function')
 
   await Promise.all([

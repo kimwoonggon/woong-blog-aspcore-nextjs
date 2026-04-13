@@ -10,6 +10,8 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Textarea } from '@/components/ui/textarea'
 import { TiptapEditor } from '@/components/admin/TiptapEditor'
 import { AIFixDialog } from '@/components/admin/AIFixDialog'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { AlertTriangle } from 'lucide-react'
 import { fetchWithCsrf } from '@/lib/api/auth'
 import { getBrowserApiBaseUrl } from '@/lib/api/browser'
 import { normalizeBlogHtmlForSave } from '@/lib/content/blog-content'
@@ -90,6 +92,8 @@ export function BlogEditor({ initialBlog, inlineMode = false }: BlogEditorProps)
     const [html, setHtml] = useState<string>(initialBlog?.content?.html || '')
     const [isSaving, setIsSaving] = useState(false)
     const [isDirty, setIsDirty] = useState(false)
+    const [saveError, setSaveError] = useState<string | null>(null)
+    const [showUnsavedDialog, setShowUnsavedDialog] = useState(false)
     const saveBlogRef = useRef<() => Promise<void>>(async () => {})
 
     const initialSnapshot = buildBlogSnapshot({
@@ -138,6 +142,7 @@ export function BlogEditor({ initialBlog, inlineMode = false }: BlogEditorProps)
         }
 
         setIsSaving(true)
+        setSaveError(null)
 
         try {
             const response = await fetchWithCsrf(
@@ -155,6 +160,7 @@ export function BlogEditor({ initialBlog, inlineMode = false }: BlogEditorProps)
 
             if (!response.ok) {
                 const message = await response.text()
+                setSaveError(message || 'Failed to save blog post.')
                 toast.error(message || 'Failed to save blog post.')
                 return
             }
@@ -170,6 +176,7 @@ export function BlogEditor({ initialBlog, inlineMode = false }: BlogEditorProps)
             })
 
             toast.success(isEditing ? 'Blog post updated successfully' : 'Blog post created successfully')
+            setSaveError(null)
             setSavedSnapshot(nextSnapshot)
             setIsDirty(false)
             clearBeforeUnloadWarning()
@@ -267,6 +274,7 @@ export function BlogEditor({ initialBlog, inlineMode = false }: BlogEditorProps)
     }, [hasUnsavedChanges])
 
     return (
+        <>
         <form
             className="space-y-8 max-w-4xl"
             onSubmit={(event) => {
@@ -285,6 +293,7 @@ export function BlogEditor({ initialBlog, inlineMode = false }: BlogEditorProps)
                         onChange={(event) => {
                             setTitle(event.target.value)
                             setIsDirty(true)
+                            setSaveError(null)
                         }}
                     />
                 </div>
@@ -298,6 +307,7 @@ export function BlogEditor({ initialBlog, inlineMode = false }: BlogEditorProps)
                         onChange={(event) => {
                             setExcerpt(event.target.value.slice(0, 200))
                             setIsDirty(true)
+                            setSaveError(null)
                         }}
                         rows={2}
                         maxLength={200}
@@ -314,6 +324,7 @@ export function BlogEditor({ initialBlog, inlineMode = false }: BlogEditorProps)
                         onChange={(event) => {
                             setTagsInput(event.target.value)
                             setIsDirty(true)
+                            setSaveError(null)
                         }}
                     />
                 </div>
@@ -326,6 +337,7 @@ export function BlogEditor({ initialBlog, inlineMode = false }: BlogEditorProps)
                             onCheckedChange={(value) => {
                                 setPublished(Boolean(value))
                                 setIsDirty(true)
+                                setSaveError(null)
                             }}
                         />
                         <Label htmlFor="published" className="cursor-pointer text-sm">Published</Label>
@@ -368,13 +380,31 @@ export function BlogEditor({ initialBlog, inlineMode = false }: BlogEditorProps)
                     onChange={(nextHtml) => {
                         setHtml(nextHtml)
                         setIsDirty(true)
+                        setSaveError(null)
                     }}
                 />
             </div>
 
             <div className="flex flex-col gap-3 border-t pt-8 sm:flex-row sm:items-center sm:justify-end">
+                {saveError ? (
+                    <p role="alert" aria-live="polite" data-testid="admin-blog-form-error" className="text-sm text-red-600 sm:mr-auto">
+                        {saveError}
+                    </p>
+                ) : null}
                 {!inlineMode && (
-                    <Button type="button" variant="outline" onClick={() => router.back()}>Cancel</Button>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                            if (hasUnsavedChanges) {
+                                setShowUnsavedDialog(true)
+                                return
+                            }
+                            router.back()
+                        }}
+                    >
+                        Cancel
+                    </Button>
                 )}
                 <Button
                     type="submit"
@@ -385,5 +415,35 @@ export function BlogEditor({ initialBlog, inlineMode = false }: BlogEditorProps)
                 </Button>
             </div>
         </form>
+        <Dialog open={showUnsavedDialog} onOpenChange={setShowUnsavedDialog}>
+            <DialogContent data-testid="admin-unsaved-dialog">
+                <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                        <AlertTriangle className="h-5 w-5 text-amber-600" aria-hidden="true" />
+                        Unsaved changes
+                    </DialogTitle>
+                    <DialogDescription>
+                        Leave this editor and discard the changes you have not saved yet.
+                    </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                    <Button type="button" variant="outline" onClick={() => setShowUnsavedDialog(false)}>
+                        Keep editing
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="destructive"
+                        onClick={() => {
+                            clearBeforeUnloadWarning()
+                            setShowUnsavedDialog(false)
+                            router.back()
+                        }}
+                    >
+                        Discard changes
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+        </>
     )
 }

@@ -117,7 +117,7 @@ export function Navbar({ ownerName = 'John Doe', session }: NavbarProps) {
     const closeMenu = () => setIsOpen(false)
 
     return (
-        <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75">
+        <header className="sticky top-0 z-[60] border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75">
             <div className="container flex h-20 items-center gap-3 px-4 md:px-6">
                 <div className="flex min-w-0 flex-1 items-center gap-4 lg:min-w-[320px] lg:flex-none">
                     <Link href="/" className="min-w-0 rounded-2xl px-1 py-1 transition-colors hover:text-primary">

@@ -14,7 +14,11 @@ test('introduction page renders backend-managed content', async ({ page, request
 
   await page.goto('/introduction')
 
+  const shell = page.getByTestId('static-public-shell')
+
+  await expect(shell.getByText('About the work')).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Introduction' })).toBeVisible()
+  await expect(shell.getByText(/A short framing of who I am, what kind of problems I like to solve/i)).toBeVisible()
   await expect(page.getByText(new RegExp(expectedSnippet.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'))).toBeVisible()
   await page.screenshot({ path: 'test-results/playwright/introduction-page.png', fullPage: true })
 })

@@ -56,3 +56,34 @@ test('admin sidebar exposes a direct public site shortcut', async ({ page }) => 
   await expect(shortcut).toHaveAttribute('href', '/')
   await expect(shortcut).toHaveAttribute('target', '_blank')
 })
+
+test('admin dashboard quick navigation links point to the site, members, and notion workspace', async ({ page }) => {
+  await page.goto('/admin/dashboard')
+
+  const openSiteLink = page.locator('main').getByRole('link', { name: 'Open Site' })
+  const membersLink = page.locator('main').getByRole('link', { name: 'Members' })
+  const notionLink = page.locator('main').getByRole('link', { name: 'Blog Notion View' })
+
+  await expect(openSiteLink).toHaveAttribute('href', '/')
+  await expect(membersLink).toHaveAttribute('href', '/admin/members')
+  await expect(notionLink).toHaveAttribute('href', '/admin/blog/notion')
+})
+
+test('admin dashboard recent content sections show linked titles and summary metadata', async ({ page }) => {
+  await page.goto('/admin/dashboard')
+
+  const firstWorkCard = page.getByTestId('works-card-link').first()
+  const firstBlogCard = page.getByTestId('blog-posts-card-link').first()
+
+  await expect(firstWorkCard).toBeVisible()
+  await expect(firstWorkCard).toHaveAttribute('href', /\/admin\/works\/.+\?returnTo=%2Fadmin%2Fdashboard/)
+  await expect(firstWorkCard.getByRole('heading', { level: 3 })).toHaveText(/\S+/)
+  await expect(firstWorkCard).toContainText(/Published|Draft/)
+  await expect(firstWorkCard.locator('article')).toContainText(/\d|—/)
+
+  await expect(firstBlogCard).toBeVisible()
+  await expect(firstBlogCard).toHaveAttribute('href', /\/admin\/blog\/.+\?returnTo=%2Fadmin%2Fdashboard/)
+  await expect(firstBlogCard.getByRole('heading', { level: 3 })).toHaveText(/\S+/)
+  await expect(firstBlogCard).toContainText(/Published|Draft/)
+  await expect(firstBlogCard.locator('article')).toContainText(/\d|—/)
+})

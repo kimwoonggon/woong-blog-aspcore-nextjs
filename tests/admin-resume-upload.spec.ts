@@ -35,11 +35,32 @@ test('admin can upload a resume pdf and public resume page exposes download', as
     downloadLink.click(),
   ])
   expect(await download.suggestedFilename()).toMatch(/\.pdf$/i)
+})
 
-  await page.getByRole('button', { name: '이력서 PDF 업로드' }).click()
-  await expect(page.getByText('Resume Management')).toBeVisible()
-  await page.locator('button:has(svg.lucide-trash-2)').click()
-  await expect(page.locator('main')).toContainText('No resume uploaded yet.', { timeout: 20000 })
+test('admin can delete the uploaded resume and clear the public resume page', async ({ page }) => {
+  page.on('dialog', (dialog) => {
+    void dialog.accept().catch(() => {})
+  })
+
+  await page.goto('/admin/pages')
+  const resumeSection = page.locator('#resume-editor')
+  await expect(resumeSection.getByText('Resume Management')).toBeVisible()
+
+  if (!(await resumeSection.getByText('Resume PDF Uploaded').isVisible())) {
+    const fileInput = resumeSection.locator('#resume-upload')
+    await Promise.all([
+      page.waitForResponse((res) => res.url().includes('/api/uploads') && res.request().method() === 'POST' && res.ok()),
+      fileInput.setInputFiles(path.resolve('tests/fixtures/resume.pdf')),
+    ])
+    await expect(resumeSection.getByText('Resume PDF Uploaded')).toBeVisible({ timeout: 20000 })
+  }
+
+  await resumeSection.getByRole('button', { name: 'Delete resume' }).click()
+  await expect(resumeSection.getByText('No resume uploaded yet.')).toBeVisible({ timeout: 20000 })
+
+  await page.goto('/resume')
+  await expect(page.locator('main')).toContainText('Resume unavailable', { timeout: 20000 })
+  await expect(page.locator('main')).toContainText('No resume has been published yet.', { timeout: 20000 })
   await expect(page.getByRole('link', { name: /download/i })).toHaveCount(0)
 
   await page.goto('/admin/pages')

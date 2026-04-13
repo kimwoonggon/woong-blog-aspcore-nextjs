@@ -27,3 +27,36 @@ test('home and blog pages share the same container width on desktop', async ({ p
 
   expect(Math.abs(homeWidth - blogWidth)).toBeLessThanOrEqual(4)
 })
+
+test('home hero intro and static public shells stay within readable line lengths', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+
+  await page.goto('/')
+  const heroCopy = page.getByText(/Works, writing, and experiments in one balanced shell\./)
+  await expect(heroCopy).toBeVisible()
+  const heroWidth = await heroCopy.evaluate((element) => element.getBoundingClientRect().width)
+  expect(heroWidth).toBeLessThanOrEqual(360)
+
+  await page.goto('/introduction')
+  const introShell = page.getByTestId('static-public-shell')
+  await expect(introShell).toBeVisible()
+  const introWidth = await introShell.evaluate((element) => element.getBoundingClientRect().width)
+  expect(introWidth).toBeLessThanOrEqual(896)
+})
+
+test('public containers stay horizontally centered on desktop', async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 900 })
+  await page.goto('/works')
+
+  const container = page.locator('main .container.max-w-7xl').first()
+  await expect(container).toBeVisible()
+  const spacing = await container.evaluate((element) => {
+    const rect = element.getBoundingClientRect()
+    return {
+      left: rect.left,
+      right: window.innerWidth - rect.right,
+    }
+  })
+
+  expect(Math.abs(spacing.left - spacing.right)).toBeLessThanOrEqual(20)
+})

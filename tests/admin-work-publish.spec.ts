@@ -6,8 +6,7 @@ test.use({ storageState: 'test-results/playwright/admin-storage-state.json' })
 test('admin can create and publish a work that appears on public works page', async ({ page }) => {
   const title = `Playwright Work ${Date.now()}`
 
-  await page.goto('/admin/works')
-  await page.getByRole('link', { name: /Add Work/i }).click()
+  await page.goto('/admin/works/new')
   await expect(page).toHaveURL(/\/admin\/works\/new/)
   await expect(page.getByLabel('Category')).toHaveValue('Uncategorized')
   await expect(page.getByLabel('Title')).toBeVisible()
@@ -49,4 +48,106 @@ test('admin can create and publish a work that appears on public works page', as
   await expect(page.getByRole('heading', { name: title })).toBeVisible()
   await expect(page.getByText('Uncategorized').first()).toBeVisible()
   await page.screenshot({ path: 'test-results/playwright/admin-work-publish.png', fullPage: true })
+})
+
+test('admin can keep a work as draft and publish it later', async ({ page }) => {
+  const title = `Playwright Draft Work ${Date.now()}`
+
+  await page.goto('/admin/works/new')
+  await page.getByLabel('Title').fill(title)
+  await page.getByLabel('Category').fill('draft')
+  await page.getByRole('checkbox', { name: 'Published' }).uncheck()
+  await page.locator('.tiptap.ProseMirror').first().fill(`This work starts as a draft for ${title}.`)
+
+  const [createResponse] = await Promise.all([
+    page.waitForResponse((res) => new URL(res.url()).pathname === '/api/admin/works' && res.request().method() === 'POST' && res.ok()),
+    page.getByRole('button', { name: /Create Work/i }).click(),
+  ])
+
+  const created = await createResponse.json() as { id: string; slug: string }
+  await expect(page).toHaveURL(/\/admin\/works(?:\?.*)?$/)
+
+  await page.getByLabel('Search work titles').fill(title)
+  const row = page.getByTestId('admin-work-row').filter({ hasText: title }).first()
+  await expect(row).toBeVisible()
+  await expect(row.locator('[data-slot="badge"]').filter({ hasText: /^Draft$/ }).first()).toBeVisible()
+
+  await page.goto(`/works/${created.slug}`)
+  await expect(page.getByRole('heading', { name: title })).toHaveCount(0)
+  await expect(page.getByText('404')).toBeVisible()
+
+  await page.goto(`/admin/works/${created.id}`)
+  const publishedCheckbox = page.getByRole('checkbox', { name: 'Published' })
+  await expect(publishedCheckbox).not.toBeChecked()
+  await publishedCheckbox.check()
+
+  await Promise.all([
+    page.waitForResponse((res) => new URL(res.url()).pathname === `/api/admin/works/${created.id}` && res.request().method() === 'PUT' && res.ok()),
+    page.getByRole('button', { name: 'Update Work' }).click(),
+  ])
+
+  await expect(page).toHaveURL(/\/admin\/works(?:\?.*)?$/)
+  await page.getByLabel('Search work titles').fill(title)
+  const publishedRow = page.getByTestId('admin-work-row').filter({ hasText: title }).first()
+  await expect(publishedRow).toBeVisible()
+  await expect(publishedRow.locator('[data-slot="badge"]').filter({ hasText: /^Published$/ }).first()).toBeVisible()
+
+  await page.goto(`/works/${created.slug}`)
+  await expect(page.getByRole('heading', { name: title })).toBeVisible()
+})
+
+test('admin can toggle a published work back to draft and publish it again', async ({ page }) => {
+  const title = `Playwright Toggle Work ${Date.now()}`
+
+  await page.goto('/admin/works/new')
+  await page.getByLabel('Title').fill(title)
+  await page.getByLabel('Category').fill('toggle')
+  await page.locator('.tiptap.ProseMirror').first().fill(`This work exercises publish toggles for ${title}.`)
+
+  const [createResponse] = await Promise.all([
+    page.waitForResponse((res) => new URL(res.url()).pathname === '/api/admin/works' && res.request().method() === 'POST' && res.ok()),
+    page.getByRole('button', { name: /Create Work/i }).click(),
+  ])
+
+  const created = await createResponse.json() as { id: string; slug: string }
+
+  await page.goto(`/works/${created.slug}`)
+  await expect(page.getByRole('heading', { name: title })).toBeVisible()
+
+  await page.goto(`/admin/works/${created.id}`)
+  const publishedCheckbox = page.getByRole('checkbox', { name: 'Published' })
+  await expect(publishedCheckbox).toBeChecked()
+  await publishedCheckbox.uncheck()
+
+  await Promise.all([
+    page.waitForResponse((res) => new URL(res.url()).pathname === `/api/admin/works/${created.id}` && res.request().method() === 'PUT' && res.ok()),
+    page.getByRole('button', { name: 'Update Work' }).click(),
+  ])
+
+  await expect(page).toHaveURL(/\/admin\/works(?:\?.*)?$/)
+  await page.getByLabel('Search work titles').fill(title)
+  const draftRow = page.getByTestId('admin-work-row').filter({ hasText: title }).first()
+  await expect(draftRow).toBeVisible()
+  await expect(draftRow.locator('[data-slot="badge"]').filter({ hasText: /^Draft$/ }).first()).toBeVisible()
+
+  await page.goto(`/works/${created.slug}`)
+  await expect(page.getByRole('heading', { name: title })).toHaveCount(0)
+  await expect(page.getByText('404')).toBeVisible()
+
+  await page.goto(`/admin/works/${created.id}`)
+  await page.getByRole('checkbox', { name: 'Published' }).check()
+
+  await Promise.all([
+    page.waitForResponse((res) => new URL(res.url()).pathname === `/api/admin/works/${created.id}` && res.request().method() === 'PUT' && res.ok()),
+    page.getByRole('button', { name: 'Update Work' }).click(),
+  ])
+
+  await expect(page).toHaveURL(/\/admin\/works(?:\?.*)?$/)
+  await page.getByLabel('Search work titles').fill(title)
+  const publishedRow = page.getByTestId('admin-work-row').filter({ hasText: title }).first()
+  await expect(publishedRow).toBeVisible()
+  await expect(publishedRow.locator('[data-slot="badge"]').filter({ hasText: /^Published$/ }).first()).toBeVisible()
+
+  await page.goto(`/works/${created.slug}`)
+  await expect(page.getByRole('heading', { name: title })).toBeVisible()
 })

@@ -5,10 +5,38 @@ import { InteractiveRenderer } from '@/components/content/InteractiveRenderer'
 import { isBlockPageContent, isHtmlPageContent, parsePageContentJson } from '@/lib/content/page-content'
 import { fetchServerSession } from '@/lib/api/server'
 import { fetchPublicPageBySlug } from '@/lib/api/pages'
+import { headers } from 'next/headers'
 
 export const revalidate = 60
 
-export default async function IntroductionPage() {
+interface PageProps {
+    searchParams?: Promise<{ __qaBroken?: string }>
+}
+
+export default async function IntroductionPage({ searchParams }: PageProps) {
+    const resolvedSearchParams = await searchParams
+    const headerStore = await headers()
+    const requestHost = (headerStore.get('x-forwarded-host') ?? headerStore.get('host') ?? '').toLowerCase()
+    const qaBrokenPage = resolvedSearchParams?.__qaBroken === '1' && /localhost|127\.0\.0\.1/.test(requestHost)
+
+    if (qaBrokenPage) {
+        return (
+            <div className="container mx-auto flex min-h-[60vh] flex-col gap-6 px-4 py-8 md:px-6 md:py-12">
+                <p className="text-sm font-medium uppercase tracking-[0.24em] text-muted-foreground">Public pages</p>
+                <h2 className="text-3xl font-semibold text-foreground">This page could not be loaded.</h2>
+                <p className="max-w-2xl text-sm text-muted-foreground">
+                    The public content request failed. Retry once the backend is healthy.
+                </p>
+                <button
+                    type="button"
+                    className="rounded-full bg-foreground px-5 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90"
+                >
+                    Retry
+                </button>
+            </div>
+        )
+    }
+
     const page = await fetchPublicPageBySlug('introduction')
     const session = await fetchServerSession()
     const title = page?.title || 'Introduction'

@@ -16,6 +16,9 @@ test('shorter viewports keep the reduced works card min-height', async ({ page }
   await page.goto('/works')
 
   const card = page.getByTestId('work-card').first()
-  const height = await card.evaluate((element) => element.getBoundingClientRect().height)
-  expect(height).toBeGreaterThanOrEqual(320)
+  await expect(card).toBeVisible()
+  await expect.poll(
+    () => card.evaluate((element) => Math.round(element.getBoundingClientRect().height)),
+    { timeout: 10_000 },
+  ).toBeGreaterThanOrEqual(320)
 })

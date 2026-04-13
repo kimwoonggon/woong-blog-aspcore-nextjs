@@ -20,11 +20,11 @@ test('public blog inline editor clears beforeunload after save', async ({ page }
   await expect.poll(async () => page.evaluate(() => typeof window.onbeforeunload)).toBe('function')
 
   await Promise.all([
-    page.waitForURL(detailUrlPattern),
     page.waitForResponse((res) => res.url().includes('/api/admin/blogs/') && res.request().method() === 'PUT' && res.ok()),
     page.getByRole('button', { name: /Update Post/i }).click(),
   ])
 
+  await expect(page).toHaveURL(detailUrlPattern)
   await expect(page.getByText(updatedTitle).first()).toBeVisible()
   await expect.poll(async () => page.evaluate(() => typeof window.onbeforeunload)).toBe('object')
   expect(dialogSeen).toBe(false)
@@ -42,18 +42,18 @@ test('public work inline editor clears beforeunload after save', async ({ page }
   await page.goto('/works?page=1&pageSize=1')
   await page.locator('a[href^="/works/"]').first().click()
   await expect(page).toHaveURL(/\/works\/[^/?#]+\?returnTo=/)
-  const returnTo = new URL(page.url()).searchParams.get('returnTo')
   await page.getByRole('button', { name: '작업 수정' }).click()
 
   await page.getByLabel('Title').fill(updatedTitle)
   await expect.poll(async () => page.evaluate(() => typeof window.onbeforeunload)).toBe('function')
 
   await Promise.all([
-    page.waitForURL(returnTo ?? /\/works(?:\?.*)?$/),
     page.waitForResponse((res) => res.url().includes('/api/admin/works/') && res.request().method() === 'PUT' && res.ok()),
     page.getByRole('button', { name: /Update Work/i }).click(),
   ])
 
+  await expect(page).toHaveURL(/\/works(?:\?.*)?$/)
+  await expect.poll(() => new URL(page.url()).searchParams.get('page')).toBe('1')
   await expect(page.getByText(updatedTitle).first()).toBeVisible()
   await expect.poll(async () => page.evaluate(() => typeof window.onbeforeunload)).toBe('object')
   expect(dialogSeen).toBe(false)

@@ -125,7 +125,7 @@ public sealed class AiBatchJobProcessor(IServiceScopeFactory scopeFactory, IOpti
         var configured = await dbContext.AiBatchJobs
             .Where(job => job.Id == jobId)
             .Select(job => job.WorkerCount)
-            .SingleAsync(cancellationToken);
+            .SingleOrDefaultAsync(cancellationToken);
 
         return Math.Max(1, configured ?? _options.BatchConcurrency);
     }
@@ -136,9 +136,31 @@ public sealed class AiBatchJobProcessor(IServiceScopeFactory scopeFactory, IOpti
         var dbContext = scope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
         var aiFixService = scope.ServiceProvider.GetRequiredService<IBlogAiFixService>();
 
-        var item = await dbContext.AiBatchJobItems.SingleAsync(x => x.Id == itemId, cancellationToken);
-        var job = await dbContext.AiBatchJobs.SingleAsync(x => x.Id == jobId, cancellationToken);
-        var blog = await dbContext.Blogs.SingleAsync(x => x.Id == item.EntityId, cancellationToken);
+        var item = await dbContext.AiBatchJobItems.SingleOrDefaultAsync(x => x.Id == itemId, cancellationToken);
+        if (item is null)
+        {
+            return;
+        }
+
+        var job = await dbContext.AiBatchJobs.SingleOrDefaultAsync(x => x.Id == jobId, cancellationToken);
+        if (job is null)
+        {
+            item.Status = AiBatchJobItemStates.Failed;
+            item.Error = "Batch job no longer exists.";
+            item.FinishedAt = DateTimeOffset.UtcNow;
+            await dbContext.SaveChangesAsync(cancellationToken);
+            return;
+        }
+
+        var blog = await dbContext.Blogs.SingleOrDefaultAsync(x => x.Id == item.EntityId, cancellationToken);
+        if (blog is null)
+        {
+            item.Status = AiBatchJobItemStates.Failed;
+            item.Error = "Target blog no longer exists.";
+            item.FinishedAt = DateTimeOffset.UtcNow;
+            await dbContext.SaveChangesAsync(cancellationToken);
+            return;
+        }
 
         item.Status = AiBatchJobItemStates.Running;
         item.StartedAt = DateTimeOffset.UtcNow;
@@ -189,7 +211,7 @@ public sealed class AiBatchJobProcessor(IServiceScopeFactory scopeFactory, IOpti
         return await dbContext.AiBatchJobs
             .Where(job => job.Id == jobId)
             .Select(job => job.CancelRequested)
-            .SingleAsync(cancellationToken);
+            .SingleOrDefaultAsync(cancellationToken);
     }
 
     private async Task MarkPendingItemCancelledAsync(Guid itemId, CancellationToken cancellationToken)

@@ -63,7 +63,7 @@ const parseThreeJsBlocks = (htmlContent: string): { hasBlock: boolean; height: n
 }
 
 function renderProseHtml(html: string) {
-    return <div className="prose prose-lg max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: html }} />
+    return <div className="prose prose-lg max-w-[72ch] dark:prose-invert" dangerouslySetInnerHTML={{ __html: html }} />
 }
 
 function renderVideoSegments(segments: ReturnType<typeof splitWorkVideoEmbedContent>, workVideos: WorkVideo[]) {

@@ -8,9 +8,15 @@ import { fetchResume } from '@/lib/api/site-settings'
 export const revalidate = 60
 export const dynamic = 'force-dynamic'
 
-export default async function ResumePage() {
-    const resume = await fetchResume()
+interface PageProps {
+    searchParams?: Promise<{ __qaEmpty?: string }>
+}
+
+export default async function ResumePage({ searchParams }: PageProps) {
+    const resolvedSearchParams = await searchParams
     const session = await fetchServerSession()
+    const qaEmptyResume = resolvedSearchParams?.__qaEmpty === '1'
+    const resume = qaEmptyResume ? null : await fetchResume()
     const resumeUrl = resume?.publicUrl ?? null
     const resumeAsset = resume
         ? {

@@ -141,7 +141,7 @@
   --brand-navy: oklch(0.55 0.15 260);
   --brand-cyan: oklch(0.75 0.14 220);
   --brand-orange: oklch(0.78 0.17 45);
-  --brand-section-bg: oklch(0.18 0.02 220);
+  --brand-section-bg: oklch(0.22 0.02 220);
   --code-block-bg: #0d1117;
   --code-block-fg: #e6edf3;
 }
