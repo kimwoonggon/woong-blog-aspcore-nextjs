@@ -11,6 +11,7 @@ docker-compose.prod.yml
 eslint.config.mjs
 nginx/prod-bootstrap.conf
 nginx/prod.conf
+postcss.config.mjs
 public
 src
 backend
