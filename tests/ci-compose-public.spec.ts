@@ -8,7 +8,7 @@ test('compose runtime serves frontend, backend, and db-backed public pages', asy
   await expect(health.json()).resolves.toMatchObject({ status: 'ok', service: 'portfolio-api' })
 
   await page.goto('/', { waitUntil: 'networkidle' })
-  await expect(page.getByText('Portfolio')).toBeVisible()
+  await expect(page.getByRole('link', { name: /Portfolio/ }).first()).toBeVisible()
 
   await page.goto('/blog', { waitUntil: 'networkidle' })
   await expect(page.getByRole('heading', { name: 'Blog' })).toBeVisible()
