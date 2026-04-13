@@ -257,6 +257,200 @@ The intent is:
 - `main` keeps the runtime surface
 
 Production deployment details live in [DEPLOYMENT.md](./DEPLOYMENT.md).
+Staging pull/up details live in [STAGING.md](./STAGING.md).
+
+## Operator Flow
+
+이 저장소는 아래 3단계 흐름으로 운영한다.
+
+1. `dev`
+   - source-build 개발 및 검증 브랜치
+   - `docker-compose.dev.yml`
+   - `CI Dev`
+2. `staging`
+   - `dev`에서 publish된 `:dev` 이미지 검증 환경
+   - `docker-compose.staging.yml`
+   - 별도 폴더에서 `pull && up -d`
+3. `main`
+   - production runtime-only 브랜치
+   - `docker-compose.prod.yml`
+   - `CI Main Runtime`
+   - `Publish GHCR Main`
+
+## Dev Start
+
+### 1. 브랜치 준비
+
+```bash
+git switch dev
+git pull origin dev
+git switch -c feature/my-change
+```
+
+### 2. 로컬 dev stack 기동
+
+권장:
+
+```bash
+./scripts/dev-up.sh
+```
+
+동등 명령:
+
+```bash
+docker compose --env-file .env -f docker-compose.dev.yml up -d --build
+```
+
+### 3. 로컬 dev 확인
+
+```bash
+curl -fsS http://localhost/api/health
+curl -fsS http://localhost/login | head
+curl -fsS http://localhost/works | head
+curl -fsS http://localhost/blog | head
+```
+
+dev 기대값:
+- `/login`에 `Continue as Local Admin`가 보여야 함
+- `/api/auth/test-login`이 동작해야 함
+- `backend`는 필요 시 `8080`으로 직접 확인 가능
+
+### 4. dev 품질 게이트
+
+```bash
+npm run lint
+npm run typecheck
+npm run test -- --run
+./scripts/ci-compose-smoke.sh dev
+PLAYWRIGHT_SKIP_AUTH_BOOTSTRAP=1 PLAYWRIGHT_EXPECT_LOCAL_ADMIN_SHORTCUT=visible PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://localhost npx playwright test tests/ci-compose-public.spec.ts --project=chromium-public --workers=1
+PLAYWRIGHT_EXPECT_LOCAL_ADMIN_SHORTCUT=visible PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://localhost npx playwright test tests/test-server-runtime.spec.ts tests/auth-security-browser.spec.ts tests/public-admin-affordances.spec.ts tests/ui-header-overlays.spec.ts --project=chromium-runtime-auth --workers=1
+```
+
+### 5. dev 반영
+
+```bash
+git push -u origin feature/my-change
+```
+
+PR:
+
+```text
+feature/my-change -> dev
+```
+
+## Staging Validation
+
+### 목적
+
+`main`으로 올리기 전에, `dev`에서 publish된 이미지를 **별도 폴더**에서 `pull && up -d`로 띄워서 실제 홈서버/스테이징 운용 흐름을 검증한다.
+
+### 1. staging 이미지 publish
+
+`dev`가 green이면 `Publish GHCR Dev`가 `:dev`, `:dev-sha-<sha>` 태그를 publish한다.
+
+예시:
+
+```text
+ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-frontend:dev
+ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-backend:dev
+```
+
+### 2. staging 폴더 준비
+
+```bash
+mkdir -p ~/woong-blog-staging
+cd ~/woong-blog-staging
+cp /path/to/repo/docker-compose.staging.yml .
+cp /path/to/repo/.env.staging.example .env.staging
+cp -r /path/to/repo/nginx ./nginx
+mkdir -p certbot/www certbot/conf/live/current
+```
+
+### 3. `.env.staging` 수정
+
+최소:
+
+```env
+FRONTEND_IMAGE=ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-frontend:dev
+BACKEND_IMAGE=ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-backend:dev
+POSTGRES_PASSWORD=change-me
+Auth__ClientId=replace-me
+Auth__ClientSecret=replace-me
+Auth__AdminEmails__0=admin@example.com
+```
+
+### 4. pull / up
+
+```bash
+echo "$GHCR_TOKEN" | docker login ghcr.io -u YOUR_GITHUB_USERNAME --password-stdin
+docker compose --env-file .env.staging -f docker-compose.staging.yml pull
+docker compose --env-file .env.staging -f docker-compose.staging.yml up -d
+docker compose --env-file .env.staging -f docker-compose.staging.yml ps
+```
+
+### 5. staging 기능 확인
+
+빠른 확인:
+
+```bash
+curl -I http://localhost/
+curl -I http://localhost/login
+curl -I http://localhost/works
+curl -I http://localhost/blog
+```
+
+브라우저 검증:
+
+```bash
+PLAYWRIGHT_HEADED=1 PLAYWRIGHT_SKIP_AUTH_BOOTSTRAP=1 PLAYWRIGHT_EXPECT_LOCAL_ADMIN_SHORTCUT=hidden PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://localhost npx playwright test tests/ci-compose-public.spec.ts --project=chromium-public --headed --workers=1
+```
+
+추가 public 검증:
+
+```bash
+PLAYWRIGHT_HEADED=1 PLAYWRIGHT_SKIP_AUTH_BOOTSTRAP=1 PLAYWRIGHT_EXPECT_LOCAL_ADMIN_SHORTCUT=hidden PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://localhost npx playwright test tests/home.spec.ts tests/public-content.spec.ts --project=chromium-public --headed --workers=1
+```
+
+staging 기대값:
+- `/login`에 `Continue as Local Admin`가 없어야 함
+- `/api/auth/test-login`은 `404`여야 함
+- `frontend/backend`는 외부 포트를 직접 열지 않아야 함
+- 홈/works/blog가 정상 렌더돼야 함
+
+## Main Promotion
+
+### 1. runtime-only promotion branch 생성
+
+```bash
+./scripts/promote-main-runtime.sh
+git -C ../woong-blog-main-runtime status --short
+git -C ../woong-blog-main-runtime push origin HEAD:release/main-promote
+```
+
+### 2. PR 생성
+
+```text
+release/main-promote -> main
+```
+
+### 3. main 검증
+
+PR 또는 merge 뒤 기대 흐름:
+- `CI Main Runtime` green
+- `Publish GHCR Main` green
+
+main 기대값:
+- `Continue as Local Admin` hidden
+- `/api/auth/test-login` 404
+- `docker-compose.prod.yml`는 `image:`만 사용
+- 운영 이미지는 GHCR `:main`, `:latest`, `:sha-<sha>`로 publish
+
+### 4. 운영 배포
+
+```bash
+docker compose --env-file .env.prod -f docker-compose.prod.yml pull
+docker compose --env-file .env.prod -f docker-compose.prod.yml up -d
+```
 
 ### Hotfix rule
 
