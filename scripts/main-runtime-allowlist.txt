@@ -18,6 +18,7 @@ backend
 package.json
 package-lock.json
 playwright.config.ts
+scripts/ci-compose-smoke.sh
 scripts/notion-api-lib.mjs
 scripts/notion-db-import-lib.mjs
 scripts/notion-export-lib.mjs
