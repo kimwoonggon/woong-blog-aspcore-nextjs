@@ -8,4 +8,4 @@ fi
 
 ENABLE_LOCAL_ADMIN_SHORTCUT=false \
 Auth__EnableTestLoginEndpoint=false \
-"${DOCKER_BIN}" compose up --build -d frontend backend nginx
+"${DOCKER_BIN}" compose up --build -d db frontend backend nginx

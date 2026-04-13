@@ -53,6 +53,8 @@ export default async function globalSetup(config: FullConfig) {
     return
   }
 
+  const skipAuthBootstrap = process.env.PLAYWRIGHT_SKIP_AUTH_BOOTSTRAP === '1'
+
   const ignoreHTTPSErrors = shouldIgnoreHttpsErrors(baseURL)
   const deadline = Date.now() + 60_000
   let lastError: unknown = null
@@ -66,6 +68,11 @@ export default async function globalSetup(config: FullConfig) {
       const readiness = await getReadyLoginPage(uiContext)
       if (!readiness.ok) {
         throw new Error(`Unexpected login readiness response: ${readiness.status}`)
+      }
+
+      if (skipAuthBootstrap) {
+        await uiContext.dispose()
+        return
       }
 
       const authBaseURL = resolveAuthBaseUrl(baseURL)

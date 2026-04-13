@@ -16,32 +16,126 @@ permissions:
   contents: read
 
 jobs:
-  docker-build:
-    name: Docker Build Check
+  frontend-quality:
+    name: Frontend lint, types, and unit tests
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - image_name: frontend
-            context: .
-            dockerfile: Dockerfile
-          - image_name: backend
-            context: .
-            dockerfile: backend/Dockerfile
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build ${{ matrix.image_name }}
-        uses: docker/build-push-action@v5
+      - name: Set up Node
+        uses: actions/setup-node@v4
         with:
-          context: ${{ matrix.context }}
-          file: ${{ matrix.dockerfile }}
-          push: false
-          tags: local/${{ matrix.image_name }}:ci
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm run test -- --run
+
+  backend-tests:
+    name: Backend tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run backend tests
+        run: docker run --pull=always --rm -v "$PWD/backend:/src" -w /src mcr.microsoft.com/dotnet/sdk:10.0 dotnet test tests/WoongBlog.Api.Tests/WoongBlog.Api.Tests.csproj
+
+  compose-verify:
+    name: Compose Full Stack Verification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve branch policy mode
+        id: policy
+        run: |
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            target_branch="${GITHUB_BASE_REF}"
+          else
+            target_branch="${GITHUB_REF_NAME}"
+          fi
+
+          if [[ "${target_branch}" == "main" ]]; then
+            echo "mode=main" >> "${GITHUB_OUTPUT}"
+            echo "shortcut_expectation=hidden" >> "${GITHUB_OUTPUT}"
+          else
+            echo "mode=dev" >> "${GITHUB_OUTPUT}"
+            echo "shortcut_expectation=visible" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Compose config and smoke
+        run: ./scripts/ci-compose-smoke.sh "${{ steps.policy.outputs.mode }}"
+
+  browser-smoke:
+    name: Browser smoke
+    runs-on: ubuntu-latest
+    needs:
+      - frontend-quality
+      - backend-tests
+      - compose-verify
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Resolve branch policy mode
+        id: policy
+        run: |
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            target_branch="${GITHUB_BASE_REF}"
+          else
+            target_branch="${GITHUB_REF_NAME}"
+          fi
+
+          if [[ "${target_branch}" == "main" ]]; then
+            echo "mode=main" >> "${GITHUB_OUTPUT}"
+            echo "shortcut_expectation=hidden" >> "${GITHUB_OUTPUT}"
+          else
+            echo "mode=dev" >> "${GITHUB_OUTPUT}"
+            echo "shortcut_expectation=visible" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Start compose stack
+        run: KEEP_RUNNING=1 ./scripts/ci-compose-smoke.sh "${{ steps.policy.outputs.mode }}"
+
+      - name: Run public browser smoke
+        env:
+          PLAYWRIGHT_SKIP_AUTH_BOOTSTRAP: "1"
+          PLAYWRIGHT_EXPECT_LOCAL_ADMIN_SHORTCUT: ${{ steps.policy.outputs.shortcut_expectation }}
+          PLAYWRIGHT_EXTERNAL_SERVER: "1"
+          PLAYWRIGHT_BASE_URL: http://localhost
+        run: npx playwright test tests/ci-compose-public.spec.ts --project=chromium-public --workers=1
+
+      - name: Run dev-only runtime auth smoke
+        if: steps.policy.outputs.mode == 'dev'
+        env:
+          PLAYWRIGHT_EXTERNAL_SERVER: "1"
+          PLAYWRIGHT_BASE_URL: http://localhost
+        run: npx playwright test tests/test-server-runtime.spec.ts tests/auth-security-browser.spec.ts tests/public-admin-affordances.spec.ts tests/ui-header-overlays.spec.ts --project=chromium-runtime-auth --workers=1
+
+      - name: Tear down compose stack
+        if: always()
+        run: docker compose down --remove-orphans --volumes

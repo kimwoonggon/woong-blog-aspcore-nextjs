@@ -12,6 +12,7 @@ const AUTHENTICATED_SPECS = [
 const RUNTIME_AUTH_SPECS = [
   /tests\/auth-security-browser\.spec\.ts$/,
   /tests\/public-admin-affordances\.spec\.ts$/,
+  /tests\/ui-header-overlays\.spec\.ts$/,
   /tests\/test-server-runtime\.spec\.ts$/,
 ]
 

@@ -14,6 +14,7 @@ The current repository standard is **compose-first**:
 - use `docker compose up -d --build` for full-stack work
 - use `npm run test:e2e:stack` for real regression checks
 - `npm run dev` may still help with isolated UI work, but it is **not** the supported verification path for auth, admin mutations, uploads, or final release checks
+- GitHub Actions must validate the same compose scenario, not isolated `docker build` steps
 
 ## Main URLs
 
@@ -131,11 +132,48 @@ Defaults:
 - `docker-compose.yml` keeps both flags `false`
 - `./scripts/dev-up.sh` turns both flags `true`
 - `./scripts/main-up.sh` keeps both flags `false`
+- `.github/workflows/ci.yml` resolves branch policy automatically:
+  - `feature/*`, `dev`, and PRs targeting `dev` run in `dev` mode
+  - `main` and PRs targeting `main` run in `main` mode
+- `.github/workflows/publish-ghcr-main.yml` runs only after the `CI` workflow succeeds on `main`, then reruns the `main` compose smoke before GHCR push
 
 This means:
 
 - `main` / production-safe runs do **not** expose the local admin shortcut
 - local development can still opt in explicitly
+- CI proves the policy through the full compose stack:
+  - `dev` mode must expose `Continue as Local Admin` and keep `test-login` enabled
+  - `main` mode must hide `Continue as Local Admin` and return `404` from `test-login`
+
+### Compose-first CI policy
+
+The repository no longer treats standalone image builds as sufficient release evidence.
+
+- CI must boot the compose stack: `db`, `backend`, `frontend`, `nginx`
+- CI must pass branch-policy auth flags into the runtime
+- `dev` mode:
+  - `ENABLE_LOCAL_ADMIN_SHORTCUT=true`
+  - `Auth__EnableTestLoginEndpoint=true`
+- `main` mode:
+  - `ENABLE_LOCAL_ADMIN_SHORTCUT=false`
+  - `Auth__EnableTestLoginEndpoint=false`
+
+The shared smoke entrypoint is:
+
+```bash
+./scripts/ci-compose-smoke.sh dev
+./scripts/ci-compose-smoke.sh main
+```
+
+It verifies:
+
+- `docker compose config`
+- `docker compose up -d --build db backend frontend nginx`
+- backend health via `/api/health`
+- frontend routing via `/` and `/login`
+- db-backed public pages via `/blog` and `/works`
+- branch-policy auth behavior on `/login`
+- branch-policy auth behavior on `/api/auth/test-login`
 
 ### Daily development flow
 
@@ -153,6 +191,21 @@ git pull origin dev
 git switch -c feature/my-change
 git push -u origin feature/my-change
 ```
+
+### CI and publish flow
+
+1. `feature/*` push or PR to `dev`
+   - runs compose-first CI in `dev` mode
+2. `dev` push
+   - runs compose-first CI in `dev` mode
+3. `release/main-promote -> main` PR
+   - runs compose-first CI in `main` mode
+4. `main` push
+   - runs compose-first CI in `main` mode
+5. successful `CI` completion on `main`
+   - triggers `publish-ghcr-main.yml`
+   - reruns `main` compose smoke
+   - publishes runtime images to GHCR only after the `main` smoke passes
 
 ### Promote `dev` into `main`
 

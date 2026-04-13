@@ -14,5 +14,11 @@ test-results
 playwright-report
 .env*.local
 .env
+downloads
+docs
+db_status
+.devcontainer-data
+.refs
+.local-certs
 backend/**/bin
 backend/**/obj
