@@ -18,6 +18,7 @@ internal sealed class AiOptionsPostConfigure(IConfiguration configuration) : IPo
             "gpt-5.2-chat");
         options.AzureOpenAiApiVersion = FirstConfigured(configuration["AZURE_OPENAI_API_VERSION"], options.AzureOpenAiApiVersion, "2024-08-01-preview");
         options.CodexCommand = FirstConfigured(configuration["CODEX_COMMAND"], options.CodexCommand, "codex");
+        options.CodexArguments = ParseShellArguments(configuration["CODEX_ARGUMENTS"], options.CodexArguments, ["exec"]);
         options.CodexModel = FirstConfigured(configuration["CODEX_MODEL"], options.CodexModel, "gpt-5.4");
         options.CodexReasoningEffort = FirstConfigured(configuration["CODEX_REASONING_EFFORT"], options.CodexReasoningEffort, "medium");
 
@@ -67,6 +68,24 @@ internal sealed class AiOptionsPostConfigure(IConfiguration configuration) : IPo
         {
             return raw
                 .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Where(value => !string.IsNullOrWhiteSpace(value))
+                .ToArray();
+        }
+
+        if (current.Count > 0)
+        {
+            return current.ToArray();
+        }
+
+        return fallback.ToArray();
+    }
+
+    private static string[] ParseShellArguments(string? raw, IReadOnlyList<string> current, IReadOnlyList<string> fallback)
+    {
+        if (!string.IsNullOrWhiteSpace(raw))
+        {
+            return System.Text.RegularExpressions.Regex.Matches(raw, "\"([^\"]*)\"|'([^']*)'|\\S+")
+                .Select(match => match.Value.Trim().Trim('"', '\''))
                 .Where(value => !string.IsNullOrWhiteSpace(value))
                 .ToArray();
         }

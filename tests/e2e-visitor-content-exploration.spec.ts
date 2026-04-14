@@ -1,10 +1,11 @@
 import { expect, test } from '@playwright/test'
+import { clickHeaderNavLink } from './helpers/navigation'
 
 test('E2E-003 visitor can move from home to works, through related content, and into blog details', async ({ page }) => {
   await page.goto('/')
 
   await expect(page.getByRole('heading', { name: /Featured works/i })).toBeVisible()
-  await page.getByRole('banner').getByRole('link', { name: 'Works', exact: true }).click()
+  await clickHeaderNavLink(page, 'Works')
   await expect(page).toHaveURL(/\/works(?:\?.*)?$/)
 
   const firstWorkCard = page.getByTestId('work-card').first()
@@ -22,7 +23,7 @@ test('E2E-003 visitor can move from home to works, through related content, and 
   await expect(page.locator('main h1')).toBeVisible()
   await expect(page).toHaveURL(/\/works\/.+/)
 
-  await page.getByRole('banner').getByRole('link', { name: 'Blog', exact: true }).click()
+  await clickHeaderNavLink(page, 'Blog')
   await expect(page).toHaveURL(/\/blog(?:\?.*)?$/)
 
   const firstBlogCard = page.getByTestId('blog-card').first()

@@ -81,9 +81,9 @@ export default async function WorkDetailPage({ params, searchParams }: PageProps
         : ''
 
     return (
-        <article className="container mx-auto max-w-6xl px-4 py-8 md:px-6 md:py-12">
-            <div className="relative mx-auto max-w-6xl">
-                <div data-testid="work-detail-body" className="mx-auto max-w-3xl min-w-0">
+        <article className="container mx-auto max-w-[min(100%,112rem)] px-4 py-8 md:px-6 md:py-12">
+            <div className="relative mx-auto max-w-[min(100%,112rem)]">
+                <div data-testid="work-detail-body" className="mx-auto min-w-0 max-w-3xl">
                     <header className="mb-8">
                         <h1 className="mb-4 text-3xl font-heading font-bold leading-tight text-foreground text-balance md:text-4xl">
                             {work.title}
@@ -203,7 +203,7 @@ export default async function WorkDetailPage({ params, searchParams }: PageProps
                     </div>
                 </div>
 
-                <aside className="hidden xl:absolute xl:right-0 xl:top-0 xl:block xl:w-64">
+                <aside className="hidden xl:absolute xl:right-0 xl:top-0 xl:block xl:w-72">
                     <TableOfContents contentRootId="work-detail-content" />
                 </aside>
             </div>

@@ -145,23 +145,41 @@ Rules:
 
         try
         {
-            var arguments = new List<string>
-            {
-                "exec",
-                "--skip-git-repo-check",
-                "--ephemeral",
-                "-C",
-                workdir,
-                "-"
-            };
+            var arguments = new List<string>(_options.CodexArguments.Length > 0 ? _options.CodexArguments : ["exec"]);
 
-            if (!string.IsNullOrWhiteSpace(model))
+            if (!arguments.Contains("--sandbox", StringComparer.OrdinalIgnoreCase))
+            {
+                arguments.Add("--sandbox");
+                arguments.Add("workspace-write");
+            }
+
+            if (!arguments.Contains("--ask-for-approval", StringComparer.OrdinalIgnoreCase))
+            {
+                arguments.Add("--ask-for-approval");
+                arguments.Add("never");
+            }
+
+            if (!arguments.Contains("--skip-git-repo-check", StringComparer.OrdinalIgnoreCase))
+            {
+                arguments.Add("--skip-git-repo-check");
+            }
+
+            if (!arguments.Contains("--ephemeral", StringComparer.OrdinalIgnoreCase))
+            {
+                arguments.Add("--ephemeral");
+            }
+
+            arguments.Add("-C");
+            arguments.Add(workdir);
+            arguments.Add("-");
+
+            if (!string.IsNullOrWhiteSpace(model) && !arguments.Contains("-m"))
             {
                 arguments.Insert(1, model);
                 arguments.Insert(1, "-m");
             }
 
-            if (!string.IsNullOrWhiteSpace(reasoningEffort))
+            if (!string.IsNullOrWhiteSpace(reasoningEffort) && !arguments.Contains("-c"))
             {
                 arguments.Insert(1, $"model_reasoning_effort=\"{reasoningEffort}\"");
                 arguments.Insert(1, "-c");

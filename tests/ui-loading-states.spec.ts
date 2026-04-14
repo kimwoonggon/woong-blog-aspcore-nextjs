@@ -1,12 +1,10 @@
 import { expect, test } from '@playwright/test'
+import { clickHeaderNavLink, rewriteHeaderNavHref } from './helpers/navigation'
 
 test('WQ-024 and VA-403 public route transitions expose a loading skeleton before content resolves', async ({ page }) => {
   await page.goto('/blog')
-  const homeLink = page.getByRole('banner').getByRole('link', { name: 'Home', exact: true })
-  await homeLink.evaluate((element) => {
-    ;(element as HTMLAnchorElement).href = '/?__qaSlow=1'
-  })
-  await homeLink.click()
+  await rewriteHeaderNavHref(page, 'Home', '/?__qaSlow=1')
+  await clickHeaderNavLink(page, 'Home')
 
   const skeleton = page.locator('.animate-pulse').first()
   await expect(skeleton).toBeVisible()

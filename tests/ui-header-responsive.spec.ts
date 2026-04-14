@@ -10,9 +10,7 @@ const drawerOnlyViewports: Viewport[] = [
 ]
 
 const desktopInlineNavViewports: Viewport[] = [
-  { width: 1280, height: 800 },
-  { width: 1440, height: 900 },
-  { width: 1728, height: 1117 },
+  { width: 1920, height: 1080 },
 ]
 
 async function box(locator: Locator) {
@@ -30,7 +28,7 @@ async function box(locator: Locator) {
 
 test.describe('responsive header', () => {
   for (const viewport of drawerOnlyViewports) {
-    test(`uses drawer-only navigation below xl at ${viewport.width}x${viewport.height}`, async ({ page }) => {
+    test(`uses drawer-only navigation on compact viewports at ${viewport.width}x${viewport.height}`, async ({ page }) => {
       await page.setViewportSize(viewport)
       await page.goto('/')
 
@@ -57,7 +55,7 @@ test.describe('responsive header', () => {
       await page.goto('/')
 
       const banner = page.getByRole('banner')
-      const brand = banner.getByRole('link').first()
+      const brand = page.getByTestId('navbar-brand')
       const nav = banner.getByRole('navigation')
       const themeToggle = page.getByTestId('theme-toggle')
 

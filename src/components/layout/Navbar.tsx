@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { CircleUserRound, LogIn, Menu } from "lucide-react"
-import { useState, useSyncExternalStore } from "react"
+import { useEffect, useRef, useState, useSyncExternalStore } from "react"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/ui/ThemeToggle"
 import {
@@ -111,22 +111,93 @@ function SessionActions({
 export function Navbar({ ownerName = 'John Doe', session }: NavbarProps) {
     const pathname = usePathname()
     const [isOpen, setIsOpen] = useState(false)
+    const [canUseInlineNav, setCanUseInlineNav] = useState(false)
     const isMounted = useSyncExternalStore(
         () => () => {},
         () => true,
         () => false,
     )
+    const headerRowRef = useRef<HTMLDivElement | null>(null)
+    const brandRef = useRef<HTMLDivElement | null>(null)
+    const actionsRef = useRef<HTMLDivElement | null>(null)
 
     const authenticated = session?.authenticated ?? false
     const isAdmin = session?.role === 'admin'
     const avatarLabel = session?.name || (isAdmin ? 'Admin' : 'User')
     const closeMenu = () => setIsOpen(false)
 
+    function measureInlineNavWidth() {
+        if (typeof window === 'undefined') {
+            return 0
+        }
+
+        const canvas = document.createElement('canvas')
+        const context = canvas.getContext('2d')
+        if (!context) {
+            return 0
+        }
+
+        context.font = '500 14px system-ui'
+        return navItems.reduce((total, item) => total + context.measureText(item.name).width + 32, 0) + ((navItems.length - 1) * 8)
+    }
+
+    useEffect(() => {
+        if (!isMounted || typeof window === 'undefined') {
+            return
+        }
+
+        const recompute = () => {
+            const headerWidth = headerRowRef.current?.getBoundingClientRect().width ?? 0
+            const brandWidth = brandRef.current?.getBoundingClientRect().width ?? 0
+            const actionsWidth = actionsRef.current?.getBoundingClientRect().width ?? 0
+            const navWidth = measureInlineNavWidth()
+
+            const viewportWideEnough = window.innerWidth >= 1280
+            const requiredWidth = brandWidth + actionsWidth + navWidth + 96
+            setCanUseInlineNav(viewportWideEnough && headerWidth >= requiredWidth)
+        }
+
+        const observer = new ResizeObserver(recompute)
+        if (headerRowRef.current) observer.observe(headerRowRef.current)
+        if (brandRef.current) observer.observe(brandRef.current)
+        if (actionsRef.current) observer.observe(actionsRef.current)
+
+        recompute()
+        window.addEventListener('resize', recompute)
+
+        return () => {
+            observer.disconnect()
+            window.removeEventListener('resize', recompute)
+        }
+    }, [isMounted, ownerName, authenticated, isAdmin, avatarLabel])
+
     return (
         <header className="sticky top-0 z-[50] border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75">
-            <div className="container flex h-20 items-center gap-3 px-4 md:px-6 2xl:grid 2xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] 2xl:gap-6">
-                <div className="flex min-w-0 items-center gap-4">
-                    <Link href="/" className="min-w-0 rounded-2xl px-1 py-1 transition-colors hover:text-primary">
+            {canUseInlineNav ? (
+                <nav className="pointer-events-none absolute left-1/2 top-1/2 z-[65] hidden -translate-x-1/2 -translate-y-1/2 items-center justify-center gap-2 whitespace-nowrap xl:flex">
+                    <div className="pointer-events-auto flex items-center gap-2">
+                        {navItems.map((item) => (
+                            <Link
+                                key={item.href}
+                                href={item.href}
+                                className={cn(
+                                    "whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-colors",
+                                    "focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring",
+                                    pathname === item.href
+                                        ? "bg-foreground text-background"
+                                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                                )}
+                            >
+                                {item.name}
+                            </Link>
+                        ))}
+                    </div>
+                </nav>
+            ) : null}
+
+            <div ref={headerRowRef} className="container mx-auto flex h-20 items-center gap-3 px-4 md:px-6">
+                <div ref={brandRef} className="flex min-w-0 items-center gap-4">
+                    <Link href="/" data-testid="navbar-brand" className="min-w-0 rounded-2xl px-1 py-1 transition-colors hover:text-primary">
                         <div className="flex flex-col">
                             <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
                                 Portfolio
@@ -136,40 +207,22 @@ export function Navbar({ ownerName = 'John Doe', session }: NavbarProps) {
                             </span>
                         </div>
                     </Link>
-                    <p className="hidden min-w-0 max-w-[15rem] truncate text-sm text-muted-foreground 2xl:block">
+                    <p className="hidden min-w-0 max-w-[15rem] truncate text-sm text-muted-foreground min-[1750px]:block">
                         Works, writing, and experiments in one balanced shell.
                     </p>
                 </div>
 
-                <nav className="hidden items-center justify-center gap-2 whitespace-nowrap 2xl:flex 2xl:justify-self-center">
-                    {navItems.map((item) => (
-                        <Link
-                            key={item.href}
-                            href={item.href}
-                            className={cn(
-                                "whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-colors",
-                                "focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring",
-                                pathname === item.href
-                                    ? "bg-foreground text-background"
-                                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                            )}
-                        >
-                            {item.name}
-                        </Link>
-                    ))}
-                </nav>
-
-                <div className="ml-auto hidden min-w-0 items-center justify-end gap-2 lg:flex 2xl:col-start-3 2xl:ml-0 2xl:gap-3 2xl:justify-self-end">
+                <div ref={actionsRef} className="ml-auto hidden min-w-0 items-center justify-end gap-2 lg:flex lg:gap-3">
                     <ThemeToggle />
                     <SessionActions authenticated={authenticated} isAdmin={isAdmin} avatarLabel={avatarLabel} />
                 </div>
 
-                {isMounted ? (
+                {isMounted && !canUseInlineNav ? (
                     <Sheet open={isOpen} onOpenChange={setIsOpen}>
                         <SheetTrigger asChild>
                             <Button
                                 variant="ghost"
-                                className="h-11 rounded-full px-3 2xl:hidden"
+                                className="h-11 rounded-full px-3"
                             >
                                 <Menu className="h-5 w-5" />
                                 <span className="sr-only">Toggle Menu</span>
@@ -273,7 +326,7 @@ export function Navbar({ ownerName = 'John Doe', session }: NavbarProps) {
                         </SheetContent>
                     </Sheet>
                 ) : (
-                    <div className="h-11 w-11 2xl:hidden" />
+                    <div className="h-11 w-11" />
                 )}
             </div>
         </header>

@@ -1,6 +1,8 @@
 import { expect, test } from '@playwright/test'
+import { clickHeaderNavLink } from './helpers/navigation'
 
 test('public home page renders the full primary navigation', async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 900 })
   await page.goto('/')
 
   const headerNav = page.getByRole('banner').getByRole('navigation')
@@ -13,6 +15,8 @@ test('public home page renders the full primary navigation', async ({ page }) =>
 })
 
 test('primary navbar routes to every public destination', async ({ page }) => {
+  await page.setViewportSize({ width: 1920, height: 1080 })
+
   const cases = [
     { label: 'Home', href: '/', assertion: () => expect(page).toHaveURL(/\/$/) },
     { label: 'Introduction', href: '/introduction', assertion: () => expect(page.locator('main h1')).toContainText('Introduction') },
@@ -24,7 +28,7 @@ test('primary navbar routes to every public destination', async ({ page }) => {
 
   for (const item of cases) {
     await page.goto('/')
-    await page.getByRole('banner').getByRole('navigation').getByRole('link', { name: item.label, exact: true }).click()
+    await clickHeaderNavLink(page, item.label)
     await expect(page).toHaveURL(new RegExp(`${item.href === '/' ? '/$' : item.href.replace('/', '\\/')}(\\?.*)?$`))
     await item.assertion()
   }

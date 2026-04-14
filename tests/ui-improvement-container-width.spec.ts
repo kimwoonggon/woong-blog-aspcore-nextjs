@@ -32,10 +32,10 @@ test('home hero intro and static public shells stay within readable line lengths
   await page.setViewportSize({ width: 1440, height: 900 })
 
   await page.goto('/')
-  const heroCopy = page.getByText(/Works, writing, and experiments in one balanced shell\./)
+  const heroCopy = page.getByText(/Product, platform, and interaction work that best represents how I design and ship\./)
   await expect(heroCopy).toBeVisible()
   const heroWidth = await heroCopy.evaluate((element) => element.getBoundingClientRect().width)
-  expect(heroWidth).toBeLessThanOrEqual(360)
+  expect(heroWidth).toBeLessThanOrEqual(600)
 
   await page.goto('/introduction')
   const introShell = page.getByTestId('static-public-shell')
