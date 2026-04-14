@@ -43,6 +43,7 @@ describe('AdminBlogBatchAiPanel', () => {
 
     mocks.fetchAdminAiRuntimeConfigBrowser.mockResolvedValue({
       provider: 'codex',
+      availableProviders: ['openai', 'codex'],
       defaultModel: 'gpt-5.4',
       codexModel: 'gpt-5.4',
       codexReasoningEffort: 'medium',
@@ -121,10 +122,24 @@ describe('AdminBlogBatchAiPanel', () => {
       blogIds: ['blog-2'],
       selectionMode: 'range',
       selectionLabel: 'range 2-2',
+      provider: 'codex',
       workerCount: 2,
       codexModel: 'gpt-5.4',
       codexReasoningEffort: 'medium',
     })
+  })
+
+  it('shows provider selection when multiple providers are available', async () => {
+    renderPanel()
+
+    await waitFor(() => {
+      expect(mocks.fetchAdminAiRuntimeConfigBrowser).toHaveBeenCalled()
+    })
+
+    const providerSelect = screen.getByLabelText('Batch AI provider')
+    expect(providerSelect).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: 'OPENAI' })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: 'CODEX' })).toBeInTheDocument()
   })
 
   it('blocks date batch creation when no date bounds are set', async () => {

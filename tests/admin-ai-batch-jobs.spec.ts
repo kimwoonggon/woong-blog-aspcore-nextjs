@@ -15,6 +15,7 @@ test('admin can create, observe, and apply a blog AI batch job without blocking 
       contentType: 'application/json',
       body: JSON.stringify({
         provider: 'codex',
+        availableProviders: ['openai', 'codex'],
         defaultModel: 'gpt-5.4',
         codexModel: 'gpt-5.4',
         codexReasoningEffort: 'medium',
@@ -160,6 +161,9 @@ test('admin can create, observe, and apply a blog AI batch job without blocking 
   await expect(page.getByTestId('admin-blog-batch-ai-panel')).toHaveCount(0)
   await page.getByRole('button', { name: 'Batch AI Fix' }).click()
   await expect(page.getByTestId('admin-blog-batch-ai-panel')).toBeVisible()
+  await expect(page.getByLabel('Batch AI provider')).toBeVisible()
+  await expect(page.getByRole('option', { name: 'OPENAI' })).toBeAttached()
+  await expect(page.getByRole('option', { name: 'CODEX' })).toBeAttached()
   const clearCompleted = page.getByRole('button', { name: /Clear completed/i })
   if (await clearCompleted.isVisible().catch(() => false)) {
     await clearCompleted.click()

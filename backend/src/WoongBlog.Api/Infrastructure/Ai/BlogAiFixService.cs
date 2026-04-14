@@ -58,8 +58,8 @@ Rules:
             throw new InvalidOperationException("HTML content is required.");
         }
 
-        var provider = NormalizeProvider(_options.Provider);
         var requestOptions = options ?? new AiFixRequestOptions();
+        var provider = NormalizeProvider(string.IsNullOrWhiteSpace(requestOptions.Provider) ? _options.Provider : requestOptions.Provider);
 
         return provider switch
         {
@@ -381,6 +381,32 @@ Rules:
             "codex" => "codex",
             _ => "openai"
         };
+    }
+
+    public static string[] GetAvailableProviders(AiOptions options)
+    {
+        var providers = new List<string>();
+
+        if (!string.IsNullOrWhiteSpace(options.OpenAiApiKey)
+            || !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("OPENAI_API_KEY")))
+        {
+            providers.Add("openai");
+        }
+
+        if ((!string.IsNullOrWhiteSpace(options.AzureOpenAiApiKey)
+                || !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("AZURE_OPENAI_API_KEY")))
+            && (!string.IsNullOrWhiteSpace(options.AzureOpenAiEndpoint)
+                || !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT"))))
+        {
+            providers.Add("azure");
+        }
+
+        if (!string.IsNullOrWhiteSpace(options.CodexCommand))
+        {
+            providers.Add("codex");
+        }
+
+        return providers.Count > 0 ? providers.ToArray() : ["openai"];
     }
 
     private string ResolveOpenAiApiKey() =>

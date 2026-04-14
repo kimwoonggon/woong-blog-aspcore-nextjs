@@ -31,8 +31,10 @@ public sealed class AiAdminService : IAiAdminService
     public IResult RuntimeConfig()
     {
         var provider = NormalizeProvider(_options.Provider);
+        var availableProviders = BlogAiFixService.GetAvailableProviders(_options);
         return Results.Ok(new AiRuntimeConfigResponse(
             Provider: provider,
+            AvailableProviders: availableProviders,
             DefaultModel: provider switch
             {
                 "azure" => _options.AzureOpenAiDeployment,
@@ -56,6 +58,7 @@ public sealed class AiAdminService : IAiAdminService
 
         var result = await _aiFixService.FixHtmlAsync(request.Html, cancellationToken, new AiFixRequestOptions(
             Mode: AiFixMode.BlogFix,
+            Provider: request.Provider,
             CodexModel: request.CodexModel,
             CodexReasoningEffort: request.CodexReasoningEffort));
         return Results.Ok(new BlogFixResponse(result.FixedHtml, result.Provider, result.Model, result.ReasoningEffort));
@@ -87,6 +90,7 @@ public sealed class AiAdminService : IAiAdminService
             {
                 var aiResult = await _aiFixService.FixHtmlAsync(html, cancellationToken, new AiFixRequestOptions(
                     Mode: AiFixMode.BlogFix,
+                    Provider: request.Provider,
                     CodexModel: request.CodexModel,
                     CodexReasoningEffort: request.CodexReasoningEffort));
 
@@ -139,6 +143,7 @@ public sealed class AiAdminService : IAiAdminService
         var result = await _aiFixService.FixHtmlAsync(request.Html, cancellationToken, new AiFixRequestOptions(
             Mode: AiFixMode.WorkEnrich,
             Title: request.Title,
+            Provider: request.Provider,
             CodexModel: request.CodexModel,
             CodexReasoningEffort: request.CodexReasoningEffort));
         return Results.Ok(new WorkEnrichResponse(result.FixedHtml, result.Provider, result.Model, result.ReasoningEffort));
@@ -167,7 +172,7 @@ public sealed class AiAdminService : IAiAdminService
             return Results.BadRequest(new { error = "No matching blogs were found." });
         }
 
-        var runtimeProvider = NormalizeProvider(_options.Provider);
+        var runtimeProvider = ResolveRequestedProvider(request.Provider);
         var runtimeModel = runtimeProvider == "codex"
             ? ResolveCodexModel(_options, request.CodexModel)
             : runtimeProvider == "azure"
@@ -438,6 +443,22 @@ public sealed class AiAdminService : IAiAdminService
             "codex" => "codex",
             _ => "openai"
         };
+
+    private string ResolveRequestedProvider(string? requestedProvider)
+    {
+        var normalizedRequested = NormalizeProvider(requestedProvider);
+        var availableProviders = BlogAiFixService.GetAvailableProviders(_options);
+        if (!string.IsNullOrWhiteSpace(requestedProvider)
+            && availableProviders.Contains(normalizedRequested, StringComparer.OrdinalIgnoreCase))
+        {
+            return normalizedRequested;
+        }
+
+        var runtimeProvider = NormalizeProvider(_options.Provider);
+        return availableProviders.Contains(runtimeProvider, StringComparer.OrdinalIgnoreCase)
+            ? runtimeProvider
+            : availableProviders[0];
+    }
 
     private static string ResolveCodexModel(AiOptions options, string? overrideValue)
     {

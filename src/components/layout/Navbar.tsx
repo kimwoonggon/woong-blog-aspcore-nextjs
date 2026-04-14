@@ -124,8 +124,8 @@ export function Navbar({ ownerName = 'John Doe', session }: NavbarProps) {
 
     return (
         <header className="sticky top-0 z-[50] border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75">
-            <div className="container flex h-20 items-center gap-3 px-4 md:px-6 xl:grid xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] xl:gap-6">
-                <div className="flex min-w-0 items-center gap-4 xl:col-start-1 xl:justify-self-start">
+            <div className="container flex h-20 items-center gap-3 px-4 md:px-6 2xl:grid 2xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] 2xl:gap-6">
+                <div className="flex min-w-0 items-center gap-4">
                     <Link href="/" className="min-w-0 rounded-2xl px-1 py-1 transition-colors hover:text-primary">
                         <div className="flex flex-col">
                             <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
@@ -141,7 +141,7 @@ export function Navbar({ ownerName = 'John Doe', session }: NavbarProps) {
                     </p>
                 </div>
 
-                <nav className="hidden items-center justify-center gap-2 whitespace-nowrap xl:absolute xl:left-1/2 xl:top-1/2 xl:z-[65] xl:flex xl:-translate-x-1/2 xl:-translate-y-1/2">
+                <nav className="hidden items-center justify-center gap-2 whitespace-nowrap 2xl:flex 2xl:justify-self-center">
                     {navItems.map((item) => (
                         <Link
                             key={item.href}
@@ -159,7 +159,7 @@ export function Navbar({ ownerName = 'John Doe', session }: NavbarProps) {
                     ))}
                 </nav>
 
-                <div className="hidden min-w-0 items-center justify-end gap-3 xl:col-start-3 xl:flex xl:justify-self-end">
+                <div className="ml-auto hidden min-w-0 items-center justify-end gap-2 lg:flex 2xl:col-start-3 2xl:ml-0 2xl:gap-3 2xl:justify-self-end">
                     <ThemeToggle />
                     <SessionActions authenticated={authenticated} isAdmin={isAdmin} avatarLabel={avatarLabel} />
                 </div>
@@ -169,7 +169,7 @@ export function Navbar({ ownerName = 'John Doe', session }: NavbarProps) {
                         <SheetTrigger asChild>
                             <Button
                                 variant="ghost"
-                                className="ml-auto h-11 rounded-full px-3 xl:hidden"
+                                className="h-11 rounded-full px-3 2xl:hidden"
                             >
                                 <Menu className="h-5 w-5" />
                                 <span className="sr-only">Toggle Menu</span>
@@ -273,7 +273,7 @@ export function Navbar({ ownerName = 'John Doe', session }: NavbarProps) {
                         </SheetContent>
                     </Sheet>
                 ) : (
-                    <div className="col-start-3 justify-self-end h-11 w-11 xl:hidden" />
+                    <div className="h-11 w-11 2xl:hidden" />
                 )}
             </div>
         </header>
