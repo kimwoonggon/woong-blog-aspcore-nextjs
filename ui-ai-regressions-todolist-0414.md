@@ -10,4 +10,4 @@
 - [x] R8 Add or update unit tests for navbar/AI provider/thumbnail regressions
 - [x] R9 Add or update Playwright coverage for navbar overlap, AI dialog usability, provider selection, and YouTube thumbnail behavior
 - [x] R10 Run targeted lint, typecheck, unit tests, and Playwright verification
-- [ ] R11 Push feature branch and prepare merge into `dev`
+- [x] R11 Push feature branch and prepare merge into `dev`
