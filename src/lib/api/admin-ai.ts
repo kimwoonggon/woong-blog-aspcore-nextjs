@@ -2,6 +2,7 @@ import { getBrowserApiBaseUrl } from '@/lib/api/browser'
 
 export interface AdminAiRuntimeConfig {
   provider: string
+  availableProviders: string[]
   defaultModel: string
   codexModel: string
   codexReasoningEffort: string

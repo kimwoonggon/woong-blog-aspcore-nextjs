@@ -12,6 +12,7 @@ public sealed class AiOptions
     public string AzureOpenAiDeployment { get; set; } = "gpt-5.2-chat";
     public string AzureOpenAiApiVersion { get; set; } = "2024-08-01-preview";
     public string CodexCommand { get; set; } = "codex";
+    public string[] CodexArguments { get; set; } = [];
     public string CodexModel { get; set; } = "gpt-5.4";
     public string CodexReasoningEffort { get; set; } = "medium";
     public int CodexTimeoutMs { get; set; } = 180000;

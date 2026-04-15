@@ -65,6 +65,31 @@ public class AdminAiEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
+    public async Task FixBlog_ForwardsRequestedProvider()
+    {
+        using var factory = _factory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureServices(services =>
+            {
+                services.RemoveAll<IBlogAiFixService>();
+                services.AddScoped<IBlogAiFixService, FakeBlogAiFixService>();
+            });
+        });
+
+        var client = CreateAuthenticatedClient(factory);
+
+        var response = await client.PostAsJsonAsync("/api/admin/ai/blog-fix", new
+        {
+            html = "<p>Hello</p>",
+            provider = "openai"
+        });
+
+        response.EnsureSuccessStatusCode();
+        var payload = await response.Content.ReadAsStringAsync();
+        Assert.Contains("openai", payload, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task FixBlogBatch_AppliesUpdatedHtml_WhenRequested()
     {
         using var factory = _factory.WithWebHostBuilder(builder =>
@@ -123,6 +148,7 @@ public class AdminAiEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         response.EnsureSuccessStatusCode();
         var payload = await response.Content.ReadAsStringAsync();
         Assert.Contains("provider", payload, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("availableProviders", payload, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("codexModel", payload, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("batchConcurrency", payload, StringComparison.OrdinalIgnoreCase);
     }
@@ -185,6 +211,7 @@ public class AdminAiEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         Assert.NotNull(created);
         Assert.Equal("queued", created!.Status);
         Assert.Equal(2, created.TotalCount);
+        Assert.Equal("codex", created.Provider);
 
         var list = await client.GetFromJsonAsync<BatchJobListPayload>("/api/admin/ai/blog-fix-batch-jobs");
         Assert.NotNull(list);
@@ -416,7 +443,7 @@ public class AdminAiEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     {
         public Task<BlogAiFixResult> FixHtmlAsync(string html, CancellationToken cancellationToken, AiFixRequestOptions? options = null)
         {
-            return Task.FromResult(new BlogAiFixResult("<p>fixed-html</p>", "fake", options?.CodexModel ?? "fake-model", options?.CodexReasoningEffort));
+            return Task.FromResult(new BlogAiFixResult("<p>fixed-html</p>", options?.Provider ?? "fake", options?.CodexModel ?? "fake-model", options?.CodexReasoningEffort));
         }
     }
 
@@ -450,6 +477,7 @@ public class AdminAiEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     private sealed record BatchJobDetailPayload(
         Guid JobId,
         string Status,
+        string Provider,
         bool AutoApply,
         int? WorkerCount,
         int TotalCount,

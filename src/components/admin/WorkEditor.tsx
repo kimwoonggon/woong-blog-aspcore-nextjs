@@ -377,6 +377,25 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
         return uploadedThumbnail
     }
 
+    async function tryAutoGenerateThumbnailFromSavedVideo(video: WorkVideo) {
+        if (video.sourceType === 'youtube') {
+            return await tryAutoGenerateThumbnailFromYouTube(video.sourceKey)
+        }
+
+        if (!video.playbackUrl) {
+            return null
+        }
+
+        const response = await fetch(video.playbackUrl)
+        if (!response.ok) {
+            throw new Error('Failed to fetch the saved video for thumbnail regeneration.')
+        }
+
+        const blob = await response.blob()
+        const file = new File([blob], video.originalFileName || `${video.id}.mp4`, { type: video.mimeType || 'video/mp4' })
+        return await tryAutoGenerateThumbnailFromUploadedVideo(file)
+    }
+
     async function maybeApplyAutoThumbnailForCandidate(candidate: ThumbnailCandidate) {
         if (!shouldReplaceWorkThumbnailSource(thumbnailSourceKind, candidate.kind)) {
             return null
@@ -451,15 +470,36 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
         }
     }
 
-    function removeWorkImage(target: 'thumbnail' | 'icon') {
+    async function regenerateThumbnailFallbackForCurrentWork() {
+        const nextSource = resolveWorkThumbnailSource({
+            thumbnailAssetId: null,
+            videos,
+            html,
+        })
+
+        setThumbnailSourceKind(nextSource.kind)
+        setThumbnailUrl(nextSource.kind === 'content-image' ? nextSource.imageUrl ?? '' : '')
+
+        if (nextSource.video) {
+            const uploadedThumbnail = await tryAutoGenerateThumbnailFromSavedVideo(nextSource.video)
+            if (uploadedThumbnail) {
+                if (initialWork?.id) {
+                    await persistThumbnailSelectionForWork(initialWork.id, uploadedThumbnail.id)
+                }
+                return
+            }
+        }
+    }
+
+    async function removeWorkImage(target: 'thumbnail' | 'icon') {
         if (target === 'thumbnail') {
             setThumbnailAssetId('')
             setThumbnailUrl('')
-            setThumbnailSourceKind(resolveWorkThumbnailSource({
-                thumbnailAssetId: null,
-                videos,
-                html,
-            }).kind)
+            try {
+                await regenerateThumbnailFallbackForCurrentWork()
+            } catch (error) {
+                toast.error(error instanceof Error ? error.message : 'Failed to regenerate the fallback thumbnail.')
+            }
             return
         }
 
@@ -1349,7 +1389,9 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                                 <Button
                                     type="button"
                                     variant="outline"
-                                    onClick={() => removeWorkImage('thumbnail')}
+                                    onClick={() => {
+                                        void removeWorkImage('thumbnail')
+                                    }}
                                     disabled={!thumbnailAssetId}
                                 >
                                     Remove Thumbnail

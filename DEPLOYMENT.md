@@ -19,6 +19,7 @@ cp .env.prod.example .env.prod
    - `Auth__ClientId`
    - `Auth__ClientSecret`
    - `Auth__AdminEmails__0`
+   - `CODEX_HOME_DIR` if `AI_PROVIDER=codex`
 
 ## 2. GHCR 로그인
 
@@ -109,6 +110,7 @@ docker compose --env-file .env.prod -f docker-compose.prod.yml exec nginx nginx 
 - 외부 공개는 `nginx`만 `80/443`으로 처리한다.
 - `data-protection-keys` volume을 삭제하면 로그인 세션과 antiforgery가 끊길 수 있다.
 - `media-storage`와 `postgres-data`는 운영 데이터이므로 재배포 중 삭제하면 안 된다.
+- `AI_PROVIDER=codex`를 유지하는 환경이면 서버의 Codex home(`auth.json` 포함)을 `CODEX_HOME_DIR`로 bind mount 해야 한다. 그렇지 않으면 backend container 안 `codex exec`가 `401 Unauthorized`로 실패한다.
 
 ## Staging Deployment
 
@@ -139,5 +141,7 @@ echo "$GHCR_TOKEN" | docker login ghcr.io -u YOUR_GITHUB_USERNAME --password-std
 docker compose --env-file .env.staging -f docker-compose.staging.yml pull
 docker compose --env-file .env.staging -f docker-compose.staging.yml up -d
 ```
+
+If staging uses `AI_PROVIDER=codex`, also set `CODEX_HOME_DIR=/absolute/path/to/.codex`.
 
 로컬 홈서버에서 먼저 staging 검증을 하고, 그 다음에만 `main` promotion을 진행하는 흐름을 권장한다.

@@ -1,6 +1,10 @@
 namespace WoongBlog.Api.Modules.AI.Api;
 
-public sealed record BlogFixRequest(string Html, string? CodexModel = null, string? CodexReasoningEffort = null);
+public sealed record BlogFixRequest(
+    string Html,
+    string? Provider = null,
+    string? CodexModel = null,
+    string? CodexReasoningEffort = null);
 
 public sealed record BlogFixResponse(string FixedHtml, string Provider, string Model, string? ReasoningEffort);
 
@@ -8,6 +12,7 @@ public sealed record BlogFixBatchRequest(
     IReadOnlyList<Guid>? BlogIds,
     bool All,
     bool Apply,
+    string? Provider = null,
     string? CodexModel = null,
     string? CodexReasoningEffort = null);
 
@@ -28,6 +33,7 @@ public sealed record BlogFixBatchResponse(
 public sealed record WorkEnrichRequest(
     string Html,
     string? Title = null,
+    string? Provider = null,
     string? CodexModel = null,
     string? CodexReasoningEffort = null);
 
@@ -39,6 +45,7 @@ public sealed record WorkEnrichResponse(
 
 public sealed record AiRuntimeConfigResponse(
     string Provider,
+    IReadOnlyList<string> AvailableProviders,
     string DefaultModel,
     string CodexModel,
     string CodexReasoningEffort,
@@ -55,6 +62,7 @@ public sealed record BlogFixBatchJobCreateRequest(
     string? SelectionKey = null,
     bool AutoApply = false,
     int? WorkerCount = null,
+    string? Provider = null,
     string? CodexModel = null,
     string? CodexReasoningEffort = null);
 
