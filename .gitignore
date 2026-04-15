@@ -70,3 +70,5 @@ appsettings.Development.json
 .refs/
 downloads/
 .devcontainer-data/
+.docker-data/
+db_status/notion-*.json

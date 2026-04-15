@@ -3,6 +3,39 @@ import { readFile } from 'node:fs/promises'
 import { extname } from 'node:path'
 import { randomUUID } from 'node:crypto'
 
+function parseDelimitedEnv(value) {
+  return String(value || '')
+    .split(/\r?\n|,/)
+    .map((item) => item.trim())
+    .filter(Boolean)
+}
+
+function buildDockerComposeArgs(commandArgs = []) {
+  const args = ['compose']
+  const envFile = process.env.DOCKER_COMPOSE_ENV_FILE?.trim()
+  const composeFiles = parseDelimitedEnv(process.env.DOCKER_COMPOSE_FILES || process.env.DOCKER_COMPOSE_FILE)
+  const projectName = process.env.DOCKER_COMPOSE_PROJECT_NAME?.trim()
+
+  if (envFile) {
+    args.push('--env-file', envFile)
+  }
+
+  for (const composeFile of composeFiles) {
+    args.push('-f', composeFile)
+  }
+
+  if (projectName) {
+    args.push('-p', projectName)
+  }
+
+  args.push(...commandArgs)
+  return args
+}
+
+function dockerCommand() {
+  return process.env.DOCKER_BIN || 'docker'
+}
+
 export function slugify(value, fallback = 'post') {
   const slug = value
     .trim()
@@ -186,15 +219,28 @@ export function rewriteHtmlWithAssetManifest(html, assetsManifest, slug) {
 }
 
 export async function copyAssetIntoBackendMedia(localPath, relativePath) {
-  await withRetry(() => runCommand('docker', ['compose', 'exec', '-T', 'backend', 'mkdir', '-p', `/app/media/${dirnameOf(relativePath)}`]))
-  await withRetry(() => runCommand('docker', ['compose', 'cp', localPath, `backend:/app/media/${relativePath}`]))
+  await withRetry(() => runCommand(dockerCommand(), buildDockerComposeArgs(['exec', '-T', 'backend', 'mkdir', '-p', `/app/media/${dirnameOf(relativePath)}`])))
+  await withRetry(() => runCommand(dockerCommand(), buildDockerComposeArgs(['cp', localPath, `backend:/app/media/${relativePath}`])))
 }
 
 export async function psqlQuery(sql) {
   return withRetry(() =>
     runCommand(
-      'docker',
-      ['compose', 'exec', '-T', 'db', 'psql', '-U', 'portfolio', '-d', 'portfolio', '-X', '-qAt', '-F', '\t'],
+      dockerCommand(),
+      buildDockerComposeArgs([
+        'exec',
+        '-T',
+        'db',
+        'psql',
+        '-U',
+        process.env.POSTGRES_USER || 'portfolio',
+        '-d',
+        process.env.POSTGRES_DB || 'portfolio',
+        '-X',
+        '-qAt',
+        '-F',
+        '\t',
+      ]),
       sql,
     ),
   )

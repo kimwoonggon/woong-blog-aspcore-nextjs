@@ -5,6 +5,7 @@
 대상 스크립트:
 
 - `scripts/import-notion-downloads-to-db.mjs`
+- `scripts/migrate-notion-blog-downloads.mjs`
 - `scripts/notion-db-import-lib.mjs`
 
 기본 전제:
@@ -16,6 +17,38 @@
 예시 다운로드 폴더:
 
 - `downloads/notion-connected-2026-03-27T10-24-20-364Z`
+- `downloads/notion-connected-2026-04-13T08-03-24-517Z`
+
+## 실운영용 기본 마이그레이션
+
+현재 기본 러너는 아래 두 export 폴더를 순차 처리한다.
+
+- `downloads/notion-connected-2026-03-27T10-24-20-364Z`
+- `downloads/notion-connected-2026-04-13T08-03-24-517Z`
+
+```bash
+npm run migrate:blog:notion
+```
+
+직접 대상 폴더를 넘기려면:
+
+```bash
+node scripts/migrate-notion-blog-downloads.mjs \
+  downloads/notion-connected-2026-03-27T10-24-20-364Z \
+  downloads/notion-connected-2026-04-13T08-03-24-517Z
+```
+
+`docker-compose.prod.yml` 같은 다른 Compose 스택에 붙일 때는:
+
+```bash
+DOCKER_COMPOSE_ENV_FILE=.env.prod.local \
+DOCKER_COMPOSE_FILES=docker-compose.prod.yml \
+POSTGRES_DB=portfolio \
+POSTGRES_USER=portfolio \
+node scripts/migrate-notion-blog-downloads.mjs
+```
+
+운영 러너는 export 폴더 안의 기존 `db-import-*.json` 결과 파일을 이어받지 않고, DB 기준으로 다시 적재한다.
 
 ## 가장 기본 실행
 
@@ -73,12 +106,18 @@ node scripts/import-notion-downloads-to-db.mjs
 
 - `NOTION_EXPORT_DIR`
   - import 대상 다운로드 폴더
+- `NOTION_EXPORT_DIRS`
+  - 여러 다운로드 폴더를 `,` 또는 줄바꿈으로 전달
 - `NOTION_IMPORT_SKIP_EXISTING_TITLES`
   - `true` 이면 DB에 같은 제목이 있을 때 skip
 - `NOTION_IMPORT_CONCURRENCY`
   - 병렬 worker 수
 - `NOTION_IMPORT_SINGLE_THREAD`
   - `true` 이면 강제로 worker 1개 사용
+- `DOCKER_COMPOSE_ENV_FILE`
+  - import 스크립트가 붙을 Compose env 파일
+- `DOCKER_COMPOSE_FILES`
+  - import 스크립트가 붙을 Compose 파일 목록
 
 ## 실행 결과 파일
 
@@ -86,6 +125,12 @@ node scripts/import-notion-downloads-to-db.mjs
 
 - `db_status/current.json`
   - 현재 진행 상태
+- `db_status/notion-migration-01.json`
+  - 첫 번째 export 폴더 상태
+- `db_status/notion-migration-02.json`
+  - 두 번째 export 폴더 상태
+- `db_status/notion-blog-migration-summary.json`
+  - 전체 합산 결과
 - `<NOTION_EXPORT_DIR>/db-import-direct-results.json`
   - 성공/skip 결과
 - `<NOTION_EXPORT_DIR>/db-import-direct-failures.json`
@@ -116,6 +161,7 @@ node -e "const fs=require('fs');const root='downloads/notion-connected-2026-03-2
 - asset 복사는 `backend` 컨테이너 내부 `/app/media/...` 로 수행된다.
 - DB upsert는 기존 marker/pageId/slug 기반 로직도 유지한다.
 - `Untitled` 문서가 많으면 제목 기준 skip이 과하게 작동할 수 있다.
+- WSL에서 저장소가 `/mnt/*` 아래면 PostgreSQL bind mount가 권한 오류를 낼 수 있으므로 `POSTGRES_DATA_DIR` 를 Linux 홈 경로로 override 하는 편이 안전하다.
 
 ## 이번 실제 실행 결과 예시
 

@@ -32,6 +32,7 @@ LETSENCRYPT_DIR=./certbot/conf
 POSTGRES_DB=portfolio
 POSTGRES_USER=portfolio
 POSTGRES_PASSWORD=portfolio
+POSTGRES_DATA_DIR=./.docker-data/prod/postgres
 Auth__Enabled=false
 PROXY_KNOWN_NETWORK=172.16.0.0/12
 EOF
@@ -48,6 +49,15 @@ cleanup() {
 trap cleanup EXIT
 
 mkdir -p certbot/www certbot/conf/live/current
+if [[ -z "${POSTGRES_DATA_DIR:-}" ]]; then
+  if [[ "$(pwd)" == /mnt/* ]]; then
+    POSTGRES_DATA_DIR="${HOME}/.woong-blog-docker/prod/postgres"
+  else
+    POSTGRES_DATA_DIR="./.docker-data/prod/postgres"
+  fi
+fi
+mkdir -p "${POSTGRES_DATA_DIR}"
+export POSTGRES_DATA_DIR
 "${DOCKER_BIN}" build -f Dockerfile -t local/woong-blog-frontend:main .
 "${DOCKER_BIN}" build -f backend/Dockerfile -t local/woong-blog-backend:main .
 "${DOCKER_BIN}" compose --env-file "${COMPOSE_ENV_FILE}" -f docker-compose.prod.yml up -d db frontend backend nginx
