@@ -33,6 +33,16 @@ cleanup() {
 }
 trap cleanup EXIT
 
+if [[ -z "${POSTGRES_DATA_DIR:-}" ]]; then
+  if [[ "$(pwd)" == /mnt/* ]]; then
+    POSTGRES_DATA_DIR="${HOME}/.woong-blog-docker/dev/postgres"
+  else
+    POSTGRES_DATA_DIR="./.docker-data/dev/postgres"
+  fi
+fi
+mkdir -p "${POSTGRES_DATA_DIR}"
+export POSTGRES_DATA_DIR
+
 NGINX_DEFAULT_CONF="${NGINX_DEFAULT_CONF:-./nginx/local-https.conf}" \
 APP_ENV_FILE="${APP_ENV_FILE}" \
 "${DOCKER_BIN}" compose --env-file "${COMPOSE_ENV_FILE}" -f docker-compose.dev.yml up --build -d db frontend backend nginx

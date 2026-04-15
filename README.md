@@ -488,6 +488,121 @@ docker run --pull=never --rm -v "$PWD/backend:/src" -w /src mcr.microsoft.com/do
 ./scripts/db-load-smoke.sh
 ```
 
+## Database Migration and Bootstrap
+
+The current repository does not use a checked-in EF Core migration chain for runtime deployment.
+Instead, the backend boot path creates and patches the schema on startup:
+
+- `EnsureCreatedAsync(...)`
+- custom SQL bootstrap in `backend/src/WoongBlog.Api/Infrastructure/Persistence/DatabaseBootstrapper.cs`
+- seed/bootstrap logic in `backend/src/WoongBlog.Api/Infrastructure/Persistence/Seeding/SeedData.cs`
+
+That means the practical DB migration flow today is:
+
+1. start `db`
+2. start `backend`
+3. let the backend create missing tables and apply schema patches
+4. optionally run the Notion blog import scripts to backfill real content
+
+### Local DB bootstrap
+
+```bash
+docker compose up -d db backend
+docker compose exec -T db psql -U portfolio -d portfolio -X -qAt -c "SELECT count(*) FROM \"Blogs\";"
+```
+
+If the backend has connected successfully, the schema should exist and the query above should return a number instead of an error.
+
+### PostgreSQL bind mount
+
+PostgreSQL data is persisted through `POSTGRES_DATA_DIR`.
+
+Default compose targets:
+
+- `docker-compose.yml` -> `./.docker-data/local/postgres`
+- `docker-compose.dev.yml` -> `./.docker-data/dev/postgres`
+- `docker-compose.staging.yml` -> `./.docker-data/staging/postgres`
+- `docker-compose.prod.yml` -> `./.docker-data/prod/postgres`
+
+Example:
+
+```bash
+POSTGRES_DATA_DIR=/home/kimwoonggon/.woong-blog-docker/local/postgres docker compose up -d db backend
+```
+
+On WSL, a Linux-home path is safer than a `/mnt/c` or `/mnt/d` bind mount because PostgreSQL may fail with permission errors on NTFS-backed paths.
+
+### Notion blog data migration
+
+The blog backfill path is Node.js-based and imports downloaded Notion exports into PostgreSQL `Blogs` and `Assets`, while copying downloaded files into backend media storage.
+
+Primary scripts:
+
+- `scripts/import-notion-downloads-to-db.mjs`
+- `scripts/migrate-notion-blog-downloads.mjs`
+- `scripts/notion-db-import-lib.mjs`
+
+Default multi-folder migration:
+
+```bash
+npm run migrate:blog:notion
+```
+
+This currently processes:
+
+- `downloads/notion-connected-2026-03-27T10-24-20-364Z`
+- `downloads/notion-connected-2026-04-13T08-03-24-517Z`
+
+Custom target folders:
+
+```bash
+node scripts/migrate-notion-blog-downloads.mjs \
+  downloads/notion-connected-2026-03-27T10-24-20-364Z \
+  downloads/notion-connected-2026-04-13T08-03-24-517Z
+```
+
+Single-folder import:
+
+```bash
+NOTION_EXPORT_DIR=downloads/notion-connected-2026-03-27T10-24-20-364Z \
+node scripts/import-notion-downloads-to-db.mjs
+```
+
+Targeting another compose stack, such as production:
+
+```bash
+DOCKER_COMPOSE_ENV_FILE=.env.prod.local \
+DOCKER_COMPOSE_FILES=docker-compose.prod.yml \
+POSTGRES_DB=portfolio \
+POSTGRES_USER=portfolio \
+node scripts/migrate-notion-blog-downloads.mjs
+```
+
+### Migration verification
+
+Status and summary files:
+
+- `db_status/current.json`
+- `db_status/notion-migration-01.json`
+- `db_status/notion-migration-02.json`
+- `db_status/notion-blog-migration-summary.json`
+
+Quick DB checks:
+
+```bash
+docker compose exec -T db psql -U portfolio -d portfolio -X -qAt -c "SELECT count(*) FROM \"Blogs\";"
+docker compose exec -T db psql -U portfolio -d portfolio -X -qAt -c "SELECT count(*) FROM \"Assets\" WHERE \"Path\" LIKE 'blogs/notion/%';"
+docker compose exec -T backend sh -lc "find /app/media/blogs/notion -type f | wc -l"
+```
+
+Recent imported blog rows:
+
+```bash
+docker compose exec -T db psql -U portfolio -d portfolio -X -qAt -F $'\t' -c "SELECT \"Title\", \"Slug\", to_char(\"PublishedAt\", 'YYYY-MM-DD HH24:MI:SSOF') FROM \"Blogs\" ORDER BY \"PublishedAt\" DESC NULLS LAST LIMIT 10;"
+```
+
+The import is idempotent at the DB row level because it matches existing blog rows by embedded Notion page marker and slug before deciding between `INSERT` and `UPDATE`.
+
 ### Full stack browser regression
 
 ```bash
@@ -533,7 +648,14 @@ Compose volumes:
 
 - `media-storage`
 - `data-protection-keys`
-- `postgres-data`
+- bind mount `POSTGRES_DATA_DIR` -> `/var/lib/postgresql/data`
+
+Default bind mount paths:
+
+- local compose: `./.docker-data/local/postgres`
+- dev compose: `./.docker-data/dev/postgres`
+- staging compose: `./.docker-data/staging/postgres`
+- prod compose: `./.docker-data/prod/postgres`
 
 ## Local HTTPS (mkcert + nginx)
 

@@ -77,6 +77,40 @@ async function seedBlogs(request: APIRequestContext, count: number) {
   }
 }
 
+async function seedBlogsWithPrefix(page: Page, prefix: string, count: number) {
+  await page.evaluate(async ({ seedPrefix, seedCount }) => {
+    const csrfResponse = await fetch('/api/auth/csrf', { credentials: 'include' })
+    if (!csrfResponse.ok) {
+      throw new Error(`Failed to fetch CSRF token: ${csrfResponse.status}`)
+    }
+
+    const csrf = await csrfResponse.json() as { requestToken: string; headerName: string }
+
+    for (let index = 0; index < seedCount; index += 1) {
+      const title = `${seedPrefix} ${String(index + 1).padStart(2, '0')}`
+      const response = await fetch('/api/admin/blogs', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          [csrf.headerName]: csrf.requestToken,
+        },
+        body: JSON.stringify({
+          title,
+          excerpt: `Seeded excerpt for ${title}`,
+          tags: ['playwright', 'pagination', seedPrefix],
+          published: true,
+          contentJson: JSON.stringify({ html: `<p>${title}</p>` }),
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to seed blog "${title}": ${response.status} ${await response.text()}`)
+      }
+    }
+  }, { seedPrefix: prefix, seedCount: count })
+}
+
 async function seedWorks(request: APIRequestContext, count: number) {
   if (count <= 0) {
     return
@@ -155,6 +189,87 @@ test('admin blog pagination adapts the row count across desktop, tablet, and mob
 
   await page.setViewportSize({ width: 600, height: 1200 })
   await expectResponsiveTablePagination(page, '/admin/blog', 'admin-blog-row', 6)
+})
+
+test('admin blog edit and delete keep the current filtered page location', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1200 })
+
+  const prefix = `Playwright ReturnTo ${Date.now()}`
+  const expectedPathname = '/admin/blog'
+  await page.goto(expectedPathname)
+  await seedBlogsWithPrefix(page, prefix, 14)
+  await page.goto(expectedPathname)
+
+  await page.getByLabel('Search blog titles').fill(prefix)
+
+  const counter = page.getByText(/^Page \d+ of \d+$/).first()
+  await expect(counter).toHaveText('Page 1 of 2')
+  await page.getByRole('button', { name: 'Next page' }).click()
+  await expect(counter).toHaveText('Page 2 of 2')
+
+  const rows = page.getByTestId('admin-blog-row')
+  await expect(rows).toHaveCount(2)
+
+  const targetRow = rows.first()
+  const originalTitle = (await targetRow.locator('td:nth-child(2) a').textContent())?.trim()
+  expect(originalTitle).toBeTruthy()
+  const updatedTitle = `${originalTitle} updated`
+
+  await targetRow.getByTitle('Edit').click()
+  await expect(page).toHaveURL(/\/admin\/blog\/.+/)
+  await page.getByLabel('Title').fill(updatedTitle)
+
+  await Promise.all([
+    page.waitForResponse((res) => res.url().includes('/api/admin/blogs/') && res.request().method() === 'PUT' && res.ok()),
+    page.getByRole('button', { name: 'Update Post' }).click(),
+  ])
+
+  await expect.poll(() => {
+    const url = new URL(page.url())
+    return JSON.stringify({
+      pathname: url.pathname,
+      page: url.searchParams.get('page'),
+      pageSize: url.searchParams.get('pageSize'),
+      query: url.searchParams.get('query'),
+    })
+  }).toBe(JSON.stringify({
+    pathname: expectedPathname,
+    page: '2',
+    pageSize: '12',
+    query: prefix,
+  }))
+  await expect(counter).toHaveText('Page 2 of 2')
+  await expect(page.getByTestId('admin-blog-row').filter({ hasText: updatedTitle }).first()).toBeVisible()
+
+  const deleteRow = page.getByTestId('admin-blog-row').filter({ hasText: updatedTitle }).first()
+  await deleteRow.getByTitle('Delete').click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+
+  await Promise.all([
+    page.waitForResponse((response) =>
+      response.url().includes('/api/admin/blogs/')
+      && response.request().method() === 'DELETE'
+      && response.ok(),
+    ),
+    page.getByRole('dialog').getByRole('button', { name: 'Delete' }).click(),
+  ])
+
+  await expect.poll(() => {
+    const url = new URL(page.url())
+    return JSON.stringify({
+      pathname: url.pathname,
+      page: url.searchParams.get('page'),
+      pageSize: url.searchParams.get('pageSize'),
+      query: url.searchParams.get('query'),
+    })
+  }).toBe(JSON.stringify({
+    pathname: expectedPathname,
+    page: '2',
+    pageSize: '12',
+    query: prefix,
+  }))
+  await expect(counter).toHaveText('Page 2 of 2')
+  await expect(page.getByTestId('admin-blog-row').filter({ hasText: updatedTitle })).toHaveCount(0)
 })
 
 test('admin works page supports title search and compact pagination controls', async ({ page }) => {

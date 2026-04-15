@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "rm -rf .next-playwright .next-build && tsc --noEmit",
+    "migrate:blog:notion": "node scripts/migrate-notion-blog-downloads.mjs",
     "test": "vitest --pool=threads",
     "test:e2e": "playwright test --workers=1",
     "test:e2e:headless": "playwright test --workers=1",

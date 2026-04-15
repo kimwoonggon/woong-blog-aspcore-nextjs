@@ -4,12 +4,16 @@ import { AdminBlogTableClient } from '@/components/admin/AdminBlogTableClient'
 import { AdminWorksTableClient } from '@/components/admin/AdminWorksTableClient'
 
 const refreshMock = vi.fn()
+const replaceMock = vi.fn()
 const promptMock = vi.fn(() => 'yes')
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
     refresh: refreshMock,
+    replace: replaceMock,
   }),
+  usePathname: () => '/admin/blog',
+  useSearchParams: () => new URLSearchParams(),
 }))
 
 vi.mock('next/link', () => ({
@@ -23,7 +27,38 @@ vi.mock('@/lib/api/admin-mutations', () => ({
   deleteManyAdminWorks: vi.fn(async () => undefined),
 }))
 
+vi.mock('@/hooks/useResponsivePageSize', () => ({
+  useResponsivePageSize: () => 12,
+}))
+
 describe('admin bulk selection tables', () => {
+  it('keeps the active admin blog page in edit links and URL state', async () => {
+    vi.stubGlobal('prompt', promptMock)
+
+    render(
+      <AdminBlogTableClient
+        blogs={Array.from({ length: 13 }, (_, index) => ({
+          id: `b${index + 1}`,
+          title: `Blog ${index + 1}`,
+          slug: `blog-${index + 1}`,
+          excerpt: '',
+          tags: [],
+          published: true,
+          publishedAt: null,
+        }))}
+      />,
+    )
+
+    replaceMock.mockClear()
+    fireEvent.click(screen.getByRole('button', { name: 'Next page' }))
+
+    expect(replaceMock).toHaveBeenCalledWith('/admin/blog?page=2&pageSize=12', { scroll: false })
+    expect(screen.getByLabelText('Edit post: Blog 13')).toHaveAttribute(
+      'href',
+      '/admin/blog/b13?returnTo=%2Fadmin%2Fblog%3Fpage%3D2%26pageSize%3D12',
+    )
+  })
+
   it('shows blog bulk delete button when rows are selected', async () => {
     vi.stubGlobal('prompt', promptMock)
 
