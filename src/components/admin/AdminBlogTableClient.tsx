@@ -1,8 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { useMemo, useState, useTransition } from 'react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { useEffect, useMemo, useState, useTransition } from 'react'
 import { ChevronLeft, ChevronRight, Eye, Pencil, Sparkles, Trash2 } from 'lucide-react'
 import { AdminBlogBatchAiPanel } from '@/components/admin/AdminBlogBatchAiPanel'
 import { Badge } from '@/components/ui/badge'
@@ -43,13 +43,22 @@ function matchesBlogQuery(blog: BlogAdminItem, normalizedQuery: string) {
   )
 }
 
+function normalizePageParam(value: string | null) {
+  const parsed = Number.parseInt(value ?? '', 10)
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1
+}
+
 export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
   const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const requestedPage = normalizePageParam(searchParams.get('page'))
+  const requestedQuery = searchParams.get('query') ?? ''
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [showBatchAiPanel, setShowBatchAiPanel] = useState(false)
-  const [query, setQuery] = useState('')
+  const [query, setQuery] = useState(requestedQuery)
   const [pendingDelete, setPendingDelete] = useState<PendingBlogDelete | null>(null)
-  const [page, setPage] = useState(1)
+  const [page, setPage] = useState(requestedPage)
   const [isPending, startTransition] = useTransition()
   const pageSize = useResponsivePageSize(12, 8, 6)
   const filteredBlogs = useMemo(() => {
@@ -62,6 +71,21 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
   }, [blogs, query])
   const totalPages = Math.max(1, Math.ceil(filteredBlogs.length / pageSize))
   const currentPage = Math.min(page, totalPages)
+  const returnTo = useMemo(() => {
+    const params = new URLSearchParams()
+    if (currentPage > 1) {
+      params.set('page', String(currentPage))
+    }
+    if (pageSize > 0) {
+      params.set('pageSize', String(pageSize))
+    }
+    if (query.trim()) {
+      params.set('query', query.trim())
+    }
+
+    const suffix = params.toString()
+    return encodeURIComponent(suffix ? `${pathname}?${suffix}` : pathname)
+  }, [currentPage, pageSize, pathname, query])
   const visibleBlogs = useMemo(() => {
     const start = (currentPage - 1) * pageSize
     return filteredBlogs.slice(start, start + pageSize)
@@ -78,6 +102,46 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
   )
   const allSelected = visibleBlogs.length > 0 && visibleIds.every((id) => effectiveSelectedIds.includes(id))
   const selectedSet = useMemo(() => new Set(effectiveSelectedIds), [effectiveSelectedIds])
+
+  useEffect(() => {
+    setQuery(requestedQuery)
+  }, [requestedQuery])
+
+  useEffect(() => {
+    setPage(requestedPage)
+  }, [requestedPage])
+
+  useEffect(() => {
+    if (page !== currentPage) {
+      setPage(currentPage)
+    }
+  }, [currentPage, page])
+
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString())
+
+    if (currentPage > 1) {
+      params.set('page', String(currentPage))
+    } else {
+      params.delete('page')
+    }
+
+    params.set('pageSize', String(pageSize))
+
+    if (query.trim()) {
+      params.set('query', query.trim())
+    } else {
+      params.delete('query')
+    }
+
+    const nextQueryString = params.toString()
+    const currentQueryString = searchParams.toString()
+    if (nextQueryString === currentQueryString) {
+      return
+    }
+
+    router.replace(nextQueryString ? `${pathname}?${nextQueryString}` : pathname, { scroll: false })
+  }, [currentPage, pageSize, pathname, query, router, searchParams])
 
   function toggle(id: string) {
     setSelectedIds((current) =>
@@ -221,7 +285,7 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
                 </TableCell>
                 <TableCell className="min-w-0 font-medium">
                   <Link
-                    href={`/admin/blog/${blog.id}`}
+                    href={`/admin/blog/${blog.id}?returnTo=${returnTo}`}
                     className="block truncate transition-colors hover:text-primary hover:underline"
                   >
                     {blog.title}
@@ -273,7 +337,7 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
                       </Link>
                     </Button>
                     <Button asChild variant="ghost" size="icon">
-                      <Link href={`/admin/blog/${blog.id}`} aria-label={`Edit post: ${blog.title}`} title="Edit">
+                      <Link href={`/admin/blog/${blog.id}?returnTo=${returnTo}`} aria-label={`Edit post: ${blog.title}`} title="Edit">
                         <Pencil className="h-4 w-4" />
                       </Link>
                     </Button>

@@ -47,7 +47,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - ${POSTGRES_DATA_DIR:-./.docker-data/prod/postgres}:/var/lib/postgresql/data
     restart: unless-stopped
 
   nginx:
@@ -65,6 +65,5 @@ services:
     restart: unless-stopped
 
 volumes:
-  postgres-data:
   data-protection-keys:
   media-storage:
