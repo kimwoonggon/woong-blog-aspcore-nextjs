@@ -4,7 +4,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
     refresh: vi.fn(),
+    replace: vi.fn(),
   }),
+  usePathname: () => '/admin/blog',
+  useSearchParams: () => new URLSearchParams(),
 }))
 
 describe('admin page success and not-found states', () => {
