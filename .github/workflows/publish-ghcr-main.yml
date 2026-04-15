@@ -52,7 +52,8 @@ jobs:
         id: vars
         run: |
           echo "owner_lc=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
-          echo "repo_lc=${GITHUB_REPOSITORY#*/}" | tr '[:upper:]' '[:lower:]' | awk '{print "repo_lc="$0}' >> "$GITHUB_OUTPUT"
+          repo_name="${GITHUB_REPOSITORY#*/}"
+          echo "repo_lc=${repo_name,,}" >> "$GITHUB_OUTPUT"
           if [[ "${GITHUB_EVENT_NAME}" == "workflow_run" ]]; then
             sha="${{ github.event.workflow_run.head_sha }}"
           else
