@@ -38,6 +38,7 @@ vi.mock('@/lib/api/browser', () => ({
 vi.mock('@/lib/api/admin-ai', () => ({
   fetchAdminAiRuntimeConfigBrowser: vi.fn(async () => ({
     provider: 'codex',
+    availableProviders: ['openai', 'codex'],
     defaultModel: 'gpt-5.4',
     codexModel: 'gpt-5.4',
     codexReasoningEffort: 'medium',

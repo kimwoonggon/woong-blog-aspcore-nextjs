@@ -42,6 +42,7 @@ export function AdminBlogBatchAiPanel({
   onApplied,
 }: AdminBlogBatchAiPanelProps) {
   const [runtimeConfig, setRuntimeConfig] = useState<AdminAiRuntimeConfig | null>(null)
+  const [selectedProvider, setSelectedProvider] = useState<'openai' | 'azure' | 'codex'>('openai')
   const [recentJobs, setRecentJobs] = useState<BlogAiBatchJobSummary[]>([])
   const [jobCounts, setJobCounts] = useState<Pick<BlogAiBatchJobListPayload, 'runningCount' | 'queuedCount' | 'completedCount' | 'failedCount' | 'cancelledCount'>>({
     runningCount: 0,
@@ -157,6 +158,7 @@ export function AdminBlogBatchAiPanel({
     }
 
     let cancelled = false
+    const savedProvider = typeof window !== 'undefined' ? window.localStorage.getItem('admin-ai-provider') : null
     const savedModel = typeof window !== 'undefined' ? window.localStorage.getItem('admin-ai-codex-model') : null
     const savedReasoning = typeof window !== 'undefined' ? window.localStorage.getItem('admin-ai-codex-reasoning') : null
 
@@ -167,6 +169,9 @@ export function AdminBlogBatchAiPanel({
         }
 
         setRuntimeConfig(config)
+        const availableProviders = (config.availableProviders?.length ? config.availableProviders : [config.provider]) as Array<'openai' | 'azure' | 'codex'>
+        const preferredProvider = (savedProvider || config.provider) as 'openai' | 'azure' | 'codex'
+        setSelectedProvider(availableProviders.includes(preferredProvider) ? preferredProvider : availableProviders[0])
         setCodexModel(savedModel || config.codexModel || 'gpt-5.4')
         setCodexReasoningEffort(savedReasoning || config.codexReasoningEffort || 'medium')
         setWorkerCount(String(config.batchConcurrency || 2))
@@ -235,6 +240,7 @@ export function AdminBlogBatchAiPanel({
                 : `${selectedIdsForJob.length} selected`,
             autoApply,
             workerCount: Number(workerCount || String(runtimeConfig?.batchConcurrency || 2)),
+            provider: selectedProvider,
             codexModel,
             codexReasoningEffort,
           }),
@@ -472,8 +478,29 @@ export function AdminBlogBatchAiPanel({
         </div>
         <div className="flex flex-wrap items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm">
           <span className="text-xs text-muted-foreground">Provider</span>
-          <span data-testid="admin-blog-batch-ai-provider" className="font-medium uppercase">{runtimeConfig?.provider ?? 'loading'}</span>
-          {runtimeConfig?.provider === 'codex' ? (
+          {(runtimeConfig?.availableProviders?.length ?? 0) > 1 ? (
+            <select
+              aria-label="Batch AI provider"
+              value={selectedProvider}
+              onChange={(event) => {
+                const nextProvider = event.target.value as 'openai' | 'azure' | 'codex'
+                setSelectedProvider(nextProvider)
+                if (typeof window !== 'undefined') {
+                  window.localStorage.setItem('admin-ai-provider', nextProvider)
+                }
+              }}
+              className="rounded-md border border-input bg-background px-2 py-1 text-sm"
+            >
+              {(runtimeConfig?.availableProviders || []).map((provider) => (
+                <option key={provider} value={provider}>
+                  {provider.toUpperCase()}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <span data-testid="admin-blog-batch-ai-provider" className="font-medium uppercase">{selectedProvider ?? runtimeConfig?.provider ?? 'loading'}</span>
+          )}
+          {selectedProvider === 'codex' ? (
             <>
               <Label htmlFor="batch-worker-count">Workers</Label>
               <input
@@ -486,7 +513,7 @@ export function AdminBlogBatchAiPanel({
                 onChange={(event) => setWorkerCount(event.target.value)}
                 className="w-16 rounded-md border border-input bg-background px-2 py-1 text-sm"
               />
-              <span className="text-xs text-muted-foreground">default {runtimeConfig.batchConcurrency}</span>
+              <span className="text-xs text-muted-foreground">default {runtimeConfig?.batchConcurrency ?? 2}</span>
               <Label htmlFor="list-codex-model" className="sr-only">Codex model</Label>
               <select
                 id="list-codex-model"
@@ -500,7 +527,7 @@ export function AdminBlogBatchAiPanel({
                 }}
                 className="bg-transparent text-sm outline-none"
               >
-                {(runtimeConfig.allowedCodexModels || []).map((model) => (
+                {(runtimeConfig?.allowedCodexModels || []).map((model) => (
                   <option key={model} value={model}>{model}</option>
                 ))}
               </select>
@@ -517,7 +544,7 @@ export function AdminBlogBatchAiPanel({
                 }}
                 className="bg-transparent text-sm outline-none"
               >
-                {(runtimeConfig.allowedCodexReasoningEfforts || []).map((effort) => (
+                {(runtimeConfig?.allowedCodexReasoningEfforts || []).map((effort) => (
                   <option key={effort} value={effort}>{effort}</option>
                 ))}
               </select>

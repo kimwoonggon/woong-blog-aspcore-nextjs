@@ -2,11 +2,25 @@ import { defineConfig, devices } from '@playwright/test'
 
 const AUTHENTICATED_SPECS = [
   /tests\/admin-(?!redirect).*\.spec\.ts$/,
+  /tests\/dark-mode\.spec\.ts$/,
+  /tests\/e2e-admin-.*\.spec\.ts$/,
+  /tests\/live-.*\.spec\.ts$/,
+  /tests\/manual-qa-gap-coverage\.spec\.ts$/,
+  /tests\/public-footer-social\.spec\.ts$/,
   /tests\/ui-admin-.*\.spec\.ts$/,
   /tests\/public-inline-editors\.spec\.ts$/,
+  /tests\/public-inline-editors-unsaved-warning\.spec\.ts$/,
   /tests\/public-blog-detail-inline-edit\.spec\.ts$/,
   /tests\/public-work-detail-inline-edit\.spec\.ts$/,
+  /tests\/public-work-videos\.spec\.ts$/,
+  /tests\/regression-screenshot-capture\.spec\.ts$/,
   /tests\/resume\.spec\.ts$/,
+  /tests\/ui-loading-states\.spec\.ts$/,
+  /tests\/ui-quality-.*\.spec\.ts$/,
+  /tests\/work-green-video-thumbnail\.spec\.ts$/,
+  /tests\/work-inline-create-flow\.spec\.ts$/,
+  /tests\/work-inline-redirects\.spec\.ts$/,
+  /tests\/work-single-delete-ux\.spec\.ts$/,
 ]
 
 const RUNTIME_AUTH_SPECS = [

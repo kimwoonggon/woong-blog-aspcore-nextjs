@@ -2,8 +2,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { AdminErrorPanel } from '@/components/admin/AdminErrorPanel'
-import { BlogEditor } from '@/components/admin/BlogEditor'
-import { InlineAdminEditorShell } from '@/components/admin/InlineAdminEditorShell'
+import { InlineBlogEditorSection } from '@/components/admin/InlineBlogEditorSection'
 import { RelatedContentList } from '@/components/content/RelatedContentList'
 import { InteractiveRenderer } from '@/components/content/InteractiveRenderer'
 import { TableOfContents } from '@/components/content/TableOfContents'
@@ -77,11 +76,14 @@ export default async function BlogDetailPage({ params, searchParams }: PageProps
     const relatedPageSuffix = resolvedSearchParams?.relatedPage
         ? `?relatedPage=${encodeURIComponent(resolvedSearchParams.relatedPage)}`
         : ''
+    const returnTo = resolvedSearchParams?.relatedPage
+        ? encodeURIComponent(`/blog?page=${encodeURIComponent(resolvedSearchParams.relatedPage)}&pageSize=12`)
+        : null
 
     return (
-        <article className="container mx-auto max-w-6xl px-4 py-8 md:px-6 md:py-12">
-            <div className="relative mx-auto max-w-6xl">
-                <div data-testid="blog-detail-body" className="mx-auto max-w-3xl min-w-0">
+        <article className="mx-auto w-full px-4 py-8 md:px-6 md:py-12">
+            <div className="mx-auto xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,48rem)_minmax(0,1fr)] xl:gap-8">
+                <div data-testid="blog-detail-body" className="mx-auto min-w-0 w-full max-w-3xl xl:col-start-2">
                     <header className="mb-8">
                         <h1 className="mb-4 text-3xl font-heading font-bold leading-tight text-foreground text-balance md:text-4xl">
                             {blog.title}
@@ -122,13 +124,7 @@ export default async function BlogDetailPage({ params, searchParams }: PageProps
                                 />
                             </div>
                         ) : (
-                            <InlineAdminEditorShell
-                                triggerLabel="글 수정"
-                                title="Blog Inline Editor"
-                                description="현재 게시물 뷰를 유지한 채 바로 수정합니다."
-                            >
-                                <BlogEditor initialBlog={adminBlog} inlineMode />
-                            </InlineAdminEditorShell>
+                            <InlineBlogEditorSection initialBlog={adminBlog} />
                         )
                     )}
 
@@ -140,7 +136,7 @@ export default async function BlogDetailPage({ params, searchParams }: PageProps
                         >
                             {olderBlog ? (
                                 <Link
-                                    href={`/blog/${olderBlog.slug}${relatedPageSuffix}`}
+                                    href={`/blog/${olderBlog.slug}${returnTo ? `?returnTo=${returnTo}&relatedPage=${encodeURIComponent(resolvedSearchParams?.relatedPage ?? '')}` : relatedPageSuffix}`}
                                     className="group rounded-2xl border border-border/80 bg-background p-4 transition hover:border-primary/30 hover:shadow-sm"
                                 >
                                     <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Previous</p>
@@ -151,7 +147,7 @@ export default async function BlogDetailPage({ params, searchParams }: PageProps
                             )}
                             {newerBlog ? (
                                 <Link
-                                    href={`/blog/${newerBlog.slug}${relatedPageSuffix}`}
+                                    href={`/blog/${newerBlog.slug}${returnTo ? `?returnTo=${returnTo}&relatedPage=${encodeURIComponent(resolvedSearchParams?.relatedPage ?? '')}` : relatedPageSuffix}`}
                                     className="group rounded-2xl border border-border/80 bg-background p-4 text-left transition hover:border-primary/30 hover:shadow-sm sm:justify-self-end"
                                 >
                                     <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Next</p>
@@ -174,7 +170,7 @@ export default async function BlogDetailPage({ params, searchParams }: PageProps
                     </div>
                 </div>
 
-                <aside className="hidden xl:absolute xl:right-0 xl:top-0 xl:block xl:w-64">
+                <aside className="hidden xl:col-start-3 xl:block xl:w-full xl:max-w-72 xl:justify-self-start">
                     <TableOfContents contentRootId="blog-detail-content" />
                 </aside>
             </div>
