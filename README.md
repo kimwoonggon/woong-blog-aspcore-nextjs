@@ -701,6 +701,8 @@ Notes:
 - the HTTPS override forces secure auth cookies for this local verification path
 - plain HTTP local Compose still works with the default `docker compose up -d --build` path
 
+For reverse-proxied staging/production, set `Auth__PublicOrigin` to the exact browser-facing origin, for example `https://woonglab.com`. This keeps the OIDC `redirect_uri` stable even when forwarded host detection or multiple public hostnames would otherwise vary it. If nginx canonicalizes `www` to the apex domain, keep `Auth__PublicOrigin` on that apex origin too.
+
 ## Deployment
 
 The **currently supported runtime architecture** is a containerized full stack:
