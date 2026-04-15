@@ -9,6 +9,7 @@ test('blog AI fix dialog loads runtime config, applies a fixed draft, and keeps 
       contentType: 'application/json',
       body: JSON.stringify({
         provider: 'codex',
+        availableProviders: ['openai', 'codex'],
         defaultModel: 'gpt-5.4',
         codexModel: 'gpt-5.4',
         codexReasoningEffort: 'medium',
@@ -43,6 +44,9 @@ test('blog AI fix dialog loads runtime config, applies a fixed draft, and keeps 
   await page.getByRole('button', { name: 'AI Content Fixer' }).click()
 
   await expect(page.getByRole('heading', { name: 'AI Content Fixer' })).toBeVisible()
+  await expect(page.getByLabel('AI provider')).toBeVisible()
+  await expect(page.getByRole('option', { name: 'OPENAI' })).toBeAttached()
+  await expect(page.getByRole('option', { name: 'CODEX' })).toBeAttached()
   await expect(page.locator('#codex-model')).toHaveValue('gpt-5.4')
   await expect(page.locator('#codex-reasoning')).toHaveValue('medium')
 

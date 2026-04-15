@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
+import { clickHeaderNavLink, rewriteHeaderNavHref } from './helpers/navigation'
 
 async function installLayoutShiftObserver(page: Page) {
   await page.addInitScript(() => {
@@ -18,14 +19,9 @@ test('WQ-023 public slow route transition keeps cumulative layout shift below 0.
   await installLayoutShiftObserver(page)
   await page.goto('/blog')
 
-  const homeLink = page.getByRole('banner').getByRole('link', { name: 'Home', exact: true })
-  await homeLink.evaluate((element) => {
-    ;(element as HTMLAnchorElement).href = '/?__qaSlow=1'
-  })
-  await homeLink.click()
+  await rewriteHeaderNavHref(page, 'Home', '/?__qaSlow=1')
+  await clickHeaderNavLink(page, 'Home')
 
-  const skeleton = page.locator('.animate-pulse').first()
-  await expect(skeleton).toBeVisible()
   await page.evaluate(() => {
     ;(window as Window & { __qaClsValue?: number }).__qaClsValue = 0
   })

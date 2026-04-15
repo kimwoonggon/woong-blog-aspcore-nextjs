@@ -43,7 +43,8 @@ test('public work detail inline edit returns the user to the originating works p
 
   await expect(page).toHaveURL(originalListUrl)
   await expect(page).not.toHaveURL(/\/admin\/works\//)
-  await expect(page.getByText(updatedTitle)).toBeVisible()
+  await expect(page.getByLabel('Title')).toHaveCount(0)
+  await expect(page.getByRole('button', { name: '새 작업 쓰기' })).toBeVisible()
 })
 
 test('public work detail video-only edits enable Update Work without requiring body changes', async ({ page }) => {

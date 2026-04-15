@@ -1,13 +1,11 @@
 import { expect, test } from '@playwright/test'
 
 test('keyboard-focused public links keep a visible focus outline', async ({ page }) => {
+  await page.setViewportSize({ width: 1920, height: 1080 })
   await page.goto('/')
 
-  await page.keyboard.press('Tab')
-  await page.keyboard.press('Tab')
-  await page.keyboard.press('Tab')
-
-  const focused = page.getByRole('link', { name: 'Home', exact: true }).first()
+  const focused = page.locator('header nav:visible').first().getByRole('link', { name: 'Home', exact: true })
+  await focused.focus()
   await expect(focused).toBeFocused()
 
   const outlineWidth = await focused.evaluate((element) => getComputedStyle(element).outlineWidth)
@@ -15,10 +13,10 @@ test('keyboard-focused public links keep a visible focus outline', async ({ page
 })
 
 test('keyboard users can traverse the primary navigation in visual order', async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.setViewportSize({ width: 1920, height: 1080 })
   await page.goto('/')
 
-  const nav = page.locator('header nav').first()
+  const nav = page.locator('header nav:visible').first()
   const orderedLinks = ['Home', 'Introduction', 'Works', 'Blog', 'Contact', 'Resume']
   const firstLink = nav.getByRole('link', { name: orderedLinks[0], exact: true })
   await firstLink.focus()

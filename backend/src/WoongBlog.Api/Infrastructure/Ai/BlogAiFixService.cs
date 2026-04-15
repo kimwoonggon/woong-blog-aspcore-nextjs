@@ -58,8 +58,8 @@ Rules:
             throw new InvalidOperationException("HTML content is required.");
         }
 
-        var provider = NormalizeProvider(_options.Provider);
         var requestOptions = options ?? new AiFixRequestOptions();
+        var provider = NormalizeProvider(string.IsNullOrWhiteSpace(requestOptions.Provider) ? _options.Provider : requestOptions.Provider);
 
         return provider switch
         {
@@ -145,23 +145,35 @@ Rules:
 
         try
         {
-            var arguments = new List<string>
-            {
-                "exec",
-                "--skip-git-repo-check",
-                "--ephemeral",
-                "-C",
-                workdir,
-                "-"
-            };
+            var arguments = new List<string>(_options.CodexArguments.Length > 0 ? _options.CodexArguments : ["exec"]);
 
-            if (!string.IsNullOrWhiteSpace(model))
+            if (!arguments.Contains("--sandbox", StringComparer.OrdinalIgnoreCase))
+            {
+                arguments.Add("--sandbox");
+                arguments.Add("workspace-write");
+            }
+
+            if (!arguments.Contains("--skip-git-repo-check", StringComparer.OrdinalIgnoreCase))
+            {
+                arguments.Add("--skip-git-repo-check");
+            }
+
+            if (!arguments.Contains("--ephemeral", StringComparer.OrdinalIgnoreCase))
+            {
+                arguments.Add("--ephemeral");
+            }
+
+            arguments.Add("-C");
+            arguments.Add(workdir);
+            arguments.Add("-");
+
+            if (!string.IsNullOrWhiteSpace(model) && !arguments.Contains("-m"))
             {
                 arguments.Insert(1, model);
                 arguments.Insert(1, "-m");
             }
 
-            if (!string.IsNullOrWhiteSpace(reasoningEffort))
+            if (!string.IsNullOrWhiteSpace(reasoningEffort) && !arguments.Contains("-c"))
             {
                 arguments.Insert(1, $"model_reasoning_effort=\"{reasoningEffort}\"");
                 arguments.Insert(1, "-c");
@@ -381,6 +393,32 @@ Rules:
             "codex" => "codex",
             _ => "openai"
         };
+    }
+
+    public static string[] GetAvailableProviders(AiOptions options)
+    {
+        var providers = new List<string>();
+
+        if (!string.IsNullOrWhiteSpace(options.OpenAiApiKey)
+            || !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("OPENAI_API_KEY")))
+        {
+            providers.Add("openai");
+        }
+
+        if ((!string.IsNullOrWhiteSpace(options.AzureOpenAiApiKey)
+                || !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("AZURE_OPENAI_API_KEY")))
+            && (!string.IsNullOrWhiteSpace(options.AzureOpenAiEndpoint)
+                || !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT"))))
+        {
+            providers.Add("azure");
+        }
+
+        if (!string.IsNullOrWhiteSpace(options.CodexCommand))
+        {
+            providers.Add("codex");
+        }
+
+        return providers.Count > 0 ? providers.ToArray() : ["openai"];
     }
 
     private string ResolveOpenAiApiKey() =>

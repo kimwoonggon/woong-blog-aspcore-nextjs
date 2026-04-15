@@ -99,6 +99,29 @@ test('falls back to the first content image when there are no videos and no expl
   await expect(page.locator(`img[alt="${title}"]`).first()).toBeVisible()
 })
 
+test('auto-fills a thumbnail when the work only has a YouTube video', async ({ page }) => {
+  const title = `Auto Thumb YouTube ${Date.now()}`
+
+  await fillWorkBasics(page, title)
+  await page.getByLabel('YouTube URL or ID').fill('https://youtu.be/dQw4w9WgXcQ')
+  await page.getByRole('button', { name: 'Add YouTube Video' }).click()
+
+  const [createResponse] = await Promise.all([
+    page.waitForResponse((res) => new URL(res.url()).pathname === '/api/admin/works' && res.request().method() === 'POST' && res.ok()),
+    page.getByRole('button', { name: 'Create with Videos' }).click(),
+  ])
+
+  const created = await createResponse.json()
+  await page.waitForURL(new RegExp(`/admin/works/${created.id}\\?videoInline=1$`), { timeout: 20000 })
+  await page.getByRole('tab', { name: 'Media & Videos' }).click()
+  await expect(page.getByTestId('work-thumbnail-source')).not.toHaveText('Thumbnail source: none')
+  await expect(page.getByAltText('Work thumbnail preview')).toBeVisible()
+  await expect(page.getByAltText('Work thumbnail preview')).toHaveAttribute('src', /(?:img\.youtube\.com\/vi\/dQw4w9WgXcQ\/hqdefault\.jpg|\/media\/work-thumbnails\/)/)
+
+  await page.goto('/works')
+  await expect(page.locator(`img[alt="${title}"]`).first()).toHaveAttribute('src', /(?:img\.youtube\.com\/vi\/dQw4w9WgXcQ\/hqdefault\.jpg|\/media\/work-thumbnails\/)/)
+})
+
 test('auto-fills a thumbnail when an existing work without one gets an uploaded video', async ({ page }) => {
   const title = `Auto Thumb Existing ${Date.now()}`
 

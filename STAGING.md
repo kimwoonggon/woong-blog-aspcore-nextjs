@@ -24,6 +24,7 @@ POSTGRES_PASSWORD=change-me
 Auth__ClientId=replace-me
 Auth__ClientSecret=replace-me
 Auth__AdminEmails__0=admin@example.com
+CODEX_HOME_DIR=/absolute/path/to/.codex
 ```
 
 ## 3. GHCR 로그인
@@ -39,6 +40,8 @@ docker compose --env-file .env.staging -f docker-compose.staging.yml pull
 docker compose --env-file .env.staging -f docker-compose.staging.yml up -d
 docker compose --env-file .env.staging -f docker-compose.staging.yml ps
 ```
+
+If staging uses `AI_PROVIDER=codex`, `CODEX_HOME_DIR` must point at a writable Codex home that already contains `auth.json`.
 
 ## 5. 최소 확인
 

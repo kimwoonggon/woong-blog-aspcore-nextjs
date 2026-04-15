@@ -56,6 +56,7 @@ function collectHeadings(root: HTMLElement) {
 export function TableOfContents({ contentRootId }: TableOfContentsProps) {
   const [items, setItems] = useState<HeadingItem[]>([])
   const [activeId, setActiveId] = useState<string>('')
+  const [collapsed, setCollapsed] = useState(false)
 
   useEffect(() => {
     const root = document.getElementById(contentRootId)
@@ -114,27 +115,39 @@ export function TableOfContents({ contentRootId }: TableOfContentsProps) {
       data-testid="blog-toc"
       className="sticky top-24 rounded-2xl border border-border/80 bg-background/95 p-4 shadow-sm"
     >
-      <p className="mb-3 text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
-        On This Page
-      </p>
-      <ol className="space-y-2 text-sm">
-        {renderedItems.map((item) => (
-          <li key={item.id}>
-            <a
-              href={`#${item.id}`}
-              className={[
-                'block rounded-xl px-3 py-2 transition-colors',
-                item.level === 3 ? 'ml-3 text-muted-foreground' : 'font-medium',
-                activeId === item.id
-                  ? 'bg-muted text-foreground'
-                  : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground',
-              ].join(' ')}
-            >
-              {item.text}
-            </a>
-          </li>
-        ))}
-      </ol>
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+          On This Page
+        </p>
+        <button
+          type="button"
+          onClick={() => setCollapsed((value) => !value)}
+          className="rounded-full border border-border/80 px-2 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          aria-expanded={!collapsed}
+        >
+          {collapsed ? 'Expand' : 'Collapse'}
+        </button>
+      </div>
+      {!collapsed ? (
+        <ol className="space-y-2 text-sm">
+          {renderedItems.map((item) => (
+            <li key={item.id}>
+              <a
+                href={`#${item.id}`}
+                className={[
+                  'block rounded-xl px-3 py-2 transition-colors',
+                  item.level === 3 ? 'ml-3 text-muted-foreground' : 'font-medium',
+                  activeId === item.id
+                    ? 'bg-muted text-foreground'
+                    : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground',
+                ].join(' ')}
+              >
+                {item.text}
+              </a>
+            </li>
+          ))}
+        </ol>
+      ) : null}
     </nav>
   )
 }

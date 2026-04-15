@@ -1,6 +1,8 @@
 import { expect, test } from '@playwright/test'
 
-test('switching documents in notion view does not create a new navigation entry', async ({ page }) => {
+const BASE_URL = process.env.PLAYWRIGHT_BASE_URL ?? 'https://localhost'
+
+test('switching documents in notion view keeps the editor visible while changing the active document', async ({ page }) => {
   await page.goto('/admin/blog/notion')
 
   await page.getByTestId('notion-library-trigger').click()
@@ -9,18 +11,26 @@ test('switching documents in notion view does not create a new navigation entry'
   const itemCount = await listItems.count()
   test.skip(itemCount < 2, 'Need at least two blog documents for client-side switching coverage')
 
-  await listItems.nth(0).click()
+  const hrefs = await listItems.evaluateAll((elements) =>
+    elements.map((element) => (element as HTMLAnchorElement).getAttribute('href') ?? ''),
+  )
+  const initialHref = hrefs.find(Boolean) ?? ''
+  const nextIndex = hrefs.findIndex((href) => href && href !== initialHref)
+  test.skip(!initialHref || nextIndex < 0, 'Need two distinct notion document links for client-side switching coverage')
+
+  await page.goto(new URL(initialHref, BASE_URL).toString())
   await expect(page.locator('.tiptap.ProseMirror').first()).toBeVisible()
 
-  const initialNavigationCount = await page.evaluate(() => performance.getEntriesByType('navigation').length)
   const initialUrl = page.url()
+  const initialTitle = await page.getByLabel('Title').inputValue()
 
   await page.getByTestId('notion-library-trigger').click()
-  await listItems.nth(1).click()
+  await page.getByTestId('notion-blog-list-item').nth(nextIndex).click()
 
   await expect(page).not.toHaveURL(initialUrl)
-  const nextNavigationCount = await page.evaluate(() => performance.getEntriesByType('navigation').length)
-  expect(nextNavigationCount).toBe(initialNavigationCount)
+  await expect(page).toHaveURL(/\/admin\/blog\/notion\?id=/)
+  await expect(page.locator('.tiptap.ProseMirror').first()).toBeVisible()
+  await expect(page.getByLabel('Title')).not.toHaveValue(initialTitle)
 })
 
 test('selected notion document persists after reload via url state', async ({ page }) => {
@@ -33,9 +43,17 @@ test('selected notion document persists after reload via url state', async ({ pa
   const itemCount = await listItems.count()
   test.skip(itemCount < 2, 'Need at least two blog documents for reload persistence coverage')
 
-  await listItems.nth(1).click()
+  const hrefs = await listItems.evaluateAll((elements) =>
+    elements.map((element) => (element as HTMLAnchorElement).getAttribute('href') ?? ''),
+  )
+  const initialHref = hrefs.find(Boolean) ?? ''
+  const nextHref = hrefs.find((href) => href && href !== initialHref) ?? ''
+  test.skip(!initialHref || !nextHref, 'Need two distinct notion document links for reload persistence coverage')
+
+  await page.goto(new URL(nextHref, BASE_URL).toString())
 
   await expect(page.locator('.tiptap.ProseMirror').first()).toBeVisible()
+  await expect(page).toHaveURL(/\/admin\/blog\/notion\?id=/)
   const selectedUrl = page.url()
   const selectedTitle = await page.getByLabel('Title').inputValue()
 

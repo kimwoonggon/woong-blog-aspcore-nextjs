@@ -12,8 +12,16 @@ test('WQ-003 meaningful public images expose descriptive alt text', async ({ pag
   await expect(featuredCard).toBeVisible()
   const featuredTitle = (await featuredCard.locator('h3').innerText()).trim()
   const featuredImage = featuredCard.locator('img').first()
-  await expect(featuredImage).toBeVisible()
-  await expect(featuredImage).toHaveAttribute('alt', featuredTitle)
+  const featuredPlaceholder = featuredCard.getByTestId('featured-work-no-image-placeholder')
+
+  if (await featuredImage.count()) {
+    await expect(featuredImage).toBeVisible()
+    await expect(featuredImage).toHaveAttribute('alt', featuredTitle)
+    return
+  }
+
+  await expect(featuredPlaceholder).toBeVisible()
+  await expect(featuredPlaceholder).toContainText('No Image')
 })
 
 test('WQ-003 work listing images and no-image placeholders stay understandable', async ({ page }) => {

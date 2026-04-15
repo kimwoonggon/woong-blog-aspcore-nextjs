@@ -235,7 +235,7 @@ test('DM-11: contact page email link uses the semantic primary color in dark mod
 
   test('DM-24: muted text contrast is at least 4.5:1 in dark mode', async ({ page }) => {
     await gotoWithTheme(page, '/')
-    const mutedText = page.getByText(/Works, writing, and experiments in one balanced shell\./)
+    const mutedText = page.getByText(/Product, platform, and interaction work that best represents how I design and ship\./)
     await expect(mutedText).toBeVisible()
 
     const foreground = await getColorChannels(mutedText, 'color')

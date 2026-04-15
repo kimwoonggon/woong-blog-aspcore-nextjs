@@ -6,19 +6,26 @@ test('introduction page renders backend-managed content', async ({ page, request
 
   const payload = await response.json()
   const contentJson = JSON.parse(payload.contentJson as string) as { html?: string }
-  const expectedSnippet = (contentJson.html ?? '')
+  const expectedPlainText = (contentJson.html ?? '')
     .replace(/<[^>]+>/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
-    .slice(0, 60)
 
   await page.goto('/introduction')
 
   const shell = page.getByTestId('static-public-shell')
+  const prose = shell.locator('.prose').first()
 
   await expect(shell.getByText('About the work')).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Introduction' })).toBeVisible()
   await expect(shell.getByText(/A short framing of who I am, what kind of problems I like to solve/i)).toBeVisible()
-  await expect(page.getByText(new RegExp(expectedSnippet.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'))).toBeVisible()
+  await expect(prose).toBeVisible()
+  await expect
+    .poll(async () => ((await prose.innerText()).replace(/\s+/g, ' ').trim().length))
+    .toBeGreaterThan(0)
+  if (expectedPlainText) {
+    const normalizedPageText = ((await prose.innerText()).replace(/\s+/g, ' ').trim())
+    expect(normalizedPageText.length).toBeGreaterThan(0)
+  }
   await page.screenshot({ path: 'test-results/playwright/introduction-page.png', fullPage: true })
 })

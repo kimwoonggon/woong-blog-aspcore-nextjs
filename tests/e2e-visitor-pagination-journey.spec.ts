@@ -24,7 +24,7 @@ test('E2E-004 visitor can keep a paginated reading path stable across list and d
   await expect(secondPageCard).toBeVisible()
   await secondPageCard.click()
 
-  await expect(page).toHaveURL(/\/blog\/.+\?relatedPage=2/)
+  await expect(page).toHaveURL(/\/blog\/.+(?:\?|&)returnTo=%2Fblog%3Fpage%3D2%26pageSize%3D\d+(?:&|%26)relatedPage=2/)
   await expect(page.getByTestId('blog-related-shell')).toBeVisible()
   await expect(page.locator('section').filter({ has: page.getByRole('heading', { name: 'More Posts' }) }).getByText(/^Page 2 of \d+$/)).toBeVisible()
 })

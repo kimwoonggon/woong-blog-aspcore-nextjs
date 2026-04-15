@@ -119,7 +119,7 @@ test('admin blog page supports title search and compact pagination controls', as
   await page.getByLabel('Search blog titles').fill(searchTitle)
   await expect(rows.locator('td:nth-child(2) a', { hasText: searchTitle }).first()).toBeVisible()
   if (hiddenTitle) {
-    await expect(page.getByRole('link', { name: hiddenTitle })).toHaveCount(0)
+    await expect(rows.locator('td:nth-child(2) a', { hasText: hiddenTitle })).toHaveCount(0)
   }
 
   await page.getByLabel('Search blog titles').clear()
@@ -170,7 +170,7 @@ test('admin works page supports title search and compact pagination controls', a
   await page.getByLabel('Search work titles').fill(searchTitle)
   await expect(rows.locator('td:nth-child(3) a', { hasText: searchTitle }).first()).toBeVisible()
   if (hiddenTitle) {
-    await expect(page.getByRole('link', { name: hiddenTitle })).toHaveCount(0)
+    await expect(rows.locator('td:nth-child(3) a', { hasText: hiddenTitle })).toHaveCount(0)
   }
 
   await page.getByLabel('Search work titles').clear()

@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 import { getStyle } from './helpers/ui-improvement'
 
-test('VA-033 layering keeps navbar above dropdowns and modal layers above dropdown content', async ({ page }) => {
+test('VA-033 layering keeps dropdowns above the navbar and modal layers above dropdown content', async ({ page }) => {
   await page.goto('/')
 
   const navbar = page.locator('header').first()
@@ -13,7 +13,7 @@ test('VA-033 layering keeps navbar above dropdowns and modal layers above dropdo
   await expect(dropdown).toBeVisible()
   const dropdownZ = Number.parseInt(await getStyle(dropdown, 'z-index'), 10)
 
-  expect(navbarZ).toBeGreaterThan(dropdownZ)
+  expect(dropdownZ).toBeGreaterThan(navbarZ)
 })
 
 test.use({ storageState: 'test-results/playwright/admin-storage-state.json' })

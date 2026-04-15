@@ -8,8 +8,17 @@ test('admin can edit an existing work entry with mixed special input', async ({ 
   const updatedBody = `작업 본문 한국어 + English + !!! ${Date.now()}`
 
   await page.goto('/admin/works')
-  await page.getByTestId('admin-work-row').first().getByRole('link').first().click()
-  await expect(page.getByRole('heading', { name: 'Edit Work' })).toBeVisible()
+  const editHref = await page
+    .getByTestId('admin-work-row')
+    .first()
+    .locator('td')
+    .nth(2)
+    .getByRole('link')
+    .getAttribute('href')
+  expect(editHref).toMatch(/\/admin\/works\//)
+  await page.goto(editHref!)
+  await expect(page).toHaveURL(/\/admin\/works\//)
+  await expect(page.getByLabel('Title')).toBeVisible()
 
   await page.getByLabel('Title').fill(updatedTitle)
   await page.locator('.tiptap.ProseMirror').first().fill(updatedBody)

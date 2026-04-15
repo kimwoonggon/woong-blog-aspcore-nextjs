@@ -11,7 +11,7 @@ RUN dotnet publish -c Release -o /app/publish /p:UseAppHost=false
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS runtime
 WORKDIR /app
-RUN apk add --no-cache nodejs npm && npm install -g @openai/codex
+RUN apk add --no-cache nodejs npm && npm install -g @openai/codex@0.120.0
 COPY --from=build /app/publish .
 
 ENV ASPNETCORE_URLS=http://0.0.0.0:8080

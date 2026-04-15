@@ -39,18 +39,18 @@ test('D-6 stale editor sessions fail to save cleanly after logout', async ({ pag
 
   await page.getByRole('button', { name: 'Create Post' }).click()
   await expect.poll(async () => {
-    return await page.evaluate(async () => {
-      try {
+    try {
+      return await page.evaluate(async () => {
         const response = await fetch('/api/auth/session', {
           credentials: 'include',
           cache: 'no-store',
         })
         const payload = await response.json() as { authenticated?: boolean }
         return payload.authenticated ?? false
-      } catch {
-        return false
-      }
-    })
+      })
+    } catch {
+      return false
+    }
   }).toBe(false)
 
   await expect(page.getByRole('heading', { name: 'Admin Login' })).toBeVisible()

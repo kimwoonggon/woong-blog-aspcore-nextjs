@@ -1,12 +1,18 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
-async function loginAsLocalUser(page: Page) {
+test.use({ storageState: { cookies: [], origins: [] } })
+
+test('non-admin local login attempts are rejected before admin access is granted', async ({ page }) => {
   const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost'
 
   await page.goto(
-    `${baseUrl}/api/auth/test-login?email=${encodeURIComponent('user@example.com')}&returnUrl=%2F`,
+    `${baseUrl}/api/auth/test-login?email=${encodeURIComponent('user@example.com')}&returnUrl=%2Fadmin%2Fdashboard`,
     { waitUntil: 'networkidle' },
   )
+
+  await expect(page).toHaveURL(/\/login\?error=admin_only/)
+  await expect(page.getByRole('heading', { name: 'Admin Login' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Sign in with Google' })).toBeVisible()
 
   await expect.poll(async () => {
     return await page.evaluate(async () => {
@@ -16,27 +22,10 @@ async function loginAsLocalUser(page: Page) {
       })
 
       const payload = await response.json() as { authenticated?: boolean; role?: string }
-      return payload.authenticated ? payload.role ?? null : null
+      return {
+        authenticated: payload.authenticated ?? false,
+        role: payload.role ?? null,
+      }
     })
-  }).toBe('user')
-}
-
-test('non-admin local sessions are redirected away from admin routes', async ({ page }) => {
-  await loginAsLocalUser(page)
-
-  await page.goto('/admin/dashboard', { waitUntil: 'networkidle' })
-
-  await expect(page).toHaveURL(/\/(?:\?.*)?$/)
-  await expect(page.getByText('Admin Panel')).toHaveCount(0)
-  await expect.poll(async () => {
-    return await page.evaluate(async () => {
-      const response = await fetch('/api/auth/session', {
-        credentials: 'include',
-        cache: 'no-store',
-      })
-
-      const payload = await response.json() as { role?: string }
-      return payload.role ?? null
-    })
-  }).toBe('user')
+  }).toEqual({ authenticated: false, role: null })
 })

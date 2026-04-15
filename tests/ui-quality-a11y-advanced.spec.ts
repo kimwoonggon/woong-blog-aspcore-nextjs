@@ -9,7 +9,7 @@ function getActiveElementLabel() {
 }
 
 test('WQ-005 keyboard users can traverse the desktop primary navigation in visual order', async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.setViewportSize({ width: 1600, height: 900 })
   await page.goto('/')
 
   const nav = page.getByRole('banner').getByRole('navigation')

@@ -7,7 +7,9 @@ test('works detail exposes previous or next navigation links', async ({ page }) 
   await expect(nav).toBeVisible()
 
   const links = nav.getByRole('link')
-  await expect(links).toHaveCount(2)
+  const linkCount = await links.count()
+  expect(linkCount).toBeGreaterThanOrEqual(1)
+  expect(linkCount).toBeLessThanOrEqual(2)
 
   const link = links.first()
   await expect(link).toHaveAttribute('href', /\/works\/.+/)

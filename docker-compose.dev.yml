@@ -52,7 +52,7 @@ services:
     volumes:
       - data-protection-keys:/app/data-protection
       - media-storage:/app/media
-      - ${HOME}/.codex:/root/.codex:ro
+      - ${CODEX_HOME_DIR:-./.codex-runtime}:/root/.codex
 
   db:
     image: postgres:16-alpine

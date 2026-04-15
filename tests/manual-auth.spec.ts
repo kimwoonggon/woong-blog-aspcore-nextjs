@@ -5,7 +5,7 @@ test.skip(!process.env.PLAYWRIGHT_MANUAL_AUTH, 'Manual auth verification runs on
 test('manual admin login verification with headed browser', async ({ page }) => {
   await page.goto('/login')
 
-  await expect(page.getByRole('button', { name: 'Sign in with Google' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Sign in with Google' })).toBeVisible()
   await page.pause()
 
   await expect(page).toHaveURL(/\/admin/)

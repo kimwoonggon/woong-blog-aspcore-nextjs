@@ -1,8 +1,27 @@
 import { expect, test } from '@playwright/test'
 
 test.use({ storageState: 'test-results/playwright/admin-storage-state.json' })
+test.setTimeout(90_000)
+
+async function createBlogForInlineFlow(page: import('@playwright/test').Page, title: string, body: string) {
+  await page.goto('/admin/blog/new')
+  await page.getByLabel('Title').fill(title)
+  await page.locator('.tiptap.ProseMirror').first().fill(body)
+
+  const [response] = await Promise.all([
+    page.waitForResponse((res) => res.url().includes('/api/admin/blogs') && res.request().method() === 'POST' && res.ok(), { timeout: 60_000 }),
+    page.getByRole('button', { name: /Create Post/i }).click(),
+  ])
+
+  return await response.json() as { id: string; slug: string }
+}
 
 test('public blog inline editor clears beforeunload after save', async ({ page }) => {
+  const created = await createBlogForInlineFlow(
+    page,
+    `Inline beforeunload blog ${Date.now()}`,
+    'Stable inline beforeunload blog body',
+  )
   const updatedTitle = `Public inline blog save ${Date.now()}`
   let dialogSeen = false
 
@@ -11,17 +30,18 @@ test('public blog inline editor clears beforeunload after save', async ({ page }
     await dialog.dismiss()
   })
 
-  await page.goto('/blog?pageSize=1')
-  await page.locator('a[href^="/blog/"]').first().click()
+  await page.goto(`/blog/${created.slug}?returnTo=%2Fblog%3Fpage%3D1%26pageSize%3D2&relatedPage=1`)
   const detailUrlPattern = /\/blog\/[^/?#]+(?:\?.*)?$/
   await page.getByRole('button', { name: '글 수정' }).click()
 
   await page.getByLabel('Title').fill(updatedTitle)
   await expect.poll(async () => page.evaluate(() => typeof window.onbeforeunload)).toBe('function')
+  const saveButton = page.getByRole('button', { name: /Update Post/i })
+  await expect(saveButton).toBeEnabled()
 
   await Promise.all([
-    page.waitForResponse((res) => res.url().includes('/api/admin/blogs/') && res.request().method() === 'PUT' && res.ok()),
-    page.getByRole('button', { name: /Update Post/i }).click(),
+    page.waitForResponse((res) => res.url().includes('/api/admin/blogs/') && res.request().method() === 'PUT' && res.ok(), { timeout: 60_000 }),
+    saveButton.click(),
   ])
 
   await expect(page).toHaveURL(detailUrlPattern)
@@ -40,16 +60,18 @@ test('public work inline editor clears beforeunload after save', async ({ page }
   })
 
   await page.goto('/works?page=1&pageSize=1')
-  await page.locator('a[href^="/works/"]').first().click()
+  await page.getByTestId('work-card').first().click()
   await expect(page).toHaveURL(/\/works\/[^/?#]+\?returnTo=/)
   await page.getByRole('button', { name: '작업 수정' }).click()
 
   await page.getByLabel('Title').fill(updatedTitle)
   await expect.poll(async () => page.evaluate(() => typeof window.onbeforeunload)).toBe('function')
+  const saveButton = page.getByRole('button', { name: /Update Work/i })
+  await expect(saveButton).toBeEnabled()
 
   await Promise.all([
-    page.waitForResponse((res) => res.url().includes('/api/admin/works/') && res.request().method() === 'PUT' && res.ok()),
-    page.getByRole('button', { name: /Update Work/i }).click(),
+    page.waitForResponse((res) => res.url().includes('/api/admin/works/') && res.request().method() === 'PUT' && res.ok(), { timeout: 60_000 }),
+    saveButton.click(),
   ])
 
   await expect(page).toHaveURL(/\/works(?:\?.*)?$/)
