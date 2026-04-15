@@ -36,8 +36,15 @@ test('featured work cards advertise hover interactions', async ({ page }) => {
 
   const image = card.locator('img').first()
   const title = card.locator('h3').first()
+  const placeholder = card.getByTestId('featured-work-no-image-placeholder')
 
-  await expect(image).toHaveClass(/group-hover:scale-105/)
+  if (await image.count()) {
+    await expect(image).toHaveClass(/group-hover:scale-105/)
+  } else {
+    await expect(placeholder).toBeVisible()
+    await expect(card.locator('[data-slot="card"]').first()).toHaveClass(/hover:border-primary\/30/)
+  }
+
   await expect(title).toHaveClass(/group-hover:text-brand-accent/)
 })
 

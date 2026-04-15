@@ -493,7 +493,8 @@ test('F-5 and F-6 inline create flows can create works and blog posts from publi
     page.waitForResponse((res) => res.url().includes('/api/admin/blogs') && res.request().method() === 'POST' && res.ok()),
     page.getByRole('button', { name: 'Create Post' }).click(),
   ])
-  await expect(page.getByRole('heading', { name: blogTitle })).toBeVisible()
+  await expect(page).toHaveURL(/\/blog(?:\?|$)/)
+  await expect(page.getByText(blogTitle)).toBeVisible()
 })
 
 test('G-5 mobile navigation hamburger opens and routes across public pages', async ({ page }) => {

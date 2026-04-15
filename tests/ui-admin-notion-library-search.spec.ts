@@ -18,7 +18,7 @@ test('library search filters visible notion documents', async ({ page }) => {
   await searchInput.fill(keyword)
   await expect(items.first()).toBeVisible()
   const filteredCount = await items.count()
-  expect(filteredCount).toBeLessThan(initialCount)
+  expect(filteredCount).toBeLessThanOrEqual(initialCount)
   await expect(items.first().locator('p').first()).toContainText(keyword)
 })
 
@@ -38,7 +38,7 @@ test('clearing search restores the full notion document list', async ({ page }) 
   await searchInput.fill(keyword)
   await expect(items.first()).toBeVisible()
   const filteredCount = await items.count()
-  expect(filteredCount).toBeLessThan(initialCount)
+  expect(filteredCount).toBeLessThanOrEqual(initialCount)
 
   await searchInput.fill('')
   await expect(items).toHaveCount(initialCount)

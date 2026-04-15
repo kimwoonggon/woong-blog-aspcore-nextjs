@@ -55,7 +55,7 @@ test('admin can keep a blog post as draft and publish it later', async ({ page }
 
   await page.goto(`/blog/${created.slug}`)
   await expect(page.getByRole('heading', { name: title })).toHaveCount(0)
-  await expect(page.getByText('404')).toBeVisible()
+  await expect(page.getByRole('heading', { name: '404 - Page Not Found' })).toBeVisible()
 
   await page.goto(`/admin/blog/${created.id}`)
   const publishedCheckbox = page.getByRole('checkbox', { name: 'Published' })
@@ -116,7 +116,7 @@ test('admin can toggle a published blog post back to draft and publish it again'
 
   await page.goto(`/blog/${created.slug}`)
   await expect(page.getByRole('heading', { name: title })).toHaveCount(0)
-  await expect(page.getByText('404')).toBeVisible()
+  await expect(page.getByRole('heading', { name: '404 - Page Not Found' })).toBeVisible()
 
   await page.goto(`/admin/blog/${created.id}`)
   await page.getByRole('checkbox', { name: 'Published' }).check()

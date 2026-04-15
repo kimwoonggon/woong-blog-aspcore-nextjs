@@ -138,10 +138,10 @@ test('AF-045 notion document info panel shows timestamps and slug for the select
   await expect(infoPanel.getByText('Slug')).toBeVisible()
 
   await expect(infoPanel.locator('dd').filter({ hasText: candidate.slug })).toBeVisible()
-  await expect(infoPanel.locator('dd').filter({ hasText: formatTimestamp(candidate.updatedAt) })).toBeVisible()
+  await expect(infoPanel.locator('dd').filter({ hasText: formatTimestamp(candidate.updatedAt) }).first()).toBeVisible()
 
   if (candidate.publishedAt) {
-    await expect(infoPanel.locator('dd').filter({ hasText: formatTimestamp(candidate.publishedAt) })).toBeVisible()
+    await expect(infoPanel.locator('dd').filter({ hasText: formatTimestamp(candidate.publishedAt) }).first()).toBeVisible()
   } else {
     await expect(infoPanel.locator('dd').filter({ hasText: '—' }).first()).toBeVisible()
   }

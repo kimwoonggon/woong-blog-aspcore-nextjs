@@ -37,6 +37,7 @@ services:
     volumes:
       - data-protection-keys:/app/data-protection
       - media-storage:/app/media
+      - ${CODEX_HOME_DIR:-./.codex-runtime}:/root/.codex
     restart: unless-stopped
 
   db:

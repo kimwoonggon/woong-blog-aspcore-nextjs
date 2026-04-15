@@ -29,8 +29,11 @@ test('E2E-003 visitor can move from home to works, through related content, and 
   const firstBlogCard = page.getByTestId('blog-card').first()
   await expect(firstBlogCard).toBeVisible()
   const firstBlogTitle = (await firstBlogCard.locator('[data-slot="card-title"]').innerText()).trim()
+  const firstBlogHref = await firstBlogCard.getAttribute('href')
+  expect(firstBlogHref).toBeTruthy()
   await firstBlogCard.click()
 
+  await expect(page).toHaveURL(new RegExp(`/blog/.+`))
   await expect(page.locator('main h1')).toHaveText(firstBlogTitle)
   await expect(page.getByTestId('blog-related-shell')).toBeVisible()
   await expect(page.getByTestId('blog-prev-next')).toBeVisible()

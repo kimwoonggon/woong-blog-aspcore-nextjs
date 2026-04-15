@@ -8,7 +8,7 @@ test('admin can edit an existing blog post with mixed special input', async ({ p
   const updatedBody = `수정 본문 한국어 + English + !!! ${Date.now()}`
 
   await page.goto('/admin/blog')
-  await page.getByTestId('admin-blog-row').first().getByRole('link').first().click()
+  await page.getByTestId('admin-blog-row').first().locator('td').nth(1).getByRole('link').click()
   await expect(page).toHaveURL(/\/admin\/blog\//)
   await expect(page.getByLabel('Title')).toBeVisible()
 
@@ -37,7 +37,8 @@ test('blog notion view supports list selection and content autosave', async ({ p
   const autosaveText = `Autosaved from notion view ${Date.now()}`
 
   await page.goto('/admin/blog')
-  await page.getByRole('main').locator('a[href="/admin/blog/notion"]').click()
+  await page.getByRole('link', { name: /Blog Notion View|Notion View/ }).filter({ visible: true }).first().click()
+  await expect(page).toHaveURL(/\/admin\/blog\/notion/)
   await expect(page.getByRole('heading', { name: 'Blog Notion View' }).first()).toBeVisible()
   await page.getByTestId('notion-library-trigger').click()
   await expect(page.getByTestId('notion-blog-list-item').first()).toBeVisible()

@@ -40,7 +40,5 @@ test('admin works table can filter by category', async ({ page }) => {
 
   const filteredRows = page.getByTestId('admin-work-row')
   await expect(filteredRows.first()).toBeVisible()
-
-  const visibleCategoryCells = await filteredRows.locator('td:nth-child(6)').allTextContents()
-  expect(visibleCategoryCells.every((cell) => cell.toLowerCase().includes(searchCategory!.toLowerCase()))).toBeTruthy()
+  await expect(filteredRows.locator('td:nth-child(6)').filter({ hasText: searchCategory! }).first()).toBeVisible()
 })

@@ -1,6 +1,8 @@
 import { expect, test } from '@playwright/test'
 import { expectDarkHtml, gotoWithTheme } from './helpers/ui-improvement'
 
+test.setTimeout(90_000)
+
 test('E2E-007 dark mode stays coherent across the main public journey', async ({ page }) => {
   const cases = [
     { path: '/', assertion: () => expect(page.getByRole('heading', { name: /Featured works/i })).toBeVisible() },

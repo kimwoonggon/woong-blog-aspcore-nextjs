@@ -32,6 +32,7 @@ interface Blog {
 interface BlogEditorProps {
     initialBlog?: Blog
     inlineMode?: boolean
+    onSaved?: () => void
 }
 
 function normalizeTagsInput(tags: string) {
@@ -79,12 +80,16 @@ function clearBeforeUnloadWarning() {
     }
 }
 
-export function BlogEditor({ initialBlog, inlineMode = false }: BlogEditorProps) {
+export function BlogEditor({ initialBlog, inlineMode = false, onSaved }: BlogEditorProps) {
     const router = useRouter()
     const pathname = usePathname()
     const searchParams = useSearchParams()
     const isEditing = Boolean(initialBlog?.id)
     const defaultPublished = initialBlog?.published ?? true
+    const requestedReturnTo = searchParams.get('returnTo')
+    const returnTo = requestedReturnTo && requestedReturnTo.startsWith('/')
+        ? requestedReturnTo
+        : '/admin/blog'
     const [title, setTitle] = useState(initialBlog?.title || '')
     const [excerpt, setExcerpt] = useState(initialBlog?.excerpt || '')
     const [tagsInput, setTagsInput] = useState(initialBlog?.tags?.join(', ') || '')
@@ -180,16 +185,22 @@ export function BlogEditor({ initialBlog, inlineMode = false }: BlogEditorProps)
             setSavedSnapshot(nextSnapshot)
             setIsDirty(false)
             clearBeforeUnloadWarning()
+            onSaved?.()
             if (normalizedHtml !== html) {
                 setHtml(normalizedHtml)
             }
 
             if (inlineMode) {
+                if (requestedReturnTo && returnTo !== '/admin/blog') {
+                    router.push(returnTo)
+                    return
+                }
+
                 const relatedPage = searchParams.get('relatedPage')
                 const relatedPageQuery = relatedPage ? `?relatedPage=${encodeURIComponent(relatedPage)}` : ''
 
-                if (!isEditing && pathname === '/blog' && nextSlug) {
-                    router.push(`/blog/${encodeURIComponent(nextSlug)}`)
+                if (!isEditing && pathname === '/blog') {
+                    router.refresh()
                     return
                 }
 
@@ -207,7 +218,7 @@ export function BlogEditor({ initialBlog, inlineMode = false }: BlogEditorProps)
                 return
             }
 
-            router.push('/admin/blog')
+            router.push(returnTo)
         } finally {
             setIsSaving(false)
         }
@@ -221,9 +232,12 @@ export function BlogEditor({ initialBlog, inlineMode = false }: BlogEditorProps)
         pathname,
         published,
         router,
+        requestedReturnTo,
+        returnTo,
         searchParams,
         tagsInput,
         title,
+        onSaved,
     ])
 
     saveBlogRef.current = saveBlog
@@ -387,7 +401,12 @@ export function BlogEditor({ initialBlog, inlineMode = false }: BlogEditorProps)
 
             <div className="flex flex-col gap-3 border-t pt-8 sm:flex-row sm:items-center sm:justify-end">
                 {saveError ? (
-                    <p role="alert" aria-live="polite" data-testid="admin-blog-form-error" className="text-sm text-red-600 sm:mr-auto">
+                    <p
+                        role="alert"
+                        aria-live="polite"
+                        data-testid="admin-blog-form-error"
+                        className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive sm:mr-auto sm:max-w-xl"
+                    >
                         {saveError}
                     </p>
                 ) : null}

@@ -46,6 +46,7 @@ export default async function BlogPage({ searchParams }: PageProps) {
     const session = await fetchServerSession()
     const totalPages = Math.max(1, blogsPayload.totalPages)
     const page = blogsPayload.page
+    const returnTo = encodeURIComponent(`/blog?page=${page}&pageSize=${currentPageSize}`)
     const pagedBlogs = qaTaggedBlogs
         ? blogsPayload.items.map((blog, index) => ({
             ...blog,
@@ -90,7 +91,7 @@ export default async function BlogPage({ searchParams }: PageProps) {
                     pagedBlogs.map((blog) => (
                         <Link
                             key={blog.id}
-                            href={`/blog/${blog.slug}?relatedPage=${page}`}
+                            href={`/blog/${blog.slug}?returnTo=${returnTo}&relatedPage=${page}`}
                             className="group/card block h-full"
                             data-testid="blog-card"
                         >

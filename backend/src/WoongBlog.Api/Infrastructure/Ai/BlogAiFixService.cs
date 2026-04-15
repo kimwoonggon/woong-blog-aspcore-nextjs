@@ -153,12 +153,6 @@ Rules:
                 arguments.Add("workspace-write");
             }
 
-            if (!arguments.Contains("--ask-for-approval", StringComparer.OrdinalIgnoreCase))
-            {
-                arguments.Add("--ask-for-approval");
-                arguments.Add("never");
-            }
-
             if (!arguments.Contains("--skip-git-repo-check", StringComparer.OrdinalIgnoreCase))
             {
                 arguments.Add("--skip-git-repo-check");

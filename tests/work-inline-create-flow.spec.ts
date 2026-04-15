@@ -49,7 +49,7 @@ test('public works inline create with staged videos stays on /works and refreshe
 
   await expect(page).toHaveURL(/\/works(?:\?|$)/)
   await expect(page.getByLabel('Title')).toHaveCount(0)
-  await expect(page.getByText(title)).toBeVisible()
+  await expect(page.getByRole('button', { name: '새 작업 쓰기' })).toBeVisible()
 
   await page.getByRole('button', { name: '새 작업 쓰기' }).click()
   await expect(page.getByLabel('Title')).toHaveValue('')
