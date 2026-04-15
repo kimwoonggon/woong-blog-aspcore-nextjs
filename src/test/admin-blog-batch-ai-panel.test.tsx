@@ -142,6 +142,63 @@ describe('AdminBlogBatchAiPanel', () => {
     expect(screen.getByRole('option', { name: 'CODEX' })).toBeInTheDocument()
   })
 
+  it('restores a saved provider from localStorage when it is still allowed', async () => {
+    window.localStorage.setItem('admin-ai-provider', 'codex')
+
+    renderPanel()
+
+    await waitFor(() => {
+      expect(mocks.fetchAdminAiRuntimeConfigBrowser).toHaveBeenCalled()
+    })
+
+    expect(screen.getByLabelText('Batch AI provider')).toHaveValue('codex')
+    expect(screen.getByLabelText('Batch AI provider')).toBeInTheDocument()
+    expect(screen.getByLabelText('Codex model')).toBeInTheDocument()
+    expect(screen.getByLabelText('Blog batch codex reasoning')).toBeInTheDocument()
+    expect(screen.getByLabelText('Workers')).toBeInTheDocument()
+  })
+
+  it('falls back to the first allowed provider when localStorage contains a stale value', async () => {
+    window.localStorage.setItem('admin-ai-provider', 'azure')
+
+    renderPanel()
+
+    await waitFor(() => {
+      expect(mocks.fetchAdminAiRuntimeConfigBrowser).toHaveBeenCalled()
+    })
+
+    expect(screen.getByLabelText('Batch AI provider')).toHaveValue('openai')
+    expect(screen.queryByLabelText('Codex model')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Blog batch codex reasoning')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Workers')).not.toBeInTheDocument()
+  })
+
+  it('uses the selected provider in the batch job payload and hides codex-only controls for openai', async () => {
+    renderPanel()
+
+    await waitFor(() => {
+      expect(mocks.fetchAdminAiRuntimeConfigBrowser).toHaveBeenCalled()
+    })
+
+    fireEvent.change(screen.getByLabelText('Batch AI provider'), { target: { value: 'openai' } })
+
+    expect(screen.queryByLabelText('Codex model')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Blog batch codex reasoning')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Workers')).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /Generate AI Fix job/i }))
+
+    await waitFor(() => {
+      expect(mocks.fetchWithCsrf).toHaveBeenCalled()
+    })
+
+    const [, request] = mocks.fetchWithCsrf.mock.calls[0] as [string, { body: string }]
+    expect(JSON.parse(request.body)).toMatchObject({
+      provider: 'openai',
+    })
+    expect(window.localStorage.getItem('admin-ai-provider')).toBe('openai')
+  })
+
   it('blocks date batch creation when no date bounds are set', async () => {
     renderPanel()
 

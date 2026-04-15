@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   refresh: vi.fn(),
   back: vi.fn(),
   pathname: '/blog',
+  searchParams: '',
   fetchWithCsrf: vi.fn(),
   toast: {
     error: vi.fn(),
@@ -18,7 +19,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mocks.push, replace: mocks.replace, refresh: mocks.refresh, back: mocks.back }),
   usePathname: () => mocks.pathname,
-  useSearchParams: () => new URLSearchParams(),
+  useSearchParams: () => new URLSearchParams(mocks.searchParams),
 }))
 
 vi.mock('sonner', () => ({ toast: mocks.toast }))
@@ -49,6 +50,7 @@ describe('BlogEditor', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mocks.pathname = '/blog'
+    mocks.searchParams = ''
     mocks.fetchWithCsrf.mockResolvedValue({
       ok: true,
       json: async () => ({}),
@@ -117,5 +119,52 @@ describe('BlogEditor', () => {
 
     expect(mocks.refresh).toHaveBeenCalled()
     expect(mocks.push).not.toHaveBeenCalled()
+  })
+
+  it('returns to a safe inline returnTo path after save', async () => {
+    mocks.pathname = '/blog'
+    mocks.searchParams = 'returnTo=%2Fblog%3Fpage%3D2%26pageSize%3D12&relatedPage=2'
+
+    render(<BlogEditor inlineMode />)
+
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Inline Return' } })
+    fireEvent.change(screen.getByLabelText('Mock blog content'), {
+      target: { value: '<p>Inline return body</p>' },
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /Create Post/i }))
+
+    await waitFor(() => {
+      expect(mocks.fetchWithCsrf).toHaveBeenCalled()
+    })
+
+    expect(mocks.push).toHaveBeenCalledWith('/blog?page=2&pageSize=12')
+    expect(mocks.refresh).not.toHaveBeenCalled()
+  })
+
+  it('ignores an unsafe returnTo path and falls back to the admin list', async () => {
+    mocks.pathname = '/admin/blog/123'
+    mocks.searchParams = 'returnTo=%2F%2Fevil.example'
+
+    render(
+      <BlogEditor
+        initialBlog={{
+          id: 'blog-1',
+          slug: 'safe-slug',
+          title: 'Existing title',
+          content: { html: '<p>Old body</p>' },
+        }}
+      />,
+    )
+
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Updated title' } })
+    fireEvent.click(screen.getByRole('button', { name: /Update Post/i }))
+
+    await waitFor(() => {
+      expect(mocks.fetchWithCsrf).toHaveBeenCalled()
+    })
+
+    expect(mocks.push).toHaveBeenCalledWith('/admin/blog')
+    expect(mocks.push).not.toHaveBeenCalledWith('//evil.example')
   })
 })

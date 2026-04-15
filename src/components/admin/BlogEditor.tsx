@@ -35,6 +35,18 @@ interface BlogEditorProps {
     onSaved?: () => void
 }
 
+function resolveReturnTo(requestedReturnTo: string | null, fallback = '/admin/blog') {
+    if (!requestedReturnTo) {
+        return fallback
+    }
+
+    if (!requestedReturnTo.startsWith('/') || requestedReturnTo.startsWith('//')) {
+        return fallback
+    }
+
+    return requestedReturnTo
+}
+
 function normalizeTagsInput(tags: string) {
     return tags.split(',').map((tag) => tag.trim()).filter(Boolean)
 }
@@ -87,9 +99,7 @@ export function BlogEditor({ initialBlog, inlineMode = false, onSaved }: BlogEdi
     const isEditing = Boolean(initialBlog?.id)
     const defaultPublished = initialBlog?.published ?? true
     const requestedReturnTo = searchParams.get('returnTo')
-    const returnTo = requestedReturnTo && requestedReturnTo.startsWith('/')
-        ? requestedReturnTo
-        : '/admin/blog'
+    const returnTo = resolveReturnTo(requestedReturnTo)
     const [title, setTitle] = useState(initialBlog?.title || '')
     const [excerpt, setExcerpt] = useState(initialBlog?.excerpt || '')
     const [tagsInput, setTagsInput] = useState(initialBlog?.tags?.join(', ') || '')
