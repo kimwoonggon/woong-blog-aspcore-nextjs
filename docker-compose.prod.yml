@@ -35,8 +35,8 @@ services:
     depends_on:
       - db
     volumes:
-      - data-protection-keys:/app/data-protection
-      - media-storage:/app/media
+      - ${DATA_PROTECTION_DIR:-./.docker-data/prod/data-protection}:/app/data-protection
+      - ${MEDIA_DATA_DIR:-./.docker-data/prod/media}:/app/media
       - ${CODEX_HOME_DIR:-./.codex-runtime}:/root/.codex
     restart: unless-stopped
 
@@ -63,7 +63,3 @@ services:
       - frontend
       - backend
     restart: unless-stopped
-
-volumes:
-  data-protection-keys:
-  media-storage:
