@@ -48,6 +48,20 @@ public class StartupOptionsValidationTests
     }
 
     [Fact]
+    public void InvalidAuthPublicOrigin_FailsAtStartup()
+    {
+        using var factory = CreateInvalidFactory(new Dictionary<string, string?>
+        {
+            ["Auth:PublicOrigin"] = "https://woonglab.com/login"
+        });
+
+        var exception = Assert.ThrowsAny<Exception>(() => factory.CreateClient());
+        var validationException = FindOptionsValidationException(exception);
+
+        Assert.Contains("Auth:PublicOrigin", string.Join('\n', validationException.Failures));
+    }
+
+    [Fact]
     public void InvalidAiProvider_FailsAtStartup()
     {
         using var factory = CreateInvalidFactory(new Dictionary<string, string?>

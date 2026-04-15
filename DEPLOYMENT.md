@@ -18,6 +18,7 @@ cp .env.prod.example .env.prod
    - `POSTGRES_PASSWORD`
    - `Auth__ClientId`
    - `Auth__ClientSecret`
+   - `Auth__PublicOrigin`
    - `Auth__AdminEmails__0`
    - `CODEX_HOME_DIR` if `AI_PROVIDER=codex`
 
@@ -108,9 +109,21 @@ docker compose --env-file .env.prod -f docker-compose.prod.yml exec nginx nginx 
 
 - `frontend`와 `backend`는 외부 포트를 열지 않는다.
 - 외부 공개는 `nginx`만 `80/443`으로 처리한다.
+- 운영 대표 origin은 하나로 고정한다. 현재 권장값은 apex인 `https://woonglab.com`이며 `www.woonglab.com`은 nginx에서 apex로 `301` canonical redirect 시킨다.
+- `Auth__PublicOrigin`은 Google OIDC `redirect_uri`를 안정적으로 고정하기 위한 값이므로 실제 브라우저 대표 origin과 정확히 일치해야 한다.
 - `data-protection-keys` volume을 삭제하면 로그인 세션과 antiforgery가 끊길 수 있다.
 - `media-storage`와 `postgres-data`는 운영 데이터이므로 재배포 중 삭제하면 안 된다.
 - `AI_PROVIDER=codex`를 유지하는 환경이면 서버의 Codex home(`auth.json` 포함)을 `CODEX_HOME_DIR`로 bind mount 해야 한다. 그렇지 않으면 backend container 안 `codex exec`가 `401 Unauthorized`로 실패한다.
+
+## 8. Downtime Note
+
+현재 `docker compose up -d` 방식은 단일 `frontend`/`backend` 컨테이너를 교체하는 구조라 엄밀한 무중단 배포가 아니다. 컨테이너 recreate 동안 짧은 응답 공백이 생길 수 있다.
+
+실제 무중단이 필요하면 배포 방식을 바꿔야 한다.
+
+- blue-green: `frontend_blue/frontend_green`, `backend_blue/backend_green`처럼 두 벌을 띄운 뒤 nginx upstream만 전환
+- rolling: 단일 host compose 대신 다중 replica + health-checked load balancer를 지원하는 오케스트레이터 사용
+- 최소 타협안: 먼저 새 backend를 다른 service name으로 올리고 health 확인 후 nginx upstream 전환, 마지막에 구버전 정리
 
 ## Staging Deployment
 

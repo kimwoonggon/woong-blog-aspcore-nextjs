@@ -55,6 +55,15 @@ internal sealed class AppOpenIdConnectEvents(
         context.Properties.AllowRefresh = true;
     }
 
+    public override Task RedirectToIdentityProvider(RedirectContext context)
+    {
+        context.ProtocolMessage.RedirectUri = PublicOriginUrlResolver.ResolveCallbackUri(
+            context.HttpContext.Request,
+            authOptions.Value);
+
+        return Task.CompletedTask;
+    }
+
     public override async Task RemoteFailure(RemoteFailureContext context)
     {
         await recorder.RecordLoginFailureAsync(

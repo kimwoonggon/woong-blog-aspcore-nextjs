@@ -8,6 +8,7 @@ public class AuthOptions
     public string Authority { get; set; } = "https://accounts.google.com";
     public string ClientId { get; set; } = string.Empty;
     public string ClientSecret { get; set; } = string.Empty;
+    public string PublicOrigin { get; set; } = string.Empty;
     public string CallbackPath { get; set; } = "/api/auth/callback";
     public string SignedOutRedirectPath { get; set; } = "/";
     public string CookieName { get; set; } = "portfolio_auth";
