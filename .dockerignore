@@ -17,6 +17,7 @@ playwright-report
 downloads
 docs
 db_status
+.docker-data
 .devcontainer-data
 .refs
 .local-certs
