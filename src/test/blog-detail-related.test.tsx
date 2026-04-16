@@ -14,7 +14,7 @@ describe('public blog detail related content', () => {
     vi.clearAllMocks()
   })
 
-  it('passes the full related blog list to the related content section instead of truncating to 30 items', async () => {
+  it('passes the full blog list including the current post to the related content section', async () => {
     const relatedItems = Array.from({ length: 37 }, (_, index) => ({
       id: `related-${index + 1}`,
       slug: `related-${index + 1}`,
@@ -62,6 +62,6 @@ describe('public blog detail related content', () => {
     const BlogDetailPage = (await import('@/app/(public)/blog/[slug]/page')).default
     render(await BlogDetailPage({ params: Promise.resolve({ slug: 'current-post' }) }))
 
-    expect(screen.getByTestId('related-count')).toHaveTextContent('37')
+    expect(screen.getByTestId('related-count')).toHaveTextContent('38')
   }, 120000)
 })
