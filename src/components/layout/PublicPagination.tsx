@@ -6,6 +6,7 @@ interface PublicPaginationProps {
   totalPages: number
   pageSize: number
   ariaLabel: string
+  queryParams?: Record<string, string | null | undefined>
 }
 
 function getPageWindow(currentPage: number, totalPages: number, windowSize = 5) {
@@ -16,12 +17,27 @@ function getPageWindow(currentPage: number, totalPages: number, windowSize = 5) 
   return Array.from({ length: end - start + 1 }, (_, index) => start + index)
 }
 
+function buildPageHref(pathname: string, page: number, pageSize: number, queryParams?: Record<string, string | null | undefined>) {
+  const params = new URLSearchParams()
+  params.set('page', String(page))
+  params.set('pageSize', String(pageSize))
+
+  for (const [key, value] of Object.entries(queryParams ?? {})) {
+    if (value) {
+      params.set(key, value)
+    }
+  }
+
+  return `${pathname}?${params.toString()}`
+}
+
 export function PublicPagination({
   pathname,
   currentPage,
   totalPages,
   pageSize,
   ariaLabel,
+  queryParams,
 }: PublicPaginationProps) {
   const pageWindow = getPageWindow(currentPage, totalPages)
 
@@ -31,7 +47,7 @@ export function PublicPagination({
         {pageWindow.map((pageNumber) => (
           <Link
             key={pageNumber}
-            href={`${pathname}?page=${pageNumber}&pageSize=${pageSize}`}
+            href={buildPageHref(pathname, pageNumber, pageSize, queryParams)}
             className={`inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
               pageNumber === currentPage
                 ? 'border-sky-400 bg-sky-500 text-white dark:border-sky-600 dark:bg-sky-600'
@@ -45,46 +61,46 @@ export function PublicPagination({
       <div className="flex items-center justify-center gap-3">
         {currentPage > 1 ? (
           <Link
-            href={`${pathname}?page=1&pageSize=${pageSize}`}
+            href={buildPageHref(pathname, 1, pageSize, queryParams)}
             className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border px-4 py-2 text-sm font-medium hover:bg-accent"
           >
-            처음
+            First
           </Link>
         ) : (
-          <span className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border px-4 py-2 text-sm text-muted-foreground">처음</span>
+          <span className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border px-4 py-2 text-sm text-muted-foreground">First</span>
         )}
         {currentPage > 1 ? (
           <Link
-            href={`${pathname}?page=${currentPage - 1}&pageSize=${pageSize}`}
+            href={buildPageHref(pathname, currentPage - 1, pageSize, queryParams)}
             className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border px-4 py-2 text-sm font-medium hover:bg-accent"
           >
-            이전
+            Previous
           </Link>
         ) : (
-          <span className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border px-4 py-2 text-sm text-muted-foreground">이전</span>
+          <span className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border px-4 py-2 text-sm text-muted-foreground">Previous</span>
         )}
         <span className="text-sm text-muted-foreground">
           {currentPage} / {totalPages}
         </span>
         {currentPage < totalPages ? (
           <Link
-            href={`${pathname}?page=${currentPage + 1}&pageSize=${pageSize}`}
+            href={buildPageHref(pathname, currentPage + 1, pageSize, queryParams)}
             className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border px-4 py-2 text-sm font-medium hover:bg-accent"
           >
-            다음
+            Next
           </Link>
         ) : (
-          <span className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border px-4 py-2 text-sm text-muted-foreground">다음</span>
+          <span className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border px-4 py-2 text-sm text-muted-foreground">Next</span>
         )}
         {currentPage < totalPages ? (
           <Link
-            href={`${pathname}?page=${totalPages}&pageSize=${pageSize}`}
+            href={buildPageHref(pathname, totalPages, pageSize, queryParams)}
             className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border px-4 py-2 text-sm font-medium hover:bg-accent"
           >
-            마지막
+            Last
           </Link>
         ) : (
-          <span className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border px-4 py-2 text-sm text-muted-foreground">마지막</span>
+          <span className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border px-4 py-2 text-sm text-muted-foreground">Last</span>
         )}
       </div>
     </nav>

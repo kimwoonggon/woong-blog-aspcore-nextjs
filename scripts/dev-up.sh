@@ -44,5 +44,9 @@ mkdir -p "${POSTGRES_DATA_DIR}"
 export POSTGRES_DATA_DIR
 
 NGINX_DEFAULT_CONF="${NGINX_DEFAULT_CONF:-./nginx/local-https.conf}" \
+NGINX_BIND_HOST="${NGINX_BIND_HOST:-127.0.0.1}" \
+NGINX_HTTP_PORT="${NGINX_HTTP_PORT:-3000}" \
+NGINX_HTTPS_PORT="${NGINX_HTTPS_PORT:-3001}" \
+BACKEND_BIND_HOST="${BACKEND_BIND_HOST:-127.0.0.1}" \
 APP_ENV_FILE="${APP_ENV_FILE}" \
 "${DOCKER_BIN}" compose --env-file "${COMPOSE_ENV_FILE}" -f docker-compose.dev.yml up --build -d db frontend backend nginx

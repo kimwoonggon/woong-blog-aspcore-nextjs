@@ -942,6 +942,7 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
         }
 
         if (navigateInlineWorkAfterSave(nextSlug, editing)) {
+            onSaved?.({ id: responsePayload?.id, slug: nextSlug, isEditing: editing })
             return true
         }
 

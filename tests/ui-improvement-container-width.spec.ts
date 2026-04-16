@@ -20,7 +20,7 @@ test('home and blog pages share the same container width on desktop', async ({ p
   const homeWidth = await homeContainer.evaluate((element) => element.getBoundingClientRect().width)
 
   await page.goto('/blog')
-  await expect(page.getByRole('heading', { name: 'Blog', exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Study', exact: true })).toBeVisible()
   const blogContainer = page.locator('main > div.container.max-w-7xl').first()
   await expect(blogContainer).toBeVisible()
   const blogWidth = await blogContainer.evaluate((element) => element.getBoundingClientRect().width)

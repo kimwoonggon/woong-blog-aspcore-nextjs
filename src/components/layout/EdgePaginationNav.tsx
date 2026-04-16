@@ -5,6 +5,7 @@ interface EdgePaginationNavProps {
   currentPage: number
   totalPages: number
   pageSize: number
+  queryParams?: Record<string, string | null | undefined>
 }
 
 function navButtonClass(side: 'left' | 'right', disabled: boolean) {
@@ -18,9 +19,21 @@ export function EdgePaginationNav({
   currentPage,
   totalPages,
   pageSize,
+  queryParams,
 }: EdgePaginationNavProps) {
-  const previousHref = currentPage > 1 ? `${pathname}?page=${currentPage - 1}&pageSize=${pageSize}` : null
-  const nextHref = currentPage < totalPages ? `${pathname}?page=${currentPage + 1}&pageSize=${pageSize}` : null
+  const buildHref = (page: number) => {
+    const params = new URLSearchParams()
+    params.set('page', String(page))
+    params.set('pageSize', String(pageSize))
+    for (const [key, value] of Object.entries(queryParams ?? {})) {
+      if (value) {
+        params.set(key, value)
+      }
+    }
+    return `${pathname}?${params.toString()}`
+  }
+  const previousHref = currentPage > 1 ? buildHref(currentPage - 1) : null
+  const nextHref = currentPage < totalPages ? buildHref(currentPage + 1) : null
 
   return (
     <>

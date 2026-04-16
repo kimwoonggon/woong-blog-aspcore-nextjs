@@ -43,6 +43,21 @@ describe('public/admin api clients', () => {
     })
   })
 
+  it('fetchPublicBlogs forwards title and content search query params', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ items: [], page: 1, pageSize: 12, totalItems: 0, totalPages: 1 }), { status: 200, headers: { 'Content-Type': 'application/json' } }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ items: [], page: 1, pageSize: 12, totalItems: 0, totalPages: 1 }), { status: 200, headers: { 'Content-Type': 'application/json' } }))
+    vi.stubGlobal('fetch', fetchMock as typeof fetch)
+
+    const { fetchPublicBlogs } = await import('@/lib/api/blogs')
+
+    await fetchPublicBlogs(1, 12, { query: 'server components', searchMode: 'title' })
+    await fetchPublicBlogs(1, 12, { query: 'renderable html', searchMode: 'content' })
+
+    expect(fetchMock).toHaveBeenNthCalledWith(1, 'http://localhost/api/public/blogs?page=1&pageSize=12&query=server+components&searchMode=title', { cache: 'no-store' })
+    expect(fetchMock).toHaveBeenNthCalledWith(2, 'http://localhost/api/public/blogs?page=1&pageSize=12&query=renderable+html&searchMode=content', { cache: 'no-store' })
+  })
+
   it('fetchPublicBlogBySlug requests the backend slug endpoint and fetchPublicWorkBySlug returns null on 404', async () => {
     const fetchMock = vi.fn()
       .mockResolvedValueOnce(

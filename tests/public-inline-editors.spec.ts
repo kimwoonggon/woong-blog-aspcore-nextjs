@@ -19,7 +19,7 @@ test('introduction and contact inline editors open in place and can be closed wi
   await expect(page.getByLabel('Title')).toHaveCount(0)
 })
 
-test('works and blog inline create panels open in place and can be closed', async ({ page }) => {
+test('works and study inline create panels open in place and can be closed', async ({ page }) => {
   await page.goto('/works')
   await expect(page.getByRole('button', { name: '새 작업 쓰기' })).toBeVisible()
   await page.getByRole('button', { name: '새 작업 쓰기' }).click()
@@ -31,7 +31,7 @@ test('works and blog inline create panels open in place and can be closed', asyn
   await page.goto('/blog')
   await expect(page.getByRole('button', { name: '새 글 쓰기' })).toBeVisible()
   await page.getByRole('button', { name: '새 글 쓰기' }).click()
-  await expect(page.getByRole('heading', { name: 'Blog Inline Create' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Study Inline Create' })).toBeVisible()
   await expect(page.getByLabel('Title')).toBeVisible()
   await page.getByRole('button', { name: '뒤로가기' }).click()
   await expect(page.getByLabel('Title')).toHaveCount(0)

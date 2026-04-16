@@ -4,10 +4,10 @@ import { getStyle } from './helpers/ui-improvement'
 test('VA-305 public pagination controls keep 44px touch targets', async ({ page }) => {
   await page.goto('/blog?page=2&pageSize=2')
 
-  const pagination = page.locator('nav[aria-label="Blog pagination"]')
+  const pagination = page.locator('nav[aria-label="Study pagination"]')
   await expect(pagination).toBeVisible()
 
-  const previous = pagination.getByRole('link', { name: '이전' })
+  const previous = pagination.getByRole('link', { name: 'Previous' })
   const active = pagination.getByRole('link', { name: '2', exact: true })
 
   for (const target of [previous, active]) {

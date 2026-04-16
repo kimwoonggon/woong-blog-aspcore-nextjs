@@ -9,6 +9,7 @@ interface InlineAdminEditorShellProps {
   title: string
   description?: string
   backLabel?: string
+  actions?: React.ReactNode
   open?: boolean
   onOpenChange?: (next: boolean) => void
   children: React.ReactNode
@@ -19,6 +20,7 @@ export function InlineAdminEditorShell({
   title,
   description,
   backLabel = '뒤로가기',
+  actions,
   open,
   onOpenChange,
   children,
@@ -48,6 +50,7 @@ export function InlineAdminEditorShell({
           )}
         </div>
         <div className="flex flex-wrap gap-2">
+          {actions}
           <Button
             type="button"
             variant="outline"

@@ -47,12 +47,6 @@ export default async function HomePage({ searchParams }: PageProps) {
     <div className="container mx-auto max-w-7xl flex flex-col gap-16 px-4 py-8 md:px-6 md:py-12">
       <section className="animate-fade-in-up mx-auto flex w-full max-w-5xl flex-col-reverse items-center gap-8 md:grid md:grid-cols-[minmax(0,40rem)_15rem] md:items-center md:justify-center md:gap-12" style={{ animationDelay: '0ms' }}>
         <div className="flex flex-col items-center text-center md:items-start md:text-left">
-          <p
-            className="mb-3 text-xs font-semibold uppercase tracking-[0.28em] text-muted-foreground animate-fade-in-up"
-            style={{ animationDelay: '50ms' }}
-          >
-            Creative portfolio
-          </p>
           <h1
             className="mb-4 text-4xl font-heading font-bold tracking-tight text-foreground md:text-5xl lg:text-6xl animate-fade-in-up [text-wrap:balance]"
             style={{ animationDelay: '100ms' }}
@@ -79,7 +73,7 @@ export default async function HomePage({ searchParams }: PageProps) {
               href="/blog"
               className="inline-flex min-h-11 items-center rounded-full border border-border px-6 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
             >
-              Read Blog
+              Read Study
             </Link>
           </div>
         </div>
@@ -233,7 +227,7 @@ export default async function HomePage({ searchParams }: PageProps) {
                   data-testid="recent-post-card"
                 >
                   <Card className="flex h-full flex-col gap-0 overflow-hidden rounded-2xl border-border/80 bg-background py-0 shadow-sm transition hover:border-primary/30 hover:shadow-md">
-                    <div className="h-1 w-full rounded-t-2xl bg-gradient-to-r from-brand-accent to-brand-cyan" />
+                    <div className="study-card-stripe h-1 w-full rounded-t-2xl" />
                     <CardHeader className="px-4 pt-4 pb-0 sm:px-5 sm:pt-5">
                       <div className="mb-2 flex flex-wrap items-center gap-2">
                         <span className="rounded-full bg-brand-navy px-2.5 py-0.5 text-xs font-bold text-white">
@@ -290,7 +284,7 @@ export default async function HomePage({ searchParams }: PageProps) {
             },
             {
               href: '/blog',
-              label: 'Blog',
+              label: 'Study',
               description: 'Read the rationale, process notes, and technical write-ups.',
               icon: FileText,
             },

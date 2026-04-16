@@ -128,9 +128,9 @@ curl "${curl_opts[@]}" "${base_url}/blog" -o /tmp/woong-blog-blog.html
 curl "${curl_opts[@]}" "${base_url}/works" -o /tmp/woong-blog-works.html
 
 grep -Fq '"status":"ok"' /tmp/woong-blog-health.json
-grep -Fq 'Portfolio' /tmp/woong-blog-home.html
+grep -Fq 'View My Works' /tmp/woong-blog-home.html
 grep -Fq 'Admin Login' /tmp/woong-blog-login.html
-grep -Fq '>Blog<' /tmp/woong-blog-blog.html
+grep -Fq '>Study<' /tmp/woong-blog-blog.html
 grep -Fq '>Works<' /tmp/woong-blog-works.html
 
 if [[ "${expected_local_admin}" == "present" ]]; then

@@ -28,6 +28,11 @@ export interface BlogDetail extends BlogListItem {
   contentJson: string
 }
 
+export interface PublicBlogSearchOptions {
+  query?: string | null
+  searchMode?: 'title' | 'content' | string | null
+}
+
 export interface AdminBlogDetail {
   id: string
   title: string
@@ -49,9 +54,19 @@ async function buildAdminHeaders(): Promise<Record<string, string>> {
   return { cookie: cookieHeader }
 }
 
-export async function fetchPublicBlogs(page = 1, pageSize = 10) {
+export async function fetchPublicBlogs(page = 1, pageSize = 10, searchOptions: PublicBlogSearchOptions = {}) {
   const apiBaseUrl = await getServerApiBaseUrl()
-  const response = await fetch(`${apiBaseUrl}/public/blogs?page=${page}&pageSize=${pageSize}`, { cache: 'no-store' })
+  const params = new URLSearchParams({
+    page: String(page),
+    pageSize: String(pageSize),
+  })
+  const query = searchOptions.query?.trim()
+  if (query) {
+    params.set('query', query)
+    params.set('searchMode', searchOptions.searchMode === 'content' ? 'content' : 'title')
+  }
+
+  const response = await fetch(`${apiBaseUrl}/public/blogs?${params.toString()}`, { cache: 'no-store' })
   if (!response.ok) {
     return {
       items: [],

@@ -36,6 +36,14 @@ test('admin session sees navbar status and public edit affordances', async ({ pa
 
   await gotoAndExpectButton(page, '/blog', '새 글 쓰기')
   await expect(page.getByRole('link', { name: '글 관리' })).toBeVisible({ timeout: 15000 })
+
+  await page.goto('/blog/seeded-blog', { waitUntil: 'networkidle' })
+  await expect(page.getByRole('button', { name: '글 수정' })).toBeVisible({ timeout: 15000 })
+  await expect(page.getByRole('button', { name: '삭제' })).toBeVisible({ timeout: 15000 })
+
+  await page.goto('/works/seeded-work', { waitUntil: 'networkidle' })
+  await expect(page.getByRole('button', { name: '작업 수정' })).toBeVisible({ timeout: 15000 })
+  await expect(page.getByRole('button', { name: '삭제' })).toBeVisible({ timeout: 15000 })
 })
 
 test('logout from signed-in menu redirects back to the main page', async ({ page }) => {

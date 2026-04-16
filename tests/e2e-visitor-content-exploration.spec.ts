@@ -23,7 +23,7 @@ test('E2E-003 visitor can move from home to works, through related content, and 
   await expect(page.locator('main h1')).toBeVisible()
   await expect(page).toHaveURL(/\/works\/.+/)
 
-  await clickHeaderNavLink(page, 'Blog')
+  await clickHeaderNavLink(page, 'Study')
   await expect(page).toHaveURL(/\/blog(?:\?.*)?$/)
 
   const firstBlogCard = page.getByTestId('blog-card').first()

@@ -17,7 +17,7 @@ test('keyboard users can traverse the primary navigation in visual order', async
   await page.goto('/')
 
   const nav = page.locator('header nav:visible').first()
-  const orderedLinks = ['Home', 'Introduction', 'Works', 'Blog', 'Contact', 'Resume']
+  const orderedLinks = ['Home', 'Introduction', 'Works', 'Study', 'Contact', 'Resume']
   const firstLink = nav.getByRole('link', { name: orderedLinks[0], exact: true })
   await firstLink.focus()
 
@@ -38,7 +38,7 @@ test('primary home CTAs keep visible focus treatment and accessible touch target
   await page.goto('/')
 
   const primaryCta = page.getByRole('link', { name: 'View My Works' })
-  const secondaryCta = page.getByRole('link', { name: 'Read Blog' })
+  const secondaryCta = page.getByRole('link', { name: 'Read Study' })
 
   for (const cta of [primaryCta, secondaryCta]) {
     await cta.focus()

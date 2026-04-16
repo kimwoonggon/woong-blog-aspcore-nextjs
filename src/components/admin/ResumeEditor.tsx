@@ -33,8 +33,10 @@ export function ResumeEditor({ resumeAsset }: ResumeEditorProps) {
         const file = e.target.files?.[0]
         if (!file) return
 
-        if (file.type !== 'application/pdf') {
+        const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
+        if (!isPdf) {
             toast.error('Please upload a PDF file.')
+            e.target.value = ''
             return
         }
 
@@ -54,7 +56,6 @@ export function ResumeEditor({ resumeAsset }: ResumeEditorProps) {
             const uploadData = await res.json()
             if (!res.ok) throw new Error(uploadData.error || 'Upload failed')
 
-            // Link the new asset to site settings
             const settingsRes = await fetchWithCsrf(`${getBrowserApiBaseUrl()}/admin/site-settings`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
@@ -65,7 +66,6 @@ export function ResumeEditor({ resumeAsset }: ResumeEditorProps) {
 
             if (!settingsRes.ok) throw new Error('Failed to link resume to settings')
 
-
             setAsset({ id: uploadData.id, bucket: 'public-resume', path: uploadData.path })
             toast.success('Resume uploaded and linked!', { id: toastId })
             router.refresh()
@@ -73,6 +73,7 @@ export function ResumeEditor({ resumeAsset }: ResumeEditorProps) {
             toast.error(getErrorMessage(error, 'Failed to upload'), { id: toastId })
         } finally {
             setIsUploading(false)
+            e.target.value = ''
         }
     }
 
@@ -83,7 +84,6 @@ export function ResumeEditor({ resumeAsset }: ResumeEditorProps) {
         const toastId = toast.loading('Removing resume...')
 
         try {
-            // 1. Unlink from site settings
             const settingsRes = await fetchWithCsrf(`${getBrowserApiBaseUrl()}/admin/site-settings`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
@@ -92,17 +92,13 @@ export function ResumeEditor({ resumeAsset }: ResumeEditorProps) {
 
             if (!settingsRes.ok) throw new Error('Failed to update site settings')
 
-            // 2. Delete the physical asset
             const assetRes = await fetchWithCsrf(`${getBrowserApiBaseUrl()}/uploads?id=${asset.id}`, {
                 method: 'DELETE',
             })
 
             if (!assetRes.ok) {
-                const errorData = await assetRes.json()
-                console.error('Asset deletion failed:', errorData.error)
-                // We proceed since it's already unlinked from settings
+                await assetRes.json().catch(() => null)
             }
-
 
             setAsset(null)
             toast.success('Resume removed successfully!', { id: toastId })
@@ -119,7 +115,7 @@ export function ResumeEditor({ resumeAsset }: ResumeEditorProps) {
             <div>
                 <h2 className="text-xl font-bold">Resume Management</h2>
                 <p className="text-sm text-gray-500 mt-1">
-                    Upload your latest resume (PDF) to be displayed on the public Resume page and Navbar.
+                    Upload your latest resume (PDF) to be displayed on the public Resume page and navigation.
                 </p>
             </div>
 

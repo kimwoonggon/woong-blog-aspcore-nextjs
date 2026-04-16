@@ -29,7 +29,7 @@ export function Footer({
     const footerLinks = [
         { href: '/', label: 'Home' },
         { href: '/works', label: 'Works' },
-        { href: '/blog', label: 'Blog' },
+        { href: '/blog', label: 'Study' },
         { href: '/introduction', label: 'Introduction' },
         { href: '/contact', label: 'Contact' },
     ]

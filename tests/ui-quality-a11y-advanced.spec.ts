@@ -13,7 +13,7 @@ test('WQ-005 keyboard users can traverse the desktop primary navigation in visua
   await page.goto('/')
 
   const nav = page.getByRole('banner').getByRole('navigation')
-  const orderedLinks = ['Home', 'Introduction', 'Works', 'Blog', 'Contact', 'Resume']
+  const orderedLinks = ['Home', 'Introduction', 'Works', 'Study', 'Contact', 'Resume']
 
   await nav.getByRole('link', { name: orderedLinks[0], exact: true }).focus()
 

@@ -8,6 +8,7 @@ public sealed record AdminWorkListItemDto(
     string Category,
     string? Period,
     string[] Tags,
+    string? ThumbnailUrl,
     bool Published,
     DateTimeOffset? PublishedAt,
     DateTimeOffset CreatedAt,

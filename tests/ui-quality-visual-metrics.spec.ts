@@ -58,7 +58,7 @@ test('VA-301 and VA-400 mobile menu sheet keeps motion tokens and overlay stylin
 test('VA-305 public pagination keeps minimum touch targets and a differentiated active state', async ({ page }) => {
   await page.goto('/blog')
 
-  const pagination = page.locator('nav[aria-label="Blog pagination"]')
+  const pagination = page.locator('nav[aria-label="Study pagination"]')
   await expect(pagination).toBeVisible()
 
   const firstLink = pagination.locator('a').first()

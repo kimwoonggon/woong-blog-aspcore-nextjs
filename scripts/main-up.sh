@@ -33,6 +33,7 @@ FRONTEND_IMAGE=local/woong-blog-frontend:main
 BACKEND_IMAGE=local/woong-blog-backend:main
 APP_ENV_FILE=.env.prod.local
 NGINX_DEFAULT_CONF=./nginx/prod-bootstrap.conf
+NGINX_BIND_HOST=127.0.0.1
 CERTBOT_WWW_DIR=./certbot/www
 LETSENCRYPT_DIR=./certbot/conf
 POSTGRES_DB=portfolio

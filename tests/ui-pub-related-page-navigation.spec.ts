@@ -9,14 +9,14 @@ test('blog detail prev-next keeps the originating related page state', async ({ 
   await firstCard.click()
 
   await expect(page).toHaveURL(/relatedPage=5/)
-  await expect(page.locator('section').filter({ has: page.getByRole('heading', { name: 'More Posts' }) }).getByText(/^Page 5 of \d+$/)).toBeVisible()
+  await expect(page.locator('section').filter({ has: page.getByRole('heading', { name: 'More Studies' }) }).getByText(/^Page 5 of \d+$/)).toBeVisible()
 
   const nextLink = page.getByTestId('blog-prev-next').getByRole('link', { name: /Next|Previous/ }).first()
   await expect(nextLink).toHaveAttribute('href', /relatedPage=5/)
   await nextLink.click()
 
   await expect(page).toHaveURL(/relatedPage=5/)
-  await expect(page.locator('section').filter({ has: page.getByRole('heading', { name: 'More Posts' }) }).getByText(/^Page 5 of \d+$/)).toBeVisible()
+  await expect(page.locator('section').filter({ has: page.getByRole('heading', { name: 'More Studies' }) }).getByText(/^Page 5 of \d+$/)).toBeVisible()
 })
 
 test('work detail prev-next keeps the originating related page state', async ({ page }) => {

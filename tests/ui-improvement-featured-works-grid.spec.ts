@@ -105,7 +105,7 @@ test('hero CTAs keep a clear primary-versus-secondary visual hierarchy', async (
   await page.goto('/')
 
   const primary = page.getByRole('link', { name: 'View My Works' })
-  const secondary = page.getByRole('link', { name: 'Read Blog' })
+  const secondary = page.getByRole('link', { name: 'Read Study' })
   await expect(primary).toBeVisible()
   await expect(secondary).toBeVisible()
 

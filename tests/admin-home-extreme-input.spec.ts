@@ -20,6 +20,10 @@ test('home page editor persists mixed Korean, English, and punctuation input', a
     page.getByRole('button', { name: 'Save Changes' }).nth(1).click(),
   ])
 
+  await page.goto('/admin/pages')
+  await expect(page.getByLabel('Headline')).toHaveValue(headline)
+  await expect(page.getByLabel('Intro Text')).toHaveValue(introText)
+
   await page.goto('/')
   await expect(page.getByRole('heading', { name: headline })).toBeVisible()
   await expect(page.getByText(introText)).toBeVisible()

@@ -11,10 +11,10 @@ test('home hero includes View My Works CTA to /works', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Works', exact: true })).toBeVisible()
 })
 
-test('home hero includes Read Blog CTA to /blog', async ({ page }) => {
+test('home hero includes Read Study CTA to /blog', async ({ page }) => {
   await page.goto('/')
 
-  const cta = page.getByRole('link', { name: 'Read Blog' })
+  const cta = page.getByRole('link', { name: 'Read Study' })
   await expect(cta).toBeVisible()
   await cta.click()
   await expect(page).toHaveURL(/\/blog$/)
@@ -25,7 +25,7 @@ test('hero CTA buttons remain visible and touch-sized on mobile', async ({ page 
   await page.goto('/')
 
   const worksCta = page.getByRole('link', { name: 'View My Works' })
-  const blogCta = page.getByRole('link', { name: 'Read Blog' })
+  const blogCta = page.getByRole('link', { name: 'Read Study' })
 
   await expect(worksCta).toBeVisible()
   await expect(blogCta).toBeVisible()

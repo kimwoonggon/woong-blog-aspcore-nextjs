@@ -29,16 +29,13 @@ test('VA-010 blog card excerpt keeps a readable line-height ratio and preserves 
 test('VA-012 and VA-013 home hero keeps a clear typography scale and weight hierarchy', async ({ page }) => {
   await page.goto('/')
 
-  const eyebrow = page.getByText('Creative portfolio')
   const heading = page.locator('main h1').first()
   const body = heading.locator('xpath=following-sibling::p[1]')
-  await expect(eyebrow).toBeVisible()
+  await expect(page.getByText('Creative portfolio')).toHaveCount(0)
   await expect(heading).toBeVisible()
   await expect(body).toBeVisible()
 
-  const [eyebrowSize, eyebrowWeight, headingSize, headingWeight, bodySize, bodyWeight] = await Promise.all([
-    getStyle(eyebrow, 'font-size'),
-    getStyle(eyebrow, 'font-weight'),
+  const [headingSize, headingWeight, bodySize, bodyWeight] = await Promise.all([
     getStyle(heading, 'font-size'),
     getStyle(heading, 'font-weight'),
     getStyle(body, 'font-size'),
@@ -46,10 +43,8 @@ test('VA-012 and VA-013 home hero keeps a clear typography scale and weight hier
   ])
 
   expect(Number.parseFloat(headingSize)).toBeGreaterThan(Number.parseFloat(bodySize))
-  expect(Number.parseFloat(bodySize)).toBeGreaterThan(Number.parseFloat(eyebrowSize))
   expect(Number.parseInt(headingWeight, 10)).toBeGreaterThanOrEqual(600)
   expect(Number.parseInt(bodyWeight, 10)).toBeLessThanOrEqual(500)
-  expect(Number.parseInt(eyebrowWeight, 10)).toBeGreaterThanOrEqual(500)
 })
 
 test('VA-120 blog detail table of contents keeps its own surfaced container styling', async ({ page }) => {

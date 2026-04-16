@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test'
 
 const worksCtas = [
   { label: 'Start a conversation', href: '/contact', heading: 'Contact' },
-  { label: 'Read the notes', href: '/blog', heading: 'Blog' },
+  { label: 'Read the notes', href: '/blog', heading: 'Study' },
 ] as const
 
 test('works archive header exposes the conversation and notes CTAs', async ({ page }) => {

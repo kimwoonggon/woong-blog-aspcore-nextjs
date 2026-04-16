@@ -2,11 +2,11 @@ import { expect, test } from '@playwright/test'
 
 const ctaCards = [
   { label: 'Works', href: '/works', heading: 'Works' },
-  { label: 'Blog', href: '/blog', heading: 'Blog' },
+  { label: 'Study', href: '/blog', heading: 'Study' },
   { label: 'Introduction', href: '/introduction', heading: 'Introduction' },
 ] as const
 
-test('home CTA section exposes quick navigation cards for works, blog, and introduction', async ({ page }) => {
+test('home CTA section exposes quick navigation cards for works, study, and introduction', async ({ page }) => {
   await page.goto('/')
 
   const section = page.locator('section').filter({

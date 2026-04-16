@@ -2,8 +2,8 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { useMemo, useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
+import { useEffect, useMemo, useState, useTransition } from 'react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { ChevronLeft, ChevronRight, Eye, Pencil, Trash2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -44,13 +44,21 @@ function matchesWorkQuery(work: WorkAdminItem, normalizedQuery: string) {
   )
 }
 
+function normalizePageParam(value: string | null) {
+  const parsed = Number.parseInt(value ?? '', 10)
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1
+}
+
 export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
   const router = useRouter()
-  const returnTo = encodeURIComponent('/admin/works')
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const requestedPage = normalizePageParam(searchParams.get('page'))
+  const requestedQuery = searchParams.get('query') ?? ''
   const [selectedIds, setSelectedIds] = useState<string[]>([])
-  const [query, setQuery] = useState('')
+  const [query, setQuery] = useState(requestedQuery)
   const [pendingDelete, setPendingDelete] = useState<PendingWorkDelete | null>(null)
-  const [page, setPage] = useState(1)
+  const [page, setPage] = useState(requestedPage)
   const [isPending, startTransition] = useTransition()
   const pageSize = useResponsivePageSize(12, 8, 6)
   const filteredWorks = useMemo(() => {
@@ -63,6 +71,21 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
   }, [works, query])
   const totalPages = Math.max(1, Math.ceil(filteredWorks.length / pageSize))
   const currentPage = Math.min(page, totalPages)
+  const returnTo = useMemo(() => {
+    const params = new URLSearchParams()
+    if (currentPage > 1) {
+      params.set('page', String(currentPage))
+    }
+    if (pageSize > 0) {
+      params.set('pageSize', String(pageSize))
+    }
+    if (query.trim()) {
+      params.set('query', query.trim())
+    }
+
+    const suffix = params.toString()
+    return encodeURIComponent(suffix ? `${pathname}?${suffix}` : pathname)
+  }, [currentPage, pageSize, pathname, query])
   const visibleWorks = useMemo(() => {
     const start = (currentPage - 1) * pageSize
     return filteredWorks.slice(start, start + pageSize)
@@ -75,6 +98,46 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
   const selectedCount = effectiveSelectedIds.length
   const allSelected = visibleWorks.length > 0 && visibleIds.every((id) => effectiveSelectedIds.includes(id))
   const selectedSet = useMemo(() => new Set(effectiveSelectedIds), [effectiveSelectedIds])
+
+  useEffect(() => {
+    setQuery(requestedQuery)
+  }, [requestedQuery])
+
+  useEffect(() => {
+    setPage(requestedPage)
+  }, [requestedPage])
+
+  useEffect(() => {
+    if (page !== currentPage) {
+      setPage(currentPage)
+    }
+  }, [currentPage, page])
+
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString())
+
+    if (currentPage > 1) {
+      params.set('page', String(currentPage))
+    } else {
+      params.delete('page')
+    }
+
+    params.set('pageSize', String(pageSize))
+
+    if (query.trim()) {
+      params.set('query', query.trim())
+    } else {
+      params.delete('query')
+    }
+
+    const nextQueryString = params.toString()
+    const currentQueryString = searchParams.toString()
+    if (nextQueryString === currentQueryString) {
+      return
+    }
+
+    router.replace(nextQueryString ? `${pathname}?${nextQueryString}` : pathname, { scroll: false })
+  }, [currentPage, pageSize, pathname, query, router, searchParams])
 
   function toggle(id: string) {
     setSelectedIds((current) =>

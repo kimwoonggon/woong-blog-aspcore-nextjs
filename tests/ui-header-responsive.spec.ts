@@ -43,7 +43,7 @@ test.describe('responsive header', () => {
       const drawer = page.getByRole('dialog')
       await expect(drawer).toBeVisible()
 
-      for (const label of ['Home', 'Introduction', 'Works', 'Blog', 'Contact', 'Resume']) {
+      for (const label of ['Home', 'Introduction', 'Works', 'Study', 'Contact', 'Resume']) {
         await expect(drawer.getByRole('link', { name: label, exact: true })).toBeVisible()
       }
     })
@@ -62,7 +62,7 @@ test.describe('responsive header', () => {
       await expect(nav).toBeVisible()
       await expect(themeToggle).toBeVisible()
 
-      for (const label of ['Home', 'Introduction', 'Works', 'Blog', 'Contact', 'Resume']) {
+      for (const label of ['Home', 'Introduction', 'Works', 'Study', 'Contact', 'Resume']) {
         await expect(nav.getByRole('link', { name: label, exact: true })).toBeVisible()
       }
 

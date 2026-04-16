@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Net.Http.Headers;
+using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using WoongBlog.Api.Infrastructure.Persistence;
 
@@ -26,6 +27,39 @@ public class AdminContentEndpointsTests : IClassFixture<CustomWebApplicationFact
         var body = await response.Content.ReadAsStringAsync();
         Assert.Contains("introduction", body, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("contact", body, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task GetAdminPages_Home_ReturnsStructuredHomeContent()
+    {
+        var client = _factory.CreateAuthenticatedClient();
+        var headline = $"Headline {Guid.NewGuid():N}";
+        var introText = $"Intro {Guid.NewGuid():N}";
+        var profileImageUrl = $"/media/public-assets/{Guid.NewGuid():N}.png";
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
+            var home = dbContext.Pages.Single(x => x.Slug == "home");
+            home.ContentJson = JsonSerializer.Serialize(new
+            {
+                headline,
+                introText,
+                profileImageUrl
+            });
+            await dbContext.SaveChangesAsync();
+        }
+
+        var response = await client.GetAsync("/api/admin/pages?slugs=home");
+
+        response.EnsureSuccessStatusCode();
+        using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var homePage = document.RootElement.EnumerateArray().Single();
+        var content = homePage.GetProperty("content");
+
+        Assert.Equal(headline, content.GetProperty("headline").GetString());
+        Assert.Equal(introText, content.GetProperty("introText").GetString());
+        Assert.Equal(profileImageUrl, content.GetProperty("profileImageUrl").GetString());
     }
 
     [Fact]

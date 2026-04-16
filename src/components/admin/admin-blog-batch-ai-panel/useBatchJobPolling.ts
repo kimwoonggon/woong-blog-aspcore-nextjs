@@ -1,5 +1,3 @@
-import { useEffect } from 'react'
-
 export function useBatchJobPolling({
   isOpen,
   activeJobId,
@@ -13,18 +11,10 @@ export function useBatchJobPolling({
   loadRecentJobs: (nextActiveJobId?: string | null) => Promise<void>
   loadJobDetail: (jobId: string) => Promise<void>
 }) {
-  useEffect(() => {
-    if (!isOpen || !activeJobId || !activeJobStatus || !['queued', 'running'].includes(activeJobStatus)) {
-      return
-    }
-
-    const timer = window.setInterval(() => {
-      void loadRecentJobs(activeJobId)
-      void loadJobDetail(activeJobId)
-    }, 2000)
-
-    return () => {
-      window.clearInterval(timer)
-    }
-  }, [activeJobId, activeJobStatus, isOpen, loadJobDetail, loadRecentJobs])
+  void isOpen
+  void activeJobId
+  void activeJobStatus
+  void loadRecentJobs
+  void loadJobDetail
+  // Polling intentionally disabled. Refresh should happen on explicit user action.
 }

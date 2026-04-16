@@ -21,7 +21,7 @@ const navItems = [
     { name: "Home", href: "/" },
     { name: "Introduction", href: "/introduction" },
     { name: "Works", href: "/works" },
-    { name: "Blog", href: "/blog" },
+    { name: "Study", href: "/blog" },
     { name: "Contact", href: "/contact" },
     { name: "Resume", href: "/resume" },
 ]
@@ -198,18 +198,10 @@ export function Navbar({ ownerName = 'John Doe', session }: NavbarProps) {
             <div ref={headerRowRef} className="container mx-auto flex h-20 items-center gap-3 px-4 md:px-6">
                 <div ref={brandRef} className="flex min-w-0 items-center gap-4">
                     <Link href="/" data-testid="navbar-brand" className="min-w-0 rounded-2xl px-1 py-1 transition-colors hover:text-primary">
-                        <div className="flex flex-col">
-                            <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
-                                Portfolio
-                            </span>
-                            <span className="max-w-[12rem] truncate text-xl font-semibold text-foreground md:max-w-[16rem] md:text-2xl xl:max-w-[14rem] 2xl:max-w-[18rem]">
-                                {ownerName}
-                            </span>
-                        </div>
+                        <span className="max-w-[12rem] truncate text-xl font-semibold text-foreground md:max-w-[16rem] md:text-2xl xl:max-w-[14rem] 2xl:max-w-[18rem]">
+                            {ownerName}
+                        </span>
                     </Link>
-                    <p className="hidden min-w-0 max-w-[15rem] truncate text-sm text-muted-foreground min-[1750px]:block">
-                        Works, writing, and experiments in one balanced shell.
-                    </p>
                 </div>
 
                 <div ref={actionsRef} className="ml-auto hidden min-w-0 items-center justify-end gap-2 lg:flex lg:gap-3">
@@ -232,9 +224,6 @@ export function Navbar({ ownerName = 'John Doe', session }: NavbarProps) {
                             <div className="flex h-full flex-col">
                                 <div className="border-b px-6 py-5">
                                     <Link href="/" className="flex flex-col" onClick={() => setIsOpen(false)}>
-                                        <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
-                                            Portfolio
-                                        </span>
                                         <span className="text-2xl font-semibold text-foreground">{ownerName}</span>
                                     </Link>
                                     <p className="mt-3 text-sm text-muted-foreground">
@@ -279,7 +268,7 @@ export function Navbar({ ownerName = 'John Doe', session }: NavbarProps) {
                                                 Theme
                                             </p>
                                             <p className="text-sm font-medium text-foreground">
-                                                Light, dark, or system
+                                                Light or dark
                                             </p>
                                         </div>
                                         <ThemeToggle testId={undefined} />

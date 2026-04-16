@@ -187,7 +187,7 @@ export default async function WorksPage({ searchParams }: PageProps) {
                     {[
                         {
                             href: '/blog',
-                            label: 'Blog',
+                            label: 'Study',
                             description: 'Read the process notes behind specific product and engineering decisions.',
                         },
                         {

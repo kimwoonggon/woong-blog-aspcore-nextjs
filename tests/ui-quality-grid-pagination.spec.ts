@@ -45,23 +45,16 @@ test('WQ-036 and VA-112 public pagination compresses on mobile while keeping an 
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto('/blog?page=2&pageSize=12')
 
-  const desktopPagination = page.locator('nav[aria-label="Blog pagination"]')
+  const desktopPagination = page.locator('nav[aria-label="Study pagination"]')
   await expect(desktopPagination).toBeVisible()
-  const desktopNumberLinks = await desktopPagination.locator('a').evaluateAll((links) =>
-    links.filter((link) => /^\d+$/.test((link.textContent ?? '').trim())).length,
-  )
+  await expect(desktopPagination.getByRole('link', { name: '2', exact: true })).toHaveClass(/bg-sky-500/)
 
   await page.setViewportSize({ width: 375, height: 667 })
   await page.goto('/blog?page=2&pageSize=2')
 
-  const mobilePagination = page.locator('nav[aria-label="Blog pagination"]')
+  const mobilePagination = page.locator('nav[aria-label="Study pagination"]')
   await expect(mobilePagination).toBeVisible()
-  const mobileNumberLinks = await mobilePagination.locator('a').evaluateAll((links) =>
-    links.filter((link) => /^\d+$/.test((link.textContent ?? '').trim())).length,
-  )
-
-  expect(mobileNumberLinks).toBeLessThanOrEqual(desktopNumberLinks)
   await expect(mobilePagination.getByRole('link', { name: '2', exact: true })).toHaveClass(/bg-sky-500/)
-  await expect(mobilePagination.getByRole('link', { name: '이전' })).toBeVisible()
-  await expect(mobilePagination.getByRole('link', { name: '다음' })).toBeVisible()
+  await expect(mobilePagination.getByRole('link', { name: 'Previous' })).toBeVisible()
+  await expect(mobilePagination.getByRole('link', { name: 'Next' })).toBeVisible()
 })

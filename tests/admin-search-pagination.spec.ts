@@ -165,8 +165,6 @@ test('admin blog page supports title search and compact pagination controls', as
 
   await expect(page.getByRole('button', { name: 'Previous page' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Next page' })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'First' })).toHaveCount(0)
-  await expect(page.getByRole('button', { name: 'Last' })).toHaveCount(0)
 
   if (initialTotal > 1) {
     await page.getByRole('button', { name: 'Next page' }).click()
@@ -321,6 +319,111 @@ test('admin works pagination adapts the row count across desktop, tablet, and mo
 
   await page.setViewportSize({ width: 600, height: 1200 })
   await expectResponsiveTablePagination(page, '/admin/works', 'admin-work-row', 6)
+})
+
+test('admin work edit and delete keep the current filtered page location', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1200 })
+
+  const prefix = `Playwright Work ReturnTo ${Date.now()}`
+  const expectedPathname = '/admin/works'
+  await page.goto(expectedPathname)
+
+  const csrfResponse = await page.request.get('/api/auth/csrf')
+  expect(csrfResponse.ok()).toBeTruthy()
+  const csrf = await csrfResponse.json() as { requestToken: string; headerName: string }
+  for (let index = 0; index < 14; index += 1) {
+    const title = `${prefix} ${String(index + 1).padStart(2, '0')}`
+    const response = await page.request.post('/api/admin/works', {
+      headers: {
+        'Content-Type': 'application/json',
+        [csrf.headerName]: csrf.requestToken,
+      },
+      data: {
+        title,
+        category: 'pagination',
+        period: '2026.04',
+        tags: ['playwright', 'pagination', prefix],
+        published: true,
+        contentJson: JSON.stringify({ html: `<p>${title}</p>` }),
+        allPropertiesJson: JSON.stringify({}),
+        thumbnailAssetId: null,
+        iconAssetId: null,
+      },
+    })
+    expect(response.ok()).toBeTruthy()
+  }
+
+  await page.goto(expectedPathname)
+  await page.getByLabel('Search work titles').fill(prefix)
+
+  const counter = page.getByText(/^Page \d+ of \d+$/).first()
+  await expect(counter).toHaveText('Page 1 of 2')
+  await page.getByRole('button', { name: 'Next page' }).click()
+  await expect(counter).toHaveText('Page 2 of 2')
+
+  const rows = page.getByTestId('admin-work-row')
+  await expect(rows).toHaveCount(2)
+
+  const targetRow = rows.first()
+  const originalTitle = (await targetRow.locator('td:nth-child(3) a').textContent())?.trim()
+  expect(originalTitle).toBeTruthy()
+  const updatedTitle = `${originalTitle} updated`
+
+  await targetRow.getByTitle('Edit').click()
+  await expect(page).toHaveURL(/\/admin\/works\/.+/)
+  await page.getByLabel('Title').fill(updatedTitle)
+
+  await Promise.all([
+    page.waitForResponse((res) => res.url().includes('/api/admin/works/') && res.request().method() === 'PUT' && res.ok()),
+    page.getByRole('button', { name: 'Update Work' }).click(),
+  ])
+
+  await expect.poll(() => {
+    const url = new URL(page.url())
+    return JSON.stringify({
+      pathname: url.pathname,
+      page: url.searchParams.get('page'),
+      pageSize: url.searchParams.get('pageSize'),
+      query: url.searchParams.get('query'),
+    })
+  }).toBe(JSON.stringify({
+    pathname: expectedPathname,
+    page: '2',
+    pageSize: '12',
+    query: prefix,
+  }))
+  await expect(counter).toHaveText('Page 2 of 2')
+  await expect(page.getByTestId('admin-work-row').filter({ hasText: updatedTitle }).first()).toBeVisible()
+
+  const deleteRow = page.getByTestId('admin-work-row').filter({ hasText: updatedTitle }).first()
+  await deleteRow.getByTitle('Delete').click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+
+  await Promise.all([
+    page.waitForResponse((response) =>
+      response.url().includes('/api/admin/works/')
+      && response.request().method() === 'DELETE'
+      && response.ok(),
+    ),
+    page.getByRole('dialog').getByRole('button', { name: 'Delete' }).click(),
+  ])
+
+  await expect.poll(() => {
+    const url = new URL(page.url())
+    return JSON.stringify({
+      pathname: url.pathname,
+      page: url.searchParams.get('page'),
+      pageSize: url.searchParams.get('pageSize'),
+      query: url.searchParams.get('query'),
+    })
+  }).toBe(JSON.stringify({
+    pathname: expectedPathname,
+    page: '2',
+    pageSize: '12',
+    query: prefix,
+  }))
+  await expect(counter).toHaveText('Page 2 of 2')
+  await expect(page.getByTestId('admin-work-row').filter({ hasText: updatedTitle })).toHaveCount(0)
 })
 
 test('admin dashboard supports independent title search for works and blog collections', async ({ page }) => {

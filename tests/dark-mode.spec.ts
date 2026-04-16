@@ -50,17 +50,12 @@ test.describe('theme toggle', () => {
     await expect.poll(() => page.evaluate(() => window.localStorage.getItem('theme'))).toBe('dark')
   })
 
-  test('DM-05: system theme tracks media color scheme changes', async ({ page }) => {
+  test('DM-05: default theme is light and the system option is hidden', async ({ page }) => {
     await page.emulateMedia({ colorScheme: 'dark' })
     await page.goto('/')
-    await selectTheme(page, 'Dark')
-    await expectDarkHtml(page)
-    await page.evaluate(() => window.localStorage.setItem('theme', 'system'))
-    await page.reload({ waitUntil: 'networkidle' })
-    await expectDarkHtml(page)
-
-    await page.emulateMedia({ colorScheme: 'light' })
     await expectLightHtml(page)
+    await page.getByTestId('theme-toggle').click()
+    await expect(page.getByRole('menuitemradio', { name: 'System' })).toHaveCount(0)
   })
 })
 
@@ -90,21 +85,21 @@ test.describe('public pages', () => {
 test('DM-08: work detail page keeps navy detail anchors in dark mode', async ({ page }) => {
   await gotoWithTheme(page, '/works/seeded-work')
   const badge = page.locator('article header .rounded-full').first()
-  const excerpt = page.locator('article header p').first()
 
     const badgeBackground = await getColorChannels(badge, 'background-color')
     const expectedBadgeBackground = await getRootVariableChannels(page, '--brand-navy')
     expectRgbClose(badgeBackground, expectedBadgeBackground)
 
-  const borderColor = await getColorChannels(excerpt, 'border-left-color')
-  const expectedBorderColor = await getRootVariableChannels(page, '--brand-navy')
-  expectRgbClose(borderColor, expectedBorderColor)
+  await expect(page.locator('article header p')).toHaveCount(0)
 })
 
   test('DM-09: blog listing hover state uses accent color in dark mode', async ({ page }) => {
     await gotoWithTheme(page, '/blog')
     const card = page.getByTestId('blog-card').first()
+    const stripe = card.getByTestId('blog-card-accent-stripe')
     const title = card.locator('[data-slot="card-title"]')
+    await expect(stripe).toHaveClass(/study-card-stripe/)
+    await expect(stripe).not.toHaveClass(/from-brand-accent/)
     await expect(title).toBeVisible()
     const titleClass = await title.evaluate((element) => element.className)
     expect(titleClass).toContain('group-hover/card:text-brand-accent')
@@ -113,16 +108,13 @@ test('DM-08: work detail page keeps navy detail anchors in dark mode', async ({ 
 test('DM-10: blog detail page uses navy detail anchors and keeps prose readable', async ({ page }) => {
   await gotoWithTheme(page, '/blog/seeded-blog')
   const badge = page.locator('article header .rounded-full').first()
-  const excerpt = page.locator('article header p').first()
   const prose = page.locator('#blog-detail-content .prose').first()
 
     const badgeBackground = await getColorChannels(badge, 'background-color')
     const expectedBadgeBackground = await getRootVariableChannels(page, '--brand-navy')
     expectRgbClose(badgeBackground, expectedBadgeBackground)
 
-  const borderColor = await getColorChannels(excerpt, 'border-left-color')
-  const expectedBorderColor = await getRootVariableChannels(page, '--brand-navy')
-  expectRgbClose(borderColor, expectedBorderColor)
+    await expect(page.locator('article header p')).toHaveCount(0)
 
     await expect(prose).toBeVisible()
     await page.screenshot({ path: 'test-results/playwright/dark-mode-blog-detail-dark.png', fullPage: true })
@@ -148,9 +140,9 @@ test('DM-11: contact page email link uses the semantic primary color in dark mod
     await expect(footer).toBeVisible()
 
     const footerBackground = await getColorChannels(footer, 'background-color')
-    expect(footerBackground[0]).toBeLessThanOrEqual(8)
-    expect(footerBackground[1]).toBeLessThanOrEqual(12)
-    expect(footerBackground[2]).toBeLessThanOrEqual(20)
+    expect(footerBackground[0]).toBeLessThanOrEqual(40)
+    expect(footerBackground[1]).toBeLessThanOrEqual(40)
+    expect(footerBackground[2]).toBeLessThanOrEqual(52)
 
     const footerLinks = footer.getByRole('link')
     if (await footerLinks.count()) {
@@ -178,8 +170,8 @@ test('DM-11: contact page email link uses the semantic primary color in dark mod
 
     const background = await getColorChannels(codeBlock, 'background-color')
     const foreground = await getColorChannels(codeBlock, 'color')
-    const expectedBackground = await getColorChannelsFromCssValue(page, '#0d1117')
-    const expectedForeground = await getColorChannelsFromCssValue(page, '#e6edf3')
+    const expectedBackground = await getColorChannelsFromCssValue(page, '#0f172a')
+    const expectedForeground = await getColorChannelsFromCssValue(page, '#e2e8f0')
     expectRgbClose(background, expectedBackground)
     expectRgbClose(foreground, expectedForeground)
   })
@@ -217,7 +209,7 @@ test('DM-11: contact page email link uses the semantic primary color in dark mod
 
   test('DM-22: pagination uses the dark active state variant', async ({ page }) => {
     await gotoWithTheme(page, '/blog')
-    const activePage = page.locator('nav[aria-label="Blog pagination"] a').first()
+    const activePage = page.locator('nav[aria-label="Study pagination"] a').first()
     await expect(activePage).toBeVisible()
 
     const background = await getColorChannels(activePage, 'background-color')

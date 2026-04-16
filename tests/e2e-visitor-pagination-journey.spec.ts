@@ -4,7 +4,7 @@ test('E2E-004 visitor can keep a paginated reading path stable across list and d
   await page.setViewportSize({ width: 1280, height: 960 })
   await page.goto('/blog?page=2&pageSize=2&__qaTagged=1')
 
-  const pagination = page.getByLabel('Blog pagination')
+  const pagination = page.getByLabel('Study pagination')
   await expect(pagination).toBeVisible()
   await expect.poll(() => new URL(page.url()).searchParams.get('page')).toBe('2')
   await expect.poll(() => new URL(page.url()).searchParams.get('pageSize')).toBeTruthy()
@@ -12,11 +12,11 @@ test('E2E-004 visitor can keep a paginated reading path stable across list and d
   expect(visibleBlogCards).toBeGreaterThan(1)
   await expect(page.getByTestId('blog-card').first()).toContainText(/playwright|seed|migration|qa/i)
 
-  await pagination.getByRole('link', { name: '이전' }).click()
+  await pagination.getByRole('link', { name: 'Previous' }).click()
   await expect.poll(() => new URL(page.url()).searchParams.get('page')).toBe('1')
   await expect.poll(() => new URL(page.url()).searchParams.get('pageSize')).toBeTruthy()
 
-  await pagination.getByRole('link', { name: '다음' }).click()
+  await pagination.getByRole('link', { name: 'Next' }).click()
   await expect.poll(() => new URL(page.url()).searchParams.get('page')).toBe('2')
   await expect.poll(() => new URL(page.url()).searchParams.get('pageSize')).toBeTruthy()
 
@@ -26,7 +26,7 @@ test('E2E-004 visitor can keep a paginated reading path stable across list and d
 
   await expect(page).toHaveURL(/\/blog\/.+(?:\?|&)returnTo=%2Fblog%3Fpage%3D2%26pageSize%3D\d+(?:&|%26)relatedPage=2/)
   await expect(page.getByTestId('blog-related-shell')).toBeVisible()
-  await expect(page.locator('section').filter({ has: page.getByRole('heading', { name: 'More Posts' }) }).getByText(/^Page 2 of \d+$/)).toBeVisible()
+  await expect(page.locator('section').filter({ has: page.getByRole('heading', { name: 'More Studies' }) }).getByText(/^Page 2 of \d+$/)).toBeVisible()
 })
 
 test('E2E-004 visitor can continue the same paginated path through the works archive', async ({ page }) => {
@@ -40,11 +40,11 @@ test('E2E-004 visitor can continue the same paginated path through the works arc
   const visibleWorkCards = await page.getByTestId('work-card').count()
   expect(visibleWorkCards).toBeGreaterThan(1)
 
-  await pagination.getByRole('link', { name: '이전' }).click()
+  await pagination.getByRole('link', { name: 'Previous' }).click()
   await expect.poll(() => new URL(page.url()).searchParams.get('page')).toBe('1')
   await expect.poll(() => new URL(page.url()).searchParams.get('pageSize')).toBeTruthy()
 
-  await pagination.getByRole('link', { name: '다음' }).click()
+  await pagination.getByRole('link', { name: 'Next' }).click()
   await expect.poll(() => new URL(page.url()).searchParams.get('page')).toBe('2')
   await expect.poll(() => new URL(page.url()).searchParams.get('pageSize')).toBeTruthy()
 
