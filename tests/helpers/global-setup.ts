@@ -7,19 +7,19 @@ function shouldIgnoreHttpsErrors(baseURL: string) {
 }
 
 function resolveAuthBaseUrl(baseURL: string) {
-  if (/^http:\/\/(localhost|127\.0\.0\.1):3000$/i.test(baseURL)) {
-    return 'http://localhost:8080'
+  if (process.env.PLAYWRIGHT_AUTH_BASE_URL) {
+    return process.env.PLAYWRIGHT_AUTH_BASE_URL
   }
 
   if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(baseURL)) {
-    return 'http://localhost:8080'
+    return baseURL
   }
 
   return baseURL
 }
 
 function shouldRelaxSecureCookiesForBaseUrl(baseURL: string) {
-  return /^http:\/\/(localhost|127\.0\.0\.1):3000$/i.test(baseURL)
+  return /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(baseURL)
 }
 
 async function relaxLocalhostSecureCookies(storageStatePath: string) {

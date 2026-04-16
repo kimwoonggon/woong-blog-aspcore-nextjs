@@ -24,9 +24,32 @@ public sealed class AdminWorkService : IAdminWorkService
 
     public async Task<IReadOnlyList<AdminWorkListItemDto>> GetAllAsync(CancellationToken cancellationToken)
     {
-        return await _dbContext.Works
+        var works = await _dbContext.Works
             .AsNoTracking()
             .OrderByDescending(x => x.CreatedAt)
+            .ToListAsync(cancellationToken);
+
+        var workIds = works.Select(x => x.Id).ToArray();
+        var assetIds = works
+            .Where(x => x.ThumbnailAssetId.HasValue)
+            .Select(x => x.ThumbnailAssetId!.Value)
+            .Distinct()
+            .ToArray();
+        var assetLookup = await _dbContext.Assets
+            .AsNoTracking()
+            .Where(x => assetIds.Contains(x.Id))
+            .ToDictionaryAsync(x => x.Id, x => x.PublicUrl, cancellationToken);
+        var workVideoRows = await _dbContext.WorkVideos
+            .AsNoTracking()
+            .Where(x => workIds.Contains(x.WorkId))
+            .OrderBy(x => x.SortOrder)
+            .ThenBy(x => x.CreatedAt)
+            .ToListAsync(cancellationToken);
+        var workVideos = workVideoRows
+            .GroupBy(x => x.WorkId)
+            .ToDictionary(x => x.Key, x => (IReadOnlyList<WorkVideo>)x.ToList());
+
+        return works
             .Select(x => new AdminWorkListItemDto(
                 x.Id,
                 x.Title,
@@ -35,12 +58,17 @@ public sealed class AdminWorkService : IAdminWorkService
                 x.Category,
                 x.Period,
                 x.Tags,
+                WorkThumbnailUrlResolver.ResolveThumbnailUrl(
+                    x.ThumbnailAssetId,
+                    x.ContentJson,
+                    workVideos.TryGetValue(x.Id, out var videos) ? videos : Array.Empty<WorkVideo>(),
+                    assetLookup),
                 x.Published,
                 x.PublishedAt,
                 x.CreatedAt,
                 x.UpdatedAt
             ))
-            .ToListAsync(cancellationToken);
+            .ToList();
     }
 
     public async Task<AdminWorkDetailDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken)

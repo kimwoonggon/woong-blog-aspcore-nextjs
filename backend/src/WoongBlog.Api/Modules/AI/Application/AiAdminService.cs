@@ -16,15 +16,18 @@ public sealed class AiAdminService : IAiAdminService
 {
     private readonly WoongBlogDbContext _dbContext;
     private readonly IBlogAiFixService _aiFixService;
+    private readonly AiBatchJobSignal _batchJobSignal;
     private readonly AiOptions _options;
 
     public AiAdminService(
         WoongBlogDbContext dbContext,
         IBlogAiFixService aiFixService,
+        AiBatchJobSignal batchJobSignal,
         IOptions<AiOptions> options)
     {
         _dbContext = dbContext;
         _aiFixService = aiFixService;
+        _batchJobSignal = batchJobSignal;
         _options = options.Value;
     }
 
@@ -206,6 +209,11 @@ public sealed class AiAdminService : IAiAdminService
                 .OrderBy(item => item.CreatedAt)
                 .ToListAsync(cancellationToken);
 
+            if (existingJob.Status == AiBatchJobStates.Queued)
+            {
+                _batchJobSignal.Notify();
+            }
+
             return Results.Ok(ToJobDetailResponse(existingJob, existingItems, includeHtml: false));
         }
 
@@ -238,6 +246,7 @@ public sealed class AiAdminService : IAiAdminService
         _dbContext.AiBatchJobs.Add(job);
         _dbContext.AiBatchJobItems.AddRange(items);
         await _dbContext.SaveChangesAsync(cancellationToken);
+        _batchJobSignal.Notify();
 
         return Results.Ok(ToJobDetailResponse(job, items, includeHtml: false));
     }

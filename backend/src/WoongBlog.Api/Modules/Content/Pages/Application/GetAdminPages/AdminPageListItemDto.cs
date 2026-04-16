@@ -6,5 +6,5 @@ public sealed record AdminPageListItemDto(
     Guid Id,
     string Slug,
     string Title,
-    AdminPageHtmlDto Content
+    object Content
 );

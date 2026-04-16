@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -24,13 +24,22 @@ interface HomePageEditorProps {
     initialContent: HomeContent
 }
 
+const DEFAULT_HEADLINE = 'Hi, I am John, Creative Technologist'
+const DEFAULT_INTRO_TEXT = 'Amet minim mollit non deserunt ullamco est sit aliqua dolor do amet sint.'
+
 export function HomePageEditor({ pageId, pageTitle, initialContent }: HomePageEditorProps) {
     const router = useRouter()
-    const [headline, setHeadline] = useState(initialContent.headline || 'Hi, I am John, Creative Technologist')
-    const [introText, setIntroText] = useState(initialContent.introText || 'Amet minim mollit non deserunt ullamco est sit aliqua dolor do amet sint.')
+    const [headline, setHeadline] = useState(initialContent.headline || DEFAULT_HEADLINE)
+    const [introText, setIntroText] = useState(initialContent.introText || DEFAULT_INTRO_TEXT)
     const [profileImageUrl, setProfileImageUrl] = useState(initialContent.profileImageUrl || '')
     const [isSaving, setIsSaving] = useState(false)
     const [isUploading, setIsUploading] = useState(false)
+
+    useEffect(() => {
+        setHeadline(initialContent.headline || DEFAULT_HEADLINE)
+        setIntroText(initialContent.introText || DEFAULT_INTRO_TEXT)
+        setProfileImageUrl(initialContent.profileImageUrl || '')
+    }, [initialContent.headline, initialContent.introText, initialContent.profileImageUrl])
 
     async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
         const file = e.target.files?.[0]
@@ -50,18 +59,16 @@ export function HomePageEditor({ pageId, pageTitle, initialContent }: HomePageEd
 
             if (response.ok) {
                 const data = await response.json()
-                console.log('Upload response:', data)
-                setProfileImageUrl(data.url)
+                setProfileImageUrl(data.publicUrl || data.url || '')
             } else {
                 const errorData = await response.json()
-                console.error('Upload failed:', errorData)
                 alert('Failed to upload image: ' + (errorData.error || 'Unknown error'))
             }
-        } catch (error) {
-            console.error('Upload error:', error)
+        } catch {
             alert('Failed to upload image')
         } finally {
             setIsUploading(false)
+            e.target.value = ''
         }
     }
 
@@ -87,8 +94,7 @@ export function HomePageEditor({ pageId, pageTitle, initialContent }: HomePageEd
             } else {
                 alert('Failed to save')
             }
-        } catch (error) {
-            console.error('Save error:', error)
+        } catch {
             alert('Failed to save')
         } finally {
             setIsSaving(false)

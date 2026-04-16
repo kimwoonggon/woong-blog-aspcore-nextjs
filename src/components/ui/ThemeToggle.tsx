@@ -1,6 +1,6 @@
 "use client"
 
-import { Monitor, Moon, Sun } from "lucide-react"
+import { Moon, Sun } from "lucide-react"
 import { useTheme } from "next-themes"
 import { useSyncExternalStore } from "react"
 import { Button } from "@/components/ui/button"
@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
 
-type ThemeMode = "light" | "dark" | "system"
+type ThemeMode = "light" | "dark"
 
 const themeOptions: Array<{
   label: string
@@ -24,7 +24,6 @@ const themeOptions: Array<{
 }> = [
   { label: "Light", value: "light", Icon: Sun },
   { label: "Dark", value: "dark", Icon: Moon },
-  { label: "System", value: "system", Icon: Monitor },
 ]
 
 function CurrentThemeIcon({ theme }: { theme: ThemeMode }) {
@@ -36,7 +35,7 @@ function CurrentThemeIcon({ theme }: { theme: ThemeMode }) {
     return <Sun className="h-5 w-5" />
   }
 
-  return <Monitor className="h-5 w-5" />
+  return <Sun className="h-5 w-5" />
 }
 
 export function ThemeToggle({ className, testId = "theme-toggle" }: { className?: string; testId?: string }) {
@@ -51,7 +50,7 @@ export function ThemeToggle({ className, testId = "theme-toggle" }: { className?
     return <div aria-hidden className={cn("h-11 w-11 rounded-full border border-border/70 bg-background/70", className)} />
   }
 
-  const currentTheme = (theme ?? "system") as ThemeMode
+  const currentTheme = (theme === "dark" ? "dark" : "light") as ThemeMode
 
   return (
     <DropdownMenu>

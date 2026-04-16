@@ -213,7 +213,7 @@ describe('AdminBlogBatchAiPanel', () => {
     expect(mocks.fetchWithCsrf).not.toHaveBeenCalled()
   })
 
-  it('polls running jobs and clears the interval on unmount', async () => {
+  it('does not poll running jobs automatically', async () => {
     vi.useFakeTimers()
 
     mocks.listBlogAiBatchJobsBrowser.mockResolvedValue({
@@ -261,7 +261,7 @@ describe('AdminBlogBatchAiPanel', () => {
       items: [],
     })
 
-    const view = renderPanel()
+    renderPanel()
 
     await act(async () => {
       await Promise.resolve()
@@ -275,26 +275,12 @@ describe('AdminBlogBatchAiPanel', () => {
     expect(initialDetailCalls).toBeGreaterThanOrEqual(1)
 
     await act(async () => {
-      vi.advanceTimersByTime(2000)
-      await Promise.resolve()
-      await Promise.resolve()
-    })
-
-    const postPollListCalls = mocks.listBlogAiBatchJobsBrowser.mock.calls.length
-    const postPollDetailCalls = mocks.getBlogAiBatchJobBrowser.mock.calls.length
-
-    expect(postPollListCalls).toBeGreaterThan(initialListCalls)
-    expect(postPollDetailCalls).toBeGreaterThan(initialDetailCalls)
-
-    view.unmount()
-
-    await act(async () => {
       vi.advanceTimersByTime(4000)
       await Promise.resolve()
       await Promise.resolve()
     })
 
-    expect(mocks.listBlogAiBatchJobsBrowser).toHaveBeenCalledTimes(postPollListCalls)
-    expect(mocks.getBlogAiBatchJobBrowser).toHaveBeenCalledTimes(postPollDetailCalls)
+    expect(mocks.listBlogAiBatchJobsBrowser).toHaveBeenCalledTimes(initialListCalls)
+    expect(mocks.getBlogAiBatchJobBrowser).toHaveBeenCalledTimes(initialDetailCalls)
   })
 })

@@ -12,6 +12,7 @@ internal static class AiServiceCollectionExtensions
 
         services.AddSingleton<IPostConfigureOptions<AiOptions>>(_ => new AiOptionsPostConfigure(configuration));
         services.AddSingleton<IValidateOptions<AiOptions>, AiOptionsValidator>();
+        services.AddSingleton<AiBatchJobSignal>();
         services.AddHttpClient<IBlogAiFixService, BlogAiFixService>();
         services.AddHostedService<AiBatchJobProcessor>();
 

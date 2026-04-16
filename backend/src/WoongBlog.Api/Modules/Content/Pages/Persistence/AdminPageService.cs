@@ -24,15 +24,20 @@ public sealed class AdminPageService : IAdminPageService
             query = query.Where(x => slugs.Contains(x.Slug));
         }
 
-        return await query
+        var pages = await query
             .OrderBy(x => x.Slug)
+            .ToListAsync(cancellationToken);
+
+        return pages
             .Select(x => new AdminPageListItemDto(
                 x.Id,
                 x.Slug,
                 x.Title,
-                new AdminPageHtmlDto(AdminContentJson.ExtractHtml(x.ContentJson))
+                string.Equals(x.Slug, "home", StringComparison.OrdinalIgnoreCase)
+                    ? AdminContentJson.ParseObject(x.ContentJson)
+                    : new AdminPageHtmlDto(AdminContentJson.ExtractHtml(x.ContentJson))
             ))
-            .ToListAsync(cancellationToken);
+            .ToList();
     }
 
     public async Task<AdminActionResult> UpdatePageAsync(Guid id, string title, string contentJson, CancellationToken cancellationToken)

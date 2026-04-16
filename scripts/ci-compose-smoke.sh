@@ -22,9 +22,6 @@ compose_cmd=()
 created_env=0
 base_url="${BASE_URL:-http://localhost}"
 curl_opts=(-fsS)
-if [[ "${base_url}" == https://* ]]; then
-  curl_opts+=(-k)
-fi
 
 keep_running="${KEEP_RUNNING:-0}"
 
@@ -58,19 +55,50 @@ trap on_error ERR
 case "${MODE}" in
   dev)
     compose_file="${compose_file:-docker-compose.dev.yml}"
+    base_url="${BASE_URL:-https://localhost:3001}"
     compose_env_file="${APP_ENV_FILE:-.env}"
     if [[ ! -f "${compose_env_file}" && -f .env.example ]]; then
       cp .env.example "${compose_env_file}"
       created_env=1
     fi
     export APP_ENV_FILE="${compose_env_file}"
-    export NGINX_DEFAULT_CONF="${NGINX_DEFAULT_CONF:-./nginx/default.conf}"
+    export NGINX_DEFAULT_CONF="${NGINX_DEFAULT_CONF:-./nginx/local-https.conf}"
+    export NGINX_HTTP_PORT="${NGINX_HTTP_PORT:-3000}"
+    export NGINX_HTTPS_PORT="${NGINX_HTTPS_PORT:-3001}"
+    export NGINX_BIND_HOST="${NGINX_BIND_HOST:-127.0.0.1}"
+    export BACKEND_PUBLISH_PORT="${BACKEND_PUBLISH_PORT:-8081}"
+    export BACKEND_BIND_HOST="${BACKEND_BIND_HOST:-127.0.0.1}"
+    export LOCAL_CERTS_DIR="${LOCAL_CERTS_DIR:-./.local-certs}"
+    mkdir -p "${LOCAL_CERTS_DIR}"
+    if [[ ! -f "${LOCAL_CERTS_DIR}/localhost.pem" || ! -f "${LOCAL_CERTS_DIR}/localhost-key.pem" ]]; then
+      openssl req -x509 -nodes -newkey rsa:2048 -days 7 \
+        -keyout "${LOCAL_CERTS_DIR}/localhost-key.pem" \
+        -out "${LOCAL_CERTS_DIR}/localhost.pem" \
+        -subj "/CN=localhost" \
+        -addext "subjectAltName=DNS:localhost,IP:127.0.0.1,IP:::1" >/dev/null 2>&1
+    fi
+    {
+      printf '\nNGINX_DEFAULT_CONF=%s\n' "${NGINX_DEFAULT_CONF}"
+      printf '\nNGINX_HTTP_PORT=%s\n' "${NGINX_HTTP_PORT}"
+      printf 'NGINX_BIND_HOST=%s\n' "${NGINX_BIND_HOST}"
+      printf 'NGINX_HTTPS_PORT=%s\n' "${NGINX_HTTPS_PORT}"
+      printf 'BACKEND_PUBLISH_PORT=%s\n' "${BACKEND_PUBLISH_PORT}"
+      printf 'BACKEND_BIND_HOST=%s\n' "${BACKEND_BIND_HOST}"
+      printf 'LOCAL_CERTS_DIR=%s\n' "${LOCAL_CERTS_DIR}"
+    } >> "${compose_env_file}"
     expected_local_admin=present
     expected_test_login_status=302
     ;;
   main)
     compose_file="${compose_file:-docker-compose.prod.yml}"
+    base_url="${BASE_URL:-http://localhost}"
     compose_env_file="${APP_ENV_FILE:-.env.prod.ci}"
+    if [[ "$(pwd)" == /mnt/* ]]; then
+      default_postgres_data_dir="${HOME}/.woong-blog-docker/ci-main/postgres"
+    else
+      default_postgres_data_dir="./.docker-data/ci-main/postgres"
+    fi
+    export POSTGRES_DATA_DIR="${POSTGRES_DATA_DIR:-${default_postgres_data_dir}}"
     if [[ -z "${FRONTEND_IMAGE:-}" ]]; then
       FRONTEND_IMAGE="local/woong-blog-frontend:smoke"
       "${DOCKER_BIN}" build -f Dockerfile -t "${FRONTEND_IMAGE}" .
@@ -89,10 +117,12 @@ LETSENCRYPT_DIR=./certbot/conf
 POSTGRES_DB=portfolio
 POSTGRES_USER=portfolio
 POSTGRES_PASSWORD=portfolio
+POSTGRES_DATA_DIR=${POSTGRES_DATA_DIR}
 Auth__Enabled=false
 PROXY_KNOWN_NETWORK=172.16.0.0/12
 EOF
     created_env=1
+    mkdir -p "${POSTGRES_DATA_DIR}"
     mkdir -p certbot/www certbot/conf/live/current
     export APP_ENV_FILE="${compose_env_file}"
     expected_local_admin=absent
@@ -103,6 +133,11 @@ EOF
     exit 1
     ;;
 esac
+
+curl_opts=(-fsS)
+if [[ "${base_url}" == https://* ]]; then
+  curl_opts+=(-k)
+fi
 
 compose_cmd=("${DOCKER_BIN}" compose --env-file "${compose_env_file}" -f "${compose_file}")
 
@@ -128,9 +163,9 @@ curl "${curl_opts[@]}" "${base_url}/blog" -o /tmp/woong-blog-blog.html
 curl "${curl_opts[@]}" "${base_url}/works" -o /tmp/woong-blog-works.html
 
 grep -Fq '"status":"ok"' /tmp/woong-blog-health.json
-grep -Fq 'Portfolio' /tmp/woong-blog-home.html
+grep -Fq 'View My Works' /tmp/woong-blog-home.html
 grep -Fq 'Admin Login' /tmp/woong-blog-login.html
-grep -Fq '>Blog<' /tmp/woong-blog-blog.html
+grep -Fq '>Study<' /tmp/woong-blog-blog.html
 grep -Fq '>Works<' /tmp/woong-blog-works.html
 
 if [[ "${expected_local_admin}" == "present" ]]; then

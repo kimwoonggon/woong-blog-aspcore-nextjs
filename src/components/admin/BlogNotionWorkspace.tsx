@@ -74,6 +74,9 @@ export function BlogNotionWorkspace({ blogs, activeBlog }: BlogNotionWorkspacePr
         html: activeBlog.content.html ?? '',
     })
     const skipAutosaveRef = useRef(true)
+    const libraryScrollRef = useRef(0)
+    const libraryScrollContainerRef = useRef<HTMLDivElement | null>(null)
+    const activeLibraryItemRef = useRef<HTMLDivElement | null>(null)
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -173,6 +176,26 @@ export function BlogNotionWorkspace({ blogs, activeBlog }: BlogNotionWorkspacePr
         return blogs.filter((blog) => blog.title.toLowerCase().includes(normalizedQuery))
     }, [blogs, librarySearch])
 
+    useEffect(() => {
+        if (!isLibraryOpen) {
+            return
+        }
+
+        const frame = window.requestAnimationFrame(() => {
+            if (libraryScrollContainerRef.current) {
+                if (libraryScrollRef.current > 0) {
+                    libraryScrollContainerRef.current.scrollTop = libraryScrollRef.current
+                } else {
+                    activeLibraryItemRef.current?.scrollIntoView({ block: 'center' })
+                }
+            }
+        })
+
+        return () => {
+            window.cancelAnimationFrame(frame)
+        }
+    }, [filteredBlogs.length, isLibraryOpen])
+
     async function saveMetadata() {
         setIsSavingMeta(true)
 
@@ -251,13 +274,20 @@ export function BlogNotionWorkspace({ blogs, activeBlog }: BlogNotionWorkspacePr
                                     className="h-8 text-sm"
                                 />
                             </div>
-                            <div className="space-y-2 overflow-y-auto p-3">
+                            <div
+                                ref={libraryScrollContainerRef}
+                                className="space-y-2 overflow-y-auto p-3"
+                                onScroll={(event) => {
+                                    libraryScrollRef.current = event.currentTarget.scrollTop
+                                }}
+                            >
                                 {filteredBlogs.map((blog) => {
                                     const isActive = blog.id === activeBlog.id
 
                                     return (
                                         <div
                                             key={blog.id}
+                                            ref={isActive ? activeLibraryItemRef : undefined}
                                             className={`rounded-2xl border px-4 py-3 transition ${
                                                 isActive
                                                     ? 'border-primary/40 bg-primary/5 shadow-sm'
@@ -270,7 +300,12 @@ export function BlogNotionWorkspace({ blogs, activeBlog }: BlogNotionWorkspacePr
                                                         href={`/admin/blog/notion?id=${encodeURIComponent(blog.id)}`}
                                                         data-testid="notion-blog-list-item"
                                                         className="block min-w-0"
-                                                        onClick={() => setIsLibraryOpen(false)}
+                                                        onClick={() => {
+                                                            if (libraryScrollContainerRef.current) {
+                                                                libraryScrollRef.current = libraryScrollContainerRef.current.scrollTop
+                                                            }
+                                                            setIsLibraryOpen(false)
+                                                        }}
                                                     >
                                                         <p className="line-clamp-2 text-sm font-medium text-gray-900 underline-offset-4 hover:underline dark:text-gray-100">
                                                             {blog.title}

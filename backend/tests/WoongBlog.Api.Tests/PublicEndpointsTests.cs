@@ -1,5 +1,7 @@
 using System.Net;
+using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
+using WoongBlog.Api.Domain.Entities;
 using WoongBlog.Api.Infrastructure.Persistence;
 
 namespace WoongBlog.Api.Tests;
@@ -47,7 +49,7 @@ public class PublicEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 
         var body = await response.Content.ReadAsStringAsync();
         Assert.Contains("Portfolio Platform Rebuild", body, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("Designing a Seed-First Migration Strategy", body, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("featuredWorks", body, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -102,6 +104,73 @@ public class PublicEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         Assert.Contains("\"items\"", body, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("\"page\":1", body, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("\"pageSize\":1", body, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task GetPublicBlogs_FiltersByTitleSearch()
+    {
+        var client = _factory.CreateClient();
+        var uniqueTitle = $"Searchable Study Title {Guid.NewGuid():N}";
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
+            dbContext.Blogs.Add(new Blog
+            {
+                Id = Guid.NewGuid(),
+                Title = uniqueTitle,
+                Slug = $"search-title-{Guid.NewGuid():N}",
+                Excerpt = "Title search target excerpt",
+                Tags = ["search"],
+                Published = true,
+                PublishedAt = DateTimeOffset.UtcNow.AddYears(-1),
+                ContentJson = JsonSerializer.Serialize(new { html = "<p>Body without the title query.</p>" }),
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
+            await dbContext.SaveChangesAsync();
+        }
+
+        var response = await client.GetAsync($"/api/public/blogs?page=1&pageSize=12&query={Uri.EscapeDataString(uniqueTitle)}&searchMode=title");
+
+        response.EnsureSuccessStatusCode();
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.Contains(uniqueTitle, body, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("\"totalItems\":1", body, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task GetPublicBlogs_FiltersByContentSearch()
+    {
+        var client = _factory.CreateClient();
+        var uniqueBody = $"content-token-{Guid.NewGuid():N}";
+        var title = $"Content Search Study {Guid.NewGuid():N}";
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
+            dbContext.Blogs.Add(new Blog
+            {
+                Id = Guid.NewGuid(),
+                Title = title,
+                Slug = $"search-content-{Guid.NewGuid():N}",
+                Excerpt = $"Content search target excerpt {uniqueBody}",
+                Tags = ["search"],
+                Published = true,
+                PublishedAt = DateTimeOffset.UtcNow.AddYears(-1),
+                ContentJson = JsonSerializer.Serialize(new { html = $"<p>{uniqueBody}</p>" }),
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
+            await dbContext.SaveChangesAsync();
+        }
+
+        var response = await client.GetAsync($"/api/public/blogs?page=1&pageSize=12&query={Uri.EscapeDataString(uniqueBody)}&searchMode=content");
+
+        response.EnsureSuccessStatusCode();
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.Contains(title, body, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("\"totalItems\":1", body, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

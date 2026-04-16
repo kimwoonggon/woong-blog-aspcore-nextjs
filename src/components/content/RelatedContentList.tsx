@@ -20,6 +20,7 @@ interface RelatedContentListProps {
   heading: string
   hrefBase: '/blog' | '/works'
   items: RelatedContentItem[]
+  currentItemId?: string
   desktopPageSize?: number
   tabletPageSize?: number
   mobilePageSize?: number
@@ -47,17 +48,32 @@ function getPageWindow(currentPage: number, totalPages: number, radius = 2) {
   return Array.from({ length: end - start + 1 }, (_, index) => start + index)
 }
 
+function resolveInitialPage(searchParams: URLSearchParams, items: RelatedContentItem[], currentItemId: string | undefined, pageSize: number) {
+  const requestedPage = Number.parseInt(searchParams.get('relatedPage') ?? '', 10)
+  if (Number.isFinite(requestedPage) && requestedPage > 0) {
+    return requestedPage
+  }
+
+  if (!currentItemId) {
+    return 1
+  }
+
+  const currentIndex = items.findIndex((item) => item.id === currentItemId)
+  return currentIndex >= 0 ? Math.floor(currentIndex / pageSize) + 1 : 1
+}
+
 function RelatedContentPager({
   heading,
   hrefBase,
   items,
+  currentItemId,
   pageSize,
   testIdBase,
 }: RelatedContentPagerProps) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const initialPage = Math.max(1, Number.parseInt(searchParams.get('relatedPage') ?? '1', 10) || 1)
+  const initialPage = resolveInitialPage(searchParams, items, currentItemId, pageSize)
   const [page, setPage] = useState(initialPage)
   const totalPages = Math.max(1, Math.ceil(items.length / pageSize))
   const currentPage = Math.min(page, totalPages)
@@ -93,22 +109,23 @@ function RelatedContentPager({
           <p className="max-w-2xl text-sm text-muted-foreground text-pretty">{followUpCopy}</p>
         </div>
         <span className="rounded-full border border-border/80 bg-background px-3 py-1 text-xs font-medium tabular-nums text-muted-foreground">
-          {Math.min(pageSize, items.length)} visible
+          {visibleItems.length} visible
         </span>
       </div>
 
       <div data-testid={`${testIdBase}-grid`} className="grid auto-rows-fr gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {visibleItems.map((item) => (
-          <Link
-            key={item.id}
-            href={`${hrefBase}/${item.slug}?relatedPage=${currentPage}`}
-            className="group block h-full"
-            data-testid={`${testIdBase}-card`}
-            aria-label={`Open ${item.title}`}
-          >
-            <article className="responsive-feed-card flex h-full flex-col overflow-hidden rounded-2xl border border-border/80 bg-background py-0 shadow-sm transition hover:border-primary/30 hover:shadow-md">
+        {visibleItems.map((item) => {
+          const card = (
+            <article
+              className={[
+                'responsive-feed-card flex h-full flex-col overflow-hidden rounded-2xl bg-background py-0 shadow-sm transition',
+                item.id === currentItemId
+                  ? 'border-2 border-brand-accent ring-1 ring-brand-accent/20'
+                  : 'border border-border/80 hover:border-primary/30 hover:shadow-md',
+              ].join(' ')}
+            >
               {isBlogList ? (
-                <div aria-hidden="true" className="h-1 w-full bg-gradient-to-r from-brand-accent to-brand-cyan" />
+                <div aria-hidden="true" className="study-card-stripe h-1 w-full" />
               ) : null}
               <div className="flex flex-1 flex-col p-4 sm:p-5">
                 <div className="mb-3 flex flex-wrap items-center gap-2 text-xs font-medium text-muted-foreground">
@@ -120,17 +137,16 @@ function RelatedContentPager({
                       {item.category}
                     </span>
                   ) : null}
+                  {item.id === currentItemId ? (
+                    <span className="rounded-full bg-brand-accent px-2 py-0.5 text-[11px] uppercase tracking-[0.18em] text-white">
+                      Current
+                    </span>
+                  ) : null}
                 </div>
-                <h3 className="responsive-feed-title line-clamp-2 min-w-0 break-words text-lg font-heading font-bold leading-tight text-foreground text-pretty transition-colors group-hover:text-brand-accent sm:text-xl">
+                <h3 className="responsive-feed-title line-clamp-2 min-w-0 break-words text-lg font-heading font-bold leading-tight text-foreground text-pretty sm:text-xl">
                   {item.title}
                 </h3>
-                {item.excerpt ? (
-                  <p className="responsive-feed-copy mt-2 line-clamp-3 flex-1 break-words text-sm leading-relaxed text-foreground/80 sm:text-base">
-                    {item.excerpt}
-                  </p>
-                ) : (
-                  <div className="flex-1" aria-hidden="true" />
-                )}
+                <div className="flex-1" aria-hidden="true" />
                 {item.tags?.length ? (
                   <ul aria-label={`${item.title} tags`} className="responsive-feed-copy mt-3 flex flex-wrap gap-2">
                     {item.tags.slice(0, 3).map((tag) => (
@@ -145,8 +161,32 @@ function RelatedContentPager({
                 ) : null}
               </div>
             </article>
-          </Link>
-        ))}
+          )
+
+          if (item.id === currentItemId) {
+            return (
+              <div
+                key={item.id}
+                data-testid={`${testIdBase}-current-card`}
+                aria-label={`Current ${item.title}`}
+              >
+                {card}
+              </div>
+            )
+          }
+
+          return (
+            <Link
+              key={item.id}
+              href={`${hrefBase}/${item.slug}?relatedPage=${currentPage}`}
+              className="group block h-full"
+              data-testid={`${testIdBase}-card`}
+              aria-label={`Open ${item.title}`}
+            >
+              {card}
+            </Link>
+          )
+        })}
       </div>
 
       <nav aria-label={`${heading} pagination`} className="rounded-2xl border border-border/70 bg-background/80 p-4 shadow-sm">

@@ -3,55 +3,45 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Trash2 } from 'lucide-react'
-import { BlogEditor } from '@/components/admin/BlogEditor'
-import { deleteAdminBlog } from '@/lib/api/admin-mutations'
+import { deleteAdminWork } from '@/lib/api/admin-mutations'
 import { InlineAdminEditorShell } from '@/components/admin/InlineAdminEditorShell'
+import { WorkEditor } from '@/components/admin/WorkEditor'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 
-interface InlineBlogEditorSectionProps {
-  initialBlog: {
-    id?: string
-    title?: string
-    excerpt?: string
-    slug?: string
-    tags?: string[]
-    published?: boolean
-    content?: { html?: string }
-    publishedAt?: string | null
-    updatedAt?: string
-  }
-  afterDeleteHref?: string
+interface InlineWorkEditorSectionProps {
+  initialWork: Parameters<typeof WorkEditor>[0]['initialWork']
+  afterDeleteHref: string
   title?: string
   description?: string
   triggerLabel?: string
 }
 
-export function InlineBlogEditorSection({
-  initialBlog,
-  afterDeleteHref = '/blog',
-  title = 'Blog Inline Editor',
-  description = '현재 게시물 뷰를 유지한 채 바로 수정합니다.',
-  triggerLabel = '글 수정',
-}: InlineBlogEditorSectionProps) {
+export function InlineWorkEditorSection({
+  initialWork,
+  afterDeleteHref,
+  title = 'Work Inline Editor',
+  description = '현재 작업 상세 뷰를 유지한 채 바로 수정하거나 삭제합니다.',
+  triggerLabel = '작업 수정',
+}: InlineWorkEditorSectionProps) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
 
   function handleDelete() {
-    const blogId = initialBlog?.id
-    if (!blogId || isPending || !window.confirm('이 글을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+    const workId = initialWork?.id
+    if (!workId || isPending || !window.confirm('이 작업을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
       return
     }
 
     startTransition(async () => {
       try {
-        await deleteAdminBlog(blogId)
-        toast.success('Study deleted')
+        await deleteAdminWork(workId)
+        toast.success('Work deleted')
         router.push(afterDeleteHref)
         router.refresh()
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'Failed to delete study.')
+        toast.error(error instanceof Error ? error.message : 'Failed to delete work.')
       }
     })
   }
@@ -76,8 +66,8 @@ export function InlineBlogEditorSection({
         </Button>
       )}
     >
-      <BlogEditor
-        initialBlog={initialBlog}
+      <WorkEditor
+        initialWork={initialWork}
         inlineMode
         onSaved={() => setOpen(false)}
       />

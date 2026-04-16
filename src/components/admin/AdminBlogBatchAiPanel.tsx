@@ -1,6 +1,6 @@
 'use client'
 
-import { X } from 'lucide-react'
+import { RefreshCcw, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -574,7 +574,7 @@ export function AdminBlogBatchAiPanel({
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Recent AI jobs</p>
-              <p className="text-xs text-muted-foreground">Processing continues while you browse the blog list.</p>
+              <p className="text-xs text-muted-foreground">Refresh on demand while you browse the blog list.</p>
               <p className="mt-1 text-xs text-muted-foreground">
                 running {jobCounts.runningCount} · queued {jobCounts.queuedCount} · completed {jobCounts.completedCount} · failed {jobCounts.failedCount} · cancelled {jobCounts.cancelledCount}
               </p>
@@ -585,6 +585,20 @@ export function AdminBlogBatchAiPanel({
               ) : null}
             </div>
             <div className="flex flex-col items-end gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                type="button"
+                onClick={() => {
+                  void loadRecentJobs(activeJobId)
+                  if (activeJobId) {
+                    void loadJobDetail(activeJobId)
+                  }
+                }}
+              >
+                <RefreshCcw className="mr-2 h-4 w-4" />
+                Refresh jobs
+              </Button>
               {queuedJobs.length > 0 ? (
                 <Button size="sm" variant="outline" type="button" onClick={() => void cancelQueuedJobs()} disabled={isCancellingJob}>
                   {isCancellingJob ? 'Cancelling queued...' : `Cancel queued (${queuedJobs.length})`}

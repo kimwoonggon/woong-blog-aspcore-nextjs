@@ -56,7 +56,6 @@ export default async function BlogDetailPage({ params, searchParams }: PageProps
     }
 
     const allBlogs = await fetchAllPublicBlogs()
-    const relatedBlogs = allBlogs.filter((item) => item.id !== blog.id)
     const renderedContent = resolveBlogRenderableHtml(blog.contentJson)
 
     const publishDate = formatDetailPublishDate(blog.publishedAt)
@@ -102,18 +101,7 @@ export default async function BlogDetailPage({ params, searchParams }: PageProps
                                 ))}
                             </ul>
                         </div>
-                        {blog.excerpt && (
-                            <p className="rounded-r-lg border-l-4 border-brand-navy bg-brand-section-bg py-2 pl-4 text-xl leading-relaxed text-foreground/80 text-pretty">
-                                {blog.excerpt}
-                            </p>
-                        )}
                     </header>
-
-                    <div id="blog-detail-content" className="mt-8">
-                        {renderedContent && (
-                            <InteractiveRenderer html={renderedContent} />
-                        )}
-                    </div>
 
                     {session.authenticated && session.role === 'admin' && (
                         adminLoadFailed || !adminBlog ? (
@@ -124,34 +112,48 @@ export default async function BlogDetailPage({ params, searchParams }: PageProps
                                 />
                             </div>
                         ) : (
-                            <InlineBlogEditorSection initialBlog={adminBlog} />
+                            <div className="mt-8">
+                                <InlineBlogEditorSection
+                                    initialBlog={adminBlog}
+                                    afterDeleteHref={returnTo ? decodeURIComponent(returnTo) : '/blog'}
+                                    title="Study Inline Editor"
+                                    description="현재 글 뷰를 유지한 채 바로 수정하거나 삭제합니다."
+                                    triggerLabel="글 수정"
+                                />
+                            </div>
                         )
                     )}
 
+                    <div id="blog-detail-content" className="mt-8">
+                        {renderedContent && (
+                            <InteractiveRenderer html={renderedContent} />
+                        )}
+                    </div>
+
                     {(olderBlog || newerBlog) && (
                         <nav
-                            aria-label="Blog post navigation"
+                            aria-label="Study navigation"
                             data-testid="blog-prev-next"
                             className="mt-12 grid gap-3 border-t border-border/70 pt-8 sm:grid-cols-2"
                         >
-                            {olderBlog ? (
+                            {newerBlog ? (
                                 <Link
-                                    href={`/blog/${olderBlog.slug}${returnTo ? `?returnTo=${returnTo}&relatedPage=${encodeURIComponent(resolvedSearchParams?.relatedPage ?? '')}` : relatedPageSuffix}`}
+                                    href={`/blog/${newerBlog.slug}${returnTo ? `?returnTo=${returnTo}&relatedPage=${encodeURIComponent(resolvedSearchParams?.relatedPage ?? '')}` : relatedPageSuffix}`}
                                     className="group rounded-2xl border border-border/80 bg-background p-4 transition hover:border-primary/30 hover:shadow-sm"
                                 >
-                                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Previous</p>
-                                    <p className="mt-2 text-base font-semibold text-foreground text-balance transition-colors group-hover:text-brand-accent">{olderBlog.title}</p>
+                                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Next</p>
+                                    <p className="mt-2 text-base font-semibold text-foreground text-balance transition-colors group-hover:text-brand-accent">{newerBlog.title}</p>
                                 </Link>
                             ) : (
                                 <div aria-hidden="true" />
                             )}
-                            {newerBlog ? (
+                            {olderBlog ? (
                                 <Link
-                                    href={`/blog/${newerBlog.slug}${returnTo ? `?returnTo=${returnTo}&relatedPage=${encodeURIComponent(resolvedSearchParams?.relatedPage ?? '')}` : relatedPageSuffix}`}
+                                    href={`/blog/${olderBlog.slug}${returnTo ? `?returnTo=${returnTo}&relatedPage=${encodeURIComponent(resolvedSearchParams?.relatedPage ?? '')}` : relatedPageSuffix}`}
                                     className="group rounded-2xl border border-border/80 bg-background p-4 text-left transition hover:border-primary/30 hover:shadow-sm sm:justify-self-end"
                                 >
-                                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Next</p>
-                                    <p className="mt-2 text-base font-semibold text-foreground text-balance transition-colors group-hover:text-brand-accent">{newerBlog.title}</p>
+                                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Previous</p>
+                                    <p className="mt-2 text-base font-semibold text-foreground text-balance transition-colors group-hover:text-brand-accent">{olderBlog.title}</p>
                                 </Link>
                             ) : null}
                         </nav>
@@ -159,10 +161,11 @@ export default async function BlogDetailPage({ params, searchParams }: PageProps
 
                     <div data-testid="blog-related-shell" className="mx-auto mt-16 max-w-3xl border-t pt-12">
                         <RelatedContentList
-                            heading="More Posts"
+                            heading="More Studies"
                             hrefBase="/blog"
-                            items={relatedBlogs}
-                            desktopPageSize={8}
+                            items={sortedBlogs}
+                            currentItemId={blog.id}
+                            desktopPageSize={9}
                             tabletPageSize={4}
                             mobilePageSize={2}
                             testIdBase="related-blog"
@@ -170,7 +173,7 @@ export default async function BlogDetailPage({ params, searchParams }: PageProps
                     </div>
                 </div>
 
-                <aside className="hidden xl:col-start-3 xl:block xl:w-full xl:max-w-72 xl:justify-self-start">
+                <aside className="hidden xl:col-start-3 xl:block xl:w-full xl:max-w-72 xl:justify-self-start xl:pl-6">
                     <TableOfContents contentRootId="blog-detail-content" />
                 </aside>
             </div>

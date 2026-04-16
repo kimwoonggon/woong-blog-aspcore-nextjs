@@ -2,8 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Badge } from '@/components/ui/badge'
 import { AdminErrorPanel } from '@/components/admin/AdminErrorPanel'
-import { InlineAdminEditorShell } from '@/components/admin/InlineAdminEditorShell'
-import { WorkEditor } from '@/components/admin/WorkEditor'
+import { InlineWorkEditorSection } from '@/components/admin/InlineWorkEditorSection'
 import { RelatedContentList } from '@/components/content/RelatedContentList'
 import { InteractiveRenderer } from '@/components/content/InteractiveRenderer'
 import { TableOfContents } from '@/components/content/TableOfContents'
@@ -18,7 +17,7 @@ export const dynamic = 'force-dynamic'
 
 interface PageProps {
     params: Promise<{ slug: string }>
-    searchParams?: Promise<{ relatedPage?: string }>
+    searchParams?: Promise<{ relatedPage?: string; returnTo?: string }>
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -57,7 +56,6 @@ export default async function WorkDetailPage({ params, searchParams }: PageProps
     }
 
     const allWorks = await fetchAllPublicWorks()
-    const relatedWorks = allWorks.filter((item) => item.id !== work.id)
     const contentHtml = parseWorkContentHtml(work.contentJson)
     const orderedVideos = [...work.videos].sort((left, right) => left.sortOrder - right.sortOrder)
     const hasInlineVideoEmbeds = hasWorkVideoEmbeds(contentHtml)
@@ -76,6 +74,7 @@ export default async function WorkDetailPage({ params, searchParams }: PageProps
     const currentIndex = sortedWorks.findIndex((item) => item.id === work.id)
     const newerWork = currentIndex > 0 ? sortedWorks[currentIndex - 1] : null
     const olderWork = currentIndex >= 0 && currentIndex < sortedWorks.length - 1 ? sortedWorks[currentIndex + 1] : null
+    const returnTo = resolvedSearchParams?.returnTo ?? null
     const relatedPageSuffix = resolvedSearchParams?.relatedPage
         ? `?relatedPage=${encodeURIComponent(resolvedSearchParams.relatedPage)}`
         : ''
@@ -99,11 +98,6 @@ export default async function WorkDetailPage({ params, searchParams }: PageProps
                                 </span>
                             )}
                         </div>
-                        {work.excerpt ? (
-                            <p className="rounded-r-lg border-l-4 border-brand-navy bg-brand-section-bg py-2 pl-4 text-xl leading-relaxed text-foreground/80 text-pretty">
-                                {work.excerpt}
-                            </p>
-                        ) : null}
                         {work.tags?.length ? (
                             <ul aria-label="Work tags" className="mt-8 flex flex-wrap gap-2">
                                 {work.tags.map((tag: string) => (
@@ -116,6 +110,27 @@ export default async function WorkDetailPage({ params, searchParams }: PageProps
                             </ul>
                         ) : null}
                     </header>
+
+                    {session.authenticated && session.role === 'admin' && (
+                        adminLoadFailed || !adminWork ? (
+                            <div className="mt-8">
+                                <AdminErrorPanel
+                                    title="Inline work editor is unavailable"
+                                    message="The public work view loaded, but the admin edit payload could not be loaded. Please retry after the backend is healthy."
+                                />
+                            </div>
+                        ) : (
+                            <div className="mt-8">
+                                <InlineWorkEditorSection
+                                    initialWork={adminWork}
+                                    afterDeleteHref={returnTo ? decodeURIComponent(returnTo) : resolvedSearchParams?.relatedPage ? `/works?page=${encodeURIComponent(resolvedSearchParams.relatedPage)}&pageSize=8` : '/works'}
+                                    title="Work Inline Editor"
+                                    description="현재 작업 상세 뷰를 유지한 채 바로 수정하거나 삭제합니다."
+                                    triggerLabel="작업 수정"
+                                />
+                            </div>
+                        )
+                    )}
 
                     <div id="work-detail-content" className="mt-8">
                         {orderedVideos.length > 0 && !hasInlineVideoEmbeds && (
@@ -142,49 +157,30 @@ export default async function WorkDetailPage({ params, searchParams }: PageProps
                         )}
                     </div>
 
-                    {session.authenticated && session.role === 'admin' && (
-                        adminLoadFailed || !adminWork ? (
-                            <div className="mt-8">
-                                <AdminErrorPanel
-                                    title="Inline work editor is unavailable"
-                                    message="The public work view loaded, but the admin edit payload could not be loaded. Please retry after the backend is healthy."
-                                />
-                            </div>
-                        ) : (
-                            <InlineAdminEditorShell
-                                triggerLabel="작업 수정"
-                                title="Work Inline Editor"
-                                description="현재 작업 상세 뷰를 벗어나지 않고 바로 수정합니다."
-                            >
-                                <WorkEditor initialWork={adminWork} inlineMode />
-                            </InlineAdminEditorShell>
-                        )
-                    )}
-
                     {(olderWork || newerWork) && (
                         <nav
                             aria-label="Work navigation"
                             data-testid="work-prev-next"
                             className="mt-12 grid gap-3 border-t border-border/70 pt-8 sm:grid-cols-2"
                         >
-                            {olderWork ? (
+                            {newerWork ? (
                                 <Link
-                                    href={`/works/${olderWork.slug}${relatedPageSuffix}`}
+                                    href={`/works/${newerWork.slug}${returnTo ? `?returnTo=${returnTo}&relatedPage=${encodeURIComponent(resolvedSearchParams?.relatedPage ?? '')}` : relatedPageSuffix}`}
                                     className="group rounded-2xl border border-border/80 bg-background p-4 transition hover:border-primary/30 hover:shadow-sm"
                                 >
-                                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Previous</p>
-                                    <p className="mt-2 text-base font-semibold text-foreground text-balance transition-colors group-hover:text-brand-accent">{olderWork.title}</p>
+                                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Next</p>
+                                    <p className="mt-2 text-base font-semibold text-foreground text-balance transition-colors group-hover:text-brand-accent">{newerWork.title}</p>
                                 </Link>
                             ) : (
                                 <div aria-hidden="true" />
                             )}
-                            {newerWork ? (
+                            {olderWork ? (
                                 <Link
-                                    href={`/works/${newerWork.slug}${relatedPageSuffix}`}
+                                    href={`/works/${olderWork.slug}${returnTo ? `?returnTo=${returnTo}&relatedPage=${encodeURIComponent(resolvedSearchParams?.relatedPage ?? '')}` : relatedPageSuffix}`}
                                     className="group rounded-2xl border border-border/80 bg-background p-4 text-left transition hover:border-primary/30 hover:shadow-sm sm:justify-self-end"
                                 >
-                                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Next</p>
-                                    <p className="mt-2 text-base font-semibold text-foreground text-balance transition-colors group-hover:text-brand-accent">{newerWork.title}</p>
+                                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Previous</p>
+                                    <p className="mt-2 text-base font-semibold text-foreground text-balance transition-colors group-hover:text-brand-accent">{olderWork.title}</p>
                                 </Link>
                             ) : null}
                         </nav>
@@ -194,8 +190,9 @@ export default async function WorkDetailPage({ params, searchParams }: PageProps
                         <RelatedContentList
                             heading="More Works"
                             hrefBase="/works"
-                            items={relatedWorks}
-                            desktopPageSize={8}
+                            items={sortedWorks}
+                            currentItemId={work.id}
+                            desktopPageSize={9}
                             tabletPageSize={4}
                             mobilePageSize={2}
                             testIdBase="related-work"
@@ -203,7 +200,7 @@ export default async function WorkDetailPage({ params, searchParams }: PageProps
                     </div>
                 </div>
 
-                <aside className="hidden xl:col-start-3 xl:block xl:w-full xl:max-w-72 xl:justify-self-start">
+                <aside className="hidden xl:col-start-3 xl:block xl:w-full xl:max-w-72 xl:justify-self-start xl:pl-6">
                     <TableOfContents contentRootId="work-detail-content" />
                 </aside>
             </div>

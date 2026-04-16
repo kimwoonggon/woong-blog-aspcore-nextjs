@@ -7,9 +7,13 @@ using WoongBlog.Api.Infrastructure.Persistence;
 
 namespace WoongBlog.Api.Infrastructure.Ai;
 
-public sealed class AiBatchJobProcessor(IServiceScopeFactory scopeFactory, IOptions<AiOptions> options) : BackgroundService
+public sealed class AiBatchJobProcessor(
+    IServiceScopeFactory scopeFactory,
+    AiBatchJobSignal signal,
+    IOptions<AiOptions> options) : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory = scopeFactory;
+    private readonly AiBatchJobSignal _signal = signal;
     private readonly AiOptions _options = options.Value;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -32,10 +36,20 @@ public sealed class AiBatchJobProcessor(IServiceScopeFactory scopeFactory, IOpti
                 await dbContext.SaveChangesAsync(stoppingToken);
             }
 
-            await PruneCompletedJobsAsync(dbContext, stoppingToken);
         }
 
+        await ProcessQueuedJobsUntilEmptyAsync(stoppingToken);
+
         while (!stoppingToken.IsCancellationRequested)
+        {
+            await _signal.WaitAsync(stoppingToken);
+            await ProcessQueuedJobsUntilEmptyAsync(stoppingToken);
+        }
+    }
+
+    private async Task ProcessQueuedJobsUntilEmptyAsync(CancellationToken cancellationToken)
+    {
+        while (!cancellationToken.IsCancellationRequested)
         {
             Guid? nextJobId = null;
 
@@ -45,28 +59,24 @@ public sealed class AiBatchJobProcessor(IServiceScopeFactory scopeFactory, IOpti
                 var nextJob = await dbContext.AiBatchJobs
                     .Where(job => job.Status == AiBatchJobStates.Queued)
                     .OrderBy(job => job.CreatedAt)
-                    .FirstOrDefaultAsync(stoppingToken);
+                    .FirstOrDefaultAsync(cancellationToken);
 
                 if (nextJob is not null)
                 {
                     nextJob.Status = AiBatchJobStates.Running;
                     nextJob.StartedAt = DateTimeOffset.UtcNow;
                     nextJob.UpdatedAt = DateTimeOffset.UtcNow;
-                    await dbContext.SaveChangesAsync(stoppingToken);
+                    await dbContext.SaveChangesAsync(cancellationToken);
                     nextJobId = nextJob.Id;
                 }
             }
 
             if (nextJobId is null)
             {
-                using var pruneScope = _scopeFactory.CreateScope();
-                var pruneDbContext = pruneScope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
-                await PruneCompletedJobsAsync(pruneDbContext, stoppingToken);
-                await Task.Delay(TimeSpan.FromSeconds(2), stoppingToken);
-                continue;
+                return;
             }
 
-            await ProcessJobAsync(nextJobId.Value, stoppingToken);
+            await ProcessJobAsync(nextJobId.Value, cancellationToken);
         }
     }
 
@@ -261,37 +271,4 @@ public sealed class AiBatchJobProcessor(IServiceScopeFactory scopeFactory, IOpti
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    private async Task PruneCompletedJobsAsync(WoongBlogDbContext dbContext, CancellationToken cancellationToken)
-    {
-        if (_options.BatchCompletedRetentionDays < 0)
-        {
-            return;
-        }
-
-        var threshold = DateTimeOffset.UtcNow.AddDays(-_options.BatchCompletedRetentionDays);
-        var oldCompletedJobs = await dbContext.AiBatchJobs
-            .Where(job =>
-                job.TargetType == "blog"
-                && job.Status == AiBatchJobStates.Completed
-                && job.FinishedAt != null
-                && job.FinishedAt < threshold)
-            .Select(job => job.Id)
-            .ToListAsync(cancellationToken);
-
-        if (oldCompletedJobs.Count == 0)
-        {
-            return;
-        }
-
-        var items = await dbContext.AiBatchJobItems
-            .Where(item => oldCompletedJobs.Contains(item.JobId))
-            .ToListAsync(cancellationToken);
-        var jobs = await dbContext.AiBatchJobs
-            .Where(job => oldCompletedJobs.Contains(job.Id))
-            .ToListAsync(cancellationToken);
-
-        dbContext.AiBatchJobItems.RemoveRange(items);
-        dbContext.AiBatchJobs.RemoveRange(jobs);
-        await dbContext.SaveChangesAsync(cancellationToken);
-    }
 }
