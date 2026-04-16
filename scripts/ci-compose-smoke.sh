@@ -188,4 +188,32 @@ if [[ "${test_login_status}" != "${expected_test_login_status}" ]]; then
   exit 1
 fi
 
+if [[ "${MODE}" == "main" && "${keep_running}" != "1" && "${SKIP_ACME_ONLY_SMOKE:-0}" != "1" ]]; then
+  challenge_file="./certbot/www/.well-known/acme-challenge/woong-smoke-token"
+  mkdir -p "$(dirname "${challenge_file}")"
+  printf 'woong-smoke-ok\n' > "${challenge_file}"
+
+  acme_env_file="$(mktemp)"
+  grep -v '^NGINX_DEFAULT_CONF=' "${compose_env_file}" > "${acme_env_file}"
+  printf 'NGINX_DEFAULT_CONF=./nginx/prod-acme-only.conf\n' >> "${acme_env_file}"
+
+  acme_compose_cmd=("${DOCKER_BIN}" compose --env-file "${acme_env_file}" -f "${compose_file}")
+  env NGINX_DEFAULT_CONF=./nginx/prod-acme-only.conf "${acme_compose_cmd[@]}" up -d nginx >/dev/null
+
+  curl "${curl_opts[@]}" "${base_url}/.well-known/acme-challenge/woong-smoke-token" \
+    -o /tmp/woong-blog-acme-token.txt
+  grep -Fq 'woong-smoke-ok' /tmp/woong-blog-acme-token.txt
+
+  blocked_status="$(
+    curl "${curl_opts[@]/-fsS/-sS}" -o /tmp/woong-blog-acme-blocked.html -w "%{http_code}" \
+      "${base_url}/blog" || true
+  )"
+  if [[ "${blocked_status}" =~ ^(200|301|302|307|308)$ ]]; then
+    echo "prod-acme-only.conf exposed /blog with status ${blocked_status}" >&2
+    exit 1
+  fi
+
+  rm -f "${acme_env_file}"
+fi
+
 echo "compose smoke passed for mode=${MODE}"
