@@ -91,14 +91,14 @@ jobs:
           PLAYWRIGHT_SKIP_AUTH_BOOTSTRAP: "1"
           PLAYWRIGHT_EXPECT_LOCAL_ADMIN_SHORTCUT: visible
           PLAYWRIGHT_EXTERNAL_SERVER: "1"
-          PLAYWRIGHT_BASE_URL: http://localhost
+          PLAYWRIGHT_BASE_URL: https://localhost:3001
         run: npx playwright test tests/ci-compose-public.spec.ts --project=chromium-public --workers=1
 
       - name: Run runtime auth smoke
         env:
           PLAYWRIGHT_EXPECT_LOCAL_ADMIN_SHORTCUT: visible
           PLAYWRIGHT_EXTERNAL_SERVER: "1"
-          PLAYWRIGHT_BASE_URL: http://localhost
+          PLAYWRIGHT_BASE_URL: https://localhost:3001
         run: npx playwright test tests/test-server-runtime.spec.ts tests/auth-security-browser.spec.ts tests/public-admin-affordances.spec.ts tests/ui-header-overlays.spec.ts --project=chromium-runtime-auth --workers=1
 
       - name: Tear down compose stack

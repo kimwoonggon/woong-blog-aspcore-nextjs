@@ -44,7 +44,7 @@ test('theme dropdown opens below the trigger without clipping', async ({ page })
   await expectMenuBelowTrigger(triggerBox, menu, desktopViewport)
   await expect(menu.getByRole('menuitemradio', { name: 'Light' })).toBeVisible()
   await expect(menu.getByRole('menuitemradio', { name: 'Dark' })).toBeVisible()
-  await expect(menu.getByRole('menuitemradio', { name: 'System' })).toBeVisible()
+  await expect(menu.getByRole('menuitemradio', { name: 'System' })).toHaveCount(0)
 })
 
 test.describe('signed-in menu', () => {
