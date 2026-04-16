@@ -200,15 +200,28 @@ if [[ "${MODE}" == "main" && "${keep_running}" != "1" && "${SKIP_ACME_ONLY_SMOKE
   acme_compose_cmd=("${DOCKER_BIN}" compose --env-file "${acme_env_file}" -f "${compose_file}")
   env NGINX_DEFAULT_CONF=./nginx/prod-acme-only.conf "${acme_compose_cmd[@]}" up -d nginx >/dev/null
 
+  for _ in $(seq 1 30); do
+    if curl "${curl_opts[@]}" "${base_url}/.well-known/acme-challenge/woong-smoke-token" \
+      -o /tmp/woong-blog-acme-token.txt >/dev/null 2>&1; then
+      break
+    fi
+    sleep 1
+  done
+
   curl "${curl_opts[@]}" "${base_url}/.well-known/acme-challenge/woong-smoke-token" \
     -o /tmp/woong-blog-acme-token.txt
   grep -Fq 'woong-smoke-ok' /tmp/woong-blog-acme-token.txt
 
+  trap - ERR
+  set +e
   blocked_status="$(
     curl "${curl_opts[@]/-fsS/-sS}" -o /tmp/woong-blog-acme-blocked.html -w "%{http_code}" \
-      "${base_url}/blog" || true
+      "${base_url}/blog"
   )"
-  if [[ "${blocked_status}" =~ ^(200|301|302|307|308)$ ]]; then
+  blocked_exit=$?
+  set -e
+  trap on_error ERR
+  if [[ "${blocked_exit}" -eq 0 && "${blocked_status}" =~ ^(200|301|302|307|308)$ ]]; then
     echo "prod-acme-only.conf exposed /blog with status ${blocked_status}" >&2
     exit 1
   fi
