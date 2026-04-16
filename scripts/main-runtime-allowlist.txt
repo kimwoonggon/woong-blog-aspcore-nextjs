@@ -10,6 +10,7 @@ backend/Dockerfile
 docker-compose.prod.yml
 eslint.config.mjs
 nginx/prod-bootstrap.conf
+nginx/prod-acme-only.conf
 nginx/prod.conf
 postcss.config.mjs
 public

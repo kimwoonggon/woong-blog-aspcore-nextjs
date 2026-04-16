@@ -93,6 +93,12 @@ case "${MODE}" in
     compose_file="${compose_file:-docker-compose.prod.yml}"
     base_url="${BASE_URL:-http://localhost}"
     compose_env_file="${APP_ENV_FILE:-.env.prod.ci}"
+    if [[ "$(pwd)" == /mnt/* ]]; then
+      default_postgres_data_dir="${HOME}/.woong-blog-docker/ci-main/postgres"
+    else
+      default_postgres_data_dir="./.docker-data/ci-main/postgres"
+    fi
+    export POSTGRES_DATA_DIR="${POSTGRES_DATA_DIR:-${default_postgres_data_dir}}"
     if [[ -z "${FRONTEND_IMAGE:-}" ]]; then
       FRONTEND_IMAGE="local/woong-blog-frontend:smoke"
       "${DOCKER_BIN}" build -f Dockerfile -t "${FRONTEND_IMAGE}" .
@@ -111,10 +117,12 @@ LETSENCRYPT_DIR=./certbot/conf
 POSTGRES_DB=portfolio
 POSTGRES_USER=portfolio
 POSTGRES_PASSWORD=portfolio
+POSTGRES_DATA_DIR=${POSTGRES_DATA_DIR}
 Auth__Enabled=false
 PROXY_KNOWN_NETWORK=172.16.0.0/12
 EOF
     created_env=1
+    mkdir -p "${POSTGRES_DATA_DIR}"
     mkdir -p certbot/www certbot/conf/live/current
     export APP_ENV_FILE="${compose_env_file}"
     expected_local_admin=absent
@@ -178,6 +186,34 @@ if [[ "${test_login_status}" != "${expected_test_login_status}" ]]; then
   echo "unexpected test-login status for mode=${MODE}: got ${test_login_status}, expected ${expected_test_login_status}" >&2
   cat /tmp/woong-blog-test-login.txt >&2 || true
   exit 1
+fi
+
+if [[ "${MODE}" == "main" && "${keep_running}" != "1" && "${SKIP_ACME_ONLY_SMOKE:-0}" != "1" ]]; then
+  challenge_file="./certbot/www/.well-known/acme-challenge/woong-smoke-token"
+  mkdir -p "$(dirname "${challenge_file}")"
+  printf 'woong-smoke-ok\n' > "${challenge_file}"
+
+  acme_env_file="$(mktemp)"
+  grep -v '^NGINX_DEFAULT_CONF=' "${compose_env_file}" > "${acme_env_file}"
+  printf 'NGINX_DEFAULT_CONF=./nginx/prod-acme-only.conf\n' >> "${acme_env_file}"
+
+  acme_compose_cmd=("${DOCKER_BIN}" compose --env-file "${acme_env_file}" -f "${compose_file}")
+  env NGINX_DEFAULT_CONF=./nginx/prod-acme-only.conf "${acme_compose_cmd[@]}" up -d nginx >/dev/null
+
+  curl "${curl_opts[@]}" "${base_url}/.well-known/acme-challenge/woong-smoke-token" \
+    -o /tmp/woong-blog-acme-token.txt
+  grep -Fq 'woong-smoke-ok' /tmp/woong-blog-acme-token.txt
+
+  blocked_status="$(
+    curl "${curl_opts[@]/-fsS/-sS}" -o /tmp/woong-blog-acme-blocked.html -w "%{http_code}" \
+      "${base_url}/blog" || true
+  )"
+  if [[ "${blocked_status}" =~ ^(200|301|302|307|308)$ ]]; then
+    echo "prod-acme-only.conf exposed /blog with status ${blocked_status}" >&2
+    exit 1
+  fi
+
+  rm -f "${acme_env_file}"
 fi
 
 echo "compose smoke passed for mode=${MODE}"

@@ -33,9 +33,11 @@ echo "$GHCR_TOKEN" | docker login ghcr.io -u YOUR_GITHUB_USERNAME --password-std
 필요 권한:
 - `read:packages`
 
-## 3. 최초 bootstrap 기동
+## 3. 최초 로컬 bootstrap 기동
 
-인증서가 아직 없을 때는 bootstrap nginx로 먼저 올린다.
+인증서가 아직 없을 때는 localhost 전용 bootstrap nginx로 먼저 올린다.
+이 단계는 앱과 DB가 정상으로 뜨는지 로컬에서 확인하기 위한 단계다.
+외부 공개 전에는 `NGINX_BIND_HOST=127.0.0.1`을 유지한다.
 
 ```bash
 mkdir -p certbot/www certbot/conf/live/current
@@ -43,11 +45,21 @@ docker compose --env-file .env.prod -f docker-compose.prod.yml pull
 docker compose --env-file .env.prod -f docker-compose.prod.yml up -d db backend frontend nginx
 ```
 
-기본값으로 `NGINX_DEFAULT_CONF=./nginx/prod-bootstrap.conf` 이므로, 이 상태에서는 `80` 포트와 ACME challenge가 동작한다.
+기본값으로 `NGINX_DEFAULT_CONF=./nginx/prod-bootstrap.conf` 이므로 로컬에서 앱과 `/api/health`를 확인할 수 있다.
+이 설정은 앱 프록시를 포함하므로 `NGINX_BIND_HOST=0.0.0.0`과 함께 사용하지 않는다.
 
 ## 4. Let’s Encrypt 인증서 발급
 
 아래 예시는 단일 대표 도메인을 기준으로 한다.
+인증서 발급 중에는 외부에 ACME challenge 경로만 열기 위해 nginx 설정을 `prod-acme-only.conf`로 바꾼다.
+
+```bash
+sed -i 's#^NGINX_BIND_HOST=.*#NGINX_BIND_HOST=0.0.0.0#' .env.prod
+sed -i 's#^NGINX_DEFAULT_CONF=.*#NGINX_DEFAULT_CONF=./nginx/prod-acme-only.conf#' .env.prod
+docker compose --env-file .env.prod -f docker-compose.prod.yml up -d nginx
+```
+
+이 상태에서는 `/.well-known/acme-challenge/*`만 응답하고 `/`, `/blog`, `/works`, `/api/*` 같은 앱 경로는 닫힌다.
 
 ```bash
 docker run --rm \
