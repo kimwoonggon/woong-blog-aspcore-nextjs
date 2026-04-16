@@ -58,6 +58,7 @@ trap on_error ERR
 case "${MODE}" in
   dev)
     compose_file="${compose_file:-docker-compose.dev.yml}"
+    base_url="${BASE_URL:-http://localhost:3000}"
     compose_env_file="${APP_ENV_FILE:-.env}"
     if [[ ! -f "${compose_env_file}" && -f .env.example ]]; then
       cp .env.example "${compose_env_file}"
@@ -65,11 +66,23 @@ case "${MODE}" in
     fi
     export APP_ENV_FILE="${compose_env_file}"
     export NGINX_DEFAULT_CONF="${NGINX_DEFAULT_CONF:-./nginx/default.conf}"
+    export NGINX_HTTP_PORT="${NGINX_HTTP_PORT:-3000}"
+    export NGINX_BIND_HOST="${NGINX_BIND_HOST:-127.0.0.1}"
+    export BACKEND_PUBLISH_PORT="${BACKEND_PUBLISH_PORT:-8081}"
+    export BACKEND_BIND_HOST="${BACKEND_BIND_HOST:-127.0.0.1}"
+    {
+      printf '\nNGINX_DEFAULT_CONF=%s\n' "${NGINX_DEFAULT_CONF}"
+      printf '\nNGINX_HTTP_PORT=%s\n' "${NGINX_HTTP_PORT}"
+      printf 'NGINX_BIND_HOST=%s\n' "${NGINX_BIND_HOST}"
+      printf 'BACKEND_PUBLISH_PORT=%s\n' "${BACKEND_PUBLISH_PORT}"
+      printf 'BACKEND_BIND_HOST=%s\n' "${BACKEND_BIND_HOST}"
+    } >> "${compose_env_file}"
     expected_local_admin=present
     expected_test_login_status=302
     ;;
   main)
     compose_file="${compose_file:-docker-compose.prod.yml}"
+    base_url="${BASE_URL:-http://localhost}"
     compose_env_file="${APP_ENV_FILE:-.env.prod.ci}"
     if [[ -z "${FRONTEND_IMAGE:-}" ]]; then
       FRONTEND_IMAGE="local/woong-blog-frontend:smoke"
