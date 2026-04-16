@@ -68,6 +68,15 @@ case "${MODE}" in
     export NGINX_BIND_HOST="${NGINX_BIND_HOST:-127.0.0.1}"
     export BACKEND_PUBLISH_PORT="${BACKEND_PUBLISH_PORT:-8081}"
     export BACKEND_BIND_HOST="${BACKEND_BIND_HOST:-127.0.0.1}"
+    export LOCAL_CERTS_DIR="${LOCAL_CERTS_DIR:-./.local-certs}"
+    mkdir -p "${LOCAL_CERTS_DIR}"
+    if [[ ! -f "${LOCAL_CERTS_DIR}/localhost.pem" || ! -f "${LOCAL_CERTS_DIR}/localhost-key.pem" ]]; then
+      openssl req -x509 -nodes -newkey rsa:2048 -days 7 \
+        -keyout "${LOCAL_CERTS_DIR}/localhost-key.pem" \
+        -out "${LOCAL_CERTS_DIR}/localhost.pem" \
+        -subj "/CN=localhost" \
+        -addext "subjectAltName=DNS:localhost,IP:127.0.0.1,IP:::1" >/dev/null 2>&1
+    fi
     {
       printf '\nNGINX_DEFAULT_CONF=%s\n' "${NGINX_DEFAULT_CONF}"
       printf '\nNGINX_HTTP_PORT=%s\n' "${NGINX_HTTP_PORT}"
@@ -75,6 +84,7 @@ case "${MODE}" in
       printf 'NGINX_HTTPS_PORT=%s\n' "${NGINX_HTTPS_PORT}"
       printf 'BACKEND_PUBLISH_PORT=%s\n' "${BACKEND_PUBLISH_PORT}"
       printf 'BACKEND_BIND_HOST=%s\n' "${BACKEND_BIND_HOST}"
+      printf 'LOCAL_CERTS_DIR=%s\n' "${LOCAL_CERTS_DIR}"
     } >> "${compose_env_file}"
     expected_local_admin=present
     expected_test_login_status=302
