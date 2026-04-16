@@ -22,9 +22,6 @@ compose_cmd=()
 created_env=0
 base_url="${BASE_URL:-http://localhost}"
 curl_opts=(-fsS)
-if [[ "${base_url}" == https://* ]]; then
-  curl_opts+=(-k)
-fi
 
 keep_running="${KEEP_RUNNING:-0}"
 
@@ -58,15 +55,16 @@ trap on_error ERR
 case "${MODE}" in
   dev)
     compose_file="${compose_file:-docker-compose.dev.yml}"
-    base_url="${BASE_URL:-http://localhost:3000}"
+    base_url="${BASE_URL:-https://localhost:3001}"
     compose_env_file="${APP_ENV_FILE:-.env}"
     if [[ ! -f "${compose_env_file}" && -f .env.example ]]; then
       cp .env.example "${compose_env_file}"
       created_env=1
     fi
     export APP_ENV_FILE="${compose_env_file}"
-    export NGINX_DEFAULT_CONF="${NGINX_DEFAULT_CONF:-./nginx/default.conf}"
+    export NGINX_DEFAULT_CONF="${NGINX_DEFAULT_CONF:-./nginx/local-https.conf}"
     export NGINX_HTTP_PORT="${NGINX_HTTP_PORT:-3000}"
+    export NGINX_HTTPS_PORT="${NGINX_HTTPS_PORT:-3001}"
     export NGINX_BIND_HOST="${NGINX_BIND_HOST:-127.0.0.1}"
     export BACKEND_PUBLISH_PORT="${BACKEND_PUBLISH_PORT:-8081}"
     export BACKEND_BIND_HOST="${BACKEND_BIND_HOST:-127.0.0.1}"
@@ -74,6 +72,7 @@ case "${MODE}" in
       printf '\nNGINX_DEFAULT_CONF=%s\n' "${NGINX_DEFAULT_CONF}"
       printf '\nNGINX_HTTP_PORT=%s\n' "${NGINX_HTTP_PORT}"
       printf 'NGINX_BIND_HOST=%s\n' "${NGINX_BIND_HOST}"
+      printf 'NGINX_HTTPS_PORT=%s\n' "${NGINX_HTTPS_PORT}"
       printf 'BACKEND_PUBLISH_PORT=%s\n' "${BACKEND_PUBLISH_PORT}"
       printf 'BACKEND_BIND_HOST=%s\n' "${BACKEND_BIND_HOST}"
     } >> "${compose_env_file}"
@@ -116,6 +115,11 @@ EOF
     exit 1
     ;;
 esac
+
+curl_opts=(-fsS)
+if [[ "${base_url}" == https://* ]]; then
+  curl_opts+=(-k)
+fi
 
 compose_cmd=("${DOCKER_BIN}" compose --env-file "${compose_env_file}" -f "${compose_file}")
 
