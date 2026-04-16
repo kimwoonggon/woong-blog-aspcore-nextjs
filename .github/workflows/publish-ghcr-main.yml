@@ -28,9 +28,13 @@ jobs:
           - image_suffix: frontend
             context: .
             dockerfile: Dockerfile
+            smoke_http_port: 18080
+            smoke_https_port: 18443
           - image_suffix: backend
             context: .
             dockerfile: backend/Dockerfile
+            smoke_http_port: 18081
+            smoke_https_port: 18444
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -46,6 +50,10 @@ jobs:
         env:
           FRONTEND_IMAGE: local/woong-blog-frontend:publish
           BACKEND_IMAGE: local/woong-blog-backend:publish
+          COMPOSE_PROJECT_NAME: woong-main-publish-${{ matrix.image_suffix }}
+          NGINX_HTTP_PORT: ${{ matrix.smoke_http_port }}
+          NGINX_HTTPS_PORT: ${{ matrix.smoke_https_port }}
+          BASE_URL: http://localhost:${{ matrix.smoke_http_port }}
         run: bash ./scripts/ci-compose-smoke.sh main
 
       - name: Normalize image names
