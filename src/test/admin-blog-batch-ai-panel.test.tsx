@@ -232,13 +232,23 @@ describe('AdminBlogBatchAiPanel', () => {
   })
 
   it('uses the selected provider in the batch job payload and hides codex-only controls for openai', async () => {
+    mocks.fetchAdminAiRuntimeConfigBrowser.mockResolvedValueOnce({
+      provider: 'openai',
+      availableProviders: ['openai'],
+      defaultModel: 'gpt-5.4',
+      codexModel: 'gpt-5.4',
+      codexReasoningEffort: 'medium',
+      allowedCodexModels: ['gpt-5.4'],
+      allowedCodexReasoningEfforts: ['low', 'medium', 'high'],
+      batchConcurrency: 2,
+      batchCompletedRetentionDays: 14,
+      defaultSystemPrompt: 'Default blog system prompt',
+    })
     renderPanel()
 
     await waitFor(() => {
-      expect(mocks.fetchAdminAiRuntimeConfigBrowser).toHaveBeenCalled()
+      expect(screen.getByTestId('admin-blog-batch-ai-provider')).toHaveTextContent('openai')
     })
-
-    fireEvent.change(screen.getByLabelText('Batch AI provider'), { target: { value: 'openai' } })
 
     expect(screen.queryByLabelText('Codex model')).not.toBeInTheDocument()
     expect(screen.queryByLabelText('Blog batch codex reasoning')).not.toBeInTheDocument()
@@ -254,7 +264,6 @@ describe('AdminBlogBatchAiPanel', () => {
     expect(JSON.parse(request.body)).toMatchObject({
       provider: 'openai',
     })
-    expect(window.localStorage.getItem('admin-ai-provider')).toBe('openai')
   })
 
   it('blocks date batch creation when no date bounds are set', async () => {
