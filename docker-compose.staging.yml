@@ -20,6 +20,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://0.0.0.0:8080
+      CODEX_HOME: /root/.codex
       ConnectionStrings__Postgres: Host=db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
       Auth__Enabled: ${Auth__Enabled:-false}
       Auth__DataProtectionKeysPath: /app/data-protection
@@ -37,7 +38,7 @@ services:
     volumes:
       - data-protection-keys:/app/data-protection
       - media-storage:/app/media
-      - ${CODEX_HOME_DIR:-./.codex-runtime}:/root/.codex
+      - ${CODEX_HOME_DIR:-${HOME}/.codex}:/root/.codex
     restart: unless-stopped
 
   db:

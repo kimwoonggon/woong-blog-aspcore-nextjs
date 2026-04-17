@@ -18,20 +18,19 @@ test('VA-300 and VA-303 navbar stays sticky with backdrop treatment and footer s
   expect(Number.parseFloat(footerBorder)).toBeGreaterThan(0)
 })
 
-test('VA-302 theme dropdown keeps popover border and elevation styling', async ({ page }) => {
+test('VA-302 theme toggle keeps a direct 44px action without popover chrome', async ({ page }) => {
   await page.goto('/')
-  await page.getByTestId('theme-toggle').click()
+  const themeToggle = page.getByTestId('theme-toggle')
+  const box = await themeToggle.boundingBox()
 
-  const menu = page.locator('[data-slot="dropdown-menu-content"]').first()
-  await expect(menu).toBeVisible()
+  expect(box).toBeTruthy()
+  expect(box!.width).toBeGreaterThanOrEqual(44)
+  expect(box!.height).toBeGreaterThanOrEqual(44)
 
-  const [borderWidth, boxShadow] = await Promise.all([
-    getStyle(menu, 'border-top-width'),
-    getStyle(menu, 'box-shadow'),
-  ])
+  await themeToggle.click()
 
-  expect(Number.parseFloat(borderWidth)).toBeGreaterThan(0)
-  expect(boxShadow).not.toBe('none')
+  await expect.poll(() => page.evaluate(() => document.documentElement.classList.contains('dark'))).toBe(true)
+  await expect(page.locator('[data-slot="dropdown-menu-content"]')).toHaveCount(0)
 })
 
 test('VA-301 and VA-400 mobile menu sheet keeps motion tokens and overlay styling', async ({ page }) => {

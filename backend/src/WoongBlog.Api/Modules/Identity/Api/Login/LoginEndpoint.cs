@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Options;
 using WoongBlog.Api.Infrastructure.Auth;
 
@@ -32,7 +31,6 @@ internal static class LoginEndpoint
                     [OpenIdConnectDefaults.AuthenticationScheme]);
             })
             .AllowAnonymous()
-            .RequireRateLimiting("auth")
             .WithTags("Auth")
             .WithName("AuthLogin");
     }

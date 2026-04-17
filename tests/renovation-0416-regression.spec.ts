@@ -18,9 +18,8 @@ test('0416 public copy, light default, and Study navigation are visible', async 
   await expect(banner.getByText(/Works, writing, and experiments/i)).toHaveCount(0)
 
   await page.getByTestId('theme-toggle').click()
-  await expect(page.getByRole('menuitemradio', { name: 'Light' })).toBeVisible()
-  await expect(page.getByRole('menuitemradio', { name: 'Dark' })).toBeVisible()
-  await expect(page.getByRole('menuitemradio', { name: 'System' })).toHaveCount(0)
+  await expect(page.locator('html')).toHaveClass(/dark/)
+  await expect(page.getByRole('menuitemradio')).toHaveCount(0)
 })
 
 test('0416 public detail pages hide excerpt callouts and keep current related items', async ({ page }) => {

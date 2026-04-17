@@ -43,17 +43,39 @@ export async function getServerApiBaseUrl() {
 export async function fetchServerSession() {
   const apiBaseUrl = await getServerApiBaseUrl()
   const cookieHeader = await getServerCookieHeader()
+  const forwardedHeaders = await getServerForwardingHeaders()
 
   const response = await fetch(`${apiBaseUrl}/auth/session`, {
-    headers: cookieHeader ? { cookie: cookieHeader } : {},
+    headers: {
+      ...forwardedHeaders,
+      ...(cookieHeader ? { cookie: cookieHeader } : {}),
+    },
     cache: 'no-store',
   })
 
-  if (!response.ok) {
+  if (response.status === 401 || response.status === 403) {
     return { authenticated: false } satisfies ServerSession
   }
 
+  if (!response.ok) {
+    throw new Error(`Session endpoint failed with status ${response.status}.`)
+  }
+
   return response.json() as Promise<ServerSession>
+}
+
+export async function getServerForwardingHeaders() {
+  const headerStore = await headers()
+  const forwardedHeaders: Record<string, string> = {}
+
+  for (const name of ['x-forwarded-for', 'x-forwarded-host', 'x-forwarded-proto', 'cf-connecting-ip']) {
+    const value = headerStore.get(name)
+    if (value) {
+      forwardedHeaders[name] = value
+    }
+  }
+
+  return forwardedHeaders
 }
 
 export async function getServerCookieHeader() {

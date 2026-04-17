@@ -17,7 +17,6 @@ internal static class GetBlogBySlugEndpoint
                 var result = await sender.Send(new GetBlogBySlugQuery(slug), cancellationToken);
                 return result is null ? Results.NotFound() : Results.Ok(result);
             })
-            .RequireRateLimiting("public-read")
             .WithTags("Public Blogs")
             .WithName("GetBlogBySlug")
             .Produces<BlogDetailDto>(StatusCodes.Status200OK)

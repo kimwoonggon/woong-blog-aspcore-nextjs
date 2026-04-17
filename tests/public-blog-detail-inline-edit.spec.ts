@@ -3,10 +3,11 @@ import { expect, test } from '@playwright/test'
 test.use({ storageState: 'test-results/playwright/admin-storage-state.json' })
 
 
-test('admin can edit a public blog detail inline and save in place', async ({ page }) => {
-  const updatedBody = `inline blog body ${Date.now()}`
+test('admin can edit a public blog detail inline and return to the originating blog page', async ({ page }) => {
+  const updatedTitle = `Inline Blog Title ${Date.now()}`
 
-  await page.goto('/blog?pageSize=1')
+  await page.goto('/blog?page=2&pageSize=2')
+  const originalListUrl = page.url()
   await page.locator('a[href^="/blog/"]').first().click()
 
   await expect(page.getByRole('button', { name: '글 수정' })).toBeVisible()
@@ -15,9 +16,7 @@ test('admin can edit a public blog detail inline and save in place', async ({ pa
   const saveButton = page.getByRole('button', { name: 'Update Post' })
   await expect(saveButton).toBeDisabled()
 
-  await page.locator('.tiptap.ProseMirror').first().click()
-  await page.keyboard.press(process.platform === 'darwin' ? 'Meta+A' : 'Control+A')
-  await page.keyboard.type(updatedBody)
+  await page.getByLabel('Title').fill(updatedTitle)
   await expect(saveButton).toBeEnabled()
 
   await Promise.all([
@@ -25,7 +24,10 @@ test('admin can edit a public blog detail inline and save in place', async ({ pa
     saveButton.click(),
   ])
 
-  await expect(page.getByText(updatedBody).first()).toBeVisible()
+  await expect(page).toHaveURL(originalListUrl)
+  await expect(page).not.toHaveURL(/\/admin\/blog\//)
+  await expect(page.getByLabel('Title')).toHaveCount(0)
+  await expect(page.getByRole('button', { name: '새 글 쓰기' })).toBeVisible()
 })
 
 test('public blog detail shows paginated related posts', async ({ page }) => {

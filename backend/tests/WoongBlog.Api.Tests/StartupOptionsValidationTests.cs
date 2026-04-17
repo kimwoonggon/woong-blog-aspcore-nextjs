@@ -20,48 +20,6 @@ public class StartupOptionsValidationTests
     }
 
     [Fact]
-    public void InvalidSecurityRateLimit_FailsAtStartup()
-    {
-        using var factory = CreateInvalidFactory(new Dictionary<string, string?>
-        {
-            ["Security:AuthRateLimitPermitLimit"] = "0"
-        });
-
-        var exception = Assert.ThrowsAny<Exception>(() => factory.CreateClient());
-        var validationException = FindOptionsValidationException(exception);
-
-        Assert.Contains("Security:AuthRateLimitPermitLimit", string.Join('\n', validationException.Failures));
-    }
-
-    [Fact]
-    public void InvalidPublicReadRateLimit_FailsAtStartup()
-    {
-        using var factory = CreateInvalidFactory(new Dictionary<string, string?>
-        {
-            ["Security:PublicReadRateLimitPermitLimit"] = "0"
-        });
-
-        var exception = Assert.ThrowsAny<Exception>(() => factory.CreateClient());
-        var validationException = FindOptionsValidationException(exception);
-
-        Assert.Contains("Security:PublicReadRateLimitPermitLimit", string.Join('\n', validationException.Failures));
-    }
-
-    [Fact]
-    public void InvalidPublicReadRateLimitWindow_FailsAtStartup()
-    {
-        using var factory = CreateInvalidFactory(new Dictionary<string, string?>
-        {
-            ["Security:PublicReadRateLimitWindowSeconds"] = "0"
-        });
-
-        var exception = Assert.ThrowsAny<Exception>(() => factory.CreateClient());
-        var validationException = FindOptionsValidationException(exception);
-
-        Assert.Contains("Security:PublicReadRateLimitWindowSeconds", string.Join('\n', validationException.Failures));
-    }
-
-    [Fact]
     public void InvalidProxyNetwork_FailsAtStartup()
     {
         using var factory = CreateInvalidFactory(new Dictionary<string, string?>

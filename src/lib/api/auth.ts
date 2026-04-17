@@ -31,9 +31,13 @@ async function ensureBrowserAuthenticatedSession() {
       cache: 'no-store',
     })
 
-    if (!response.ok) {
+    if (response.status === 401 || response.status === 403) {
       redirectToLoginForAuthFailure()
       return false
+    }
+
+    if (!response.ok) {
+      throw new Error(`Session check failed with status ${response.status}.`)
     }
 
     const payload = await response.json() as { authenticated?: boolean }
@@ -44,8 +48,7 @@ async function ensureBrowserAuthenticatedSession() {
     redirectToLoginForAuthFailure()
     return false
   } catch {
-    redirectToLoginForAuthFailure()
-    return false
+    throw new Error('Session check failed. Please retry after the server is healthy.')
   }
 }
 

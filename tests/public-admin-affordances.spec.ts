@@ -19,14 +19,12 @@ test('login page reflects the expected local admin shortcut policy', async ({ pa
   }
 })
 
-test.skip('admin session sees navbar status and public edit affordances', async ({ page }) => {
+test.skip('admin session keeps public edit affordances without public navbar account controls', async ({ page }) => {
   await loginAsLocalAdmin(page, '/')
 
-  await expect(page.getByText('Signed in')).toBeVisible()
-  await page.getByRole('button', { name: 'Open signed-in menu' }).click()
-  await expect(page.getByRole('menuitem', { name: 'My Page' })).toBeVisible()
-  await expect(page.getByRole('menuitem', { name: 'Admin Page' })).toBeVisible()
-  await expect(page.getByRole('menuitem', { name: 'Logout' })).toBeVisible()
+  await expect(page.getByText('Signed in')).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Open signed-in menu' })).toHaveCount(0)
+  await expect(page.getByRole('link', { name: 'Login' })).toHaveCount(0)
 
   await gotoAndExpectButton(page, '/introduction', '소개글 수정')
   await gotoAndExpectButton(page, '/contact', '문의글 수정')
@@ -46,13 +44,32 @@ test.skip('admin session sees navbar status and public edit affordances', async 
   await expect(page.getByRole('button', { name: '삭제' })).toBeVisible({ timeout: 15000 })
 })
 
-test('logout from signed-in menu redirects back to the main page', async ({ page }) => {
+test('signed-in public navbar omits account, admin, logout, and login controls', async ({ page }) => {
   await loginAsLocalAdmin(page, '/')
 
-  await page.getByRole('button', { name: 'Open signed-in menu' }).click()
-  await page.getByRole('menuitem', { name: 'Logout' }).click()
+  await expect(page.getByText('Signed in')).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Open signed-in menu' })).toHaveCount(0)
+  await expect(page.getByRole('link', { name: 'Login' })).toHaveCount(0)
+  await expect(page.getByRole('menuitem', { name: 'My Page' })).toHaveCount(0)
+  await expect(page.getByRole('menuitem', { name: 'Admin Page' })).toHaveCount(0)
+  await expect(page.getByRole('menuitem', { name: 'Logout' })).toHaveCount(0)
 
   await expect(page).toHaveURL(/\/$/)
+})
+
+test('mobile public drawer omits account, admin, logout, and login controls', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await loginAsLocalAdmin(page, '/')
+  await page.getByRole('button', { name: 'Toggle Menu' }).click()
+
+  const drawer = page.getByRole('dialog')
+  await expect(drawer).toBeVisible()
+  await expect(drawer.getByText('Account')).toHaveCount(0)
+  await expect(drawer.getByRole('link', { name: 'My Page' })).toHaveCount(0)
+  await expect(drawer.getByRole('link', { name: 'Admin Page' })).toHaveCount(0)
+  await expect(drawer.getByRole('button', { name: 'Logout' })).toHaveCount(0)
+  await expect(drawer.getByRole('link', { name: 'Login' })).toHaveCount(0)
+  await expect(drawer.getByTestId('mobile-theme-toggle')).toBeVisible()
 })
 
 test('unauthenticated visitors do not see public edit or create affordances', async ({ page }) => {

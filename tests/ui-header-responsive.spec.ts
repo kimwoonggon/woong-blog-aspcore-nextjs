@@ -81,6 +81,8 @@ test.describe('responsive header', () => {
 
       await expect(nav).toBeVisible()
       await expect(themeToggle).toBeVisible()
+      await expect(page.getByRole('link', { name: 'Login' })).toHaveCount(0)
+      await expect(page.getByText('Signed in')).toHaveCount(0)
 
       for (const label of ['Home', 'Introduction', 'Works', 'Study', 'Contact', 'Resume']) {
         await expect(nav.getByRole('link', { name: label, exact: true })).toBeVisible()

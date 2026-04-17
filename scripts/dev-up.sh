@@ -21,6 +21,11 @@ if [[ -z "${CODEX_HOME_DIR:-}" ]]; then
 fi
 
 export CODEX_HOME_DIR
+if [[ -e "${CODEX_HOME_DIR}" && ! -d "${CODEX_HOME_DIR}" ]]; then
+  echo "CODEX_HOME_DIR must be a directory: ${CODEX_HOME_DIR}" >&2
+  exit 1
+fi
+mkdir -p "${CODEX_HOME_DIR}"
 
 COMPOSE_ENV_FILE="$(mktemp)"
 cp "${APP_ENV_FILE}" "${COMPOSE_ENV_FILE}"

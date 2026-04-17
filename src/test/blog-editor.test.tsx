@@ -142,6 +142,29 @@ describe('BlogEditor', () => {
     expect(mocks.refresh).not.toHaveBeenCalled()
   })
 
+  it('returns public inline creates to the first blog page with the current page size', async () => {
+    mocks.pathname = '/blog'
+    mocks.searchParams = 'page=3&pageSize=2'
+    const onSaved = vi.fn()
+
+    render(<BlogEditor inlineMode onSaved={onSaved} />)
+
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Inline Create Return' } })
+    fireEvent.change(screen.getByLabelText('Mock blog content'), {
+      target: { value: '<p>Inline create return body</p>' },
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /Create Post/i }))
+
+    await waitFor(() => {
+      expect(mocks.fetchWithCsrf).toHaveBeenCalled()
+    })
+
+    expect(onSaved).toHaveBeenCalled()
+    expect(mocks.push).toHaveBeenCalledWith('/blog?page=1&pageSize=2')
+    expect(mocks.refresh).toHaveBeenCalled()
+  })
+
   it('ignores an unsafe returnTo path and falls back to the admin list', async () => {
     mocks.pathname = '/admin/blog/123'
     mocks.searchParams = 'returnTo=%2F%2Fevil.example'

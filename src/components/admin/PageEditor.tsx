@@ -21,9 +21,10 @@ interface Page {
 interface PageEditorProps {
     page: Page
     inlineMode?: boolean
+    onSaved?: () => void
 }
 
-export function PageEditor({ page, inlineMode = false }: PageEditorProps) {
+export function PageEditor({ page, inlineMode = false, onSaved }: PageEditorProps) {
     const router = useRouter()
     const [title, setTitle] = useState(page.title || '')
     const [html, setHtml] = useState(
@@ -52,6 +53,7 @@ export function PageEditor({ page, inlineMode = false }: PageEditorProps) {
             } else {
                 toast.success('Page updated successfully!', { id: toastId })
                 router.refresh()
+                onSaved?.()
             }
         } catch (err) {
             console.error('Fatal save error:', err)

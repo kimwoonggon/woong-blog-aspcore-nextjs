@@ -7,13 +7,21 @@ async function expectVisibleHeaderMetadata(page: Page) {
   await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /.+/)
 }
 
+async function firstPublicSlug(page: Page, collection: 'blogs' | 'works') {
+  const response = await page.request.get(`/api/public/${collection}?page=1&pageSize=1`)
+  const payload = await response.json() as { items?: Array<{ slug?: string }> }
+  const slug = payload.items?.[0]?.slug
+  test.skip(!slug, `No public ${collection} available in this environment.`)
+  return slug!
+}
+
 test('blog detail metadata uses the visible article title and excerpt', async ({ page }) => {
-  await page.goto('/blog/seeded-blog')
+  await page.goto(`/blog/${await firstPublicSlug(page, 'blogs')}`)
   await expectVisibleHeaderMetadata(page)
 })
 
 test('work detail metadata uses the visible project title and excerpt', async ({ page }) => {
-  await page.goto('/works/seeded-work')
+  await page.goto(`/works/${await firstPublicSlug(page, 'works')}`)
   await expectVisibleHeaderMetadata(page)
 })
 
@@ -26,5 +34,7 @@ test('site exposes a branded svg favicon', async ({ page, request }) => {
   const response = await request.get('/favicon.svg')
   expect(response.ok()).toBeTruthy()
   expect(response.headers()['content-type']).toContain('image/svg+xml')
-  await expect(response.text()).resolves.toContain('WK')
+  const svg = await response.text()
+  expect(svg).toContain('aria-label="W"')
+  expect(svg).not.toContain('#f3434f')
 })

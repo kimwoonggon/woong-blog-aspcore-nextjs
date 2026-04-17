@@ -54,6 +54,20 @@ test('blog pagination hydrates page and pageSize query params without rewriting 
   await expect(page.getByTestId('blog-card')).toHaveCount(2)
 })
 
+test('invalid blog page clamps to the nearest valid page', async ({ page, request }) => {
+  await page.setViewportSize({ width: 1280, height: 720 })
+  const response = await request.get('/api/public/blogs?page=1&pageSize=2')
+  expect(response.ok()).toBeTruthy()
+  const payload = await response.json() as { totalPages: number }
+  const lastPage = Math.max(1, payload.totalPages)
+
+  await page.goto(`/blog?page=${lastPage + 99}&pageSize=2`)
+
+  await expect.poll(() => new URL(page.url()).searchParams.get('page')).toBe(String(lastPage))
+  await expect.poll(() => new URL(page.url()).searchParams.get('pageSize')).toBe('2')
+  await expect(page.getByLabel('Study pagination').getByText(`${lastPage} /`)).toBeVisible()
+})
+
 test('blog density changes smoothly at intermediate heights', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 960 })
   await page.goto('/blog')

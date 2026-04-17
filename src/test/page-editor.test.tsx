@@ -76,9 +76,12 @@ describe('PageEditor', () => {
   })
 
   it('saves page content and refreshes the router on success', async () => {
+    const onSaved = vi.fn()
+
     render(
       <PageEditor
         page={{ id: 'page-1', title: 'Contact', slug: 'contact', content: { html: '<p>Old</p>' } }}
+        onSaved={onSaved}
       />,
     )
 
@@ -103,6 +106,7 @@ describe('PageEditor', () => {
       }),
     )
     expect(mocks.refresh).toHaveBeenCalled()
+    expect(onSaved).toHaveBeenCalled()
   })
 
   it('shows the backend error body when the save response is not ok', async () => {

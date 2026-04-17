@@ -1,4 +1,5 @@
-import { getServerApiBaseUrl } from '@/lib/api/server'
+import { getServerApiBaseUrl, getServerForwardingHeaders } from '@/lib/api/server'
+import { throwPublicApiError } from '@/lib/api/public-errors'
 
 export interface HomePagePayload {
   title: string
@@ -45,10 +46,13 @@ export interface HomePayload {
 
 export async function fetchPublicHome() {
   const apiBaseUrl = await getServerApiBaseUrl()
-  const response = await fetch(`${apiBaseUrl}/public/home`, { cache: 'no-store' })
+  const response = await fetch(`${apiBaseUrl}/public/home`, {
+    cache: 'no-store',
+    headers: await getServerForwardingHeaders(),
+  })
 
   if (!response.ok) {
-    return null
+    await throwPublicApiError(response, 'Failed to load public home.')
   }
 
   return response.json() as Promise<HomePayload>

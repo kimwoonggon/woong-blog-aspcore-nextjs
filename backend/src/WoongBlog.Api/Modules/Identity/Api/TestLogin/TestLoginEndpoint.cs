@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using WoongBlog.Api.Infrastructure.Auth;
@@ -57,7 +56,6 @@ internal static class TestLoginEndpoint
                 return Results.LocalRedirect(testLogin.RedirectUri);
             })
             .AllowAnonymous()
-            .RequireRateLimiting("auth")
             .WithTags("Auth")
             .WithName("AuthTestLogin");
     }

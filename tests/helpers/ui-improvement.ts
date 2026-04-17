@@ -100,8 +100,15 @@ export async function openThemeMenu(page: Page) {
 }
 
 export async function selectTheme(page: Page, value: 'Light' | 'Dark' | 'System') {
-  await openThemeMenu(page)
-  await page.getByRole('menuitemradio', { name: value }).click()
+  if (value === 'System') {
+    throw new Error('System theme is intentionally not exposed.')
+  }
+
+  const targetIsDark = value === 'Dark'
+  const isDark = await page.evaluate(() => document.documentElement.classList.contains('dark'))
+  if (isDark !== targetIsDark) {
+    await page.getByTestId('theme-toggle').click()
+  }
 }
 
 export async function expectDarkHtml(page: Page) {
