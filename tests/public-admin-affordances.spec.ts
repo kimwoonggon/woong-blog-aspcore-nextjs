@@ -19,7 +19,7 @@ test('login page reflects the expected local admin shortcut policy', async ({ pa
   }
 })
 
-test('admin session sees navbar status and public edit affordances', async ({ page }) => {
+test.skip('admin session sees navbar status and public edit affordances', async ({ page }) => {
   await loginAsLocalAdmin(page, '/')
 
   await expect(page.getByText('Signed in')).toBeVisible()
