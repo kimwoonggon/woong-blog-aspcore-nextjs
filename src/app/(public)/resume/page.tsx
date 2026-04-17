@@ -6,7 +6,6 @@ import { fetchServerSession } from '@/lib/api/server'
 import { Download } from 'lucide-react'
 import { fetchResume } from '@/lib/api/site-settings'
 
-export const revalidate = 60
 export const dynamic = 'force-dynamic'
 
 interface PageProps {

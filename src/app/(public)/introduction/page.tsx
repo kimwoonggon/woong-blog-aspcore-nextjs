@@ -7,7 +7,7 @@ import { fetchServerSession } from '@/lib/api/server'
 import { fetchPublicPageBySlug } from '@/lib/api/pages'
 import { headers } from 'next/headers'
 
-export const revalidate = 60
+export const dynamic = 'force-dynamic'
 
 interface PageProps {
     searchParams?: Promise<{ __qaBroken?: string }>
