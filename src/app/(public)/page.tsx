@@ -44,7 +44,7 @@ export default async function HomePage({ searchParams }: PageProps) {
     : featuredWorks
 
   return (
-    <div className="container mx-auto max-w-7xl flex flex-col gap-16 px-4 py-8 md:px-6 md:py-12">
+    <div className="container mx-auto max-w-7xl flex flex-col gap-12 px-4 py-8 md:px-6 md:py-10">
       <section className="animate-fade-in-up mx-auto flex w-full max-w-5xl flex-col-reverse items-center gap-8 md:grid md:grid-cols-[minmax(0,40rem)_15rem] md:items-center md:justify-center md:gap-12" style={{ animationDelay: '0ms' }}>
         <div className="flex flex-col items-center text-center md:items-start md:text-left">
           <h1
@@ -104,20 +104,14 @@ export default async function HomePage({ searchParams }: PageProps) {
 
       <section
         data-testid="featured-works-section"
-        className="animate-fade-in-up -mx-4 rounded-[2rem] border border-border/60 bg-brand-section-bg px-4 py-8 md:-mx-6 md:px-6"
+        className="animate-fade-in-up -mx-4 rounded-[2rem] border border-border/60 bg-brand-section-bg px-4 py-7 md:-mx-6 md:px-6"
         style={{ animationDelay: '350ms' }}
       >
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
-              Selected work
-            </p>
-            <h2 className="mt-2 text-xl font-heading font-bold text-foreground md:text-2xl">
-              Featured works
+            <h2 className="text-xl font-heading font-bold text-foreground md:text-2xl">
+              Works
             </h2>
-            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-              Product, platform, and interaction work that best represents how I design and ship.
-            </p>
           </div>
           <Link
             href="/works"
@@ -185,20 +179,14 @@ export default async function HomePage({ searchParams }: PageProps) {
 
       <section
         data-testid="recent-posts-section"
-        className="animate-fade-in-up rounded-[2rem] border border-border/70 bg-background px-5 py-8 shadow-sm dark:bg-card md:px-6"
+        className="animate-fade-in-up rounded-[2rem] border border-border/70 bg-background px-5 py-7 shadow-sm dark:bg-card md:px-6"
         style={{ animationDelay: '450ms' }}
       >
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
-              Notes and essays
-            </p>
-            <h2 className="mt-2 text-xl font-heading font-bold text-foreground md:text-2xl">
-              Recent posts
+            <h2 className="text-xl font-heading font-bold text-foreground md:text-2xl">
+              Study Notes
             </h2>
-            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-              Writing about product decisions, implementation details, and the tradeoffs behind them.
-            </p>
           </div>
           <Link
             href="/blog"
@@ -260,41 +248,25 @@ export default async function HomePage({ searchParams }: PageProps) {
         </div>
       </section>
 
-      <section className="animate-fade-in-up rounded-[2rem] border border-border/70 bg-background px-5 py-6 shadow-sm md:px-6" style={{ animationDelay: '550ms' }}>
-        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
-              Explore next
-            </p>
-            <h2 className="mt-2 text-xl font-heading font-bold text-foreground">
-              Move through the portfolio with intent
-            </h2>
-          </div>
-          <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
-            Start with the project archive, read the longer notes, or jump into the more personal pages.
-          </p>
-        </div>
-        <div className="mt-5 grid gap-3 md:grid-cols-3">
+      <section data-testid="home-navigation-section" className="animate-fade-in-up rounded-[2rem] border border-border/70 bg-background px-5 py-5 shadow-sm md:px-6" style={{ animationDelay: '550ms' }}>
+        <div className="grid gap-3 md:grid-cols-3">
           {[
             {
               href: '/works',
               label: 'Works',
-              description: 'Browse the complete archive of shipped work and experiments.',
               icon: BriefcaseBusiness,
             },
             {
               href: '/blog',
               label: 'Study',
-              description: 'Read the rationale, process notes, and technical write-ups.',
               icon: FileText,
             },
             {
               href: '/introduction',
               label: 'Introduction',
-              description: 'Get the personal context behind the portfolio and current focus.',
               icon: User,
             },
-          ].map(({ href, label, description, icon: Icon }) => (
+          ].map(({ href, label, icon: Icon }) => (
             <Link
               key={href}
               href={href}
@@ -307,9 +279,6 @@ export default async function HomePage({ searchParams }: PageProps) {
                 <div>
                   <p className="text-base font-semibold text-foreground transition-colors group-hover:text-brand-accent">
                     {label}
-                  </p>
-                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                    {description}
                   </p>
                 </div>
               </div>

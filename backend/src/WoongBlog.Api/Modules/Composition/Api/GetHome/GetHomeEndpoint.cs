@@ -16,6 +16,7 @@ internal static class GetHomeEndpoint
                 var result = await sender.Send(new GetHomeQuery(), cancellationToken);
                 return result is null ? Results.NotFound() : Results.Ok(result);
             })
+            .RequireRateLimiting("public-read")
             .WithTags("Public Home")
             .WithName("GetHome")
             .Produces<HomeDto>(StatusCodes.Status200OK)

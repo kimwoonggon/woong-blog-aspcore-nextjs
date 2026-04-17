@@ -169,6 +169,42 @@ public class PublicQueryHandlerTests
     }
 
     [Fact]
+    public async Task GetWorksQueryHandler_FiltersByTitleSearch()
+    {
+        await using var dbContext = CreateDbContext();
+        dbContext.Works.AddRange(
+            new Work { Id = Guid.NewGuid(), Title = "Searchable Terminal UI", Slug = "searchable-terminal-ui", Excerpt = "alpha", Category = "cat", ContentJson = "{\"html\":\"<p>alpha</p>\"}", AllPropertiesJson = "{}", Published = true, PublishedAt = DateTimeOffset.UtcNow, CreatedAt = DateTimeOffset.UtcNow, UpdatedAt = DateTimeOffset.UtcNow },
+            new Work { Id = Guid.NewGuid(), Title = "Different Work", Slug = "different-work", Excerpt = "beta", Category = "cat", ContentJson = "{\"html\":\"<p>beta</p>\"}", AllPropertiesJson = "{}", Published = true, PublishedAt = DateTimeOffset.UtcNow, CreatedAt = DateTimeOffset.UtcNow, UpdatedAt = DateTimeOffset.UtcNow }
+        );
+        await dbContext.SaveChangesAsync();
+
+        var handler = new GetWorksQueryHandler(CreatePublicWorkService(dbContext));
+
+        var result = await handler.Handle(new GetWorksQuery(Query: "terminal", SearchMode: "title"), CancellationToken.None);
+
+        Assert.Single(result.Items);
+        Assert.Equal("Searchable Terminal UI", result.Items[0].Title);
+    }
+
+    [Fact]
+    public async Task GetWorksQueryHandler_FiltersByContentSearch()
+    {
+        await using var dbContext = CreateDbContext();
+        dbContext.Works.AddRange(
+            new Work { Id = Guid.NewGuid(), Title = "Content Match", Slug = "content-match", Excerpt = "contains graph-token", Category = "cat", ContentJson = "{\"html\":\"<p>alpha</p>\"}", AllPropertiesJson = "{}", Published = true, PublishedAt = DateTimeOffset.UtcNow, CreatedAt = DateTimeOffset.UtcNow, UpdatedAt = DateTimeOffset.UtcNow },
+            new Work { Id = Guid.NewGuid(), Title = "Miss", Slug = "miss", Excerpt = "beta", Category = "cat", ContentJson = "{\"html\":\"<p>beta</p>\"}", AllPropertiesJson = "{}", Published = true, PublishedAt = DateTimeOffset.UtcNow, CreatedAt = DateTimeOffset.UtcNow, UpdatedAt = DateTimeOffset.UtcNow }
+        );
+        await dbContext.SaveChangesAsync();
+
+        var handler = new GetWorksQueryHandler(CreatePublicWorkService(dbContext));
+
+        var result = await handler.Handle(new GetWorksQuery(Query: "graph-token", SearchMode: "content"), CancellationToken.None);
+
+        Assert.Single(result.Items);
+        Assert.Equal("Content Match", result.Items[0].Title);
+    }
+
+    [Fact]
     public async Task GetBlogsQueryHandler_ReturnsPagedResults()
     {
         await using var dbContext = CreateDbContext();

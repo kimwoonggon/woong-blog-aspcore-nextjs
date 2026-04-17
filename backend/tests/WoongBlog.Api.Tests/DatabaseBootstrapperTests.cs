@@ -26,9 +26,9 @@ public class DatabaseBootstrapperTests
         Assert.Single(dbContext.SiteSettings);
         Assert.Equal(2, dbContext.Profiles.Count());
         Assert.Equal(3, dbContext.Pages.Count());
-        Assert.Equal(2, dbContext.Works.Count());
+        Assert.True(dbContext.Works.Count() >= 20);
         Assert.Equal(2, dbContext.WorkVideos.Count());
-        Assert.Equal(2, dbContext.Blogs.Count());
+        Assert.True(dbContext.Blogs.Count() >= 20);
         Assert.Equal(6, dbContext.Assets.Count());
     }
 

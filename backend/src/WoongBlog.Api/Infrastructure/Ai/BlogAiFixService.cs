@@ -51,6 +51,8 @@ Rules:
         _prompts = LoadPromptCatalog();
     }
 
+    public static string GetDefaultBlogFixPrompt() => LoadPromptCatalog().BlogFix;
+
     public async Task<BlogAiFixResult> FixHtmlAsync(string html, CancellationToken cancellationToken, AiFixRequestOptions? options = null)
     {
         if (string.IsNullOrWhiteSpace(html))
@@ -270,6 +272,11 @@ Rules:
 
     private string BuildSystemPrompt(AiFixRequestOptions options)
     {
+        if (!string.IsNullOrWhiteSpace(options.CustomPrompt))
+        {
+            return options.CustomPrompt.Trim();
+        }
+
         return options.Mode == AiFixMode.WorkEnrich
             ? _prompts.WorkEnrichTemplate.Replace("{title}", options.Title ?? "Untitled Project", StringComparison.Ordinal)
             : _prompts.BlogFix;

@@ -179,6 +179,7 @@ public static class SeedData
             PublishedAt = DateTimeOffset.UtcNow.AddDays(-3)
         };
         dbContext.Works.AddRange(seededWork, internalAdminWorkbench);
+        AddSupplementalWorks(dbContext);
 
         dbContext.WorkVideos.AddRange(
             new WorkVideo
@@ -225,6 +226,7 @@ public static class SeedData
                 PublishedAt = DateTimeOffset.UtcNow.AddDays(-1)
             }
         );
+        AddSupplementalBlogs(dbContext);
 
         await dbContext.SaveChangesAsync();
     }
@@ -331,6 +333,7 @@ public static class SeedData
             "M7lc1UVf-VE",
             "Seed Demo",
             1);
+        await EnsureSupplementalWorksAsync(dbContext);
 
         var seededBlog = await dbContext.Blogs.SingleOrDefaultAsync(x => x.Slug == "seeded-blog");
         if (seededBlog is null)
@@ -368,8 +371,79 @@ public static class SeedData
             seededBlog.UpdatedAt = DateTimeOffset.UtcNow;
         }
 
+        await EnsureSupplementalBlogsAsync(dbContext);
+
         await dbContext.SaveChangesAsync();
     }
+
+    private static void AddSupplementalWorks(WoongBlogDbContext dbContext)
+    {
+        for (var index = 1; index <= 18; index += 1)
+        {
+            dbContext.Works.Add(CreateSupplementalWork(index));
+        }
+    }
+
+    private static async Task EnsureSupplementalWorksAsync(WoongBlogDbContext dbContext)
+    {
+        for (var index = 1; index <= 18; index += 1)
+        {
+            var slug = $"seeded-work-extra-{index:00}";
+            if (await dbContext.Works.AnyAsync(x => x.Slug == slug))
+            {
+                continue;
+            }
+
+            dbContext.Works.Add(CreateSupplementalWork(index));
+        }
+    }
+
+    private static Work CreateSupplementalWork(int index) => new()
+    {
+        Slug = $"seeded-work-extra-{index:00}",
+        Title = $"Seeded Work Extra {index:00}",
+        Excerpt = $"Supplemental seeded work item {index:00} for pagination and related-content verification.",
+        ContentJson = $$"""{"html":"<h2>Supplemental Work {{index:00}}</h2><p>This extra seeded work keeps archive pagination, related cards, and visual layout tests deterministic on a clean database.</p><h3>Implementation Note</h3><p>The content is intentionally concise but structured.</p>"}""",
+        Category = index % 2 == 0 ? "platform" : "workflow",
+        Period = "2026.01 - 2026.04",
+        AllPropertiesJson = """{"status":"supplemental-seed"}""",
+        Tags = new[] { "seed", "pagination", "work" },
+        Published = true,
+        PublishedAt = DateTimeOffset.UtcNow.AddDays(-10 - index)
+    };
+
+    private static void AddSupplementalBlogs(WoongBlogDbContext dbContext)
+    {
+        for (var index = 1; index <= 18; index += 1)
+        {
+            dbContext.Blogs.Add(CreateSupplementalBlog(index));
+        }
+    }
+
+    private static async Task EnsureSupplementalBlogsAsync(WoongBlogDbContext dbContext)
+    {
+        for (var index = 1; index <= 18; index += 1)
+        {
+            var slug = $"seeded-blog-extra-{index:00}";
+            if (await dbContext.Blogs.AnyAsync(x => x.Slug == slug))
+            {
+                continue;
+            }
+
+            dbContext.Blogs.Add(CreateSupplementalBlog(index));
+        }
+    }
+
+    private static Blog CreateSupplementalBlog(int index) => new()
+    {
+        Slug = $"seeded-blog-extra-{index:00}",
+        Title = $"Seeded Study Extra {index:00}",
+        Excerpt = $"Supplemental seeded study note {index:00} for pagination and typography verification.",
+        ContentJson = $$"""{"html":"<h2>Supplemental Study {{index:00}}</h2><p>This extra seeded study note gives public pagination and table-of-contents tests enough content on a clean database.</p><h3>Readable Structure</h3><p>It keeps prose, heading hierarchy, and related-card behavior deterministic.</p><pre><code>console.log('seed {{index:00}}');</code></pre>"}""",
+        Tags = new[] { "seed", "pagination", "study" },
+        Published = true,
+        PublishedAt = DateTimeOffset.UtcNow.AddDays(-10 - index)
+    };
 
     private static async Task EnsureSeededWorkVideoAsync(
         WoongBlogDbContext dbContext,

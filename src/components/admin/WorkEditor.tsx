@@ -528,12 +528,12 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
         setYoutubeUrlInput('')
     }
 
-    function handleStageVideoFile(event: React.ChangeEvent<HTMLInputElement>) {
+    function handleStageHlsVideoFile(event: React.ChangeEvent<HTMLInputElement>) {
         const file = event.target.files?.[0]
         if (!file) return
 
         if (isEditing) {
-            void uploadVideoForExistingWork(file)
+            void uploadHlsVideoForExistingWork(file)
             event.target.value = ''
             return
         }
@@ -542,6 +542,7 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
             tempId: crypto.randomUUID(),
             kind: 'file',
             label: file.name,
+            uploadMode: 'hls',
             file,
         }])
         event.target.value = ''
@@ -700,6 +701,23 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
         return await response.json() as VideoMutationPayload
     }
 
+    async function uploadHlsVideo(workId: string, file: File, expectedVersion: number) {
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('expectedVideosVersion', String(expectedVersion))
+
+        const response = await fetchWithCsrf(`${getBrowserApiBaseUrl()}/admin/works/${encodeURIComponent(workId)}/videos/hls-job`, {
+            method: 'POST',
+            body: formData,
+        })
+
+        if (!response.ok) {
+            throw new Error(await getResponseError(response, 'Failed to process the video as HLS.'))
+        }
+
+        return await response.json() as VideoMutationPayload
+    }
+
     async function uploadVideoForExistingWork(file: File) {
         if (!initialWork?.id) return
 
@@ -723,6 +741,32 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
             toast.success('Video uploaded.')
         } catch (error) {
             toast.error(error instanceof Error ? error.message : 'Failed to upload video.')
+        } finally {
+            setIsVideoBusy(false)
+        }
+    }
+
+    async function uploadHlsVideoForExistingWork(file: File) {
+        if (!initialWork?.id) return
+
+        setIsVideoBusy(true)
+
+        try {
+            const payload = await uploadHlsVideo(initialWork.id, file, videosVersion)
+            syncVideos(payload)
+            setHasPersistedVideoChanges(true)
+            try {
+                const uploadedThumbnail = await maybeApplyAutoThumbnailForCandidate({ kind: 'uploaded-video', file })
+                if (uploadedThumbnail) {
+                    await persistThumbnailSelectionForWork(initialWork.id, uploadedThumbnail.id)
+                }
+            } catch (error) {
+                toast.error(error instanceof Error ? error.message : 'Failed to auto-generate a video thumbnail.')
+            }
+            refreshInlinePublicWorkIfNeeded()
+            toast.success('HLS video uploaded.')
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Failed to upload HLS video.')
         } finally {
             setIsVideoBusy(false)
         }
@@ -870,9 +914,13 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
             }
         }
 
-        const target = await requestUploadTarget(workId, draft.file, currentVersion)
-        await uploadToTarget(workId, draft.file, target)
-        const payload = await confirmVideoUpload(workId, target.uploadSessionId, currentVersion)
+        const payload = draft.uploadMode === 'hls'
+            ? await uploadHlsVideo(workId, draft.file, currentVersion)
+            : await (async () => {
+                const target = await requestUploadTarget(workId, draft.file!, currentVersion)
+                await uploadToTarget(workId, draft.file!, target)
+                return await confirmVideoUpload(workId, target.uploadSessionId, currentVersion)
+            })()
 
         return {
             currentVersion: getNextVideosVersion(payload, currentVersion + 1),
@@ -1490,17 +1538,17 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                         </Button>
                     </div>
 
-                    <div className="space-y-2">
-                        <Label htmlFor="work-video-upload">Upload MP4 Video</Label>
+                    <div className="space-y-2 rounded-xl border border-dashed border-border/80 bg-muted/40 p-4">
+                        <Label htmlFor="work-video-upload">Upload MP4 Video as HLS</Label>
                         <Input
                             id="work-video-upload"
                             type="file"
                             accept="video/mp4,.mp4"
-                            onChange={handleStageVideoFile}
+                            onChange={handleStageHlsVideoFile}
                             disabled={isVideoBusy || (!isEditing && stagedVideos.length >= 10)}
                         />
                         <p className="text-xs text-muted-foreground">
-                            MP4 only, up to 200MB, maximum 10 videos per work.
+                            Creates an m3u8 playlist from the original MP4 without downscaling. Use H.264/AAC MP4 files for browser playback.
                         </p>
                     </div>
 
@@ -1645,7 +1693,7 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                                         <div>
                                             <p className="text-sm font-medium">{video.label}</p>
                                             <p className="text-xs text-muted-foreground">
-                                                {video.kind === 'youtube' ? 'YouTube draft' : 'MP4 draft'} · order {index + 1}
+                                                {video.kind === 'youtube' ? 'YouTube draft' : video.uploadMode === 'hls' ? 'HLS MP4 draft' : 'MP4 draft'} · order {index + 1}
                                             </p>
                                         </div>
                                         <div className="flex flex-wrap gap-2">

@@ -2,6 +2,8 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using WoongBlog.Api.Infrastructure.Persistence;
 using WoongBlog.Api.Modules.Content.Works.Application.WorkVideos;
@@ -96,6 +98,64 @@ public class WorkVideoEndpointsTests : IClassFixture<CustomWebApplicationFactory
             Assert.Empty(dbContext.WorkVideos.Where(x => x.WorkId == created.Id));
             Assert.Empty(dbContext.WorkVideoUploadSessions.Where(x => x.WorkId == created.Id));
             Assert.NotEmpty(dbContext.VideoStorageCleanupJobs.Where(x => x.WorkId == created.Id));
+        }
+    }
+
+    [Fact]
+    public async Task HlsJob_SegmentsWithCopyModeStoresLocalManifestAndProjectsPlaybackUrl()
+    {
+        var fakeFfmpeg = CreateFakeFfmpeg();
+        try
+        {
+            using var factory = _factory.WithWebHostBuilder(builder =>
+            {
+                builder.ConfigureAppConfiguration((_, configBuilder) =>
+                {
+                    configBuilder.AddInMemoryCollection(new Dictionary<string, string?>
+                    {
+                        ["WorkVideos:Hls:FfmpegPath"] = fakeFfmpeg.ScriptPath,
+                        ["WorkVideos:Hls:SegmentDurationSeconds"] = "4"
+                    });
+                });
+            });
+
+            var client = await CreateAuthenticatedClientAsync(factory);
+            var created = await CreateWorkAsync(client, $"HLS Work {Guid.NewGuid():N}");
+
+            using var form = new MultipartFormDataContent();
+            var fileContent = new ByteArrayContent(SampleMp4Bytes);
+            fileContent.Headers.ContentType = new MediaTypeHeaderValue("video/mp4");
+            form.Add(fileContent, "file", "demo.mp4");
+            form.Add(new StringContent("0"), "expectedVideosVersion");
+
+            var response = await client.PostAsync($"/api/admin/works/{created.Id}/videos/hls-job", form);
+            response.EnsureSuccessStatusCode();
+            var payload = await response.Content.ReadFromJsonAsync<MutationPayload>();
+
+            Assert.NotNull(payload);
+            var video = Assert.Single(payload!.Videos);
+            Assert.Equal(WorkVideoSourceTypes.Hls, video.SourceType);
+            Assert.NotNull(video.PlaybackUrl);
+            Assert.EndsWith("/master.m3u8", video.PlaybackUrl, StringComparison.OrdinalIgnoreCase);
+            Assert.EndsWith(":videos/" + created.Id.ToString("N") + "/" + video.Id.ToString("N") + "/hls/master.m3u8", video.SourceKey, StringComparison.OrdinalIgnoreCase);
+            Assert.False(video.SourceKey.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase));
+
+            var manifestResponse = await client.GetAsync(video.PlaybackUrl);
+            manifestResponse.EnsureSuccessStatusCode();
+            var manifestBody = await manifestResponse.Content.ReadAsStringAsync();
+            Assert.Contains("segment_00000.ts", manifestBody, StringComparison.OrdinalIgnoreCase);
+
+            var ffmpegArgs = await File.ReadAllTextAsync(fakeFfmpeg.ArgsPath);
+            Assert.Contains("-c\ncopy", ffmpegArgs, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("scale", ffmpegArgs, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("720", ffmpegArgs, StringComparison.OrdinalIgnoreCase);
+        }
+        finally
+        {
+            if (Directory.Exists(fakeFfmpeg.DirectoryPath))
+            {
+                Directory.Delete(fakeFfmpeg.DirectoryPath, recursive: true);
+            }
         }
     }
 
@@ -225,6 +285,66 @@ public class WorkVideoEndpointsTests : IClassFixture<CustomWebApplicationFactory
         return payload!;
     }
 
+    private static async Task<HttpClient> CreateAuthenticatedClientAsync(WebApplicationFactory<Program> factory)
+    {
+        var client = factory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            AllowAutoRedirect = false,
+            BaseAddress = new Uri("https://localhost")
+        });
+
+        client.DefaultRequestHeaders.Add(TestAuthHandler.HeaderName, "admin");
+        var csrfPayload = await client.GetFromJsonAsync<CsrfTokenResponse>("/api/auth/csrf");
+        if (!string.IsNullOrWhiteSpace(csrfPayload?.RequestToken))
+        {
+            client.DefaultRequestHeaders.Add("X-CSRF-TOKEN", csrfPayload.RequestToken);
+        }
+
+        return client;
+    }
+
+    private static FakeFfmpeg CreateFakeFfmpeg()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), $"portfolio-tests-ffmpeg-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(directory);
+        var scriptPath = Path.Combine(directory, "ffmpeg");
+        var argsPath = Path.Combine(directory, "args.txt");
+        var escapedArgsPath = QuoteShellValue(argsPath);
+
+        File.WriteAllText(scriptPath, $$"""
+#!/bin/sh
+printf '%s\n' "$@" > {{escapedArgsPath}}
+out=""
+for arg in "$@"; do out="$arg"; done
+dir=$(dirname "$out")
+mkdir -p "$dir"
+cat > "$out" <<'EOF'
+#EXTM3U
+#EXT-X-VERSION:3
+#EXT-X-TARGETDURATION:1
+#EXT-X-MEDIA-SEQUENCE:0
+#EXTINF:1.0,
+segment_00000.ts
+#EXT-X-ENDLIST
+EOF
+printf 'segment' > "$dir/segment_00000.ts"
+""");
+
+        if (!OperatingSystem.IsWindows())
+        {
+            File.SetUnixFileMode(
+                scriptPath,
+                UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+        }
+
+        return new FakeFfmpeg(directory, scriptPath, argsPath);
+    }
+
+    private static string QuoteShellValue(string value)
+    {
+        return $"'{value.Replace("'", "'\"'\"'", StringComparison.Ordinal)}'";
+    }
+
     private sealed class CreatedWorkPayload
     {
         public Guid Id { get; set; }
@@ -249,7 +369,14 @@ public class WorkVideoEndpointsTests : IClassFixture<CustomWebApplicationFactory
     private sealed class VideoPayload
     {
         public Guid Id { get; set; }
+        public string SourceType { get; set; } = string.Empty;
+        public string SourceKey { get; set; } = string.Empty;
+        public string? PlaybackUrl { get; set; }
     }
+
+    private sealed record CsrfTokenResponse(string RequestToken, string HeaderName);
+
+    private sealed record FakeFfmpeg(string DirectoryPath, string ScriptPath, string ArgsPath);
 
     private static readonly byte[] SampleMp4Bytes =
     [

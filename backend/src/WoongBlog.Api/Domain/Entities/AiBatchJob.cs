@@ -20,6 +20,7 @@ public class AiBatchJob
     public string Model { get; set; } = string.Empty;
     public string? ReasoningEffort { get; set; }
     public string PromptMode { get; set; } = "blog-fix";
+    public string? CustomPrompt { get; set; }
     public Guid? RequestedByProfileId { get; set; }
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset? StartedAt { get; set; }

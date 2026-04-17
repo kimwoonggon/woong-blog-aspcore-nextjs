@@ -4,7 +4,8 @@ public sealed record BlogFixRequest(
     string Html,
     string? Provider = null,
     string? CodexModel = null,
-    string? CodexReasoningEffort = null);
+    string? CodexReasoningEffort = null,
+    string? CustomPrompt = null);
 
 public sealed record BlogFixResponse(string FixedHtml, string Provider, string Model, string? ReasoningEffort);
 
@@ -14,7 +15,8 @@ public sealed record BlogFixBatchRequest(
     bool Apply,
     string? Provider = null,
     string? CodexModel = null,
-    string? CodexReasoningEffort = null);
+    string? CodexReasoningEffort = null,
+    string? CustomPrompt = null);
 
 public sealed record BlogFixBatchItemResponse(
     Guid BlogId,
@@ -35,7 +37,8 @@ public sealed record WorkEnrichRequest(
     string? Title = null,
     string? Provider = null,
     string? CodexModel = null,
-    string? CodexReasoningEffort = null);
+    string? CodexReasoningEffort = null,
+    string? CustomPrompt = null);
 
 public sealed record WorkEnrichResponse(
     string FixedHtml,
@@ -52,7 +55,8 @@ public sealed record AiRuntimeConfigResponse(
     IReadOnlyList<string> AllowedCodexModels,
     IReadOnlyList<string> AllowedCodexReasoningEfforts,
     int BatchConcurrency,
-    int BatchCompletedRetentionDays);
+    int BatchCompletedRetentionDays,
+    string DefaultSystemPrompt);
 
 public sealed record BlogFixBatchJobCreateRequest(
     IReadOnlyList<Guid>? BlogIds,
@@ -64,7 +68,8 @@ public sealed record BlogFixBatchJobCreateRequest(
     int? WorkerCount = null,
     string? Provider = null,
     string? CodexModel = null,
-    string? CodexReasoningEffort = null);
+    string? CodexReasoningEffort = null,
+    string? CustomPrompt = null);
 
 public sealed record BlogFixBatchJobApplyRequest(
     IReadOnlyList<Guid>? JobItemIds = null);
@@ -92,6 +97,7 @@ public sealed record BlogFixBatchJobSummaryResponse(
     string Provider,
     string Model,
     string? ReasoningEffort,
+    string? CustomPrompt,
     DateTimeOffset CreatedAt,
     DateTimeOffset? StartedAt,
     DateTimeOffset? FinishedAt,
@@ -124,6 +130,7 @@ public sealed record BlogFixBatchJobDetailResponse(
     string Provider,
     string Model,
     string? ReasoningEffort,
+    string? CustomPrompt,
     DateTimeOffset CreatedAt,
     DateTimeOffset? StartedAt,
     DateTimeOffset? FinishedAt,

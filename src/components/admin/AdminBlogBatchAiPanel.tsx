@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import { fetchWithCsrf } from '@/lib/api/auth'
 import { getBrowserApiBaseUrl } from '@/lib/api/browser'
 import {
@@ -25,6 +26,8 @@ import {
 } from '@/components/admin/admin-blog-batch-ai-panel/helpers'
 import { useBatchJobPolling } from '@/components/admin/admin-blog-batch-ai-panel/useBatchJobPolling'
 import { toast } from 'sonner'
+
+const savedSystemPromptKey = 'admin-ai-system-prompt'
 
 interface AdminBlogBatchAiPanelProps {
   isOpen: boolean
@@ -61,6 +64,8 @@ export function AdminBlogBatchAiPanel({
   const [dateEnd, setDateEnd] = useState('')
   const [codexModel, setCodexModel] = useState('gpt-5.4')
   const [codexReasoningEffort, setCodexReasoningEffort] = useState('medium')
+  const [customPrompt, setCustomPrompt] = useState('')
+  const [savedPrompt, setSavedPrompt] = useState('')
   const [workerCount, setWorkerCount] = useState('2')
   const [autoApply, setAutoApply] = useState(false)
   const [isCreatingJob, setIsCreatingJob] = useState(false)
@@ -103,6 +108,7 @@ export function AdminBlogBatchAiPanel({
   const currentRunningJob = recentJobs.find((job) => job.status === 'running') ?? null
   const queuedJobs = recentJobs.filter((job) => job.status === 'queued')
   const selectionSummary = summarizeSelectionTitles(selectedTitlesForJob)
+  const hasUnsavedPrompt = customPrompt !== savedPrompt
   const duplicateCounts = recentJobs.reduce<Record<string, number>>((acc, job) => {
     if (job.selectionKey) {
       acc[job.selectionKey] = (acc[job.selectionKey] ?? 0) + 1
@@ -161,6 +167,7 @@ export function AdminBlogBatchAiPanel({
     const savedProvider = typeof window !== 'undefined' ? window.localStorage.getItem('admin-ai-provider') : null
     const savedModel = typeof window !== 'undefined' ? window.localStorage.getItem('admin-ai-codex-model') : null
     const savedReasoning = typeof window !== 'undefined' ? window.localStorage.getItem('admin-ai-codex-reasoning') : null
+    const savedPrompt = typeof window !== 'undefined' ? window.localStorage.getItem(savedSystemPromptKey) : null
 
     void fetchAdminAiRuntimeConfigBrowser()
       .then((config) => {
@@ -174,6 +181,9 @@ export function AdminBlogBatchAiPanel({
         setSelectedProvider(availableProviders.includes(preferredProvider) ? preferredProvider : availableProviders[0])
         setCodexModel(savedModel || config.codexModel || 'gpt-5.4')
         setCodexReasoningEffort(savedReasoning || config.codexReasoningEffort || 'medium')
+        const prompt = savedPrompt || config.defaultSystemPrompt || ''
+        setCustomPrompt(prompt)
+        setSavedPrompt(prompt)
         setWorkerCount(String(config.batchConcurrency || 2))
       })
       .catch((error) => {
@@ -222,6 +232,11 @@ export function AdminBlogBatchAiPanel({
       return
     }
 
+    if (customPrompt !== savedPrompt) {
+      toast.error('Save the system prompt before generating an AI fix job.')
+      return
+    }
+
     setIsCreatingJob(true)
     try {
       const response = await fetchWithCsrf(
@@ -243,6 +258,7 @@ export function AdminBlogBatchAiPanel({
             provider: selectedProvider,
             codexModel,
             codexReasoningEffort,
+            customPrompt: savedPrompt.trim() || undefined,
           }),
         },
       )
@@ -263,6 +279,28 @@ export function AdminBlogBatchAiPanel({
     } finally {
       setIsCreatingJob(false)
     }
+  }
+
+  function saveSystemPrompt() {
+    persistSystemPrompt(customPrompt)
+    setSavedPrompt(customPrompt)
+    toast.success('System prompt saved')
+  }
+
+  function persistSystemPrompt(value: string) {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(savedSystemPromptKey, value)
+    }
+  }
+
+  function resetSystemPrompt() {
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem(savedSystemPromptKey)
+    }
+
+    setCustomPrompt(runtimeConfig?.defaultSystemPrompt || '')
+    setSavedPrompt(runtimeConfig?.defaultSystemPrompt || '')
+    toast.success('System prompt reset')
   }
 
   async function applyJobResults(jobItemIds?: string[]) {
@@ -567,6 +605,31 @@ export function AdminBlogBatchAiPanel({
             {isCancellingJob ? 'Cancelling...' : 'Cancel job'}
           </Button>
         ) : null}
+      </div>
+      <div className="mt-3 space-y-2 rounded-md border border-input bg-background px-3 py-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <Label htmlFor="batch-ai-system-prompt" className="text-xs text-muted-foreground">
+            System prompt
+          </Label>
+          <div className="flex items-center gap-2">
+            {hasUnsavedPrompt ? (
+              <span className="text-xs text-amber-600">Unsaved</span>
+            ) : null}
+            <Button type="button" variant="outline" size="sm" onClick={resetSystemPrompt}>
+              Reset
+            </Button>
+            <Button type="button" variant="secondary" size="sm" onClick={saveSystemPrompt}>
+              Save prompt
+            </Button>
+          </div>
+        </div>
+        <Textarea
+          id="batch-ai-system-prompt"
+          aria-label="Batch AI system prompt"
+          value={customPrompt}
+          onChange={(event) => setCustomPrompt(event.target.value)}
+          className="max-h-44 min-h-28 resize-y text-sm"
+        />
       </div>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">

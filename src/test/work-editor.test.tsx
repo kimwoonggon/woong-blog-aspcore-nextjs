@@ -99,6 +99,29 @@ vi.mock('@/components/admin/TiptapEditor', async () => {
   }
 })
 
+function okJson(payload: unknown) {
+  return {
+    ok: true,
+    headers: new Headers({ 'content-type': 'application/json' }),
+    json: async () => payload,
+    text: async () => '',
+  }
+}
+
+function hlsMutationPayload() {
+  return {
+    videos_version: 1,
+    videos: [{
+      id: 'video-1',
+      sourceType: 'hls',
+      sourceKey: 'local:videos/work-1/video-1/hls/master.m3u8',
+      playbackUrl: '/media/videos/work-1/video-1/hls/master.m3u8',
+      mimeType: 'application/vnd.apple.mpegurl',
+      sortOrder: 0,
+    }],
+  }
+}
+
 describe('WorkEditor', () => {
   const changeContent = (value: string) => {
     fireEvent.change(screen.getByLabelText('Mock work content'), {
@@ -130,23 +153,13 @@ describe('WorkEditor', () => {
     cleanup()
   })
 
-  it('surfaces a cloudflare cors hint when direct object upload throws', async () => {
-    mocks.fetchWithCsrf
-      .mockResolvedValueOnce({
-        ok: true,
-        headers: new Headers({ 'content-type': 'application/json' }),
-        json: async () => ({
-          uploadSessionId: 'session-1',
-          uploadMethod: 'PUT',
-          uploadUrl: 'https://example.r2.cloudflarestorage.com/bucket/video.mp4',
-          storageKey: 'videos/work-1/video.mp4',
-        }),
-        text: async () => '',
-      })
-
-    vi.stubGlobal('fetch', vi.fn(async () => {
-      throw new TypeError('Failed to fetch')
-    }) as typeof fetch)
+  it('surfaces HLS processing errors when the backend rejects a video upload', async () => {
+    mocks.fetchWithCsrf.mockResolvedValueOnce({
+      ok: false,
+      headers: new Headers({ 'content-type': 'application/json' }),
+      json: async () => ({ error: 'MP4 must be H.264/AAC compatible for copy-mode HLS.' }),
+      text: async () => JSON.stringify({ error: 'MP4 must be H.264/AAC compatible for copy-mode HLS.' }),
+    })
 
     render(
       <WorkEditor
@@ -164,12 +177,12 @@ describe('WorkEditor', () => {
       />,
     )
 
-    const fileInput = screen.getByLabelText('Upload MP4 Video')
+    const fileInput = screen.getByLabelText('Upload MP4 Video as HLS')
     const file = new File(['\x00\x00\x00\x18ftypmp42'], 'demo.mp4', { type: 'video/mp4' })
     fireEvent.change(fileInput, { target: { files: [file] } })
 
     await waitFor(() => {
-      expect(mocks.toast.error).toHaveBeenCalledWith('Browser upload to Cloudflare R2 failed. Check bucket CORS for Origin, PUT, and Content-Type.')
+      expect(mocks.toast.error).toHaveBeenCalledWith('MP4 must be H.264/AAC compatible for copy-mode HLS.')
     })
   })
 
@@ -229,51 +242,9 @@ describe('WorkEditor', () => {
 
   it('allows save completion after video-only edits on an existing work', async () => {
     mocks.fetchWithCsrf
-      .mockResolvedValueOnce({
-        ok: true,
-        headers: new Headers({ 'content-type': 'application/json' }),
-        json: async () => ({
-          uploadSessionId: 'session-1',
-          uploadMethod: 'POST',
-          uploadUrl: '/api/admin/works/work-1/videos/upload?uploadSessionId=session-1',
-          storageKey: 'videos/work-1/session-1.mp4',
-        }),
-        text: async () => '',
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        headers: new Headers({ 'content-type': 'application/json' }),
-        json: async () => ({ success: true }),
-        text: async () => '',
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        headers: new Headers({ 'content-type': 'application/json' }),
-        json: async () => ({
-          videos_version: 1,
-          videos: [{
-            id: 'video-1',
-            sourceType: 'r2',
-            sourceKey: 'videos/work-1/demo.mp4',
-            playbackUrl: 'https://example.com/demo.mp4',
-            mimeType: 'video/mp4',
-            sortOrder: 0,
-          }],
-        }),
-        text: async () => '',
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        headers: new Headers({ 'content-type': 'application/json' }),
-        json: async () => ({ id: 'thumb-1', url: '/media/work-thumbnails/thumb-1.jpg' }),
-        text: async () => '',
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        headers: new Headers({ 'content-type': 'application/json' }),
-        json: async () => ({ id: 'work-1', slug: 'existing-work' }),
-        text: async () => '',
-      })
+      .mockResolvedValueOnce(okJson(hlsMutationPayload()))
+      .mockResolvedValueOnce(okJson({ id: 'thumb-1', url: '/media/work-thumbnails/thumb-1.jpg' }))
+      .mockResolvedValueOnce(okJson({ id: 'work-1', slug: 'existing-work' }))
 
     render(
       <WorkEditor
@@ -295,7 +266,7 @@ describe('WorkEditor', () => {
     const saveButton = screen.getByRole('button', { name: /Update Work/i })
     expect(saveButton).toBeDisabled()
 
-    const fileInput = screen.getByLabelText('Upload MP4 Video')
+    const fileInput = screen.getByLabelText('Upload MP4 Video as HLS')
     const file = new File(['\x00\x00\x00\x18ftypmp42'], 'demo.mp4', { type: 'video/mp4' })
     fireEvent.change(fileInput, { target: { files: [file] } })
 
@@ -313,54 +284,17 @@ describe('WorkEditor', () => {
 
   it('stages create-time videos and runs create-plus-attach flow', async () => {
     mocks.fetchWithCsrf
-      .mockResolvedValueOnce({
-        ok: true,
-        headers: new Headers({ 'content-type': 'application/json' }),
-        json: async () => ({ id: 'work-1', slug: 'work-title' }),
-        text: async () => '',
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        headers: new Headers({ 'content-type': 'application/json' }),
-        json: async () => ({
-          uploadSessionId: 'session-1',
-          uploadMethod: 'POST',
-          uploadUrl: '/api/admin/works/work-1/videos/upload?uploadSessionId=session-1',
-          storageKey: 'videos/work-1/session-1.mp4',
-        }),
-        text: async () => '',
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        headers: new Headers({ 'content-type': 'application/json' }),
-        json: async () => ({ success: true }),
-        text: async () => '',
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        headers: new Headers({ 'content-type': 'application/json' }),
-        json: async () => ({ videos_version: 1, videos: [] }),
-        text: async () => '',
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        headers: new Headers({ 'content-type': 'application/json' }),
-        json: async () => ({ id: 'thumb-1', url: '/media/work-thumbnails/thumb-1.jpg' }),
-        text: async () => '',
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        headers: new Headers({ 'content-type': 'application/json' }),
-        json: async () => ({ id: 'work-1', slug: 'work-title' }),
-        text: async () => '',
-      })
+      .mockResolvedValueOnce(okJson({ id: 'work-1', slug: 'work-title' }))
+      .mockResolvedValueOnce(okJson(hlsMutationPayload()))
+      .mockResolvedValueOnce(okJson({ id: 'thumb-1', url: '/media/work-thumbnails/thumb-1.jpg' }))
+      .mockResolvedValueOnce(okJson({ id: 'work-1', slug: 'work-title' }))
 
     render(<WorkEditor />)
 
     fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Work title' } })
     changeContent('<p>Hello</p>')
 
-    const fileInput = screen.getByLabelText('Upload MP4 Video')
+    const fileInput = screen.getByLabelText('Upload MP4 Video as HLS')
     const file = new File(['\x00\x00\x00\x18ftypmp42'], 'demo.mp4', { type: 'video/mp4' })
     fireEvent.change(fileInput, { target: { files: [file] } })
 
@@ -372,28 +306,18 @@ describe('WorkEditor', () => {
     await waitFor(() => {
       expect(mocks.fetchWithCsrf).toHaveBeenNthCalledWith(
         2,
-        '/api/admin/works/work-1/videos/upload-url',
+        '/api/admin/works/work-1/videos/hls-job',
         expect.objectContaining({ method: 'POST' }),
       )
     })
 
     expect(mocks.fetchWithCsrf).toHaveBeenNthCalledWith(
       3,
-      '/api/admin/works/work-1/videos/upload?uploadSessionId=session-1',
-      expect.objectContaining({ method: 'POST', body: expect.any(FormData) }),
-    )
-    expect(mocks.fetchWithCsrf).toHaveBeenNthCalledWith(
-      4,
-      '/api/admin/works/work-1/videos/confirm',
-      expect.objectContaining({ method: 'POST' }),
-    )
-    expect(mocks.fetchWithCsrf).toHaveBeenNthCalledWith(
-      5,
       '/api/uploads',
       expect.objectContaining({ method: 'POST', body: expect.any(FormData) }),
     )
     expect(mocks.fetchWithCsrf).toHaveBeenNthCalledWith(
-      6,
+      4,
       '/api/admin/works/work-1',
       expect.objectContaining({ method: 'PUT' }),
     )
@@ -433,53 +357,16 @@ describe('WorkEditor', () => {
     const onSaved = vi.fn()
 
     mocks.fetchWithCsrf
-      .mockResolvedValueOnce({
-        ok: true,
-        headers: new Headers({ 'content-type': 'application/json' }),
-        json: async () => ({ id: 'work-1', slug: 'inline-video-work' }),
-        text: async () => '',
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        headers: new Headers({ 'content-type': 'application/json' }),
-        json: async () => ({
-          uploadSessionId: 'session-1',
-          uploadMethod: 'POST',
-          uploadUrl: '/api/admin/works/work-1/videos/upload?uploadSessionId=session-1',
-          storageKey: 'videos/work-1/session-1.mp4',
-        }),
-        text: async () => '',
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        headers: new Headers({ 'content-type': 'application/json' }),
-        json: async () => ({ success: true }),
-        text: async () => '',
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        headers: new Headers({ 'content-type': 'application/json' }),
-        json: async () => ({ videos_version: 1, videos: [] }),
-        text: async () => '',
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        headers: new Headers({ 'content-type': 'application/json' }),
-        json: async () => ({ id: 'thumb-1', url: '/media/work-thumbnails/thumb-1.jpg' }),
-        text: async () => '',
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        headers: new Headers({ 'content-type': 'application/json' }),
-        json: async () => ({ id: 'work-1', slug: 'inline-video-work' }),
-        text: async () => '',
-      })
+      .mockResolvedValueOnce(okJson({ id: 'work-1', slug: 'inline-video-work' }))
+      .mockResolvedValueOnce(okJson(hlsMutationPayload()))
+      .mockResolvedValueOnce(okJson({ id: 'thumb-1', url: '/media/work-thumbnails/thumb-1.jpg' }))
+      .mockResolvedValueOnce(okJson({ id: 'work-1', slug: 'inline-video-work' }))
 
     render(<WorkEditor inlineMode onSaved={onSaved} />)
 
     fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Inline video work' } })
     changeContent('<p>Hello</p>')
-    const fileInput = screen.getByLabelText('Upload MP4 Video')
+    const fileInput = screen.getByLabelText('Upload MP4 Video as HLS')
     const file = new File(['\x00\x00\x00\x18ftypmp42'], 'demo.mp4', { type: 'video/mp4' })
     fireEvent.change(fileInput, { target: { files: [file] } })
 
@@ -584,45 +471,8 @@ describe('WorkEditor', () => {
 
   it('auto-generates a thumbnail from an uploaded video when there is no explicit thumbnail', async () => {
     mocks.fetchWithCsrf
-      .mockResolvedValueOnce({
-        ok: true,
-        headers: new Headers({ 'content-type': 'application/json' }),
-        json: async () => ({
-          uploadSessionId: 'session-1',
-          uploadMethod: 'POST',
-          uploadUrl: '/api/admin/works/work-1/videos/upload?uploadSessionId=session-1',
-          storageKey: 'videos/work-1/session-1.mp4',
-        }),
-        text: async () => '',
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        headers: new Headers({ 'content-type': 'application/json' }),
-        json: async () => ({ success: true }),
-        text: async () => '',
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        headers: new Headers({ 'content-type': 'application/json' }),
-        json: async () => ({
-          videos_version: 1,
-          videos: [{
-            id: 'video-1',
-            sourceType: 'r2',
-            sourceKey: 'videos/work-1/demo.mp4',
-            playbackUrl: 'https://example.com/demo.mp4',
-            mimeType: 'video/mp4',
-            sortOrder: 0,
-          }],
-        }),
-        text: async () => '',
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        headers: new Headers({ 'content-type': 'application/json' }),
-        json: async () => ({ id: 'thumb-1', url: '/media/work-thumbnails/thumb-1.jpg' }),
-        text: async () => '',
-      })
+      .mockResolvedValueOnce(okJson(hlsMutationPayload()))
+      .mockResolvedValueOnce(okJson({ id: 'thumb-1', url: '/media/work-thumbnails/thumb-1.jpg' }))
 
     render(
       <WorkEditor
@@ -640,13 +490,13 @@ describe('WorkEditor', () => {
       />,
     )
 
-    const fileInput = screen.getByLabelText('Upload MP4 Video')
+    const fileInput = screen.getByLabelText('Upload MP4 Video as HLS')
     const file = new File(['\x00\x00\x00\x18ftypmp42'], 'demo.mp4', { type: 'video/mp4' })
     fireEvent.change(fileInput, { target: { files: [file] } })
 
     await waitFor(() => {
       expect(mocks.fetchWithCsrf).toHaveBeenNthCalledWith(
-        4,
+        2,
         '/api/uploads',
         expect.objectContaining({ method: 'POST', body: expect.any(FormData) }),
       )
@@ -661,51 +511,9 @@ describe('WorkEditor', () => {
 
   it('persists auto-generated uploaded-video thumbnails immediately for existing works', async () => {
     mocks.fetchWithCsrf
-      .mockResolvedValueOnce({
-        ok: true,
-        headers: new Headers({ 'content-type': 'application/json' }),
-        json: async () => ({
-          uploadSessionId: 'session-1',
-          uploadMethod: 'POST',
-          uploadUrl: '/api/admin/works/work-1/videos/upload?uploadSessionId=session-1',
-          storageKey: 'videos/work-1/session-1.mp4',
-        }),
-        text: async () => '',
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        headers: new Headers({ 'content-type': 'application/json' }),
-        json: async () => ({ success: true }),
-        text: async () => '',
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        headers: new Headers({ 'content-type': 'application/json' }),
-        json: async () => ({
-          videos_version: 1,
-          videos: [{
-            id: 'video-1',
-            sourceType: 'r2',
-            sourceKey: 'videos/work-1/demo.mp4',
-            playbackUrl: 'https://example.com/demo.mp4',
-            mimeType: 'video/mp4',
-            sortOrder: 0,
-          }],
-        }),
-        text: async () => '',
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        headers: new Headers({ 'content-type': 'application/json' }),
-        json: async () => ({ id: 'thumb-1', url: '/media/work-thumbnails/thumb-1.jpg' }),
-        text: async () => '',
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        headers: new Headers({ 'content-type': 'application/json' }),
-        json: async () => ({ id: 'work-1', slug: 'existing-work' }),
-        text: async () => '',
-      })
+      .mockResolvedValueOnce(okJson(hlsMutationPayload()))
+      .mockResolvedValueOnce(okJson({ id: 'thumb-1', url: '/media/work-thumbnails/thumb-1.jpg' }))
+      .mockResolvedValueOnce(okJson({ id: 'work-1', slug: 'existing-work' }))
 
     render(
       <WorkEditor
@@ -723,13 +531,13 @@ describe('WorkEditor', () => {
       />,
     )
 
-    const fileInput = screen.getByLabelText('Upload MP4 Video')
+    const fileInput = screen.getByLabelText('Upload MP4 Video as HLS')
     const file = new File(['\x00\x00\x00\x18ftypmp42'], 'demo.mp4', { type: 'video/mp4' })
     fireEvent.change(fileInput, { target: { files: [file] } })
 
     await waitFor(() => {
       expect(mocks.fetchWithCsrf).toHaveBeenNthCalledWith(
-        5,
+        3,
         '/api/admin/works/work-1',
         expect.objectContaining({ method: 'PUT' }),
       )

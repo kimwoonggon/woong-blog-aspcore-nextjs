@@ -51,6 +51,7 @@ describe('AdminBlogBatchAiPanel', () => {
       allowedCodexReasoningEfforts: ['low', 'medium', 'high'],
       batchConcurrency: 2,
       batchCompletedRetentionDays: 14,
+      defaultSystemPrompt: 'Default blog system prompt',
     })
     mocks.listBlogAiBatchJobsBrowser.mockResolvedValue({
       jobs: [],
@@ -126,17 +127,78 @@ describe('AdminBlogBatchAiPanel', () => {
       workerCount: 2,
       codexModel: 'gpt-5.4',
       codexReasoningEffort: 'medium',
+      customPrompt: 'Default blog system prompt',
     })
   })
 
-  it('shows provider selection when multiple providers are available', async () => {
+  it('sends edited custom prompt when creating a batch job', async () => {
     renderPanel()
 
     await waitFor(() => {
       expect(mocks.fetchAdminAiRuntimeConfigBrowser).toHaveBeenCalled()
     })
 
-    const providerSelect = screen.getByLabelText('Batch AI provider')
+    expect(screen.getByLabelText('Batch AI system prompt')).toHaveValue('Default blog system prompt')
+    fireEvent.change(screen.getByLabelText('Batch AI system prompt'), {
+      target: { value: 'Use this batch-specific prompt.' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Save prompt' }))
+    fireEvent.click(screen.getByRole('button', { name: /Generate AI Fix job/i }))
+
+    await waitFor(() => {
+      expect(mocks.fetchWithCsrf).toHaveBeenCalled()
+    })
+
+    const [, request] = mocks.fetchWithCsrf.mock.calls[0] as [string, { body: string }]
+    expect(JSON.parse(request.body)).toMatchObject({
+      customPrompt: 'Use this batch-specific prompt.',
+    })
+    expect(window.localStorage.getItem('admin-ai-system-prompt')).toBe('Use this batch-specific prompt.')
+  })
+
+  it('requires saving batch prompt edits before generating a batch job', async () => {
+    renderPanel()
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Batch AI system prompt')).toHaveValue('Default blog system prompt')
+    })
+
+    fireEvent.change(screen.getByLabelText('Batch AI system prompt'), {
+      target: { value: 'Unsaved batch prompt.' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: /Generate AI Fix job/i }))
+
+    expect(mocks.toast.error).toHaveBeenCalledWith('Save the system prompt before generating an AI fix job.')
+    expect(mocks.fetchWithCsrf).not.toHaveBeenCalled()
+  })
+
+  it('saves and restores the batch system prompt', async () => {
+    const { unmount } = renderPanel()
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Batch AI system prompt')).toHaveValue('Default blog system prompt')
+    })
+
+    fireEvent.change(screen.getByLabelText('Batch AI system prompt'), {
+      target: { value: 'Saved batch prompt.' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Save prompt' }))
+
+    expect(window.localStorage.getItem('admin-ai-system-prompt')).toBe('Saved batch prompt.')
+    expect(mocks.toast.success).toHaveBeenCalledWith('System prompt saved')
+
+    unmount()
+    renderPanel()
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Batch AI system prompt')).toHaveValue('Saved batch prompt.')
+    })
+  })
+
+  it('shows provider selection when multiple providers are available', async () => {
+    renderPanel()
+
+    const providerSelect = await screen.findByLabelText('Batch AI provider')
     expect(providerSelect).toBeInTheDocument()
     expect(screen.getByRole('option', { name: 'OPENAI' })).toBeInTheDocument()
     expect(screen.getByRole('option', { name: 'CODEX' })).toBeInTheDocument()
@@ -147,12 +209,10 @@ describe('AdminBlogBatchAiPanel', () => {
 
     renderPanel()
 
-    await waitFor(() => {
-      expect(mocks.fetchAdminAiRuntimeConfigBrowser).toHaveBeenCalled()
-    })
+    const providerSelect = await screen.findByLabelText('Batch AI provider')
 
-    expect(screen.getByLabelText('Batch AI provider')).toHaveValue('codex')
-    expect(screen.getByLabelText('Batch AI provider')).toBeInTheDocument()
+    expect(providerSelect).toHaveValue('codex')
+    expect(providerSelect).toBeInTheDocument()
     expect(screen.getByLabelText('Codex model')).toBeInTheDocument()
     expect(screen.getByLabelText('Blog batch codex reasoning')).toBeInTheDocument()
     expect(screen.getByLabelText('Workers')).toBeInTheDocument()
@@ -163,24 +223,32 @@ describe('AdminBlogBatchAiPanel', () => {
 
     renderPanel()
 
-    await waitFor(() => {
-      expect(mocks.fetchAdminAiRuntimeConfigBrowser).toHaveBeenCalled()
-    })
+    const providerSelect = await screen.findByLabelText('Batch AI provider')
 
-    expect(screen.getByLabelText('Batch AI provider')).toHaveValue('openai')
+    expect(providerSelect).toHaveValue('openai')
     expect(screen.queryByLabelText('Codex model')).not.toBeInTheDocument()
     expect(screen.queryByLabelText('Blog batch codex reasoning')).not.toBeInTheDocument()
     expect(screen.queryByLabelText('Workers')).not.toBeInTheDocument()
   })
 
   it('uses the selected provider in the batch job payload and hides codex-only controls for openai', async () => {
+    mocks.fetchAdminAiRuntimeConfigBrowser.mockResolvedValueOnce({
+      provider: 'openai',
+      availableProviders: ['openai'],
+      defaultModel: 'gpt-5.4',
+      codexModel: 'gpt-5.4',
+      codexReasoningEffort: 'medium',
+      allowedCodexModels: ['gpt-5.4'],
+      allowedCodexReasoningEfforts: ['low', 'medium', 'high'],
+      batchConcurrency: 2,
+      batchCompletedRetentionDays: 14,
+      defaultSystemPrompt: 'Default blog system prompt',
+    })
     renderPanel()
 
     await waitFor(() => {
-      expect(mocks.fetchAdminAiRuntimeConfigBrowser).toHaveBeenCalled()
+      expect(screen.getByTestId('admin-blog-batch-ai-provider')).toHaveTextContent('openai')
     })
-
-    fireEvent.change(screen.getByLabelText('Batch AI provider'), { target: { value: 'openai' } })
 
     expect(screen.queryByLabelText('Codex model')).not.toBeInTheDocument()
     expect(screen.queryByLabelText('Blog batch codex reasoning')).not.toBeInTheDocument()
@@ -196,7 +264,6 @@ describe('AdminBlogBatchAiPanel', () => {
     expect(JSON.parse(request.body)).toMatchObject({
       provider: 'openai',
     })
-    expect(window.localStorage.getItem('admin-ai-provider')).toBe('openai')
   })
 
   it('blocks date batch creation when no date bounds are set', async () => {

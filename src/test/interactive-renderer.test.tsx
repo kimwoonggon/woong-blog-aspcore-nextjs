@@ -36,4 +36,19 @@ describe('InteractiveRenderer', () => {
     expect(container.querySelector('iframe')).toBeNull()
     expect(container.querySelector('video')).toBeNull()
   })
+
+  it('removes script tags, event handlers, and javascript urls from raw html', () => {
+    const { container } = render(
+      <InteractiveRenderer
+        html={'<p onclick="window.evil=true">Safe</p><script>window.evil=true</script><a href="javascript:alert(1)">bad</a><img src="javascript:alert(1)" onerror="alert(1)" />'}
+      />,
+    )
+
+    expect(screen.getByText('Safe')).toBeInTheDocument()
+    expect(container.querySelector('script')).toBeNull()
+    expect(container.querySelector('p')).not.toHaveAttribute('onclick')
+    expect(container.querySelector('a')).not.toHaveAttribute('href')
+    expect(container.querySelector('img')).not.toHaveAttribute('src')
+    expect(container.querySelector('img')).not.toHaveAttribute('onerror')
+  })
 })

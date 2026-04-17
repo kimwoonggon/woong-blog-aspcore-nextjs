@@ -211,15 +211,17 @@ export function Navbar({ ownerName = 'John Doe', session }: NavbarProps) {
 
                 {isMounted && !canUseInlineNav ? (
                     <Sheet open={isOpen} onOpenChange={setIsOpen}>
-                        <SheetTrigger asChild>
-                            <Button
-                                variant="ghost"
-                                className="h-11 rounded-full px-3"
-                            >
-                                <Menu className="h-5 w-5" />
-                                <span className="sr-only">Toggle Menu</span>
-                            </Button>
-                        </SheetTrigger>
+                        <div className="ml-auto flex shrink-0 justify-end pr-1 lg:ml-0 lg:pr-0">
+                            <SheetTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    className="h-11 min-w-11 rounded-full px-3"
+                                >
+                                    <Menu className="h-5 w-5" />
+                                    <span className="sr-only">Toggle Menu</span>
+                                </Button>
+                            </SheetTrigger>
+                        </div>
                         <SheetContent side="right" className="w-[92vw] max-w-sm p-0">
                             <div className="flex h-full flex-col">
                                 <div className="border-b px-6 py-5">

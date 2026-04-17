@@ -58,6 +58,21 @@ describe('public/admin api clients', () => {
     expect(fetchMock).toHaveBeenNthCalledWith(2, 'http://localhost/api/public/blogs?page=1&pageSize=12&query=renderable+html&searchMode=content', { cache: 'no-store' })
   })
 
+  it('fetchPublicWorks forwards title and content search query params', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ items: [], page: 1, pageSize: 8, totalItems: 0, totalPages: 1 }), { status: 200, headers: { 'Content-Type': 'application/json' } }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ items: [], page: 1, pageSize: 8, totalItems: 0, totalPages: 1 }), { status: 200, headers: { 'Content-Type': 'application/json' } }))
+    vi.stubGlobal('fetch', fetchMock as typeof fetch)
+
+    const { fetchPublicWorks } = await import('@/lib/api/works')
+
+    await fetchPublicWorks(1, 8, { query: 'portfolio platform', searchMode: 'title' })
+    await fetchPublicWorks(1, 8, { query: 'migration details', searchMode: 'content' })
+
+    expect(fetchMock).toHaveBeenNthCalledWith(1, 'http://localhost/api/public/works?page=1&pageSize=8&query=portfolio+platform&searchMode=title', { cache: 'no-store' })
+    expect(fetchMock).toHaveBeenNthCalledWith(2, 'http://localhost/api/public/works?page=1&pageSize=8&query=migration+details&searchMode=content', { cache: 'no-store' })
+  })
+
   it('fetchPublicBlogBySlug requests the backend slug endpoint and fetchPublicWorkBySlug returns null on 404', async () => {
     const fetchMock = vi.fn()
       .mockResolvedValueOnce(

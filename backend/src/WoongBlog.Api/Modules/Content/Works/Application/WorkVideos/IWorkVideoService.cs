@@ -16,6 +16,11 @@ public interface IWorkVideoService
         Guid uploadSessionId,
         IFormFile? file,
         CancellationToken cancellationToken);
+    Task<WorkVideoServiceResult<WorkVideosMutationResult>> UploadHlsAsync(
+        Guid workId,
+        IFormFile? file,
+        int expectedVideosVersion,
+        CancellationToken cancellationToken);
     Task<WorkVideoServiceResult<WorkVideosMutationResult>> ConfirmUploadAsync(
         Guid workId,
         Guid uploadSessionId,

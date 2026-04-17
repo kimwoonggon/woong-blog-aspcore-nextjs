@@ -26,6 +26,11 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: `${ownerName} | ${tagline}`,
     description: `Personal portfolio of ${ownerName}, showcasing works and thoughts.`,
+    icons: {
+      icon: '/favicon.svg',
+      shortcut: '/favicon.svg',
+      apple: '/favicon.svg',
+    },
   }
 }
 

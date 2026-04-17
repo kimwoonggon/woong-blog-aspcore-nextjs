@@ -5,6 +5,7 @@ import { ThreeJsScene } from './ThreeJsScene'
 import { WorkVideoPlayer } from './WorkVideoPlayer'
 import type { WorkVideo } from '@/lib/api/works'
 import { hasWorkVideoEmbeds, splitWorkVideoEmbedContent } from '@/lib/content/work-video-embeds'
+import { sanitizeHtml } from '@/lib/content/html-sanitizer'
 
 interface InteractiveRendererProps {
     html: string
@@ -63,7 +64,7 @@ const parseThreeJsBlocks = (htmlContent: string): { hasBlock: boolean; height: n
 }
 
 function renderProseHtml(html: string) {
-    return <div className="prose prose-lg max-w-[72ch] dark:prose-invert" dangerouslySetInnerHTML={{ __html: html }} />
+    return <div className="prose prose-lg max-w-[72ch] dark:prose-invert" dangerouslySetInnerHTML={{ __html: sanitizeHtml(html) }} />
 }
 
 function renderVideoSegments(segments: ReturnType<typeof splitWorkVideoEmbedContent>, workVideos: WorkVideo[]) {
