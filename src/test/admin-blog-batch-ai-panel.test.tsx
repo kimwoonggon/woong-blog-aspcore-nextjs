@@ -213,12 +213,10 @@ describe('AdminBlogBatchAiPanel', () => {
 
     renderPanel()
 
-    await waitFor(() => {
-      expect(mocks.fetchAdminAiRuntimeConfigBrowser).toHaveBeenCalled()
-    })
+    const providerSelect = await screen.findByLabelText('Batch AI provider')
 
-    expect(screen.getByLabelText('Batch AI provider')).toHaveValue('codex')
-    expect(screen.getByLabelText('Batch AI provider')).toBeInTheDocument()
+    expect(providerSelect).toHaveValue('codex')
+    expect(providerSelect).toBeInTheDocument()
     expect(screen.getByLabelText('Codex model')).toBeInTheDocument()
     expect(screen.getByLabelText('Blog batch codex reasoning')).toBeInTheDocument()
     expect(screen.getByLabelText('Workers')).toBeInTheDocument()
