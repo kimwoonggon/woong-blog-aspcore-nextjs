@@ -1,7 +1,8 @@
 import { spawn } from 'node:child_process'
-import { readFile } from 'node:fs/promises'
-import { extname } from 'node:path'
+import { mkdtemp, readFile, rm } from 'node:fs/promises'
+import { basename, extname, join } from 'node:path'
 import { randomUUID } from 'node:crypto'
+import { tmpdir } from 'node:os'
 
 function parseDelimitedEnv(value) {
   return String(value || '')
@@ -219,8 +220,42 @@ export function rewriteHtmlWithAssetManifest(html, assetsManifest, slug) {
 }
 
 export async function copyAssetIntoBackendMedia(localPath, relativePath) {
+  const resizedAsset = await resizeImageForBackendMedia(localPath, relativePath)
+  const sourcePath = resizedAsset?.path || localPath
+
   await withRetry(() => runCommand(dockerCommand(), buildDockerComposeArgs(['exec', '-T', 'backend', 'mkdir', '-p', `/app/media/${dirnameOf(relativePath)}`])))
-  await withRetry(() => runCommand(dockerCommand(), buildDockerComposeArgs(['cp', localPath, `backend:/app/media/${relativePath}`])))
+  await withRetry(() => runCommand(dockerCommand(), buildDockerComposeArgs(['cp', sourcePath, `backend:/app/media/${relativePath}`])))
+
+  if (resizedAsset?.tempDir) {
+    await rm(resizedAsset.tempDir, { recursive: true, force: true })
+  }
+}
+
+async function resizeImageForBackendMedia(localPath, relativePath) {
+  const extension = extname(relativePath).toLowerCase()
+  if (!['.jpg', '.jpeg', '.png', '.webp'].includes(extension)) {
+    return null
+  }
+
+  const tempDir = await mkdtemp(join(tmpdir(), 'notion-image-resize-'))
+  const outputPath = join(tempDir, basename(relativePath))
+
+  try {
+    await runCommand('ffmpeg', [
+      '-y',
+      '-i',
+      localPath,
+      '-vf',
+      'scale=if(gt(iw\\,1600)\\,1600\\,iw):-2',
+      '-q:v',
+      '5',
+      outputPath,
+    ])
+    return { path: outputPath, tempDir }
+  } catch {
+    await rm(tempDir, { recursive: true, force: true })
+    return null
+  }
 }
 
 export async function psqlQuery(sql) {

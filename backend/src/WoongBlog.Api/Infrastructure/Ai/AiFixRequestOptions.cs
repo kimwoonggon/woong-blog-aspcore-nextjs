@@ -5,7 +5,8 @@ public sealed record AiFixRequestOptions(
     string? Title = null,
     string? Provider = null,
     string? CodexModel = null,
-    string? CodexReasoningEffort = null
+    string? CodexReasoningEffort = null,
+    string? CustomPrompt = null
 );
 
 public enum AiFixMode

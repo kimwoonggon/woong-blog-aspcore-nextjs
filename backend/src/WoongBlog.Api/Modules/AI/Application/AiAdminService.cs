@@ -49,7 +49,8 @@ public sealed class AiAdminService : IAiAdminService
             AllowedCodexModels: _options.CodexAllowedModels,
             AllowedCodexReasoningEfforts: _options.CodexAllowedReasoningEfforts,
             BatchConcurrency: _options.BatchConcurrency,
-            BatchCompletedRetentionDays: _options.BatchCompletedRetentionDays));
+            BatchCompletedRetentionDays: _options.BatchCompletedRetentionDays,
+            DefaultSystemPrompt: BlogAiFixService.GetDefaultBlogFixPrompt()));
     }
 
     public async Task<IResult> FixBlogAsync(BlogFixRequest request, CancellationToken cancellationToken)
@@ -63,7 +64,8 @@ public sealed class AiAdminService : IAiAdminService
             Mode: AiFixMode.BlogFix,
             Provider: request.Provider,
             CodexModel: request.CodexModel,
-            CodexReasoningEffort: request.CodexReasoningEffort));
+            CodexReasoningEffort: request.CodexReasoningEffort,
+            CustomPrompt: request.CustomPrompt));
         return Results.Ok(new BlogFixResponse(result.FixedHtml, result.Provider, result.Model, result.ReasoningEffort));
     }
 
@@ -95,7 +97,8 @@ public sealed class AiAdminService : IAiAdminService
                     Mode: AiFixMode.BlogFix,
                     Provider: request.Provider,
                     CodexModel: request.CodexModel,
-                    CodexReasoningEffort: request.CodexReasoningEffort));
+                    CodexReasoningEffort: request.CodexReasoningEffort,
+                    CustomPrompt: request.CustomPrompt));
 
                 if (request.Apply)
                 {
@@ -148,7 +151,8 @@ public sealed class AiAdminService : IAiAdminService
             Title: request.Title,
             Provider: request.Provider,
             CodexModel: request.CodexModel,
-            CodexReasoningEffort: request.CodexReasoningEffort));
+            CodexReasoningEffort: request.CodexReasoningEffort,
+            CustomPrompt: request.CustomPrompt));
         return Results.Ok(new WorkEnrichResponse(result.FixedHtml, result.Provider, result.Model, result.ReasoningEffort));
     }
 
@@ -184,11 +188,13 @@ public sealed class AiAdminService : IAiAdminService
         var runtimeReasoning = runtimeProvider == "codex"
             ? ResolveCodexReasoningEffort(_options, request.CodexReasoningEffort)
             : null;
+        var customPrompt = NormalizeCustomPrompt(request.CustomPrompt);
         var selectionKey = BuildSelectionKey(
             request.SelectionMode,
             blogs.Select(blog => blog.Id).ToArray(),
             runtimeModel,
             runtimeReasoning,
+            customPrompt,
             request.All,
             request.AutoApply,
             request.WorkerCount);
@@ -232,6 +238,7 @@ public sealed class AiAdminService : IAiAdminService
             Model = runtimeModel,
             ReasoningEffort = runtimeReasoning,
             PromptMode = "blog-fix",
+            CustomPrompt = customPrompt,
             UpdatedAt = DateTimeOffset.UtcNow,
         };
 
@@ -490,6 +497,7 @@ public sealed class AiAdminService : IAiAdminService
         IReadOnlyList<Guid> blogIds,
         string runtimeModel,
         string? runtimeReasoning,
+        string? customPrompt,
         bool all,
         bool autoApply,
         int? workerCount)
@@ -500,6 +508,7 @@ public sealed class AiAdminService : IAiAdminService
             all ? "all" : "subset",
             runtimeModel,
             runtimeReasoning ?? string.Empty,
+            customPrompt ?? string.Empty,
             autoApply ? "auto-apply" : "manual-apply",
             NormalizeWorkerCount(workerCount)?.ToString() ?? "default-workers",
             string.Join(",", blogIds.OrderBy(id => id)));
@@ -517,6 +526,9 @@ public sealed class AiAdminService : IAiAdminService
         return Math.Clamp(workerCount.Value, 1, 8);
     }
 
+    private static string? NormalizeCustomPrompt(string? customPrompt) =>
+        string.IsNullOrWhiteSpace(customPrompt) ? null : customPrompt.Trim();
+
     private static BlogFixBatchJobSummaryResponse ToJobSummaryResponse(AiBatchJob job) => new(
         job.Id,
         job.Status,
@@ -532,6 +544,7 @@ public sealed class AiAdminService : IAiAdminService
         job.Provider,
         job.Model,
         job.ReasoningEffort,
+        job.CustomPrompt,
         job.CreatedAt,
         job.StartedAt,
         job.FinishedAt,
@@ -555,6 +568,7 @@ public sealed class AiAdminService : IAiAdminService
         job.Provider,
         job.Model,
         job.ReasoningEffort,
+        job.CustomPrompt,
         job.CreatedAt,
         job.StartedAt,
         job.FinishedAt,

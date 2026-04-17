@@ -32,6 +32,7 @@ export interface VideoDraft {
   tempId: string
   kind: 'youtube' | 'file'
   label: string
+  uploadMode?: 'legacy' | 'hls'
   youtubeUrl?: string
   file?: File
 }

@@ -181,8 +181,10 @@ public sealed class AiBatchJobProcessor(
             var html = AdminContentJson.ExtractHtml(blog.ContentJson);
             var result = await aiFixService.FixHtmlAsync(html, cancellationToken, new AiFixRequestOptions(
                 Mode: AiFixMode.BlogFix,
+                Provider: job.Provider,
                 CodexModel: job.Model,
-                CodexReasoningEffort: job.ReasoningEffort));
+                CodexReasoningEffort: job.ReasoningEffort,
+                CustomPrompt: job.CustomPrompt));
 
             item.FixedHtml = result.FixedHtml;
             item.Provider = result.Provider;

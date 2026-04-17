@@ -35,18 +35,12 @@ export function Footer({
     ]
 
     return (
-        <footer className="w-full border-t border-border bg-background py-8">
-            <div className="container mx-auto flex flex-col gap-8 px-4">
-                <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
-                    <div className="max-w-md space-y-2">
-                        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
-                            Explore
-                        </p>
-                        <p className="text-lg font-heading font-semibold text-foreground">
-                            {ownerName}
-                        </p>
-                        <p className="text-sm leading-relaxed text-muted-foreground">
-                            Selected work, writing, and ways to get in touch.
+        <footer className="w-full border-t border-border bg-background py-6">
+            <div className="container mx-auto flex flex-col gap-6 px-4">
+                <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+                    <div className="max-w-md space-y-1">
+                        <p className="text-sm font-medium text-muted-foreground">
+                            &copy; {new Date().getFullYear()} {ownerName}. Works &amp; Study Notes.
                         </p>
                     </div>
 
@@ -89,10 +83,6 @@ export function Footer({
                     </div>
                 )}
 
-                {/* Copyright */}
-                <p className="border-t border-border/70 pt-6 text-sm text-muted-foreground">
-                    &copy; {new Date().getFullYear()} {ownerName}. All rights reserved.
-                </p>
             </div>
         </footer>
     )

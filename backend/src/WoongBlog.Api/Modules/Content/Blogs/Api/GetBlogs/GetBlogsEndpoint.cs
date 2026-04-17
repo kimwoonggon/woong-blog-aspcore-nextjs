@@ -17,6 +17,7 @@ internal static class GetBlogsEndpoint
                 var result = await sender.Send(request.ToQuery(), cancellationToken);
                 return Results.Ok(result);
             })
+            .RequireRateLimiting("public-read")
             .WithTags("Public Blogs")
             .WithName("GetBlogs")
             .Produces<PagedBlogsDto>(StatusCodes.Status200OK);

@@ -1,11 +1,11 @@
 import { InlineAdminEditorShell } from '@/components/admin/InlineAdminEditorShell'
 import { ResumeEditor } from '@/components/admin/ResumeEditor'
+import { ResumePdfViewer } from '@/components/content/ResumePdfViewer'
 import { Button } from '@/components/ui/button'
 import { fetchServerSession } from '@/lib/api/server'
 import { Download } from 'lucide-react'
 import { fetchResume } from '@/lib/api/site-settings'
 
-export const revalidate = 60
 export const dynamic = 'force-dynamic'
 
 interface PageProps {
@@ -29,18 +29,12 @@ export default async function ResumePage({ searchParams }: PageProps) {
     return (
         <div
             data-testid="resume-shell"
-            className="container mx-auto flex h-[calc(100vh-64px-72px)] flex-col px-4 py-8 md:px-6 md:py-12"
+            className="container mx-auto flex h-[calc(100vh-64px-72px)] flex-col px-4 py-7 md:px-6 md:py-10"
         >
-            <header className="mb-6 rounded-[2rem] border border-border/70 bg-background px-5 py-6 shadow-sm md:px-6">
+            <header className="mb-5">
                 <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                     <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
-                            Resume
-                        </p>
                         <h1 className="text-3xl font-heading font-bold text-foreground md:text-4xl">Resume</h1>
-                        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-                            A quick overview of experience, responsibilities, and the contexts behind the portfolio work collected here.
-                        </p>
                     </div>
                     {resumeUrl && (
                         <div className="rounded-2xl border border-border/70 bg-muted/30 p-1">
@@ -56,11 +50,7 @@ export default async function ResumePage({ searchParams }: PageProps) {
 
             <div className="flex-1 w-full overflow-hidden rounded-[2rem] border border-border/70 bg-muted/30 shadow-sm">
                 {resumeUrl ? (
-                    <iframe
-                        src={`${resumeUrl}#toolbar=0`}
-                        className="h-full w-full"
-                        title="Resume PDF"
-                    />
+                    <ResumePdfViewer url={resumeUrl} />
                 ) : (
                     <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center">
                         <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">

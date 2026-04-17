@@ -16,6 +16,7 @@ internal static class GetResumeEndpoint
                 var result = await sender.Send(new GetResumeQuery(), cancellationToken);
                 return result is null ? Results.NotFound() : Results.Ok(result);
             })
+            .RequireRateLimiting("public-read")
             .WithTags("Public Site")
             .WithName("GetResume")
             .Produces<ResumeDto>(StatusCodes.Status200OK)

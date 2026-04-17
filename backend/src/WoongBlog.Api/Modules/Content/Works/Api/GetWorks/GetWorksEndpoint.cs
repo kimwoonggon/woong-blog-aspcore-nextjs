@@ -17,6 +17,7 @@ internal static class GetWorksEndpoint
                 var result = await sender.Send(request.ToQuery(), cancellationToken);
                 return Results.Ok(result);
             })
+            .RequireRateLimiting("public-read")
             .WithTags("Public Works")
             .WithName("GetWorks")
             .Produces<PagedWorksDto>(StatusCodes.Status200OK);

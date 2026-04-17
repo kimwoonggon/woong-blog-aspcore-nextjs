@@ -49,9 +49,18 @@ public sealed class R2VideoStorageService(
         return Task.FromResult(new VideoUploadTargetResult(uploadSessionId, "PUT", url, storageKey));
     }
 
-    public Task SaveDirectUploadAsync(string storageKey, Stream stream, string contentType, CancellationToken cancellationToken)
+    public async Task SaveDirectUploadAsync(string storageKey, Stream stream, string contentType, CancellationToken cancellationToken)
     {
-        throw new NotSupportedException("R2 storage expects direct-to-object-store uploads.");
+        EnsureConfigured();
+
+        await GetClient().PutObjectAsync(new PutObjectRequest
+        {
+            BucketName = _options.BucketName,
+            Key = storageKey,
+            InputStream = stream,
+            ContentType = contentType,
+            UseChunkEncoding = false
+        }, cancellationToken);
     }
 
     public async Task<VideoStoredObject?> GetObjectAsync(string storageKey, CancellationToken cancellationToken)
@@ -95,11 +104,54 @@ public sealed class R2VideoStorageService(
     {
         EnsureConfigured();
 
+        if (storageKey.EndsWith(".m3u8", StringComparison.OrdinalIgnoreCase))
+        {
+            await DeleteHlsObjectsAsync(storageKey, cancellationToken);
+            return;
+        }
+
         await GetClient().DeleteObjectAsync(new DeleteObjectRequest
         {
             BucketName = _options.BucketName,
             Key = storageKey
         }, cancellationToken);
+    }
+
+    private async Task DeleteHlsObjectsAsync(string manifestStorageKey, CancellationToken cancellationToken)
+    {
+        var separatorIndex = manifestStorageKey.LastIndexOf('/');
+        if (separatorIndex < 0)
+        {
+            await GetClient().DeleteObjectAsync(new DeleteObjectRequest
+            {
+                BucketName = _options.BucketName,
+                Key = manifestStorageKey
+            }, cancellationToken);
+            return;
+        }
+
+        var prefix = manifestStorageKey[..(separatorIndex + 1)];
+        var request = new ListObjectsV2Request
+        {
+            BucketName = _options.BucketName,
+            Prefix = prefix
+        };
+
+        do
+        {
+            var listedObjects = await GetClient().ListObjectsV2Async(request, cancellationToken);
+            foreach (var storedObject in listedObjects.S3Objects)
+            {
+                await GetClient().DeleteObjectAsync(new DeleteObjectRequest
+                {
+                    BucketName = _options.BucketName,
+                    Key = storedObject.Key
+                }, cancellationToken);
+            }
+
+            request.ContinuationToken = listedObjects.NextContinuationToken;
+        }
+        while (!string.IsNullOrWhiteSpace(request.ContinuationToken));
     }
 
     private void EnsureConfigured()

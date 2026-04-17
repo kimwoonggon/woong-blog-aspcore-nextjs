@@ -46,6 +46,7 @@ vi.mock('@/lib/api/admin-ai', () => ({
     allowedCodexReasoningEfforts: ['low', 'medium', 'high', 'xhigh'],
     batchConcurrency: 2,
     batchCompletedRetentionDays: 3,
+    defaultSystemPrompt: 'Default blog system prompt',
   })),
   listBlogAiBatchJobsBrowser: vi.fn(async () => ({
     jobs: [],

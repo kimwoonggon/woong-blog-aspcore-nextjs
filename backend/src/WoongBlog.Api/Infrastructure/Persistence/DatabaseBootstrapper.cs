@@ -60,6 +60,7 @@ CREATE TABLE IF NOT EXISTS "AiBatchJobs" (
   "Model" text NOT NULL,
   "ReasoningEffort" text NULL,
   "PromptMode" text NOT NULL,
+  "CustomPrompt" text NULL,
   "RequestedByProfileId" uuid NULL,
   "CreatedAt" timestamptz NOT NULL,
   "StartedAt" timestamptz NULL,
@@ -71,6 +72,7 @@ ALTER TABLE "AiBatchJobs" ADD COLUMN IF NOT EXISTS "SelectionLabel" text NOT NUL
 ALTER TABLE "AiBatchJobs" ADD COLUMN IF NOT EXISTS "SelectionKey" text NOT NULL DEFAULT '';
 ALTER TABLE "AiBatchJobs" ADD COLUMN IF NOT EXISTS "AutoApply" boolean NOT NULL DEFAULT FALSE;
 ALTER TABLE "AiBatchJobs" ADD COLUMN IF NOT EXISTS "WorkerCount" integer NULL;
+ALTER TABLE "AiBatchJobs" ADD COLUMN IF NOT EXISTS "CustomPrompt" text NULL;
 CREATE INDEX IF NOT EXISTS "IX_AiBatchJobs_TargetType_Status_CreatedAt" ON "AiBatchJobs" ("TargetType", "Status", "CreatedAt");
 CREATE INDEX IF NOT EXISTS "IX_AiBatchJobs_TargetType_SelectionKey_Status" ON "AiBatchJobs" ("TargetType", "SelectionKey", "Status");
 """;
