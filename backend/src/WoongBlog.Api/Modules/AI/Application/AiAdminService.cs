@@ -33,8 +33,11 @@ public sealed class AiAdminService : IAiAdminService
 
     public IResult RuntimeConfig()
     {
-        var provider = NormalizeProvider(_options.Provider);
         var availableProviders = BlogAiFixService.GetAvailableProviders(_options);
+        var configuredProvider = NormalizeProvider(_options.Provider);
+        var provider = availableProviders.Contains(configuredProvider, StringComparer.OrdinalIgnoreCase)
+            ? configuredProvider
+            : availableProviders[0];
         return Results.Ok(new AiRuntimeConfigResponse(
             Provider: provider,
             AvailableProviders: availableProviders,

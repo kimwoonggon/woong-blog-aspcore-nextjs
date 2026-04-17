@@ -17,7 +17,6 @@ internal static class GetWorkBySlugEndpoint
                 var result = await sender.Send(new GetWorkBySlugQuery(slug), cancellationToken);
                 return result is null ? Results.NotFound() : Results.Ok(result);
             })
-            .RequireRateLimiting("public-read")
             .WithTags("Public Works")
             .WithName("GetWorkBySlug")
             .Produces<WorkDetailDto>(StatusCodes.Status200OK)

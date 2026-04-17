@@ -28,6 +28,7 @@ internal sealed class AiOptionsPostConfigure(IConfiguration configuration) : IPo
         }
 
         options.CodexWorkdir = FirstConfigured(configuration["CODEX_WORKDIR"], options.CodexWorkdir);
+        options.CodexHome = FirstConfigured(configuration["CODEX_HOME"], options.CodexHome);
 
         if (int.TryParse(configuration["AI_BATCH_CONCURRENCY"], out var batchConcurrency) && batchConcurrency > 0)
         {

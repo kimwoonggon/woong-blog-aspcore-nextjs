@@ -54,7 +54,7 @@ public class AuthEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
-    public async Task TestLogin_IsRateLimited_WhenFlooded()
+    public async Task TestLogin_IsNotRateLimitedByTheApplication()
     {
         using var isolatedFactory = new CustomWebApplicationFactory();
         var client = isolatedFactory.CreateClient(new WebApplicationFactoryClientOptions
@@ -63,14 +63,13 @@ public class AuthEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         });
 
         var statuses = new List<HttpStatusCode>();
-        for (var i = 0; i < 300; i++)
+        for (var i = 0; i < 10; i++)
         {
             var response = await client.GetAsync("/api/auth/test-login?email=admin@example.com&returnUrl=%2Fadmin");
             statuses.Add(response.StatusCode);
         }
 
-        Assert.NotEqual(HttpStatusCode.TooManyRequests, statuses[0]);
-        Assert.Contains(HttpStatusCode.TooManyRequests, statuses);
+        Assert.DoesNotContain(HttpStatusCode.TooManyRequests, statuses);
     }
 
     [Fact]
@@ -82,7 +81,7 @@ public class AuthEndpointsTests : IClassFixture<CustomWebApplicationFactory>
             AllowAutoRedirect = false
         });
 
-        for (var i = 0; i < 300; i++)
+        for (var i = 0; i < 10; i++)
         {
             var response = await client.GetAsync("/api/auth/session");
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);

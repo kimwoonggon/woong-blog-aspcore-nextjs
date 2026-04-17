@@ -17,7 +17,42 @@ export const dynamic = 'force-dynamic'
 
 interface PageProps {
     params: Promise<{ slug: string }>
-    searchParams?: Promise<{ relatedPage?: string }>
+    searchParams?: Promise<{ relatedPage?: string; returnTo?: string }>
+}
+
+function resolveSafeReturnTo(returnTo?: string | null) {
+    if (!returnTo) {
+        return null
+    }
+
+    let decodedReturnTo = returnTo
+
+    try {
+        decodedReturnTo = decodeURIComponent(returnTo)
+    } catch {
+        decodedReturnTo = returnTo
+    }
+
+    if (!decodedReturnTo.startsWith('/') || decodedReturnTo.startsWith('//')) {
+        return null
+    }
+
+    return decodedReturnTo
+}
+
+function buildDetailQuerySuffix(returnTo: string | null, relatedPage?: string) {
+    const params = new URLSearchParams()
+
+    if (returnTo) {
+        params.set('returnTo', returnTo)
+    }
+
+    if (relatedPage) {
+        params.set('relatedPage', relatedPage)
+    }
+
+    const query = params.toString()
+    return query ? `?${query}` : ''
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -75,9 +110,12 @@ export default async function BlogDetailPage({ params, searchParams }: PageProps
     const relatedPageSuffix = resolvedSearchParams?.relatedPage
         ? `?relatedPage=${encodeURIComponent(resolvedSearchParams.relatedPage)}`
         : ''
-    const returnTo = resolvedSearchParams?.relatedPage
-        ? encodeURIComponent(`/blog?page=${encodeURIComponent(resolvedSearchParams.relatedPage)}&pageSize=12`)
+    const requestedReturnTo = resolveSafeReturnTo(resolvedSearchParams?.returnTo)
+    const fallbackReturnTo = resolvedSearchParams?.relatedPage
+        ? `/blog?page=${encodeURIComponent(resolvedSearchParams.relatedPage)}&pageSize=12`
         : null
+    const afterDeleteHref = requestedReturnTo ?? fallbackReturnTo ?? '/blog'
+    const detailQuerySuffix = buildDetailQuerySuffix(requestedReturnTo, resolvedSearchParams?.relatedPage)
 
     return (
         <article className="mx-auto w-full px-4 py-8 md:px-6 md:py-12">
@@ -115,7 +153,7 @@ export default async function BlogDetailPage({ params, searchParams }: PageProps
                             <div className="mt-8">
                                 <InlineBlogEditorSection
                                     initialBlog={adminBlog}
-                                    afterDeleteHref={returnTo ? decodeURIComponent(returnTo) : '/blog'}
+                                    afterDeleteHref={afterDeleteHref}
                                     title="Study Inline Editor"
                                     description="현재 글 뷰를 유지한 채 바로 수정하거나 삭제합니다."
                                     triggerLabel="글 수정"
@@ -138,7 +176,7 @@ export default async function BlogDetailPage({ params, searchParams }: PageProps
                         >
                             {newerBlog ? (
                                 <Link
-                                    href={`/blog/${newerBlog.slug}${returnTo ? `?returnTo=${returnTo}&relatedPage=${encodeURIComponent(resolvedSearchParams?.relatedPage ?? '')}` : relatedPageSuffix}`}
+                                    href={`/blog/${newerBlog.slug}${detailQuerySuffix || relatedPageSuffix}`}
                                     className="group rounded-2xl border border-border/80 bg-background p-4 transition hover:border-primary/30 hover:shadow-sm"
                                 >
                                     <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Next</p>
@@ -149,7 +187,7 @@ export default async function BlogDetailPage({ params, searchParams }: PageProps
                             )}
                             {olderBlog ? (
                                 <Link
-                                    href={`/blog/${olderBlog.slug}${returnTo ? `?returnTo=${returnTo}&relatedPage=${encodeURIComponent(resolvedSearchParams?.relatedPage ?? '')}` : relatedPageSuffix}`}
+                                    href={`/blog/${olderBlog.slug}${detailQuerySuffix || relatedPageSuffix}`}
                                     className="group rounded-2xl border border-border/80 bg-background p-4 text-left transition hover:border-primary/30 hover:shadow-sm sm:justify-self-end"
                                 >
                                     <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Previous</p>

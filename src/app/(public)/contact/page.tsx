@@ -1,6 +1,5 @@
 import { BlockRenderer } from '@/components/content/BlockRenderer'
-import { InlineAdminEditorShell } from '@/components/admin/InlineAdminEditorShell'
-import { PageEditor } from '@/components/admin/PageEditor'
+import { InlinePageEditorSection } from '@/components/admin/InlinePageEditorSection'
 import { InteractiveRenderer } from '@/components/content/InteractiveRenderer'
 import { isBlockPageContent, isHtmlPageContent, parsePageContentJson } from '@/lib/content/page-content'
 import { fetchServerSession } from '@/lib/api/server'
@@ -74,21 +73,17 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
             )}
 
             {session.authenticated && session.role === 'admin' && page && (
-                <InlineAdminEditorShell
+                <InlinePageEditorSection
                     triggerLabel="문의글 수정"
                     title="Contact Inline Editor"
                     description="현재 페이지에서 바로 문의 페이지 내용을 수정합니다."
-                >
-                    <PageEditor
-                        inlineMode
-                        page={{
-                            id: page.id,
-                            title: page.title,
-                            slug: page.slug,
-                            content: parsedContent ?? { html: '' },
-                        }}
-                    />
-                </InlineAdminEditorShell>
+                    page={{
+                        id: page.id,
+                        title: page.title,
+                        slug: page.slug,
+                        content: parsedContent ?? { html: '' },
+                    }}
+                />
             )}
         </div>
     )

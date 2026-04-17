@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { useEffect, useMemo, useState, useTransition } from 'react'
+import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import { ChevronLeft, ChevronRight, Eye, Pencil, Sparkles, Trash2 } from 'lucide-react'
 import { AdminBlogBatchAiPanel } from '@/components/admin/AdminBlogBatchAiPanel'
 import { Badge } from '@/components/ui/badge'
@@ -54,6 +54,8 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
   const searchParams = useSearchParams()
   const requestedPage = normalizePageParam(searchParams.get('page'))
   const requestedQuery = searchParams.get('query') ?? ''
+  const searchParamsKey = searchParams.toString()
+  const lastAppliedUrlPageRef = useRef(requestedPage)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [showBatchAiPanel, setShowBatchAiPanel] = useState(false)
   const [query, setQuery] = useState(requestedQuery)
@@ -108,8 +110,14 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
   }, [requestedQuery])
 
   useEffect(() => {
-    setPage(requestedPage)
-  }, [requestedPage])
+    const nextRequestedPage = normalizePageParam(new URLSearchParams(searchParamsKey).get('page'))
+    if (lastAppliedUrlPageRef.current === nextRequestedPage) {
+      return
+    }
+
+    lastAppliedUrlPageRef.current = nextRequestedPage
+    setPage(nextRequestedPage)
+  }, [searchParamsKey])
 
   useEffect(() => {
     if (page !== currentPage) {
@@ -118,7 +126,7 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
   }, [currentPage, page])
 
   useEffect(() => {
-    const params = new URLSearchParams(searchParams.toString())
+    const params = new URLSearchParams(searchParamsKey)
 
     if (currentPage > 1) {
       params.set('page', String(currentPage))
@@ -135,13 +143,14 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
     }
 
     const nextQueryString = params.toString()
-    const currentQueryString = searchParams.toString()
+    const currentQueryString = searchParamsKey
     if (nextQueryString === currentQueryString) {
       return
     }
 
+    lastAppliedUrlPageRef.current = currentPage
     router.replace(nextQueryString ? `${pathname}?${nextQueryString}` : pathname, { scroll: false })
-  }, [currentPage, pageSize, pathname, query, router, searchParams])
+  }, [currentPage, pageSize, pathname, query, router, searchParamsKey])
 
   function toggle(id: string) {
     setSelectedIds((current) =>

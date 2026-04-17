@@ -20,7 +20,7 @@ cp .env.prod.example .env.prod
    - `Auth__ClientSecret`
    - `Auth__PublicOrigin`
    - `Auth__AdminEmails__0`
-   - `CODEX_HOME_DIR` if `AI_PROVIDER=codex`
+   - `CODEX_HOME_DIR` if backend Codex AI Fix should be enabled
 
 ## 2. GHCR 로그인
 
@@ -125,7 +125,24 @@ docker compose --env-file .env.prod -f docker-compose.prod.yml exec nginx nginx 
 - `Auth__PublicOrigin`은 Google OIDC `redirect_uri`를 안정적으로 고정하기 위한 값이므로 실제 브라우저 대표 origin과 정확히 일치해야 한다.
 - `data-protection-keys` volume을 삭제하면 로그인 세션과 antiforgery가 끊길 수 있다.
 - `media-storage`와 `postgres-data`는 운영 데이터이므로 재배포 중 삭제하면 안 된다.
-- `AI_PROVIDER=codex`를 유지하는 환경이면 서버의 Codex home(`auth.json` 포함)을 `CODEX_HOME_DIR`로 bind mount 해야 한다. 그렇지 않으면 backend container 안 `codex exec`가 `401 Unauthorized`로 실패한다.
+- Backend Codex AI Fix는 image 안에서 새로 로그인하지 않는다. 운영 서버 host의 인증된 Codex home을 bind mount 한다.
+- `CODEX_HOME_DIR`는 반드시 절대경로로 명시하는 것을 권장한다. 예: `CODEX_HOME_DIR=/root/.codex` 또는 `CODEX_HOME_DIR=/home/deploy/.codex`.
+- `CODEX_HOME_DIR` 안에는 `auth.json`이 있어야 한다. 없으면 backend는 Codex provider를 숨기거나 명시적인 unavailable/auth error를 반환한다.
+- GHCR image pull 방식과 Codex bind mount는 충돌하지 않는다. image는 동일하고, 인증은 compose runtime volume으로 주입된다.
+- CI/GitHub Actions 빌드와 일반 test는 Codex 인증을 요구하지 않는다. live Codex smoke는 인증된 `CODEX_HOME_DIR`가 있는 dev/staging 서버에서만 수행한다.
+
+운영 서버에서 확인:
+
+```bash
+test -f /root/.codex/auth.json && echo "Codex auth exists"
+docker compose --env-file .env.prod -f docker-compose.prod.yml exec backend sh -lc 'test -f /root/.codex/auth.json && echo "Codex auth mounted"'
+```
+
+`.env.prod` 예시:
+
+```env
+CODEX_HOME_DIR=/root/.codex
+```
 
 ## 8. Downtime Note
 
@@ -167,6 +184,7 @@ docker compose --env-file .env.staging -f docker-compose.staging.yml pull
 docker compose --env-file .env.staging -f docker-compose.staging.yml up -d
 ```
 
-If staging uses `AI_PROVIDER=codex`, also set `CODEX_HOME_DIR=/absolute/path/to/.codex`.
+If staging should expose Codex AI Fix, also set `CODEX_HOME_DIR=/absolute/path/to/.codex`.
+If `CODEX_HOME_DIR` is omitted or the mounted directory has no `auth.json`, staging should still boot, but Codex provider is not expected to be available.
 
 로컬 홈서버에서 먼저 staging 검증을 하고, 그 다음에만 `main` promotion을 진행하는 흐름을 권장한다.

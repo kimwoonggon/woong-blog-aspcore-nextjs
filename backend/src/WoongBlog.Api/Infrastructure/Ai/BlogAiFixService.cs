@@ -139,6 +139,12 @@ Rules:
             throw new InvalidOperationException("Codex command is not configured.");
         }
 
+        var codexHome = EnsureCodexHomeDirectory(_options.CodexHome);
+        if (!HasCodexAuthentication(codexHome))
+        {
+            throw new InvalidOperationException("Codex is not authenticated on the server. Mount an authenticated CODEX_HOME directory or configure OPENAI_API_KEY.");
+        }
+
         var model = ResolveCodexModel(options.CodexModel);
         var reasoningEffort = ResolveCodexReasoningEffort(options.CodexReasoningEffort);
         var prompt = BuildCodexPrompt(html, options);
@@ -194,12 +200,20 @@ Rules:
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
-                CreateNoWindow = true
+                CreateNoWindow = true,
+                WorkingDirectory = Directory.Exists(workdir) ? workdir : Directory.GetCurrentDirectory()
             };
 
             foreach (var argument in arguments)
             {
                 startInfo.ArgumentList.Add(argument);
+            }
+
+            startInfo.Environment["CODEX_HOME"] = codexHome;
+            var codexHomeParent = Directory.GetParent(codexHome);
+            if (codexHomeParent is not null && string.Equals(Path.GetFileName(codexHome), ".codex", StringComparison.Ordinal))
+            {
+                startInfo.Environment["HOME"] = codexHomeParent.FullName;
             }
 
             using var process = new Process { StartInfo = startInfo };
@@ -248,6 +262,48 @@ Rules:
                 artifact.Dispose();
             }
         }
+    }
+
+    private static string EnsureCodexHomeDirectory(string configuredHome)
+    {
+        var codexHome = ResolveCodexHome(configuredHome);
+        if (File.Exists(codexHome))
+        {
+            throw new InvalidOperationException(
+                $"Codex home must be a directory, but '{codexHome}' is a file. Set CODEX_HOME or Ai:CodexHome to a writable directory.");
+        }
+
+        try
+        {
+            Directory.CreateDirectory(codexHome);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or NotSupportedException)
+        {
+            throw new InvalidOperationException(
+                $"Codex home directory '{codexHome}' could not be created. Set CODEX_HOME or Ai:CodexHome to a writable directory.",
+                exception);
+        }
+
+        return codexHome;
+    }
+
+    private static string ResolveCodexHome(string configuredHome)
+    {
+        if (!string.IsNullOrWhiteSpace(configuredHome))
+        {
+            return configuredHome.Trim();
+        }
+
+        var environmentHome = Environment.GetEnvironmentVariable("CODEX_HOME");
+        if (!string.IsNullOrWhiteSpace(environmentHome))
+        {
+            return environmentHome.Trim();
+        }
+
+        var userHome = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        return string.IsNullOrWhiteSpace(userHome)
+            ? Path.Combine(Directory.GetCurrentDirectory(), ".codex")
+            : Path.Combine(userHome, ".codex");
     }
 
     private object[] BuildMessages(string html, AiFixRequestOptions options)
@@ -420,7 +476,8 @@ Rules:
             providers.Add("azure");
         }
 
-        if (!string.IsNullOrWhiteSpace(options.CodexCommand))
+        if (!string.IsNullOrWhiteSpace(options.CodexCommand)
+            && HasCodexAuthentication(ResolveCodexHome(options.CodexHome)))
         {
             providers.Add("codex");
         }
@@ -476,6 +533,22 @@ Rules:
         return _options.CodexAllowedReasoningEfforts.Contains(candidate, StringComparer.OrdinalIgnoreCase)
             ? candidate
             : _options.CodexReasoningEffort;
+    }
+
+    private static bool HasCodexAuthentication(string codexHome)
+    {
+        if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("OPENAI_API_KEY")))
+        {
+            return true;
+        }
+
+        if (string.IsNullOrWhiteSpace(codexHome) || !Directory.Exists(codexHome))
+        {
+            return false;
+        }
+
+        return File.Exists(Path.Combine(codexHome, "auth.json"))
+            || File.Exists(Path.Combine(codexHome, "credentials.json"));
     }
 
     private static AiPromptCatalog LoadPromptCatalog()

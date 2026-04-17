@@ -13,26 +13,6 @@ internal sealed class SecurityOptionsValidator : IValidateOptions<SecurityOption
             failures.Add("Security:HstsMaxAgeDays must be 0 or greater.");
         }
 
-        if (options.AuthRateLimitPermitLimit <= 0)
-        {
-            failures.Add("Security:AuthRateLimitPermitLimit must be greater than 0.");
-        }
-
-        if (options.AuthRateLimitWindowSeconds <= 0)
-        {
-            failures.Add("Security:AuthRateLimitWindowSeconds must be greater than 0.");
-        }
-
-        if (options.PublicReadRateLimitPermitLimit <= 0)
-        {
-            failures.Add("Security:PublicReadRateLimitPermitLimit must be greater than 0.");
-        }
-
-        if (options.PublicReadRateLimitWindowSeconds <= 0)
-        {
-            failures.Add("Security:PublicReadRateLimitWindowSeconds must be greater than 0.");
-        }
-
         if (string.IsNullOrWhiteSpace(options.ReferrerPolicy))
         {
             failures.Add("Security:ReferrerPolicy is required.");

@@ -382,7 +382,7 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
             return await tryAutoGenerateThumbnailFromYouTube(video.sourceKey)
         }
 
-        if (!video.playbackUrl) {
+        if (!video.playbackUrl || video.playbackUrl.toLowerCase().includes('.m3u8') || video.mimeType === 'application/vnd.apple.mpegurl') {
             return null
         }
 
