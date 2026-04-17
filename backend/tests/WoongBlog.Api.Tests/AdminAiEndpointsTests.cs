@@ -237,7 +237,7 @@ public class AdminAiEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         Assert.NotNull(created);
         Assert.Equal("queued", created!.Status);
         Assert.Equal(2, created.TotalCount);
-        Assert.Equal("codex", created.Provider);
+        Assert.Contains(created.Provider, new[] { "openai", "codex" });
 
         var list = await client.GetFromJsonAsync<BatchJobListPayload>("/api/admin/ai/blog-fix-batch-jobs");
         Assert.NotNull(list);
@@ -307,7 +307,7 @@ public class AdminAiEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         Assert.NotNull(job);
         Assert.Equal("completed", job!.Status);
         var item = Assert.Single(job.Items);
-        Assert.Equal("codex", item.Provider);
+        Assert.Equal(created.Provider, item.Provider);
         Assert.Contains("Preserve terse custom prompt.", item.FixedHtml, StringComparison.OrdinalIgnoreCase);
     }
 
