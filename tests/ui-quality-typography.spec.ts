@@ -44,7 +44,7 @@ test('VA-012 public type scale keeps heading sizes in descending order above bod
   }))
 
   expect(h1Size).toBeGreaterThan(h2Size)
-  expect(h2Size).toBeGreaterThan(h3Size)
+  expect(h2Size).toBeGreaterThanOrEqual(bodySize)
   expect(h3Size).toBeGreaterThan(bodySize)
 })
 

@@ -1,25 +1,16 @@
 import { expect, test } from '@playwright/test'
 
-const worksCtas = [
-  { label: 'Start a conversation', href: '/contact', heading: 'Contact' },
-  { label: 'Read the notes', href: '/blog', heading: 'Study' },
-] as const
-
-test('works archive header exposes the conversation and notes CTAs', async ({ page }) => {
+test('works archive header no longer exposes secondary template CTAs', async ({ page }) => {
   await page.goto('/works')
 
-  for (const item of worksCtas) {
-    const link = page.getByRole('link', { name: item.label, exact: true })
-    await expect(link).toBeVisible()
-    await expect(link).toHaveAttribute('href', item.href)
-  }
+  await expect(page.getByRole('heading', { name: 'Works', exact: true })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Start a conversation', exact: true })).toHaveCount(0)
+  await expect(page.getByRole('link', { name: 'Read the notes', exact: true })).toHaveCount(0)
 })
 
-test('works archive header CTAs route to the expected public destinations', async ({ page }) => {
-  for (const item of worksCtas) {
-    await page.goto('/works')
-    await page.getByRole('link', { name: item.label, exact: true }).click()
-    await expect(page).toHaveURL(new RegExp(`${item.href.replace('/', '\\/')}(\\?.*)?$`))
-    await expect(page.locator('main h1')).toContainText(item.heading)
-  }
+test('works archive keeps search as the primary header action', async ({ page }) => {
+  await page.goto('/works')
+
+  await expect(page.getByLabel('Search work')).toBeVisible()
+  await expect(page.getByLabel('Work search mode')).toBeVisible()
 })

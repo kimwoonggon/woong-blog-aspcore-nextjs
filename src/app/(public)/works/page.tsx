@@ -1,7 +1,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { BriefcaseBusiness } from 'lucide-react'
+import { Search, X, BriefcaseBusiness } from 'lucide-react'
 import { PublicWorksInlineCreateShell } from '@/components/admin/PublicWorksInlineCreateShell'
 import { PublicAdminLink } from '@/components/admin/PublicAdminLink'
 import { EdgePaginationNav } from '@/components/layout/EdgePaginationNav'
@@ -10,12 +10,12 @@ import { ResponsivePageSizeSync } from '@/components/layout/ResponsivePageSizeSy
 import { Badge } from '@/components/ui/badge'
 import { headers } from 'next/headers'
 import { fetchServerSession } from '@/lib/api/server'
-import { fetchPublicWorks } from '@/lib/api/works'
+import { fetchPublicWorks, type PublicWorkSearchParams } from '@/lib/api/works'
 
 export const dynamic = 'force-dynamic'
 
 interface PageProps {
-    searchParams?: Promise<{ page?: string; pageSize?: string; __qaEmpty?: string; __qaNoImage?: string }>
+    searchParams?: Promise<{ page?: string; pageSize?: string; query?: string; searchMode?: string; __qaEmpty?: string; __qaNoImage?: string }>
 }
 
 const DESKTOP_PAGE_SIZE = 8
@@ -39,9 +39,13 @@ export default async function WorksPage({ searchParams }: PageProps) {
     const qaNoImageWorks = resolvedSearchParams?.__qaNoImage === '1' && /localhost|127\.0\.0\.1/.test(requestHost)
     const currentPage = Math.max(1, Number.parseInt(resolvedSearchParams?.page ?? '1', 10) || 1)
     const currentPageSize = Math.max(1, Number.parseInt(resolvedSearchParams?.pageSize ?? String(DESKTOP_PAGE_SIZE), 10) || DESKTOP_PAGE_SIZE)
+    const searchQuery = resolvedSearchParams?.query?.trim() ?? ''
+    const searchMode = resolvedSearchParams?.searchMode === 'content' ? 'content' : 'title'
+    const queryParams: PublicWorkSearchParams | undefined = searchQuery ? { query: searchQuery, searchMode } : undefined
+    const paginationQueryParams: Record<string, string> | undefined = searchQuery ? { query: searchQuery, searchMode } : undefined
     const worksPayload = qaEmptyWorks
         ? { items: [], page: 1, pageSize: currentPageSize, totalItems: 0, totalPages: 1 }
-        : await fetchPublicWorks(currentPage, currentPageSize)
+        : await fetchPublicWorks(currentPage, currentPageSize, queryParams)
     const session = await fetchServerSession()
     const totalPages = Math.max(1, worksPayload.totalPages)
     const page = worksPayload.page
@@ -60,37 +64,58 @@ export default async function WorksPage({ searchParams }: PageProps) {
                 currentPage={page}
                 totalPages={totalPages}
                 pageSize={currentPageSize}
+                queryParams={paginationQueryParams}
             />
             <ResponsivePageSizeSync
                 desktopPageSize={DESKTOP_PAGE_SIZE}
                 tabletPageSize={TABLET_PAGE_SIZE}
                 mobilePageSize={MOBILE_PAGE_SIZE}
             />
-            <div className="mb-8 flex flex-col gap-4 rounded-[2rem] border border-border/70 bg-brand-section-bg px-5 py-6 md:px-6">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-                    <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Project archive</p>
-                        <h1 className="mt-2 text-3xl font-heading font-bold text-foreground md:text-4xl">Works</h1>
-                        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-                            A curated archive of shipped interfaces, experiments, and platform work. Each card is meant to read quickly and still invite a deeper dive.
-                        </p>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                        <Link
-                            href="/contact"
-                            className="inline-flex min-h-10 items-center rounded-full border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+            <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <h1 className="text-3xl font-heading font-bold text-foreground md:text-4xl">Works</h1>
+                <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+                    <form action="/works" method="get" role="search" className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                        <input type="hidden" name="page" value="1" />
+                        <input type="hidden" name="pageSize" value={currentPageSize} />
+                        <label htmlFor="work-search" className="sr-only">Search work</label>
+                        <div className="flex min-h-11 items-center gap-2 rounded-full border border-border bg-background px-3 transition-colors focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/20">
+                            <Search className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                            <input
+                                id="work-search"
+                                name="query"
+                                defaultValue={searchQuery}
+                                placeholder="Search work"
+                                className="w-full min-w-0 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground sm:w-56"
+                            />
+                        </div>
+                        <label htmlFor="work-search-mode" className="sr-only">Search mode</label>
+                        <select
+                            id="work-search-mode"
+                            name="searchMode"
+                            defaultValue={searchMode}
+                            className="min-h-11 rounded-full border border-border bg-background px-3 text-sm text-foreground"
+                            aria-label="Work search mode"
                         >
-                            Start a conversation
-                        </Link>
-                        <Link
-                            href="/blog"
-                            className="inline-flex min-h-10 items-center rounded-full px-4 py-2 text-sm font-medium text-brand-cyan transition-colors hover:text-brand-cyan hover:underline"
+                            <option value="title">Title</option>
+                            <option value="content">Content</option>
+                        </select>
+                        <button
+                            type="submit"
+                            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-foreground px-4 py-2 text-sm font-semibold text-background transition-colors hover:bg-foreground/90"
                         >
-                            Read the notes
-                        </Link>
-                    </div>
-                </div>
-                <div className="flex flex-wrap gap-2">
+                            <Search className="h-4 w-4" aria-hidden="true" />
+                            Search
+                        </button>
+                        {searchQuery ? (
+                            <Link
+                                href={`/works?page=1&pageSize=${currentPageSize}`}
+                                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                            >
+                                <X className="h-4 w-4" aria-hidden="true" />
+                                Clear
+                            </Link>
+                        ) : null}
+                    </form>
                     <PublicAdminLink href="/admin/works" label="작업 관리" variant="manage" />
                 </div>
             </div>
@@ -171,51 +196,9 @@ export default async function WorksPage({ searchParams }: PageProps) {
                     totalPages={totalPages}
                     pageSize={currentPageSize}
                     ariaLabel="Works pagination"
+                    queryParams={paginationQueryParams}
                 />
             </div>
-            <section className="mt-8 rounded-[2rem] border border-border/70 bg-background px-5 py-6 shadow-sm md:px-6">
-                <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-                    <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Keep exploring</p>
-                        <h2 className="mt-2 text-xl font-heading font-bold text-foreground">Use the portfolio like a guided path</h2>
-                    </div>
-                    <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
-                        If you want more context than a card can hold, move into the writing or reach out directly.
-                    </p>
-                </div>
-                <div className="mt-5 grid gap-3 md:grid-cols-3">
-                    {[
-                        {
-                            href: '/blog',
-                            label: 'Study',
-                            description: 'Read the process notes behind specific product and engineering decisions.',
-                        },
-                        {
-                            href: '/introduction',
-                            label: 'Introduction',
-                            description: 'Get the personal framing behind the type of work I choose to do.',
-                        },
-                        {
-                            href: '/contact',
-                            label: 'Contact',
-                            description: 'Open a conversation if a project here overlaps with what you are building.',
-                        },
-                    ].map(({ href, label, description }) => (
-                        <Link
-                            key={href}
-                            href={href}
-                            className="group rounded-2xl border border-border/80 bg-background p-4 transition hover:border-primary/30 hover:shadow-sm"
-                        >
-                            <p className="text-base font-semibold text-foreground transition-colors group-hover:text-brand-accent">
-                                {label}
-                            </p>
-                            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                                {description}
-                            </p>
-                        </Link>
-                    ))}
-                </div>
-            </section>
         </div>
     )
 }

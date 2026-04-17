@@ -119,7 +119,8 @@ describe('UI primitives and shared render helpers', () => {
   it('hides social links when the footer receives no configured urls', () => {
     render(<Footer />)
 
-    expect(screen.getAllByText(/John Doe/)).toHaveLength(2)
+    expect(screen.getAllByText(/John Doe/)).toHaveLength(1)
+    expect(screen.getByText(/Works & Study Notes/)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Home' })).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'GitHub' })).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'LinkedIn' })).not.toBeInTheDocument()

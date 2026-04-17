@@ -25,7 +25,7 @@ test('WQ-023 public slow route transition keeps cumulative layout shift below 0.
   await page.evaluate(() => {
     ;(window as Window & { __qaClsValue?: number }).__qaClsValue = 0
   })
-  await expect(page.getByRole('heading', { name: /Featured works/i })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Works', exact: true })).toBeVisible()
   const cls = await page.evaluate(() => (window as Window & { __qaClsValue?: number }).__qaClsValue ?? 0)
   expect(cls).toBeLessThanOrEqual(0.105)
 })

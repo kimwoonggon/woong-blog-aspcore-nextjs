@@ -71,4 +71,9 @@ appsettings.Development.json
 downloads/
 .devcontainer-data/
 .docker-data/
+.codex-runtime/
+certbot/
+*.lscache
+db_status/current.json
 db_status/notion-*.json
+logs/

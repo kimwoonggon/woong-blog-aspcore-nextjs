@@ -29,7 +29,7 @@ test('admin can edit an existing blog post with mixed special input', async ({ p
 
   const payload = await response.json()
   await page.goto(`/blog/${payload.slug}`)
-  await expect(page.getByRole('heading', { name: updatedTitle })).toBeVisible()
+  await expect(page.locator('main h1', { hasText: updatedTitle })).toBeVisible()
   await expect(page.getByText(updatedBody).first()).toBeVisible()
 })
 

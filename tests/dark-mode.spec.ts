@@ -64,7 +64,7 @@ test.describe('public pages', () => {
     await gotoWithTheme(page, '/')
     await expectDarkHtml(page)
 
-    const section = page.getByRole('heading', { name: 'Featured works' }).locator('..').locator('..')
+    const section = page.getByRole('heading', { name: 'Works', exact: true }).locator('..').locator('..')
     const sectionBackground = await getStyle(section, 'background-color')
     const expectedBackground = await getStyle(section, 'background-color')
     expect(sectionBackground).toBe(expectedBackground)
@@ -227,7 +227,7 @@ test('DM-11: contact page email link uses the semantic primary color in dark mod
 
   test('DM-24: muted text contrast is at least 4.5:1 in dark mode', async ({ page }) => {
     await gotoWithTheme(page, '/')
-    const mutedText = page.getByText(/Product, platform, and interaction work that best represents how I design and ship\./)
+    const mutedText = page.getByRole('heading', { name: 'Study Notes' })
     await expect(mutedText).toBeVisible()
 
     const foreground = await getColorChannels(mutedText, 'color')

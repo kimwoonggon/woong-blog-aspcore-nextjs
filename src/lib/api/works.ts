@@ -2,7 +2,7 @@ import { getServerApiBaseUrl, getServerCookieHeader } from '@/lib/api/server'
 
 export interface WorkVideo {
   id: string
-  sourceType: 'youtube' | 'local' | 'r2'
+  sourceType: 'youtube' | 'local' | 'r2' | 'hls'
   sourceKey: string
   playbackUrl?: string | null
   originalFileName?: string | null
@@ -31,6 +31,11 @@ export interface PagedWorksPayload {
   pageSize: number
   totalItems: number
   totalPages: number
+}
+
+export interface PublicWorkSearchParams {
+  query?: string
+  searchMode?: 'title' | 'content'
 }
 
 export interface WorkAdminItem extends WorkListItem {
@@ -180,9 +185,18 @@ function parseAdminWorkDetailPayload(payload: unknown): AdminWorkDetailPayload {
   }
 }
 
-export async function fetchPublicWorks(page = 1, pageSize = 6) {
+export async function fetchPublicWorks(page = 1, pageSize = 6, searchParams?: PublicWorkSearchParams) {
   const apiBaseUrl = await getServerApiBaseUrl()
-  const response = await fetch(`${apiBaseUrl}/public/works?page=${page}&pageSize=${pageSize}`, { cache: 'no-store' })
+  const params = new URLSearchParams({
+    page: String(page),
+    pageSize: String(pageSize),
+  })
+  if (searchParams?.query?.trim()) {
+    params.set('query', searchParams.query.trim())
+    params.set('searchMode', searchParams.searchMode === 'content' ? 'content' : 'title')
+  }
+
+  const response = await fetch(`${apiBaseUrl}/public/works?${params.toString()}`, { cache: 'no-store' })
   if (!response.ok) {
     return {
       items: [],

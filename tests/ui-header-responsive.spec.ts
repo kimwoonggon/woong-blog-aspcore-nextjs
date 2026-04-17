@@ -49,6 +49,26 @@ test.describe('responsive header', () => {
     })
   }
 
+  test('keeps the mobile menu trigger at the right edge with safe spacing', async ({ page }) => {
+    await page.setViewportSize({ width: 360, height: 740 })
+    await page.goto('/')
+
+    const brand = page.getByTestId('navbar-brand')
+    const menuButton = page.getByRole('button', { name: 'Toggle Menu' })
+
+    const [brandBox, menuBox] = await Promise.all([
+      box(brand),
+      box(menuButton),
+    ])
+
+    expect(menuBox.width).toBeGreaterThanOrEqual(44)
+    expect(menuBox.right).toBeLessThanOrEqual(360 - 8)
+    expect(menuBox.left).toBeGreaterThan(brandBox.right)
+
+    const overflow = await page.locator('header').evaluate((element: HTMLElement) => element.scrollWidth - element.clientWidth)
+    expect(overflow).toBeLessThanOrEqual(1)
+  })
+
   for (const viewport of desktopInlineNavViewports) {
     test(`keeps the inline nav non-overlapping at ${viewport.width}x${viewport.height}`, async ({ page }) => {
       await page.setViewportSize(viewport)

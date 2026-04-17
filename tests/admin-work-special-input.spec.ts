@@ -21,6 +21,6 @@ test('work editor accepts Korean and punctuation-heavy input and publishes publi
 
   const body = await response.json()
   await page.goto(`/works/${body.slug}`)
-  await expect(page.getByRole('heading', { name: title })).toBeVisible()
+  await expect(page.locator('main h1', { hasText: title })).toBeVisible()
   await expect(page.getByText(content).first()).toBeVisible()
 })

@@ -4,7 +4,7 @@ import { clickHeaderNavLink } from './helpers/navigation'
 test('E2E-003 visitor can move from home to works, through related content, and into blog details', async ({ page }) => {
   await page.goto('/')
 
-  await expect(page.getByRole('heading', { name: /Featured works/i })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Works', exact: true })).toBeVisible()
   await clickHeaderNavLink(page, 'Works')
   await expect(page).toHaveURL(/\/works(?:\?.*)?$/)
 

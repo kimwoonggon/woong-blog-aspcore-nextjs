@@ -24,11 +24,11 @@ test('resume page keeps a tall viewer shell without clipping the document area',
   expect(shellHeight).toBeGreaterThanOrEqual(540)
 })
 
-test('static public pages keep a consistent header pattern', async ({ page }) => {
+test('static public pages keep a clean unframed header pattern', async ({ page }) => {
   const cases = [
-    { path: '/introduction', eyebrow: 'About the work' },
-    { path: '/contact', eyebrow: 'Get in touch' },
-    { path: '/resume', eyebrow: 'Resume' },
+    { path: '/introduction', heading: 'Introduction' },
+    { path: '/contact', heading: 'Contact' },
+    { path: '/resume', heading: 'Resume' },
   ]
 
   for (const item of cases) {
@@ -36,20 +36,18 @@ test('static public pages keep a consistent header pattern', async ({ page }) =>
 
     const header = page.locator('main header').first()
     await expect(header).toBeVisible()
-    await expect(header.locator('p').first()).toHaveText(item.eyebrow)
-    await expect(header.locator('h1').first()).toBeVisible()
+    await expect(header.locator('h1').first()).toHaveText(item.heading)
+    await expect(header.locator('p').first()).toHaveCount(0)
 
     const metrics = await header.evaluate((element) => {
       const style = getComputedStyle(element)
       return {
         borderTopWidth: Number.parseFloat(style.borderTopWidth),
-        borderRadius: Number.parseFloat(style.borderTopLeftRadius),
         boxShadow: style.boxShadow,
       }
     })
 
-    expect(metrics.borderTopWidth).toBeGreaterThan(0)
-    expect(metrics.borderRadius).toBeGreaterThanOrEqual(24)
-    expect(metrics.boxShadow).not.toBe('none')
+    expect(metrics.borderTopWidth).toBe(0)
+    expect(metrics.boxShadow).toBe('none')
   }
 })

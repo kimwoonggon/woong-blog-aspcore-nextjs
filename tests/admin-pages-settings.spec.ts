@@ -23,7 +23,7 @@ test('admin can update site settings from admin pages', async ({ page }) => {
 
   await page.goto('/')
   await expect(page.getByRole('link', { name: ownerName }).first()).toBeVisible()
-  await expect(page.getByText(new RegExp(`${ownerName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}.*All rights reserved`, 'i'))).toBeVisible()
+  await expect(page.getByText(new RegExp(`${ownerName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}.*Works & Study Notes`, 'i'))).toBeVisible()
 })
 
 test('admin can update the introduction page from admin pages', async ({ page }) => {

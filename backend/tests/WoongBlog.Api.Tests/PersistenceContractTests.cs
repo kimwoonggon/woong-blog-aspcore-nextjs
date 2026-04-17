@@ -73,8 +73,8 @@ public class PersistenceContractTests
         Assert.Single(dbContext.SiteSettings);
         Assert.Equal(2, dbContext.Profiles.Count());
         Assert.Equal(3, dbContext.Pages.Count());
-        Assert.Equal(2, dbContext.Works.Count());
-        Assert.Equal(2, dbContext.Blogs.Count());
+        Assert.True(dbContext.Works.Count() >= 20);
+        Assert.True(dbContext.Blogs.Count() >= 20);
         Assert.Equal(6, dbContext.Assets.Count());
 
         var homePage = dbContext.Pages.Single(page => page.Slug == "home");
@@ -83,6 +83,8 @@ public class PersistenceContractTests
 
         Assert.Contains("headline", homePage.ContentJson, StringComparison.OrdinalIgnoreCase);
         Assert.Equal("/media/resume/woonggon-kim-resume.pdf", resumeAsset.PublicUrl);
+        Assert.NotNull(dbContext.Works.SingleOrDefault(work => work.Slug == "seeded-work"));
+        Assert.NotNull(dbContext.Blogs.SingleOrDefault(blog => blog.Slug == "seeded-blog"));
         Assert.All(dbContext.Works, work => Assert.True(work.Published));
         Assert.All(dbContext.Blogs, blog => Assert.True(blog.Published));
     }

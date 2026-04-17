@@ -49,6 +49,25 @@ internal static class WorkVideoEndpoints
             .WithTags("Admin Work Videos")
             .WithName("UploadLocalWorkVideo");
 
+        app.MapPost($"{WorksApiPaths.GetAdminWorkById}/videos/hls-job", async (
+                Guid id,
+                HttpContext httpContext,
+                IWorkVideoService service,
+                CancellationToken cancellationToken) =>
+            {
+                var form = await httpContext.Request.ReadFormAsync(cancellationToken);
+                if (!int.TryParse(form["expectedVideosVersion"], out var expectedVideosVersion))
+                {
+                    return Results.BadRequest(new { error = "expectedVideosVersion is required." });
+                }
+
+                var result = await service.UploadHlsAsync(id, form.Files["file"], expectedVideosVersion, cancellationToken);
+                return ToResult(result);
+            })
+            .RequireAuthorization("AdminOnly")
+            .WithTags("Admin Work Videos")
+            .WithName("StartWorkVideoHlsJob");
+
         app.MapPost($"{WorksApiPaths.GetAdminWorkById}/videos/confirm", async (
                 Guid id,
                 ConfirmWorkVideoUploadRequest request,

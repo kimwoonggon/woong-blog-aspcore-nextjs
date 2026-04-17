@@ -23,6 +23,16 @@ internal sealed class SecurityOptionsValidator : IValidateOptions<SecurityOption
             failures.Add("Security:AuthRateLimitWindowSeconds must be greater than 0.");
         }
 
+        if (options.PublicReadRateLimitPermitLimit <= 0)
+        {
+            failures.Add("Security:PublicReadRateLimitPermitLimit must be greater than 0.");
+        }
+
+        if (options.PublicReadRateLimitWindowSeconds <= 0)
+        {
+            failures.Add("Security:PublicReadRateLimitWindowSeconds must be greater than 0.");
+        }
+
         if (string.IsNullOrWhiteSpace(options.ReferrerPolicy))
         {
             failures.Add("Security:ReferrerPolicy is required.");

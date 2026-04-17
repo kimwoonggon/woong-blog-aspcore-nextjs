@@ -2,6 +2,8 @@ import { expect, test } from '@playwright/test'
 
 test('E2E-004 visitor can keep a paginated reading path stable across list and detail pages', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 960 })
+  const payload = await (await page.request.get('/api/public/blogs?page=1&pageSize=2')).json() as { totalPages: number }
+  test.skip(payload.totalPages < 2, 'Clean seed does not have a second study page.')
   await page.goto('/blog?page=2&pageSize=2&__qaTagged=1')
 
   const pagination = page.getByLabel('Study pagination')
@@ -31,6 +33,8 @@ test('E2E-004 visitor can keep a paginated reading path stable across list and d
 
 test('E2E-004 visitor can continue the same paginated path through the works archive', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 960 })
+  const payload = await (await page.request.get('/api/public/works?page=1&pageSize=2')).json() as { totalPages: number }
+  test.skip(payload.totalPages < 2, 'Clean seed does not have a second works page.')
   await page.goto('/works?page=2&pageSize=2')
 
   const pagination = page.getByLabel('Works pagination')

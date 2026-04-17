@@ -32,6 +32,6 @@ test('admin can edit an existing work entry with mixed special input', async ({ 
   await expect(page).toHaveURL(/\/admin\/works(?:\?.*)?$/)
   await expect(page.getByText(updatedTitle)).toBeVisible()
   await page.goto(`/works/${payload.slug}`)
-  await expect(page.getByRole('heading', { name: updatedTitle })).toBeVisible()
+  await expect(page.locator('main h1', { hasText: updatedTitle })).toBeVisible()
   await expect(page.getByText(updatedBody).first()).toBeVisible()
 })

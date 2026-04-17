@@ -27,8 +27,19 @@ public sealed class PublicWorkService : IPublicWorkService
         var requestedPage = Math.Max(1, queryInput.Page);
 
         var query = _dbContext.Works.AsNoTracking()
-            .Where(x => x.Published)
-            .OrderByDescending(x => x.PublishedAt);
+            .Where(x => x.Published);
+
+        var normalizedSearch = queryInput.Query?.Trim();
+        if (!string.IsNullOrWhiteSpace(normalizedSearch))
+        {
+            var searchText = normalizedSearch.ToLowerInvariant();
+            var searchMode = queryInput.SearchMode.Trim().ToLowerInvariant();
+            query = searchMode == "content"
+                ? query.Where(x => x.Excerpt.ToLower().Contains(searchText) || x.ContentJson.ToLower().Contains(searchText))
+                : query.Where(x => x.Title.ToLower().Contains(searchText));
+        }
+
+        query = query.OrderByDescending(x => x.PublishedAt);
 
         var totalItems = await query.CountAsync(cancellationToken);
         var totalPages = Math.Max(1, (int)Math.Ceiling(totalItems / (double)pageSize));

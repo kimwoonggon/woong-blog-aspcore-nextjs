@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-const PUBLIC_PATHS = ['/', '/works', '/blog', '/works/seeded-work', '/blog/seeded-blog']
+const PUBLIC_PATHS = ['/', '/works', '/blog', '/introduction', '/contact', '/resume', '/works/seeded-work', '/blog/seeded-blog']
 
 for (const path of PUBLIC_PATHS) {
   test(`${path} avoids horizontal overflow on mobile`, async ({ page }) => {

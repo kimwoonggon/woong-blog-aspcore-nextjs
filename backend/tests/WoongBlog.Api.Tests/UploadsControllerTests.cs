@@ -58,6 +58,24 @@ public class UploadsControllerTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
+    public async Task Upload_UnsupportedImage_ReturnsBadRequest()
+    {
+        var client = _factory.CreateAuthenticatedClient();
+        using var form = new MultipartFormDataContent();
+        using var stream = new MemoryStream([1, 2, 3]);
+        using var fileContent = new StreamContent(stream);
+        fileContent.Headers.ContentType = new MediaTypeHeaderValue("image/bmp");
+        form.Add(fileContent, "file", "legacy.bmp");
+        form.Add(new StringContent("blogs/inline"), "bucket");
+
+        var response = await client.PostAsync("/api/uploads", form);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.Contains("Unsupported image type", body);
+    }
+
+    [Fact]
     public async Task Delete_MissingAsset_ReturnsNotFound()
     {
         var client = _factory.CreateAuthenticatedClient();

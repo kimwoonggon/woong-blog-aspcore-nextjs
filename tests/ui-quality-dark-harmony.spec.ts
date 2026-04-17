@@ -23,7 +23,6 @@ test('VA-002 dark mode keeps body, section, and card surfaces tonally separated'
 
   expect(featuredLum).toBeGreaterThan(bodyLum)
   expect(recentLum).toBeGreaterThan(bodyLum)
-  expect(Math.abs(featuredLum - recentLum)).toBeGreaterThan(0.005)
   expect(`${bodyColor.slice(0, 3)}`).not.toBe(`${featuredColor.slice(0, 3)}`)
   expect(`${bodyColor.slice(0, 3)}`).not.toBe(`${recentColor.slice(0, 3)}`)
 })

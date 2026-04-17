@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import { TiptapEditor } from './TiptapEditor'
 import { fetchWithCsrf } from '@/lib/api/auth'
 import { fetchAdminAiRuntimeConfigBrowser, type AdminAiRuntimeConfig } from '@/lib/api/admin-ai'
@@ -20,6 +21,7 @@ interface AIFixDialogProps {
 }
 
 type ProviderOption = 'openai' | 'azure' | 'codex'
+const savedSystemPromptKey = 'admin-ai-system-prompt'
 
 function normalizeProvider(value?: string | null): ProviderOption {
     if (value === 'azure' || value === 'codex') {
@@ -43,6 +45,8 @@ export function AIFixDialog({
     const [selectedProvider, setSelectedProvider] = useState<ProviderOption>('openai')
     const [codexModel, setCodexModel] = useState('gpt-5.4')
     const [codexReasoningEffort, setCodexReasoningEffort] = useState('medium')
+    const [customPrompt, setCustomPrompt] = useState('')
+    const [savedPrompt, setSavedPrompt] = useState('')
 
     useEffect(() => {
         if (!open) {
@@ -53,6 +57,7 @@ export function AIFixDialog({
         const savedProvider = typeof window !== 'undefined' ? window.localStorage.getItem('admin-ai-provider') : null
         const savedModel = typeof window !== 'undefined' ? window.localStorage.getItem('admin-ai-codex-model') : null
         const savedReasoning = typeof window !== 'undefined' ? window.localStorage.getItem('admin-ai-codex-reasoning') : null
+        const savedPrompt = typeof window !== 'undefined' ? window.localStorage.getItem(savedSystemPromptKey) : null
 
         void fetchAdminAiRuntimeConfigBrowser()
             .then((config) => {
@@ -72,6 +77,9 @@ export function AIFixDialog({
                 setSelectedProvider(resolvedProvider)
                 setCodexModel(savedModel || config.codexModel || 'gpt-5.4')
                 setCodexReasoningEffort(savedReasoning || config.codexReasoningEffort || 'medium')
+                const prompt = savedPrompt || config.defaultSystemPrompt || ''
+                setCustomPrompt(prompt)
+                setSavedPrompt(prompt)
             })
             .catch((error: unknown) => {
                 if (!cancelled) {
@@ -85,6 +93,11 @@ export function AIFixDialog({
     }, [open])
 
     async function handleFix() {
+        if (customPrompt !== savedPrompt) {
+            toast.error('Save the system prompt before generating an AI fix.')
+            return
+        }
+
         setLoading(true)
         setFixedContent(null)
 
@@ -97,6 +110,7 @@ export function AIFixDialog({
                     provider: selectedProvider,
                     codexModel,
                     codexReasoningEffort,
+                    customPrompt: savedPrompt.trim() || undefined,
                     ...extraBodyParams,
                 }),
             })
@@ -138,8 +152,31 @@ export function AIFixDialog({
         toast.success('AI changes applied successfully')
     }
 
+    function saveSystemPrompt() {
+        persistSystemPrompt(customPrompt)
+        setSavedPrompt(customPrompt)
+        toast.success('System prompt saved')
+    }
+
+    function persistSystemPrompt(value: string) {
+        if (typeof window !== 'undefined') {
+            window.localStorage.setItem(savedSystemPromptKey, value)
+        }
+    }
+
+    function resetSystemPrompt() {
+        if (typeof window !== 'undefined') {
+            window.localStorage.removeItem(savedSystemPromptKey)
+        }
+
+        setCustomPrompt(runtimeConfig?.defaultSystemPrompt || '')
+        setSavedPrompt(runtimeConfig?.defaultSystemPrompt || '')
+        toast.success('System prompt reset')
+    }
+
     const availableProviders = (runtimeConfig?.availableProviders?.length ? runtimeConfig.availableProviders : runtimeConfig ? [runtimeConfig.provider] : ['openai'])
         .map((provider) => normalizeProvider(provider))
+    const hasUnsavedPrompt = customPrompt !== savedPrompt
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
@@ -247,6 +284,31 @@ export function AIFixDialog({
                                 </div>
                             </>
                         ) : null}
+                    </div>
+                    <div className="mt-3 space-y-2 rounded-2xl border border-border/80 bg-muted/20 px-4 py-3">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                            <Label htmlFor="ai-system-prompt" className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+                                System prompt
+                            </Label>
+                            <div className="flex items-center gap-2">
+                                {hasUnsavedPrompt ? (
+                                    <span className="text-xs text-amber-600">Unsaved</span>
+                                ) : null}
+                                <Button type="button" variant="outline" size="sm" onClick={resetSystemPrompt}>
+                                    Reset
+                                </Button>
+                                <Button type="button" variant="secondary" size="sm" onClick={saveSystemPrompt}>
+                                    Save prompt
+                                </Button>
+                            </div>
+                        </div>
+                        <Textarea
+                            id="ai-system-prompt"
+                            aria-label="AI system prompt"
+                            value={customPrompt}
+                            onChange={(event) => setCustomPrompt(event.target.value)}
+                            className="max-h-40 min-h-28 resize-y bg-background text-sm"
+                        />
                     </div>
                 </DialogHeader>
 

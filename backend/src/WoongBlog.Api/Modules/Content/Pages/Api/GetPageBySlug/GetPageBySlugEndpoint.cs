@@ -17,6 +17,7 @@ internal static class GetPageBySlugEndpoint
                 var result = await sender.Send(new GetPageBySlugQuery(slug), cancellationToken);
                 return result is null ? Results.NotFound() : Results.Ok(result);
             })
+            .RequireRateLimiting("public-read")
             .WithTags("Public Pages")
             .WithName("GetPageBySlug")
             .Produces<PageDto>(StatusCodes.Status200OK)

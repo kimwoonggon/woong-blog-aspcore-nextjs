@@ -5,7 +5,7 @@ test.setTimeout(90_000)
 
 test('E2E-007 dark mode stays coherent across the main public journey', async ({ page }) => {
   const cases = [
-    { path: '/', assertion: () => expect(page.getByRole('heading', { name: /Featured works/i })).toBeVisible() },
+    { path: '/', assertion: () => expect(page.getByRole('heading', { name: 'Works', exact: true })).toBeVisible() },
     { path: '/works', assertion: () => expect(page.locator('main h1')).toHaveText('Works') },
     { path: '/works/seeded-work', assertion: () => expect(page.locator('main h1')).toHaveText('Portfolio Platform Rebuild') },
     { path: '/blog', assertion: () => expect(page.locator('main h1')).toHaveText('Study') },

@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { getColorChannels, getStyle } from './helpers/ui-improvement'
+import { getStyle } from './helpers/ui-improvement'
 
 test('Featured works renders as a grid card layout', async ({ page }) => {
   await page.goto('/')
@@ -21,10 +21,10 @@ test('clicking a featured work card opens its detail page', async ({ page }) => 
   await expect(page).toHaveURL(/\/works\/.+/)
 })
 
-test('View all from Featured works navigates to /works', async ({ page }) => {
+test('View all from Works navigates to /works', async ({ page }) => {
   await page.goto('/')
 
-  const section = page.getByRole('heading', { name: 'Featured works' }).locator('xpath=ancestor::section[1]')
+  const section = page.getByRole('heading', { name: 'Works', exact: true }).locator('xpath=ancestor::section[1]')
   await section.getByRole('link', { name: 'View all' }).click()
   await expect(page).toHaveURL(/\/works$/)
 })
@@ -70,7 +70,7 @@ test('home featured works no longer shows the legacy click-to-view-details fallb
   await expect(page.getByText('Click to view details', { exact: true })).toHaveCount(0)
 })
 
-test('Featured works collapses to one column on mobile', async ({ page }) => {
+test('Works collapses to one column on mobile', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 667 })
   await page.goto('/')
 
@@ -86,7 +86,7 @@ test('Featured works collapses to one column on mobile', async ({ page }) => {
   expect(secondBox!.y).toBeGreaterThan(firstBox!.y)
 })
 
-test('Featured works uses two columns on tablet and three on desktop', async ({ page }) => {
+test('Works uses two columns on tablet and three on desktop', async ({ page }) => {
   const measureColumns = async (width: number, height: number) => {
     await page.setViewportSize({ width, height })
     await page.goto('/')

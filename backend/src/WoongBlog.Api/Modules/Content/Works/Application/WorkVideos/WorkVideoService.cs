@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
@@ -13,10 +15,14 @@ public sealed class WorkVideoService(
     IEnumerable<IVideoObjectStorage> storages,
     IWorkVideoPlaybackUrlBuilder playbackUrlBuilder,
     IHostEnvironment environment,
-    IOptions<CloudflareR2Options> r2Options) : IWorkVideoService
+    IOptions<CloudflareR2Options> r2Options,
+    IOptions<WorkVideoHlsOptions> hlsOptions) : IWorkVideoService
 {
     private const int MaxVideosPerWork = 10;
     private const long MaxVideoBytes = 200L * 1024L * 1024L;
+    private const string HlsManifestFileName = "master.m3u8";
+    private const string HlsManifestContentType = "application/vnd.apple.mpegurl";
+    private const string HlsSegmentContentType = "video/mp2t";
     private static readonly string[] AllowedMimeTypes = ["video/mp4"];
     private static readonly string[] AllowedExtensions = [".mp4"];
 
@@ -24,6 +30,7 @@ public sealed class WorkVideoService(
     private readonly IWorkVideoPlaybackUrlBuilder _playbackUrlBuilder = playbackUrlBuilder;
     private readonly IHostEnvironment _environment = environment;
     private readonly CloudflareR2Options _r2Options = r2Options.Value;
+    private readonly WorkVideoHlsOptions _hlsOptions = hlsOptions.Value;
     private readonly IReadOnlyDictionary<string, IVideoObjectStorage> _storages = storages
         .ToDictionary(storage => storage.StorageType, StringComparer.OrdinalIgnoreCase);
 
@@ -130,6 +137,103 @@ public sealed class WorkVideoService(
         session.Status = WorkVideoUploadSessionStatuses.Uploaded;
         await _dbContext.SaveChangesAsync(cancellationToken);
         return WorkVideoServiceResult<object>.Ok(new { success = true });
+    }
+
+    public async Task<WorkVideoServiceResult<WorkVideosMutationResult>> UploadHlsAsync(
+        Guid workId,
+        IFormFile? file,
+        int expectedVideosVersion,
+        CancellationToken cancellationToken)
+    {
+        if (file is null)
+        {
+            return WorkVideoServiceResult<WorkVideosMutationResult>.BadRequest("No file uploaded.");
+        }
+
+        var work = await _dbContext.Works.SingleOrDefaultAsync(x => x.Id == workId, cancellationToken);
+        if (work is null)
+        {
+            return WorkVideoServiceResult<WorkVideosMutationResult>.NotFound("Work not found.");
+        }
+
+        if (work.VideosVersion != expectedVideosVersion)
+        {
+            return WorkVideoServiceResult<WorkVideosMutationResult>.Conflict("Videos changed. Refresh and retry.");
+        }
+
+        var validationError = ValidateVideoFile(file.FileName, file.ContentType, file.Length);
+        if (validationError is not null)
+        {
+            return WorkVideoServiceResult<WorkVideosMutationResult>.BadRequest(validationError);
+        }
+
+        if (await CountVideosAsync(workId, cancellationToken) >= MaxVideosPerWork)
+        {
+            return WorkVideoServiceResult<WorkVideosMutationResult>.BadRequest("Each work supports up to 10 videos.");
+        }
+
+        var storageType = ResolveStorageType();
+        if (!_storages.TryGetValue(storageType, out var storage))
+        {
+            return WorkVideoServiceResult<WorkVideosMutationResult>.BadRequest("No video storage backend is available.");
+        }
+
+        var videoId = Guid.NewGuid();
+        var hlsPrefix = $"videos/{workId:N}/{videoId:N}/hls";
+        var manifestStorageKey = $"{hlsPrefix}/{HlsManifestFileName}";
+        var tempDirectory = Path.Combine(Path.GetTempPath(), "woong-blog-hls", videoId.ToString("N"));
+
+        try
+        {
+            Directory.CreateDirectory(tempDirectory);
+            var inputPath = Path.Combine(tempDirectory, "source.mp4");
+            await using (var inputFile = File.Create(inputPath))
+            await using (var uploadStream = file.OpenReadStream())
+            {
+                await uploadStream.CopyToAsync(inputFile, cancellationToken);
+            }
+
+            var sourcePrefix = await ReadFilePrefixAsync(inputPath, 64, cancellationToken);
+            if (!LooksLikeMp4(sourcePrefix))
+            {
+                return WorkVideoServiceResult<WorkVideosMutationResult>.BadRequest("Only valid MP4 files are supported.");
+            }
+
+            var hlsDirectory = Path.Combine(tempDirectory, "hls");
+            Directory.CreateDirectory(hlsDirectory);
+            var manifestPath = Path.Combine(hlsDirectory, HlsManifestFileName);
+            var ffmpegError = await SegmentHlsAsync(inputPath, hlsDirectory, manifestPath, cancellationToken);
+            if (ffmpegError is not null)
+            {
+                return WorkVideoServiceResult<WorkVideosMutationResult>.BadRequest(ffmpegError);
+            }
+
+            await UploadHlsOutputAsync(storage, hlsDirectory, hlsPrefix, cancellationToken);
+
+            _dbContext.WorkVideos.Add(new WorkVideo
+            {
+                Id = videoId,
+                WorkId = workId,
+                SourceType = WorkVideoSourceTypes.Hls,
+                SourceKey = WorkVideoHlsSourceKey.Create(storageType, manifestStorageKey),
+                OriginalFileName = SanitizeOriginalFileName(file.FileName),
+                MimeType = HlsManifestContentType,
+                FileSize = file.Length,
+                SortOrder = await GetNextSortOrderAsync(workId, cancellationToken),
+                CreatedAt = DateTimeOffset.UtcNow
+            });
+
+            work.VideosVersion += 1;
+            await _dbContext.SaveChangesAsync(cancellationToken);
+            return WorkVideoServiceResult<WorkVideosMutationResult>.Ok(await BuildMutationResultAsync(workId, cancellationToken));
+        }
+        finally
+        {
+            if (Directory.Exists(tempDirectory))
+            {
+                Directory.Delete(tempDirectory, recursive: true);
+            }
+        }
     }
 
     public async Task<WorkVideoServiceResult<WorkVideosMutationResult>> ConfirmUploadAsync(
@@ -452,6 +556,130 @@ public sealed class WorkVideoService(
             )).ToList());
     }
 
+    private async Task<string?> SegmentHlsAsync(
+        string inputPath,
+        string hlsDirectory,
+        string manifestPath,
+        CancellationToken cancellationToken)
+    {
+        var segmentDuration = Math.Max(1, _hlsOptions.SegmentDurationSeconds);
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeout.CancelAfter(TimeSpan.FromSeconds(Math.Max(1, _hlsOptions.TimeoutSeconds)));
+
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = _hlsOptions.FfmpegPath,
+            WorkingDirectory = hlsDirectory,
+            RedirectStandardError = true,
+            UseShellExecute = false
+        };
+
+        startInfo.ArgumentList.Add("-hide_banner");
+        startInfo.ArgumentList.Add("-loglevel");
+        startInfo.ArgumentList.Add("error");
+        startInfo.ArgumentList.Add("-i");
+        startInfo.ArgumentList.Add(inputPath);
+        startInfo.ArgumentList.Add("-map");
+        startInfo.ArgumentList.Add("0:v:0");
+        startInfo.ArgumentList.Add("-map");
+        startInfo.ArgumentList.Add("0:a:0?");
+        startInfo.ArgumentList.Add("-c");
+        startInfo.ArgumentList.Add("copy");
+        startInfo.ArgumentList.Add("-f");
+        startInfo.ArgumentList.Add("hls");
+        startInfo.ArgumentList.Add("-hls_time");
+        startInfo.ArgumentList.Add(segmentDuration.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        startInfo.ArgumentList.Add("-hls_playlist_type");
+        startInfo.ArgumentList.Add("vod");
+        startInfo.ArgumentList.Add("-hls_segment_filename");
+        startInfo.ArgumentList.Add("segment_%05d.ts");
+        startInfo.ArgumentList.Add(HlsManifestFileName);
+
+        using var process = new Process { StartInfo = startInfo };
+        var stderr = new StringBuilder();
+        process.ErrorDataReceived += (_, args) =>
+        {
+            if (!string.IsNullOrWhiteSpace(args.Data))
+            {
+                stderr.AppendLine(args.Data);
+            }
+        };
+
+        try
+        {
+            if (!process.Start())
+            {
+                return "Unable to start HLS processing.";
+            }
+
+            process.BeginErrorReadLine();
+            await process.WaitForExitAsync(timeout.Token);
+            process.WaitForExit();
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            TryKillProcess(process);
+            return "HLS processing timed out.";
+        }
+        catch (Exception exception) when (exception is System.ComponentModel.Win32Exception or InvalidOperationException)
+        {
+            return $"Unable to start HLS processing: {exception.Message}";
+        }
+
+        if (process.ExitCode != 0)
+        {
+            var message = stderr.ToString().Trim();
+            return string.IsNullOrWhiteSpace(message)
+                ? "Unable to process MP4 into HLS."
+                : $"Unable to process MP4 into HLS: {message}";
+        }
+
+        return File.Exists(manifestPath)
+            ? null
+            : "HLS processing did not produce a manifest.";
+    }
+
+    private static void TryKillProcess(Process process)
+    {
+        try
+        {
+            if (!process.HasExited)
+            {
+                process.Kill(entireProcessTree: true);
+            }
+        }
+        catch (InvalidOperationException)
+        {
+        }
+    }
+
+    private static async Task<byte[]> ReadFilePrefixAsync(string filePath, int length, CancellationToken cancellationToken)
+    {
+        await using var stream = File.OpenRead(filePath);
+        var buffer = new byte[length];
+        var bytesRead = await stream.ReadAsync(buffer.AsMemory(0, length), cancellationToken);
+        return buffer[..bytesRead];
+    }
+
+    private static async Task UploadHlsOutputAsync(
+        IVideoObjectStorage storage,
+        string hlsDirectory,
+        string hlsPrefix,
+        CancellationToken cancellationToken)
+    {
+        foreach (var filePath in Directory.EnumerateFiles(hlsDirectory).Order(StringComparer.Ordinal))
+        {
+            var fileName = Path.GetFileName(filePath);
+            var storageKey = $"{hlsPrefix}/{fileName}";
+            var contentType = fileName.EndsWith(".m3u8", StringComparison.OrdinalIgnoreCase)
+                ? HlsManifestContentType
+                : HlsSegmentContentType;
+
+            await using var stream = File.OpenRead(filePath);
+            await storage.SaveDirectUploadAsync(storageKey, stream, contentType, cancellationToken);
+        }
+    }
+
     private async Task EnqueueCleanupAsync(
         Guid? workId,
         Guid? workVideoId,
@@ -462,6 +690,14 @@ public sealed class WorkVideoService(
         if (string.Equals(sourceType, WorkVideoSourceTypes.YouTube, StringComparison.OrdinalIgnoreCase))
         {
             return;
+        }
+
+        if (string.Equals(sourceType, WorkVideoSourceTypes.Hls, StringComparison.OrdinalIgnoreCase))
+        {
+            if (!WorkVideoHlsSourceKey.TryParse(sourceKey, out sourceType, out sourceKey))
+            {
+                return;
+            }
         }
 
         var exists = await _dbContext.VideoStorageCleanupJobs.AnyAsync(

@@ -16,6 +16,7 @@ internal static class GetSiteSettingsEndpoint
                 var result = await sender.Send(new GetSiteSettingsQuery(), cancellationToken);
                 return result is null ? Results.NotFound() : Results.Ok(result);
             })
+            .RequireRateLimiting("public-read")
             .WithTags("Public Site")
             .WithName("GetSiteSettings")
             .Produces<SiteSettingsDto>(StatusCodes.Status200OK)

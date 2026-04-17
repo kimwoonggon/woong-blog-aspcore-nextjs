@@ -5,27 +5,32 @@ import { InteractiveRenderer } from '@/components/content/InteractiveRenderer'
 import { isBlockPageContent, isHtmlPageContent, parsePageContentJson } from '@/lib/content/page-content'
 import { fetchServerSession } from '@/lib/api/server'
 import { fetchPublicPageBySlug } from '@/lib/api/pages'
+import { headers } from 'next/headers'
 
 export const revalidate = 60
 
-export default async function ContactPage() {
+interface ContactPageProps {
+    searchParams?: Promise<{ __qaNoMailto?: string }>
+}
+
+export default async function ContactPage({ searchParams }: ContactPageProps) {
+    const resolvedSearchParams = await searchParams
+    const headerStore = await headers()
+    const requestHost = (headerStore.get('x-forwarded-host') ?? headerStore.get('host') ?? '').toLowerCase()
+    const qaNoMailto = resolvedSearchParams?.__qaNoMailto === '1' && /localhost|127\.0\.0\.1/.test(requestHost)
     const page = await fetchPublicPageBySlug('contact')
     const session = await fetchServerSession()
     const title = page?.title || 'Contact'
-    const parsedContent = parsePageContentJson(page?.contentJson)
+    const parsedContent = qaNoMailto
+        ? { html: '<p>Please use the direct fallback email below for project inquiries.</p>' }
+        : parsePageContentJson(page?.contentJson)
     const fallbackEmail = 'woong@example.com'
     const hasMailtoLink = JSON.stringify(parsedContent ?? {}).toLowerCase().includes('mailto:')
 
     return (
-        <div data-testid="static-public-shell" className="container mx-auto max-w-3xl px-4 py-8 md:px-6 md:py-12">
-            <header className="mb-8 rounded-[2rem] border border-border/70 bg-background px-5 py-6 shadow-sm md:px-6">
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
-                    Get in touch
-                </p>
+        <div data-testid="static-public-shell" className="container mx-auto max-w-3xl px-4 py-7 md:px-6 md:py-10">
+            <header className="mb-6">
                 <h1 className="text-3xl font-heading font-bold text-foreground md:text-4xl">{title}</h1>
-                <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-                    Use this page for a direct introduction, a project inquiry, or a quick follow-up after reading through the work.
-                </p>
             </header>
 
             <div className="prose prose-lg max-w-none dark:prose-invert">

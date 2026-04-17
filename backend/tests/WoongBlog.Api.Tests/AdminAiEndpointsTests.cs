@@ -90,6 +90,31 @@ public class AdminAiEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
+    public async Task FixBlog_ForwardsCustomPrompt()
+    {
+        using var factory = _factory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureServices(services =>
+            {
+                services.RemoveAll<IBlogAiFixService>();
+                services.AddScoped<IBlogAiFixService, FakeBlogAiFixService>();
+            });
+        });
+
+        var client = CreateAuthenticatedClient(factory);
+
+        var response = await client.PostAsJsonAsync("/api/admin/ai/blog-fix", new
+        {
+            html = "<p>Hello</p>",
+            customPrompt = "Use terse editorial fixes only."
+        });
+
+        response.EnsureSuccessStatusCode();
+        var payload = await response.Content.ReadAsStringAsync();
+        Assert.Contains("Use terse editorial fixes only.", payload, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task FixBlogBatch_AppliesUpdatedHtml_WhenRequested()
     {
         using var factory = _factory.WithWebHostBuilder(builder =>
@@ -151,6 +176,7 @@ public class AdminAiEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         Assert.Contains("availableProviders", payload, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("codexModel", payload, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("batchConcurrency", payload, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("defaultSystemPrompt", payload, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -221,6 +247,68 @@ public class AdminAiEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         Assert.NotNull(detail);
         Assert.Equal(created.JobId, detail!.JobId);
         Assert.Equal(2, detail.Items.Count);
+    }
+
+    [Fact]
+    public async Task BatchJob_PersistsAndAppliesCustomPrompt()
+    {
+        using var factory = _factory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureServices(services =>
+            {
+                services.RemoveAll<IBlogAiFixService>();
+                services.AddScoped<IBlogAiFixService, FakeBlogAiFixService>();
+            });
+        });
+
+        var client = CreateAuthenticatedClient(factory);
+
+        Guid blogId;
+        using (var scope = factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
+            blogId = dbContext.Blogs.OrderBy(x => x.CreatedAt).Select(x => x.Id).First();
+        }
+
+        var create = await client.PostAsJsonAsync("/api/admin/ai/blog-fix-batch-jobs", new
+        {
+            blogIds = new[] { blogId },
+            all = false,
+            workerCount = 1,
+            codexModel = "gpt-5.4",
+            codexReasoningEffort = "medium",
+            customPrompt = "Preserve terse custom prompt."
+        });
+
+        create.EnsureSuccessStatusCode();
+        var created = await create.Content.ReadFromJsonAsync<BatchJobDetailPayload>();
+        Assert.NotNull(created);
+        Assert.Equal("Preserve terse custom prompt.", created!.CustomPrompt);
+
+        using (var persistScope = factory.Services.CreateScope())
+        {
+            var dbContext = persistScope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
+            var persisted = await dbContext.AiBatchJobs.SingleAsync(job => job.Id == created.JobId);
+            Assert.Equal("Preserve terse custom prompt.", persisted.CustomPrompt);
+        }
+
+        BatchJobDetailPayload? job = null;
+        for (var attempt = 0; attempt < 30; attempt += 1)
+        {
+            job = await client.GetFromJsonAsync<BatchJobDetailPayload>($"/api/admin/ai/blog-fix-batch-jobs/{created.JobId}");
+            if (job is not null && (job.Status == "completed" || job.Status == "failed" || job.Status == "cancelled"))
+            {
+                break;
+            }
+
+            await Task.Delay(250);
+        }
+
+        Assert.NotNull(job);
+        Assert.Equal("completed", job!.Status);
+        var item = Assert.Single(job.Items);
+        Assert.Equal("codex", item.Provider);
+        Assert.Contains("Preserve terse custom prompt.", item.FixedHtml, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -443,7 +531,10 @@ public class AdminAiEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     {
         public Task<BlogAiFixResult> FixHtmlAsync(string html, CancellationToken cancellationToken, AiFixRequestOptions? options = null)
         {
-            return Task.FromResult(new BlogAiFixResult("<p>fixed-html</p>", options?.Provider ?? "fake", options?.CodexModel ?? "fake-model", options?.CodexReasoningEffort));
+            var fixedHtml = string.IsNullOrWhiteSpace(options?.CustomPrompt)
+                ? "<p>fixed-html</p>"
+                : $"<p>fixed-html</p><p>{options.CustomPrompt}</p>";
+            return Task.FromResult(new BlogAiFixResult(fixedHtml, options?.Provider ?? "fake", options?.CodexModel ?? "fake-model", options?.CodexReasoningEffort));
         }
     }
 
@@ -478,6 +569,7 @@ public class AdminAiEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         Guid JobId,
         string Status,
         string Provider,
+        string? CustomPrompt,
         bool AutoApply,
         int? WorkerCount,
         int TotalCount,
@@ -485,5 +577,5 @@ public class AdminAiEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         int SucceededCount,
         int FailedCount,
         IReadOnlyList<BatchJobItemPayload> Items);
-    private sealed record BatchJobItemPayload(Guid JobItemId, Guid BlogId, string Title, string Status, string? FixedHtml, string? Error);
+    private sealed record BatchJobItemPayload(Guid JobItemId, Guid BlogId, string Title, string Status, string? FixedHtml, string? Error, string? Provider);
 }

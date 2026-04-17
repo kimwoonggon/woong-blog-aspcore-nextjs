@@ -45,7 +45,7 @@ test('admin can create and publish a work that appears on public works page', as
   await expect(page.getByRole('link', { name: title }).first()).toBeVisible()
 
   await page.goto(`/works/${payload.slug}`)
-  await expect(page.getByRole('heading', { name: title })).toBeVisible()
+  await expect(page.locator('main h1', { hasText: title })).toBeVisible()
   await expect(page.getByText('Uncategorized').first()).toBeVisible()
   await page.screenshot({ path: 'test-results/playwright/admin-work-publish.png', fullPage: true })
 })
@@ -93,7 +93,7 @@ test('admin can keep a work as draft and publish it later', async ({ page }) => 
   await expect(publishedRow.locator('[data-slot="badge"]').filter({ hasText: /^Published$/ }).first()).toBeVisible()
 
   await page.goto(`/works/${created.slug}`)
-  await expect(page.getByRole('heading', { name: title })).toBeVisible()
+  await expect(page.locator('main h1', { hasText: title })).toBeVisible()
 })
 
 test('admin can toggle a published work back to draft and publish it again', async ({ page }) => {
@@ -112,7 +112,7 @@ test('admin can toggle a published work back to draft and publish it again', asy
   const created = await createResponse.json() as { id: string; slug: string }
 
   await page.goto(`/works/${created.slug}`)
-  await expect(page.getByRole('heading', { name: title })).toBeVisible()
+  await expect(page.locator('main h1', { hasText: title })).toBeVisible()
 
   await page.goto(`/admin/works/${created.id}`)
   const publishedCheckbox = page.getByRole('checkbox', { name: 'Published' })
@@ -149,5 +149,5 @@ test('admin can toggle a published work back to draft and publish it again', asy
   await expect(publishedRow.locator('[data-slot="badge"]').filter({ hasText: /^Published$/ }).first()).toBeVisible()
 
   await page.goto(`/works/${created.slug}`)
-  await expect(page.getByRole('heading', { name: title })).toBeVisible()
+  await expect(page.locator('main h1', { hasText: title })).toBeVisible()
 })

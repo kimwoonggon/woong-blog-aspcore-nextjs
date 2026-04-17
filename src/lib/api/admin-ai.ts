@@ -10,6 +10,7 @@ export interface AdminAiRuntimeConfig {
   allowedCodexReasoningEfforts: string[]
   batchConcurrency: number
   batchCompletedRetentionDays: number
+  defaultSystemPrompt: string
 }
 
 export interface BlogAiBatchJobSummary {
@@ -27,6 +28,7 @@ export interface BlogAiBatchJobSummary {
   provider: string
   model: string
   reasoningEffort?: string | null
+  customPrompt?: string | null
   createdAt: string
   startedAt?: string | null
   finishedAt?: string | null

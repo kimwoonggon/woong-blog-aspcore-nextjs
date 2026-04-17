@@ -82,7 +82,7 @@ test('admin can create a mixed work with two youtube links, two mp4 uploads, and
   ])
 
   await page.goto(`/works/${created.slug}`)
-  await expect(page.getByRole('heading', { name: title })).toBeVisible()
+  await expect(page.locator('main h1', { hasText: title })).toBeVisible()
   await expect(page.getByText(/Before inline video\./).first()).toBeVisible()
   await expect(page.getByText(/Between videos\./).first()).toBeVisible()
   await expect(page.getByText(/More inline video\./).first()).toBeVisible()

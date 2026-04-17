@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { NodeViewWrapper, NodeViewProps } from '@tiptap/react'
 import { Code, Eye, Edit3 } from 'lucide-react'
+import { sanitizeHtml } from '@/lib/content/html-sanitizer'
 
 export const HtmlComponent = (props: NodeViewProps) => {
     const [html, setHtml] = useState(props.node.attrs.html || '')
@@ -52,7 +53,7 @@ export const HtmlComponent = (props: NodeViewProps) => {
                 ) : (
                     <div className="p-4 overflow-auto">
                         {html ? (
-                            <div dangerouslySetInnerHTML={{ __html: html }} />
+                            <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(html) }} />
                         ) : (
                             <div className="text-gray-400 text-sm italic">Empty widget. Click Edit to add HTML.</div>
                         )}

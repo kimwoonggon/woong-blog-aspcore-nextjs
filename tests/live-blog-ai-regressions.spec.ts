@@ -77,6 +77,7 @@ test.describe('live AI and inline blog regressions', () => {
   })
 
   test('blog AI fixer runs against the live codex backend and applies changes', async ({ page }) => {
+    test.skip(process.env.PLAYWRIGHT_LIVE_AI !== '1', 'Live AI smoke requires PLAYWRIGHT_LIVE_AI=1.')
     const title = `Live Blog AI ${Date.now()}`
     const editorBody = '<h2>why bff works</h2><p>bff auth centralizes session ownership in the backend and keeps the browser thinner.</p>'
 
@@ -114,6 +115,7 @@ test.describe('live AI and inline blog regressions', () => {
   })
 
   test('work AI enrich runs against the live codex backend and applies changes', async ({ page }) => {
+    test.skip(process.env.PLAYWRIGHT_LIVE_AI !== '1', 'Live AI smoke requires PLAYWRIGHT_LIVE_AI=1.')
     const title = `Live Work AI ${Date.now()}`
 
     await page.goto('/admin/works/new')

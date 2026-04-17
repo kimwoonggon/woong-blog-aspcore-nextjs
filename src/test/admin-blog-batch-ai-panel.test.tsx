@@ -51,6 +51,7 @@ describe('AdminBlogBatchAiPanel', () => {
       allowedCodexReasoningEfforts: ['low', 'medium', 'high'],
       batchConcurrency: 2,
       batchCompletedRetentionDays: 14,
+      defaultSystemPrompt: 'Default blog system prompt',
     })
     mocks.listBlogAiBatchJobsBrowser.mockResolvedValue({
       jobs: [],
@@ -126,6 +127,71 @@ describe('AdminBlogBatchAiPanel', () => {
       workerCount: 2,
       codexModel: 'gpt-5.4',
       codexReasoningEffort: 'medium',
+      customPrompt: 'Default blog system prompt',
+    })
+  })
+
+  it('sends edited custom prompt when creating a batch job', async () => {
+    renderPanel()
+
+    await waitFor(() => {
+      expect(mocks.fetchAdminAiRuntimeConfigBrowser).toHaveBeenCalled()
+    })
+
+    expect(screen.getByLabelText('Batch AI system prompt')).toHaveValue('Default blog system prompt')
+    fireEvent.change(screen.getByLabelText('Batch AI system prompt'), {
+      target: { value: 'Use this batch-specific prompt.' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Save prompt' }))
+    fireEvent.click(screen.getByRole('button', { name: /Generate AI Fix job/i }))
+
+    await waitFor(() => {
+      expect(mocks.fetchWithCsrf).toHaveBeenCalled()
+    })
+
+    const [, request] = mocks.fetchWithCsrf.mock.calls[0] as [string, { body: string }]
+    expect(JSON.parse(request.body)).toMatchObject({
+      customPrompt: 'Use this batch-specific prompt.',
+    })
+    expect(window.localStorage.getItem('admin-ai-system-prompt')).toBe('Use this batch-specific prompt.')
+  })
+
+  it('requires saving batch prompt edits before generating a batch job', async () => {
+    renderPanel()
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Batch AI system prompt')).toHaveValue('Default blog system prompt')
+    })
+
+    fireEvent.change(screen.getByLabelText('Batch AI system prompt'), {
+      target: { value: 'Unsaved batch prompt.' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: /Generate AI Fix job/i }))
+
+    expect(mocks.toast.error).toHaveBeenCalledWith('Save the system prompt before generating an AI fix job.')
+    expect(mocks.fetchWithCsrf).not.toHaveBeenCalled()
+  })
+
+  it('saves and restores the batch system prompt', async () => {
+    const { unmount } = renderPanel()
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Batch AI system prompt')).toHaveValue('Default blog system prompt')
+    })
+
+    fireEvent.change(screen.getByLabelText('Batch AI system prompt'), {
+      target: { value: 'Saved batch prompt.' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Save prompt' }))
+
+    expect(window.localStorage.getItem('admin-ai-system-prompt')).toBe('Saved batch prompt.')
+    expect(mocks.toast.success).toHaveBeenCalledWith('System prompt saved')
+
+    unmount()
+    renderPanel()
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Batch AI system prompt')).toHaveValue('Saved batch prompt.')
     })
   })
 

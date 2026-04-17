@@ -8,7 +8,7 @@ test('WQ-024 and VA-403 public route transitions expose a loading skeleton befor
 
   const skeleton = page.locator('.animate-pulse').first()
   await expect(skeleton).toBeVisible()
-  await expect(page.getByRole('heading', { name: /Featured works/i })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Works', exact: true })).toBeVisible()
 })
 
 test.use({ storageState: 'test-results/playwright/admin-storage-state.json' })

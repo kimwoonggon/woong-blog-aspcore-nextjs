@@ -1,8 +1,6 @@
 import path from 'path'
 import { expect, test } from '@playwright/test'
 
-test.use({ storageState: 'test-results/playwright/admin-storage-state.json' })
-
 test('resume page exposes a download action', async ({ page }) => {
   await page.goto('/resume')
   await expect(page.getByRole('heading', { name: 'Resume', exact: true })).toBeVisible()
@@ -45,5 +43,21 @@ test('resume page exposes a download action', async ({ page }) => {
 
   await expect(page.getByRole('heading', { name: 'Resume', exact: true })).toBeVisible()
   await expect(downloadLink).toBeVisible()
+  await expect(page.getByTestId('resume-pdf-viewer')).toBeVisible()
   await page.screenshot({ path: 'test-results/playwright/resume-page.png', fullPage: true })
+})
+
+test('resume page keeps the PDF viewer usable on mobile', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/resume')
+
+  await expect(page.getByRole('heading', { name: 'Resume', exact: true })).toBeVisible()
+  await expect(page.getByTestId('resume-pdf-viewer')).toBeVisible()
+
+  const metrics = await page.evaluate(() => ({
+    clientWidth: document.documentElement.clientWidth,
+    scrollWidth: document.documentElement.scrollWidth,
+  }))
+
+  expect(metrics.scrollWidth - metrics.clientWidth).toBeLessThanOrEqual(1)
 })

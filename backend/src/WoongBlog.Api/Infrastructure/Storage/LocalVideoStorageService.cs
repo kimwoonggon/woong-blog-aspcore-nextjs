@@ -71,6 +71,16 @@ public sealed class LocalVideoStorageService(
     public Task DeleteAsync(string storageKey, CancellationToken cancellationToken)
     {
         var physicalPath = Path.Combine(_authOptions.MediaRoot, storageKey);
+        if (storageKey.EndsWith(".m3u8", StringComparison.OrdinalIgnoreCase))
+        {
+            var directory = Path.GetDirectoryName(physicalPath);
+            if (!string.IsNullOrWhiteSpace(directory) && Directory.Exists(directory))
+            {
+                Directory.Delete(directory, recursive: true);
+                return Task.CompletedTask;
+            }
+        }
+
         if (File.Exists(physicalPath))
         {
             File.Delete(physicalPath);

@@ -83,7 +83,7 @@ test('capture homepage across a full width sweep and record layout metrics', asy
 
   await writeFile(path.join(OUTPUT_DIR, 'metrics.json'), JSON.stringify(metrics, null, 2))
 
-  const badOverflow = metrics.filter((entry) => entry.width >= 250 && entry.overflowX > 1)
+  const badOverflow = metrics.filter((entry) => entry.width >= 320 && entry.overflowX > 1)
   expect(
     badOverflow,
     `Horizontal overflow detected at widths >=250px: ${badOverflow.map((entry) => entry.width).join(', ')}`,

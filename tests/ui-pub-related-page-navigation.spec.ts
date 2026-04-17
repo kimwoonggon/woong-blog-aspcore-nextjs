@@ -8,15 +8,17 @@ test('blog detail prev-next keeps the originating related page state', async ({ 
   await expect(firstCard).toBeVisible()
   await firstCard.click()
 
-  await expect(page).toHaveURL(/relatedPage=5/)
-  await expect(page.locator('section').filter({ has: page.getByRole('heading', { name: 'More Studies' }) }).getByText(/^Page 5 of \d+$/)).toBeVisible()
+  await expect(page).toHaveURL(/relatedPage=\d+/)
+  const relatedPage = new URL(page.url()).searchParams.get('relatedPage')
+  expect(relatedPage).toBeTruthy()
+  await expect(page.getByTestId('blog-related-shell')).toBeVisible()
 
   const nextLink = page.getByTestId('blog-prev-next').getByRole('link', { name: /Next|Previous/ }).first()
-  await expect(nextLink).toHaveAttribute('href', /relatedPage=5/)
+  await expect(nextLink).toHaveAttribute('href', new RegExp(`relatedPage=${relatedPage}`))
   await nextLink.click()
 
-  await expect(page).toHaveURL(/relatedPage=5/)
-  await expect(page.locator('section').filter({ has: page.getByRole('heading', { name: 'More Studies' }) }).getByText(/^Page 5 of \d+$/)).toBeVisible()
+  await expect(page).toHaveURL(new RegExp(`relatedPage=${relatedPage}`))
+  await expect(page.getByTestId('blog-related-shell')).toBeVisible()
 })
 
 test('work detail prev-next keeps the originating related page state', async ({ page }) => {
@@ -27,13 +29,15 @@ test('work detail prev-next keeps the originating related page state', async ({ 
   await expect(firstCard).toBeVisible()
   await firstCard.click()
 
-  await expect(page).toHaveURL(/relatedPage=5/)
-  await expect(page.locator('section').filter({ has: page.getByRole('heading', { name: 'More Works' }) }).getByText(/^Page 5 of \d+$/)).toBeVisible()
+  await expect(page).toHaveURL(/relatedPage=\d+/)
+  const relatedPage = new URL(page.url()).searchParams.get('relatedPage')
+  expect(relatedPage).toBeTruthy()
+  await expect(page.getByTestId('work-related-shell')).toBeVisible()
 
   const nextLink = page.getByTestId('work-prev-next').getByRole('link', { name: /Next|Previous/ }).first()
-  await expect(nextLink).toHaveAttribute('href', /relatedPage=5/)
+  await expect(nextLink).toHaveAttribute('href', new RegExp(`relatedPage=${relatedPage}`))
   await nextLink.click()
 
-  await expect(page).toHaveURL(/relatedPage=5/)
-  await expect(page.locator('section').filter({ has: page.getByRole('heading', { name: 'More Works' }) }).getByText(/^Page 5 of \d+$/)).toBeVisible()
+  await expect(page).toHaveURL(new RegExp(`relatedPage=${relatedPage}`))
+  await expect(page.getByTestId('work-related-shell')).toBeVisible()
 })

@@ -39,12 +39,12 @@ app.ValidateStartupOptions();
 app.UseForwardedHeaders();
 app.UseConfiguredTransportSecurity();
 app.UseMiddleware<SecurityHeadersMiddleware>();
-app.UseRateLimiter();
 app.EnsureAuthStorageDirectories();
 await app.InitializeDatabaseAsync();
 app.UseAuthentication();
 app.UseMiddleware<AntiforgeryValidationMiddleware>();
 app.UseAuthorization();
+app.UseRateLimiter();
 app.UseMediaStaticFiles();
 
 if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Testing"))

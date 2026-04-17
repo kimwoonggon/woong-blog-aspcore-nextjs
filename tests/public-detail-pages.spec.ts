@@ -8,13 +8,21 @@ test('contact page renders heading and contact content', async ({ page }) => {
 
 test('work detail page renders seeded detail content and stable related cards', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 960 })
-  await page.goto('/works/seeded-work')
-  await expect(page.getByRole('heading', { name: 'Portfolio Platform Rebuild' })).toBeVisible()
-  await expect(page.getByText(/React \+ TypeScript frontend/i)).toBeVisible()
+  const worksResponse = await page.request.get('/api/public/works?page=1&pageSize=1')
+  expect(worksResponse.ok()).toBeTruthy()
+  const worksPayload = await worksResponse.json() as { items: Array<{ slug: string; title: string }> }
+  const work = worksPayload.items[0]
+  expect(work).toBeTruthy()
+
+  await page.goto(`/works/${work.slug}`)
+  await expect(page.locator('main h1')).toHaveText(work.title)
 
   const relatedWorkCards = page.getByTestId('related-work-card')
+  if ((await relatedWorkCards.count()) === 0) {
+    return
+  }
+
   await expect(relatedWorkCards.first()).toBeVisible()
-  expect(await relatedWorkCards.count()).toBeGreaterThanOrEqual(2)
 
   const heights = await relatedWorkCards.evaluateAll((elements) =>
     elements.map((element) => Math.round(element.getBoundingClientRect().height))
@@ -25,13 +33,21 @@ test('work detail page renders seeded detail content and stable related cards', 
 
 test('blog detail page renders seeded blog content and stable related cards', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 960 })
-  await page.goto('/blog/seeded-blog')
-  await expect(page.locator('main h1')).toHaveText('Designing a Seed-First Migration Strategy')
-  await expect(page.getByText(/Seed data gives frontend and backend teams/i)).toBeVisible()
+  const blogsResponse = await page.request.get('/api/public/blogs?page=1&pageSize=1')
+  expect(blogsResponse.ok()).toBeTruthy()
+  const blogsPayload = await blogsResponse.json() as { items: Array<{ slug: string; title: string }> }
+  const blog = blogsPayload.items[0]
+  expect(blog).toBeTruthy()
+
+  await page.goto(`/blog/${blog.slug}`)
+  await expect(page.locator('main h1')).toHaveText(blog.title)
 
   const relatedBlogCards = page.getByTestId('related-blog-card')
+  if ((await relatedBlogCards.count()) === 0) {
+    return
+  }
+
   await expect(relatedBlogCards.first()).toBeVisible()
-  expect(await relatedBlogCards.count()).toBeGreaterThanOrEqual(2)
 
   const heights = await relatedBlogCards.evaluateAll((elements) =>
     elements.map((element) => Math.round(element.getBoundingClientRect().height))

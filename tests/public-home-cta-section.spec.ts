@@ -9,11 +9,11 @@ const ctaCards = [
 test('home CTA section exposes quick navigation cards for works, study, and introduction', async ({ page }) => {
   await page.goto('/')
 
-  const section = page.locator('section').filter({
-    has: page.getByRole('heading', { name: 'Move through the portfolio with intent' }),
-  })
+  await expect(page.getByRole('heading', { name: 'Study Notes' })).toBeVisible()
+  const section = page.locator('main section').last()
 
   await expect(section).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Move through the portfolio with intent' })).toHaveCount(0)
 
   for (const item of ctaCards) {
     const link = section.locator(`a[href="${item.href}"]`)
@@ -27,9 +27,8 @@ test('home CTA section cards navigate to their destination pages', async ({ page
   for (const item of ctaCards) {
     await page.goto('/')
 
-    const section = page.locator('section').filter({
-      has: page.getByRole('heading', { name: 'Move through the portfolio with intent' }),
-    })
+    await expect(page.getByRole('heading', { name: 'Study Notes' })).toBeVisible()
+    const section = page.locator('main section').last()
 
     await section.locator(`a[href="${item.href}"]`).click()
     await expect(page).toHaveURL(new RegExp(`${item.href.replace('/', '\\/')}(\\?.*)?$`))

@@ -43,15 +43,9 @@ export default async function IntroductionPage({ searchParams }: PageProps) {
     const parsedContent = parsePageContentJson(page?.contentJson)
 
     return (
-        <div data-testid="static-public-shell" className="container mx-auto max-w-3xl px-4 py-8 md:px-6 md:py-12">
-            <header className="mb-8 rounded-[2rem] border border-border/70 bg-background px-5 py-6 shadow-sm md:px-6">
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
-                    About the work
-                </p>
+        <div data-testid="static-public-shell" className="container mx-auto max-w-3xl px-4 py-7 md:px-6 md:py-10">
+            <header className="mb-6">
                 <h1 className="text-3xl font-heading font-bold text-foreground md:text-4xl">{title}</h1>
-                <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-                    A short framing of who I am, what kind of problems I like to solve, and how to read the projects collected across the site.
-                </p>
             </header>
 
             <div className="prose prose-lg max-w-none dark:prose-invert">
