@@ -1,8 +1,8 @@
 
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { Search, X } from 'lucide-react'
-import { BlogEditor } from '@/components/admin/BlogEditor'
-import { InlineAdminEditorShell } from '@/components/admin/InlineAdminEditorShell'
+import { InlineBlogEditorSection } from '@/components/admin/InlineBlogEditorSection'
 import { PublicAdminLink } from '@/components/admin/PublicAdminLink'
 import { EdgePaginationNav } from '@/components/layout/EdgePaginationNav'
 import { PublicPagination } from '@/components/layout/PublicPagination'
@@ -33,6 +33,30 @@ function formatPublishedDate(publishedAt?: string | null) {
         : 'Unknown Date'
 }
 
+function buildBlogListHref({
+    page,
+    pageSize,
+    query,
+    searchMode,
+}: {
+    page: number
+    pageSize: number
+    query?: string
+    searchMode?: string
+}) {
+    const params = new URLSearchParams({
+        page: String(page),
+        pageSize: String(pageSize),
+    })
+
+    if (query) {
+        params.set('query', query)
+        params.set('searchMode', searchMode === 'content' ? 'content' : 'title')
+    }
+
+    return `/blog?${params.toString()}`
+}
+
 export default async function BlogPage({ searchParams }: PageProps) {
     const resolvedSearchParams = await searchParams
     const headerStore = await headers()
@@ -49,7 +73,17 @@ export default async function BlogPage({ searchParams }: PageProps) {
         : await fetchPublicBlogs(currentPage, currentPageSize, searchQueryParams)
     const session = await fetchServerSession()
     const totalPages = Math.max(1, blogsPayload.totalPages)
-    const page = blogsPayload.page
+    const clampedPage = Math.min(currentPage, totalPages)
+    if (resolvedSearchParams?.page && Number.parseInt(resolvedSearchParams.page, 10) !== clampedPage) {
+        redirect(buildBlogListHref({
+            page: clampedPage,
+            pageSize: currentPageSize,
+            query: searchQuery,
+            searchMode,
+        }))
+    }
+
+    const page = Math.min(Math.max(1, blogsPayload.page), totalPages)
     const returnToParams = new URLSearchParams({
         page: String(page),
         pageSize: String(currentPageSize),
@@ -133,13 +167,15 @@ export default async function BlogPage({ searchParams }: PageProps) {
                 </div>
             </div>
             {session.authenticated && session.role === 'admin' && (
-                <InlineAdminEditorShell
+                <InlineBlogEditorSection
                     triggerLabel="새 글 쓰기"
                     title="Study Inline Create"
                     description="Create a new study note inline without leaving the current public page."
-                >
-                    <BlogEditor inlineMode />
-                </InlineAdminEditorShell>
+                    afterSaveHref={buildBlogListHref({
+                        page: 1,
+                        pageSize: currentPageSize,
+                    })}
+                />
             )}
             <div data-testid="blog-grid" className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
                 {pagedBlogs && pagedBlogs.length > 0 ? (

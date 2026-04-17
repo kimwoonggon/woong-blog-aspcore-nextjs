@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 vi.mock('@/lib/api/server', () => ({
   getServerApiBaseUrl: vi.fn(async () => 'http://localhost/api'),
   getServerCookieHeader: vi.fn(async () => 'session=test'),
+  getServerForwardingHeaders: vi.fn(async () => ({})),
 }))
 
 describe('public/admin api clients', () => {
@@ -10,7 +11,7 @@ describe('public/admin api clients', () => {
     vi.restoreAllMocks()
   })
 
-  it('fetchPublicPageBySlug returns null when the backend responds with a non-ok status', async () => {
+  it('fetchPublicPageBySlug returns null only for 404', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => new Response('missing', { status: 404 })) as typeof fetch)
 
     const { fetchPublicPageBySlug } = await import('@/lib/api/pages')
@@ -18,7 +19,7 @@ describe('public/admin api clients', () => {
     await expect(fetchPublicPageBySlug('contact')).resolves.toBeNull()
   })
 
-  it('fetchPublicBlogs and fetchPublicWorks return empty fallback payloads on non-ok responses', async () => {
+  it('fetchPublicBlogs and fetchPublicWorks throw explicit errors on non-ok responses', async () => {
     const fetchMock = vi.fn()
       .mockResolvedValueOnce(new Response('missing', { status: 503 }))
       .mockResolvedValueOnce(new Response('missing', { status: 500 }))
@@ -27,20 +28,8 @@ describe('public/admin api clients', () => {
     const { fetchPublicBlogs } = await import('@/lib/api/blogs')
     const { fetchPublicWorks } = await import('@/lib/api/works')
 
-    await expect(fetchPublicBlogs(3, 7)).resolves.toEqual({
-      items: [],
-      page: 3,
-      pageSize: 7,
-      totalItems: 0,
-      totalPages: 1,
-    })
-    await expect(fetchPublicWorks(2, 8)).resolves.toEqual({
-      items: [],
-      page: 2,
-      pageSize: 8,
-      totalItems: 0,
-      totalPages: 1,
-    })
+    await expect(fetchPublicBlogs(3, 7)).rejects.toThrow('Failed to load public blog posts.')
+    await expect(fetchPublicWorks(2, 8)).rejects.toThrow('Failed to load public works.')
   })
 
   it('fetchPublicBlogs forwards title and content search query params', async () => {
@@ -54,8 +43,8 @@ describe('public/admin api clients', () => {
     await fetchPublicBlogs(1, 12, { query: 'server components', searchMode: 'title' })
     await fetchPublicBlogs(1, 12, { query: 'renderable html', searchMode: 'content' })
 
-    expect(fetchMock).toHaveBeenNthCalledWith(1, 'http://localhost/api/public/blogs?page=1&pageSize=12&query=server+components&searchMode=title', { cache: 'no-store' })
-    expect(fetchMock).toHaveBeenNthCalledWith(2, 'http://localhost/api/public/blogs?page=1&pageSize=12&query=renderable+html&searchMode=content', { cache: 'no-store' })
+    expect(fetchMock).toHaveBeenNthCalledWith(1, 'http://localhost/api/public/blogs?page=1&pageSize=12&query=server+components&searchMode=title', { cache: 'no-store', headers: {} })
+    expect(fetchMock).toHaveBeenNthCalledWith(2, 'http://localhost/api/public/blogs?page=1&pageSize=12&query=renderable+html&searchMode=content', { cache: 'no-store', headers: {} })
   })
 
   it('fetchPublicWorks forwards title and content search query params', async () => {
@@ -69,8 +58,8 @@ describe('public/admin api clients', () => {
     await fetchPublicWorks(1, 8, { query: 'portfolio platform', searchMode: 'title' })
     await fetchPublicWorks(1, 8, { query: 'migration details', searchMode: 'content' })
 
-    expect(fetchMock).toHaveBeenNthCalledWith(1, 'http://localhost/api/public/works?page=1&pageSize=8&query=portfolio+platform&searchMode=title', { cache: 'no-store' })
-    expect(fetchMock).toHaveBeenNthCalledWith(2, 'http://localhost/api/public/works?page=1&pageSize=8&query=migration+details&searchMode=content', { cache: 'no-store' })
+    expect(fetchMock).toHaveBeenNthCalledWith(1, 'http://localhost/api/public/works?page=1&pageSize=8&query=portfolio+platform&searchMode=title', { cache: 'no-store', headers: {} })
+    expect(fetchMock).toHaveBeenNthCalledWith(2, 'http://localhost/api/public/works?page=1&pageSize=8&query=migration+details&searchMode=content', { cache: 'no-store', headers: {} })
   })
 
   it('fetchPublicBlogBySlug requests the backend slug endpoint and fetchPublicWorkBySlug returns null on 404', async () => {
@@ -89,7 +78,7 @@ describe('public/admin api clients', () => {
 
     const result = await fetchPublicBlogBySlug('seeded-blog')
 
-    expect(fetchMock).toHaveBeenNthCalledWith(1, 'http://localhost/api/public/blogs/seeded-blog', { cache: 'no-store' })
+    expect(fetchMock).toHaveBeenNthCalledWith(1, 'http://localhost/api/public/blogs/seeded-blog', { cache: 'no-store', headers: {} })
     expect(result?.slug).toBe('seeded-blog')
     await expect(fetchPublicWorkBySlug('missing-work')).resolves.toBeNull()
   })

@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 
 interface InlineBlogEditorSectionProps {
-  initialBlog: {
+  initialBlog?: {
     id?: string
     title?: string
     excerpt?: string
@@ -22,6 +22,7 @@ interface InlineBlogEditorSectionProps {
     updatedAt?: string
   }
   afterDeleteHref?: string
+  afterSaveHref?: string
   title?: string
   description?: string
   triggerLabel?: string
@@ -30,6 +31,7 @@ interface InlineBlogEditorSectionProps {
 export function InlineBlogEditorSection({
   initialBlog,
   afterDeleteHref = '/blog',
+  afterSaveHref,
   title = 'Blog Inline Editor',
   description = '현재 게시물 뷰를 유지한 채 바로 수정합니다.',
   triggerLabel = '글 수정',
@@ -63,7 +65,7 @@ export function InlineBlogEditorSection({
       triggerLabel={triggerLabel}
       title={title}
       description={description}
-      actions={(
+      actions={initialBlog?.id ? (
         <Button
           type="button"
           variant="outline"
@@ -74,11 +76,12 @@ export function InlineBlogEditorSection({
           <Trash2 className="h-4 w-4" />
           {isPending ? '삭제 중...' : '삭제'}
         </Button>
-      )}
+      ) : null}
     >
       <BlogEditor
         initialBlog={initialBlog}
         inlineMode
+        inlineReturnTo={afterSaveHref}
         onSaved={() => setOpen(false)}
       />
     </InlineAdminEditorShell>

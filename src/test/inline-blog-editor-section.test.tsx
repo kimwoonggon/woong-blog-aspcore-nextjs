@@ -71,6 +71,25 @@ describe('InlineBlogEditorSection', () => {
     expect(screen.queryByRole('button', { name: /뒤로가기/i })).not.toBeInTheDocument()
   })
 
+  it('supports public create mode and closes after save without showing delete controls', () => {
+    render(
+      <InlineBlogEditorSection
+        triggerLabel="새 글 쓰기"
+        title="Study Inline Create"
+        description="Create a new study note inline."
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /새 글 쓰기/i }))
+
+    expect(screen.getByText('Mock inline editor')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '삭제' })).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /Complete save/i }))
+
+    expect(screen.queryByText('Mock inline editor')).not.toBeInTheDocument()
+  })
+
   it('deletes the blog and returns to the requested page', async () => {
     render(
       <InlineBlogEditorSection

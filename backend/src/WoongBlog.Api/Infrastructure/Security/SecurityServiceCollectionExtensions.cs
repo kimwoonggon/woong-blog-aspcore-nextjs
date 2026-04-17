@@ -1,8 +1,5 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Options;
-using System.Globalization;
-using System.Threading.RateLimiting;
 using WoongBlog.Api.Infrastructure.Auth;
 
 namespace WoongBlog.Api.Infrastructure.Security;
@@ -30,29 +27,6 @@ internal static class SecurityServiceCollectionExtensions
             options.Cookie.HttpOnly = true;
             options.Cookie.SameSite = SameSiteMode.Lax;
             options.Cookie.SecurePolicy = antiforgerySecurePolicy;
-        });
-
-        services.AddRateLimiter(options =>
-        {
-            options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-            options.OnRejected = (context, cancellationToken) =>
-            {
-                if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
-                {
-                    context.HttpContext.Response.Headers.RetryAfter =
-                        Math.Ceiling(retryAfter.TotalSeconds).ToString(CultureInfo.InvariantCulture);
-                }
-
-                return ValueTask.CompletedTask;
-            };
-
-            options.AddFixedWindowLimiter("auth", limiterOptions =>
-            {
-                limiterOptions.PermitLimit = securityOptions.AuthRateLimitPermitLimit;
-                limiterOptions.Window = TimeSpan.FromSeconds(securityOptions.AuthRateLimitWindowSeconds);
-                limiterOptions.QueueLimit = 0;
-            });
-            options.AddPolicy<string, PublicReadRateLimiterPolicy>("public-read");
         });
 
         services.AddHsts(options =>

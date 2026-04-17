@@ -13,20 +13,23 @@ async function readBox(locator: Locator): Promise<Box> {
   }
 }
 
-test('header collapses navigation before action controls overlap on medium desktop widths', async ({ page }) => {
+test('header keeps the public theme action separated on medium desktop widths', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 900 })
   await page.goto('/')
 
+  const header = page.locator('header').first()
+  const nav = header.locator('nav')
   const themeToggle = page.getByTestId('theme-toggle')
-  const loginButton = page.getByRole('link', { name: 'Login' })
 
+  await expect(nav).toBeVisible()
   await expect(themeToggle).toBeVisible()
-  await expect(loginButton).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Login' })).toHaveCount(0)
+  await expect(page.getByText('Signed in')).toHaveCount(0)
 
+  const navBox = await readBox(nav)
   const themeBox = await readBox(themeToggle)
-  const loginBox = await readBox(loginButton)
 
-  expect(themeBox.right).toBeLessThanOrEqual(loginBox.left - 8)
+  expect(navBox.right).toBeLessThanOrEqual(themeBox.left - 16)
 })
 
 test('header keeps desktop nav separated from action controls on wide screens', async ({ page }) => {
@@ -36,18 +39,16 @@ test('header keeps desktop nav separated from action controls on wide screens', 
   const header = page.locator('header').first()
   const nav = header.locator('nav')
   const themeToggle = page.getByTestId('theme-toggle')
-  const loginButton = page.getByRole('link', { name: 'Login' })
   const menuButton = page.getByRole('button', { name: 'Toggle Menu' })
 
   await expect(nav).toBeVisible()
   await expect(themeToggle).toBeVisible()
-  await expect(loginButton).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Login' })).toHaveCount(0)
+  await expect(page.getByText('Signed in')).toHaveCount(0)
   await expect(menuButton).toBeHidden()
 
   const navBox = await readBox(nav)
   const themeBox = await readBox(themeToggle)
-  const loginBox = await readBox(loginButton)
 
   expect(navBox.right).toBeLessThanOrEqual(themeBox.left - 16)
-  expect(themeBox.right).toBeLessThanOrEqual(loginBox.left - 8)
 })

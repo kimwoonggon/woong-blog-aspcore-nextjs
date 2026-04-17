@@ -44,7 +44,6 @@ await app.InitializeDatabaseAsync();
 app.UseAuthentication();
 app.UseMiddleware<AntiforgeryValidationMiddleware>();
 app.UseAuthorization();
-app.UseRateLimiter();
 app.UseMediaStaticFiles();
 
 if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Testing"))

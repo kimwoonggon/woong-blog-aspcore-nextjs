@@ -66,8 +66,6 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IDisp
                 ["Auth:SecureCookies"] = "false",
                 ["Security:UseHttpsRedirection"] = "false",
                 ["Security:UseHsts"] = "false",
-                ["Security:AuthRateLimitPermitLimit"] = "250",
-                ["Security:AuthRateLimitWindowSeconds"] = "60",
                 ["Proxy:KnownProxies:0"] = "127.0.0.1"
             });
         });

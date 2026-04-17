@@ -79,11 +79,11 @@ describe('server api helpers', () => {
     await expect(getServerApiBaseUrl()).resolves.toBe('http://localhost/api')
   })
 
-  it('returns an unauthenticated session object when the backend session call fails', async () => {
+  it('throws when the backend session call fails instead of hiding the failure as logout', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => new Response('nope', { status: 500 })) as unknown as typeof fetch)
     const { fetchServerSession } = await import('@/lib/api/server')
 
-    await expect(fetchServerSession()).resolves.toEqual({ authenticated: false })
+    await expect(fetchServerSession()).rejects.toThrow('Session endpoint failed with status 500.')
   })
 
   it('omits the cookie header when the incoming request has no cookies', async () => {
@@ -102,7 +102,7 @@ describe('server api helpers', () => {
     await fetchServerSession()
 
     expect(fetchMock).toHaveBeenCalledWith('http://localhost/api/auth/session', {
-      headers: {},
+      headers: { 'x-forwarded-proto': 'http' },
       cache: 'no-store',
     })
   })
@@ -127,7 +127,7 @@ describe('server api helpers', () => {
 
     expect(result).toEqual({ authenticated: true, role: 'admin' })
     expect(fetchMock).toHaveBeenCalledWith('http://localhost/api/auth/session', {
-      headers: { cookie: 'cookie-a=1; cookie-b=2' },
+      headers: { cookie: 'cookie-a=1; cookie-b=2', 'x-forwarded-proto': 'http' },
       cache: 'no-store',
     })
   })
@@ -145,7 +145,7 @@ describe('server api helpers', () => {
 
     await expect(fetchServerSession()).resolves.toEqual({ authenticated: true })
     expect(fetchMock).toHaveBeenCalledWith('http://localhost/api/auth/session', {
-      headers: {},
+      headers: { 'x-forwarded-proto': 'http' },
       cache: 'no-store',
     })
   })

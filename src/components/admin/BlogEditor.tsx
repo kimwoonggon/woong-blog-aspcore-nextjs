@@ -33,6 +33,7 @@ interface BlogEditorProps {
     initialBlog?: Blog
     inlineMode?: boolean
     onSaved?: () => void
+    inlineReturnTo?: string
 }
 
 function resolveReturnTo(requestedReturnTo: string | null, fallback = '/admin/blog') {
@@ -92,13 +93,13 @@ function clearBeforeUnloadWarning() {
     }
 }
 
-export function BlogEditor({ initialBlog, inlineMode = false, onSaved }: BlogEditorProps) {
+export function BlogEditor({ initialBlog, inlineMode = false, onSaved, inlineReturnTo }: BlogEditorProps) {
     const router = useRouter()
     const pathname = usePathname()
     const searchParams = useSearchParams()
     const isEditing = Boolean(initialBlog?.id)
     const defaultPublished = initialBlog?.published ?? true
-    const requestedReturnTo = searchParams.get('returnTo')
+    const requestedReturnTo = inlineReturnTo ?? searchParams.get('returnTo')
     const returnTo = resolveReturnTo(requestedReturnTo)
     const [title, setTitle] = useState(initialBlog?.title || '')
     const [excerpt, setExcerpt] = useState(initialBlog?.excerpt || '')
@@ -210,6 +211,12 @@ export function BlogEditor({ initialBlog, inlineMode = false, onSaved }: BlogEdi
                 const relatedPageQuery = relatedPage ? `?relatedPage=${encodeURIComponent(relatedPage)}` : ''
 
                 if (!isEditing && pathname === '/blog') {
+                    const currentPageSize = searchParams.get('pageSize')
+                    const destination = currentPageSize
+                        ? `/blog?page=1&pageSize=${encodeURIComponent(currentPageSize)}`
+                        : '/blog?page=1'
+
+                    router.push(destination)
                     router.refresh()
                     return
                 }

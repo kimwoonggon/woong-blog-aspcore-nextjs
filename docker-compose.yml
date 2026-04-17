@@ -23,6 +23,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://0.0.0.0:8080
+      CODEX_HOME: /root/.codex
       ConnectionStrings__Postgres: Host=db;Port=5432;Database=portfolio;Username=portfolio;Password=portfolio
       Auth__DataProtectionKeysPath: /app/data-protection
       Auth__MediaRoot: /app/media
@@ -46,7 +47,7 @@ services:
     volumes:
       - data-protection-keys:/app/data-protection
       - media-storage:/app/media
-      - ${CODEX_HOME_DIR:-./.codex-runtime}:/root/.codex
+      - ${CODEX_HOME_DIR:-${HOME}/.codex}:/root/.codex
 
   db:
     image: postgres:16-alpine
