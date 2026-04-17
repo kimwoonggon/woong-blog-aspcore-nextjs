@@ -198,11 +198,7 @@ describe('AdminBlogBatchAiPanel', () => {
   it('shows provider selection when multiple providers are available', async () => {
     renderPanel()
 
-    await waitFor(() => {
-      expect(mocks.fetchAdminAiRuntimeConfigBrowser).toHaveBeenCalled()
-    })
-
-    const providerSelect = screen.getByLabelText('Batch AI provider')
+    const providerSelect = await screen.findByLabelText('Batch AI provider')
     expect(providerSelect).toBeInTheDocument()
     expect(screen.getByRole('option', { name: 'OPENAI' })).toBeInTheDocument()
     expect(screen.getByRole('option', { name: 'CODEX' })).toBeInTheDocument()
