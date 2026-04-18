@@ -22,6 +22,7 @@ const ALLOWED_TAGS = new Set([
   'ol',
   'p',
   'pre',
+  'mermaid-block',
   'section',
   'span',
   'strong',
@@ -50,6 +51,7 @@ const TAG_ATTRIBUTES: Record<string, Set<string>> = {
   a: new Set(['href', 'rel', 'target']),
   img: new Set(['alt', 'height', 'loading', 'src', 'width']),
   'html-snippet': new Set(['html']),
+  'mermaid-block': new Set(['data-code']),
   'three-js-block': new Set(['height']),
 }
 

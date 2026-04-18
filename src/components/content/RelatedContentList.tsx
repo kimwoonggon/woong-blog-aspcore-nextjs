@@ -179,6 +179,7 @@ function RelatedContentPager({
             <Link
               key={item.id}
               href={`${hrefBase}/${item.slug}?relatedPage=${currentPage}`}
+              prefetch={false}
               className="group block h-full"
               data-testid={`${testIdBase}-card`}
               aria-label={`Open ${item.title}`}

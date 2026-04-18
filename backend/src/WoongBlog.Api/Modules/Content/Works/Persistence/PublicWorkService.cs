@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using WoongBlog.Api.Domain.Entities;
 using WoongBlog.Api.Infrastructure.Persistence;
 using WoongBlog.Api.Modules.Composition.Application.GetHome;
+using WoongBlog.Api.Modules.Content.Common.Application.Support;
 using WoongBlog.Api.Modules.Content.Works.Application.Abstractions;
 using WoongBlog.Api.Modules.Content.Works.Application.GetWorkBySlug;
 using WoongBlog.Api.Modules.Content.Works.Application.GetWorks;
@@ -27,28 +28,44 @@ public sealed class PublicWorkService : IPublicWorkService
         var requestedPage = Math.Max(1, queryInput.Page);
 
         var query = _dbContext.Works.AsNoTracking()
-            .Where(x => x.Published);
+            .Where(x => x.Published)
+            .OrderByDescending(x => x.PublishedAt);
 
         var normalizedSearch = queryInput.Query?.Trim();
-        if (!string.IsNullOrWhiteSpace(normalizedSearch))
+        List<Work> works;
+        int totalItems;
+        int totalPages;
+        int page;
+        if (string.IsNullOrWhiteSpace(normalizedSearch))
         {
-            var searchText = normalizedSearch.ToLowerInvariant();
+            totalItems = await query.CountAsync(cancellationToken);
+            totalPages = Math.Max(1, (int)Math.Ceiling(totalItems / (double)pageSize));
+            page = Math.Min(requestedPage, totalPages);
+
+            works = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync(cancellationToken);
+        }
+        else
+        {
             var searchMode = queryInput.SearchMode.Trim().ToLowerInvariant();
-            query = searchMode == "content"
-                ? query.Where(x => x.Excerpt.ToLower().Contains(searchText) || x.ContentJson.ToLower().Contains(searchText))
-                : query.Where(x => x.Title.ToLower().Contains(searchText));
+            var filteredWorks = (await query.ToListAsync(cancellationToken))
+                .Where(work => searchMode == "content"
+                    ? ContentSearchText.AnyContainsNormalized(normalizedSearch, work.Excerpt, work.ContentJson)
+                    : ContentSearchText.ContainsNormalized(work.Title, normalizedSearch))
+                .ToList();
+
+            totalItems = filteredWorks.Count;
+            totalPages = Math.Max(1, (int)Math.Ceiling(totalItems / (double)pageSize));
+            page = Math.Min(requestedPage, totalPages);
+
+            works = filteredWorks
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
         }
 
-        query = query.OrderByDescending(x => x.PublishedAt);
-
-        var totalItems = await query.CountAsync(cancellationToken);
-        var totalPages = Math.Max(1, (int)Math.Ceiling(totalItems / (double)pageSize));
-        var page = Math.Min(requestedPage, totalPages);
-
-        var works = await query
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync(cancellationToken);
         var workIds = works.Select(work => work.Id).ToArray();
         var videoRows = await _dbContext.WorkVideos
             .AsNoTracking()

@@ -140,6 +140,54 @@ async function seedWorks(request: APIRequestContext, count: number) {
   }
 }
 
+function normalizedSearchIncludes(value: string, query: string) {
+  const normalize = (text: string) => text.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '')
+  return normalize(value).includes(normalize(query))
+}
+
+async function seedNormalizedSearchFixtures(request: APIRequestContext) {
+  const csrf = await getCsrf(request)
+  const suffix = Date.now()
+  const blogTitle = `T,B,N 안녕하세요 Blog ${suffix}`
+  const workTitle = `T,B,N 안녕하세요 Work ${suffix}`
+
+  const blogResponse = await request.post('/api/admin/blogs', {
+    headers: {
+      'Content-Type': 'application/json',
+      [csrf.headerName]: csrf.requestToken,
+    },
+    data: {
+      title: blogTitle,
+      excerpt: `Seeded excerpt for ${blogTitle}`,
+      tags: ['normalized-search', 'T,B,N'],
+      published: true,
+      contentJson: JSON.stringify({ html: `<p>${blogTitle}</p>` }),
+    },
+  })
+  expect(blogResponse.ok()).toBeTruthy()
+
+  const workResponse = await request.post('/api/admin/works', {
+    headers: {
+      'Content-Type': 'application/json',
+      [csrf.headerName]: csrf.requestToken,
+    },
+    data: {
+      title: workTitle,
+      category: 'normalized-search',
+      period: '2026.04',
+      tags: ['normalized-search', 'T,B,N'],
+      published: true,
+      contentJson: JSON.stringify({ html: `<p>${workTitle}</p>` }),
+      allPropertiesJson: JSON.stringify({}),
+      thumbnailAssetId: null,
+      iconAssetId: null,
+    },
+  })
+  expect(workResponse.ok()).toBeTruthy()
+
+  return { blogTitle, workTitle }
+}
+
 test('admin blog page supports title search and compact pagination controls', async ({ page }) => {
   await page.goto('/admin/blog')
 
@@ -152,7 +200,7 @@ test('admin blog page supports title search and compact pagination controls', as
 
   await page.getByLabel('Search blog titles').fill(searchTitle)
   await expect(rows.locator('td:nth-child(2) a', { hasText: searchTitle }).first()).toBeVisible()
-  if (hiddenTitle) {
+  if (hiddenTitle && !normalizedSearchIncludes(hiddenTitle, searchTitle)) {
     await expect(rows.locator('td:nth-child(2) a', { hasText: hiddenTitle })).toHaveCount(0)
   }
 
@@ -282,7 +330,7 @@ test('admin works page supports title search and compact pagination controls', a
 
   await page.getByLabel('Search work titles').fill(searchTitle)
   await expect(rows.locator('td:nth-child(3) a', { hasText: searchTitle }).first()).toBeVisible()
-  if (hiddenTitle) {
+  if (hiddenTitle && !normalizedSearchIncludes(hiddenTitle, searchTitle)) {
     await expect(rows.locator('td:nth-child(3) a', { hasText: hiddenTitle })).toHaveCount(0)
   }
 
@@ -304,6 +352,39 @@ test('admin works page supports title search and compact pagination controls', a
     await page.getByRole('button', { name: 'Previous page' }).click()
     await expect(counter).toHaveText(/Page 1 of \d+/)
   }
+})
+
+test('admin search ignores punctuation, spacing, and case without resetting typed input', async ({ page }) => {
+  const { blogTitle, workTitle } = await seedNormalizedSearchFixtures(page.context().request)
+
+  await page.goto('/admin/blog')
+  const blogSearch = page.getByLabel('Search blog titles')
+  await blogSearch.pressSequentially('tbn')
+  await expect(blogSearch).toHaveValue('tbn')
+  await expect(page.getByTestId('admin-blog-row').filter({ hasText: blogTitle }).first()).toBeVisible()
+  await expect.poll(() => {
+    const url = new URL(page.url())
+    return url.searchParams.get('query')
+  }).toBe('tbn')
+
+  await page.goto('/admin/works')
+  const workSearch = page.getByLabel('Search work titles')
+  await workSearch.pressSequentially('TBN')
+  await expect(workSearch).toHaveValue('TBN')
+  await expect(page.getByTestId('admin-work-row').filter({ hasText: workTitle }).first()).toBeVisible()
+  await expect.poll(() => {
+    const url = new URL(page.url())
+    return url.searchParams.get('query')
+  }).toBe('TBN')
+
+  await page.goto('/admin/dashboard')
+  const worksSection = page.locator('section').filter({ has: page.getByRole('heading', { name: 'Works' }) }).first()
+  const blogsSection = page.locator('section').filter({ has: page.getByRole('heading', { name: 'Blog Posts' }) }).first()
+
+  await worksSection.getByLabel('Works title search').fill('tbn')
+  await expect(worksSection.getByRole('heading', { name: workTitle })).toBeVisible()
+  await blogsSection.getByLabel('Blog Posts title search').fill('TB')
+  await expect(blogsSection.getByRole('heading', { name: blogTitle })).toBeVisible()
 })
 
 test('admin works pagination adapts the row count across desktop, tablet, and mobile widths', async ({ page }) => {

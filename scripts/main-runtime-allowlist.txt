@@ -20,6 +20,10 @@ package.json
 package-lock.json
 playwright.config.ts
 scripts/ci-compose-smoke.sh
+scripts/azure-backup-lib.mjs
+scripts/azure-backup.mjs
+scripts/azure-restore.mjs
+scripts/install-azure-backup-cron.mjs
 scripts/notion-api-lib.mjs
 scripts/notion-db-import-lib.mjs
 scripts/notion-export-lib.mjs

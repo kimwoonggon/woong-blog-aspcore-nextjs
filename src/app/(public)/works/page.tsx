@@ -132,6 +132,7 @@ export default async function WorksPage({ searchParams }: PageProps) {
                             <Link
                                 key={work.id}
                                 href={`/works/${work.slug}?returnTo=${returnTo}&relatedPage=${page}`}
+                                prefetch={false}
                                 className="group/card block h-full"
                                 data-testid="work-card"
                             >

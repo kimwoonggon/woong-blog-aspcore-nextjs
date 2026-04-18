@@ -187,6 +187,24 @@ public class PublicQueryHandlerTests
     }
 
     [Fact]
+    public async Task GetWorksQueryHandler_FiltersByNormalizedTitleSearch()
+    {
+        await using var dbContext = CreateDbContext();
+        dbContext.Works.AddRange(
+            new Work { Id = Guid.NewGuid(), Title = "T,B,N 안녕하세요", Slug = "tbn-work", Excerpt = "alpha", Category = "cat", ContentJson = "{\"html\":\"<p>alpha</p>\"}", AllPropertiesJson = "{}", Published = true, PublishedAt = DateTimeOffset.UtcNow, CreatedAt = DateTimeOffset.UtcNow, UpdatedAt = DateTimeOffset.UtcNow },
+            new Work { Id = Guid.NewGuid(), Title = "Different Work", Slug = "different-work", Excerpt = "beta", Category = "cat", ContentJson = "{\"html\":\"<p>beta</p>\"}", AllPropertiesJson = "{}", Published = true, PublishedAt = DateTimeOffset.UtcNow, CreatedAt = DateTimeOffset.UtcNow, UpdatedAt = DateTimeOffset.UtcNow }
+        );
+        await dbContext.SaveChangesAsync();
+
+        var handler = new GetWorksQueryHandler(CreatePublicWorkService(dbContext));
+
+        var result = await handler.Handle(new GetWorksQuery(Query: "tbn", SearchMode: "title"), CancellationToken.None);
+
+        Assert.Single(result.Items);
+        Assert.Equal("T,B,N 안녕하세요", result.Items[0].Title);
+    }
+
+    [Fact]
     public async Task GetWorksQueryHandler_FiltersByContentSearch()
     {
         await using var dbContext = CreateDbContext();
@@ -222,5 +240,23 @@ public class PublicQueryHandlerTests
         Assert.Equal(2, result.TotalPages);
         Assert.Equal(2, result.Page);
         Assert.Single(result.Items);
+    }
+
+    [Fact]
+    public async Task GetBlogsQueryHandler_FiltersByNormalizedTitleSearch()
+    {
+        await using var dbContext = CreateDbContext();
+        dbContext.Blogs.AddRange(
+            new Blog { Id = Guid.NewGuid(), Title = "T,B,N 안녕하세요", Slug = "tbn-blog", Excerpt = "alpha", ContentJson = "{\"html\":\"<p>alpha</p>\"}", Published = true, PublishedAt = DateTimeOffset.UtcNow, CreatedAt = DateTimeOffset.UtcNow, UpdatedAt = DateTimeOffset.UtcNow },
+            new Blog { Id = Guid.NewGuid(), Title = "Different Blog", Slug = "different-blog", Excerpt = "beta", ContentJson = "{\"html\":\"<p>beta</p>\"}", Published = true, PublishedAt = DateTimeOffset.UtcNow, CreatedAt = DateTimeOffset.UtcNow, UpdatedAt = DateTimeOffset.UtcNow }
+        );
+        await dbContext.SaveChangesAsync();
+
+        var handler = new GetBlogsQueryHandler(CreatePublicBlogService(dbContext));
+
+        var result = await handler.Handle(new GetBlogsQuery(Query: "TBN", SearchMode: "title"), CancellationToken.None);
+
+        Assert.Single(result.Items);
+        Assert.Equal("T,B,N 안녕하세요", result.Items[0].Title);
     }
 }

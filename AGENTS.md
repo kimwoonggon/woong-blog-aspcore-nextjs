@@ -48,6 +48,24 @@ Subagents are user-triggered only. Do not spawn or delegate to subagents unless 
 
 For specialist knowledge, use the `find-skills` skill before implementation. Search for relevant skills, prefer suitable popular or high-star options when available, install or register the selected skill when feasible, and use it during development. If no exact needed skill is already available, still search for a related skill and proceed with the best available option or document why none was usable.
 
+## Codex Panic Prevention
+
+Codex/plugin panic is a serious blocker. A known recurring cause is the Codex TUI plugin store failing with `plugin cache root should be absolute: No such file or directory`. This is caused by Codex trying to canonicalize a plugin cache root that is missing or is being resolved as a non-absolute path. It is separate from application code failures and can appear after skill/plugin installation, subagent/plugin warm-up, or long-running commands that trigger plugin refresh.
+
+Before installing skills/plugins, spawning subagents, or starting long-running Docker/build/test commands, ensure these plugin cache directories exist as absolute paths:
+
+```bash
+mkdir -p /home/kimwoonggon/.codex/plugins/cache /home/kimwoonggon/.codex/.tmp/plugins
+readlink -f /home/kimwoonggon/.codex/plugins/cache
+readlink -f /home/kimwoonggon/.codex/.tmp/plugins
+```
+
+Never set `CODEX_HOME`, `CODEX_HOME_DIR`, plugin cache paths, or plugin-related environment values to relative paths. Use absolute paths such as `/home/kimwoonggon/.codex`.
+
+If a Codex panic happens, stop assuming any prior background command or subagent state is reliable. First inspect `~/.codex/log/codex-tui.log` for the panic line and verify the plugin cache directories above. Then re-check external process state explicitly with commands such as `docker compose ps -a`, targeted logs, and health probes before continuing.
+
+Avoid installing new skills/plugins or spawning additional subagents after a plugin-cache panic unless the cache paths have been verified and the work genuinely requires it.
+
 ## Commit & Pull Request Guidelines
 
 Recent commits use concise imperative subjects, usually sentence case, such as `Stabilize batch AI provider test timing`. Keep subjects specific and avoid bundling unrelated work.

@@ -31,6 +31,14 @@ describe('blog-content helpers', () => {
     expect(rendered).toContain('<img src="/media/hero.png" alt="hero" />')
   })
 
+  it('keeps mermaid fenced markdown as a regular code block', () => {
+    const rendered = renderMarkdownToHtml('```mermaid\ngraph TD;\n  A-->B;\n```')
+
+    expect(rendered).toContain('<pre><code class="language-mermaid">')
+    expect(rendered).toContain('graph TD;')
+    expect(rendered).toContain('A--&gt;B;')
+  })
+
   it('treats markdown stored in html as markdown fallback content', () => {
     const rendered = resolveBlogRenderableHtml(JSON.stringify({
       html: '## Markdown title\n\n![alt](/media/test.png)',

@@ -19,6 +19,7 @@ import {
   Strikethrough,
   Undo,
   X,
+  Workflow,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -176,12 +177,19 @@ export function EditorToolbar({
         >
           <Code size={18} />
         </ToolbarButton>
+
+        <ToolbarButton
+          onClick={() => editor.chain().focus().insertContent({ type: 'mermaidBlock' }).run()}
+          title="Insert Mermaid Diagram"
+        >
+          <Workflow size={18} />
+        </ToolbarButton>
       </div>
       <div
         data-testid="tiptap-toolbar-hint"
         className="border-b border-dashed border-border bg-muted/40 px-4 py-2 text-xs text-muted-foreground"
       >
-        Type <span className="font-semibold">/</span> for commands, use <span className="font-semibold">Code Block</span> for snippets, and drag/drop or paste images directly into the editor. HTML widgets and 3D blocks stay available from the toolbar.
+        Type <span className="font-semibold">/</span> for commands, use <span className="font-semibold">Code Block</span> for snippets, and drag/drop or paste images directly into the editor. HTML widgets, Mermaid diagrams, and 3D blocks stay available from the toolbar.
       </div>
     </>
   )

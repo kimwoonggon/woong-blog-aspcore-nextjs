@@ -177,6 +177,7 @@ export default async function BlogDetailPage({ params, searchParams }: PageProps
                             {newerBlog ? (
                                 <Link
                                     href={`/blog/${newerBlog.slug}${detailQuerySuffix || relatedPageSuffix}`}
+                                    prefetch={false}
                                     className="group rounded-2xl border border-border/80 bg-background p-4 transition hover:border-primary/30 hover:shadow-sm"
                                 >
                                     <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Next</p>
@@ -188,6 +189,7 @@ export default async function BlogDetailPage({ params, searchParams }: PageProps
                             {olderBlog ? (
                                 <Link
                                     href={`/blog/${olderBlog.slug}${detailQuerySuffix || relatedPageSuffix}`}
+                                    prefetch={false}
                                     className="group rounded-2xl border border-border/80 bg-background p-4 text-left transition hover:border-primary/30 hover:shadow-sm sm:justify-self-end"
                                 >
                                     <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Previous</p>
