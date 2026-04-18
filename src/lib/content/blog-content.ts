@@ -7,7 +7,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
-const MEANINGFUL_HTML_PATTERN = /<(?:!DOCTYPE|html|body|p|div|h[1-6]|ul|ol|li|blockquote|code|pre|img|a|table|thead|tbody|tr|td|th|section|article|br|hr|span|strong|em|html-snippet|three-js-block)\b/i
+const MEANINGFUL_HTML_PATTERN = /<(?:!DOCTYPE|html|body|p|div|h[1-6]|ul|ol|li|blockquote|code|pre|img|a|table|thead|tbody|tr|td|th|section|article|br|hr|span|strong|em|html-snippet|three-js-block|mermaid-block)\b/i
 const MARKDOWN_PATTERN = /(^|\n)\s*(?:#{1,6}\s+|[-*+]\s+|\d+\.\s+|>\s+|```|!\[[^\]]*\]\([^)]+\)|\[[^\]]+\]\([^)]+\))/m
 const SIMPLE_WRAPPER_ONLY_PATTERN = /^<\/?(?:p|div)(?:\s[^>]*)?>|<br\s*\/?>$/i
 
@@ -18,6 +18,10 @@ function escapeHtml(value: string) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;')
+}
+
+function escapeHtmlAttribute(value: string) {
+  return escapeHtml(value)
 }
 
 function sanitizeUrl(value: string) {
@@ -75,12 +79,17 @@ function flushBlockquote(blockquoteLines: string[], blocks: string[]) {
   blockquoteLines.length = 0
 }
 
-function flushCodeBlock(codeLines: string[], blocks: string[]) {
+function flushCodeBlock(codeLines: string[], blocks: string[], language: string | null) {
   if (codeLines.length === 0) {
     return
   }
 
-  blocks.push(`<pre><code>${escapeHtml(codeLines.join('\n'))}</code></pre>`)
+  const code = codeLines.join('\n')
+  if (language) {
+    blocks.push(`<pre><code class="language-${escapeHtmlAttribute(language)}">${escapeHtml(code)}</code></pre>`)
+  } else {
+    blocks.push(`<pre><code>${escapeHtml(code)}</code></pre>`)
+  }
   codeLines.length = 0
 }
 
@@ -115,6 +124,8 @@ export function looksLikeMarkdown(value: string) {
 function decodeHtmlEntities(value: string) {
   return value
     .replace(/&nbsp;/gi, ' ')
+    .replace(/&#10;/gi, '\n')
+    .replace(/&#13;/gi, '\n')
     .replace(/&lt;/gi, '<')
     .replace(/&gt;/gi, '>')
     .replace(/&quot;/gi, '"')
@@ -193,6 +204,7 @@ export function renderMarkdownToHtml(markdown: string) {
   const codeLines: string[] = []
   let listType: 'ul' | 'ol' | null = null
   let inCodeBlock = false
+  let codeBlockLanguage: string | null = null
 
   const flushAll = () => {
     flushParagraph(paragraphLines, blocks)
@@ -204,17 +216,20 @@ export function renderMarkdownToHtml(markdown: string) {
   for (const rawLine of lines) {
     const line = rawLine.trimEnd()
 
-    if (/^```/.test(line.trim())) {
+    const fenceMatch = line.trim().match(/^```(\w[\w-]*)?\s*$/)
+    if (fenceMatch) {
       flushParagraph(paragraphLines, blocks)
       flushList(listType, listItems, blocks)
       listType = null
       flushBlockquote(blockquoteLines, blocks)
 
       if (inCodeBlock) {
-        flushCodeBlock(codeLines, blocks)
+        flushCodeBlock(codeLines, blocks, codeBlockLanguage)
         inCodeBlock = false
+        codeBlockLanguage = null
       } else {
         inCodeBlock = true
+        codeBlockLanguage = fenceMatch[1]?.toLowerCase() ?? null
       }
       continue
     }
@@ -277,7 +292,7 @@ export function renderMarkdownToHtml(markdown: string) {
   }
 
   if (inCodeBlock) {
-    flushCodeBlock(codeLines, blocks)
+    flushCodeBlock(codeLines, blocks, codeBlockLanguage)
   }
 
   flushAll()

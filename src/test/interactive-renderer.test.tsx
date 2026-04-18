@@ -1,9 +1,34 @@
 import { render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
-import { InteractiveRenderer } from '@/components/content/InteractiveRenderer'
+import { beforeAll, describe, expect, it, vi } from 'vitest'
 import { buildWorkVideoEmbedMarkup } from '@/lib/content/work-video-embeds'
 
+let InteractiveRenderer: typeof import('@/components/content/InteractiveRenderer').InteractiveRenderer
+
+vi.mock('@/components/content/ThreeJsScene', () => ({
+  ThreeJsScene: ({ height }: { height?: number }) => (
+    <div data-testid="three-js-scene">{height}</div>
+  ),
+}))
+
+vi.mock('@/components/content/WorkVideoPlayer', () => ({
+  WorkVideoPlayer: ({ video }: { video: { sourceType: string; sourceKey: string } }) => (
+    video.sourceType === 'youtube'
+      ? <iframe title="YouTube video" src={`https://www.youtube-nocookie.com/embed/${video.sourceKey}`} />
+      : <video title="Work video" />
+  ),
+}))
+
+vi.mock('@/components/content/MermaidRenderer', () => ({
+  MermaidRenderer: ({ code }: { code: string }) => (
+    <div data-testid="mermaid-renderer">{code}</div>
+  ),
+}))
+
 describe('InteractiveRenderer', () => {
+  beforeAll(async () => {
+    ;({ InteractiveRenderer } = await import('@/components/content/InteractiveRenderer'))
+  })
+
   it('renders inline work video embeds between html segments', () => {
     render(
       <InteractiveRenderer
@@ -50,5 +75,56 @@ describe('InteractiveRenderer', () => {
     expect(container.querySelector('a')).not.toHaveAttribute('href')
     expect(container.querySelector('img')).not.toHaveAttribute('src')
     expect(container.querySelector('img')).not.toHaveAttribute('onerror')
+  })
+
+  it('renders mermaid blocks client-side without dropping surrounding prose', () => {
+    render(
+      <InteractiveRenderer
+        html={'<p>Intro</p><mermaid-block data-code="graph TD;\nA--&gt;B;"></mermaid-block><p>Outro</p>'}
+      />,
+    )
+
+    expect(screen.getByText('Intro')).toBeInTheDocument()
+    expect(screen.getByText('Outro')).toBeInTheDocument()
+    expect(screen.getByTestId('mermaid-renderer')).toHaveTextContent('graph TD;')
+    expect(screen.getByTestId('mermaid-renderer')).toHaveTextContent('A-->B;')
+  })
+
+  it('parses mermaid data-code values that contain raw arrow characters', () => {
+    render(
+      <InteractiveRenderer
+        html={'<p>Intro</p><mermaid-block data-code="flowchart TD\n  Work[Work Detail] --> Diagram[Mermaid SVG]"></mermaid-block><p>Outro</p>'}
+      />,
+    )
+
+    expect(screen.getByText('Intro')).toBeInTheDocument()
+    expect(screen.getByText('Outro')).toBeInTheDocument()
+    expect(screen.getByTestId('mermaid-renderer')).toHaveTextContent('Work[Work Detail] --> Diagram[Mermaid SVG]')
+  })
+
+  it('keeps language-mermaid code blocks as regular code', () => {
+    render(
+      <InteractiveRenderer
+        html={'<p>Intro</p><pre><code class="language-mermaid">sequenceDiagram\nUser-&gt;&gt;Frontend: Login</code></pre><p>Outro</p>'}
+      />,
+    )
+
+    expect(screen.getByText('Intro')).toBeInTheDocument()
+    expect(screen.getByText('Outro')).toBeInTheDocument()
+    expect(screen.queryByTestId('mermaid-renderer')).not.toBeInTheDocument()
+    expect(screen.getByText(/sequenceDiagram/)).toBeInTheDocument()
+  })
+
+  it('keeps paragraph-wrapped mermaid fences as regular prose', () => {
+    render(
+      <InteractiveRenderer
+        html={'<p>Intro</p><p>```mermaid</p><p>sequenceDiagram</p><p>User-&gt;&gt;Frontend: Login</p><p>```</p><p>Outro</p>'}
+      />,
+    )
+
+    expect(screen.getByText('Intro')).toBeInTheDocument()
+    expect(screen.getByText('Outro')).toBeInTheDocument()
+    expect(screen.queryByTestId('mermaid-renderer')).not.toBeInTheDocument()
+    expect(screen.getByText('```mermaid')).toBeInTheDocument()
   })
 })

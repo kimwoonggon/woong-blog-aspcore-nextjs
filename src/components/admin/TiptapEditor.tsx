@@ -61,6 +61,7 @@ export function TiptapEditor({
                     void handleImageUpload(event.clipboardData.files[0])
                     return true
                 }
+
                 return false
             },
         },

@@ -1,5 +1,4 @@
 import StarterKit from '@tiptap/starter-kit'
-import Image from '@tiptap/extension-image'
 import Placeholder from '@tiptap/extension-placeholder'
 import Highlight from '@tiptap/extension-highlight'
 import { TextStyle } from '@tiptap/extension-text-style'
@@ -12,6 +11,8 @@ import { HtmlBlock } from '@/components/admin/tiptap/HtmlBlock'
 import { SlashCommand } from '@/components/admin/tiptap/SlashCommand'
 import { suggestion } from '@/components/admin/tiptap/Commands'
 import { WorkVideoEmbedBlock } from '@/components/admin/tiptap/WorkVideoEmbedBlock'
+import { MermaidBlock } from '@/components/admin/tiptap/MermaidBlock'
+import { ResizableImage } from '@/components/admin/tiptap/ResizableImageBlock'
 import type { WorkVideo } from '@/lib/api/works'
 
 const lowlight = createLowlight(common)
@@ -36,8 +37,8 @@ export function createTiptapExtensions({
         class: 'rounded-md bg-gray-900 text-gray-100 p-4 font-mono my-4',
       },
     }),
-    Image.configure({
-      inline: true,
+    ResizableImage.configure({
+      inline: false,
       allowBase64: true,
       HTMLAttributes: {
         class: 'max-w-full h-auto rounded-lg my-4',
@@ -62,6 +63,7 @@ export function createTiptapExtensions({
     WorkVideoEmbedBlock.configure({
       resolveVideo,
     }),
+    MermaidBlock,
     SlashCommand.configure({
       suggestion,
     }),

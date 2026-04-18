@@ -3,7 +3,9 @@
 import React, { useMemo } from 'react'
 import { ThreeJsScene } from './ThreeJsScene'
 import { WorkVideoPlayer } from './WorkVideoPlayer'
+import { MermaidRenderer } from './MermaidRenderer'
 import type { WorkVideo } from '@/lib/api/works'
+import { containsMermaidSyntax, splitMermaidContent } from '@/lib/content/mermaid-content'
 import { hasWorkVideoEmbeds, splitWorkVideoEmbedContent } from '@/lib/content/work-video-embeds'
 import { sanitizeHtml } from '@/lib/content/html-sanitizer'
 
@@ -15,6 +17,9 @@ interface InteractiveRendererProps {
 // Consistent HTML entity decoding for both SSR and client (no hydration mismatch)
 const decodeHtmlEntities = (str: string): string => {
     return str
+        .replace(/&nbsp;/gi, ' ')
+        .replace(/&#10;/gi, '\n')
+        .replace(/&#13;/gi, '\n')
         .replace(/&lt;/gi, '<')
         .replace(/&gt;/gi, '>')
         .replace(/&quot;/gi, '"')
@@ -102,9 +107,34 @@ export function InteractiveRenderer({ html, workVideos = [] }: InteractiveRender
     const hasWorkVideoEmbed = hasWorkVideoEmbeds(processedHtml)
     const hasHtmlSnippet = processedHtml.includes('html-snippet')
     const hasThreeJsBlock = processedHtml.includes('three-js-block')
+    const hasMermaidBlock = containsMermaidSyntax(processedHtml)
 
     if (hasWorkVideoEmbed) {
         return renderVideoSegments(splitWorkVideoEmbedContent(processedHtml), workVideos)
+    }
+
+    if (hasMermaidBlock) {
+        return (
+            <div className="prose prose-lg max-w-none space-y-6 dark:prose-invert">
+                {splitMermaidContent(processedHtml).map((segment, index) => {
+                    if (segment.type === 'mermaid') {
+                        return <MermaidRenderer key={`mermaid-${index}`} code={segment.code} />
+                    }
+
+                    if (!segment.html.trim()) {
+                        return null
+                    }
+
+                    return (
+                        <InteractiveRenderer
+                            key={`html-${index}`}
+                            html={segment.html}
+                            workVideos={workVideos}
+                        />
+                    )
+                })}
+            </div>
+        )
     }
 
     // Fast path: no custom blocks, render directly

@@ -98,6 +98,15 @@ export const suggestion = {
                     editor.chain().focus().deleteRange(range).insertContent({ type: 'htmlBlock' }).run()
                 },
             },
+            {
+                title: 'Mermaid Diagram',
+                description: 'Insert an editable Mermaid diagram block.',
+                shortcuts: ['m', 'd'],
+                icon: 'mermaid',
+                command: ({ editor, range }: CommandProps) => {
+                    editor.chain().focus().deleteRange(range).insertContent({ type: 'mermaidBlock' }).run()
+                },
+            },
         ]
 
         return items.filter((item) => {

@@ -166,6 +166,7 @@ export default async function WorkDetailPage({ params, searchParams }: PageProps
                             {newerWork ? (
                                 <Link
                                     href={`/works/${newerWork.slug}${returnTo ? `?returnTo=${returnTo}&relatedPage=${encodeURIComponent(resolvedSearchParams?.relatedPage ?? '')}` : relatedPageSuffix}`}
+                                    prefetch={false}
                                     className="group rounded-2xl border border-border/80 bg-background p-4 transition hover:border-primary/30 hover:shadow-sm"
                                 >
                                     <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Next</p>
@@ -177,6 +178,7 @@ export default async function WorkDetailPage({ params, searchParams }: PageProps
                             {olderWork ? (
                                 <Link
                                     href={`/works/${olderWork.slug}${returnTo ? `?returnTo=${returnTo}&relatedPage=${encodeURIComponent(resolvedSearchParams?.relatedPage ?? '')}` : relatedPageSuffix}`}
+                                    prefetch={false}
                                     className="group rounded-2xl border border-border/80 bg-background p-4 text-left transition hover:border-primary/30 hover:shadow-sm sm:justify-self-end"
                                 >
                                     <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Previous</p>

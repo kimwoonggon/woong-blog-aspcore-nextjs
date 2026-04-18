@@ -17,9 +17,10 @@ import {
     Quote,
     Code,
     ImageIcon,
+    Workflow,
 } from 'lucide-react'
 
-export type CommandIconName = 'h1' | 'h2' | 'h3' | 'p' | 'ul' | 'ol' | 'quote' | 'code' | 'image' | '3d'
+export type CommandIconName = 'h1' | 'h2' | 'h3' | 'p' | 'ul' | 'ol' | 'quote' | 'code' | 'image' | '3d' | 'mermaid'
 
 export interface CommandItem {
     title: string;
@@ -160,6 +161,7 @@ function getIcon(name: CommandIconName) {
         case 'code': return <Code size={16} />
         case 'image': return <ImageIcon size={16} />
         case '3d': return <Box size={16} />
+        case 'mermaid': return <Workflow size={16} />
         default: return <Type size={16} />
     }
 }

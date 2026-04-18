@@ -183,6 +183,7 @@ export default async function BlogPage({ searchParams }: PageProps) {
                         <Link
                             key={blog.id}
                             href={`/blog/${blog.slug}?returnTo=${returnTo}&relatedPage=${page}`}
+                            prefetch={false}
                             className="group/card block h-full"
                             data-testid="blog-card"
                         >

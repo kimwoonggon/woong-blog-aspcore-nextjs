@@ -154,6 +154,41 @@ CODEX_HOME_DIR=/root/.codex
 - rolling: 단일 host compose 대신 다중 replica + health-checked load balancer를 지원하는 오케스트레이터 사용
 - 최소 타협안: 먼저 새 backend를 다른 service name으로 올리고 health 확인 후 nginx upstream 전환, 마지막에 구버전 정리
 
+## Azure Backup and Restore
+
+운영 백업은 Azure Blob Storage에 두 개의 아티팩트를 저장한다.
+
+- `media.tar.gz`
+- `postgres.dump`
+
+백업 실행:
+
+```bash
+APP_ENV_FILE=.env.prod node scripts/azure-backup.mjs
+```
+
+먼저 출력만 확인하려면 `--dry-run`을 붙인다.
+
+```bash
+APP_ENV_FILE=.env.prod node scripts/azure-backup.mjs --dry-run
+```
+
+복원은 선택한 백업 ID와 `--confirm`을 동시에 요구한다.
+
+```bash
+APP_ENV_FILE=.env.prod node scripts/azure-restore.mjs --backup-id 20260418T000000Z --confirm
+```
+
+복원 전에는 앱과 백엔드를 중지하고 유지보수 창에서 실행하는 것을 권장한다. 복원은 media 디렉터리를 tar.gz로 덮고 PostgreSQL 덤프를 다시 적재한다.
+
+cron 설치:
+
+```bash
+APP_ENV_FILE=.env.prod node scripts/install-azure-backup-cron.mjs
+```
+
+이 cron은 `CRON_TZ=Asia/Seoul`과 `0 7 * * *`를 사용한다. 설치 스크립트는 기존 crontab에서 같은 마커 블록을 갱신한다.
+
 ## Staging Deployment
 
 `dev` CI 성공 후에는 staging용 GHCR 이미지가 별도 workflow로 publish된다.
