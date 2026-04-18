@@ -724,6 +724,37 @@ For the actual deployment checklist and step-by-step runbook, see:
 
 - [`DEPLOYMENT.md`](./DEPLOYMENT.md)
 
+## Azure Backup Workflow
+
+Production backups write two blobs to Azure Blob Storage:
+
+- `media.tar.gz`
+- `postgres.dump`
+
+Run a backup with:
+
+```bash
+APP_ENV_FILE=.env.prod node scripts/azure-backup.mjs
+```
+
+Use `--dry-run` to validate the resolved paths and blob names without uploading anything.
+
+Restore a selected backup with an explicit confirmation guard:
+
+```bash
+APP_ENV_FILE=.env.prod node scripts/azure-restore.mjs --backup-id 20260418T000000Z --confirm
+```
+
+Restore also supports `--dry-run`.
+
+Install the daily cron entry with:
+
+```bash
+APP_ENV_FILE=.env.prod node scripts/install-azure-backup-cron.mjs
+```
+
+The cron job runs at `07:00` in `Asia/Seoul` and reuses the repository's `.env.prod` file.
+
 ## CI / CD Branch Rules
 
 Current workflow intent:

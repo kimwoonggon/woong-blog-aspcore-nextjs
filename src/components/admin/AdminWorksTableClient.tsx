@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { useEffect, useMemo, useState, useTransition } from 'react'
+import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { ChevronLeft, ChevronRight, Eye, Pencil, Trash2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
@@ -21,6 +21,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import type { WorkAdminItem } from '@/lib/api/works'
 import { deleteAdminWork, deleteManyAdminWorks } from '@/lib/api/admin-mutations'
 import { useResponsivePageSize } from '@/hooks/useResponsivePageSize'
+import { anyContainsNormalizedSearch } from '@/lib/search/normalized-search'
 import { toast } from 'sonner'
 
 interface AdminWorksTableClientProps {
@@ -32,21 +33,25 @@ interface PendingWorkDelete {
   title: string
 }
 
-function matchesWorkQuery(work: WorkAdminItem, normalizedQuery: string) {
-  if (!normalizedQuery) {
-    return true
-  }
-
-  return (
-    work.title.toLowerCase().includes(normalizedQuery)
-    || work.category.toLowerCase().includes(normalizedQuery)
-    || work.tags.some((tag) => tag.toLowerCase().includes(normalizedQuery))
-  )
+function matchesWorkQuery(work: WorkAdminItem, query: string) {
+  return anyContainsNormalizedSearch([work.title, work.category, ...work.tags], query)
 }
 
 function normalizePageParam(value: string | null) {
   const parsed = Number.parseInt(value ?? '', 10)
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 1
+}
+
+function deferStateUpdate(callback: () => void) {
+  queueMicrotask(callback)
+}
+
+function replaceBrowserUrl(pathname: string, queryString: string) {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  window.history.replaceState(window.history.state, '', queryString ? `${pathname}?${queryString}` : pathname)
 }
 
 export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
@@ -55,6 +60,10 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
   const searchParams = useSearchParams()
   const requestedPage = normalizePageParam(searchParams.get('page'))
   const requestedQuery = searchParams.get('query') ?? ''
+  const searchParamsKey = searchParams.toString()
+  const lastWrittenSearchParamsRef = useRef<string | null>(null)
+  const hasMountedSearchSyncRef = useRef(false)
+  const hasMountedUrlWriteRef = useRef(false)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [query, setQuery] = useState(requestedQuery)
   const [pendingDelete, setPendingDelete] = useState<PendingWorkDelete | null>(null)
@@ -62,12 +71,12 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
   const [isPending, startTransition] = useTransition()
   const pageSize = useResponsivePageSize(12, 8, 6)
   const filteredWorks = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase()
-    if (!normalizedQuery) {
+    const trimmedQuery = query.trim()
+    if (!trimmedQuery) {
       return works
     }
 
-    return works.filter((work) => matchesWorkQuery(work, normalizedQuery))
+    return works.filter((work) => matchesWorkQuery(work, trimmedQuery))
   }, [works, query])
   const totalPages = Math.max(1, Math.ceil(filteredWorks.length / pageSize))
   const currentPage = Math.min(page, totalPages)
@@ -100,21 +109,51 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
   const selectedSet = useMemo(() => new Set(effectiveSelectedIds), [effectiveSelectedIds])
 
   useEffect(() => {
-    setQuery(requestedQuery)
-  }, [requestedQuery])
+    if (!hasMountedSearchSyncRef.current) {
+      hasMountedSearchSyncRef.current = true
+      return
+    }
 
-  useEffect(() => {
-    setPage(requestedPage)
-  }, [requestedPage])
+    if (lastWrittenSearchParamsRef.current === searchParamsKey) {
+      lastWrittenSearchParamsRef.current = null
+      return
+    }
+
+    let cancelled = false
+    deferStateUpdate(() => {
+      if (!cancelled) {
+        setQuery(requestedQuery)
+        setPage(requestedPage)
+      }
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [requestedPage, requestedQuery, searchParamsKey])
 
   useEffect(() => {
     if (page !== currentPage) {
-      setPage(currentPage)
+      let cancelled = false
+      deferStateUpdate(() => {
+        if (!cancelled) {
+          setPage(currentPage)
+        }
+      })
+
+      return () => {
+        cancelled = true
+      }
     }
   }, [currentPage, page])
 
   useEffect(() => {
-    const params = new URLSearchParams(searchParams.toString())
+    if (!hasMountedUrlWriteRef.current) {
+      hasMountedUrlWriteRef.current = true
+      return
+    }
+
+    const params = new URLSearchParams(searchParamsKey)
 
     if (currentPage > 1) {
       params.set('page', String(currentPage))
@@ -131,13 +170,14 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
     }
 
     const nextQueryString = params.toString()
-    const currentQueryString = searchParams.toString()
+    const currentQueryString = searchParamsKey
     if (nextQueryString === currentQueryString) {
       return
     }
 
-    router.replace(nextQueryString ? `${pathname}?${nextQueryString}` : pathname, { scroll: false })
-  }, [currentPage, pageSize, pathname, query, router, searchParams])
+    lastWrittenSearchParamsRef.current = nextQueryString
+    replaceBrowserUrl(pathname, nextQueryString)
+  }, [currentPage, pageSize, pathname, query, router, searchParamsKey])
 
   function toggle(id: string) {
     setSelectedIds((current) =>
@@ -190,14 +230,13 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
             value={query}
             onChange={(event) => {
               const nextQuery = event.target.value
-              const normalizedQuery = nextQuery.trim().toLowerCase()
               setQuery(nextQuery)
               setPage(1)
               setSelectedIds((current) =>
                 current.filter((id) =>
                   works.some((work) =>
                     work.id === id
-                    && matchesWorkQuery(work, normalizedQuery),
+                    && matchesWorkQuery(work, nextQuery),
                   ),
                 ),
               )
@@ -276,6 +315,7 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
                 <TableCell className="min-w-0 font-medium">
                   <Link
                     href={`/admin/works/${work.id}?returnTo=${returnTo}`}
+                    prefetch={false}
                     className="block truncate transition-colors hover:text-primary hover:underline"
                   >
                     {work.title}
@@ -301,6 +341,7 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
                     <Button asChild variant="ghost" size="icon">
                       <Link
                         href={`/works/${work.slug}`}
+                        prefetch={false}
                         target="_blank"
                         rel="noreferrer"
                         aria-label={`View public work: ${work.title}`}
@@ -312,6 +353,7 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
                     <Button asChild variant="ghost" size="icon">
                       <Link
                         href={`/admin/works/${work.id}?returnTo=${returnTo}`}
+                        prefetch={false}
                         aria-label={`Edit work: ${work.title}`}
                         title="Edit"
                       >

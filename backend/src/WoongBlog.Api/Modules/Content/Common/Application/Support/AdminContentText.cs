@@ -17,7 +17,12 @@ internal static class AdminContentText
             return string.Empty;
         }
 
-        var text = System.Text.RegularExpressions.Regex.Replace(html, "<[^>]*>", " ");
+        var withoutMermaidBlocks = System.Text.RegularExpressions.Regex.Replace(
+            html,
+            "<mermaid-block\\b[\\s\\S]*?</mermaid-block>",
+            " ",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        var text = System.Text.RegularExpressions.Regex.Replace(withoutMermaidBlocks, "<[^>]*>", " ");
         text = System.Text.RegularExpressions.Regex.Replace(text, "\\s+", " ").Trim();
         return text.Length <= 160 ? text : $"{text[..160].Trim()}...";
     }

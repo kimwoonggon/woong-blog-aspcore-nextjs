@@ -17,7 +17,19 @@ vi.mock('next/navigation', () => ({
 }))
 
 vi.mock('next/link', () => ({
-  default: ({ href, children, ...props }: { href: string; children: React.ReactNode }) => <a href={href} {...props}>{children}</a>,
+  default: ({
+    href,
+    children,
+    ...props
+  }: {
+    href: string
+    children: React.ReactNode
+    prefetch?: boolean
+  }) => {
+    const { prefetch, ...anchorProps } = props
+    void prefetch
+    return <a href={href} {...anchorProps}>{children}</a>
+  },
 }))
 
 vi.mock('@/lib/api/admin-mutations', () => ({
@@ -49,10 +61,11 @@ describe('admin bulk selection tables', () => {
       />,
     )
 
-    replaceMock.mockClear()
     fireEvent.click(screen.getByRole('button', { name: 'Next page' }))
 
-    expect(replaceMock).toHaveBeenCalledWith('/admin/blog?page=2&pageSize=12', { scroll: false })
+    expect(replaceMock).not.toHaveBeenCalled()
+    expect(window.location.pathname).toBe('/admin/blog')
+    expect(window.location.search).toBe('?page=2&pageSize=12')
     expect(screen.getByLabelText('Edit post: Blog 13')).toHaveAttribute(
       'href',
       '/admin/blog/b13?returnTo=%2Fadmin%2Fblog%3Fpage%3D2%26pageSize%3D12',

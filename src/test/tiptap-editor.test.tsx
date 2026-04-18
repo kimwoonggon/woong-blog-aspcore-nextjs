@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { TiptapEditor } from '@/components/admin/TiptapEditor'
 import { buildWorkVideoEmbedMarkup } from '@/lib/content/work-video-embeds'
@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => {
       handleDrop?: DropHandler
       handlePaste?: PasteHandler
     }
+    extensions?: unknown[]
   }
 
   const state: {
@@ -152,6 +153,12 @@ vi.mock('@/components/admin/tiptap/ThreeJsBlock', () => ({
 vi.mock('@/components/admin/tiptap/HtmlBlock', () => ({
   HtmlBlock: { name: 'html-block' },
 }))
+vi.mock('@/components/admin/tiptap/MermaidBlock', () => ({
+  MermaidBlock: { name: 'mermaid-block' },
+}))
+vi.mock('@/components/admin/tiptap/ResizableImageBlock', () => ({
+  ResizableImage: { configure: () => ({ name: 'resizable-image' }) },
+}))
 vi.mock('@/components/admin/tiptap/SlashCommand', () => ({
   SlashCommand: { configure: () => ({ name: 'slash-command' }) },
 }))
@@ -224,6 +231,27 @@ describe('TiptapEditor', () => {
     expect(mocks.state.setImage).toHaveBeenCalledWith('/uploads/dropped-image.png')
   })
 
+  it('keeps pasted mermaid fences out of the independent mermaid block path', async () => {
+    render(<TiptapEditor content="<p>Initial</p>" onChange={vi.fn()} />)
+
+    const clipboardData = {
+      files: [],
+      getData: (type: string) => type === 'text/plain'
+        ? '```mermaid\nsequenceDiagram\n  User->>Frontend: Login\n```'
+        : '',
+    }
+
+    await act(async () => {
+      const handled = await mocks.state.config?.editorProps?.handlePaste?.(
+        {},
+        { clipboardData } as unknown as ClipboardEvent,
+      )
+      expect(handled).toBe(false)
+    })
+
+    expect(mocks.state.insertContent).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'mermaidBlock' }))
+  })
+
   it('inserts a work video embed and reports success when a requested video exists', async () => {
     mocks.state.currentHtml = '<p>Body</p>'
     const onVideoInsertHandled = vi.fn()
@@ -270,5 +298,17 @@ describe('TiptapEditor', () => {
     render(<TiptapEditor content="<p>Body</p>" onChange={vi.fn()} />)
 
     expect(screen.getByTestId('tiptap-toolbar-hint')).toBeInTheDocument()
+  })
+
+  it('exposes a mermaid insert action in the toolbar and registers the mermaid block extension', () => {
+    render(<TiptapEditor content="<p>Body</p>" onChange={vi.fn()} />)
+
+    expect(mocks.state.config?.extensions).toEqual(expect.arrayContaining([
+      expect.objectContaining({ name: 'mermaid-block' }),
+    ]))
+
+    fireEvent.click(screen.getByTitle('Insert Mermaid Diagram'))
+
+    expect(mocks.state.insertContent).toHaveBeenCalledWith({ type: 'mermaidBlock' })
   })
 })

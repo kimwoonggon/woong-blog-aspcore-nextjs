@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { useResponsivePageSize } from '@/hooks/useResponsivePageSize'
 import type { BlogAdminItem } from '@/lib/api/blogs'
 import type { WorkAdminItem } from '@/lib/api/works'
+import { anyContainsNormalizedSearch } from '@/lib/search/normalized-search'
 
 interface CollectionItem {
   id: string
@@ -58,12 +59,15 @@ function AdminCollectionSection<T extends CollectionItem>({
   const [query, setQuery] = useState('')
   const [page, setPage] = useState(1)
   const filteredItems = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase()
-    if (!normalizedQuery) {
+    const trimmedQuery = query.trim()
+    if (!trimmedQuery) {
       return items
     }
 
-    return items.filter((item) => item.title.toLowerCase().includes(normalizedQuery))
+    return items.filter((item) => anyContainsNormalizedSearch(
+      [item.title, item.category, item.excerpt, ...(item.tags ?? [])],
+      trimmedQuery,
+    ))
   }, [items, query])
   const totalPages = Math.max(1, Math.ceil(filteredItems.length / pageSize))
   const currentPage = Math.min(page, totalPages)

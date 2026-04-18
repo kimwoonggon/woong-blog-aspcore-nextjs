@@ -9,6 +9,9 @@
     "lint": "eslint",
     "typecheck": "rm -rf .next-playwright .next-build && tsc --noEmit",
     "migrate:blog:notion": "node scripts/migrate-notion-blog-downloads.mjs",
+    "backup:azure": "node scripts/azure-backup.mjs",
+    "restore:azure": "node scripts/azure-restore.mjs",
+    "backup:azure:cron": "node scripts/install-azure-backup-cron.mjs",
     "test": "vitest --pool=threads",
     "test:e2e": "playwright test --workers=1",
     "test:e2e:headless": "playwright test --workers=1",
@@ -31,6 +34,7 @@
     "test:coverage:m3": "vitest run src/test/api-base.test.ts src/test/auth-login-url.test.ts src/test/auth-csrf.test.ts src/test/responsive-page-size.test.ts src/test/server-api.test.ts src/test/public-api-clients.test.ts src/test/public-api-contracts.test.ts src/test/page-editor.test.ts src/test/admin-dashboard-collections.test.ts src/test/ui-primitives.test.tsx --coverage --coverage.clean=true --coverage.reporter=json-summary --coverage.reporter=text-summary"
   },
   "dependencies": {
+    "@azure/storage-blob": "^12.31.0",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
@@ -58,6 +62,7 @@
     "html-react-parser": "^5.2.17",
     "lowlight": "^3.3.0",
     "lucide-react": "^0.563.0",
+    "mermaid": "^11.14.0",
     "next": "16.1.6",
     "next-themes": "^0.4.6",
     "openai": "^6.18.0",

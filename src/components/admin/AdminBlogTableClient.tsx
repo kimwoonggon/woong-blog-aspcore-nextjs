@@ -21,6 +21,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import type { BlogAdminItem } from '@/lib/api/blogs'
 import { deleteAdminBlog, deleteManyAdminBlogs } from '@/lib/api/admin-mutations'
 import { useResponsivePageSize } from '@/hooks/useResponsivePageSize'
+import { anyContainsNormalizedSearch } from '@/lib/search/normalized-search'
 import { toast } from 'sonner'
 
 interface AdminBlogTableClientProps {
@@ -32,20 +33,25 @@ interface PendingBlogDelete {
   title: string
 }
 
-function matchesBlogQuery(blog: BlogAdminItem, normalizedQuery: string) {
-  if (!normalizedQuery) {
-    return true
-  }
-
-  return (
-    blog.title.toLowerCase().includes(normalizedQuery)
-    || blog.tags.some((tag) => tag.toLowerCase().includes(normalizedQuery))
-  )
+function matchesBlogQuery(blog: BlogAdminItem, query: string) {
+  return anyContainsNormalizedSearch([blog.title, ...blog.tags], query)
 }
 
 function normalizePageParam(value: string | null) {
   const parsed = Number.parseInt(value ?? '', 10)
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 1
+}
+
+function deferStateUpdate(callback: () => void) {
+  queueMicrotask(callback)
+}
+
+function replaceBrowserUrl(pathname: string, queryString: string) {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  window.history.replaceState(window.history.state, '', queryString ? `${pathname}?${queryString}` : pathname)
 }
 
 export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
@@ -56,6 +62,9 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
   const requestedQuery = searchParams.get('query') ?? ''
   const searchParamsKey = searchParams.toString()
   const lastAppliedUrlPageRef = useRef(requestedPage)
+  const lastWrittenSearchParamsRef = useRef<string | null>(null)
+  const hasMountedSearchSyncRef = useRef(false)
+  const hasMountedUrlWriteRef = useRef(false)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [showBatchAiPanel, setShowBatchAiPanel] = useState(false)
   const [query, setQuery] = useState(requestedQuery)
@@ -64,12 +73,12 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
   const [isPending, startTransition] = useTransition()
   const pageSize = useResponsivePageSize(12, 8, 6)
   const filteredBlogs = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase()
-    if (!normalizedQuery) {
+    const trimmedQuery = query.trim()
+    if (!trimmedQuery) {
       return blogs
     }
 
-    return blogs.filter((blog) => matchesBlogQuery(blog, normalizedQuery))
+    return blogs.filter((blog) => matchesBlogQuery(blog, trimmedQuery))
   }, [blogs, query])
   const totalPages = Math.max(1, Math.ceil(filteredBlogs.length / pageSize))
   const currentPage = Math.min(page, totalPages)
@@ -106,8 +115,27 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
   const selectedSet = useMemo(() => new Set(effectiveSelectedIds), [effectiveSelectedIds])
 
   useEffect(() => {
-    setQuery(requestedQuery)
-  }, [requestedQuery])
+    if (!hasMountedSearchSyncRef.current) {
+      hasMountedSearchSyncRef.current = true
+      return
+    }
+
+    if (lastWrittenSearchParamsRef.current === searchParamsKey) {
+      lastWrittenSearchParamsRef.current = null
+      return
+    }
+
+    let cancelled = false
+    deferStateUpdate(() => {
+      if (!cancelled) {
+        setQuery(requestedQuery)
+      }
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [requestedQuery, searchParamsKey])
 
   useEffect(() => {
     const nextRequestedPage = normalizePageParam(new URLSearchParams(searchParamsKey).get('page'))
@@ -116,16 +144,39 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
     }
 
     lastAppliedUrlPageRef.current = nextRequestedPage
-    setPage(nextRequestedPage)
+    let cancelled = false
+    deferStateUpdate(() => {
+      if (!cancelled) {
+        setPage(nextRequestedPage)
+      }
+    })
+
+    return () => {
+      cancelled = true
+    }
   }, [searchParamsKey])
 
   useEffect(() => {
     if (page !== currentPage) {
-      setPage(currentPage)
+      let cancelled = false
+      deferStateUpdate(() => {
+        if (!cancelled) {
+          setPage(currentPage)
+        }
+      })
+
+      return () => {
+        cancelled = true
+      }
     }
   }, [currentPage, page])
 
   useEffect(() => {
+    if (!hasMountedUrlWriteRef.current) {
+      hasMountedUrlWriteRef.current = true
+      return
+    }
+
     const params = new URLSearchParams(searchParamsKey)
 
     if (currentPage > 1) {
@@ -149,7 +200,8 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
     }
 
     lastAppliedUrlPageRef.current = currentPage
-    router.replace(nextQueryString ? `${pathname}?${nextQueryString}` : pathname, { scroll: false })
+    lastWrittenSearchParamsRef.current = nextQueryString
+    replaceBrowserUrl(pathname, nextQueryString)
   }, [currentPage, pageSize, pathname, query, router, searchParamsKey])
 
   function toggle(id: string) {
@@ -203,14 +255,13 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
             value={query}
             onChange={(event) => {
               const nextQuery = event.target.value
-              const normalizedQuery = nextQuery.trim().toLowerCase()
               setQuery(nextQuery)
               setPage(1)
               setSelectedIds((current) =>
                 current.filter((id) =>
                   blogs.some((blog) =>
                     blog.id === id
-                    && matchesBlogQuery(blog, normalizedQuery),
+                    && matchesBlogQuery(blog, nextQuery),
                   ),
                 ),
               )
@@ -295,6 +346,7 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
                 <TableCell className="min-w-0 font-medium">
                   <Link
                     href={`/admin/blog/${blog.id}?returnTo=${returnTo}`}
+                    prefetch={false}
                     className="block truncate transition-colors hover:text-primary hover:underline"
                   >
                     {blog.title}
@@ -337,6 +389,7 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
                     <Button asChild variant="ghost" size="icon">
                       <Link
                         href={`/blog/${blog.slug}`}
+                        prefetch={false}
                         target="_blank"
                         rel="noreferrer"
                         aria-label={`View public post: ${blog.title}`}
@@ -346,7 +399,7 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
                       </Link>
                     </Button>
                     <Button asChild variant="ghost" size="icon">
-                      <Link href={`/admin/blog/${blog.id}?returnTo=${returnTo}`} aria-label={`Edit post: ${blog.title}`} title="Edit">
+                      <Link href={`/admin/blog/${blog.id}?returnTo=${returnTo}`} prefetch={false} aria-label={`Edit post: ${blog.title}`} title="Edit">
                         <Pencil className="h-4 w-4" />
                       </Link>
                     </Button>
