@@ -445,38 +445,119 @@ AddPagesModule()
   IPageQueryStore -> PageQueryStore
 ```
 
-## 2026-04-20 implementation update - AI and WorkVideo
+## 2026-04-20 구현 반영 - AI와 WorkVideo
 
-이전 문서의 `Follow-up direction`은 AI와 WorkVideo를 다음 후보로 적었지만, 이후 구현에서 두 영역도 CQRS 방향으로 실제 전환했다. 이 섹션은 현재 코드 기준으로 사라진 interface/service, 새로 생긴 store/handler/support, 그리고 책임 이동을 기록한다.
+이 섹션은 Content에서 적용한 CQRS 규칙을 AI와 WorkVideo에 실제로 적용한 내용을 정리한다. 핵심은 service를 무조건 없애는 것이 아니다. 여러 use case를 한꺼번에 처리하던 넓은 facade service는 제거하고, 공통성이 높고 응집된 policy/support/service는 handler가 DI로 받아 사용하도록 분리했다.
 
-### AI module - removed facade service
+## AI 모듈
 
-제거된 broad service:
+### 이전 흐름
+
+이전 AI 흐름은 대체로 다음 형태였다.
+
+```text
+AI Endpoint -> IAiAdminService -> DbContext / IBlogAiFixService / batch state 변경
+```
+
+또는 command/query handler가 있더라도 실제 책임은 대부분 `AiAdminService`에 있었다.
+
+```text
+AI Endpoint -> MediatR Handler -> AiAdminService -> DbContext / IBlogAiFixService
+```
+
+문제는 `AiAdminService`가 너무 많은 use case를 한 곳에서 처리했다는 점이다.
+
+- runtime config 조회
+- single blog HTML fix
+- work HTML enrich
+- batch job 생성
+- batch job 목록/상세 조회
+- batch job apply
+- batch job cancel/clear/remove
+- batch item 상태 전환
+- blog content/excerpt 갱신
+- HTTP에 가까운 result 의미 구성
+
+즉 CQRS command/query type은 있었지만, handler가 얇은 wrapper가 되고 실제 use-case 책임은 service에 남아 있었다.
+
+### 제거한 service
+
+다음 broad service를 제거했다.
 
 - `IAiAdminService`
 - `AiAdminService`
 
-이전 구조는 AI admin endpoints가 `IAiAdminService`를 직접 호출하고, 이 service가 runtime config 조회, single blog fix, work enrich, batch job 생성/조회/적용/취소/삭제 같은 여러 use case를 한 곳에 품는 형태였다. 이 구조에서는 endpoint와 service 사이에 MediatR command/query가 있어도, 실제 use-case orchestration은 `AiAdminService`에 남아 있었다.
+`IBlogAiFixService`는 제거하지 않았다. 이 interface는 외부 AI provider 호출을 감싸는 infrastructure adapter 성격이기 때문에 유지하는 것이 맞다.
 
-변경 후 AI endpoint 흐름은 다음과 같다.
+### 변경 후 흐름
+
+변경 후 AI endpoint 흐름은 다음 형태다.
 
 ```text
-AI Endpoint -> MediatR Command/Query Handler -> IAiBlogFixBatchStore / IBlogAiFixService / policy
+AI Endpoint -> MediatR Command/Query Handler -> IAiBlogFixBatchStore / IBlogAiFixService / Policy
 ```
 
-HTTP mapping은 endpoint boundary에 남겼다.
+HTTP mapping은 endpoint boundary에만 남겼다.
 
-- `AiActionResult<T>`: application result. HTTP status code나 `IResult`를 직접 노출하지 않는다.
-- `AiHttpResultMapper`: API layer에서만 `AiActionResult<T>`를 `IResult`로 변환한다.
+```text
+Handler -> AiActionResult<T> -> AiHttpResultMapper -> IResult
+```
 
-### AI module - added stores, policies, handlers
+- `AiActionResult<T>`는 application result다.
+- `AiHttpResultMapper`만 API layer에서 `AiActionResult<T>`를 HTTP result로 바꾼다.
+- AI application handler는 `IResult`, `StatusCodes` 같은 ASP.NET HTTP 타입을 직접 노출하지 않는다.
+
+### Command side
+
+AI command handlers:
+
+- `FixBlogHtmlCommandHandler`
+- `FixBlogBatchCommandHandler`
+- `EnrichWorkHtmlCommandHandler`
+- `CreateBlogFixBatchJobCommandHandler`
+- `ApplyBlogFixBatchJobCommandHandler`
+- `CancelBlogFixBatchJobCommandHandler`
+- `CancelQueuedBlogFixBatchJobsCommandHandler`
+- `ClearCompletedBlogFixBatchJobsCommandHandler`
+- `RemoveBlogFixBatchJobCommandHandler`
+
+이 handler들이 맡는 책임은 다음과 같다.
+
+- HTML 입력 검증
+- AI provider 호출 요청 구성
+- batch 대상 blog 선택
+- provider/model/reasoning/custom prompt 정규화
+- selection key 생성
+- 중복 active job 재사용
+- job/item 생성
+- apply 시 blog `ContentJson`, excerpt, updated timestamp 갱신
+- cancel/clear/remove 상태 전환
+- API boundary로 넘길 application result 구성
+
+### Query side
+
+AI query handlers:
+
+- `GetAiRuntimeConfigQueryHandler`
+- `ListBlogFixBatchJobsQueryHandler`
+- `GetBlogFixBatchJobQueryHandler`
+
+이 handler들은 다음을 담당한다.
+
+- runtime provider/model 설정 조회
+- batch job count 조회
+- 최근 batch job 목록 조회
+- batch job 상세와 item projection 조회
+- response DTO mapping 호출
+
+### Store side
 
 새 persistence boundary:
 
 - `IAiBlogFixBatchStore`
 - `AiBlogFixBatchStore`
 
-역할:
+store는 DB read/write primitive를 제공한다.
 
 - blog fix 대상 조회
 - batch job/item 생성
@@ -486,6 +567,14 @@ HTTP mapping은 endpoint boundary에 남겼다.
 - job/item 삭제
 - `SaveChangesAsync`
 
+현재는 batch 관련 query와 command가 한 store에 모여 있다. 기능이 더 커지면 다음처럼 분리할 수 있다.
+
+- `IAiBatchTargetQueryStore`
+- `IAiBatchJobCommandStore`
+- `IAiBatchJobQueryStore`
+
+### Policy and support side
+
 새 policy/support:
 
 - `AiRuntimePolicy`
@@ -494,115 +583,148 @@ HTTP mapping은 endpoint boundary에 남겼다.
 - `AiBatchWorkerPolicy`
 - `IBlogFixApplyPolicy` / `BlogFixApplyPolicy`
 
-역할:
+각 책임은 다음과 같다.
 
-- provider/model/reasoning/custom prompt normalization
+- provider/model/reasoning/custom prompt 정규화
 - selection key 생성
 - queued/running/completed/failed/cancelled/applied 상태 전환 규칙
 - job/item count refresh/finalize 규칙
 - response DTO mapping
-- auto-apply 시 `Blog.ContentJson`, excerpt, item status 갱신
+- auto-apply 시 blog content/excerpt와 item status 갱신
 
-주요 handler:
+### Background processing side
 
-- `GetAiRuntimeConfigQueryHandler`
-- `FixBlogHtmlCommandHandler`
-- `EnrichWorkHtmlCommandHandler`
-- `FixBlogBatchCommandHandler`
-- `CreateBlogFixBatchJobCommandHandler`
-- `ListBlogFixBatchJobsQueryHandler`
-- `GetBlogFixBatchJobQueryHandler`
-- `ApplyBlogFixBatchJobCommandHandler`
-- `CancelBlogFixBatchJobCommandHandler`
-- `CancelQueuedBlogFixBatchJobsCommandHandler`
-- `ClearCompletedBlogFixBatchJobsCommandHandler`
-- `RemoveBlogFixBatchJobCommandHandler`
+이전 batch processor는 background loop와 job 실행 세부사항이 섞여 있었다.
 
-이 handler들이 기존 `AiAdminService`가 갖고 있던 use-case 책임을 나눠 가져갔다. 예를 들어 `CreateBlogFixBatchJobCommandHandler`는 대상 blog 선택, runtime provider/model 결정, selection key 생성, duplicate active job 재사용, job/item 생성, signal notify를 담당한다. `ApplyBlogFixBatchJobCommandHandler`는 succeeded item과 대상 blog를 로드하고, fixed html을 blog content/excerpt에 적용한 뒤 job aggregate를 refresh한다.
-
-외부 AI provider 호출은 여전히 `IBlogAiFixService`가 담당한다. 이 interface는 제거 대상이 아니라 infrastructure adapter boundary로 유지한다.
-
-### AI batch processor - background loop and job execution split
-
-`AiBatchJobProcessor`는 더 이상 `WoongBlogDbContext`를 직접 사용하지 않는다. 현재 책임은 background worker loop에 집중된다.
+변경 후 흐름은 다음과 같다.
 
 ```text
 AiBatchJobProcessor
-  -> reset running jobs
-  -> wait signal
-  -> find queued job
-  -> mark job running
-  -> IAiBatchJobRunner.RunAsync(jobId)
+  -> signal wait
+  -> IAiBatchJobScheduler
+  -> IAiBatchJobRunner
+  -> IAiBatchJobItemDispatcher
+  -> IAiBatchJobItemProcessor
 ```
 
-새 실행 boundary:
+역할 분리:
 
-- `IAiBatchJobRunner` / `AiBatchJobRunner`
-- `IAiBatchJobItemProcessor` / `AiBatchJobItemProcessor`
+- `AiBatchJobProcessor`
+  - background loop
+  - signal wait
+  - scoped scheduler 호출
+- `AiBatchJobScheduler`
+  - running job reset
+  - queued job 조회
+  - running 전환
+  - runner 호출
+- `AiBatchJobRunner`
+  - job 하나의 pending item queue drain
+  - worker count 적용
+- `AiBatchJobItemDispatcher`
+  - item별 scoped dependency 생성
+  - cancel check
+  - item processor 호출
+  - job count refresh
+  - job finalize
+- `AiBatchJobItemProcessor`
+  - item 하나 처리
+  - blog 로드
+  - `IBlogAiFixService` 호출
+  - success/fail 기록
+  - auto-apply 적용
 
-`AiBatchJobRunner`는 job 하나의 pending item queue를 worker count 정책에 따라 drain하고, item별 processing 후 count refresh/finalize를 수행한다. `AiBatchJobItemProcessor`는 item 하나에 대해 blog 로드, `IBlogAiFixService` 호출, success/fail 상태 기록, auto-apply 적용을 담당한다.
+### Scope factory 정리
 
-CQRS 관점의 개선점:
+AI application layer에서는 다음 직접 사용을 제거했다.
 
-- background service가 EF persistence와 AI provider orchestration을 직접 품지 않는다.
-- job 단위 orchestration과 item 단위 orchestration이 분리됐다.
-- 상태 전환 규칙은 `AiBatchJobProgressPolicy`로 모였다.
-- HTTP result mapping은 API layer로 제한됐다.
+- `IServiceScopeFactory`
+- `CreateScope`
+- `GetRequiredService`
 
-주의점:
+이 규칙은 architecture test로 막는다. scoped lifetime이 필요한 병렬 item 처리는 infrastructure boundary인 `AiBatchJobItemDispatcher`에 격리했다.
 
-- `AiBatchJobRunner`는 앞으로 비대해질 수 있다. 현재도 worker queue drain, cancellation check, item dispatch, count refresh, finalize를 모두 담당한다.
-- `AiBatchJobProcessor`는 가벼워졌지만 완전히 passive scheduler는 아니다. queued job 조회, running 전환, runner 호출 orchestration을 여전히 가진다.
-- queued job pick과 `MarkRunning`은 현재 store 호출과 save 흐름으로 동작한다. 여러 worker/process가 동시에 실행될 가능성이 커지면 atomic claim 또는 DB-level concurrency guard를 별도로 점검해야 한다.
-- `IServiceScopeFactory` 기반 resolve가 여러 private method에 흩어져 있어 흐름 추적이 약간 어렵다. scoped dependency 생명주기를 지키기 위한 선택이지만, runner가 더 커지면 `IAiBatchJobQueue`, `IAiBatchJobFinalizer`, `IAiBatchJobCancellationPolicy` 같은 더 작은 경계로 분리할 수 있다.
-- `IAiBlogFixBatchStore`가 target query, job command, job query 역할을 함께 가진다. 현재는 단일 batch boundary로 받아들였지만, batch 기능이 더 커지면 `IAiBatchTargetQueryStore`, `IAiBatchJobCommandStore`, `IAiBatchJobQueryStore`로 쪼갤 후보가 된다.
+### 남은 주의점
 
-### WorkVideo - removed broad interface and narrowed service boundary
+- queued job pick과 running 전환은 현재 store 조회 후 save 흐름이다. 여러 process나 여러 worker instance가 동시에 뜨면 atomic claim 또는 DB-level concurrency guard가 필요하다.
+- `IAiBlogFixBatchStore`는 아직 target query, job command, job query 역할을 함께 가진다. batch 기능이 더 커지면 store를 더 쪼개야 한다.
+- `AiBatchJobRunner`는 지금 queue drain 중심으로 가벼워졌지만, worker scheduling 정책이 커지면 별도 policy/service로 분리할 수 있다.
 
-제거/교체된 broad boundary:
+## WorkVideo 모듈
+
+### 이전 흐름
+
+이전 WorkVideo 흐름은 대체로 다음 형태였다.
+
+```text
+WorkVideo Endpoint -> IWorkVideoService -> DbContext / Storage / ffmpeg / cleanup
+```
+
+문제는 `IWorkVideoService`가 여러 endpoint use case를 한꺼번에 처리했다는 점이다.
+
+- upload URL 발급
+- local upload
+- HLS upload와 ffmpeg 변환
+- uploaded object confirm
+- YouTube video 추가
+- video reorder
+- video delete
+- cleanup enqueue
+- mutation result projection
+- HTTP status에 가까운 결과 구성
+
+즉 endpoint는 `IWorkVideoService`에 위임하고, service가 persistence, storage, validation, side effect, result mapping을 함께 들고 있었다.
+
+### 제거하거나 축소한 service
+
+제거한 broad interface:
 
 - `IWorkVideoService`
+
+교체한 result:
+
 - `WorkVideoServiceResult<T>`
 
-`WorkVideoService` class 자체는 남아 있지만 역할이 바뀌었다. 더 이상 upload URL 발급, direct upload, HLS 변환, confirm, YouTube 추가, reorder, delete 같은 endpoint use case를 모두 처리하는 broad service가 아니다. 현재 `WorkVideoService`는 `IWorkVideoCleanupService` 구현으로 축소되어 cleanup 전용 background/delete-work boundary만 담당한다.
-
-새 cleanup boundary:
+남긴 narrow service:
 
 - `IWorkVideoCleanupService`
 - `WorkVideoService`
 
-역할:
+`WorkVideoService` class는 남아 있지만 역할은 cleanup 전용으로 축소했다.
 
 - work 삭제 시 관련 video cleanup job enqueue
 - pending cleanup job 처리
 - expired upload session 정리
 
-### WorkVideo - command/query handlers and stores
+### 변경 후 흐름
 
-새 persistence boundary:
+변경 후 WorkVideo endpoint 흐름은 다음 형태다.
 
-- `IWorkVideoCommandStore`
-- `WorkVideoCommandStore`
-- `IWorkVideoQueryStore`
-- `WorkVideoQueryStore`
+```text
+WorkVideo Endpoint -> MediatR Command Handler -> IWorkVideoCommandStore / IWorkVideoQueryStore / Storage support
+```
 
-`IWorkVideoCommandStore`는 mutation primitive를 담당한다.
+endpoint는 HTTP boundary만 담당한다.
 
-- work/update 대상 로드
-- upload session 로드/추가/상태 변경
-- video count/next sort order 조회
-- video row 추가/삭제/reorder
-- cleanup job enqueue
-- expired session/pending cleanup job 조회
-- `SaveChangesAsync`
+- route binding
+- auth policy
+- request DTO binding
+- `WorkVideoResult<T>`를 HTTP result로 변환
 
-`IWorkVideoQueryStore`는 mutation 후 response projection을 담당한다.
+handler는 use-case orchestration을 담당한다.
 
-- `GetMutationResultAsync`
-- `WorkVideosMutationResult`
-- `WorkVideoDto`
+- version conflict 확인
+- not found 처리
+- validation
+- mutation
+- cleanup enqueue
+- mutation projection 조회
 
-새 command handlers:
+store는 DB primitive와 projection을 담당한다.
+
+### Command side
+
+WorkVideo command handlers:
 
 - `IssueWorkVideoUploadCommandHandler`
 - `UploadLocalWorkVideoCommandHandler`
@@ -612,63 +734,29 @@ CQRS 관점의 개선점:
 - `DeleteWorkVideoCommandHandler`
 - `StartWorkVideoHlsJobCommandHandler`
 
-endpoint 흐름은 다음과 같다.
-
-```text
-WorkVideo Endpoint -> MediatR Command Handler -> IWorkVideoCommandStore/IWorkVideoQueryStore + storage/transcoding support
-```
-
-`WorkVideoEndpoints`는 HTTP request binding, auth, route mapping, `WorkVideoResult<T>` -> HTTP 변환만 담당한다. handler는 version conflict, not found, validation, mutation, cleanup enqueue, projection 조회를 orchestration한다.
-
-### WorkVideo - support/adapters extracted
-
-새 support/adapters:
-
-- `IWorkVideoStorageSelector`
-- `IVideoTranscoder` / `FfmpegVideoTranscoder`
-- `IWorkVideoFileInspector`
-- `IWorkVideoHlsWorkspace`
-- `IWorkVideoHlsOutputPublisher`
-
-책임 분리:
-
-- `IWorkVideoStorageSelector`: local/R2 등 현재 사용할 video storage 선택
-- `IVideoTranscoder`: ffmpeg HLS segmentation 실행
-- `IWorkVideoFileInspector`: MP4 prefix/`ftyp` validation
-- `IWorkVideoHlsWorkspace`: HLS 임시 workspace/source file 관리
-- `IWorkVideoHlsOutputPublisher`: HLS output directory를 object storage로 publish
-
-이 분리로 `StartWorkVideoHlsJobCommandHandler`는 HLS use case orchestration을 유지하되, filesystem temp directory, ffmpeg process, output upload 같은 side effect 구현을 직접 품지 않는다.
-
-### WorkVideo result mapping
-
-`WorkVideoServiceResult<T>`가 갖고 있던 HTTP status code 개념은 제거했다. 새 result는 application-level status만 가진다.
-
-- `WorkVideoResult<T>`
-- `WorkVideoResultStatus`
-  - `Success`
-  - `BadRequest`
-  - `NotFound`
-  - `Conflict`
-  - `Unsupported`
-
-HTTP status mapping은 `WorkVideoEndpoints.ToResult`에서만 수행한다. architecture test도 `WorkVideoResult<T>`가 `StatusCodes.*`에 의존하지 않도록 검증한다.
-
-### WorkVideo handlers - improved responsibilities
+각 handler의 책임은 다음과 같다.
 
 `IssueWorkVideoUploadCommandHandler`:
 
 - work 존재 여부 확인
 - videos version conflict 확인
-- file policy validation
+- file validation
 - max video count 확인
 - storage backend 선택
 - upload session 생성
 - upload target 생성
 
+`UploadLocalWorkVideoCommandHandler`:
+
+- upload session 확인
+- local storage 여부 확인
+- file validation
+- direct upload 저장
+- session uploaded 처리
+
 `ConfirmWorkVideoUploadCommandHandler`:
 
-- session/work/version validation
+- work/session/version 확인
 - object 존재/content-type/size 확인
 - MP4 prefix validation
 - `WorkVideo` row 생성
@@ -677,14 +765,14 @@ HTTP status mapping은 `WorkVideoEndpoints.ToResult`에서만 수행한다. arch
 
 `AddYouTubeWorkVideoCommandHandler`:
 
-- work/version/max-count validation
-- YouTube URL/ID normalization
+- work/version/max-count 확인
+- YouTube URL/ID 정규화
 - `WorkVideo` row 생성
-- mutation projection 반환
+- videos version 증가
 
 `ReorderWorkVideosCommandHandler`:
 
-- work/version validation
+- work/version 확인
 - reorder payload가 모든 video를 정확히 포함하는지 검증
 - sort order update
 - videos version 증가
@@ -699,29 +787,97 @@ HTTP status mapping은 `WorkVideoEndpoints.ToResult`에서만 수행한다. arch
 
 `StartWorkVideoHlsJobCommandHandler`:
 
-- file/work/version/max-count validation
+- file/work/version/max-count 확인
 - storage 선택
 - HLS workspace 생성
 - MP4 inspection
-- `IVideoTranscoder`를 통한 HLS segmentation
+- HLS segmentation
 - HLS output publish
 - HLS `WorkVideo` row 생성
 
-CQRS 관점의 개선점:
+### Store side
 
-- endpoint handler가 broad `IWorkVideoService`에 위임하지 않는다.
-- mutation 책임이 command별 handler로 나뉘었다.
-- persistence primitive와 response projection이 store로 분리됐다.
-- storage/ffmpeg/filesystem side effect는 adapter/support interface로 분리됐다.
-- cleanup은 별도 service boundary로 남겨 background worker와 delete-work cleanup만 담당한다.
+새 persistence boundary:
 
-주의점:
+- `IWorkVideoCommandStore`
+- `WorkVideoCommandStore`
+- `IWorkVideoQueryStore`
+- `WorkVideoQueryStore`
 
-- WorkVideo command handlers는 여전히 무겁다. CQRS 관점에서는 handler orchestration이 맞지만, especially `StartWorkVideoHlsJobCommandHandler`는 validation, storage selection, workspace, MP4 inspection, transcoding, publish, row creation을 한 흐름에서 조율한다.
-- `WorkVideoPolicy`는 pure helper라 허용 가능하지만 현재 command handler 파일 안에 있다. YouTube normalization, file validation, HLS constants가 더 커지면 별도 file/class로 분리하는 편이 낫다.
-- `IWorkVideoCommandStore`도 mutation primitive를 많이 담고 있다. 지금은 WorkVideo aggregate boundary로 볼 수 있지만, cleanup/session/video row operation이 더 커지면 session command store, cleanup command store로 분리할 수 있다.
-- cleanup은 `IWorkVideoCleanupService`로 좁아졌지만 여전히 service boundary다. cleanup job processing이 복잡해지면 `ProcessVideoCleanupJobsCommandHandler`, `ExpireWorkVideoUploadSessionsCommandHandler`처럼 background use case도 command handler로 표현하는 것을 검토한다.
-- storage/HLS support extraction은 side effect 구현을 분리했지만, handler가 이 support들을 연결하는 흐름은 아직 길다. 이 부분은 추후 unit/integration 테스트가 충분해진 뒤 더 작게 나누는 것이 안전하다.
+`IWorkVideoCommandStore`는 mutation primitive를 담당한다.
+
+- work/update 대상 로드
+- upload session 로드/추가/상태 변경
+- video count 조회
+- next sort order 조회
+- video row 추가/삭제/reorder
+- cleanup job enqueue
+- expired session 조회
+- pending cleanup job 조회
+- `SaveChangesAsync`
+
+`IWorkVideoQueryStore`는 mutation 후 response projection을 담당한다.
+
+- `GetMutationResultAsync`
+- `WorkVideosMutationResult`
+- `WorkVideoDto`
+
+### Support and adapter side
+
+새 support/adapter:
+
+- `IWorkVideoStorageSelector`
+- `IVideoTranscoder` / `FfmpegVideoTranscoder`
+- `IWorkVideoFileInspector`
+- `IWorkVideoHlsWorkspace`
+- `IWorkVideoHlsOutputPublisher`
+- `WorkVideoPolicy`
+
+각 책임은 다음과 같다.
+
+- `IWorkVideoStorageSelector`: local/R2 등 현재 사용할 video storage 선택
+- `IVideoTranscoder`: ffmpeg HLS segmentation 실행
+- `IWorkVideoFileInspector`: MP4 prefix와 `ftyp` validation
+- `IWorkVideoHlsWorkspace`: HLS 임시 workspace와 source file 관리
+- `IWorkVideoHlsOutputPublisher`: HLS output directory를 object storage로 publish
+- `WorkVideoPolicy`: YouTube ID 정규화, file validation, HLS constants
+
+### Result mapping
+
+`WorkVideoServiceResult<T>`가 갖고 있던 HTTP status code 개념은 제거했다.
+
+새 application result:
+
+- `WorkVideoResult<T>`
+- `WorkVideoResultStatus`
+
+status 값:
+
+- `Success`
+- `BadRequest`
+- `NotFound`
+- `Conflict`
+- `Unsupported`
+
+HTTP status mapping은 `WorkVideoEndpoints.ToResult`에서만 수행한다. architecture test도 `WorkVideoResult<T>`가 `StatusCodes.*`에 의존하지 않도록 검증한다.
+
+### 파일 구조 정리
+
+이전에는 WorkVideo command handlers와 policy가 `WorkVideoCommandHandlers.cs` 한 파일에 같이 있었다.
+
+변경 후:
+
+- endpoint action별 command handler 파일로 분리
+- `WorkVideoPolicy.cs` 별도 분리
+- `WorkVideoCommandHandlers.cs` 제거
+
+이 변경은 동작 변경이 아니라 탐색 비용과 파일 비대화를 줄이기 위한 구조 정리다.
+
+### 남은 주의점
+
+- `StartWorkVideoHlsJobCommandHandler`는 여전히 밀도가 높다. HLS use case 자체가 storage selection, workspace, MP4 inspection, transcoding, output publish, row creation을 한 번에 조율해야 하기 때문이다.
+- `IWorkVideoCommandStore`는 work/video/session/cleanup mutation primitive를 함께 가진다. cleanup/session 쪽이 더 커지면 store를 나눌 수 있다.
+- `IWorkVideoCleanupService`는 좁아졌지만 여전히 service boundary다. cleanup job processing이 복잡해지면 background use case도 command handler로 표현할 수 있다.
 
 ## Files added
 
@@ -786,19 +942,19 @@ Preserved:
 - `WoongBlogDbContext` now references Content support helpers for search synchronization. This is pragmatic in a single-project architecture but would need a domain/application service if the codebase later becomes multi-project Clean Architecture.
 - Raw SQL schema patch remains consistent with the repository's current `SchemaPatches` approach instead of introducing EF migrations.
 
-## Follow-up direction - cross-module handler/service split
+## 후속 방향 - cross-module handler/service split
 
-2026-04-20 review note: the Content refactor direction is sound, but the same rule should not stop at Blog/Work/Page. The next pass should treat Content as the reference implementation and apply the same responsibility split to AI, Media, Site, Identity, Composition, and WorkVideo flows where the current service owns too many concerns.
+2026-04-20 review note: Content refactor 방향은 좋지만 같은 규칙이 Blog/Work/Page에서 멈추면 안 된다. 다음 pass에서는 Content를 기준 구현으로 보고, AI, Media, Site, Identity, Composition, WorkVideo 중 service가 너무 많은 책임을 가진 flow에 같은 책임 분리 규칙을 적용한다.
 
-The target rule is not "remove every service." The rule is:
+목표는 "모든 service 제거"가 아니다. 기준은 다음과 같다.
 
-- Endpoint owns HTTP binding, auth policy selection, request DTO binding, and HTTP result mapping.
-- Command/query handler owns use-case orchestration, state transition rules, and failure/result semantics.
-- Command/query store owns persistence primitives and projection queries.
-- Infrastructure adapter owns external side effects such as AI provider calls, local/R2 storage, ffmpeg/HLS processing, cookie sign-in integration, and clock/file-system interactions.
-- Pure policy/support services remain acceptable when they are deterministic and do not depend on HTTP, EF, or external systems.
+- Endpoint는 HTTP binding, auth policy 선택, request DTO binding, HTTP result mapping을 맡는다.
+- Command/query handler는 use-case orchestration, state transition rule, failure/result semantics를 맡는다.
+- Command/query store는 persistence primitive와 projection query를 맡는다.
+- Infrastructure adapter는 AI provider 호출, local/R2 storage, ffmpeg/HLS 처리, cookie sign-in, clock/file-system interaction 같은 외부 side effect를 맡는다.
+- Pure policy/support service는 HTTP, EF, 외부 시스템에 의존하지 않는 deterministic logic이면 유지해도 된다.
 
-Red flags to remove in the next refactor:
+다음 refactor에서 제거해야 할 red flag:
 
 - Application service method returns `IResult`.
 - Service accepts an API request DTO or MediatR command wholesale and mutates persistence directly.
@@ -806,62 +962,62 @@ Red flags to remove in the next refactor:
 - One service combines validation, EF query, file-system write/delete, third-party call, projection, and response shaping.
 - Persistence adapter depends on API contracts rather than primitive parameters, domain entities, or projection DTOs.
 
-### AI module candidates
+### AI 모듈 현재 상태
 
-Current implemented shape:
+현재 구현 흐름:
 
 ```text
 Endpoint -> MediatR AI handlers -> IAiBlogFixBatchStore + IBlogAiFixService + AiBatchJobSignal
 ```
 
-`IAiAdminService` was removed. AI endpoints now call MediatR command/query handlers, and batch persistence flows through `IAiBlogFixBatchStore`.
+`IAiAdminService`는 제거됐다. AI endpoints는 MediatR command/query handler를 호출하고, batch persistence는 `IAiBlogFixBatchStore`를 통해 흐른다.
 
-Implemented slices:
+구현된 slice:
 
-- `GetAiRuntimeConfigQueryHandler`: resolve provider/model defaults from options and `IBlogAiFixService` capability metadata.
-- `FixBlogHtmlCommandHandler`: validate HTML, call `IBlogAiFixService`, return a response DTO. No EF store required.
-- `EnrichWorkHtmlCommandHandler`: same pattern for work enrichment.
-- `CreateBlogFixBatchJobCommandHandler`: select target blogs through `IAiBlogFixBatchStore`, build selection key, create job/items, notify `AiBatchJobSignal`.
-- `ListBlogFixBatchJobsQueryHandler` and `GetBlogFixBatchJobQueryHandler`: use `IAiBlogFixBatchStore` projections.
-- `ApplyBlogFixBatchJobCommandHandler`: load job/items and target blogs, apply content/excerpt update, refresh aggregates.
-- `CancelBlogFixBatchJobCommandHandler`, `CancelQueuedBlogFixBatchJobsCommandHandler`, `ClearCompletedBlogFixBatchJobsCommandHandler`, `RemoveBlogFixBatchJobCommandHandler`: isolate status transition rules in handlers and persistence operations in store.
+- `GetAiRuntimeConfigQueryHandler`: options와 `IBlogAiFixService` capability metadata에서 provider/model 기본값을 만든다.
+- `FixBlogHtmlCommandHandler`: HTML 검증, `IBlogAiFixService` 호출, response DTO 반환을 맡는다. EF store가 필요 없다.
+- `EnrichWorkHtmlCommandHandler`: work enrichment에도 같은 패턴을 적용한다.
+- `CreateBlogFixBatchJobCommandHandler`: `IAiBlogFixBatchStore`로 대상 blog를 고르고, selection key 생성, job/item 생성, `AiBatchJobSignal` notify를 맡는다.
+- `ListBlogFixBatchJobsQueryHandler`, `GetBlogFixBatchJobQueryHandler`: `IAiBlogFixBatchStore` projection을 사용한다.
+- `ApplyBlogFixBatchJobCommandHandler`: job/item과 target blog를 로드하고, content/excerpt update를 적용한 뒤 aggregate를 refresh한다.
+- `CancelBlogFixBatchJobCommandHandler`, `CancelQueuedBlogFixBatchJobsCommandHandler`, `ClearCompletedBlogFixBatchJobsCommandHandler`, `RemoveBlogFixBatchJobCommandHandler`: status transition rule은 handler/policy에 두고 persistence operation은 store에 둔다.
 
-Keep `IBlogAiFixService` as an infrastructure/service adapter because it represents an external AI capability. `IAiBlogFixBatchStore` is intentionally one batch-store boundary for now; if it grows again, a later cleanup can split it into target query, job command, and job query stores.
+`IBlogAiFixService`는 외부 AI capability adapter라 유지한다. `IAiBlogFixBatchStore`는 현재 하나의 batch store boundary로 둔다. 더 커지면 target query, job command, job query store로 나눈다.
 
-### Media module candidates
+### Media 모듈 현재 상태
 
-Current shape:
+현재 흐름:
 
 ```text
 Endpoint -> MediatR media command handlers -> IMediaAssetCommandStore + IMediaAssetStorage + IMediaAssetUploadPolicy
 ```
 
-`MediaAssetService` was removed. Upload/delete flows now use command handlers, a command store, storage adapter, and upload policy.
+`MediaAssetService`는 제거됐다. Upload/delete flow는 command handler, command store, storage adapter, upload policy를 사용한다.
 
-Recommended target:
+구현/유지할 목표:
 
-- `UploadAssetCommandHandler`: owns bucket normalization, upload validation outcome, profile id extraction rule, and transactional orchestration.
-- `DeleteAssetCommandHandler`: owns not-found semantics and delete order.
+- `UploadAssetCommandHandler`: bucket normalization, upload validation 결과, profile id 추출 규칙, 저장 orchestration을 맡는다.
+- `DeleteAssetCommandHandler`: not-found 의미와 delete 순서를 맡는다.
 - `IMediaAssetCommandStore`: `AddAssetAsync`, `GetAssetForDeleteAsync`, `RemoveAssetAsync`, `SaveChangesAsync`.
-- `IMediaObjectStorage`: `SaveAsync`, `DeleteIfExistsAsync`, with local storage as one adapter and future R2/S3 storage as another.
-- `MediaUploadPolicy`: pure validation for MIME type, size, extension, bucket constraints.
+- `IMediaObjectStorage`: `SaveAsync`, `DeleteIfExistsAsync`. local storage는 adapter고, future R2/S3도 adapter로 붙인다.
+- `MediaUploadPolicy`: MIME type, size, extension, bucket constraint에 대한 pure validation.
 
 For safety, the first implementation should keep current external response shape but add integration tests around "file written and asset row persisted" and "delete removes both row and file." If true atomicity is required later, add an outbox/cleanup job instead of trying to make file-system writes transactional with EF.
 
-### WorkVideo module candidates
+### WorkVideo 모듈 현재 상태
 
-2026-04-20 implementation converted this from a future candidate into a completed CQRS slice. `WorkVideoService` remains only as `IWorkVideoCleanupService`; endpoint mutations moved to command handlers.
+2026-04-20 구현으로 WorkVideo는 future candidate가 아니라 완료된 CQRS slice가 됐다. `WorkVideoService`는 `IWorkVideoCleanupService` 역할만 남고, endpoint mutation은 command handler로 이동했다.
 
-Completed target:
+완료된 목표:
 
-- One command handler per endpoint action: `IssueWorkVideoUploadCommandHandler`, `UploadLocalWorkVideoCommandHandler`, `ConfirmWorkVideoUploadCommandHandler`, `AddYouTubeWorkVideoCommandHandler`, `ReorderWorkVideosCommandHandler`, `DeleteWorkVideoCommandHandler`, `StartWorkVideoHlsJobCommandHandler`.
-- `IWorkVideoCommandStore` and `IWorkVideoQueryStore` own work/session/video row operations and mutation projections.
-- `IVideoObjectStorage` remains an external storage adapter.
-- `IVideoTranscoder` wraps ffmpeg/HLS segmentation.
-- `IWorkVideoFileInspector`, `IWorkVideoHlsWorkspace`, and `IWorkVideoHlsOutputPublisher` isolate MP4 validation, temp workspace management, and HLS output publishing.
-- `WorkVideoResult<T>`/`WorkVideoResultStatus` replaced HTTP status-bearing service results. HTTP mapping is now only in `WorkVideoEndpoints.ToResult`.
+- endpoint action별 command handler를 둔다: `IssueWorkVideoUploadCommandHandler`, `UploadLocalWorkVideoCommandHandler`, `ConfirmWorkVideoUploadCommandHandler`, `AddYouTubeWorkVideoCommandHandler`, `ReorderWorkVideosCommandHandler`, `DeleteWorkVideoCommandHandler`, `StartWorkVideoHlsJobCommandHandler`.
+- `IWorkVideoCommandStore`, `IWorkVideoQueryStore`가 work/session/video row operation과 mutation projection을 맡는다.
+- `IVideoObjectStorage`는 외부 storage adapter로 남는다.
+- `IVideoTranscoder`가 ffmpeg/HLS segmentation을 감싼다.
+- `IWorkVideoFileInspector`, `IWorkVideoHlsWorkspace`, `IWorkVideoHlsOutputPublisher`가 MP4 validation, temp workspace management, HLS output publishing을 분리한다.
+- `WorkVideoResult<T>`/`WorkVideoResultStatus`가 HTTP status를 들고 있던 service result를 대체한다. HTTP mapping은 `WorkVideoEndpoints.ToResult`에만 있다.
 
-Remaining cleanup, if needed later, is smaller: `WorkVideoPolicy` can be moved from the command handler file into its own file if the policy grows, but it is already pure and does not depend on HTTP, EF, storage, or ffmpeg.
+남은 cleanup은 작다. `WorkVideoPolicy`는 이미 별도 파일이고 HTTP, EF, storage, ffmpeg에 의존하지 않는 pure helper다.
 
 ### Site module candidates
 
@@ -1233,12 +1389,25 @@ Remaining work:
 
 ### WorkVideo command handlers contain substantial orchestration
 
-This is acceptable for the current CQRS target because handlers own use-case orchestration. However, there is still dense validation/storage/transcoding flow in the command handlers.
+This is acceptable for the current CQRS target because handlers own use-case orchestration. The worst file-level bloat was reduced by splitting `WorkVideoCommandHandlers.cs` into endpoint-action handler files and moving pure rules to `WorkVideoPolicy.cs`. However, HLS remains a dense use case because it must coordinate validation, storage selection, workspace, MP4 inspection, ffmpeg segmentation, output publishing, and row creation.
 
 Possible later extraction:
 
 - add focused unit tests for `WorkVideoPolicy`
-- move `WorkVideoPolicy` into its own file if YouTube/video validation rules keep growing
+- split HLS orchestration further only if the support abstractions or tests reveal duplicated rules
+
+### AI batch runner is less coupled but store boundary is still broad
+
+The AI application layer no longer directly uses `IServiceScopeFactory` or service locator resolution. Background-scoped work is isolated in infrastructure boundaries:
+
+- `AiBatchJobProcessor`
+- `AiBatchJobItemDispatcher`
+
+Remaining work:
+
+- review queued-job claim semantics if more than one background worker/process can run
+- consider splitting `IAiBlogFixBatchStore` into target query, job command, and job query stores if batch features continue growing
+- consider smaller runner/finalizer/cancellation policies if `AiBatchJobRunner` grows beyond queue draining
 
 ### Cleanup service is still a service boundary
 

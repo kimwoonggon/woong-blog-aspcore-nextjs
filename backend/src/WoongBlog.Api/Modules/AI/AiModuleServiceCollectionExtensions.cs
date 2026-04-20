@@ -11,9 +11,11 @@ internal static class AiModuleServiceCollectionExtensions
     {
         services.AddAiInfrastructure(configuration);
         services.AddScoped<IAiBlogFixBatchStore, AiBlogFixBatchStore>();
+        services.AddScoped<IAiBatchJobScheduler, AiBatchJobScheduler>();
         services.AddScoped<IAiBatchJobRunner, AiBatchJobRunner>();
+        services.AddSingleton<IAiBatchJobItemDispatcher, AiBatchJobItemDispatcher>();
         services.AddScoped<IAiBatchJobItemProcessor, AiBatchJobItemProcessor>();
-        services.AddScoped<IBlogFixApplyPolicy, BlogFixApplyPolicy>();
+        services.AddSingleton<IBlogFixApplyPolicy, BlogFixApplyPolicy>();
         return services;
     }
 }

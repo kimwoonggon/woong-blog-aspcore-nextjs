@@ -232,6 +232,39 @@ public class ArchitectureBoundaryTests
     }
 
     [Fact]
+    public void Ai_Application_Types_DoNot_Directly_Use_ServiceScopeFactory_Or_ServiceLocator()
+    {
+        var aiApplicationDirectory = Path.Combine(
+            FindRepositoryRoot(),
+            "backend",
+            "src",
+            "WoongBlog.Api",
+            "Modules",
+            "AI",
+            "Application");
+
+        var disallowedTokens = new[]
+        {
+            "IServiceScopeFactory",
+            ".CreateScope(",
+            ".CreateAsyncScope(",
+            "GetRequiredService<",
+        };
+
+        var violatingFiles = Directory.EnumerateFiles(aiApplicationDirectory, "*.cs", SearchOption.AllDirectories)
+            .Where(path =>
+            {
+                var source = File.ReadAllText(path);
+                return disallowedTokens.Any(token => source.Contains(token, StringComparison.Ordinal));
+            })
+            .Select(path => Path.GetRelativePath(FindRepositoryRoot(), path))
+            .OrderBy(path => path)
+            .ToArray();
+
+        Assert.Empty(violatingFiles);
+    }
+
+    [Fact]
     public void Content_Application_Abstractions_DoNot_Accept_MediatR_Request_Types()
     {
         var abstractionTypes = ApiAssembly.GetTypes()

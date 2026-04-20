@@ -15,6 +15,8 @@ test('VA-022 home sections keep a consistent vertical rhythm', async ({ page }) 
   ]
   const gaps: number[] = []
   for (let i = 1; i < sections.length; i += 1) {
+    await expect(sections[i - 1]).toBeVisible()
+    await expect(sections[i]).toBeVisible()
     const [prev, next] = await Promise.all([sections[i - 1].boundingBox(), sections[i].boundingBox()])
     expect(prev).toBeTruthy()
     expect(next).toBeTruthy()
