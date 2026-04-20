@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { getStyle } from './helpers/ui-improvement'
+import { getViewportClass, toggleThemeForViewport } from './helpers/responsive-policy'
 
 test('VA-300 and VA-303 navbar stays sticky with backdrop treatment and footer stays visually separated', async ({ page }) => {
   await page.goto('/')
@@ -20,14 +21,17 @@ test('VA-300 and VA-303 navbar stays sticky with backdrop treatment and footer s
 
 test('VA-302 theme toggle keeps a direct 44px action without popover chrome', async ({ page }) => {
   await page.goto('/')
-  const themeToggle = page.getByTestId('theme-toggle')
+  const viewportClass = await getViewportClass(page)
+  const themeToggle = viewportClass === 'desktop'
+    ? page.getByTestId('theme-toggle')
+    : page.getByRole('button', { name: 'Toggle Menu' })
   const box = await themeToggle.boundingBox()
 
   expect(box).toBeTruthy()
   expect(box!.width).toBeGreaterThanOrEqual(44)
   expect(box!.height).toBeGreaterThanOrEqual(44)
 
-  await themeToggle.click()
+  await toggleThemeForViewport(page)
 
   await expect.poll(() => page.evaluate(() => document.documentElement.classList.contains('dark'))).toBe(true)
   await expect(page.locator('[data-slot="dropdown-menu-content"]')).toHaveCount(0)

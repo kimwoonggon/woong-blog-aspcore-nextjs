@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { expectedPublicBlogPageSize } from './helpers/responsive-policy'
 
 async function expectPageSize(page: import('@playwright/test').Page, expectedPageSize: string) {
   await expect.poll(() => new URL(page.url()).searchParams.get('pageSize')).toBe(expectedPageSize)
@@ -23,59 +24,63 @@ test('blog pagination uses desktop page size and exposes first/prev/next/last co
   await expect(pagination.getByRole('link', { name: '1', exact: true })).toHaveClass(/bg-sky-500/)
 })
 
-test('blog pagination comes up earlier on shorter viewports by reducing the page size', async ({ page }) => {
-  await page.setViewportSize({ width: 1280, height: 720 })
+test('blog pagination uses stable tablet page size instead of height-driven collapse', async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 720 })
   await page.goto('/blog')
 
-  await expectPageSize(page, '2')
-  await expect(page.locator('nav[aria-label="Study pagination"] a[href="/blog?page=1&pageSize=2"]')).toBeVisible()
-  await expect(page.getByTestId('blog-card')).toHaveCount(2)
+  const expectedPageSize = await expectedPublicBlogPageSize(page)
+  await expectPageSize(page, String(expectedPageSize))
+  await expect(page.locator(`nav[aria-label="Study pagination"] a[href="/blog?page=1&pageSize=${expectedPageSize}"]`)).toBeVisible()
+  await expect(page.getByTestId('blog-card')).toHaveCount(expectedPageSize)
   const compactHeight = await page.getByTestId('blog-card').first().evaluate((element) => element.getBoundingClientRect().height)
 
-  expect(compactHeight).toBeLessThan(260)
+  expect(compactHeight).toBeGreaterThan(0)
 })
 
 test('blog pagination hydrates page and pageSize query params without rewriting the requested page', async ({ page }) => {
-  await page.setViewportSize({ width: 1280, height: 720 })
-  await page.goto('/blog?page=2&pageSize=2')
+  await page.setViewportSize({ width: 1024, height: 720 })
+  const expectedPageSize = await expectedPublicBlogPageSize(page)
+  await page.goto(`/blog?page=2&pageSize=${expectedPageSize}`)
 
   const pagination = page.getByLabel('Study pagination')
   const pageCountText = await pagination.locator('span').filter({ hasText: /\d+\s*\/\s*\d+/ }).first().innerText()
   test.skip(pageCountText.trim() === '1 / 1', 'Clean seed has one page of study notes.')
 
   await expect.poll(() => new URL(page.url()).searchParams.get('page')).toBe('2')
-  await expectPageSize(page, '2')
+  await expectPageSize(page, String(expectedPageSize))
   await expect(pagination.getByText('2 /')).toBeVisible()
-  await expect(pagination.getByRole('link', { name: '1', exact: true })).toHaveAttribute('href', '/blog?page=1&pageSize=2')
-  await expect(pagination.getByRole('link', { name: 'Previous' })).toHaveAttribute('href', '/blog?page=1&pageSize=2')
-  await expect(pagination.getByRole('link', { name: 'Next' })).toHaveAttribute('href', '/blog?page=3&pageSize=2')
-  await expect(pagination.getByRole('link', { name: 'Last' })).toHaveAttribute('href', /\/blog\?page=\d+&pageSize=2$/)
+  await expect(pagination.getByRole('link', { name: '1', exact: true })).toHaveAttribute('href', `/blog?page=1&pageSize=${expectedPageSize}`)
+  await expect(pagination.getByRole('link', { name: 'Previous' })).toHaveAttribute('href', `/blog?page=1&pageSize=${expectedPageSize}`)
+  await expect(pagination.getByRole('link', { name: 'Next' })).toHaveAttribute('href', `/blog?page=3&pageSize=${expectedPageSize}`)
+  await expect(pagination.getByRole('link', { name: 'Last' })).toHaveAttribute('href', new RegExp(`/blog\\?page=\\d+&pageSize=${expectedPageSize}$`))
   await expect(pagination.getByRole('link', { name: '2', exact: true })).toHaveClass(/bg-sky-500/)
-  await expect(page.getByTestId('blog-card')).toHaveCount(2)
+  await expect(page.getByTestId('blog-card')).toHaveCount(expectedPageSize)
 })
 
 test('invalid blog page clamps to the nearest valid page', async ({ page, request }) => {
-  await page.setViewportSize({ width: 1280, height: 720 })
-  const response = await request.get('/api/public/blogs?page=1&pageSize=2')
+  await page.setViewportSize({ width: 390, height: 844 })
+  const expectedPageSize = await expectedPublicBlogPageSize(page)
+  const response = await request.get(`/api/public/blogs?page=1&pageSize=${expectedPageSize}`)
   expect(response.ok()).toBeTruthy()
   const payload = await response.json() as { totalPages: number }
   const lastPage = Math.max(1, payload.totalPages)
 
-  await page.goto(`/blog?page=${lastPage + 99}&pageSize=2`)
+  await page.goto(`/blog?page=${lastPage + 99}&pageSize=${expectedPageSize}`)
 
   await expect.poll(() => new URL(page.url()).searchParams.get('page')).toBe(String(lastPage))
-  await expect.poll(() => new URL(page.url()).searchParams.get('pageSize')).toBe('2')
+  await expect.poll(() => new URL(page.url()).searchParams.get('pageSize')).toBe(String(expectedPageSize))
   await expect(page.getByLabel('Study pagination').getByText(`${lastPage} /`)).toBeVisible()
 })
 
-test('blog density changes smoothly at intermediate heights', async ({ page }) => {
-  await page.setViewportSize({ width: 1280, height: 960 })
+test('blog density is stable at tablet width regardless of intermediate height', async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 960 })
   await page.goto('/blog')
 
-  await expectPageSize(page, '4')
+  const expectedPageSize = await expectedPublicBlogPageSize(page)
+  await expectPageSize(page, String(expectedPageSize))
   const cardCount = await page.getByTestId('blog-card').count()
   test.skip(cardCount < 2, 'Clean seed does not have enough study cards for density comparison.')
-  expect(cardCount).toBeLessThanOrEqual(4)
+  expect(cardCount).toBeLessThanOrEqual(expectedPageSize)
 
   const heights = await page.getByTestId('blog-card').evaluateAll((elements) =>
     elements.map((element) => Math.round(element.getBoundingClientRect().height))

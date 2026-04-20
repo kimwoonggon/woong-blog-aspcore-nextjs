@@ -2,6 +2,8 @@ import { copyFile, mkdir, stat, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { expect, test, type APIRequestContext } from '@playwright/test'
 
+import { expectMermaidRendered } from './helpers/mermaid'
+
 test.use({
   storageState: 'test-results/playwright/admin-storage-state.json',
   video: 'on',
@@ -112,7 +114,7 @@ for (let index = 1; index <= COUNT; index += 1) {
     await page.goto(`/admin/blog/${blog.id}`, { waitUntil: 'domcontentloaded' })
     await expect(page.getByLabel('Title')).toHaveValue(blog.title)
     await expect(page.getByTestId('tiptap-editor-shell')).toContainText('Mermaid Diagram')
-    await expect(page.locator('[data-testid="tiptap-editor-shell"] svg').first()).toBeVisible()
+    await expectMermaidRendered(page, page.getByTestId('tiptap-editor-shell'))
   })
 }
 
@@ -121,7 +123,7 @@ for (let index = 1; index <= COUNT; index += 1) {
     const blog = generated[index - 1]
     await page.goto(`/blog/${blog.slug}`, { waitUntil: 'domcontentloaded' })
     await expect(page.locator('main h1', { hasText: blog.title })).toBeVisible()
-    await expect(page.locator('svg').first()).toBeVisible()
+    await expectMermaidRendered(page)
     await expect(page.locator('main')).toContainText(`${suiteKey} before ${index}`)
     await expect(page.locator('main')).toContainText(`${suiteKey} after ${index}`)
   })

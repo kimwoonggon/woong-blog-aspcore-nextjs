@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using WoongBlog.Api.Domain.Entities;
+using WoongBlog.Api.Modules.Content.Common.Application.Support;
 
 namespace WoongBlog.Api.Infrastructure.Persistence;
 
@@ -24,6 +25,18 @@ public class WoongBlogDbContext : DbContext
     public DbSet<Work> Works => Set<Work>();
     public DbSet<WorkVideo> WorkVideos => Set<WorkVideo>();
     public DbSet<WorkVideoUploadSession> WorkVideoUploadSessions => Set<WorkVideoUploadSession>();
+
+    public override int SaveChanges()
+    {
+        SynchronizeContentSearchFields();
+        return base.SaveChanges();
+    }
+
+    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        SynchronizeContentSearchFields();
+        return base.SaveChangesAsync(cancellationToken);
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -61,6 +74,8 @@ public class WoongBlogDbContext : DbContext
         modelBuilder.Entity<Work>(entity =>
         {
             entity.HasIndex(x => x.Slug).IsUnique();
+            entity.HasIndex(x => new { x.Published, x.PublishedAt });
+            entity.HasIndex(x => x.SearchTitle);
             entity.Property(x => x.ContentJson).HasColumnType("jsonb");
             entity.Property(x => x.AllPropertiesJson).HasColumnType("jsonb");
         });
@@ -93,6 +108,8 @@ public class WoongBlogDbContext : DbContext
         modelBuilder.Entity<Blog>(entity =>
         {
             entity.HasIndex(x => x.Slug).IsUnique();
+            entity.HasIndex(x => new { x.Published, x.PublishedAt });
+            entity.HasIndex(x => x.SearchTitle);
             entity.Property(x => x.ContentJson).HasColumnType("jsonb");
         });
 
@@ -118,5 +135,30 @@ public class WoongBlogDbContext : DbContext
             entity.HasIndex(x => x.Email);
             entity.HasIndex(x => new { x.Provider, x.ProviderSubject }).IsUnique();
         });
+    }
+
+    private void SynchronizeContentSearchFields()
+    {
+        foreach (var entry in ChangeTracker.Entries<Blog>())
+        {
+            if (entry.State is EntityState.Added or EntityState.Modified)
+            {
+                entry.Entity.SearchTitle = ContentSearchText.Normalize(entry.Entity.Title);
+                entry.Entity.SearchText = ContentSearchText.BuildIndex(
+                    entry.Entity.Excerpt,
+                    AdminContentJson.ExtractExcerptText(entry.Entity.ContentJson));
+            }
+        }
+
+        foreach (var entry in ChangeTracker.Entries<Work>())
+        {
+            if (entry.State is EntityState.Added or EntityState.Modified)
+            {
+                entry.Entity.SearchTitle = ContentSearchText.Normalize(entry.Entity.Title);
+                entry.Entity.SearchText = ContentSearchText.BuildIndex(
+                    entry.Entity.Excerpt,
+                    AdminContentJson.ExtractExcerptText(entry.Entity.ContentJson));
+            }
+        }
     }
 }

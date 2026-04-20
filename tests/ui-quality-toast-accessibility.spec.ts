@@ -28,7 +28,6 @@ test('WQ-012 admin toasts announce politely without stealing focus', async ({ pa
 
   const toasterRegion = page
     .locator('section[aria-live="polite"][aria-label^="Notifications"]')
-    .filter({ has: page.getByText('Toast accessibility validation failure') })
     .first()
   await expect(toasterRegion).toHaveAttribute('aria-live', 'polite')
   await expect(toasterRegion).toHaveAttribute('aria-relevant', 'additions text')

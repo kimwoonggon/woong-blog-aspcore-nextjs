@@ -41,6 +41,23 @@ public class PersistenceContractTests
         Assert.Equal("jsonb", worksEntity.FindProperty(nameof(Work.AllPropertiesJson))!.FindAnnotation(RelationalAnnotationNames.ColumnType)?.Value);
         Assert.Equal("jsonb", blogsEntity.FindProperty(nameof(Blog.ContentJson))!.FindAnnotation(RelationalAnnotationNames.ColumnType)?.Value);
 
+        Assert.NotNull(worksEntity.FindProperty(nameof(Work.SearchTitle)));
+        Assert.NotNull(worksEntity.FindProperty(nameof(Work.SearchText)));
+        Assert.NotNull(blogsEntity.FindProperty(nameof(Blog.SearchTitle)));
+        Assert.NotNull(blogsEntity.FindProperty(nameof(Blog.SearchText)));
+
+        Assert.Contains(worksEntity.GetIndexes(), index =>
+            index.Properties.Select(property => property.Name).SequenceEqual([nameof(Work.Published), nameof(Work.PublishedAt)]));
+
+        Assert.Contains(blogsEntity.GetIndexes(), index =>
+            index.Properties.Select(property => property.Name).SequenceEqual([nameof(Blog.Published), nameof(Blog.PublishedAt)]));
+
+        Assert.Contains(worksEntity.GetIndexes(), index =>
+            index.Properties.Select(property => property.Name).SequenceEqual([nameof(Work.SearchTitle)]));
+
+        Assert.Contains(blogsEntity.GetIndexes(), index =>
+            index.Properties.Select(property => property.Name).SequenceEqual([nameof(Blog.SearchTitle)]));
+
         Assert.Contains(worksEntity.GetIndexes(), index =>
             index.IsUnique &&
             index.Properties.Select(property => property.Name).SequenceEqual([nameof(Work.Slug)]));

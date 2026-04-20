@@ -2,7 +2,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using WoongBlog.Api.Domain.Entities;
 
-namespace WoongBlog.Api.Modules.Content.Works.Persistence;
+namespace WoongBlog.Api.Modules.Content.Works.Application.Support;
 
 internal static partial class WorkThumbnailUrlResolver
 {
@@ -20,7 +20,7 @@ internal static partial class WorkThumbnailUrlResolver
         var preferredVideo = SelectPreferredVideo(videos);
         if (preferredVideo is not null)
         {
-            if (string.Equals(preferredVideo.SourceType, "youtube", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(preferredVideo.SourceType, WorkVideoSourceTypes.YouTube, StringComparison.OrdinalIgnoreCase))
             {
                 return $"https://img.youtube.com/vi/{preferredVideo.SourceKey}/hqdefault.jpg";
             }
@@ -38,7 +38,7 @@ internal static partial class WorkThumbnailUrlResolver
             .ThenBy(x => x.CreatedAt)
             .ToList();
 
-        return orderedVideos.FirstOrDefault(x => !string.Equals(x.SourceType, "youtube", StringComparison.OrdinalIgnoreCase))
+        return orderedVideos.FirstOrDefault(x => !string.Equals(x.SourceType, WorkVideoSourceTypes.YouTube, StringComparison.OrdinalIgnoreCase))
             ?? orderedVideos.FirstOrDefault();
     }
 

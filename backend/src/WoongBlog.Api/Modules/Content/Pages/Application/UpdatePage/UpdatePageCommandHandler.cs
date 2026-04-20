@@ -6,15 +6,26 @@ namespace WoongBlog.Api.Modules.Content.Pages.Application.UpdatePage;
 
 public sealed class UpdatePageCommandHandler : IRequestHandler<UpdatePageCommand, AdminActionResult>
 {
-    private readonly IAdminPageService _adminPageService;
+    private readonly IPageCommandStore _pageCommandStore;
 
-    public UpdatePageCommandHandler(IAdminPageService adminPageService)
+    public UpdatePageCommandHandler(IPageCommandStore pageCommandStore)
     {
-        _adminPageService = adminPageService;
+        _pageCommandStore = pageCommandStore;
     }
 
     public async Task<AdminActionResult> Handle(UpdatePageCommand request, CancellationToken cancellationToken)
     {
-        return await _adminPageService.UpdatePageAsync(request.Id, request.Title, request.ContentJson, cancellationToken);
+        var page = await _pageCommandStore.GetByIdForUpdateAsync(request.Id, cancellationToken);
+        if (page is null)
+        {
+            return new AdminActionResult(false);
+        }
+
+        page.Title = request.Title;
+        page.ContentJson = request.ContentJson;
+        page.UpdatedAt = DateTimeOffset.UtcNow;
+
+        await _pageCommandStore.SaveChangesAsync(cancellationToken);
+        return new AdminActionResult(true);
     }
 }

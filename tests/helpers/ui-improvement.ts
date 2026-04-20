@@ -1,4 +1,5 @@
 import { expect, type Locator, type Page } from '@playwright/test'
+import { toggleThemeForViewport } from './responsive-policy'
 
 export async function getStyle(locator: Locator, property: string) {
   return locator.evaluate(
@@ -96,7 +97,7 @@ export function contrastRatio(foreground: readonly number[], background: readonl
 }
 
 export async function openThemeMenu(page: Page) {
-  await page.getByTestId('theme-toggle').click()
+  await toggleThemeForViewport(page)
 }
 
 export async function selectTheme(page: Page, value: 'Light' | 'Dark' | 'System') {
@@ -107,7 +108,7 @@ export async function selectTheme(page: Page, value: 'Light' | 'Dark' | 'System'
   const targetIsDark = value === 'Dark'
   const isDark = await page.evaluate(() => document.documentElement.classList.contains('dark'))
   if (isDark !== targetIsDark) {
-    await page.getByTestId('theme-toggle').click()
+    await toggleThemeForViewport(page)
   }
 }
 

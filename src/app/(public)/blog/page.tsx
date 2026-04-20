@@ -20,8 +20,8 @@ interface PageProps {
 }
 
 const DESKTOP_PAGE_SIZE = 12
-const TABLET_PAGE_SIZE = 4
-const MOBILE_PAGE_SIZE = 2
+const TABLET_PAGE_SIZE = 8
+const MOBILE_PAGE_SIZE = 4
 
 function formatPublishedDate(publishedAt?: string | null) {
     return publishedAt

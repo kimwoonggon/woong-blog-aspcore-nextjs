@@ -23,6 +23,11 @@ public static class DatabaseBootstrapper
                     "20260410_work_videos",
                     WorkVideoSchemaPatchSql,
                     cancellationToken);
+                await ApplySchemaPatchAsync(
+                    dbContext,
+                    "20260419_content_search_fields",
+                    ContentSearchSchemaPatchSql,
+                    cancellationToken);
                 await SeedData.InitializeAsync(dbContext);
                 return;
             }
@@ -191,5 +196,79 @@ CREATE TABLE IF NOT EXISTS "VideoStorageCleanupJobs" (
 );
 CREATE INDEX IF NOT EXISTS "IX_VideoStorageCleanupJobs_Status" ON "VideoStorageCleanupJobs" ("Status");
 CREATE INDEX IF NOT EXISTS "IX_VideoStorageCleanupJobs_CreatedAt" ON "VideoStorageCleanupJobs" ("CreatedAt");
+""";
+
+    private const string ContentSearchSchemaPatchSql = """
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+ALTER TABLE "Blogs" ADD COLUMN IF NOT EXISTS "SearchTitle" text NOT NULL DEFAULT '';
+ALTER TABLE "Blogs" ADD COLUMN IF NOT EXISTS "SearchText" text NOT NULL DEFAULT '';
+ALTER TABLE "Blogs" ALTER COLUMN "SearchTitle" SET DEFAULT '';
+ALTER TABLE "Blogs" ALTER COLUMN "SearchText" SET DEFAULT '';
+
+ALTER TABLE "Works" ADD COLUMN IF NOT EXISTS "SearchTitle" text NOT NULL DEFAULT '';
+ALTER TABLE "Works" ADD COLUMN IF NOT EXISTS "SearchText" text NOT NULL DEFAULT '';
+ALTER TABLE "Works" ALTER COLUMN "SearchTitle" SET DEFAULT '';
+ALTER TABLE "Works" ALTER COLUMN "SearchText" SET DEFAULT '';
+
+CREATE OR REPLACE FUNCTION public.__woongblog_content_search_normalize(value text)
+RETURNS text
+LANGUAGE sql
+IMMUTABLE
+AS $$
+  SELECT regexp_replace(lower(coalesce(value, '')), '[[:space:][:punct:][:cntrl:]]+', '', 'g')
+$$;
+
+UPDATE "Blogs"
+SET
+  "SearchTitle" = CASE
+    WHEN "SearchTitle" IS NULL OR "SearchTitle" = '' THEN public.__woongblog_content_search_normalize("Title")
+    ELSE "SearchTitle"
+  END,
+  "SearchText" = CASE
+    WHEN "SearchText" IS NULL OR "SearchText" = '' THEN concat_ws(
+      ' ',
+      nullif(public.__woongblog_content_search_normalize("Excerpt"), ''),
+      nullif(public.__woongblog_content_search_normalize("ContentJson"::text), '')
+    )
+    ELSE "SearchText"
+  END
+WHERE "SearchTitle" IS NULL
+   OR "SearchTitle" = ''
+   OR "SearchText" IS NULL
+   OR "SearchText" = '';
+
+UPDATE "Works"
+SET
+  "SearchTitle" = CASE
+    WHEN "SearchTitle" IS NULL OR "SearchTitle" = '' THEN public.__woongblog_content_search_normalize("Title")
+    ELSE "SearchTitle"
+  END,
+  "SearchText" = CASE
+    WHEN "SearchText" IS NULL OR "SearchText" = '' THEN concat_ws(
+      ' ',
+      nullif(public.__woongblog_content_search_normalize("Excerpt"), ''),
+      nullif(public.__woongblog_content_search_normalize("ContentJson"::text), '')
+    )
+    ELSE "SearchText"
+  END
+WHERE "SearchTitle" IS NULL
+   OR "SearchTitle" = ''
+   OR "SearchText" IS NULL
+   OR "SearchText" = '';
+
+ALTER TABLE "Blogs" ALTER COLUMN "SearchTitle" SET NOT NULL;
+ALTER TABLE "Blogs" ALTER COLUMN "SearchText" SET NOT NULL;
+ALTER TABLE "Works" ALTER COLUMN "SearchTitle" SET NOT NULL;
+ALTER TABLE "Works" ALTER COLUMN "SearchText" SET NOT NULL;
+
+CREATE INDEX IF NOT EXISTS "IX_Blogs_Published_PublishedAt" ON "Blogs" ("Published", "PublishedAt");
+CREATE INDEX IF NOT EXISTS "IX_Works_Published_PublishedAt" ON "Works" ("Published", "PublishedAt");
+CREATE INDEX IF NOT EXISTS "IX_Blogs_SearchTitle_Trgm" ON "Blogs" USING gin ("SearchTitle" gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS "IX_Blogs_SearchText_Trgm" ON "Blogs" USING gin ("SearchText" gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS "IX_Works_SearchTitle_Trgm" ON "Works" USING gin ("SearchTitle" gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS "IX_Works_SearchText_Trgm" ON "Works" USING gin ("SearchText" gin_trgm_ops);
+
+DROP FUNCTION IF EXISTS public.__woongblog_content_search_normalize(text);
 """;
 }

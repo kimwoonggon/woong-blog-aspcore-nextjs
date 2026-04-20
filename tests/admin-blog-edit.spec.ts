@@ -8,8 +8,14 @@ test('admin can edit an existing blog post with mixed special input', async ({ p
   const updatedBody = `수정 본문 한국어 + English + !!! ${Date.now()}`
 
   await page.goto('/admin/blog')
-  await page.getByTestId('admin-blog-row').first().locator('td').nth(1).getByRole('link').click()
-  await expect(page).toHaveURL(/\/admin\/blog\//)
+  const firstRow = page.getByTestId('admin-blog-row').first()
+  await expect(firstRow).toBeVisible()
+  const editLink = firstRow.locator('td').nth(1).getByRole('link').first()
+  await expect(editLink).toHaveAttribute('href', /\/admin\/blog\/[^?]+/)
+  await Promise.all([
+    page.waitForURL(/\/admin\/blog\/[^/?]+/),
+    editLink.click(),
+  ])
   await expect(page.getByLabel('Title')).toBeVisible()
 
   await page.getByLabel('Title').fill(updatedTitle)

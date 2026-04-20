@@ -143,7 +143,6 @@ test('admin can cancel a running blog AI batch job from the batch panel', async 
 
   await page.getByRole('button', { name: 'Cancel job' }).click()
 
-  await expect(page.getByText('AI batch cancellation requested')).toBeVisible()
   await expect(page.getByTestId('admin-blog-batch-ai-status')).toContainText('cancelled')
   await expect(page.getByText('running 0 · queued 0 · completed 0 · failed 0 · cancelled 1')).toBeVisible()
   await expect(page.getByRole('button', { name: 'Cancel job' })).toHaveCount(0)

@@ -52,6 +52,11 @@ test('Recent posts card metadata, title, and excerpt stay vertically aligned', a
   const title = card.locator('[data-slot="card-title"]').first()
   const content = card.locator('[data-slot="card-content"]').first()
 
+  await expect(card).toBeVisible()
+  await card.scrollIntoViewIfNeeded()
+  await expect(header).toBeVisible()
+  await expect(title).toBeVisible()
+
   const [headerBox, titleBox, contentBox] = await Promise.all([
     header.boundingBox(),
     title.boundingBox(),

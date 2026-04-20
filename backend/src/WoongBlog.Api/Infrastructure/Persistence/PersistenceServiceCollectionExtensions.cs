@@ -2,12 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using WoongBlog.Api.Modules.Composition.Application.Abstractions;
 using WoongBlog.Api.Modules.Composition.Persistence;
-using WoongBlog.Api.Modules.Content.Blogs.Application.Abstractions;
-using WoongBlog.Api.Modules.Content.Blogs.Persistence;
-using WoongBlog.Api.Modules.Content.Pages.Application.Abstractions;
-using WoongBlog.Api.Modules.Content.Pages.Persistence;
-using WoongBlog.Api.Modules.Content.Works.Application.Abstractions;
-using WoongBlog.Api.Modules.Content.Works.Persistence;
 using WoongBlog.Api.Modules.Identity.Application.Abstractions;
 using WoongBlog.Api.Modules.Identity.Persistence;
 using WoongBlog.Api.Modules.Site.Application.Abstractions;
@@ -39,12 +33,6 @@ internal static class PersistenceServiceCollectionExtensions
             options.ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.PendingModelChangesWarning));
         });
 
-        services.AddScoped<IAdminPageService, AdminPageService>();
-        services.AddScoped<IPublicPageService, PublicPageService>();
-        services.AddScoped<IAdminBlogService, AdminBlogService>();
-        services.AddScoped<IPublicBlogService, PublicBlogService>();
-        services.AddScoped<IAdminWorkService, AdminWorkService>();
-        services.AddScoped<IPublicWorkService, PublicWorkService>();
         services.AddScoped<IAdminMemberService, AdminMemberService>();
         services.AddScoped<IAdminSiteSettingsService, AdminSiteSettingsService>();
         services.AddScoped<IPublicSiteService, PublicSiteService>();

@@ -4,7 +4,7 @@ async function gotoStable(page: Page, url: string) {
   for (let attempt = 0; attempt < 2; attempt += 1) {
     try {
       await page.goto(url, { waitUntil: 'domcontentloaded' })
-      await page.waitForLoadState('networkidle')
+      await expect(page.locator('body')).toBeVisible({ timeout: 15000 })
       return
     } catch (error) {
       if (!(error instanceof Error) || !error.message.includes('ERR_ABORTED') || attempt === 1) {
@@ -22,24 +22,9 @@ export async function loginAsLocalAdmin(page: Page, returnPath = '/') {
     `${baseUrl}/api/auth/test-login?email=admin%40example.com&returnUrl=%2Fadmin%2Fdashboard`,
   )
   await expect(page).toHaveURL(/\/admin(?:\/dashboard)?$/, { timeout: 15000 })
-  await expect.poll(async () => {
-    try {
-      return await page.evaluate(async () => {
-        try {
-          const response = await fetch('/api/auth/session', {
-            credentials: 'include',
-            cache: 'no-store',
-          })
-          if (!response.ok) return false
-          const payload = await response.json() as { authenticated?: boolean }
-          return payload.authenticated === true
-        } catch {
-          return false
-        }
-      })
-    } catch {
-      return false
-    }
-  }, { timeout: 15000 }).toBe(true)
+  await expect(page.getByRole('heading', { name: /Dashboard|Admin Panel/ }).first()).toBeVisible({ timeout: 15000 })
+  if (new URL(page.url()).pathname === returnPath) {
+    return
+  }
   await gotoStable(page, `${baseUrl}${returnPath}`)
 }

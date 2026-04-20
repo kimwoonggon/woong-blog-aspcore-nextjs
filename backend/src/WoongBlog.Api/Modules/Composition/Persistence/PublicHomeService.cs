@@ -3,7 +3,9 @@ using WoongBlog.Api.Domain.Entities;
 using WoongBlog.Api.Infrastructure.Persistence;
 using WoongBlog.Api.Modules.Composition.Application.Abstractions;
 using WoongBlog.Api.Modules.Composition.Application.GetHome;
-using WoongBlog.Api.Modules.Content.Works.Persistence;
+using WoongBlog.Api.Modules.Content.Blogs.Application.GetBlogs;
+using WoongBlog.Api.Modules.Content.Works.Application.GetWorks;
+using WoongBlog.Api.Modules.Content.Works.Application.Support;
 
 namespace WoongBlog.Api.Modules.Composition.Persistence;
 

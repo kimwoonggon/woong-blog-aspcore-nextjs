@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Options;
+using WoongBlog.Api.Domain.Entities;
 using WoongBlog.Api.Infrastructure.Auth;
 using WoongBlog.Api.Modules.Content.Works.Application.WorkVideos;
 

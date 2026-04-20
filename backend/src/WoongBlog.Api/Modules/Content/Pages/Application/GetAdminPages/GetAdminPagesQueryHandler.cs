@@ -5,15 +5,15 @@ namespace WoongBlog.Api.Modules.Content.Pages.Application.GetAdminPages;
 
 public sealed class GetAdminPagesQueryHandler : IRequestHandler<GetAdminPagesQuery, IReadOnlyList<AdminPageListItemDto>>
 {
-    private readonly IAdminPageService _adminPageService;
+    private readonly IPageQueryStore _pageQueryStore;
 
-    public GetAdminPagesQueryHandler(IAdminPageService adminPageService)
+    public GetAdminPagesQueryHandler(IPageQueryStore pageQueryStore)
     {
-        _adminPageService = adminPageService;
+        _pageQueryStore = pageQueryStore;
     }
 
     public async Task<IReadOnlyList<AdminPageListItemDto>> Handle(GetAdminPagesQuery request, CancellationToken cancellationToken)
     {
-        return await _adminPageService.GetPagesAsync(request.Slugs, cancellationToken);
+        return await _pageQueryStore.GetAdminPagesAsync(request.Slugs, cancellationToken);
     }
 }

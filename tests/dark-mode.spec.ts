@@ -10,6 +10,7 @@ import {
   getStyle,
   gotoWithTheme,
 } from './helpers/ui-improvement'
+import { expectResponsiveNavMode, toggleThemeForViewport } from './helpers/responsive-policy'
 
 async function firstPublicSlug(page: Page, collection: 'blogs' | 'works') {
   const response = await page.request.get(`/api/public/${collection}?page=1&pageSize=1`)
@@ -22,12 +23,12 @@ async function firstPublicSlug(page: Page, collection: 'blogs' | 'works') {
 test.describe('theme toggle', () => {
   test('DM-01: theme toggle button is visible in the navbar', async ({ page }) => {
     await page.goto('/')
-    await expect(page.getByTestId('theme-toggle')).toBeVisible()
+    await expectResponsiveNavMode(page)
   })
 
   test('DM-02: clicking the theme toggle applies the dark class directly', async ({ page }) => {
     await page.goto('/')
-    await page.getByTestId('theme-toggle').click()
+    await toggleThemeForViewport(page)
     await expectDarkHtml(page)
 
     const bodyBackground = await getColorChannels(page.locator('body'), 'background-color')
@@ -37,9 +38,9 @@ test.describe('theme toggle', () => {
 
   test('DM-03: clicking the theme toggle again removes the dark class', async ({ page }) => {
     await page.goto('/')
-    await page.getByTestId('theme-toggle').click()
+    await toggleThemeForViewport(page)
     await expectDarkHtml(page)
-    await page.getByTestId('theme-toggle').click()
+    await toggleThemeForViewport(page)
     await expectLightHtml(page)
 
     const bodyBackground = await getStyle(page.locator('body'), 'background-color')
@@ -49,7 +50,7 @@ test.describe('theme toggle', () => {
 
   test('DM-04: the selected theme persists after reload', async ({ page }) => {
     await page.goto('/')
-    await page.getByTestId('theme-toggle').click()
+    await toggleThemeForViewport(page)
     await expectDarkHtml(page)
     await page.reload({ waitUntil: 'networkidle' })
     await expectDarkHtml(page)
@@ -60,7 +61,7 @@ test.describe('theme toggle', () => {
     await page.emulateMedia({ colorScheme: 'dark' })
     await page.goto('/')
     await expectLightHtml(page)
-    await page.getByTestId('theme-toggle').click()
+    await toggleThemeForViewport(page)
     await expectDarkHtml(page)
     await expect(page.locator('[data-slot="dropdown-menu-content"]')).toHaveCount(0)
     await expect(page.getByRole('menuitemradio')).toHaveCount(0)

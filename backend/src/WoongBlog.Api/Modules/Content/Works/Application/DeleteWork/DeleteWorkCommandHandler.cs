@@ -7,18 +7,31 @@ namespace WoongBlog.Api.Modules.Content.Works.Application.DeleteWork;
 
 public sealed class DeleteWorkCommandHandler : IRequestHandler<DeleteWorkCommand, AdminActionResult>
 {
-    private readonly IAdminWorkService _adminWorkService;
+    private readonly IWorkCommandStore _workCommandStore;
     private readonly IWorkVideoService _workVideoService;
 
-    public DeleteWorkCommandHandler(IAdminWorkService adminWorkService, IWorkVideoService workVideoService)
+    public DeleteWorkCommandHandler(IWorkCommandStore workCommandStore, IWorkVideoService workVideoService)
     {
-        _adminWorkService = adminWorkService;
+        _workCommandStore = workCommandStore;
         _workVideoService = workVideoService;
     }
 
     public async Task<AdminActionResult> Handle(DeleteWorkCommand request, CancellationToken cancellationToken)
     {
+        var work = await _workCommandStore.GetByIdForUpdateAsync(request.Id, cancellationToken);
+        if (work is null)
+        {
+            return new AdminActionResult(false);
+        }
+
         await _workVideoService.EnqueueCleanupForWorkAsync(request.Id, cancellationToken);
-        return await _adminWorkService.DeleteAsync(request.Id, cancellationToken);
+        var workVideos = await _workCommandStore.GetVideosForWorkAsync(request.Id, cancellationToken);
+        var uploadSessions = await _workCommandStore.GetUploadSessionsForWorkAsync(request.Id, cancellationToken);
+
+        _workCommandStore.RemoveVideos(workVideos);
+        _workCommandStore.RemoveUploadSessions(uploadSessions);
+        _workCommandStore.Remove(work);
+        await _workCommandStore.SaveChangesAsync(cancellationToken);
+        return new AdminActionResult(true);
     }
 }

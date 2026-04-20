@@ -2,6 +2,7 @@ using Amazon.S3;
 using Amazon.S3.Model;
 using Amazon.S3.Util;
 using Microsoft.Extensions.Options;
+using WoongBlog.Api.Domain.Entities;
 using WoongBlog.Api.Modules.Content.Works.Application.WorkVideos;
 
 namespace WoongBlog.Api.Infrastructure.Storage;

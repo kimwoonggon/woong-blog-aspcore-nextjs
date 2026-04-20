@@ -5,7 +5,11 @@ test.use({ storageState: 'test-results/playwright/admin-storage-state.json' })
 
 async function openBlogEditor(page: Page) {
   await page.goto('/admin/blog')
-  await page.getByTestId('admin-blog-row').first().getByRole('link').first().click()
+  const editLink = page.getByTestId('admin-blog-row').first().getByRole('link').first()
+  await expect(editLink).toHaveAttribute('href', /\/admin\/blog\/[^?]+/)
+  const href = await editLink.getAttribute('href')
+  expect(href).toBeTruthy()
+  await page.goto(href!)
   await expect(page.locator('.tiptap.ProseMirror').first()).toBeVisible()
   await expect.poll(() => page.evaluate(() => {
     const target = window as typeof window & { __WOONG_TIPTAP_EDITOR__?: { commands?: { setContent?: (value: string) => void } } }

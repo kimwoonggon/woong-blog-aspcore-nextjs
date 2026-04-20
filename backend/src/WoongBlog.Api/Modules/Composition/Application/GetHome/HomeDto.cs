@@ -1,3 +1,6 @@
+using WoongBlog.Api.Modules.Content.Blogs.Application.GetBlogs;
+using WoongBlog.Api.Modules.Content.Works.Application.GetWorks;
+
 namespace WoongBlog.Api.Modules.Composition.Application.GetHome;
 
 public sealed record HomeDto(
@@ -15,27 +18,4 @@ public sealed record SiteSettingsSummaryDto(
     string GitHubUrl,
     string LinkedInUrl,
     string ResumePublicUrl
-);
-
-public sealed record WorkCardDto(
-    Guid Id,
-    string Slug,
-    string Title,
-    string Excerpt,
-    string Category,
-    string? Period,
-    string[] Tags,
-    string? ThumbnailUrl,
-    string? IconUrl,
-    DateTimeOffset? PublishedAt
-);
-
-public sealed record BlogCardDto(
-    Guid Id,
-    string Slug,
-    string Title,
-    string Excerpt,
-    string[] Tags,
-    string? CoverUrl,
-    DateTimeOffset? PublishedAt
 );

@@ -60,6 +60,8 @@ next-env.d.ts
 # runtime/test artifacts
 test-results/
 playwright-report/
+tests/playwright/**/*.webm
+tests/playwright/**/*.png
 tests/helpers/admin-storage-state.json
 backend/**/bin/
 backend/**/obj/

@@ -5,6 +5,15 @@ namespace WoongBlog.Api.Modules.Content.Common.Application.Support;
 
 internal static class ContentSearchText
 {
+    public static string BuildIndex(params string?[] values)
+    {
+        var normalizedValues = values
+            .Select(Normalize)
+            .Where(value => value.Length > 0);
+
+        return string.Join(' ', normalizedValues);
+    }
+
     public static bool ContainsNormalized(string? value, string? query)
     {
         var normalizedQuery = Normalize(query);
@@ -27,7 +36,7 @@ internal static class ContentSearchText
         return values.Any(value => Normalize(value).Contains(normalizedQuery, StringComparison.Ordinal));
     }
 
-    private static string Normalize(string? value)
+    public static string Normalize(string? value)
     {
         if (string.IsNullOrWhiteSpace(value))
         {

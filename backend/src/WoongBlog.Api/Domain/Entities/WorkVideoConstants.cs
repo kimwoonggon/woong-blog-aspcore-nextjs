@@ -1,4 +1,4 @@
-namespace WoongBlog.Api.Modules.Content.Works.Application.WorkVideos;
+namespace WoongBlog.Api.Domain.Entities;
 
 public static class WorkVideoSourceTypes
 {

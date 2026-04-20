@@ -2,6 +2,8 @@ import { copyFile, mkdir, stat, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { expect, test, type APIRequestContext } from '@playwright/test'
 
+import { expectMermaidRendered } from './helpers/mermaid'
+
 test.use({
   storageState: 'test-results/playwright/admin-storage-state.json',
   video: 'on',
@@ -133,7 +135,9 @@ test('save batch ai prompt before reading mermaid posts', async ({ page }) => {
   await expect.poll(async () => (await prompt.inputValue()).length).toBeGreaterThan(0)
   await prompt.fill(BATCH_AI_PROMPT)
   await expect(prompt).toHaveValue(BATCH_AI_PROMPT)
+  await expect(panel.getByText('Unsaved')).toBeVisible()
   await panel.getByRole('button', { name: 'Save prompt' }).click()
+  await expect(panel.getByText('Unsaved')).toHaveCount(0)
   await expect.poll(async () => page.evaluate(() => window.localStorage.getItem('admin-ai-system-prompt') ?? '')).toBe(BATCH_AI_PROMPT)
 })
 
@@ -143,7 +147,7 @@ for (let index = 1; index <= COUNT; index += 1) {
     await page.goto(`/admin/blog/${blog.id}`, { waitUntil: 'domcontentloaded' })
     await expect(page.getByLabel('Title')).toHaveValue(blog.title)
     await expect(page.getByTestId('tiptap-editor-shell')).toContainText('Mermaid Diagram')
-    await expect(page.locator('[data-testid="tiptap-editor-shell"] svg').first()).toBeVisible()
+    await expectMermaidRendered(page, page.getByTestId('tiptap-editor-shell'))
   })
 }
 
@@ -152,7 +156,7 @@ for (let index = 1; index <= COUNT; index += 1) {
     const blog = generated[index - 1]
     await page.goto(`/blog/${blog.slug}`, { waitUntil: 'domcontentloaded' })
     await expect(page.locator('main h1', { hasText: blog.title })).toBeVisible()
-    await expect(page.locator('svg').first()).toBeVisible()
+    await expectMermaidRendered(page)
     await expect(page.locator('main')).toContainText(`${suiteKey} batch prompt before ${index}`)
     await expect(page.locator('main')).toContainText(`${suiteKey} batch prompt after ${index}`)
   })

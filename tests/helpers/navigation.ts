@@ -46,6 +46,12 @@ export async function rewriteHeaderNavHref(page: Page, label: string, href: stri
     return
   }
 
+  if (!(await dialogLink.isVisible().catch(() => false))) {
+    await expect(menuButton).toBeVisible()
+    await menuButton.click()
+    await expect(dialogLink).toBeVisible()
+  }
+
   await dialogLink.evaluate((element, nextHref) => {
     ;(element as HTMLAnchorElement).href = nextHref
   }, href)

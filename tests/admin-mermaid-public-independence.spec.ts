@@ -1,5 +1,7 @@
 import { expect, test, type APIRequestContext } from '@playwright/test'
 
+import { expectMermaidRendered } from './helpers/mermaid'
+
 test.use({ storageState: 'test-results/playwright/admin-storage-state.json' })
 
 async function getCsrf(request: APIRequestContext) {
@@ -99,7 +101,7 @@ test('public blog and work pages stay stable when mermaid content exists', async
 
   await page.goto(`/blog/${mermaidBlog.slug}`)
   await expect(page.locator('main h1', { hasText: mermaidBlogTitle })).toBeVisible()
-  await expect(page.locator('svg').first()).toBeVisible()
+  await expectMermaidRendered(page)
   await expect(page.getByText('Blog before diagram')).toBeVisible()
   await expect(page.getByText('Blog after diagram')).toBeVisible()
   await page.goto(`/blog/${plainBlog.slug}`)
@@ -108,7 +110,7 @@ test('public blog and work pages stay stable when mermaid content exists', async
 
   await page.goto(`/works/${mermaidWork.slug}`)
   await expect(page.locator('main h1', { hasText: mermaidWorkTitle })).toBeVisible()
-  await expect(page.locator('svg').first()).toBeVisible()
+  await expectMermaidRendered(page)
   await expect(page.getByText('Work before diagram')).toBeVisible()
   await expect(page.getByText('Work after diagram')).toBeVisible()
   const relatedNext = page.getByRole('button', { name: 'Go to next related page' })

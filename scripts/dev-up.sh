@@ -21,11 +21,20 @@ if [[ -z "${CODEX_HOME_DIR:-}" ]]; then
 fi
 
 export CODEX_HOME_DIR
+case "${CODEX_HOME_DIR}" in
+  /*) ;;
+  *)
+    echo "CODEX_HOME_DIR must be an absolute path: ${CODEX_HOME_DIR}" >&2
+    exit 1
+    ;;
+esac
 if [[ -e "${CODEX_HOME_DIR}" && ! -d "${CODEX_HOME_DIR}" ]]; then
   echo "CODEX_HOME_DIR must be a directory: ${CODEX_HOME_DIR}" >&2
   exit 1
 fi
-mkdir -p "${CODEX_HOME_DIR}"
+mkdir -p "${CODEX_HOME_DIR}/plugins/cache" "${CODEX_HOME_DIR}/.tmp/plugins"
+readlink -f "${CODEX_HOME_DIR}/plugins/cache" >/dev/null
+readlink -f "${CODEX_HOME_DIR}/.tmp/plugins" >/dev/null
 
 COMPOSE_ENV_FILE="$(mktemp)"
 cp "${APP_ENV_FILE}" "${COMPOSE_ENV_FILE}"

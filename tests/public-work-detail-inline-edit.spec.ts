@@ -1,12 +1,14 @@
 import { expect, test } from '@playwright/test'
+import { expectedPublicWorksPageSize } from './helpers/responsive-policy'
 
 test.use({ storageState: 'test-results/playwright/admin-storage-state.json' })
 
 
 test('admin can edit a public work detail inline and return to the originating works page', async ({ page }) => {
   const updatedTitle = `inline work title ${Date.now()}`
+  const expectedPageSize = await expectedPublicWorksPageSize(page)
 
-  await page.goto('/works?page=2&pageSize=2')
+  await page.goto(`/works?page=2&pageSize=${expectedPageSize}`)
   const originalListUrl = page.url()
   await page.locator('a[href^="/works/"]').first().click()
 

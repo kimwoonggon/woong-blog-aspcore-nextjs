@@ -1,6 +1,14 @@
-using WoongBlog.Api.Modules.Composition.Application.GetHome;
-
 namespace WoongBlog.Api.Modules.Content.Blogs.Application.GetBlogs;
+
+public sealed record BlogCardDto(
+    Guid Id,
+    string Slug,
+    string Title,
+    string Excerpt,
+    string[] Tags,
+    string? CoverUrl,
+    DateTimeOffset? PublishedAt
+);
 
 public sealed record PagedBlogsDto(
     IReadOnlyList<BlogCardDto> Items,

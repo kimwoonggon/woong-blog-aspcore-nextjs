@@ -7,8 +7,6 @@ using WoongBlog.Api.Modules.Composition.Persistence;
 using WoongBlog.Api.Modules.Content.Blogs.Application.Abstractions;
 using WoongBlog.Api.Modules.Content.Blogs.Application.GetBlogs;
 using WoongBlog.Api.Modules.Content.Blogs.Persistence;
-using WoongBlog.Api.Modules.Content.Pages.Application.Abstractions;
-using WoongBlog.Api.Modules.Content.Pages.Persistence;
 using WoongBlog.Api.Modules.Content.Works.Application.Abstractions;
 using WoongBlog.Api.Modules.Content.Works.Application.GetWorks;
 using WoongBlog.Api.Modules.Content.Works.Application.WorkVideos;
@@ -33,8 +31,8 @@ public class PublicQueryHandlerTests
 
     private static IPublicHomeService CreatePublicHomeService(WoongBlogDbContext dbContext) => new PublicHomeService(dbContext);
     private static IPublicSiteService CreatePublicSiteService(WoongBlogDbContext dbContext) => new PublicSiteService(dbContext);
-    private static IPublicWorkService CreatePublicWorkService(WoongBlogDbContext dbContext) => new PublicWorkService(dbContext, new TestPlaybackUrlBuilder());
-    private static IPublicBlogService CreatePublicBlogService(WoongBlogDbContext dbContext) => new PublicBlogService(dbContext);
+    private static IWorkQueryStore CreateWorkQueryStore(WoongBlogDbContext dbContext) => new WorkQueryStore(dbContext, new TestPlaybackUrlBuilder());
+    private static IBlogQueryStore CreateBlogQueryStore(WoongBlogDbContext dbContext) => new BlogQueryStore(dbContext);
 
     private sealed class TestPlaybackUrlBuilder : IWorkVideoPlaybackUrlBuilder
     {
@@ -140,7 +138,7 @@ public class PublicQueryHandlerTests
         );
         await dbContext.SaveChangesAsync();
 
-        var handler = new GetWorksQueryHandler(CreatePublicWorkService(dbContext));
+        var handler = new GetWorksQueryHandler(CreateWorkQueryStore(dbContext));
 
         var result = await handler.Handle(new GetWorksQuery(), CancellationToken.None);
 
@@ -158,7 +156,7 @@ public class PublicQueryHandlerTests
         );
         await dbContext.SaveChangesAsync();
 
-        var handler = new GetWorksQueryHandler(CreatePublicWorkService(dbContext));
+        var handler = new GetWorksQueryHandler(CreateWorkQueryStore(dbContext));
 
         var result = await handler.Handle(new GetWorksQuery(Page: 2, PageSize: 1), CancellationToken.None);
 
@@ -178,7 +176,7 @@ public class PublicQueryHandlerTests
         );
         await dbContext.SaveChangesAsync();
 
-        var handler = new GetWorksQueryHandler(CreatePublicWorkService(dbContext));
+        var handler = new GetWorksQueryHandler(CreateWorkQueryStore(dbContext));
 
         var result = await handler.Handle(new GetWorksQuery(Query: "terminal", SearchMode: "title"), CancellationToken.None);
 
@@ -196,7 +194,7 @@ public class PublicQueryHandlerTests
         );
         await dbContext.SaveChangesAsync();
 
-        var handler = new GetWorksQueryHandler(CreatePublicWorkService(dbContext));
+        var handler = new GetWorksQueryHandler(CreateWorkQueryStore(dbContext));
 
         var result = await handler.Handle(new GetWorksQuery(Query: "tbn", SearchMode: "title"), CancellationToken.None);
 
@@ -214,7 +212,7 @@ public class PublicQueryHandlerTests
         );
         await dbContext.SaveChangesAsync();
 
-        var handler = new GetWorksQueryHandler(CreatePublicWorkService(dbContext));
+        var handler = new GetWorksQueryHandler(CreateWorkQueryStore(dbContext));
 
         var result = await handler.Handle(new GetWorksQuery(Query: "graph-token", SearchMode: "content"), CancellationToken.None);
 
@@ -232,7 +230,7 @@ public class PublicQueryHandlerTests
         );
         await dbContext.SaveChangesAsync();
 
-        var handler = new GetBlogsQueryHandler(CreatePublicBlogService(dbContext));
+        var handler = new GetBlogsQueryHandler(CreateBlogQueryStore(dbContext));
 
         var result = await handler.Handle(new GetBlogsQuery(Page: 2, PageSize: 1), CancellationToken.None);
 
@@ -252,7 +250,7 @@ public class PublicQueryHandlerTests
         );
         await dbContext.SaveChangesAsync();
 
-        var handler = new GetBlogsQueryHandler(CreatePublicBlogService(dbContext));
+        var handler = new GetBlogsQueryHandler(CreateBlogQueryStore(dbContext));
 
         var result = await handler.Handle(new GetBlogsQuery(Query: "TBN", SearchMode: "title"), CancellationToken.None);
 

@@ -1,19 +1,32 @@
 using MediatR;
+using WoongBlog.Api.Modules.Content.Common.Application.Support;
 using WoongBlog.Api.Modules.Content.Works.Application.Abstractions;
 
 namespace WoongBlog.Api.Modules.Content.Works.Application.GetWorks;
 
 public class GetWorksQueryHandler : IRequestHandler<GetWorksQuery, PagedWorksDto>
 {
-    private readonly IPublicWorkService _publicWorkService;
+    private readonly IWorkQueryStore _workQueryStore;
 
-    public GetWorksQueryHandler(IPublicWorkService publicWorkService)
+    public GetWorksQueryHandler(IWorkQueryStore workQueryStore)
     {
-        _publicWorkService = publicWorkService;
+        _workQueryStore = workQueryStore;
     }
 
     public async Task<PagedWorksDto> Handle(GetWorksQuery request, CancellationToken cancellationToken)
     {
-        return await _publicWorkService.GetWorksAsync(request, cancellationToken);
+        var pageSize = Math.Max(1, request.PageSize);
+        var page = Math.Max(1, request.Page);
+        var normalizedQuery = ContentSearchText.Normalize(request.Query);
+        var searchMode = string.Equals(request.SearchMode.Trim(), "content", StringComparison.OrdinalIgnoreCase)
+            ? ContentSearchMode.Content
+            : ContentSearchMode.Title;
+
+        return await _workQueryStore.GetPublishedPageAsync(
+            page,
+            pageSize,
+            string.IsNullOrEmpty(normalizedQuery) ? null : normalizedQuery,
+            searchMode,
+            cancellationToken);
     }
 }

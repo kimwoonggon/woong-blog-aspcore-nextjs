@@ -94,7 +94,8 @@ test('Works uses two columns on tablet and three on desktop', async ({ page }) =
     const grid = page.getByTestId('featured-works-grid')
 
     const templateColumns = await getStyle(grid, 'grid-template-columns')
-    return templateColumns.split(' ').length
+    const repeatMatch = templateColumns.match(/^repeat\((\d+),/)
+    return repeatMatch ? Number(repeatMatch[1]) : templateColumns.split(' ').length
   }
 
   expect(await measureColumns(768, 1024)).toBe(2)
