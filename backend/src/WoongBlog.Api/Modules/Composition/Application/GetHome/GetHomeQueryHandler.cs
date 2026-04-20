@@ -5,15 +5,26 @@ namespace WoongBlog.Api.Modules.Composition.Application.GetHome;
 
 public class GetHomeQueryHandler : IRequestHandler<GetHomeQuery, HomeDto?>
 {
-    private readonly IPublicHomeService _publicHomeService;
+    private readonly IHomeQueryStore _homeQueryStore;
 
-    public GetHomeQueryHandler(IPublicHomeService publicHomeService)
+    public GetHomeQueryHandler(IHomeQueryStore homeQueryStore)
     {
-        _publicHomeService = publicHomeService;
+        _homeQueryStore = homeQueryStore;
     }
 
     public async Task<HomeDto?> Handle(GetHomeQuery request, CancellationToken cancellationToken)
     {
-        return await _publicHomeService.GetHomeAsync(cancellationToken);
+        var homePage = await _homeQueryStore.GetHomePageAsync(cancellationToken);
+        var siteSettings = await _homeQueryStore.GetSiteSettingsSummaryAsync(cancellationToken);
+
+        if (homePage is null || siteSettings is null)
+        {
+            return null;
+        }
+
+        var featuredWorks = await _homeQueryStore.GetFeaturedWorksAsync(cancellationToken);
+        var recentPosts = await _homeQueryStore.GetRecentPostsAsync(cancellationToken);
+
+        return new HomeDto(homePage, siteSettings, featuredWorks, recentPosts);
     }
 }

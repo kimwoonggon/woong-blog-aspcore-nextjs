@@ -1,11 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
-using WoongBlog.Api.Modules.Composition.Application.Abstractions;
-using WoongBlog.Api.Modules.Composition.Persistence;
-using WoongBlog.Api.Modules.Identity.Application.Abstractions;
-using WoongBlog.Api.Modules.Identity.Persistence;
-using WoongBlog.Api.Modules.Site.Application.Abstractions;
-using WoongBlog.Api.Modules.Site.Persistence;
 
 namespace WoongBlog.Api.Infrastructure.Persistence;
 
@@ -32,12 +26,6 @@ internal static class PersistenceServiceCollectionExtensions
             options.UseNpgsql(connectionString);
             options.ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.PendingModelChangesWarning));
         });
-
-        services.AddScoped<IAdminMemberService, AdminMemberService>();
-        services.AddScoped<IAdminSiteSettingsService, AdminSiteSettingsService>();
-        services.AddScoped<IPublicSiteService, PublicSiteService>();
-        services.AddScoped<IAdminDashboardService, AdminDashboardService>();
-        services.AddScoped<IPublicHomeService, PublicHomeService>();
 
         return services;
     }

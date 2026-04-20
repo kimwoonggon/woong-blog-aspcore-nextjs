@@ -74,6 +74,12 @@ public sealed record BlogFixBatchJobCreateRequest(
 public sealed record BlogFixBatchJobApplyRequest(
     IReadOnlyList<Guid>? JobItemIds = null);
 
+public sealed record BlogFixBatchJobCancelQueuedResponse(int Cancelled);
+
+public sealed record BlogFixBatchJobClearCompletedResponse(int Cleared);
+
+public sealed record BlogFixBatchJobRemoveResponse(int Removed, Guid JobId);
+
 public sealed record BlogFixBatchJobListResponse(
     IReadOnlyList<BlogFixBatchJobSummaryResponse> Jobs,
     int RunningCount,

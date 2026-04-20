@@ -3,7 +3,7 @@ WORKDIR /src
 
 COPY backend/WoongBlog.sln ./backend/WoongBlog.sln
 COPY backend/src/WoongBlog.Api/ ./backend/src/WoongBlog.Api/
-COPY backend/tests/WoongBlog.Api.Tests/ ./backend/tests/WoongBlog.Api.Tests/
+COPY backend/tests/ ./backend/tests/
 
 WORKDIR /src/backend/src/WoongBlog.Api
 RUN dotnet restore ../../WoongBlog.sln

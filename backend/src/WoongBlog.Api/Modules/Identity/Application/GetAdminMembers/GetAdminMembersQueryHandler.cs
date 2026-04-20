@@ -5,15 +5,15 @@ namespace WoongBlog.Api.Modules.Identity.Application.GetAdminMembers;
 
 public sealed class GetAdminMembersQueryHandler : IRequestHandler<GetAdminMembersQuery, IReadOnlyList<AdminMemberListItemDto>>
 {
-    private readonly IAdminMemberService _adminMemberService;
+    private readonly IAdminMemberQueryStore _adminMemberQueryStore;
 
-    public GetAdminMembersQueryHandler(IAdminMemberService adminMemberService)
+    public GetAdminMembersQueryHandler(IAdminMemberQueryStore adminMemberQueryStore)
     {
-        _adminMemberService = adminMemberService;
+        _adminMemberQueryStore = adminMemberQueryStore;
     }
 
     public async Task<IReadOnlyList<AdminMemberListItemDto>> Handle(GetAdminMembersQuery request, CancellationToken cancellationToken)
     {
-        return await _adminMemberService.GetAllAsync(cancellationToken);
+        return await _adminMemberQueryStore.GetAllAsync(cancellationToken);
     }
 }

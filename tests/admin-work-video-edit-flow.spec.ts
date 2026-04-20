@@ -18,8 +18,11 @@ test('admin can add videos inline while editing an existing work', async ({ page
 
   const created = await createResponse.json()
   await page.goto(`/admin/works/${created.id}`)
+  await expect(page.getByLabel('Title')).toHaveValue(title)
+  await expect(page.getByText(/Saved videos version 0/i)).toBeVisible()
 
   await page.getByLabel('YouTube URL or ID').fill('https://youtu.be/dQw4w9WgXcQ')
+  await expect(page.getByRole('button', { name: 'Add YouTube Video' })).toBeEnabled()
   await Promise.all([
     page.waitForResponse((res) => res.url().includes('/videos/youtube') && res.request().method() === 'POST' && res.ok()),
     page.getByRole('button', { name: 'Add YouTube Video' }).click(),

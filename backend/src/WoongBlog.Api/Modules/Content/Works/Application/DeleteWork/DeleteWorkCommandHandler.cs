@@ -8,12 +8,12 @@ namespace WoongBlog.Api.Modules.Content.Works.Application.DeleteWork;
 public sealed class DeleteWorkCommandHandler : IRequestHandler<DeleteWorkCommand, AdminActionResult>
 {
     private readonly IWorkCommandStore _workCommandStore;
-    private readonly IWorkVideoService _workVideoService;
+    private readonly IWorkVideoCleanupService _workVideoCleanupService;
 
-    public DeleteWorkCommandHandler(IWorkCommandStore workCommandStore, IWorkVideoService workVideoService)
+    public DeleteWorkCommandHandler(IWorkCommandStore workCommandStore, IWorkVideoCleanupService workVideoCleanupService)
     {
         _workCommandStore = workCommandStore;
-        _workVideoService = workVideoService;
+        _workVideoCleanupService = workVideoCleanupService;
     }
 
     public async Task<AdminActionResult> Handle(DeleteWorkCommand request, CancellationToken cancellationToken)
@@ -24,7 +24,7 @@ public sealed class DeleteWorkCommandHandler : IRequestHandler<DeleteWorkCommand
             return new AdminActionResult(false);
         }
 
-        await _workVideoService.EnqueueCleanupForWorkAsync(request.Id, cancellationToken);
+        await _workVideoCleanupService.EnqueueCleanupForWorkAsync(request.Id, cancellationToken);
         var workVideos = await _workCommandStore.GetVideosForWorkAsync(request.Id, cancellationToken);
         var uploadSessions = await _workCommandStore.GetUploadSessionsForWorkAsync(request.Id, cancellationToken);
 

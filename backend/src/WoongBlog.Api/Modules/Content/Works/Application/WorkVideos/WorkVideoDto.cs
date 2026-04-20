@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Http;
 using System.Text.Json.Serialization;
 
 namespace WoongBlog.Api.Modules.Content.Works.Application.WorkVideos;
@@ -27,16 +26,25 @@ public sealed record VideoUploadTargetResult(
     string StorageKey
 );
 
-public sealed record WorkVideoServiceResult<T>(
-    int StatusCode,
+public enum WorkVideoResultStatus
+{
+    Success,
+    BadRequest,
+    NotFound,
+    Conflict,
+    Unsupported
+}
+
+public sealed record WorkVideoResult<T>(
+    WorkVideoResultStatus Status,
     string? Error,
     T? Value)
 {
-    public bool IsSuccess => StatusCode is >= 200 and < 300;
+    public bool IsSuccess => Status == WorkVideoResultStatus.Success;
 
-    public static WorkVideoServiceResult<T> Ok(T value) => new(StatusCodes.Status200OK, null, value);
-    public static WorkVideoServiceResult<T> BadRequest(string error) => new(StatusCodes.Status400BadRequest, error, default);
-    public static WorkVideoServiceResult<T> NotFound(string error) => new(StatusCodes.Status404NotFound, error, default);
-    public static WorkVideoServiceResult<T> Conflict(string error) => new(StatusCodes.Status409Conflict, error, default);
-    public static WorkVideoServiceResult<T> Unsupported(string error) => new(StatusCodes.Status400BadRequest, error, default);
+    public static WorkVideoResult<T> Ok(T value) => new(WorkVideoResultStatus.Success, null, value);
+    public static WorkVideoResult<T> BadRequest(string error) => new(WorkVideoResultStatus.BadRequest, error, default);
+    public static WorkVideoResult<T> NotFound(string error) => new(WorkVideoResultStatus.NotFound, error, default);
+    public static WorkVideoResult<T> Conflict(string error) => new(WorkVideoResultStatus.Conflict, error, default);
+    public static WorkVideoResult<T> Unsupported(string error) => new(WorkVideoResultStatus.Unsupported, error, default);
 }

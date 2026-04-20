@@ -191,7 +191,7 @@ Query handler는 request parameter 정규화, search mode 결정, page/pageSize 
 `DeleteWorkCommandHandler`는 다음 책임을 갖게 됐다.
 
 - work 존재 여부 확인
-- `IWorkVideoService.EnqueueCleanupForWorkAsync` 호출
+- `IWorkVideoCleanupService.EnqueueCleanupForWorkAsync` 호출
 - work videos/upload sessions 로드
 - related rows remove
 - work remove/save
@@ -425,9 +425,16 @@ Works:
 AddWorksModule()
   IWorkCommandStore -> WorkCommandStore
   IWorkQueryStore -> WorkQueryStore
-  IWorkVideoService -> WorkVideoService
+  IWorkVideoCommandStore -> WorkVideoCommandStore
+  IWorkVideoQueryStore -> WorkVideoQueryStore
+  IWorkVideoCleanupService -> WorkVideoService
   IVideoObjectStorage -> Local/R2 storage
   IWorkVideoPlaybackUrlBuilder -> WorkVideoPlaybackUrlBuilder
+  IVideoTranscoder -> FfmpegVideoTranscoder
+  IWorkVideoStorageSelector -> WorkVideoStorageSelector
+  IWorkVideoFileInspector -> WorkVideoFileInspector
+  IWorkVideoHlsWorkspace -> WorkVideoHlsWorkspace
+  IWorkVideoHlsOutputPublisher -> WorkVideoHlsOutputPublisher
 ```
 
 Pages:
@@ -437,6 +444,284 @@ AddPagesModule()
   IPageCommandStore -> PageCommandStore
   IPageQueryStore -> PageQueryStore
 ```
+
+## 2026-04-20 implementation update - AI and WorkVideo
+
+이전 문서의 `Follow-up direction`은 AI와 WorkVideo를 다음 후보로 적었지만, 이후 구현에서 두 영역도 CQRS 방향으로 실제 전환했다. 이 섹션은 현재 코드 기준으로 사라진 interface/service, 새로 생긴 store/handler/support, 그리고 책임 이동을 기록한다.
+
+### AI module - removed facade service
+
+제거된 broad service:
+
+- `IAiAdminService`
+- `AiAdminService`
+
+이전 구조는 AI admin endpoints가 `IAiAdminService`를 직접 호출하고, 이 service가 runtime config 조회, single blog fix, work enrich, batch job 생성/조회/적용/취소/삭제 같은 여러 use case를 한 곳에 품는 형태였다. 이 구조에서는 endpoint와 service 사이에 MediatR command/query가 있어도, 실제 use-case orchestration은 `AiAdminService`에 남아 있었다.
+
+변경 후 AI endpoint 흐름은 다음과 같다.
+
+```text
+AI Endpoint -> MediatR Command/Query Handler -> IAiBlogFixBatchStore / IBlogAiFixService / policy
+```
+
+HTTP mapping은 endpoint boundary에 남겼다.
+
+- `AiActionResult<T>`: application result. HTTP status code나 `IResult`를 직접 노출하지 않는다.
+- `AiHttpResultMapper`: API layer에서만 `AiActionResult<T>`를 `IResult`로 변환한다.
+
+### AI module - added stores, policies, handlers
+
+새 persistence boundary:
+
+- `IAiBlogFixBatchStore`
+- `AiBlogFixBatchStore`
+
+역할:
+
+- blog fix 대상 조회
+- batch job/item 생성
+- active/queued/running/completed job 조회
+- job item 조회
+- target blog update용 entity 로드
+- job/item 삭제
+- `SaveChangesAsync`
+
+새 policy/support:
+
+- `AiRuntimePolicy`
+- `AiBatchJobProgressPolicy`
+- `AiBatchJobResponseMapper`
+- `AiBatchWorkerPolicy`
+- `IBlogFixApplyPolicy` / `BlogFixApplyPolicy`
+
+역할:
+
+- provider/model/reasoning/custom prompt normalization
+- selection key 생성
+- queued/running/completed/failed/cancelled/applied 상태 전환 규칙
+- job/item count refresh/finalize 규칙
+- response DTO mapping
+- auto-apply 시 `Blog.ContentJson`, excerpt, item status 갱신
+
+주요 handler:
+
+- `GetAiRuntimeConfigQueryHandler`
+- `FixBlogHtmlCommandHandler`
+- `EnrichWorkHtmlCommandHandler`
+- `FixBlogBatchCommandHandler`
+- `CreateBlogFixBatchJobCommandHandler`
+- `ListBlogFixBatchJobsQueryHandler`
+- `GetBlogFixBatchJobQueryHandler`
+- `ApplyBlogFixBatchJobCommandHandler`
+- `CancelBlogFixBatchJobCommandHandler`
+- `CancelQueuedBlogFixBatchJobsCommandHandler`
+- `ClearCompletedBlogFixBatchJobsCommandHandler`
+- `RemoveBlogFixBatchJobCommandHandler`
+
+이 handler들이 기존 `AiAdminService`가 갖고 있던 use-case 책임을 나눠 가져갔다. 예를 들어 `CreateBlogFixBatchJobCommandHandler`는 대상 blog 선택, runtime provider/model 결정, selection key 생성, duplicate active job 재사용, job/item 생성, signal notify를 담당한다. `ApplyBlogFixBatchJobCommandHandler`는 succeeded item과 대상 blog를 로드하고, fixed html을 blog content/excerpt에 적용한 뒤 job aggregate를 refresh한다.
+
+외부 AI provider 호출은 여전히 `IBlogAiFixService`가 담당한다. 이 interface는 제거 대상이 아니라 infrastructure adapter boundary로 유지한다.
+
+### AI batch processor - background loop and job execution split
+
+`AiBatchJobProcessor`는 더 이상 `WoongBlogDbContext`를 직접 사용하지 않는다. 현재 책임은 background worker loop에 집중된다.
+
+```text
+AiBatchJobProcessor
+  -> reset running jobs
+  -> wait signal
+  -> find queued job
+  -> mark job running
+  -> IAiBatchJobRunner.RunAsync(jobId)
+```
+
+새 실행 boundary:
+
+- `IAiBatchJobRunner` / `AiBatchJobRunner`
+- `IAiBatchJobItemProcessor` / `AiBatchJobItemProcessor`
+
+`AiBatchJobRunner`는 job 하나의 pending item queue를 worker count 정책에 따라 drain하고, item별 processing 후 count refresh/finalize를 수행한다. `AiBatchJobItemProcessor`는 item 하나에 대해 blog 로드, `IBlogAiFixService` 호출, success/fail 상태 기록, auto-apply 적용을 담당한다.
+
+CQRS 관점의 개선점:
+
+- background service가 EF persistence와 AI provider orchestration을 직접 품지 않는다.
+- job 단위 orchestration과 item 단위 orchestration이 분리됐다.
+- 상태 전환 규칙은 `AiBatchJobProgressPolicy`로 모였다.
+- HTTP result mapping은 API layer로 제한됐다.
+
+주의점:
+
+- `AiBatchJobRunner`는 앞으로 비대해질 수 있다. 현재도 worker queue drain, cancellation check, item dispatch, count refresh, finalize를 모두 담당한다.
+- `AiBatchJobProcessor`는 가벼워졌지만 완전히 passive scheduler는 아니다. queued job 조회, running 전환, runner 호출 orchestration을 여전히 가진다.
+- queued job pick과 `MarkRunning`은 현재 store 호출과 save 흐름으로 동작한다. 여러 worker/process가 동시에 실행될 가능성이 커지면 atomic claim 또는 DB-level concurrency guard를 별도로 점검해야 한다.
+- `IServiceScopeFactory` 기반 resolve가 여러 private method에 흩어져 있어 흐름 추적이 약간 어렵다. scoped dependency 생명주기를 지키기 위한 선택이지만, runner가 더 커지면 `IAiBatchJobQueue`, `IAiBatchJobFinalizer`, `IAiBatchJobCancellationPolicy` 같은 더 작은 경계로 분리할 수 있다.
+- `IAiBlogFixBatchStore`가 target query, job command, job query 역할을 함께 가진다. 현재는 단일 batch boundary로 받아들였지만, batch 기능이 더 커지면 `IAiBatchTargetQueryStore`, `IAiBatchJobCommandStore`, `IAiBatchJobQueryStore`로 쪼갤 후보가 된다.
+
+### WorkVideo - removed broad interface and narrowed service boundary
+
+제거/교체된 broad boundary:
+
+- `IWorkVideoService`
+- `WorkVideoServiceResult<T>`
+
+`WorkVideoService` class 자체는 남아 있지만 역할이 바뀌었다. 더 이상 upload URL 발급, direct upload, HLS 변환, confirm, YouTube 추가, reorder, delete 같은 endpoint use case를 모두 처리하는 broad service가 아니다. 현재 `WorkVideoService`는 `IWorkVideoCleanupService` 구현으로 축소되어 cleanup 전용 background/delete-work boundary만 담당한다.
+
+새 cleanup boundary:
+
+- `IWorkVideoCleanupService`
+- `WorkVideoService`
+
+역할:
+
+- work 삭제 시 관련 video cleanup job enqueue
+- pending cleanup job 처리
+- expired upload session 정리
+
+### WorkVideo - command/query handlers and stores
+
+새 persistence boundary:
+
+- `IWorkVideoCommandStore`
+- `WorkVideoCommandStore`
+- `IWorkVideoQueryStore`
+- `WorkVideoQueryStore`
+
+`IWorkVideoCommandStore`는 mutation primitive를 담당한다.
+
+- work/update 대상 로드
+- upload session 로드/추가/상태 변경
+- video count/next sort order 조회
+- video row 추가/삭제/reorder
+- cleanup job enqueue
+- expired session/pending cleanup job 조회
+- `SaveChangesAsync`
+
+`IWorkVideoQueryStore`는 mutation 후 response projection을 담당한다.
+
+- `GetMutationResultAsync`
+- `WorkVideosMutationResult`
+- `WorkVideoDto`
+
+새 command handlers:
+
+- `IssueWorkVideoUploadCommandHandler`
+- `UploadLocalWorkVideoCommandHandler`
+- `ConfirmWorkVideoUploadCommandHandler`
+- `AddYouTubeWorkVideoCommandHandler`
+- `ReorderWorkVideosCommandHandler`
+- `DeleteWorkVideoCommandHandler`
+- `StartWorkVideoHlsJobCommandHandler`
+
+endpoint 흐름은 다음과 같다.
+
+```text
+WorkVideo Endpoint -> MediatR Command Handler -> IWorkVideoCommandStore/IWorkVideoQueryStore + storage/transcoding support
+```
+
+`WorkVideoEndpoints`는 HTTP request binding, auth, route mapping, `WorkVideoResult<T>` -> HTTP 변환만 담당한다. handler는 version conflict, not found, validation, mutation, cleanup enqueue, projection 조회를 orchestration한다.
+
+### WorkVideo - support/adapters extracted
+
+새 support/adapters:
+
+- `IWorkVideoStorageSelector`
+- `IVideoTranscoder` / `FfmpegVideoTranscoder`
+- `IWorkVideoFileInspector`
+- `IWorkVideoHlsWorkspace`
+- `IWorkVideoHlsOutputPublisher`
+
+책임 분리:
+
+- `IWorkVideoStorageSelector`: local/R2 등 현재 사용할 video storage 선택
+- `IVideoTranscoder`: ffmpeg HLS segmentation 실행
+- `IWorkVideoFileInspector`: MP4 prefix/`ftyp` validation
+- `IWorkVideoHlsWorkspace`: HLS 임시 workspace/source file 관리
+- `IWorkVideoHlsOutputPublisher`: HLS output directory를 object storage로 publish
+
+이 분리로 `StartWorkVideoHlsJobCommandHandler`는 HLS use case orchestration을 유지하되, filesystem temp directory, ffmpeg process, output upload 같은 side effect 구현을 직접 품지 않는다.
+
+### WorkVideo result mapping
+
+`WorkVideoServiceResult<T>`가 갖고 있던 HTTP status code 개념은 제거했다. 새 result는 application-level status만 가진다.
+
+- `WorkVideoResult<T>`
+- `WorkVideoResultStatus`
+  - `Success`
+  - `BadRequest`
+  - `NotFound`
+  - `Conflict`
+  - `Unsupported`
+
+HTTP status mapping은 `WorkVideoEndpoints.ToResult`에서만 수행한다. architecture test도 `WorkVideoResult<T>`가 `StatusCodes.*`에 의존하지 않도록 검증한다.
+
+### WorkVideo handlers - improved responsibilities
+
+`IssueWorkVideoUploadCommandHandler`:
+
+- work 존재 여부 확인
+- videos version conflict 확인
+- file policy validation
+- max video count 확인
+- storage backend 선택
+- upload session 생성
+- upload target 생성
+
+`ConfirmWorkVideoUploadCommandHandler`:
+
+- session/work/version validation
+- object 존재/content-type/size 확인
+- MP4 prefix validation
+- `WorkVideo` row 생성
+- session confirmed 처리
+- videos version 증가
+
+`AddYouTubeWorkVideoCommandHandler`:
+
+- work/version/max-count validation
+- YouTube URL/ID normalization
+- `WorkVideo` row 생성
+- mutation projection 반환
+
+`ReorderWorkVideosCommandHandler`:
+
+- work/version validation
+- reorder payload가 모든 video를 정확히 포함하는지 검증
+- sort order update
+- videos version 증가
+
+`DeleteWorkVideoCommandHandler`:
+
+- work/version/video 존재 여부 확인
+- cleanup job enqueue
+- video row 삭제
+- remaining videos sort order 재정렬
+- videos version 증가
+
+`StartWorkVideoHlsJobCommandHandler`:
+
+- file/work/version/max-count validation
+- storage 선택
+- HLS workspace 생성
+- MP4 inspection
+- `IVideoTranscoder`를 통한 HLS segmentation
+- HLS output publish
+- HLS `WorkVideo` row 생성
+
+CQRS 관점의 개선점:
+
+- endpoint handler가 broad `IWorkVideoService`에 위임하지 않는다.
+- mutation 책임이 command별 handler로 나뉘었다.
+- persistence primitive와 response projection이 store로 분리됐다.
+- storage/ffmpeg/filesystem side effect는 adapter/support interface로 분리됐다.
+- cleanup은 별도 service boundary로 남겨 background worker와 delete-work cleanup만 담당한다.
+
+주의점:
+
+- WorkVideo command handlers는 여전히 무겁다. CQRS 관점에서는 handler orchestration이 맞지만, especially `StartWorkVideoHlsJobCommandHandler`는 validation, storage selection, workspace, MP4 inspection, transcoding, publish, row creation을 한 흐름에서 조율한다.
+- `WorkVideoPolicy`는 pure helper라 허용 가능하지만 현재 command handler 파일 안에 있다. YouTube normalization, file validation, HLS constants가 더 커지면 별도 file/class로 분리하는 편이 낫다.
+- `IWorkVideoCommandStore`도 mutation primitive를 많이 담고 있다. 지금은 WorkVideo aggregate boundary로 볼 수 있지만, cleanup/session/video row operation이 더 커지면 session command store, cleanup command store로 분리할 수 있다.
+- cleanup은 `IWorkVideoCleanupService`로 좁아졌지만 여전히 service boundary다. cleanup job processing이 복잡해지면 `ProcessVideoCleanupJobsCommandHandler`, `ExpireWorkVideoUploadSessionsCommandHandler`처럼 background use case도 command handler로 표현하는 것을 검토한다.
+- storage/HLS support extraction은 side effect 구현을 분리했지만, handler가 이 support들을 연결하는 흐름은 아직 길다. 이 부분은 추후 unit/integration 테스트가 충분해진 뒤 더 작게 나누는 것이 안전하다.
 
 ## Files added
 
@@ -500,6 +785,509 @@ Preserved:
 - `SearchTitle` and `SearchText` are denormalized fields. This adds write-side synchronization complexity but reduces read-side search cost.
 - `WoongBlogDbContext` now references Content support helpers for search synchronization. This is pragmatic in a single-project architecture but would need a domain/application service if the codebase later becomes multi-project Clean Architecture.
 - Raw SQL schema patch remains consistent with the repository's current `SchemaPatches` approach instead of introducing EF migrations.
+
+## Follow-up direction - cross-module handler/service split
+
+2026-04-20 review note: the Content refactor direction is sound, but the same rule should not stop at Blog/Work/Page. The next pass should treat Content as the reference implementation and apply the same responsibility split to AI, Media, Site, Identity, Composition, and WorkVideo flows where the current service owns too many concerns.
+
+The target rule is not "remove every service." The rule is:
+
+- Endpoint owns HTTP binding, auth policy selection, request DTO binding, and HTTP result mapping.
+- Command/query handler owns use-case orchestration, state transition rules, and failure/result semantics.
+- Command/query store owns persistence primitives and projection queries.
+- Infrastructure adapter owns external side effects such as AI provider calls, local/R2 storage, ffmpeg/HLS processing, cookie sign-in integration, and clock/file-system interactions.
+- Pure policy/support services remain acceptable when they are deterministic and do not depend on HTTP, EF, or external systems.
+
+Red flags to remove in the next refactor:
+
+- Application service method returns `IResult`.
+- Service accepts an API request DTO or MediatR command wholesale and mutates persistence directly.
+- Handler is only a thin wrapper over `SomeBroadService.DoEverythingAsync`.
+- One service combines validation, EF query, file-system write/delete, third-party call, projection, and response shaping.
+- Persistence adapter depends on API contracts rather than primitive parameters, domain entities, or projection DTOs.
+
+### AI module candidates
+
+Current implemented shape:
+
+```text
+Endpoint -> MediatR AI handlers -> IAiBlogFixBatchStore + IBlogAiFixService + AiBatchJobSignal
+```
+
+`IAiAdminService` was removed. AI endpoints now call MediatR command/query handlers, and batch persistence flows through `IAiBlogFixBatchStore`.
+
+Implemented slices:
+
+- `GetAiRuntimeConfigQueryHandler`: resolve provider/model defaults from options and `IBlogAiFixService` capability metadata.
+- `FixBlogHtmlCommandHandler`: validate HTML, call `IBlogAiFixService`, return a response DTO. No EF store required.
+- `EnrichWorkHtmlCommandHandler`: same pattern for work enrichment.
+- `CreateBlogFixBatchJobCommandHandler`: select target blogs through `IAiBlogFixBatchStore`, build selection key, create job/items, notify `AiBatchJobSignal`.
+- `ListBlogFixBatchJobsQueryHandler` and `GetBlogFixBatchJobQueryHandler`: use `IAiBlogFixBatchStore` projections.
+- `ApplyBlogFixBatchJobCommandHandler`: load job/items and target blogs, apply content/excerpt update, refresh aggregates.
+- `CancelBlogFixBatchJobCommandHandler`, `CancelQueuedBlogFixBatchJobsCommandHandler`, `ClearCompletedBlogFixBatchJobsCommandHandler`, `RemoveBlogFixBatchJobCommandHandler`: isolate status transition rules in handlers and persistence operations in store.
+
+Keep `IBlogAiFixService` as an infrastructure/service adapter because it represents an external AI capability. `IAiBlogFixBatchStore` is intentionally one batch-store boundary for now; if it grows again, a later cleanup can split it into target query, job command, and job query stores.
+
+### Media module candidates
+
+Current shape:
+
+```text
+Endpoint -> MediatR media command handlers -> IMediaAssetCommandStore + IMediaAssetStorage + IMediaAssetUploadPolicy
+```
+
+`MediaAssetService` was removed. Upload/delete flows now use command handlers, a command store, storage adapter, and upload policy.
+
+Recommended target:
+
+- `UploadAssetCommandHandler`: owns bucket normalization, upload validation outcome, profile id extraction rule, and transactional orchestration.
+- `DeleteAssetCommandHandler`: owns not-found semantics and delete order.
+- `IMediaAssetCommandStore`: `AddAssetAsync`, `GetAssetForDeleteAsync`, `RemoveAssetAsync`, `SaveChangesAsync`.
+- `IMediaObjectStorage`: `SaveAsync`, `DeleteIfExistsAsync`, with local storage as one adapter and future R2/S3 storage as another.
+- `MediaUploadPolicy`: pure validation for MIME type, size, extension, bucket constraints.
+
+For safety, the first implementation should keep current external response shape but add integration tests around "file written and asset row persisted" and "delete removes both row and file." If true atomicity is required later, add an outbox/cleanup job instead of trying to make file-system writes transactional with EF.
+
+### WorkVideo module candidates
+
+2026-04-20 implementation converted this from a future candidate into a completed CQRS slice. `WorkVideoService` remains only as `IWorkVideoCleanupService`; endpoint mutations moved to command handlers.
+
+Completed target:
+
+- One command handler per endpoint action: `IssueWorkVideoUploadCommandHandler`, `UploadLocalWorkVideoCommandHandler`, `ConfirmWorkVideoUploadCommandHandler`, `AddYouTubeWorkVideoCommandHandler`, `ReorderWorkVideosCommandHandler`, `DeleteWorkVideoCommandHandler`, `StartWorkVideoHlsJobCommandHandler`.
+- `IWorkVideoCommandStore` and `IWorkVideoQueryStore` own work/session/video row operations and mutation projections.
+- `IVideoObjectStorage` remains an external storage adapter.
+- `IVideoTranscoder` wraps ffmpeg/HLS segmentation.
+- `IWorkVideoFileInspector`, `IWorkVideoHlsWorkspace`, and `IWorkVideoHlsOutputPublisher` isolate MP4 validation, temp workspace management, and HLS output publishing.
+- `WorkVideoResult<T>`/`WorkVideoResultStatus` replaced HTTP status-bearing service results. HTTP mapping is now only in `WorkVideoEndpoints.ToResult`.
+
+Remaining cleanup, if needed later, is smaller: `WorkVideoPolicy` can be moved from the command handler file into its own file if the policy grows, but it is already pure and does not depend on HTTP, EF, storage, or ffmpeg.
+
+### Site module candidates
+
+Current shape still has actor-style services:
+
+- `IAdminSiteSettingsService` / `AdminSiteSettingsService`
+- `IPublicSiteService` / `PublicSiteService`
+
+The command handler currently delegates the entire `UpdateSiteSettingsCommand` to `AdminSiteSettingsService`. This repeats the pre-refactor Content pattern.
+
+Recommended target:
+
+- `UpdateSiteSettingsCommandHandler` loads singleton settings through `ISiteSettingsCommandStore`, applies partial update semantics, sets `UpdatedAt`, and saves.
+- `GetAdminSiteSettingsQueryHandler`, `GetSiteSettingsQueryHandler`, and `GetResumeQueryHandler` use `ISiteSettingsQueryStore` projections.
+- Resume asset lookup should be a query-store method such as `GetResumeAssetAsync` instead of being hidden in `PublicSiteService`.
+
+### Composition module candidates
+
+Composition queries are read-side orchestration, so broad services are less risky than broad command services. Still, `PublicHomeService` owns home page lookup, site settings lookup, asset lookup, featured works, work videos, recent posts, thumbnail resolution, and DTO construction.
+
+Recommended target:
+
+- `GetHomeQueryHandler` should orchestrate multiple narrow read stores: page summary, site settings summary, featured works, recent posts, and asset lookup.
+- `GetDashboardSummaryQueryHandler` can use `IAdminDashboardQueryStore` because it is a simple read projection.
+- Keep composition DTO construction in the handler or a pure mapper. Do not let a persistence service become the hidden owner of the home page use case.
+
+This can reuse the existing Content query stores where practical. If cross-module query composition becomes too chatty, introduce a dedicated read-model store for the home projection, but keep it query-only.
+
+### Identity/Auth module candidates
+
+Identity has two kinds of code that should be treated differently.
+
+Acceptable service boundary:
+
+- `IdentityInteractionService` may remain a service where it wraps ASP.NET authentication details, cookie properties, and `AuthRecorder` integration. Those are framework interactions, not plain persistence.
+
+Refactor candidates:
+
+- Admin member listing should move from `IAdminMemberService` to `IAdminMemberQueryStore`, with `GetAdminMembersQueryHandler` owning the read use case.
+- Test login profile lookup can be separated into an `IIdentityProfileQueryStore` so `IdentityInteractionService` focuses on authentication/session interaction.
+- Logout and test-login can become commands if endpoint logic grows, but do not over-model `GetSession` and `GetCsrf`; those are thin HTTP/framework reads and can stay endpoint-local.
+
+### Refactor order
+
+Recommended order by risk/reward:
+
+1. Site settings: small scope, mirrors Content update/query split, low side-effect risk.
+2. Composition read stores: improves clarity without changing behavior.
+3. Identity admin members: simple query split.
+4. AI admin/batch handlers: high payoff because `IAiAdminService` mixes HTTP, EF, AI, and batch state transitions.
+5. Media asset upload/delete: side-effect boundary requires careful integration tests.
+6. WorkVideo: largest side-effect surface; do after Media storage boundaries are stable.
+
+Each slice should follow the same TDD cadence:
+
+```text
+one behavior test -> minimum handler/store change -> refactor -> architecture boundary assertion
+```
+
+## Backend test strategy expansion
+
+The backend test plan should distinguish behavioral tests by layer instead of treating every backend test as one generic xUnit suite.
+
+### Project layout target
+
+Current state is a single `backend/tests/WoongBlog.Api.UnitTests, WoongBlog.Api.IntegrationTests, WoongBlog.Api.ArchitectureTests` project with endpoint, persistence, architecture, service, and validator tests. Keep it during migration, but move toward:
+
+```text
+backend/tests/WoongBlog.Api.UnitTests
+backend/tests/WoongBlog.Api.IntegrationTests
+backend/tests/WoongBlog.Api.ContractTests
+backend/tests/WoongBlog.Api.ArchitectureTests
+```
+
+If splitting projects is too much for the first pass, use xUnit traits/categories first and split projects later. The important part is that CI can run fast tests before slower Docker-backed integration/contract tests.
+
+### Unit tests
+
+Purpose: verify pure behavior and handler orchestration without ASP.NET hosting or real external services.
+
+Good targets:
+
+- command/query validators
+- pure policies: slug generation, provider/model normalization, media validation, video validation, search normalization
+- handler state transition rules using fake stores/adapters
+- DTO mapper/projection helpers where they contain non-trivial rules
+- `AuthRedirectUriResolver`, content text extraction, thumbnail resolution
+
+Avoid:
+
+- mocking private methods
+- testing EF query syntax in unit tests
+- asserting that a handler called a specific internal method when the observable result is enough
+
+### Integration tests
+
+Purpose: verify ASP.NET routing, auth policies, DI, EF model behavior, schema patches, persistence queries, file upload behavior, and hosted/background interactions.
+
+Good targets:
+
+- Minimal API endpoint behavior through `WebApplicationFactory`
+- admin auth and CSRF/session flows
+- media upload/delete with test media root
+- AI batch job status transitions with fake AI provider
+- WorkVideo upload/session/reorder/delete with fake storage and fake transcoder
+- PostgreSQL-specific schema and index behavior through Docker compose where in-memory EF would hide issues
+- module registration/startup composition
+
+The existing `PersistenceContractTests` should be renamed conceptually as persistence/schema contract tests. They are valuable, but they are not Pact HTTP contract tests.
+
+### Pact.NET contract tests
+
+Interpretation: `pack.net` in the request maps to Pact.NET/PactNet because the intended feature is contract testing.
+
+Use Pact for HTTP API contract boundaries between the Next.js frontend/API client and ASP.NET provider. Pact is most useful for stable request/response contracts; it should not replace Playwright for browser behavior or integration tests for multipart/file-system side effects.
+
+Recommended first contract scope:
+
+- `GET /api/public/site-settings`
+- `GET /api/public/home`
+- `GET /api/public/blogs`
+- `GET /api/public/blogs/{slug}`
+- `GET /api/public/works`
+- `GET /api/public/works/{slug}`
+- `GET /api/public/pages/{slug}`
+- `GET /api/auth/session`
+- selected admin read endpoints after auth test-state setup
+
+Defer or keep integration-only at first:
+
+- multipart upload contracts
+- HLS/video flows
+- AI batch mutations with long-running background behavior
+
+Provider verification target:
+
+- Add `backend/tests/WoongBlog.Api.ContractTests`.
+- Add `PactNet` and `PactNet.Output.Xunit` to that test project.
+- Start the ASP.NET provider on a real local TCP socket for Pact verification. Do not use `WebApplicationFactory`/in-memory `TestServer` for Pact.NET provider verification because Pact.NET's verifier calls the provider from native code outside the in-memory ASP.NET test server.
+- Use Pact provider states to seed specific rows: published blog exists, published work exists, site settings configured, admin session available, empty result state.
+- Verify Pact files from `tests/contracts/pacts` or from a Pact Broker/PactFlow once CI is ready.
+
+Consumer contract target:
+
+- The real consumer is the Next.js/frontend API layer, so the long-term consumer pact generation should happen in the frontend test stack with Pact JS or generated Pact files from the typed API client tests.
+- If the team wants a .NET-only first step, create a small .NET consumer harness for the highest-value public API contracts, but treat it as a bootstrap. It should not pretend to cover the TypeScript frontend client forever.
+
+Contract authoring rules:
+
+- Use matchers for ids, timestamps, URLs, optional fields, and arrays.
+- Assert JSON shape and business-required fields, not exact seed values unless the exact value is the contract.
+- Keep Pact contracts focused on compatibility; put business edge cases in unit/integration tests.
+- Publish provider verification results only from CI.
+
+Pact.NET package choice:
+
+- Prefer `PactNet` from the `pact-foundation` NuGet owner.
+- Avoid deprecated OS-specific packages such as `PactNet.Windows`, `PactNet.Linux.x64`, and `PactNet.OSX`.
+- Pin the package version centrally once introduced; as of the 2026-04-20 source check, NuGet lists `PactNet` latest as `5.0.1`.
+
+### SonarAnalyzer.CSharp test project plan
+
+2026-04-20 correction: do not introduce SonarQube server/scanner CI for this repository now. The intended static analysis addition is `SonarAnalyzer.CSharp` as a compile-time analyzer package on backend test projects after the CQRS refactor settles.
+
+Recommended backend test project shape after WorkVideo store and AI batch processor cleanup are complete:
+
+```text
+backend/tests/WoongBlog.Api.UnitTests
+backend/tests/WoongBlog.Api.IntegrationTests
+backend/tests/WoongBlog.Api.ArchitectureTests
+backend/tests/WoongBlog.Api.ContractTests
+```
+
+Rules:
+
+- Split tests by dependency shape at the time of the split, not by a fixed stale file-name list.
+- Unit tests must not use `WebApplicationFactory`, `HttpClient`, endpoint routing, auth middleware, real upload side effects, or real DB providers.
+- Integration tests own Minimal API, DI, auth, EF persistence, file/storage side effects, and existing `CustomWebApplicationFactory`/`TestAuthHandler`.
+- Architecture tests own assembly/source dependency rules and can add `NetArchTest.Rules`.
+- Contract tests remain Pact.NET provider verification and stay separate from integration tests.
+- Add `SonarAnalyzer.CSharp 10.15.0.120848` to each backend test project as an analyzer package.
+- Remove any `sonar-scan` CI job and keep Pact provider verification as the only contract-quality job until actual consumer pact files exist.
+
+### New architecture tests to add with each slice
+
+Add boundary tests incrementally as modules are refactored:
+
+- Application services must not return `IResult`.
+- Persistence stores must not accept API request DTOs or MediatR command/query types.
+- Endpoint files should depend on `ISender` for use cases except deliberately thin framework endpoints such as CSRF/session.
+- Domain entities must not reference `Modules.*.Application`, `Infrastructure`, or ASP.NET packages.
+- Query stores can return projection DTOs; command stores should expose persistence primitives and avoid HTTP status/result concepts.
+- AI/Media/Video infrastructure adapters can depend on external libraries, but handlers should depend on interfaces.
+
+## 2026-04-20 implementation update - cross-module CQRS pass
+
+The follow-up direction above has now been applied beyond Content. The most important correction from this pass is that the goal was not to move service methods into handlers mechanically. The goal was to remove broad services that mixed HTTP, EF, external side effects, status transitions, and response shaping.
+
+### Site, Composition, and Identity
+
+The low-risk read/update modules now follow the Content reference shape more closely.
+
+Implemented shape:
+
+```text
+Endpoint -> MediatR Handler -> Command/Query Store -> DbContext
+```
+
+Changes:
+
+- Site settings now use `ISiteSettingsCommandStore` and `ISiteSettingsQueryStore`.
+- `UpdateSiteSettingsCommandHandler` owns partial-update semantics, not-found behavior, `UpdatedAt`, and save orchestration.
+- Public/admin site settings and resume queries use query-store projections.
+- Composition read orchestration now uses `IHomeQueryStore` and `IAdminDashboardQueryStore`.
+- `GetHomeQueryHandler` composes the home DTO from page, site settings, featured works, recent posts, and asset/video projection inputs.
+- Admin members now use `IAdminMemberQueryStore`.
+
+Removed broad services:
+
+- `IAdminSiteSettingsService`
+- `IPublicSiteService`
+- `IAdminDashboardService`
+- `IPublicHomeService`
+- `IAdminMemberService`
+
+Kept intentionally:
+
+- `IdentityInteractionService`, because it wraps ASP.NET authentication/cookie interaction and `AuthRecorder`. This is a framework adapter boundary, not plain persistence orchestration.
+
+### AI module
+
+Previous shape:
+
+```text
+Endpoint -> MediatR AI handlers -> IAiBlogFixBatchStore + IBlogAiFixService + AiBatchJobSignal
+```
+
+Current shape:
+
+```text
+Endpoint -> MediatR Handler -> IAiBlogFixBatchStore + IBlogAiFixService + AiBatchJobSignal
+```
+
+Changes:
+
+- `IAiAdminService` and `AiAdminService` were removed.
+- AI endpoints call `ISender` and map `AiActionResult<T>` to HTTP only at the API boundary.
+- `GetAiRuntimeConfigQueryHandler` owns runtime config response construction.
+- `FixBlogHtmlCommandHandler` and `EnrichWorkHtmlCommandHandler` validate HTML and call `IBlogAiFixService`.
+- Blog batch job create/list/detail/apply/cancel/clear/remove flows are represented as MediatR commands/queries.
+- `IAiBlogFixBatchStore` / `AiBlogFixBatchStore` owns blog target lookup, job/item persistence, aggregate reads, and save primitives.
+- `AiRuntimePolicy` owns provider/model/reasoning/custom prompt/selection-key normalization.
+- `AiBatchJobProgressPolicy` owns batch item/job status transitions and aggregate count refresh.
+- `AiBatchJobProcessor` no longer depends directly on `WoongBlogDbContext`; it works through `IAiBlogFixBatchStore` and shared progress policy.
+
+What this fixed:
+
+- HTTP result creation left the application service layer.
+- API DTOs no longer flow into persistence adapters as service input.
+- Handler and background processor now share the same batch progress rules instead of duplicating count/status math.
+
+### Media module
+
+Previous shape:
+
+```text
+Endpoint -> MediatR media command handlers -> IMediaAssetCommandStore + IMediaAssetStorage + IMediaAssetUploadPolicy
+```
+
+Current shape:
+
+```text
+Endpoint -> MediatR Command Handler -> IMediaAssetCommandStore + IMediaAssetStorage + IMediaAssetUploadPolicy
+```
+
+Changes:
+
+- `IMediaAssetService` and `MediaAssetService` were removed.
+- `UploadAssetCommandHandler` owns upload orchestration, profile id extraction, storage write, asset row creation, and response shaping.
+- `DeleteMediaAssetCommandHandler` owns delete semantics and store/storage coordination.
+- `IMediaAssetCommandStore` owns asset persistence primitives.
+- `IMediaAssetStorage` owns physical file-system side effects.
+- `IMediaAssetUploadPolicy` owns deterministic upload validation.
+
+What this fixed:
+
+- File-system writes and EF persistence are separately testable.
+- Upload validation is pure policy logic.
+- Endpoints no longer call a broad media application service directly.
+
+### WorkVideo module
+
+Intermediate shape after the first pass:
+
+```text
+Endpoint -> MediatR WorkVideo command handlers -> IWorkVideoCommandStore + IWorkVideoQueryStore + storage selector + storage adapter + transcoder
+```
+
+This was not enough because it merely wrapped a broad service. The final pass moved endpoint use-case orchestration into command handlers.
+
+Current endpoint mutation shape:
+
+```text
+Endpoint -> MediatR Command Handler -> IWorkVideoCommandStore + IWorkVideoQueryStore + IWorkVideoStorageSelector + IVideoObjectStorage + IVideoTranscoder
+```
+
+Changes:
+
+- Upload URL, local upload, HLS upload, confirm upload, YouTube add, reorder, and delete endpoints all go through command handlers.
+- Those command handlers now orchestrate stores/adapters directly instead of calling `IWorkVideoService`.
+- `IWorkVideoCommandStore` owns tracked work/video/session/cleanup mutation primitives.
+- `IWorkVideoQueryStore` owns `WorkVideosMutationResult` projection.
+- `IVideoTranscoder` / `FfmpegVideoTranscoder` owns HLS segmentation.
+- `IWorkVideoStorageSelector` owns local/R2 storage selection.
+- `IWorkVideoCleanupService` remains as a narrow cleanup/background/delete-work boundary only.
+
+Kept intentionally:
+
+- `WorkVideoService`, but now only as `IWorkVideoCleanupService` implementation for:
+  - enqueue cleanup for all videos when deleting a work
+  - process cleanup jobs
+  - expire upload sessions
+
+What this fixed:
+
+- Endpoint command handlers are no longer thin wrappers over a broad service.
+- EF row operations are behind stores.
+- Storage and transcoding are adapter boundaries.
+- The remaining service has a narrow background-cleanup responsibility.
+
+### Test project split and static analysis
+
+Backend tests are now physically split after CQRS boundaries stabilized:
+
+```text
+backend/tests/WoongBlog.Api.UnitTests
+backend/tests/WoongBlog.Api.IntegrationTests
+backend/tests/WoongBlog.Api.ArchitectureTests
+backend/tests/WoongBlog.Api.ContractTests
+```
+
+The old `WoongBlog.Api.UnitTests, WoongBlog.Api.IntegrationTests, WoongBlog.Api.ArchitectureTests` project was removed after the split.
+
+Layer ownership:
+
+- Unit tests: pure helpers, validators, policies, and handler/store behavior without ASP.NET hosting.
+- Integration tests: Minimal API, `WebApplicationFactory`, auth, DI, EF, upload/file side effects, AI, media, WorkVideo.
+- Architecture tests: dependency rules and source/assembly boundaries.
+- Contract tests: Pact.NET provider verification; currently clean-skips when no pact JSON files exist.
+
+Static analysis correction:
+
+- SonarQube server/scanner CI was removed.
+- `SonarAnalyzer.CSharp` is used as a compile-time analyzer package in the split test projects.
+
+## Remaining gaps after 2026-04-20 pass
+
+The CQRS/service split is materially better, but not finished in every dimension.
+
+### Pact contracts are infrastructure-only
+
+Pact.NET provider verification exists, but there are no real consumer pact JSON files yet.
+
+Remaining work:
+
+- Generate frontend/API-client consumer pacts for stable read endpoints.
+- Start with public home/site/blog/work/page/auth session contracts.
+- Keep upload, HLS/video mutation, and AI batch mutation out of Pact until those APIs are intentionally frozen.
+
+### WorkVideo command handlers contain substantial orchestration
+
+This is acceptable for the current CQRS target because handlers own use-case orchestration. However, there is still dense validation/storage/transcoding flow in the command handlers.
+
+Possible later extraction:
+
+- add focused unit tests for `WorkVideoPolicy`
+- move `WorkVideoPolicy` into its own file if YouTube/video validation rules keep growing
+
+### Cleanup service is still a service boundary
+
+`IWorkVideoCleanupService` remains intentionally because it is background-worker/delete-work cleanup orchestration. It is narrow now, but still a service.
+
+Watch point:
+
+- If cleanup grows, split it into `IWorkVideoCleanupCommandStore` plus `ProcessVideoCleanupJobsCommandHandler` and `ExpireWorkVideoUploadSessionsCommandHandler`.
+
+### Identity interaction remains broad but framework-bound
+
+`IdentityInteractionService` remains because it coordinates authentication framework behavior, cookies, redirect resolution, and `AuthRecorder`.
+
+Watch point:
+
+- If profile lookup or member/session persistence grows inside it, introduce identity query/command stores and keep the service as only the ASP.NET auth adapter.
+
+### Integration tests still mostly use in-memory EF
+
+The split project includes Testcontainers dependencies, but the existing integration tests still primarily use the current in-memory `WebApplicationFactory`.
+
+Remaining work:
+
+- move PostgreSQL-specific schema/index tests to Testcontainers
+- keep in-memory tests for fast endpoint behavior where provider-specific behavior is irrelevant
+
+### Analyzer warnings are visible but not yet cleaned up
+
+`SonarAnalyzer.CSharp` now emits warnings in test projects, especially around DTO-like private payload types and cancellation-token analyzer warnings.
+
+Remaining work:
+
+- decide which analyzer warnings should be fixed vs suppressed in test projects
+- prefer targeted suppressions for DTO deserialization payloads and integration-test cancellation patterns where appropriate
+
+### Feature flow map is stale for implemented modules
+
+`docs/test260419-feature-flow-map.md` still contains rows that mention old shapes such as old AI and WorkVideo service-call shapes.
+
+Remaining work:
+
+- regenerate or patch the flow map so handler/store columns reflect the new AI, Media, Site, Composition, Identity, and WorkVideo shapes.
+
+### Source notes checked on 2026-04-20
+
+- Pact.NET official docs: `https://docs.pact.io/implementation_guides/net`
+- Pact.NET GitHub README: `https://github.com/pact-foundation/pact-net`
+- NuGet pact-foundation profile: `https://www.nuget.org/profiles/pact-foundation`
+- SonarAnalyzer.CSharp NuGet package: `https://www.nuget.org/packages/SonarAnalyzer.CSharp`
 
 ## Verification performed
 

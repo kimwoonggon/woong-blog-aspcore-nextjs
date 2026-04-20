@@ -217,8 +217,12 @@ public class AuthRecorder
             return false;
         }
 
-        session.LastSeenAt = now;
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        if (ShouldRefreshLastSeen(session.LastSeenAt, now))
+        {
+            session.LastSeenAt = now;
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+
         return true;
     }
 
@@ -250,6 +254,12 @@ public class AuthRecorder
         => _authOptions.AdminEmails.Any(x => string.Equals(x, email, StringComparison.OrdinalIgnoreCase))
             ? "admin"
             : "user";
+
+    private bool ShouldRefreshLastSeen(DateTimeOffset lastSeenAt, DateTimeOffset now)
+    {
+        var refreshIntervalSeconds = Math.Max(1, _authOptions.LastSeenRefreshIntervalSeconds);
+        return lastSeenAt.AddSeconds(refreshIntervalSeconds) <= now;
+    }
 
     private static Guid? TryGuid(string? value) => Guid.TryParse(value, out var result) ? result : null;
 }

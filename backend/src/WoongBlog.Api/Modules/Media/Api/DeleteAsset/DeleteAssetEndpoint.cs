@@ -1,5 +1,6 @@
+using MediatR;
 using Microsoft.AspNetCore.Routing;
-using WoongBlog.Api.Modules.Media.Application;
+using WoongBlog.Api.Modules.Media.Application.Commands.DeleteMediaAsset;
 
 namespace WoongBlog.Api.Modules.Media.Api.DeleteAsset;
 
@@ -9,10 +10,10 @@ internal static class DeleteAssetEndpoint
     {
         app.MapDelete(MediaApiPaths.Uploads, async (
                 Guid id,
-                IMediaAssetService mediaAssetService,
+                ISender sender,
                 CancellationToken cancellationToken) =>
             {
-                var deleted = await mediaAssetService.DeleteAsync(id, cancellationToken);
+                var deleted = await sender.Send(new DeleteMediaAssetCommand(id), cancellationToken);
                 return deleted.Found
                     ? Results.Ok(new { success = true })
                     : Results.NotFound(new { error = "Asset not found" });

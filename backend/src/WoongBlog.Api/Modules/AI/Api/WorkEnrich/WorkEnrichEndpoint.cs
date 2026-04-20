@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Routing;
-using WoongBlog.Api.Modules.AI.Application;
+using MediatR;
+using WoongBlog.Api.Modules.AI.Application.WorkEnrich;
 
 namespace WoongBlog.Api.Modules.AI.Api.WorkEnrich;
 
@@ -7,11 +8,16 @@ internal static class WorkEnrichEndpoint
 {
     internal static void MapWorkEnrich(this IEndpointRouteBuilder app)
     {
-        app.MapPost(AiApiPaths.WorkEnrich, (
+        app.MapPost(AiApiPaths.WorkEnrich, async (
                 WorkEnrichRequest request,
-                IAiAdminService service,
-                CancellationToken cancellationToken) =>
-            service.EnrichWorkAsync(request, cancellationToken))
+                ISender sender,
+                CancellationToken cancellationToken) => (await sender.Send(new EnrichWorkHtmlCommand(
+                    request.Html,
+                    request.Title,
+                    request.Provider,
+                    request.CodexModel,
+                    request.CodexReasoningEffort,
+                    request.CustomPrompt), cancellationToken)).ToHttpResult())
             .RequireAuthorization("AdminOnly")
             .WithTags("Admin AI")
             .WithName("AdminAiEnrichWork");

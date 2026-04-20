@@ -17,6 +17,7 @@ public class AuthOptions
     public string DataProtectionKeysPath { get; set; } = "/app/data-protection";
     public string MediaRoot { get; set; } = "/app/media";
     public int SlidingExpirationMinutes { get; set; } = 20;
+    public int LastSeenRefreshIntervalSeconds { get; set; } = 30;
     public int AbsoluteExpirationHours { get; set; } = 8;
     public bool SecureCookies { get; set; }
     public bool RequireHttpsMetadata { get; set; }

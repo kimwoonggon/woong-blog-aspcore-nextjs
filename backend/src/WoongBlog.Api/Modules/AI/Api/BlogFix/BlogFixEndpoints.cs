@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Routing;
-using WoongBlog.Api.Modules.AI.Application;
+using MediatR;
+using WoongBlog.Api.Modules.AI.Application.BlogFix;
 
 namespace WoongBlog.Api.Modules.AI.Api.BlogFix;
 
@@ -7,11 +8,15 @@ internal static class BlogFixEndpoints
 {
     internal static void MapBlogFix(this IEndpointRouteBuilder app)
     {
-        app.MapPost(AiApiPaths.BlogFix, (
+        app.MapPost(AiApiPaths.BlogFix, async (
                 BlogFixRequest request,
-                IAiAdminService service,
-                CancellationToken cancellationToken) =>
-            service.FixBlogAsync(request, cancellationToken))
+                ISender sender,
+                CancellationToken cancellationToken) => (await sender.Send(new FixBlogHtmlCommand(
+                    request.Html,
+                    request.Provider,
+                    request.CodexModel,
+                    request.CodexReasoningEffort,
+                    request.CustomPrompt), cancellationToken)).ToHttpResult())
             .RequireAuthorization("AdminOnly")
             .WithTags("Admin AI")
             .WithName("AdminAiFixBlog");
@@ -19,11 +24,17 @@ internal static class BlogFixEndpoints
 
     internal static void MapBlogFixBatch(this IEndpointRouteBuilder app)
     {
-        app.MapPost(AiApiPaths.BlogFixBatch, (
+        app.MapPost(AiApiPaths.BlogFixBatch, async (
                 BlogFixBatchRequest request,
-                IAiAdminService service,
-                CancellationToken cancellationToken) =>
-            service.FixBlogBatchAsync(request, cancellationToken))
+                ISender sender,
+                CancellationToken cancellationToken) => (await sender.Send(new FixBlogBatchCommand(
+                    request.BlogIds,
+                    request.All,
+                    request.Apply,
+                    request.Provider,
+                    request.CodexModel,
+                    request.CodexReasoningEffort,
+                    request.CustomPrompt), cancellationToken)).ToHttpResult())
             .RequireAuthorization("AdminOnly")
             .WithTags("Admin AI")
             .WithName("AdminAiFixBlogBatch");

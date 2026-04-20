@@ -5,15 +5,15 @@ namespace WoongBlog.Api.Modules.Site.Application.GetResume;
 
 public class GetResumeQueryHandler : IRequestHandler<GetResumeQuery, ResumeDto?>
 {
-    private readonly IPublicSiteService _publicSiteService;
+    private readonly ISiteSettingsQueryStore _siteSettingsQueryStore;
 
-    public GetResumeQueryHandler(IPublicSiteService publicSiteService)
+    public GetResumeQueryHandler(ISiteSettingsQueryStore siteSettingsQueryStore)
     {
-        _publicSiteService = publicSiteService;
+        _siteSettingsQueryStore = siteSettingsQueryStore;
     }
 
     public async Task<ResumeDto?> Handle(GetResumeQuery request, CancellationToken cancellationToken)
     {
-        return await _publicSiteService.GetResumeAsync(cancellationToken);
+        return await _siteSettingsQueryStore.GetResumeAsync(cancellationToken);
     }
 }
