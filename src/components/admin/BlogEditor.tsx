@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { TiptapEditor } from '@/components/admin/TiptapEditor'
 import { AIFixDialog } from '@/components/admin/AIFixDialog'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, Save } from 'lucide-react'
 import { fetchWithCsrf } from '@/lib/api/auth'
 import { getBrowserApiBaseUrl } from '@/lib/api/browser'
 import { normalizeBlogHtmlForSave } from '@/lib/content/blog-content'
@@ -128,6 +128,7 @@ export function BlogEditor({ initialBlog, inlineMode = false, onSaved, inlineRet
         html,
     })
     const hasUnsavedChanges = isDirty || savedSnapshot !== currentSnapshot
+    const isSaveDisabled = isSaving || !hasUnsavedChanges || !title.trim()
 
     useEffect(() => {
         setSavedSnapshot(initialSnapshot)
@@ -304,15 +305,57 @@ export function BlogEditor({ initialBlog, inlineMode = false, onSaved, inlineRet
         }
     }, [hasUnsavedChanges])
 
+    const requestBack = () => {
+        if (hasUnsavedChanges) {
+            setShowUnsavedDialog(true)
+            return
+        }
+
+        router.back()
+    }
+
     return (
         <>
         <form
-            className="space-y-8 max-w-4xl"
+            className="max-w-5xl space-y-8"
             onSubmit={(event) => {
                 event.preventDefault()
                 void saveBlog()
             }}
         >
+            <div className="sticky top-24 z-20 flex flex-col gap-3 rounded-2xl border border-border/80 bg-background/95 p-4 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0 space-y-1">
+                    <p className="text-sm font-semibold text-foreground">
+                        {isEditing ? 'Edit post' : 'New post'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                        {hasUnsavedChanges ? 'Unsaved changes' : 'No unsaved changes'}
+                    </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                    {!inlineMode && (
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="gap-2"
+                            onClick={requestBack}
+                        >
+                            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+                            Back
+                        </Button>
+                    )}
+                    <Button
+                        type="submit"
+                        aria-label="Save changes from top action bar"
+                        disabled={isSaveDisabled}
+                        className="gap-2 px-6 font-medium"
+                    >
+                        <Save className="h-4 w-4" aria-hidden="true" />
+                        {isSaving ? 'Saving...' : 'Save'}
+                    </Button>
+                </div>
+            </div>
+
             <div className="grid gap-6 rounded-2xl border border-border/80 bg-card p-6 shadow-sm md:grid-cols-2">
                 <div className="space-y-2">
                     <Label htmlFor="title">Title</Label>
@@ -398,7 +441,10 @@ export function BlogEditor({ initialBlog, inlineMode = false, onSaved, inlineRet
                 </div>
             </div>
 
-            <div className="space-y-4 rounded-2xl border border-border/80 bg-card p-6 shadow-sm">
+            <div
+                data-testid="blog-editor-workspace"
+                className="min-w-0 max-w-full resize-x space-y-4 overflow-auto rounded-2xl border border-border/80 bg-card p-6 shadow-sm md:min-w-[42rem]"
+            >
                 <div className="mb-2 flex items-center justify-between">
                     <h3 className="text-lg font-medium">Content</h3>
                     <div className="flex items-center gap-2">
@@ -432,11 +478,7 @@ export function BlogEditor({ initialBlog, inlineMode = false, onSaved, inlineRet
                         type="button"
                         variant="outline"
                         onClick={() => {
-                            if (hasUnsavedChanges) {
-                                setShowUnsavedDialog(true)
-                                return
-                            }
-                            router.back()
+                            requestBack()
                         }}
                     >
                         Cancel
@@ -444,7 +486,7 @@ export function BlogEditor({ initialBlog, inlineMode = false, onSaved, inlineRet
                 )}
                 <Button
                     type="submit"
-                    disabled={isSaving || !isDirty || !title.trim()}
+                    disabled={isSaveDisabled}
                     className="px-8 font-medium"
                 >
                     {isSaving ? 'Saving…' : isEditing ? 'Update Post' : 'Create Post'}

@@ -2,7 +2,7 @@ import { BlockRenderer } from '@/components/content/BlockRenderer'
 import { InlinePageEditorSection } from '@/components/admin/InlinePageEditorSection'
 import { InteractiveRenderer } from '@/components/content/InteractiveRenderer'
 import { isBlockPageContent, isHtmlPageContent, parsePageContentJson } from '@/lib/content/page-content'
-import { fetchServerSession } from '@/lib/api/server'
+import { getPublicAdminAffordanceState } from '@/lib/auth/public-admin'
 import { fetchPublicPageBySlug } from '@/lib/api/pages'
 import { headers } from 'next/headers'
 
@@ -37,7 +37,7 @@ export default async function IntroductionPage({ searchParams }: PageProps) {
     }
 
     const page = await fetchPublicPageBySlug('introduction')
-    const session = await fetchServerSession()
+    const { canShowAdminAffordances } = await getPublicAdminAffordanceState()
     const title = page?.title || 'Introduction'
     const parsedContent = parsePageContentJson(page?.contentJson)
 
@@ -61,7 +61,7 @@ export default async function IntroductionPage({ searchParams }: PageProps) {
                 )}
             </div>
 
-            {session.authenticated && session.role === 'admin' && page && (
+            {canShowAdminAffordances && page && (
                 <InlinePageEditorSection
                     triggerLabel="소개글 수정"
                     title="Introduction Inline Editor"

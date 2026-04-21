@@ -94,7 +94,7 @@ describe('PageEditor', () => {
     })
 
     expect(mocks.fetchWithCsrf).toHaveBeenCalledWith(
-      'http://localhost/api/admin/pages',
+      '/api/admin/pages',
       expect.objectContaining({
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },

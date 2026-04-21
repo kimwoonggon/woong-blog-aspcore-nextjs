@@ -8,7 +8,7 @@ import { InteractiveRenderer } from '@/components/content/InteractiveRenderer'
 import { TableOfContents } from '@/components/content/TableOfContents'
 import { Badge } from '@/components/ui/badge'
 import { Metadata } from 'next'
-import { fetchServerSession } from '@/lib/api/server'
+import { getPublicAdminAffordanceState } from '@/lib/auth/public-admin'
 import { resolveBlogRenderableHtml } from '@/lib/content/blog-content'
 import { fetchAdminBlogById, fetchAllPublicBlogs, fetchPublicBlogBySlug } from '@/lib/api/blogs'
 import { formatDetailPublishDate } from './blog-detail-helpers'
@@ -78,11 +78,11 @@ export default async function BlogDetailPage({ params, searchParams }: PageProps
         notFound()
     }
 
-    const session = await fetchServerSession()
+    const { canShowAdminAffordances } = await getPublicAdminAffordanceState()
     let adminBlog = null
     let adminLoadFailed = false
 
-    if (session.authenticated && session.role === 'admin') {
+    if (canShowAdminAffordances) {
         try {
             adminBlog = await fetchAdminBlogById(blog.id)
         } catch {
@@ -141,7 +141,7 @@ export default async function BlogDetailPage({ params, searchParams }: PageProps
                         </div>
                     </header>
 
-                    {session.authenticated && session.role === 'admin' && (
+                    {canShowAdminAffordances && (
                         adminLoadFailed || !adminBlog ? (
                             <div className="mt-8">
                                 <AdminErrorPanel

@@ -3,7 +3,6 @@ import { Navbar } from "@/components/layout/Navbar"
 import { Footer } from "@/components/layout/Footer"
 import { SkipToMainLink } from "@/components/layout/SkipToMainLink"
 import { fetchPublicSiteSettings } from "@/lib/api/site-settings"
-import { fetchServerSession } from "@/lib/api/server"
 
 export default async function PublicLayout({
     children,
@@ -11,13 +10,12 @@ export default async function PublicLayout({
     children: React.ReactNode
 }) {
     const siteSettings = await fetchPublicSiteSettings()
-    const session = await fetchServerSession()
     const ownerName = siteSettings?.ownerName || 'John Doe'
 
     return (
         <div className="flex min-h-screen flex-col font-sans">
             <SkipToMainLink />
-            <Navbar ownerName={ownerName} session={session} />
+            <Navbar ownerName={ownerName} />
             <main id="main-content" tabIndex={-1} className="flex-1">{children}</main>
             <Footer
                 ownerName={ownerName}

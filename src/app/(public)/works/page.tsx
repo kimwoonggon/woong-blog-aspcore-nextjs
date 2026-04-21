@@ -9,7 +9,7 @@ import { PublicPagination } from '@/components/layout/PublicPagination'
 import { ResponsivePageSizeSync } from '@/components/layout/ResponsivePageSizeSync'
 import { Badge } from '@/components/ui/badge'
 import { headers } from 'next/headers'
-import { fetchServerSession } from '@/lib/api/server'
+import { getPublicAdminAffordanceState } from '@/lib/auth/public-admin'
 import { fetchPublicWorks, type PublicWorkSearchParams } from '@/lib/api/works'
 
 export const dynamic = 'force-dynamic'
@@ -46,7 +46,7 @@ export default async function WorksPage({ searchParams }: PageProps) {
     const worksPayload = qaEmptyWorks
         ? { items: [], page: 1, pageSize: currentPageSize, totalItems: 0, totalPages: 1 }
         : await fetchPublicWorks(currentPage, currentPageSize, queryParams)
-    const session = await fetchServerSession()
+    const { canShowAdminAffordances } = await getPublicAdminAffordanceState()
     const totalPages = Math.max(1, worksPayload.totalPages)
     const page = worksPayload.page
     const pagedWorks = qaNoImageWorks
@@ -116,10 +116,10 @@ export default async function WorksPage({ searchParams }: PageProps) {
                             </Link>
                         ) : null}
                     </form>
-                    <PublicAdminLink href="/admin/works" label="작업 관리" variant="manage" />
+                    <PublicAdminLink href="/admin/works" label="작업 관리" canShow={canShowAdminAffordances} variant="manage" />
                 </div>
             </div>
-            {session.authenticated && session.role === 'admin' && (
+            {canShowAdminAffordances && (
                 <PublicWorksInlineCreateShell />
             )}
             <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">

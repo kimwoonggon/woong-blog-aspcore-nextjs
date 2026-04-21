@@ -19,8 +19,11 @@ test('D-2 local admin login creates an authenticated browser session', async ({ 
 
 test('D-6 stale editor sessions fail to save cleanly after logout', async ({ page }) => {
   await loginAsLocalAdmin(page, '/admin/blog/new')
-  await page.getByLabel('Title').fill(`Expired Session ${Date.now()}`)
+  const expiredTitle = `Expired Session ${Date.now()}`
+  await page.locator('input#title').fill(expiredTitle)
   await page.locator('.tiptap.ProseMirror').first().fill('Session expiry body')
+  await expect(page.locator('input#title')).toHaveValue(expiredTitle)
+  await expect(page.getByRole('button', { name: 'Create Post' })).toBeEnabled()
 
   await page.evaluate(async () => {
     const csrfResponse = await fetch('/api/auth/csrf', {
@@ -36,6 +39,11 @@ test('D-6 stale editor sessions fail to save cleanly after logout', async ({ pag
       },
     })
   })
+
+  if (await page.getByRole('button', { name: 'Create Post' }).isDisabled()) {
+    await page.locator('input#title').fill(expiredTitle)
+    await page.locator('.tiptap.ProseMirror').first().fill('Session expiry body')
+  }
 
   await page.getByRole('button', { name: 'Create Post' }).click()
   await expect.poll(async () => {

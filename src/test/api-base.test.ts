@@ -1,13 +1,13 @@
 import { describe, expect, it, vi } from 'vitest'
 
 describe('getApiBaseUrl', () => {
-  it('returns localhost api when running from localhost:3000', async () => {
+  it('returns a relative api base when running from localhost:3000', async () => {
     vi.resetModules()
     delete process.env.NEXT_PUBLIC_API_BASE_URL
 
     const { getApiBaseUrl } = await import('@/lib/api/base')
 
-    expect(getApiBaseUrl()).toBe('http://localhost/api')
+    expect(getApiBaseUrl()).toBe('/api')
   })
 
   it('returns NEXT_PUBLIC_API_BASE_URL when configured', async () => {

@@ -8,7 +8,7 @@ import { InteractiveRenderer } from '@/components/content/InteractiveRenderer'
 import { TableOfContents } from '@/components/content/TableOfContents'
 import { WorkVideoPlayer } from '@/components/content/WorkVideoPlayer'
 import { Metadata } from 'next'
-import { fetchServerSession } from '@/lib/api/server'
+import { getPublicAdminAffordanceState } from '@/lib/auth/public-admin'
 import { fetchAdminWorkById, fetchAllPublicWorks, fetchPublicWorkBySlug } from '@/lib/api/works'
 import { hasWorkVideoEmbeds } from '@/lib/content/work-video-embeds'
 import { formatDetailPublishDate, parseWorkContentHtml } from './work-detail-helpers'
@@ -43,11 +43,11 @@ export default async function WorkDetailPage({ params, searchParams }: PageProps
         notFound()
     }
 
-    const session = await fetchServerSession()
+    const { canShowAdminAffordances } = await getPublicAdminAffordanceState()
     let adminWork = null
     let adminLoadFailed = false
 
-    if (session.authenticated && session.role === 'admin') {
+    if (canShowAdminAffordances) {
         try {
             adminWork = await fetchAdminWorkById(work.id)
         } catch {
@@ -111,7 +111,7 @@ export default async function WorkDetailPage({ params, searchParams }: PageProps
                         ) : null}
                     </header>
 
-                    {session.authenticated && session.role === 'admin' && (
+                    {canShowAdminAffordances && (
                         adminLoadFailed || !adminWork ? (
                             <div className="mt-8">
                                 <AdminErrorPanel

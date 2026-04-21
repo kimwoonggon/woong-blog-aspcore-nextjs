@@ -20,11 +20,6 @@ const navItems = [
 
 interface NavbarProps {
     ownerName?: string
-    session?: {
-        authenticated: boolean
-        name?: string
-        role?: string
-    }
 }
 
 export function Navbar({ ownerName = 'John Doe' }: NavbarProps) {

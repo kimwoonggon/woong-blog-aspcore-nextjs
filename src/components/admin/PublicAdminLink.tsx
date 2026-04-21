@@ -1,17 +1,15 @@
 import Link from 'next/link'
 import { Pencil, LayoutDashboard } from 'lucide-react'
-import { fetchServerSession } from '@/lib/api/server'
 
 interface PublicAdminLinkProps {
   href: string
   label: string
+  canShow: boolean
   variant?: 'edit' | 'manage'
 }
 
-export async function PublicAdminLink({ href, label, variant = 'edit' }: PublicAdminLinkProps) {
-  const session = await fetchServerSession()
-
-  if (!session.authenticated || session.role !== 'admin') {
+export function PublicAdminLink({ href, label, canShow, variant = 'edit' }: PublicAdminLinkProps) {
+  if (!canShow) {
     return null
   }
 

@@ -1,0 +1,64 @@
+{
+  "title": "Public Session + Blog Editor QoL Audit",
+  "date": "2026-04-21",
+  "summary": "Focused frontend/admin consistency PR covering public admin affordance session cleanup, contact authored-content fidelity, and BlogEditor quick-save/excerpt workflow improvements.",
+  "changed": [
+    "Removed redundant public layout session fetch and unused Navbar session prop.",
+    "Added shared public admin affordance helper in src/lib/auth/public-admin.ts.",
+    "Updated public blog, works, contact, introduction, and resume pages to use the shared admin affordance gate.",
+    "Changed PublicAdminLink to render from a page-provided canShow boolean.",
+    "Removed contact hasMailto/fallback direct-email injection and QA override.",
+    "Added BlogEditor top quick-save/back action bar, retained bottom Create/Update submit, and added horizontal workspace resizing.",
+    "Preserved excerpt-aware save/update and inline update data flow.",
+    "Changed browser default API base to same-origin /api for Docker/CSP-compatible mutations.",
+    "Updated focused Vitest and Playwright coverage."
+  ],
+  "intentionallyNotChanged": [
+    "Backend auth/security semantics, role checks, session response contract, CSRF behavior, and endpoint routes.",
+    "Anonymous accessibility of public read pages.",
+    "Excerpt-first blog cards and related cards.",
+    "Mobile infinite scroll, feed prefetch redesign, mobile search redesign, broad card density tuning, related-content refactors, and autosave debounce redesign.",
+    "Resume PDF DOMMatrix SSR issue, which was diagnosed and deferred."
+  ],
+  "validations": [
+    {
+      "command": "npx vitest run src/test/api-base.test.ts src/test/auth-csrf.test.ts src/test/auth-login-url.test.ts src/test/page-editor.test.tsx src/test/blog-editor.test.tsx src/test/public-admin-rendering.test.tsx --pool=threads",
+      "result": "passed: 6 files, 38 tests"
+    },
+    {
+      "command": "npm run lint",
+      "result": "passed with 5 existing warnings"
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "passed"
+    },
+    {
+      "command": "npm test -- --run",
+      "result": "passed: 47 files, 247 tests"
+    },
+    {
+      "command": "BACKEND_PUBLISH_PORT=18080 NGINX_DEFAULT_CONF=./nginx/default.conf ./scripts/dev-up.sh",
+      "result": "passed: Docker dev stack rebuilt and started"
+    },
+    {
+      "command": "focused Playwright subset against http://127.0.0.1:3000",
+      "result": "passed: 14 passed, 1 existing skipped"
+    },
+    {
+      "command": "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 PLAYWRIGHT_EXPECT_LOCAL_ADMIN_SHORTCUT=visible npx playwright test --workers=4",
+      "result": "completed with 552 passed, 10 failed, 9 skipped; failed lines passed serial rerun"
+    },
+    {
+      "command": "serial rerun of failed full-e2e lines with --workers=1",
+      "result": "passed: 29 passed"
+    }
+  ],
+  "risks": [
+    "Full e2e is not clean under 4 workers; failures passed serially and indicate parallel shared-state/test isolation risk.",
+    "Frontend logs show DOMMatrix is not defined from react-pdf/pdfjs SSR evaluation on /resume; defer to a separate ResumePdfViewer client-only dynamic import fix.",
+    "Browser API base now defaults to /api; deployments needing an absolute browser API base should set NEXT_PUBLIC_API_BASE_URL.",
+    "Contact pages without authored email links no longer receive synthetic email UI by design."
+  ],
+  "recommendation": "Proceed with this focused PR; follow up on resume PDF SSR DOMMatrix and 4-worker e2e isolation separately."
+}

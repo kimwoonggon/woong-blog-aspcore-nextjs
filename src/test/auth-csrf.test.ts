@@ -37,9 +37,9 @@ describe('auth csrf helpers', () => {
 
     const { getLoginUrl, getLocalAdminLoginUrl, getCsrfToken } = await import('@/lib/api/auth')
 
-    expect(getLoginUrl()).toBe('http://localhost/api/auth/login?returnUrl=%2Fadmin')
+    expect(getLoginUrl()).toBe('/api/auth/login?returnUrl=%2Fadmin')
     expect(getLocalAdminLoginUrl('/admin/dashboard', 'admin+test@example.com')).toBe(
-      'http://localhost/api/auth/test-login?email=admin%2Btest%40example.com&returnUrl=%2Fadmin%2Fdashboard',
+      '/api/auth/test-login?email=admin%2Btest%40example.com&returnUrl=%2Fadmin%2Fdashboard',
     )
     await expect(getCsrfToken()).resolves.toEqual({
       requestToken: 'token-1',

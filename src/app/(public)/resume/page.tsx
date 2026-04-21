@@ -2,7 +2,7 @@ import { InlineAdminEditorShell } from '@/components/admin/InlineAdminEditorShel
 import { ResumeEditor } from '@/components/admin/ResumeEditor'
 import { ResumePdfViewer } from '@/components/content/ResumePdfViewer'
 import { Button } from '@/components/ui/button'
-import { fetchServerSession } from '@/lib/api/server'
+import { getPublicAdminAffordanceState } from '@/lib/auth/public-admin'
 import { Download } from 'lucide-react'
 import { fetchResume } from '@/lib/api/site-settings'
 
@@ -14,7 +14,7 @@ interface PageProps {
 
 export default async function ResumePage({ searchParams }: PageProps) {
     const resolvedSearchParams = await searchParams
-    const session = await fetchServerSession()
+    const { canShowAdminAffordances } = await getPublicAdminAffordanceState()
     const qaEmptyResume = resolvedSearchParams?.__qaEmpty === '1'
     const resume = qaEmptyResume ? null : await fetchResume()
     const resumeUrl = resume?.publicUrl ?? null
@@ -62,7 +62,7 @@ export default async function ResumePage({ searchParams }: PageProps) {
                     </div>
                 )}
             </div>
-            {session.authenticated && session.role === 'admin' && (
+            {canShowAdminAffordances && (
                 <InlineAdminEditorShell
                     triggerLabel="이력서 PDF 업로드"
                     title="Resume Inline Upload"

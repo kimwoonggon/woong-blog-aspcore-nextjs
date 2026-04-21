@@ -10,7 +10,7 @@ test('introduction and contact pages keep the public reading layout', async ({ p
 
   await page.goto('/contact')
   await expect(page.locator('main h1').first()).toBeVisible()
-  await expect(page.locator('main a[href^="mailto:"]').first()).toBeVisible()
+  await expect(page.locator('main')).not.toContainText('Direct email')
   const contactWidth = await page.getByTestId('static-public-shell').evaluate((element) => element.getBoundingClientRect().width)
   expect(contactWidth).toBeLessThanOrEqual(896)
 })

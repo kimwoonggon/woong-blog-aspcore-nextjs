@@ -10,7 +10,7 @@ import { ResponsivePageSizeSync } from '@/components/layout/ResponsivePageSizeSy
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { headers } from 'next/headers'
-import { fetchServerSession } from '@/lib/api/server'
+import { getPublicAdminAffordanceState } from '@/lib/auth/public-admin'
 import { fetchPublicBlogs } from '@/lib/api/blogs'
 
 export const dynamic = 'force-dynamic'
@@ -71,7 +71,7 @@ export default async function BlogPage({ searchParams }: PageProps) {
     const blogsPayload = qaEmptyBlogs
         ? { items: [], page: 1, pageSize: currentPageSize, totalItems: 0, totalPages: 1 }
         : await fetchPublicBlogs(currentPage, currentPageSize, searchQueryParams)
-    const session = await fetchServerSession()
+    const { canShowAdminAffordances } = await getPublicAdminAffordanceState()
     const totalPages = Math.max(1, blogsPayload.totalPages)
     const clampedPage = Math.min(currentPage, totalPages)
     if (resolvedSearchParams?.page && Number.parseInt(resolvedSearchParams.page, 10) !== clampedPage) {
@@ -163,10 +163,10 @@ export default async function BlogPage({ searchParams }: PageProps) {
                             </Link>
                         ) : null}
                     </form>
-                    <PublicAdminLink href="/admin/blog" label="글 관리" variant="manage" />
+                    <PublicAdminLink href="/admin/blog" label="글 관리" canShow={canShowAdminAffordances} variant="manage" />
                 </div>
             </div>
-            {session.authenticated && session.role === 'admin' && (
+            {canShowAdminAffordances && (
                 <InlineBlogEditorSection
                     triggerLabel="새 글 쓰기"
                     title="Study Inline Create"

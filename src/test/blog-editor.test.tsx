@@ -190,4 +190,100 @@ describe('BlogEditor', () => {
     expect(mocks.push).toHaveBeenCalledWith('/admin/blog')
     expect(mocks.push).not.toHaveBeenCalledWith('//evil.example')
   })
+
+  it('preserves excerpt when updating from the top quick-save action', async () => {
+    mocks.pathname = '/admin/blog/blog-1'
+
+    render(
+      <BlogEditor
+        initialBlog={{
+          id: 'blog-1',
+          slug: 'existing-post',
+          title: 'Existing title',
+          excerpt: 'Old excerpt',
+          tags: ['admin'],
+          published: true,
+          content: { html: '<p>Old body</p>' },
+        }}
+      />,
+    )
+
+    fireEvent.change(screen.getByLabelText('Excerpt'), { target: { value: 'Updated excerpt' } })
+    fireEvent.click(screen.getByRole('button', { name: /Save changes from top action bar/i }))
+
+    await waitFor(() => {
+      expect(mocks.fetchWithCsrf).toHaveBeenCalledWith(
+        '/api/admin/blogs/blog-1',
+        expect.objectContaining({
+          method: 'PUT',
+          body: JSON.stringify({
+            title: 'Existing title',
+            excerpt: 'Updated excerpt',
+            tags: ['admin'],
+            published: true,
+            contentJson: JSON.stringify({
+              html: '<p>Old body</p>',
+            }),
+          }),
+        }),
+      )
+    })
+  })
+
+  it('keeps inline update saves excerpt-aware while returning to the public detail route', async () => {
+    mocks.pathname = '/blog/existing-post'
+    mocks.searchParams = 'relatedPage=2'
+    mocks.fetchWithCsrf.mockResolvedValue({
+      ok: true,
+      json: async () => ({ slug: 'updated-post' }),
+      text: async () => '',
+    })
+
+    render(
+      <BlogEditor
+        inlineMode
+        initialBlog={{
+          id: 'blog-1',
+          slug: 'existing-post',
+          title: 'Existing title',
+          excerpt: 'Old excerpt',
+          tags: ['inline'],
+          published: true,
+          content: { html: '<p>Old body</p>' },
+        }}
+      />,
+    )
+
+    fireEvent.change(screen.getByLabelText('Excerpt'), { target: { value: 'Inline excerpt update' } })
+    fireEvent.click(screen.getByRole('button', { name: /Save changes from top action bar/i }))
+
+    await waitFor(() => {
+      expect(mocks.fetchWithCsrf).toHaveBeenCalledWith(
+        '/api/admin/blogs/blog-1',
+        expect.objectContaining({
+          method: 'PUT',
+          body: JSON.stringify({
+            title: 'Existing title',
+            excerpt: 'Inline excerpt update',
+            tags: ['inline'],
+            published: true,
+            contentJson: JSON.stringify({
+              html: '<p>Old body</p>',
+            }),
+          }),
+        }),
+      )
+    })
+
+    expect(mocks.replace).toHaveBeenCalledWith('/blog/updated-post?relatedPage=2')
+    expect(mocks.refresh).toHaveBeenCalled()
+  })
+
+  it('renders a horizontally resizable editor workspace while keeping the bottom submit action', () => {
+    render(<BlogEditor />)
+
+    expect(screen.getByTestId('blog-editor-workspace')).toHaveClass('resize-x')
+    expect(screen.getByRole('button', { name: /Create Post/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Save changes from top action bar/i })).toBeInTheDocument()
+  })
 })
