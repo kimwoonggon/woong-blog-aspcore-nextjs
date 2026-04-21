@@ -2,6 +2,7 @@ using WoongBlog.Api.Modules.Content.Pages.Application.GetPageBySlug;
 
 namespace WoongBlog.Api.Tests;
 
+[Trait(TestCategories.Key, TestCategories.Unit)]
 public class GetPageBySlugQueryValidatorTests
 {
     private readonly GetPageBySlugQueryValidator _validator = new();

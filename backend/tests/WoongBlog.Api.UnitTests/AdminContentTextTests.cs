@@ -2,6 +2,7 @@ using WoongBlog.Api.Modules.Content.Common.Application.Support;
 
 namespace WoongBlog.Api.Tests;
 
+[Trait(TestCategories.Key, TestCategories.Unit)]
 public class AdminContentTextTests
 {
     [Fact]

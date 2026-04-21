@@ -5,12 +5,14 @@ using WoongBlog.Api.Modules.AI.Application.Abstractions;
 
 namespace WoongBlog.Api.Modules.AI.Application.BatchJobs;
 
-public sealed class RemoveBlogFixBatchJobCommandHandler(IAiBlogFixBatchStore store)
+public sealed class RemoveBlogFixBatchJobCommandHandler(
+    IAiBatchJobQueryStore jobQueryStore,
+    IAiBatchJobCommandStore commandStore)
     : IRequestHandler<RemoveBlogFixBatchJobCommand, AiActionResult<BlogFixBatchJobRemoveResponse>>
 {
     public async Task<AiActionResult<BlogFixBatchJobRemoveResponse>> Handle(RemoveBlogFixBatchJobCommand request, CancellationToken cancellationToken)
     {
-        var job = await store.GetBlogJobAsync(request.JobId, cancellationToken);
+        var job = await jobQueryStore.GetBlogJobAsync(request.JobId, cancellationToken);
         if (job is null)
         {
             return AiActionResult<BlogFixBatchJobRemoveResponse>.NotFound();
@@ -21,10 +23,10 @@ public sealed class RemoveBlogFixBatchJobCommandHandler(IAiBlogFixBatchStore sto
             return AiActionResult<BlogFixBatchJobRemoveResponse>.Conflict("Only completed, failed, or cancelled jobs can be removed.");
         }
 
-        var items = await store.GetJobItemsAsync(request.JobId, cancellationToken);
-        store.RemoveItems(items);
-        store.RemoveJobs([job]);
-        await store.SaveChangesAsync(cancellationToken);
+        var items = await jobQueryStore.GetJobItemsAsync(request.JobId, cancellationToken);
+        commandStore.RemoveItems(items);
+        commandStore.RemoveJobs([job]);
+        await commandStore.SaveChangesAsync(cancellationToken);
 
         return AiActionResult<BlogFixBatchJobRemoveResponse>.Ok(new BlogFixBatchJobRemoveResponse(1, request.JobId));
     }

@@ -5,11 +5,12 @@ using WoongBlog.Api.Modules.AI.Application;
 
 namespace WoongBlog.Api.Tests;
 
-public sealed class CodexRuntimeEnvironmentTests : IDisposable
+[Trait(TestCategories.Key, TestCategories.Component)]
+public sealed class CodexRuntimeEnvironmentComponentTests : IDisposable
 {
     private readonly string _tempRoot = Path.Combine(Path.GetTempPath(), $"woong-codex-tests-{Guid.NewGuid():N}");
 
-    public CodexRuntimeEnvironmentTests()
+    public CodexRuntimeEnvironmentComponentTests()
     {
         Directory.CreateDirectory(_tempRoot);
     }

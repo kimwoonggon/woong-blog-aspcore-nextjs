@@ -19,20 +19,6 @@ public interface IWorkVideoCommandStore
 
     Task<int> GetNextSortOrderAsync(Guid workId, CancellationToken cancellationToken);
 
-    Task<IReadOnlyList<VideoStorageCleanupJob>> GetPendingCleanupJobsAsync(CancellationToken cancellationToken);
-
-    Task<IReadOnlyList<WorkVideoUploadSession>> GetExpiredUploadSessionsAsync(
-        DateTimeOffset utcNow,
-        CancellationToken cancellationToken);
-
-    Task EnqueueCleanupAsync(
-        Guid? workId,
-        Guid? workVideoId,
-        string sourceType,
-        string sourceKey,
-        DateTimeOffset utcNow,
-        CancellationToken cancellationToken);
-
     void AddUploadSession(WorkVideoUploadSession session);
 
     void AddWorkVideo(WorkVideo video);

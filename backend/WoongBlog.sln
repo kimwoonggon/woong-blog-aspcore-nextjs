@@ -23,6 +23,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WoongBlog.Application", "sr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WoongBlog.Infrastructure", "src\WoongBlog.Infrastructure\WoongBlog.Infrastructure.csproj", "{C9F41A2B-500C-4DF9-9F6F-ECAEAB702A69}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WoongBlog.Api.ComponentTests", "tests\WoongBlog.Api.ComponentTests\WoongBlog.Api.ComponentTests.csproj", "{9903BE3F-D169-48FF-9DA4-D71DA7A3874F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -129,6 +131,18 @@ Global
 		{C9F41A2B-500C-4DF9-9F6F-ECAEAB702A69}.Release|x64.Build.0 = Release|Any CPU
 		{C9F41A2B-500C-4DF9-9F6F-ECAEAB702A69}.Release|x86.ActiveCfg = Release|Any CPU
 		{C9F41A2B-500C-4DF9-9F6F-ECAEAB702A69}.Release|x86.Build.0 = Release|Any CPU
+		{9903BE3F-D169-48FF-9DA4-D71DA7A3874F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9903BE3F-D169-48FF-9DA4-D71DA7A3874F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9903BE3F-D169-48FF-9DA4-D71DA7A3874F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{9903BE3F-D169-48FF-9DA4-D71DA7A3874F}.Debug|x64.Build.0 = Debug|Any CPU
+		{9903BE3F-D169-48FF-9DA4-D71DA7A3874F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{9903BE3F-D169-48FF-9DA4-D71DA7A3874F}.Debug|x86.Build.0 = Debug|Any CPU
+		{9903BE3F-D169-48FF-9DA4-D71DA7A3874F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9903BE3F-D169-48FF-9DA4-D71DA7A3874F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9903BE3F-D169-48FF-9DA4-D71DA7A3874F}.Release|x64.ActiveCfg = Release|Any CPU
+		{9903BE3F-D169-48FF-9DA4-D71DA7A3874F}.Release|x64.Build.0 = Release|Any CPU
+		{9903BE3F-D169-48FF-9DA4-D71DA7A3874F}.Release|x86.ActiveCfg = Release|Any CPU
+		{9903BE3F-D169-48FF-9DA4-D71DA7A3874F}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -142,5 +156,6 @@ Global
 		{CB8CFDEC-8B39-4789-BFB9-161B527C9467} = {48D2FCC6-9A27-482B-8E04-9B1BF6D19B50}
 		{ABB3DACC-AA98-4EF6-B3DF-5301FCAA9766} = {48D2FCC6-9A27-482B-8E04-9B1BF6D19B50}
 		{C9F41A2B-500C-4DF9-9F6F-ECAEAB702A69} = {48D2FCC6-9A27-482B-8E04-9B1BF6D19B50}
+		{9903BE3F-D169-48FF-9DA4-D71DA7A3874F} = {438F2740-F7F1-4314-AEC1-FF9DF577321B}
 	EndGlobalSection
 EndGlobal

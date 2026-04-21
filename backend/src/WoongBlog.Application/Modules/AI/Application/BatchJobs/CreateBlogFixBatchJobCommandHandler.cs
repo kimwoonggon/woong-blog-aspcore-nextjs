@@ -6,7 +6,9 @@ using WoongBlog.Api.Modules.AI.Application.Abstractions;
 namespace WoongBlog.Api.Modules.AI.Application.BatchJobs;
 
 public sealed class CreateBlogFixBatchJobCommandHandler(
-    IAiBlogFixBatchStore store,
+    IAiBatchTargetQueryStore targetStore,
+    IAiBatchJobQueryStore jobQueryStore,
+    IAiBatchJobCommandStore commandStore,
     IAiBatchJobSignal batchJobSignal,
     IAiRuntimeCapabilities runtimeCapabilities,
     IOptions<AiOptions> options) : IRequestHandler<CreateBlogFixBatchJobCommand, AiActionResult<BlogFixBatchJobDetailResponse>>
@@ -22,7 +24,7 @@ public sealed class CreateBlogFixBatchJobCommandHandler(
             return AiActionResult<BlogFixBatchJobDetailResponse>.BadRequest("Either blogIds or all=true is required.");
         }
 
-        var blogs = await store.GetBlogTargetsAsync(request.All, request.BlogIds, cancellationToken);
+        var blogs = await targetStore.GetBlogTargetsAsync(request.All, request.BlogIds, cancellationToken);
         if (blogs.Count == 0)
         {
             return AiActionResult<BlogFixBatchJobDetailResponse>.BadRequest("No matching blogs were found.");
@@ -49,10 +51,10 @@ public sealed class CreateBlogFixBatchJobCommandHandler(
             request.WorkerCount);
         var workerCount = AiRuntimePolicy.NormalizeWorkerCount(request.WorkerCount);
 
-        var existingJob = await store.GetActiveBlogJobBySelectionKeyAsync(selectionKey, cancellationToken);
+        var existingJob = await jobQueryStore.GetActiveBlogJobBySelectionKeyAsync(selectionKey, cancellationToken);
         if (existingJob is not null)
         {
-            var existingItems = await store.GetJobItemsAsync(existingJob.Id, cancellationToken);
+            var existingItems = await jobQueryStore.GetJobItemsAsync(existingJob.Id, cancellationToken);
             if (existingJob.Status == AiBatchJobStates.Queued)
             {
                 batchJobSignal.Notify();
@@ -89,8 +91,8 @@ public sealed class CreateBlogFixBatchJobCommandHandler(
             Status = AiBatchJobItemStates.Pending,
         }).ToList();
 
-        store.AddJob(job, items);
-        await store.SaveChangesAsync(cancellationToken);
+        commandStore.AddJob(job, items);
+        await commandStore.SaveChangesAsync(cancellationToken);
         batchJobSignal.Notify();
 
         return AiActionResult<BlogFixBatchJobDetailResponse>.Ok(

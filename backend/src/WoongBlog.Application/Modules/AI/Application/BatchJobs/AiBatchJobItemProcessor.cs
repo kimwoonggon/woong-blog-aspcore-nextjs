@@ -6,36 +6,38 @@ using WoongBlog.Api.Modules.Content.Common.Application.Support;
 namespace WoongBlog.Api.Modules.AI.Application.BatchJobs;
 
 public sealed class AiBatchJobItemProcessor(
-    IAiBlogFixBatchStore store,
+    IAiBatchJobQueryStore jobQueryStore,
+    IAiBatchTargetQueryStore targetStore,
+    IAiBatchJobCommandStore commandStore,
     IBlogAiFixService aiFixService,
     IBlogFixApplyPolicy applyPolicy) : IAiBatchJobItemProcessor
 {
     public async Task ProcessAsync(Guid jobId, Guid itemId, CancellationToken cancellationToken)
     {
-        var item = await store.GetJobItemAsync(itemId, cancellationToken);
+        var item = await jobQueryStore.GetJobItemAsync(itemId, cancellationToken);
         if (item is null)
         {
             return;
         }
 
-        var job = await store.GetBlogJobAsync(jobId, cancellationToken);
+        var job = await jobQueryStore.GetBlogJobAsync(jobId, cancellationToken);
         if (job is null)
         {
             AiBatchJobProgressPolicy.MarkFailed(item, "Batch job no longer exists.", DateTimeOffset.UtcNow);
-            await store.SaveChangesAsync(cancellationToken);
+            await commandStore.SaveChangesAsync(cancellationToken);
             return;
         }
 
-        var blogLookup = await store.GetBlogsForUpdateAsync([item.EntityId], cancellationToken);
+        var blogLookup = await targetStore.GetBlogsForUpdateAsync([item.EntityId], cancellationToken);
         if (!blogLookup.TryGetValue(item.EntityId, out var blog))
         {
             AiBatchJobProgressPolicy.MarkFailed(item, "Target blog no longer exists.", DateTimeOffset.UtcNow);
-            await store.SaveChangesAsync(cancellationToken);
+            await commandStore.SaveChangesAsync(cancellationToken);
             return;
         }
 
         AiBatchJobProgressPolicy.MarkRunning(item, DateTimeOffset.UtcNow);
-        await store.SaveChangesAsync(cancellationToken);
+        await commandStore.SaveChangesAsync(cancellationToken);
 
         try
         {
@@ -68,6 +70,6 @@ public sealed class AiBatchJobItemProcessor(
         }
 
         item.FinishedAt = DateTimeOffset.UtcNow;
-        await store.SaveChangesAsync(cancellationToken);
+        await commandStore.SaveChangesAsync(cancellationToken);
     }
 }

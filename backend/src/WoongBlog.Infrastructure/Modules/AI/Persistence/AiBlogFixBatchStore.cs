@@ -5,7 +5,10 @@ using WoongBlog.Api.Modules.AI.Application.Abstractions;
 
 namespace WoongBlog.Api.Modules.AI.Persistence;
 
-public sealed class AiBlogFixBatchStore(WoongBlogDbContext dbContext) : IAiBlogFixBatchStore
+public sealed class AiBlogFixBatchStore(WoongBlogDbContext dbContext) :
+    IAiBatchTargetQueryStore,
+    IAiBatchJobQueryStore,
+    IAiBatchJobCommandStore
 {
     public async Task<IReadOnlyList<Blog>> GetBlogsForFixAsync(
         bool all,

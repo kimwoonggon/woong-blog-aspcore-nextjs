@@ -5,7 +5,7 @@ using WoongBlog.Api.Modules.AI.Application.Abstractions;
 namespace WoongBlog.Api.Modules.AI.Application.BatchJobs;
 
 public sealed class AiBatchJobRunner(
-    IAiBlogFixBatchStore store,
+    IAiBatchJobQueryStore jobQueryStore,
     IAiBatchJobItemDispatcher itemDispatcher,
     IOptions<AiOptions> options) : IAiBatchJobRunner
 {
@@ -32,13 +32,13 @@ public sealed class AiBatchJobRunner(
 
     private async Task<IReadOnlyList<Guid>> GetPendingItemIdsAsync(Guid jobId, CancellationToken cancellationToken)
     {
-        var pendingItems = await store.GetPendingItemsForJobsAsync([jobId], cancellationToken);
+        var pendingItems = await jobQueryStore.GetPendingItemsForJobsAsync([jobId], cancellationToken);
         return pendingItems.Select(item => item.Id).ToArray();
     }
 
     private async Task<int> ResolveWorkerCountAsync(Guid jobId, CancellationToken cancellationToken)
     {
-        var job = await store.GetBlogJobAsync(jobId, cancellationToken);
+        var job = await jobQueryStore.GetBlogJobAsync(jobId, cancellationToken);
         return AiBatchWorkerPolicy.ResolveWorkerCount(job?.WorkerCount, _options.BatchConcurrency);
     }
 

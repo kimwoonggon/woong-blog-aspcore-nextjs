@@ -484,7 +484,7 @@ dotnet test backend/WoongBlog.sln
 
 For a Dockerized SDK run, mount `backend` and run the same solution from `/src`. If Docker is not available inside the SDK container, exclude the Testcontainers-backed Postgres persistence contract test.
 
-Current backend test taxonomy note: `PublicQueryHandlerTests` and `AuthRecorderTests` in `WoongBlog.Api.UnitTests` are in-memory persistence component tests, and `BlogAiFixServiceCodexRuntimeTests` plus `CodexRuntimeEnvironmentTests` are Codex runtime/process component tests. They remain in the unit test project for now and are candidates for a later test-rebalancing PR.
+Current backend test taxonomy note: `WoongBlog.Api.UnitTests` is kept to focused Application/support helper and validator tests. Infrastructure-backed, EF InMemory, ASP.NET `HttpContext`, filesystem/process, and `HttpClient` tests live in `WoongBlog.Api.ComponentTests`. Endpoint and hosted-stack tests remain in `WoongBlog.Api.IntegrationTests`.
 
 ### Database smoke/load
 
@@ -784,7 +784,7 @@ So the normal release path is:
 - `backend/src/WoongBlog.Application/` — application handlers, validators, ports, and DTOs
 - `backend/src/WoongBlog.Infrastructure/` — persistence, auth, storage, AI provider, and host infrastructure adapters
 - `backend/src/WoongBlog.Domain/` — domain entities and constants
-- `backend/tests/WoongBlog.Api.{UnitTests,IntegrationTests,ContractTests,ArchitectureTests}/` — backend test suites
+- `backend/tests/WoongBlog.Api.{UnitTests,ComponentTests,IntegrationTests,ContractTests,ArchitectureTests}/` — backend test suites
 - `tests/` — Playwright stack/browser regressions
 - `nginx/default.conf` — edge routing contract
 - `docker-compose.yml` — stack orchestration

@@ -11,7 +11,7 @@ public sealed record AiBatchJobCounts(
     int FailedCount,
     int CancelledCount);
 
-public interface IAiBlogFixBatchStore
+public interface IAiBatchTargetQueryStore
 {
     Task<IReadOnlyList<Blog>> GetBlogsForFixAsync(
         bool all,
@@ -23,6 +23,11 @@ public interface IAiBlogFixBatchStore
         IReadOnlyCollection<Guid>? blogIds,
         CancellationToken cancellationToken);
 
+    Task<Dictionary<Guid, Blog>> GetBlogsForUpdateAsync(IReadOnlyCollection<Guid> blogIds, CancellationToken cancellationToken);
+}
+
+public interface IAiBatchJobQueryStore
+{
     Task<AiBatchJob?> GetActiveBlogJobBySelectionKeyAsync(string selectionKey, CancellationToken cancellationToken);
     Task<IReadOnlyList<AiBatchJob>> GetRunningBlogJobsAsync(CancellationToken cancellationToken);
     Task<AiBatchJob?> GetBlogJobAsync(Guid jobId, CancellationToken cancellationToken);
@@ -31,11 +36,14 @@ public interface IAiBlogFixBatchStore
     Task<AiBatchJobCounts> GetBlogJobCountsAsync(CancellationToken cancellationToken);
     Task<IReadOnlyList<AiBatchJobItem>> GetJobItemsAsync(Guid jobId, CancellationToken cancellationToken);
     Task<IReadOnlyList<AiBatchJobItem>> GetSucceededUnappliedItemsAsync(Guid jobId, IReadOnlyCollection<Guid>? jobItemIds, CancellationToken cancellationToken);
-    Task<Dictionary<Guid, Blog>> GetBlogsForUpdateAsync(IReadOnlyCollection<Guid> blogIds, CancellationToken cancellationToken);
     Task<IReadOnlyList<AiBatchJob>> GetQueuedBlogJobsAsync(CancellationToken cancellationToken);
     Task<IReadOnlyList<AiBatchJob>> GetCompletedBlogJobsAsync(CancellationToken cancellationToken);
     Task<IReadOnlyList<AiBatchJobItem>> GetPendingItemsForJobsAsync(IReadOnlyCollection<Guid> jobIds, CancellationToken cancellationToken);
     Task<IReadOnlyList<AiBatchJobItem>> GetItemsForJobsAsync(IReadOnlyCollection<Guid> jobIds, CancellationToken cancellationToken);
+}
+
+public interface IAiBatchJobCommandStore
+{
     void AddJob(AiBatchJob job, IReadOnlyList<AiBatchJobItem> items);
     void RemoveJobs(IReadOnlyList<AiBatchJob> jobs);
     void RemoveItems(IReadOnlyList<AiBatchJobItem> items);

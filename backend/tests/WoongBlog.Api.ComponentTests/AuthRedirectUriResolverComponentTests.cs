@@ -3,7 +3,8 @@ using WoongBlog.Api.Infrastructure.Auth;
 
 namespace WoongBlog.Api.Tests;
 
-public class AuthRedirectUriResolverTests
+[Trait(TestCategories.Key, TestCategories.Component)]
+public class AuthRedirectUriResolverComponentTests
 {
     [Fact]
     public void ResolveCallbackUri_UsesConfiguredPublicOrigin_WhenPresent()

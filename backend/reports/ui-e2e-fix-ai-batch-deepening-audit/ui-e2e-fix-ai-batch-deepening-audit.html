@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>UI E2E Fix + AI Batch Deepening Audit</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, sans-serif; margin: 2rem; color: #172033; line-height: 1.5; }
+    h1, h2 { color: #111827; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: 0.95rem; }
+    th, td { border: 1px solid #d0d7de; padding: 0.55rem; vertical-align: top; }
+    th { background: #f6f8fa; text-align: left; }
+    .pass { display: inline-block; background: #dcfce7; color: #166534; padding: 0.2rem 0.45rem; border-radius: 999px; font-weight: 700; }
+    .meta { color: #4b5563; }
+  </style>
+</head>
+<body>
+  <h1>UI E2E Fix + AI Batch Deepening Audit</h1>
+  <p class="meta">
+    Generated: <code>2026-04-21T13:13:26+09:00</code><br>
+    Branch: <code>feat/phase-2-backend-discompostion</code><br>
+    Commit SHA: <code>066c48c1ed04d096d6e2a2cd9322c4b967c6aed1</code>
+  </p>
+
+  <h2>Executive Summary</h2>
+  <p>Overall status: <span class="pass">PASS</span></p>
+  <p>The two known full-e2e failures were fixed, and AI batch persistence boundaries were deepened through conservative interface segregation. Public API contracts, routes, DTO JSON shape, and backend physical boundaries were preserved.</p>
+
+  <h2>Root Cause And Fixes</h2>
+  <table>
+    <thead><tr><th>Failure</th><th>Root cause</th><th>Fix</th></tr></thead>
+    <tbody>
+      <tr><td><code>/blog</code> mobile overflow</td><td>Unbroken/generated blog title, excerpt, or tag text could widen cards.</td><td>Added <code>min-w-0</code> and <code>overflow-wrap:anywhere</code> protections in the blog card path.</td></tr>
+      <tr><td>Batch AI prompt textarea reset</td><td>Async runtime-config initialization could overwrite a prompt after user input.</td><td>Added a prompt-touched guard before applying async prompt initialization.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>AI Batch Deepening</h2>
+  <table>
+    <thead><tr><th>Area</th><th>Change</th></tr></thead>
+    <tbody>
+      <tr><td>Target query</td><td>Added <code>IAiBatchTargetQueryStore</code>.</td></tr>
+      <tr><td>Job query</td><td>Added <code>IAiBatchJobQueryStore</code>.</td></tr>
+      <tr><td>Job command</td><td>Added <code>IAiBatchJobCommandStore</code>.</td></tr>
+      <tr><td>Compatibility</td><td>Kept <code>IAiBlogFixBatchStore</code> as aggregate over the narrow interfaces.</td></tr>
+      <tr><td>Consumers</td><td>Updated handlers, scheduler, runner, dispatcher, and item processor to depend on narrow interfaces.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Verification</h2>
+  <table>
+    <thead><tr><th>Command</th><th>Result</th></tr></thead>
+    <tbody>
+      <tr><td><code>npx vitest run src/test/admin-blog-batch-ai-panel.test.tsx --pool=threads</code></td><td>10 passed</td></tr>
+      <tr><td><code>npm run typecheck</code></td><td>passed</td></tr>
+      <tr><td><code>npm run test:e2e:stack -- tests/ui-pub-overflow.spec.ts:6 tests/mermaid-batch-prompt-0419.spec.ts:126</code></td><td>9 passed</td></tr>
+      <tr><td><code>dotnet test backend/tests/WoongBlog.Api.UnitTests/WoongBlog.Api.UnitTests.csproj</code></td><td>13 passed</td></tr>
+      <tr><td><code>dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter "FullyQualifiedName~AdminAiEndpointsTests|FullyQualifiedName~StartupCompositionTests"</code></td><td>16 passed</td></tr>
+      <tr><td><code>dotnet test backend/tests/WoongBlog.Api.ArchitectureTests/WoongBlog.Api.ArchitectureTests.csproj</code></td><td>27 passed</td></tr>
+      <tr><td><code>dotnet test backend/WoongBlog.sln</code></td><td>Contract 1, Unit 13, Component 26, Architecture 27, Integration 93 passed</td></tr>
+      <tr><td><code>npm run test:e2e:stack</code></td><td>563 passed, 8 skipped</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Deferred Items</h2>
+  <ul>
+    <li>Remove or shrink the <code>IAiBlogFixBatchStore</code> compatibility aggregate later.</li>
+    <li>Split the concrete EF store only if future churn justifies it.</li>
+    <li>Atomic claim / DB concurrency redesign.</li>
+    <li>AI options ownership split.</li>
+    <li>Namespace normalization.</li>
+    <li>Middleware relocation.</li>
+    <li>Per-module csproj split.</li>
+  </ul>
+
+  <h2>Final Recommendation</h2>
+  <p>The branch is ready for the next <strong>low-risk cleanup PR</strong>.</p>
+</body>
+</html>

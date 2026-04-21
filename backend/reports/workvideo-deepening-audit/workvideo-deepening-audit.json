@@ -1,0 +1,78 @@
+{
+  "generated_at": "2026-04-21T11:34:05+09:00",
+  "branch": "feat/phase-2-backend-discompostion",
+  "commit_sha": "066c48c1ed04d096d6e2a2cd9322c4b967c6aed1",
+  "overall_status": "PASS",
+  "recommendation": "next selective chapter2.5 PR should target AI batch",
+  "summary": [
+    "Extracted HLS job planning into WorkVideoHlsJobPlan",
+    "Split background cleanup persistence responsibilities into IWorkVideoCleanupStore and WorkVideoCleanupStore",
+    "Kept endpoint routes, DTO shape, behavior, and result mapping unchanged"
+  ],
+  "production_files_changed": [
+    "backend/src/WoongBlog.Application/Modules/Content/Works/Application/WorkVideos/WorkVideoHlsJobPlan.cs",
+    "backend/src/WoongBlog.Application/Modules/Content/Works/Application/WorkVideos/IWorkVideoCleanupStore.cs",
+    "backend/src/WoongBlog.Application/Modules/Content/Works/Application/WorkVideos/IWorkVideoCommandStore.cs",
+    "backend/src/WoongBlog.Application/Modules/Content/Works/Application/WorkVideos/StartWorkVideoHlsJobCommandHandler.cs",
+    "backend/src/WoongBlog.Application/Modules/Content/Works/Application/WorkVideos/DeleteWorkVideoCommandHandler.cs",
+    "backend/src/WoongBlog.Infrastructure/Modules/Content/Works/Persistence/WorkVideoCleanupStore.cs",
+    "backend/src/WoongBlog.Infrastructure/Modules/Content/Works/Persistence/WorkVideoCommandStore.cs",
+    "backend/src/WoongBlog.Infrastructure/Modules/Content/Works/WorkVideos/WorkVideoCleanupService.cs",
+    "backend/src/WoongBlog.Api/Modules/Content/Works/WorksModuleServiceCollectionExtensions.cs"
+  ],
+  "tests_added_or_updated": [
+    {
+      "path": "backend/tests/WoongBlog.Api.UnitTests/WorkVideoHlsJobPlanTests.cs",
+      "purpose": "Verify HLS storage paths, source key, sanitized name, and WorkVideo entity construction"
+    },
+    {
+      "path": "backend/tests/WoongBlog.Api.IntegrationTests/StartupCompositionTests.cs",
+      "purpose": "Verify IWorkVideoCleanupStore registration"
+    },
+    {
+      "path": "backend/tests/WoongBlog.Api.ArchitectureTests/ArchitectureBoundaryTests.cs",
+      "purpose": "Guard that IWorkVideoCommandStore does not expose cleanup-only responsibilities"
+    }
+  ],
+  "behavior_preservation": [
+    "HLS source key format preserved",
+    "HLS endpoint route preserved",
+    "WorkVideo API result mapping remains in Api",
+    "Upload/confirm/reorder/delete/HLS/playback behavior preserved",
+    "Cleanup enqueue behavior preserved"
+  ],
+  "verification": [
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.UnitTests/WoongBlog.Api.UnitTests.csproj",
+      "result": "13 passed"
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter \"FullyQualifiedName~WorkVideoEndpointsTests|FullyQualifiedName~StartupCompositionTests\"",
+      "result": "9 passed"
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.ArchitectureTests/WoongBlog.Api.ArchitectureTests.csproj",
+      "result": "26 passed"
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln",
+      "result": "Contract 1, Unit 13, Component 26, Architecture 26, Integration 93 passed"
+    },
+    {
+      "command": "npm run test:e2e:stack",
+      "result": "563 passed, 8 skipped"
+    }
+  ],
+  "deferred_items": [
+    "WorkVideo csproj/module extraction",
+    "Larger IWorkVideoCommandStore decomposition into separate work/video/session stores",
+    "Broader WorkVideo orchestration redesign",
+    "Namespace normalization",
+    "Moving WorkVideo module DI registration from Api to Infrastructure-owned helpers",
+    "ConfirmWorkVideoUploadCommandHandler deepening",
+    "Cleanup semantics or storage deletion policy changes"
+  ],
+  "known_warnings": [
+    "Existing NU1901 low-severity AWSSDK.Core warning remains"
+  ]
+}

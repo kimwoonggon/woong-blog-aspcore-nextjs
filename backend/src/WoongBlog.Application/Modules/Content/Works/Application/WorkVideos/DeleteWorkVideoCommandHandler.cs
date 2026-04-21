@@ -4,6 +4,7 @@ namespace WoongBlog.Api.Modules.Content.Works.Application.WorkVideos;
 
 public sealed class DeleteWorkVideoCommandHandler(
     IWorkVideoCommandStore commandStore,
+    IWorkVideoCleanupStore cleanupStore,
     IWorkVideoQueryStore queryStore)
     : IRequestHandler<DeleteWorkVideoCommand, WorkVideoResult<WorkVideosMutationResult>>
 {
@@ -28,7 +29,7 @@ public sealed class DeleteWorkVideoCommandHandler(
             return WorkVideoResult<WorkVideosMutationResult>.NotFound("Video not found.");
         }
 
-        await commandStore.EnqueueCleanupAsync(
+        await cleanupStore.EnqueueCleanupAsync(
             request.WorkId,
             video.Id,
             video.SourceType,

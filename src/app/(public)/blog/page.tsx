@@ -184,15 +184,15 @@ export default async function BlogPage({ searchParams }: PageProps) {
                             key={blog.id}
                             href={`/blog/${blog.slug}?returnTo=${returnTo}&relatedPage=${page}`}
                             prefetch={false}
-                            className="group/card block h-full"
+                            className="group/card block h-full min-w-0"
                             data-testid="blog-card"
                         >
-                            <Card className="responsive-feed-card flex h-full flex-col gap-0 overflow-hidden rounded-2xl border-border/80 bg-background py-0 shadow-sm transition hover:border-primary/30 hover:shadow-md">
+                            <Card className="responsive-feed-card flex h-full min-w-0 flex-col gap-0 overflow-hidden rounded-2xl border-border/80 bg-background py-0 shadow-sm transition hover:border-primary/30 hover:shadow-md">
                                 <div
                                     data-testid="blog-card-accent-stripe"
                                     className="study-card-stripe h-1 w-full rounded-t-2xl"
                                 />
-                                <CardHeader className="px-4 pt-4 pb-0 sm:px-5 sm:pt-5">
+                                <CardHeader className="min-w-0 px-4 pt-4 pb-0 sm:px-5 sm:pt-5">
                                     <div className="mb-2 flex flex-wrap items-center gap-2">
                                         <Badge variant="secondary" className="rounded-full bg-brand-navy px-2.5 py-0.5 text-xs text-white hover:bg-brand-navy/90">
                                             {formatPublishedDate(blog.publishedAt)}
@@ -200,19 +200,19 @@ export default async function BlogPage({ searchParams }: PageProps) {
                                         {blog.tags?.slice(0, 2).map((tag) => (
                                             <span
                                                 key={tag}
-                                                className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
+                                                className="max-w-full rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground [overflow-wrap:anywhere]"
                                             >
                                                 {tag}
                                             </span>
                                         ))}
                                     </div>
-                                    <CardTitle className="responsive-feed-title line-clamp-2 text-lg font-heading font-bold leading-tight text-foreground transition-colors group-hover/card:text-brand-accent sm:text-xl">
+                                    <CardTitle className="responsive-feed-title line-clamp-2 min-w-0 break-words text-lg font-heading font-bold leading-tight text-foreground transition-colors [overflow-wrap:anywhere] group-hover/card:text-brand-accent sm:text-xl">
                                         {blog.title}
                                     </CardTitle>
                                 </CardHeader>
-                                <CardContent className="flex flex-1 flex-col px-4 pb-4 pt-3 sm:px-5 sm:pb-5">
+                                <CardContent className="flex min-w-0 flex-1 flex-col px-4 pb-4 pt-3 sm:px-5 sm:pb-5">
                                     {blog.excerpt ? (
-                                        <p className="responsive-feed-copy line-clamp-3 flex-1 text-sm leading-relaxed text-muted-foreground sm:text-base">
+                                        <p className="responsive-feed-copy line-clamp-3 min-w-0 flex-1 break-words text-sm leading-relaxed text-muted-foreground [overflow-wrap:anywhere] sm:text-base">
                                             {blog.excerpt}
                                         </p>
                                     ) : null}

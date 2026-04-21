@@ -1,8 +1,5 @@
-using WoongBlog.Api.Infrastructure.Ai;
 using WoongBlog.Api.Modules.AI.Application;
-using WoongBlog.Api.Modules.AI.Application.Abstractions;
 using WoongBlog.Api.Modules.AI.Application.BatchJobs;
-using WoongBlog.Api.Modules.AI.Persistence;
 
 namespace WoongBlog.Api.Modules.AI;
 
@@ -10,11 +7,9 @@ internal static class AiModuleServiceCollectionExtensions
 {
     public static IServiceCollection AddAiModule(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddAiInfrastructure(configuration);
-        services.AddScoped<IAiBlogFixBatchStore, AiBlogFixBatchStore>();
+        services.AddAiModuleInfrastructure(configuration);
         services.AddScoped<IAiBatchJobScheduler, AiBatchJobScheduler>();
         services.AddScoped<IAiBatchJobRunner, AiBatchJobRunner>();
-        services.AddSingleton<IAiBatchJobItemDispatcher, AiBatchJobItemDispatcher>();
         services.AddScoped<IAiBatchJobItemProcessor, AiBatchJobItemProcessor>();
         services.AddSingleton<IBlogFixApplyPolicy, BlogFixApplyPolicy>();
         return services;

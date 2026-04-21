@@ -5,7 +5,8 @@ using WoongBlog.Api.Modules.AI.Application;
 
 namespace WoongBlog.Api.Tests;
 
-public class BlogAiFixServiceCodexRuntimeTests
+[Trait(TestCategories.Key, TestCategories.Component)]
+public class BlogAiFixServiceCodexRuntimeComponentTests
 {
     [Fact]
     public async Task FixHtmlAsync_WithCodexProvider_FailsClearlyWhenCodexHomeIsFile()

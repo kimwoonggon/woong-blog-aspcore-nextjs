@@ -7,22 +7,25 @@ using WoongBlog.Api.Modules.Content.Common.Application.Support;
 
 namespace WoongBlog.Api.Modules.AI.Application.BatchJobs;
 
-public sealed class ApplyBlogFixBatchJobCommandHandler(IAiBlogFixBatchStore store)
+public sealed class ApplyBlogFixBatchJobCommandHandler(
+    IAiBatchJobQueryStore jobQueryStore,
+    IAiBatchTargetQueryStore targetStore,
+    IAiBatchJobCommandStore commandStore)
     : IRequestHandler<ApplyBlogFixBatchJobCommand, AiActionResult<BlogFixBatchJobDetailResponse>>
 {
     public async Task<AiActionResult<BlogFixBatchJobDetailResponse>> Handle(
         ApplyBlogFixBatchJobCommand request,
         CancellationToken cancellationToken)
     {
-        var job = await store.GetBlogJobAsync(request.JobId, cancellationToken);
+        var job = await jobQueryStore.GetBlogJobAsync(request.JobId, cancellationToken);
         if (job is null)
         {
             return AiActionResult<BlogFixBatchJobDetailResponse>.NotFound();
         }
 
-        var items = await store.GetSucceededUnappliedItemsAsync(request.JobId, request.JobItemIds, cancellationToken);
+        var items = await jobQueryStore.GetSucceededUnappliedItemsAsync(request.JobId, request.JobItemIds, cancellationToken);
         var blogIds = items.Select(item => item.EntityId).ToArray();
-        var blogs = await store.GetBlogsForUpdateAsync(blogIds, cancellationToken);
+        var blogs = await targetStore.GetBlogsForUpdateAsync(blogIds, cancellationToken);
         var now = DateTimeOffset.UtcNow;
 
         foreach (var item in items)
@@ -39,21 +42,22 @@ public sealed class ApplyBlogFixBatchJobCommandHandler(IAiBlogFixBatchStore stor
             item.Status = AiBatchJobItemStates.Applied;
         }
 
-        await store.SaveChangesAsync(cancellationToken);
-        await RefreshJobAggregatesAsync(store, job, cancellationToken);
+        await commandStore.SaveChangesAsync(cancellationToken);
+        await RefreshJobAggregatesAsync(jobQueryStore, commandStore, job, cancellationToken);
 
-        var refreshedItems = await store.GetJobItemsAsync(request.JobId, cancellationToken);
+        var refreshedItems = await jobQueryStore.GetJobItemsAsync(request.JobId, cancellationToken);
         return AiActionResult<BlogFixBatchJobDetailResponse>.Ok(
             AiBatchJobResponseMapper.ToJobDetailResponse(job, refreshedItems, includeHtml: true));
     }
 
     private static async Task RefreshJobAggregatesAsync(
-        IAiBlogFixBatchStore store,
+        IAiBatchJobQueryStore jobQueryStore,
+        IAiBatchJobCommandStore commandStore,
         AiBatchJob job,
         CancellationToken cancellationToken)
     {
-        var items = await store.GetJobItemsAsync(job.Id, cancellationToken);
+        var items = await jobQueryStore.GetJobItemsAsync(job.Id, cancellationToken);
         AiBatchJobProgressPolicy.RefreshCounts(job, items, DateTimeOffset.UtcNow);
-        await store.SaveChangesAsync(cancellationToken);
+        await commandStore.SaveChangesAsync(cancellationToken);
     }
 }

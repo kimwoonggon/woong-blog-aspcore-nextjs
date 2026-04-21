@@ -4,10 +4,12 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using WoongBlog.Api.Infrastructure.Persistence;
+using WoongBlog.Api.Modules.AI.Application.Abstractions;
 using WoongBlog.Api.Modules.Content.Blogs.Api.CreateBlog;
 using WoongBlog.Api.Modules.Content.Blogs.Application.Abstractions;
 using WoongBlog.Api.Modules.Content.Blogs.Application.CreateBlog;
 using WoongBlog.Api.Modules.Content.Common.Application.Support;
+using WoongBlog.Api.Modules.Content.Works.Application.WorkVideos;
 
 namespace WoongBlog.Api.Tests;
 
@@ -41,10 +43,14 @@ public class StartupCompositionTests : IClassFixture<CustomWebApplicationFactory
         var services = scope.ServiceProvider;
 
         Assert.NotNull(services.GetRequiredService<IMediator>());
+        Assert.NotNull(services.GetRequiredService<IAiBatchTargetQueryStore>());
+        Assert.NotNull(services.GetRequiredService<IAiBatchJobQueryStore>());
+        Assert.NotNull(services.GetRequiredService<IAiBatchJobCommandStore>());
         Assert.NotNull(services.GetRequiredService<IValidator<CreateBlogRequest>>());
         Assert.NotNull(services.GetRequiredService<IValidator<CreateBlogCommand>>());
         Assert.NotNull(services.GetRequiredService<IRequestHandler<CreateBlogCommand, AdminMutationResult>>());
         Assert.NotNull(services.GetRequiredService<IBlogCommandStore>());
+        Assert.NotNull(services.GetRequiredService<IWorkVideoCleanupStore>());
         Assert.NotNull(services.GetRequiredService<WoongBlogDbContext>());
     }
 }

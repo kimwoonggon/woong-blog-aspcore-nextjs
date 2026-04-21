@@ -8,7 +8,8 @@ using WoongBlog.Api.Modules.Identity.Application;
 
 namespace WoongBlog.Api.Tests;
 
-public class AuthRecorderTests
+[Trait(TestCategories.Key, TestCategories.Component)]
+public class AuthRecorderComponentTests
 {
     private static WoongBlogDbContext CreateDbContext()
     {

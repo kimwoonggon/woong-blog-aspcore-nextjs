@@ -7,6 +7,7 @@ using WoongBlog.Api.Modules.Site.Application.UpdateSiteSettings;
 
 namespace WoongBlog.Api.Tests;
 
+[Trait(TestCategories.Key, TestCategories.Unit)]
 public class RequestValidatorTests
 {
     [Fact]

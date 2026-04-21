@@ -1,5 +1,4 @@
 using MediatR;
-using WoongBlog.Api.Domain.Entities;
 
 namespace WoongBlog.Api.Modules.Content.Works.Application.WorkVideos;
 
@@ -50,10 +49,13 @@ public sealed class StartWorkVideoHlsJobCommandHandler(
             return WorkVideoResult<WorkVideosMutationResult>.BadRequest("No video storage backend is available.");
         }
 
-        var videoId = Guid.NewGuid();
-        var hlsPrefix = $"videos/{request.WorkId:N}/{videoId:N}/hls";
-        var manifestStorageKey = $"{hlsPrefix}/{WorkVideoPolicy.HlsManifestFileName}";
-        await using (var workspace = await hlsWorkspace.CreateAsync(request.File, videoId, cancellationToken))
+        var plan = WorkVideoHlsJobPlan.Create(
+            request.WorkId,
+            storageType,
+            request.File.FileName,
+            request.File.Length);
+
+        await using (var workspace = await hlsWorkspace.CreateAsync(request.File, plan.VideoId, cancellationToken))
         {
             if (!await fileInspector.LooksLikeMp4Async(workspace.SourcePath, cancellationToken))
             {
@@ -70,20 +72,11 @@ public sealed class StartWorkVideoHlsJobCommandHandler(
                 return WorkVideoResult<WorkVideosMutationResult>.BadRequest(ffmpegError);
             }
 
-            await hlsOutputPublisher.PublishAsync(storage, workspace.HlsDirectory, hlsPrefix, cancellationToken);
+            await hlsOutputPublisher.PublishAsync(storage, workspace.HlsDirectory, plan.HlsPrefix, cancellationToken);
 
-            commandStore.AddWorkVideo(new WorkVideo
-            {
-                Id = videoId,
-                WorkId = request.WorkId,
-                SourceType = WorkVideoSourceTypes.Hls,
-                SourceKey = WorkVideoHlsSourceKey.Create(storageType, manifestStorageKey),
-                OriginalFileName = WorkVideoPolicy.SanitizeOriginalFileName(request.File.FileName),
-                MimeType = WorkVideoPolicy.HlsManifestContentType,
-                FileSize = request.File.Length,
-                SortOrder = await commandStore.GetNextSortOrderAsync(request.WorkId, cancellationToken),
-                CreatedAt = DateTimeOffset.UtcNow
-            });
+            commandStore.AddWorkVideo(plan.ToWorkVideo(
+                await commandStore.GetNextSortOrderAsync(request.WorkId, cancellationToken),
+                DateTimeOffset.UtcNow));
 
             work.VideosVersion += 1;
             await commandStore.SaveChangesAsync(cancellationToken);

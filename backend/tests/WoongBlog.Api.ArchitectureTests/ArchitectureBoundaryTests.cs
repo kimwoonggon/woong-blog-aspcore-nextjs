@@ -1,7 +1,9 @@
 using System.Reflection;
+using System.Xml.Linq;
 using MediatR;
 using WoongBlog.Api.Infrastructure.Persistence;
 using WoongBlog.Api.Modules.AI.Application;
+using WoongBlog.Api.Modules.AI.Application.Abstractions;
 using WoongBlog.Api.Modules.Content.Blogs.Application.Abstractions;
 using WoongBlog.Api.Modules.Content.Works.Application.Abstractions;
 using WoongBlog.Api.Modules.Content.Works.Application.WorkVideos;
@@ -450,6 +452,96 @@ public class ArchitectureBoundaryTests
             .ToArray();
 
         Assert.Empty(violatingMethods);
+    }
+
+    [Fact]
+    public void WorkVideo_CommandStore_DoesNotExpose_BackgroundCleanupResponsibilities()
+    {
+        var commandStoreMethods = typeof(IWorkVideoCommandStore)
+            .GetMethods()
+            .Select(method => method.Name)
+            .ToArray();
+        var cleanupStoreMethods = typeof(IWorkVideoCleanupStore)
+            .GetMethods()
+            .Select(method => method.Name)
+            .ToArray();
+        var cleanupOnlyMethodNames = new[]
+        {
+            nameof(IWorkVideoCleanupStore.GetPendingCleanupJobsAsync),
+            nameof(IWorkVideoCleanupStore.GetExpiredUploadSessionsAsync),
+            nameof(IWorkVideoCleanupStore.EnqueueCleanupAsync)
+        };
+
+        Assert.DoesNotContain(commandStoreMethods, cleanupOnlyMethodNames.Contains);
+        Assert.All(cleanupOnlyMethodNames, methodName => Assert.Contains(methodName, cleanupStoreMethods));
+    }
+
+    [Fact]
+    public void Ai_Batch_AggregateBatchStore_IsRemoved()
+    {
+        var aggregateType = ApplicationAssembly.GetType("WoongBlog.Api.Modules.AI.Application.Abstractions.IAiBlogFixBatchStore");
+        var sourceHits = FindSourceFilesContainingTokens(
+            Path.Combine(FindRepositoryRoot(), "backend", "src"),
+            ["IAiBlogFixBatchStore"]);
+
+        Assert.Null(aggregateType);
+        Assert.Empty(sourceHits);
+    }
+
+    [Fact]
+    public void Api_ModuleRegistrations_DoNotReference_ConcreteInfrastructureAdapters()
+    {
+        var apiModulesDirectory = Path.Combine(
+            FindRepositoryRoot(),
+            "backend",
+            "src",
+            "WoongBlog.Api",
+            "Modules");
+        var registrationFiles = Directory.EnumerateFiles(apiModulesDirectory, "*ServiceCollectionExtensions.cs", SearchOption.AllDirectories);
+        var forbiddenTokens = new[]
+        {
+            ".Persistence;",
+            ".Storage;",
+            ".Policies;",
+            "WoongBlog.Api.Infrastructure.Ai",
+            "WoongBlog.Api.Infrastructure.Storage"
+        };
+        var violatingFiles = registrationFiles
+            .Where(path =>
+            {
+                var source = File.ReadAllText(path);
+                return forbiddenTokens.Any(token => source.Contains(token, StringComparison.Ordinal));
+            })
+            .Select(path => Path.GetRelativePath(FindRepositoryRoot(), path))
+            .OrderBy(path => path)
+            .ToArray();
+
+        Assert.Empty(violatingFiles);
+    }
+
+    [Fact]
+    public void UnitTestProject_DoesNotReference_Infrastructure_AspNetCore_Or_EfInMemory()
+    {
+        var projectPath = Path.Combine(
+            FindRepositoryRoot(),
+            "backend",
+            "tests",
+            "WoongBlog.Api.UnitTests",
+            "WoongBlog.Api.UnitTests.csproj");
+        var project = XDocument.Load(projectPath);
+        var projectReferences = project.Descendants("ProjectReference")
+            .Select(element => element.Attribute("Include")?.Value ?? string.Empty)
+            .ToArray();
+        var frameworkReferences = project.Descendants("FrameworkReference")
+            .Select(element => element.Attribute("Include")?.Value ?? string.Empty)
+            .ToArray();
+        var packageReferences = project.Descendants("PackageReference")
+            .Select(element => element.Attribute("Include")?.Value ?? string.Empty)
+            .ToArray();
+
+        Assert.DoesNotContain(projectReferences, reference => reference.Contains("WoongBlog.Infrastructure", StringComparison.Ordinal));
+        Assert.DoesNotContain(frameworkReferences, reference => reference == "Microsoft.AspNetCore.App");
+        Assert.DoesNotContain(packageReferences, reference => reference == "Microsoft.EntityFrameworkCore.InMemory");
     }
 
     private static bool DependsOnDbContext(Type type)

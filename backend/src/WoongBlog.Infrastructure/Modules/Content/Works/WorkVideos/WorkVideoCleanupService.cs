@@ -3,28 +3,28 @@ using WoongBlog.Api.Domain.Entities;
 namespace WoongBlog.Api.Modules.Content.Works.Application.WorkVideos;
 
 public sealed class WorkVideoService(
-    IWorkVideoCommandStore workVideoCommandStore,
+    IWorkVideoCleanupStore cleanupStore,
     IEnumerable<IVideoObjectStorage> storages) : IWorkVideoCleanupService
 {
-    private readonly IWorkVideoCommandStore _workVideoCommandStore = workVideoCommandStore;
+    private readonly IWorkVideoCleanupStore _cleanupStore = cleanupStore;
     private readonly IReadOnlyDictionary<string, IVideoObjectStorage> _storages = storages
         .ToDictionary(storage => storage.StorageType, StringComparer.OrdinalIgnoreCase);
 
     public async Task EnqueueCleanupForWorkAsync(Guid workId, CancellationToken cancellationToken)
     {
-        var videos = await _workVideoCommandStore.GetVideosForWorkAsync(workId, cancellationToken);
+        var videos = await _cleanupStore.GetVideosForWorkAsync(workId, cancellationToken);
 
         foreach (var video in videos)
         {
             await EnqueueCleanupAsync(workId, video.Id, video.SourceType, video.SourceKey, cancellationToken);
         }
 
-        await _workVideoCommandStore.SaveChangesAsync(cancellationToken);
+        await _cleanupStore.SaveChangesAsync(cancellationToken);
     }
 
     public async Task<int> ProcessCleanupJobsAsync(CancellationToken cancellationToken)
     {
-        var jobs = await _workVideoCommandStore.GetPendingCleanupJobsAsync(cancellationToken);
+        var jobs = await _cleanupStore.GetPendingCleanupJobsAsync(cancellationToken);
 
         foreach (var job in jobs)
         {
@@ -56,7 +56,7 @@ public sealed class WorkVideoService(
 
         if (jobs.Count > 0)
         {
-            await _workVideoCommandStore.SaveChangesAsync(cancellationToken);
+            await _cleanupStore.SaveChangesAsync(cancellationToken);
         }
 
         return jobs.Count;
@@ -65,7 +65,7 @@ public sealed class WorkVideoService(
     public async Task<int> ExpireUploadSessionsAsync(CancellationToken cancellationToken)
     {
         var utcNow = DateTimeOffset.UtcNow;
-        var sessions = await _workVideoCommandStore.GetExpiredUploadSessionsAsync(utcNow, cancellationToken);
+        var sessions = await _cleanupStore.GetExpiredUploadSessionsAsync(utcNow, cancellationToken);
 
         foreach (var session in sessions)
         {
@@ -75,7 +75,7 @@ public sealed class WorkVideoService(
 
         if (sessions.Count > 0)
         {
-            await _workVideoCommandStore.SaveChangesAsync(cancellationToken);
+            await _cleanupStore.SaveChangesAsync(cancellationToken);
         }
 
         return sessions.Count;
@@ -88,7 +88,7 @@ public sealed class WorkVideoService(
         string sourceKey,
         CancellationToken cancellationToken)
     {
-        await _workVideoCommandStore.EnqueueCleanupAsync(
+        await _cleanupStore.EnqueueCleanupAsync(
             workId,
             workVideoId,
             sourceType,

@@ -5,12 +5,14 @@ using WoongBlog.Api.Modules.AI.Application.Abstractions;
 
 namespace WoongBlog.Api.Modules.AI.Application.BatchJobs;
 
-public sealed class CancelBlogFixBatchJobCommandHandler(IAiBlogFixBatchStore store)
+public sealed class CancelBlogFixBatchJobCommandHandler(
+    IAiBatchJobQueryStore jobQueryStore,
+    IAiBatchJobCommandStore commandStore)
     : IRequestHandler<CancelBlogFixBatchJobCommand, AiActionResult<BlogFixBatchJobSummaryResponse>>
 {
     public async Task<AiActionResult<BlogFixBatchJobSummaryResponse>> Handle(CancelBlogFixBatchJobCommand request, CancellationToken cancellationToken)
     {
-        var job = await store.GetBlogJobAsync(request.JobId, cancellationToken);
+        var job = await jobQueryStore.GetBlogJobAsync(request.JobId, cancellationToken);
         if (job is null)
         {
             return AiActionResult<BlogFixBatchJobSummaryResponse>.NotFound();
@@ -20,7 +22,7 @@ public sealed class CancelBlogFixBatchJobCommandHandler(IAiBlogFixBatchStore sto
         {
             job.CancelRequested = true;
             job.UpdatedAt = DateTimeOffset.UtcNow;
-            await store.SaveChangesAsync(cancellationToken);
+            await commandStore.SaveChangesAsync(cancellationToken);
         }
 
         return AiActionResult<BlogFixBatchJobSummaryResponse>.Ok(

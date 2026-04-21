@@ -18,8 +18,8 @@ using WoongBlog.Api.Modules.Site.Persistence;
 
 namespace WoongBlog.Api.Tests;
 
-[Trait(TestCategories.Key, TestCategories.Unit)]
-public class PublicQueryHandlerTests
+[Trait(TestCategories.Key, TestCategories.Component)]
+public class PublicQueryHandlerComponentTests
 {
     private static WoongBlogDbContext CreateDbContext()
     {

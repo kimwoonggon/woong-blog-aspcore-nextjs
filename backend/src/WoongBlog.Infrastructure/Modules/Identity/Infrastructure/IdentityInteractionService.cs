@@ -5,8 +5,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using WoongBlog.Api.Infrastructure.Auth;
 using WoongBlog.Api.Infrastructure.Persistence;
+using WoongBlog.Api.Modules.Identity.Application;
 
-namespace WoongBlog.Api.Modules.Identity.Application;
+namespace WoongBlog.Api.Modules.Identity.Infrastructure;
 
 public sealed class IdentityInteractionService : IIdentityInteractionService
 {

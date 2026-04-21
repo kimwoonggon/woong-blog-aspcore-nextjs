@@ -1,0 +1,238 @@
+{
+  "generated_at": "2026-04-21T10:37:19+09:00",
+  "overall_status": "PASS with yellow flags",
+  "branch": "feat/phase-2-backend-discompostion",
+  "commit_sha": "066c48c1ed04d096d6e2a2cd9322c4b967c6aed1",
+  "high_risk_violation_count": 0,
+  "yellow_flag_count": 8,
+  "recommendation": "ready for test-rebalancing PR",
+  "project_reference_graph": {
+    "WoongBlog.Domain": [],
+    "WoongBlog.Application": [
+      "WoongBlog.Domain"
+    ],
+    "WoongBlog.Infrastructure": [
+      "WoongBlog.Application",
+      "WoongBlog.Domain"
+    ],
+    "WoongBlog.Api": [
+      "WoongBlog.Application",
+      "WoongBlog.Infrastructure"
+    ]
+  },
+  "package_reference_distribution": {
+    "WoongBlog.Domain": [],
+    "WoongBlog.Application": [
+      "FluentValidation 12.1.1",
+      "FluentValidation.DependencyInjectionExtensions 12.1.1",
+      "MediatR 14.1.0",
+      "Microsoft.Extensions.DependencyInjection.Abstractions 10.0.0",
+      "Microsoft.Extensions.Options 10.0.0"
+    ],
+    "WoongBlog.Infrastructure": [
+      "FrameworkReference Microsoft.AspNetCore.App",
+      "AWSSDK.S3 4.0.6.2",
+      "Microsoft.AspNetCore.Authentication.OpenIdConnect 10.0.0",
+      "Microsoft.EntityFrameworkCore 10.0.0",
+      "Microsoft.EntityFrameworkCore.Design 10.0.0",
+      "Microsoft.EntityFrameworkCore.InMemory 10.0.0",
+      "Npgsql.EntityFrameworkCore.PostgreSQL 10.0.0"
+    ],
+    "WoongBlog.Api": [
+      "FluentValidation 12.1.1",
+      "FluentValidation.DependencyInjectionExtensions 12.1.1",
+      "MediatR 14.1.0",
+      "Microsoft.AspNetCore.Authentication.OpenIdConnect 10.0.0",
+      "Microsoft.AspNetCore.OpenApi 10.0.0"
+    ]
+  },
+  "criteria_results": [
+    {
+      "criterion": "Domain is dependency-free apart from runtime framework basics",
+      "status": "PASS",
+      "evidence": "Domain csproj has no package, framework, or project references; source search found no higher-layer or framework refs."
+    },
+    {
+      "criterion": "Application depends on Domain only",
+      "status": "PASS",
+      "evidence": "Application csproj references only WoongBlog.Domain."
+    },
+    {
+      "criterion": "Infrastructure depends on Application + Domain only",
+      "status": "PASS",
+      "evidence": "Infrastructure csproj references Application and Domain only."
+    },
+    {
+      "criterion": "Api depends on Application + Infrastructure",
+      "status": "PASS",
+      "evidence": "Api csproj references Application and Infrastructure only."
+    },
+    {
+      "criterion": "No circular references",
+      "status": "PASS",
+      "evidence": "Project graph is acyclic."
+    },
+    {
+      "criterion": "No Application -> Infrastructure dependency",
+      "status": "PASS",
+      "evidence": "No project reference and no Infrastructure namespace matches under Application."
+    },
+    {
+      "criterion": "No Domain -> Application/Infrastructure dependency",
+      "status": "PASS",
+      "evidence": "No higher-layer namespace matches under Domain."
+    },
+    {
+      "criterion": "Application must not expose ASP.NET HTTP result abstractions",
+      "status": "PASS",
+      "evidence": "No ASP.NET HTTP result/source tokens under Application; ArchitectureTests include reflected type-surface checks."
+    },
+    {
+      "criterion": "Application must not use IServiceScopeFactory/CreateScope/GetRequiredService",
+      "status": "PASS",
+      "evidence": "No service scope or service locator tokens found under Application."
+    },
+    {
+      "criterion": "Api owns HTTP result mapping",
+      "status": "PASS",
+      "evidence": "AiHttpResultMapper and WorkVideoEndpoints map application results to IResult in Api."
+    },
+    {
+      "criterion": "DbContext and concrete stores live in Infrastructure",
+      "status": "PASS",
+      "evidence": "WoongBlogDbContext and concrete *Store implementations are under WoongBlog.Infrastructure; production source search found no DbContext usage outside Infrastructure."
+    },
+    {
+      "criterion": "Handlers and abstraction interfaces live in Application",
+      "status": "PASS with yellow flag",
+      "evidence": "MediatR handlers and primary store/port abstractions live in Application; Infrastructure has a framework-facing identity interaction interface with Application naming."
+    },
+    {
+      "criterion": "AiActionResult<T> remains HTTP-agnostic",
+      "status": "PASS",
+      "evidence": "Uses AiActionStatus enum only; HTTP mapping is in Api."
+    },
+    {
+      "criterion": "WorkVideoResult<T> remains HTTP-agnostic",
+      "status": "PASS",
+      "evidence": "Uses WorkVideoResultStatus enum only; HTTP mapping is in Api."
+    },
+    {
+      "criterion": "Content CQRS direction remains intact",
+      "status": "PASS",
+      "evidence": "Handlers/interfaces are in Application, concrete persistence stores in Infrastructure, endpoints in Api."
+    },
+    {
+      "criterion": "AI batch boundary remains intact",
+      "status": "PASS",
+      "evidence": "Commands/queries/policies/contracts are in Application; provider/background/store implementations are in Infrastructure."
+    },
+    {
+      "criterion": "WorkVideo handler/store/support boundary remains intact",
+      "status": "PASS",
+      "evidence": "Handlers/ports/results are in Application; storage/HLS/transcoder/cleanup implementations are in Infrastructure."
+    },
+    {
+      "criterion": "Cleaner composition boundaries exist",
+      "status": "PASS with yellow flag",
+      "evidence": "AddApplication and AddInfrastructure exist; Api module extensions still register concrete Infrastructure adapters."
+    },
+    {
+      "criterion": "EF design-time/runtime setup remains viable",
+      "status": "PASS with yellow flag",
+      "evidence": "DbContext and design-time factory are in Infrastructure; migrations assembly points to Infrastructure; runtime bootstrap remains schema-patch based."
+    },
+    {
+      "criterion": "Test taxonomy supports next phase",
+      "status": "PASS with yellow flag",
+      "evidence": "Projects are split, but UnitTests references Infrastructure/ASP.NET and contains component-style tests."
+    }
+  ],
+  "high_risk_violations": [],
+  "yellow_flags": [
+    {
+      "area": "Namespace clarity",
+      "file_paths": [
+        "backend/src/WoongBlog.Application",
+        "backend/src/WoongBlog.Domain",
+        "backend/src/WoongBlog.Infrastructure"
+      ],
+      "why_it_matters": "Split assemblies still use WoongBlog.Api.* namespaces, weakening readability and grep-based ownership checks.",
+      "suggested_cleanup": "Normalize namespaces in a dedicated low-risk PR or document the convention."
+    },
+    {
+      "area": "Api composition knows concrete Infrastructure adapters",
+      "file_paths": [
+        "backend/src/WoongBlog.Api/Modules/*/*ServiceCollectionExtensions.cs"
+      ],
+      "why_it_matters": "Api module registration extensions import and register concrete Infrastructure types.",
+      "suggested_cleanup": "Move module infrastructure registrations behind Infrastructure-owned helpers later."
+    },
+    {
+      "area": "DbContext search synchronization depends on Application support helpers",
+      "file_paths": [
+        "backend/src/WoongBlog.Infrastructure/Infrastructure/Persistence/ContentSearchFieldSynchronizer.cs"
+      ],
+      "why_it_matters": "Persistence uses Application support helpers during SaveChanges.",
+      "suggested_cleanup": "Move search helper ownership to Domain or Infrastructure if persistence owns indexing long-term."
+    },
+    {
+      "area": "Infrastructure-shaped AI options live in Application",
+      "file_paths": [
+        "backend/src/WoongBlog.Application/Modules/AI/Application/AiOptions.cs"
+      ],
+      "why_it_matters": "Provider secrets/runtime settings blur option ownership.",
+      "suggested_cleanup": "Split Application runtime policy options from Infrastructure provider options later."
+    },
+    {
+      "area": "Infrastructure includes ASP.NET host/middleware concerns",
+      "file_paths": [
+        "backend/src/WoongBlog.Infrastructure/Infrastructure/Auth",
+        "backend/src/WoongBlog.Infrastructure/Infrastructure/Security",
+        "backend/src/WoongBlog.Infrastructure/Infrastructure/Validation/ValidationExceptionFilter.cs"
+      ],
+      "why_it_matters": "Infrastructure is host infrastructure rather than pure non-HTTP infrastructure.",
+      "suggested_cleanup": "Defer unless an Api-only HTTP boundary is desired."
+    },
+    {
+      "area": "EF migration workflow remains bootstrap/schema-patch based",
+      "file_paths": [
+        "backend/src/WoongBlog.Infrastructure/Infrastructure/Persistence/WoongBlogDbContextDesignTimeFactory.cs",
+        "backend/src/WoongBlog.Infrastructure/Infrastructure/Persistence/DatabaseBootstrapper.cs"
+      ],
+      "why_it_matters": "Design-time factory exists, but no checked-in migrations folder is present.",
+      "suggested_cleanup": "Decide separately whether EF migrations should become the deployment workflow."
+    },
+    {
+      "area": "Unit test project includes component/infrastructure tests",
+      "file_paths": [
+        "backend/tests/WoongBlog.Api.UnitTests/PublicQueryHandlerTests.cs",
+        "backend/tests/WoongBlog.Api.UnitTests/AuthRecorderTests.cs",
+        "backend/tests/WoongBlog.Api.UnitTests/BlogAiFixServiceCodexRuntimeTests.cs",
+        "backend/tests/WoongBlog.Api.UnitTests/CodexRuntimeEnvironmentTests.cs",
+        "backend/tests/WoongBlog.Api.UnitTests/AuthRedirectUriResolverTests.cs"
+      ],
+      "why_it_matters": "These tests use Infrastructure, EF InMemory, ASP.NET contexts, filesystem/process fakes, or HttpClient.",
+      "suggested_cleanup": "Move or relabel during the next test-rebalancing PR."
+    },
+    {
+      "area": "Identity infrastructure namespace/path classification",
+      "file_paths": [
+        "backend/src/WoongBlog.Infrastructure/Modules/Identity/Application/IIdentityInteractionService.cs",
+        "backend/src/WoongBlog.Infrastructure/Modules/Identity/Application/IdentityInteractionService.cs"
+      ],
+      "why_it_matters": "Infrastructure code uses an Application namespace segment, which can confuse boundary scans.",
+      "suggested_cleanup": "Rename/repath to Infrastructure identity interaction naming later."
+    }
+  ],
+  "deferred_items": [
+    "Namespace normalization from WoongBlog.Api.* to assembly-aligned namespaces.",
+    "Moving ContentSearchText/AdminContentJson if search indexing ownership moves to Domain or Infrastructure.",
+    "Splitting AI configuration into Application runtime policy options and Infrastructure provider options.",
+    "Deciding whether ASP.NET middleware/auth/validation filters should remain in Infrastructure or move closer to Api.",
+    "Introducing an EF migrations workflow.",
+    "Per-module physical splits.",
+    "Broad handler/store redesign.",
+    "Reclassifying component-style tests currently under WoongBlog.Api.UnitTests."
+  ]
+}

@@ -7,7 +7,8 @@ using WoongBlog.Api.Modules.Content.Common.Application.Support;
 namespace WoongBlog.Api.Modules.AI.Application.BlogFix;
 
 public sealed class FixBlogBatchCommandHandler(
-    IAiBlogFixBatchStore store,
+    IAiBatchTargetQueryStore targetStore,
+    IAiBatchJobCommandStore commandStore,
     IBlogAiFixService aiFixService) : IRequestHandler<FixBlogBatchCommand, AiActionResult<BlogFixBatchResponse>>
 {
     public async Task<AiActionResult<BlogFixBatchResponse>> Handle(FixBlogBatchCommand request, CancellationToken cancellationToken)
@@ -17,7 +18,7 @@ public sealed class FixBlogBatchCommandHandler(
             return AiActionResult<BlogFixBatchResponse>.BadRequest("Either blogIds or all=true is required.");
         }
 
-        var blogs = await store.GetBlogsForFixAsync(request.All, request.BlogIds, cancellationToken);
+        var blogs = await targetStore.GetBlogsForFixAsync(request.All, request.BlogIds, cancellationToken);
         var results = new List<BlogFixBatchItemResponse>(blogs.Count);
         foreach (var blog in blogs)
         {
@@ -65,7 +66,7 @@ public sealed class FixBlogBatchCommandHandler(
 
         if (request.Apply)
         {
-            await store.SaveChangesAsync(cancellationToken);
+            await commandStore.SaveChangesAsync(cancellationToken);
         }
 
         return AiActionResult<BlogFixBatchResponse>.Ok(new BlogFixBatchResponse(results, request.Apply));

@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 
-namespace WoongBlog.Api.Modules.Identity.Application;
+namespace WoongBlog.Api.Modules.Identity.Infrastructure;
 
 public interface IIdentityInteractionService
 {

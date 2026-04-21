@@ -4,12 +4,13 @@ using WoongBlog.Api.Modules.AI.Application.Abstractions;
 namespace WoongBlog.Api.Modules.AI.Application.BatchJobs;
 
 public sealed class AiBatchJobScheduler(
-    IAiBlogFixBatchStore store,
+    IAiBatchJobQueryStore jobQueryStore,
+    IAiBatchJobCommandStore commandStore,
     IAiBatchJobRunner runner) : IAiBatchJobScheduler
 {
     public async Task ResetRunningJobsAsync(CancellationToken cancellationToken)
     {
-        var runningJobs = await store.GetRunningBlogJobsAsync(cancellationToken);
+        var runningJobs = await jobQueryStore.GetRunningBlogJobsAsync(cancellationToken);
         if (runningJobs.Count == 0)
         {
             return;
@@ -21,7 +22,7 @@ public sealed class AiBatchJobScheduler(
             AiBatchJobProgressPolicy.MarkQueued(job, now);
         }
 
-        await store.SaveChangesAsync(cancellationToken);
+        await commandStore.SaveChangesAsync(cancellationToken);
     }
 
     public async Task ProcessQueuedJobsUntilEmptyAsync(CancellationToken cancellationToken)
@@ -40,14 +41,14 @@ public sealed class AiBatchJobScheduler(
 
     private async Task<AiBatchJob?> TryStartNextQueuedJobAsync(CancellationToken cancellationToken)
     {
-        var nextJob = (await store.GetQueuedBlogJobsAsync(cancellationToken)).FirstOrDefault();
+        var nextJob = (await jobQueryStore.GetQueuedBlogJobsAsync(cancellationToken)).FirstOrDefault();
         if (nextJob is null)
         {
             return null;
         }
 
         AiBatchJobProgressPolicy.MarkRunning(nextJob, DateTimeOffset.UtcNow);
-        await store.SaveChangesAsync(cancellationToken);
+        await commandStore.SaveChangesAsync(cancellationToken);
         return nextJob;
     }
 }
