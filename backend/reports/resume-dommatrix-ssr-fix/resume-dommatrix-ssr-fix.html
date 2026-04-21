@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Resume DOMMatrix SSR Fix Audit</title>
+  <style>
+    body { font-family: system-ui, sans-serif; line-height: 1.5; max-width: 920px; margin: 40px auto; padding: 0 20px; color: #172033; }
+    h1, h2 { line-height: 1.2; }
+    code { background: #eef2f7; padding: 2px 4px; border-radius: 4px; }
+    li { margin: 6px 0; }
+    .status { border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px 16px; background: #f8fafc; }
+  </style>
+</head>
+<body>
+  <h1>Resume DOMMatrix SSR Fix Audit</h1>
+  <p><strong>Date:</strong> 2026-04-22</p>
+  <div class="status">
+    <p>This small change isolates <code>react-pdf</code>/<code>pdfjs-dist</code> behind a client-only dynamic boundary so the server-rendered <code>/resume</code> route no longer evaluates browser-only PDF code.</p>
+  </div>
+
+  <h2>Changed</h2>
+  <ul>
+    <li>Added <code>ResumePdfDocument.tsx</code> for browser-only PDF rendering.</li>
+    <li>Changed <code>ResumePdfViewer.tsx</code> into a <code>next/dynamic</code> wrapper with <code>ssr: false</code>.</li>
+    <li>Added a focused SSR isolation Vitest guard.</li>
+    <li>Updated focused <code>/resume</code> Playwright tests to assert HTTP 200.</li>
+  </ul>
+
+  <h2>Validation</h2>
+  <ul>
+    <li>Focused Vitest passed.</li>
+    <li><code>npm run lint</code> passed with existing warnings.</li>
+    <li><code>npm run typecheck</code> passed.</li>
+    <li>Docker dev stack rebuild passed.</li>
+    <li>Focused <code>/resume</code> Playwright passed: 3 passed.</li>
+    <li>Frontend logs had no post-rebuild <code>DOMMatrix</code> or <code>ReferenceError</code> matches.</li>
+  </ul>
+
+  <h2>Risks</h2>
+  <ul>
+    <li>The library is still the same on the client; this only fixes SSR evaluation.</li>
+    <li>Full Playwright parallel instability remains a separate follow-up.</li>
+  </ul>
+
+  <h2>Recommendation</h2>
+  <p>Proceed with this focused runtime fix and keep broader test-isolation work in a separate PR.</p>
+</body>
+</html>

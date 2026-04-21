@@ -1,0 +1,50 @@
+{
+  "title": "Resume DOMMatrix SSR Fix Audit",
+  "date": "2026-04-22",
+  "summary": "Fixes /resume SSR/runtime failure by moving react-pdf behind a client-only dynamic boundary so pdfjs-dist is not evaluated in the server bundle.",
+  "changed": [
+    "Created src/components/content/ResumePdfDocument.tsx for browser-only react-pdf usage.",
+    "Changed src/components/content/ResumePdfViewer.tsx into a next/dynamic ssr:false wrapper.",
+    "Added src/test/resume-server-render.test.tsx as a focused SSR isolation guard.",
+    "Updated tests/resume.spec.ts and tests/public-resume-empty-state.spec.ts to assert HTTP 200 on /resume."
+  ],
+  "notChanged": [
+    "Resume page layout",
+    "Backend APIs",
+    "Caching strategy",
+    "Unrelated blog/work/contact flows",
+    "Global Playwright worker isolation cleanup"
+  ],
+  "validations": [
+    {
+      "command": "npx vitest run src/test/resume-server-render.test.tsx --pool=threads",
+      "result": "passed"
+    },
+    {
+      "command": "npm run lint",
+      "result": "passed with 5 existing warnings"
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "passed"
+    },
+    {
+      "command": "BACKEND_PUBLISH_PORT=18080 NGINX_DEFAULT_CONF=./nginx/default.conf ./scripts/dev-up.sh",
+      "result": "passed"
+    },
+    {
+      "command": "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 npx playwright test tests/public-resume-empty-state.spec.ts tests/resume.spec.ts --workers=1",
+      "result": "3 passed"
+    },
+    {
+      "command": "docker compose -f docker-compose.dev.yml logs frontend | rg \"DOMMatrix|ReferenceError\"",
+      "result": "no matches after rebuild"
+    }
+  ],
+  "risks": [
+    "Vitest covers wrapper isolation rather than reproducing the entire Next server bundle path.",
+    "Client-side react-pdf behavior is unchanged beyond SSR isolation.",
+    "Parallel Playwright flakiness remains deferred."
+  ],
+  "recommendation": "Proceed with this focused /resume fix and handle full-suite Playwright isolation separately."
+}
