@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using WoongBlog.Api.Infrastructure.Ai;
+using WoongBlog.Api.Modules.AI.Application;
 using WoongBlog.Api.Infrastructure.Persistence;
 
 namespace WoongBlog.Api.Tests;

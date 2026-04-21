@@ -1,4 +1,5 @@
 using WoongBlog.Api.Infrastructure.Ai;
+using WoongBlog.Api.Modules.AI.Application;
 using WoongBlog.Api.Modules.AI.Application.Abstractions;
 using WoongBlog.Api.Modules.AI.Application.BatchJobs;
 using WoongBlog.Api.Modules.AI.Persistence;

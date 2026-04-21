@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using System.Security.Claims;
-using WoongBlog.Api.Infrastructure.Auth;
+using WoongBlog.Api.Modules.Identity.Application;
 
 namespace WoongBlog.Api.Modules.Identity.Api.GetSession;
 

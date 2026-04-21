@@ -73,7 +73,7 @@ test('VA-202 admin sidebar text keeps readable heading and nav label sizing', as
 test('VA-211 and VA-212 admin table columns and search field keep aligned readable controls', async ({ page }) => {
   await page.goto('/admin/blog')
 
-  const search = page.locator('input[aria-label="Search blog titles"]:visible').first()
+  const search = page.getByRole('textbox', { name: 'Search blog titles' })
   const row = page.getByTestId('admin-blog-row').first()
   const cells = row.getByRole('cell')
   await expect(search).toBeVisible()

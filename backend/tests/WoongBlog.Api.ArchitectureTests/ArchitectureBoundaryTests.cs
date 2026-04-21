@@ -1,8 +1,10 @@
 using System.Reflection;
 using MediatR;
 using WoongBlog.Api.Infrastructure.Persistence;
+using WoongBlog.Api.Modules.AI.Application;
 using WoongBlog.Api.Modules.Content.Blogs.Application.Abstractions;
 using WoongBlog.Api.Modules.Content.Works.Application.Abstractions;
+using WoongBlog.Api.Modules.Content.Works.Application.WorkVideos;
 
 namespace WoongBlog.Api.Tests;
 
@@ -10,6 +12,186 @@ namespace WoongBlog.Api.Tests;
 public class ArchitectureBoundaryTests
 {
     private static readonly Assembly ApiAssembly = typeof(Program).Assembly;
+    private static readonly Assembly ApplicationAssembly = typeof(IBlogCommandStore).Assembly;
+    private static readonly Assembly InfrastructureAssembly = typeof(WoongBlogDbContext).Assembly;
+    private static readonly string[] ProductionAssemblyNames =
+    [
+        "WoongBlog.Domain",
+        "WoongBlog.Application",
+        "WoongBlog.Infrastructure",
+        "WoongBlog.Api"
+    ];
+
+    [Fact]
+    public void Backend_IsSplitIntoExpectedProductionAssemblies()
+    {
+        var missingAssemblies = ProductionAssemblyNames
+            .Where(assemblyName => TryLoadAssembly(assemblyName) is null)
+            .ToArray();
+
+        Assert.Empty(missingAssemblies);
+    }
+
+    [Fact]
+    public void Production_ProjectReferences_FollowLayeredDirection()
+    {
+        var references = ProductionAssemblyNames
+            .ToDictionary(
+                assemblyName => assemblyName,
+                assemblyName => GetWoongBlogProjectReferences(RequireAssembly(assemblyName)));
+
+        Assert.Empty(references["WoongBlog.Domain"]);
+        Assert.Equal(["WoongBlog.Domain"], references["WoongBlog.Application"]);
+        Assert.Equal(["WoongBlog.Application", "WoongBlog.Domain"], references["WoongBlog.Infrastructure"]);
+        Assert.DoesNotContain("WoongBlog.Domain", references["WoongBlog.Api"]);
+        Assert.Contains("WoongBlog.Application", references["WoongBlog.Api"]);
+        Assert.Contains("WoongBlog.Infrastructure", references["WoongBlog.Api"]);
+        Assert.DoesNotContain("WoongBlog.Infrastructure", references["WoongBlog.Application"]);
+        Assert.DoesNotContain("WoongBlog.Api", references["WoongBlog.Application"]);
+        Assert.DoesNotContain("WoongBlog.Api", references["WoongBlog.Infrastructure"]);
+    }
+
+    [Fact]
+    public void Application_DoesNotReference_InfrastructureOrApi()
+    {
+        var references = GetWoongBlogProjectReferences(RequireAssembly("WoongBlog.Application"));
+
+        Assert.DoesNotContain("WoongBlog.Infrastructure", references);
+        Assert.DoesNotContain("WoongBlog.Api", references);
+    }
+
+    [Fact]
+    public void Domain_DoesNotReference_ApplicationInfrastructureOrApi()
+    {
+        var references = GetWoongBlogProjectReferences(RequireAssembly("WoongBlog.Domain"));
+
+        Assert.DoesNotContain("WoongBlog.Application", references);
+        Assert.DoesNotContain("WoongBlog.Infrastructure", references);
+        Assert.DoesNotContain("WoongBlog.Api", references);
+    }
+
+    [Fact]
+    public void Domain_DoesNotReference_FrameworkOrHigherLayerAssemblies()
+    {
+        var references = RequireAssembly("WoongBlog.Domain")
+            .GetReferencedAssemblies()
+            .Select(reference => reference.Name ?? string.Empty)
+            .ToArray();
+
+        var forbiddenReferences = references
+            .Where(reference =>
+                reference.StartsWith("WoongBlog.", StringComparison.Ordinal) ||
+                reference.StartsWith("Microsoft.AspNetCore", StringComparison.Ordinal) ||
+                reference.StartsWith("Microsoft.EntityFrameworkCore", StringComparison.Ordinal) ||
+                reference == "MediatR")
+            .ToArray();
+
+        Assert.Empty(forbiddenReferences);
+    }
+
+    [Fact]
+    public void Application_DoesNotReference_HttpPersistenceOrInfrastructureConcepts()
+    {
+        var references = RequireAssembly("WoongBlog.Application")
+            .GetReferencedAssemblies()
+            .Select(reference => reference.Name ?? string.Empty)
+            .ToArray();
+
+        var forbiddenReferences = references
+            .Where(reference =>
+                reference == "WoongBlog.Infrastructure" ||
+                reference == "WoongBlog.Api" ||
+                reference.StartsWith("Microsoft.AspNetCore", StringComparison.Ordinal) ||
+                reference.StartsWith("Microsoft.EntityFrameworkCore", StringComparison.Ordinal))
+            .ToArray();
+
+        Assert.Empty(forbiddenReferences);
+    }
+
+    [Fact]
+    public void Application_Source_DoesNotUseHttpResultsOrServiceLocator()
+    {
+        var applicationDirectory = Path.Combine(
+            FindRepositoryRoot(),
+            "backend",
+            "src",
+            "WoongBlog.Application");
+
+        var disallowedTokens = new[]
+        {
+            "IResult",
+            "Results.",
+            "TypedResults.",
+            "StatusCodes.",
+            "HttpContext",
+            "IFormFile",
+            "IServiceScopeFactory",
+            ".CreateScope(",
+            ".CreateAsyncScope(",
+            "GetRequiredService<",
+            "GetRequiredService(",
+        };
+
+        var violatingFiles = FindSourceFilesContainingTokens(applicationDirectory, disallowedTokens);
+
+        Assert.Empty(violatingFiles);
+    }
+
+    [Fact]
+    public void Application_DoesNotExpose_AspNetCoreHttpResultTypes()
+    {
+        var violatingMembers = FindMembersUsingForbiddenTypes(ApplicationAssembly, IsAspNetCoreHttpType);
+
+        Assert.Empty(violatingMembers);
+    }
+
+    [Fact]
+    public void Application_DoesNotUse_ServiceScopeFactoryOrServiceLocator()
+    {
+        var applicationDirectory = Path.Combine(
+            FindRepositoryRoot(),
+            "backend",
+            "src",
+            "WoongBlog.Application");
+
+        var violatingMembers = FindMembersUsingForbiddenTypes(ApplicationAssembly, IsServiceLocatorType);
+        var violatingFiles = FindSourceFilesContainingTokens(
+            applicationDirectory,
+            [
+                "IServiceScopeFactory",
+                ".CreateScope(",
+                ".CreateAsyncScope(",
+                "GetRequiredService<",
+                "GetRequiredService("
+            ]);
+
+        Assert.Empty(violatingMembers);
+        Assert.Empty(violatingFiles);
+    }
+
+    [Fact]
+    public void Application_ResultTypes_RemainHttpAgnostic()
+    {
+        var resultTypes = new[]
+        {
+            typeof(AiActionResult<>),
+            typeof(AiActionStatus),
+            typeof(WorkVideoResult<>),
+            typeof(WorkVideoResultStatus)
+        };
+        var typesOutsideApplication = resultTypes
+            .Where(type => type.Assembly != ApplicationAssembly)
+            .Select(type => type.FullName ?? type.Name)
+            .OrderBy(name => name)
+            .ToArray();
+        var violatingMembers = resultTypes
+            .SelectMany(type => FindForbiddenTypeSurface(type, IsAspNetCoreHttpType))
+            .OrderBy(name => name)
+            .ToArray();
+
+        Assert.Empty(typesOutsideApplication);
+        Assert.Empty(violatingMembers);
+    }
 
     [Fact]
     public void Http_Adapters_DoNotDirectlyDependOn_DbContext()
@@ -28,23 +210,34 @@ public class ArchitectureBoundaryTests
     }
 
     [Fact]
-    public void Module_Registration_Extensions_Exist_For_Approved_Modules()
+    public void Composition_Registration_Extensions_Exist_For_Approved_Boundaries()
     {
-        var expectedTypes = new[]
+        var expectedTypes = new Dictionary<Assembly, string[]>
         {
-            "WoongBlog.Api.Common.CommonModuleServiceCollectionExtensions",
-            "WoongBlog.Api.Modules.Content.Pages.PagesModuleServiceCollectionExtensions",
-            "WoongBlog.Api.Modules.Content.Blogs.BlogsModuleServiceCollectionExtensions",
-            "WoongBlog.Api.Modules.Content.Works.WorksModuleServiceCollectionExtensions",
-            "WoongBlog.Api.Modules.Site.SiteModuleServiceCollectionExtensions",
-            "WoongBlog.Api.Modules.Composition.CompositionModuleServiceCollectionExtensions",
-            "WoongBlog.Api.Modules.Identity.IdentityModuleServiceCollectionExtensions",
-            "WoongBlog.Api.Modules.Media.MediaModuleServiceCollectionExtensions",
-            "WoongBlog.Api.Modules.AI.AiModuleServiceCollectionExtensions",
+            [ApiAssembly] =
+            [
+                "WoongBlog.Api.Common.ApiServiceCollectionExtensions",
+                "WoongBlog.Api.Modules.Content.Pages.PagesModuleServiceCollectionExtensions",
+                "WoongBlog.Api.Modules.Content.Blogs.BlogsModuleServiceCollectionExtensions",
+                "WoongBlog.Api.Modules.Content.Works.WorksModuleServiceCollectionExtensions",
+                "WoongBlog.Api.Modules.Site.SiteModuleServiceCollectionExtensions",
+                "WoongBlog.Api.Modules.Composition.CompositionModuleServiceCollectionExtensions",
+                "WoongBlog.Api.Modules.Identity.IdentityModuleServiceCollectionExtensions",
+                "WoongBlog.Api.Modules.Media.MediaModuleServiceCollectionExtensions",
+                "WoongBlog.Api.Modules.AI.AiModuleServiceCollectionExtensions",
+            ],
+            [ApplicationAssembly] =
+            [
+                "WoongBlog.Api.Application.ApplicationServiceCollectionExtensions",
+            ],
+            [InfrastructureAssembly] =
+            [
+                "WoongBlog.Api.Infrastructure.InfrastructureServiceCollectionExtensions",
+            ],
         };
 
         var missingTypes = expectedTypes
-            .Where(typeName => ApiAssembly.GetType(typeName) is null)
+            .SelectMany(pair => pair.Value.Where(typeName => pair.Key.GetType(typeName) is null))
             .ToArray();
 
         Assert.Empty(missingTypes);
@@ -109,7 +302,7 @@ public class ArchitectureBoundaryTests
     [Fact]
     public void Module_Persistence_Types_DoNot_Depend_On_Other_Module_Persistence_Types()
     {
-        var persistenceTypes = ApiAssembly.GetTypes()
+        var persistenceTypes = InfrastructureAssembly.GetTypes()
             .Where(type => type.Namespace is not null)
             .Where(type =>
             {
@@ -148,7 +341,7 @@ public class ArchitectureBoundaryTests
             "IAiAdminService",
         };
 
-        var violatingTypes = ApiAssembly.GetTypes()
+        var violatingTypes = ApplicationAssembly.GetTypes()
             .Where(type => type.IsClass)
             .Where(type => (type.Namespace ?? string.Empty).StartsWith("WoongBlog.Api.Modules.", StringComparison.Ordinal))
             .Where(type => type.Name.EndsWith("Handler", StringComparison.Ordinal))
@@ -179,29 +372,12 @@ public class ArchitectureBoundaryTests
             "WoongBlog.Api.Modules.AI.Application.IAiAdminService",
         };
 
+        var productionAssemblies = new[] { ApiAssembly, ApplicationAssembly, InfrastructureAssembly };
         var stillPresent = removedTypes
-            .Where(typeName => ApiAssembly.GetType(typeName) is not null)
+            .Where(typeName => productionAssemblies.Any(assembly => assembly.GetType(typeName) is not null))
             .ToArray();
 
         Assert.Empty(stillPresent);
-    }
-
-    [Fact]
-    public void Module_Application_Types_DoNot_Expose_AspNetCore_Http_Results()
-    {
-        var violatingMembers = ApiAssembly.GetTypes()
-            .Where(type => (type.Namespace ?? string.Empty).StartsWith("WoongBlog.Api.Modules.", StringComparison.Ordinal))
-            .Where(type => (type.Namespace ?? string.Empty).Contains(".Application", StringComparison.Ordinal))
-            .SelectMany(type => type.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static)
-                .Select(method => new { Type = type, Method = method }))
-            .Where(candidate =>
-                IsAspNetCoreHttpResult(candidate.Method.ReturnType) ||
-                candidate.Method.GetParameters().Any(parameter => IsAspNetCoreHttpResult(parameter.ParameterType)))
-            .Select(candidate => $"{candidate.Type.FullName}.{candidate.Method.Name}")
-            .OrderBy(name => name)
-            .ToArray();
-
-        Assert.Empty(violatingMembers);
     }
 
     [Fact]
@@ -211,7 +387,7 @@ public class ArchitectureBoundaryTests
             FindRepositoryRoot(),
             "backend",
             "src",
-            "WoongBlog.Api",
+            "WoongBlog.Application",
             "Modules",
             "Content",
             "Works",
@@ -238,7 +414,7 @@ public class ArchitectureBoundaryTests
             FindRepositoryRoot(),
             "backend",
             "src",
-            "WoongBlog.Api",
+            "WoongBlog.Application",
             "Modules",
             "AI",
             "Application");
@@ -249,17 +425,10 @@ public class ArchitectureBoundaryTests
             ".CreateScope(",
             ".CreateAsyncScope(",
             "GetRequiredService<",
+            "GetRequiredService(",
         };
 
-        var violatingFiles = Directory.EnumerateFiles(aiApplicationDirectory, "*.cs", SearchOption.AllDirectories)
-            .Where(path =>
-            {
-                var source = File.ReadAllText(path);
-                return disallowedTokens.Any(token => source.Contains(token, StringComparison.Ordinal));
-            })
-            .Select(path => Path.GetRelativePath(FindRepositoryRoot(), path))
-            .OrderBy(path => path)
-            .ToArray();
+        var violatingFiles = FindSourceFilesContainingTokens(aiApplicationDirectory, disallowedTokens);
 
         Assert.Empty(violatingFiles);
     }
@@ -267,7 +436,7 @@ public class ArchitectureBoundaryTests
     [Fact]
     public void Content_Application_Abstractions_DoNot_Accept_MediatR_Request_Types()
     {
-        var abstractionTypes = ApiAssembly.GetTypes()
+        var abstractionTypes = ApplicationAssembly.GetTypes()
             .Where(type => type.IsInterface)
             .Where(type => (type.Namespace ?? string.Empty).StartsWith("WoongBlog.Api.Modules.", StringComparison.Ordinal))
             .Where(type => (type.Namespace ?? string.Empty).Contains(".Application.Abstractions", StringComparison.Ordinal))
@@ -310,9 +479,146 @@ public class ArchitectureBoundaryTests
 
     private static bool DependsOnTypeNamed(Type type, IReadOnlySet<string> typeNames)
     {
-        return type.GetFields(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
-            .Select(field => field.FieldType)
-            .Any(fieldType => IsTypeNamed(fieldType, typeNames));
+        return GetReferencedTypes(type).Any(referencedType => IsTypeNamed(referencedType, typeNames));
+    }
+
+    private static string[] FindMembersUsingForbiddenTypes(Assembly assembly, Func<Type, bool> isForbiddenType)
+    {
+        return assembly.GetTypes()
+            .SelectMany(type => FindForbiddenTypeSurface(type, isForbiddenType))
+            .OrderBy(name => name)
+            .ToArray();
+    }
+
+    private static IEnumerable<string> FindForbiddenTypeSurface(Type type, Func<Type, bool> isForbiddenType)
+    {
+        if (TypeContainsForbidden(type.BaseType, isForbiddenType))
+        {
+            yield return $"{type.FullName ?? type.Name} base type";
+        }
+
+        foreach (var interfaceType in type.GetInterfaces())
+        {
+            if (TypeContainsForbidden(interfaceType, isForbiddenType))
+            {
+                yield return $"{type.FullName ?? type.Name} interface {FormatTypeName(interfaceType)}";
+            }
+        }
+
+        foreach (var field in type.GetFields(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly))
+        {
+            if (TypeContainsForbidden(field.FieldType, isForbiddenType))
+            {
+                yield return $"{type.FullName ?? type.Name}.{field.Name}";
+            }
+        }
+
+        foreach (var property in type.GetProperties(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly))
+        {
+            if (TypeContainsForbidden(property.PropertyType, isForbiddenType))
+            {
+                yield return $"{type.FullName ?? type.Name}.{property.Name}";
+            }
+        }
+
+        foreach (var constructor in type.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly))
+        {
+            foreach (var parameter in constructor.GetParameters())
+            {
+                if (TypeContainsForbidden(parameter.ParameterType, isForbiddenType))
+                {
+                    yield return $"{type.FullName ?? type.Name}..ctor({parameter.Name})";
+                }
+            }
+        }
+
+        foreach (var method in type.GetMethods(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly))
+        {
+            if (TypeContainsForbidden(method.ReturnType, isForbiddenType))
+            {
+                yield return $"{type.FullName ?? type.Name}.{method.Name} return";
+            }
+
+            foreach (var parameter in method.GetParameters())
+            {
+                if (TypeContainsForbidden(parameter.ParameterType, isForbiddenType))
+                {
+                    yield return $"{type.FullName ?? type.Name}.{method.Name}({parameter.Name})";
+                }
+            }
+        }
+    }
+
+    private static IEnumerable<Type> GetReferencedTypes(Type type)
+    {
+        foreach (var field in type.GetFields(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic))
+        {
+            yield return field.FieldType;
+        }
+
+        foreach (var property in type.GetProperties(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic))
+        {
+            yield return property.PropertyType;
+        }
+
+        foreach (var constructor in type.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
+        {
+            foreach (var parameter in constructor.GetParameters())
+            {
+                yield return parameter.ParameterType;
+            }
+        }
+
+        foreach (var method in type.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static))
+        {
+            yield return method.ReturnType;
+            foreach (var parameter in method.GetParameters())
+            {
+                yield return parameter.ParameterType;
+            }
+        }
+    }
+
+    private static bool TypeContainsForbidden(Type? type, Func<Type, bool> isForbiddenType)
+    {
+        if (type is null)
+        {
+            return false;
+        }
+
+        if (isForbiddenType(type))
+        {
+            return true;
+        }
+
+        if (type.HasElementType)
+        {
+            return TypeContainsForbidden(type.GetElementType(), isForbiddenType);
+        }
+
+        if (!type.IsGenericType)
+        {
+            return false;
+        }
+
+        var genericTypeDefinition = type.GetGenericTypeDefinition();
+        return (genericTypeDefinition != type && isForbiddenType(genericTypeDefinition)) ||
+            type.GetGenericArguments().Any(argument => TypeContainsForbidden(argument, isForbiddenType));
+    }
+
+    private static string[] FindSourceFilesContainingTokens(string directory, IReadOnlyCollection<string> tokens)
+    {
+        var repositoryRoot = FindRepositoryRoot();
+
+        return Directory.EnumerateFiles(directory, "*.cs", SearchOption.AllDirectories)
+            .Where(path =>
+            {
+                var source = File.ReadAllText(path);
+                return tokens.Any(token => source.Contains(token, StringComparison.Ordinal));
+            })
+            .Select(path => Path.GetRelativePath(repositoryRoot, path))
+            .OrderBy(path => path)
+            .ToArray();
     }
 
     private static bool IsTypeFromNamespaces(Type type, IReadOnlyCollection<string> namespaces)
@@ -328,6 +634,11 @@ public class ArchitectureBoundaryTests
 
     private static bool IsTypeNamed(Type type, IReadOnlySet<string> typeNames)
     {
+        if (type.HasElementType)
+        {
+            return IsTypeNamed(type.GetElementType()!, typeNames);
+        }
+
         if (type.IsGenericType)
         {
             return type.GetGenericArguments().Any(argument => IsTypeNamed(argument, typeNames));
@@ -336,10 +647,21 @@ public class ArchitectureBoundaryTests
         return typeNames.Contains(type.Name);
     }
 
-    private static bool IsAspNetCoreHttpResult(Type type)
+    private static bool IsAspNetCoreHttpType(Type type)
     {
-        return type.FullName == "Microsoft.AspNetCore.Http.IResult" ||
+        return (type.Namespace?.StartsWith("Microsoft.AspNetCore.Http", StringComparison.Ordinal) ?? false) ||
+            type.FullName == "Microsoft.AspNetCore.Http.IResult" ||
             type.GetInterfaces().Any(candidate => candidate.FullName == "Microsoft.AspNetCore.Http.IResult");
+    }
+
+    private static bool IsServiceLocatorType(Type type)
+    {
+        return type.FullName is "System.IServiceProvider" or "Microsoft.Extensions.DependencyInjection.IServiceScopeFactory";
+    }
+
+    private static string FormatTypeName(Type type)
+    {
+        return type.FullName ?? type.Name;
     }
 
     private static bool IsMediatRRequestType(Type type)
@@ -348,12 +670,41 @@ public class ArchitectureBoundaryTests
             type.GetInterfaces().Any(interfaceType => interfaceType.IsGenericType && interfaceType.GetGenericTypeDefinition() == typeof(IRequest<>));
     }
 
+    private static Assembly RequireAssembly(string assemblyName)
+    {
+        return TryLoadAssembly(assemblyName)
+            ?? throw new InvalidOperationException($"Could not load production assembly '{assemblyName}'.");
+    }
+
+    private static Assembly? TryLoadAssembly(string assemblyName)
+    {
+        try
+        {
+            return Assembly.Load(assemblyName);
+        }
+        catch (FileNotFoundException)
+        {
+            return null;
+        }
+    }
+
+    private static string[] GetWoongBlogProjectReferences(Assembly assembly)
+    {
+        return assembly
+            .GetReferencedAssemblies()
+            .Select(reference => reference.Name ?? string.Empty)
+            .Where(reference => reference.StartsWith("WoongBlog.", StringComparison.Ordinal))
+            .Order(StringComparer.Ordinal)
+            .ToArray();
+    }
+
     private static string FindRepositoryRoot()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);
         while (directory is not null)
         {
             if (Directory.Exists(Path.Combine(directory.FullName, "backend", "src", "WoongBlog.Api")) &&
+                Directory.Exists(Path.Combine(directory.FullName, "backend", "src", "WoongBlog.Application")) &&
                 File.Exists(Path.Combine(directory.FullName, "package.json")))
             {
                 return directory.FullName;

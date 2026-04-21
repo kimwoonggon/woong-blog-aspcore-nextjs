@@ -80,6 +80,45 @@ public class PersistenceContractTests
     }
 
     [Fact]
+    public async Task SaveChanges_PopulatesContentSearchFields()
+    {
+        await using var dbContext = CreateDbContext();
+        var blog = new Blog
+        {
+            Id = Guid.NewGuid(),
+            Title = "T,B,N 안녕하세요",
+            Slug = "blog-search",
+            Excerpt = "Blog excerpt",
+            ContentJson = "{\"markdown\":\"## Search Markdown\"}",
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+        var work = new Work
+        {
+            Id = Guid.NewGuid(),
+            Title = "Work Search Title",
+            Slug = "work-search",
+            Excerpt = "Work excerpt",
+            Category = "case-study",
+            ContentJson = "{\"html\":\"<p>Search HTML</p>\"}",
+            AllPropertiesJson = "{}",
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        dbContext.Blogs.Add(blog);
+        dbContext.Works.Add(work);
+        await dbContext.SaveChangesAsync();
+
+        Assert.Equal("tbn안녕하세요", blog.SearchTitle);
+        Assert.Contains("blogexcerpt", blog.SearchText, StringComparison.Ordinal);
+        Assert.Contains("searchmarkdown", blog.SearchText, StringComparison.Ordinal);
+        Assert.Equal("worksearchtitle", work.SearchTitle);
+        Assert.Contains("workexcerpt", work.SearchText, StringComparison.Ordinal);
+        Assert.Contains("searchhtml", work.SearchText, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task SeedData_SeedsCoreContractData_OnlyOnce()
     {
         await using var dbContext = CreateDbContext();

@@ -3,6 +3,9 @@ WORKDIR /src
 
 COPY backend/WoongBlog.sln ./backend/WoongBlog.sln
 COPY backend/src/WoongBlog.Api/ ./backend/src/WoongBlog.Api/
+COPY backend/src/WoongBlog.Application/ ./backend/src/WoongBlog.Application/
+COPY backend/src/WoongBlog.Domain/ ./backend/src/WoongBlog.Domain/
+COPY backend/src/WoongBlog.Infrastructure/ ./backend/src/WoongBlog.Infrastructure/
 COPY backend/tests/ ./backend/tests/
 
 WORKDIR /src/backend/src/WoongBlog.Api

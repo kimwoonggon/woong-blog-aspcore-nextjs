@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.HttpOverrides;
+using WoongBlog.Api.Application;
 using WoongBlog.Api.Common;
 using WoongBlog.Api.Infrastructure.Auth;
 using WoongBlog.Api.Infrastructure.Configuration;
+using WoongBlog.Api.Infrastructure;
 using WoongBlog.Api.Infrastructure.Persistence;
 using WoongBlog.Api.Modules.AI.Api;
 using WoongBlog.Api.Modules.AI;
@@ -23,7 +25,9 @@ using WoongBlog.Api.Infrastructure.Security;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddCommonModule(builder.Configuration, builder.Environment);
+builder.Services.AddApiCore();
+builder.Services.AddApplication();
+builder.Services.AddInfrastructure(builder.Configuration, builder.Environment);
 builder.Services.AddPagesModule();
 builder.Services.AddBlogsModule();
 builder.Services.AddWorksModule(builder.Configuration);

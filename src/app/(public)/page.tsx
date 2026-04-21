@@ -28,7 +28,7 @@ export default async function HomePage({ searchParams }: PageProps) {
   const requestHost = (headerStore.get('x-forwarded-host') ?? headerStore.get('host') ?? '').toLowerCase()
   const isLocalQaRequest = /localhost|127\.0\.0\.1/.test(requestHost)
   if (resolvedSearchParams?.__qaSlow === '1' && isLocalQaRequest) {
-    await new Promise((resolve) => setTimeout(resolve, 600))
+    await new Promise((resolve) => setTimeout(resolve, 2000))
   }
   const payload = await fetchPublicHome()
   const homeContent = toHomeContent(parsePageContentJson(payload?.homePage?.contentJson))

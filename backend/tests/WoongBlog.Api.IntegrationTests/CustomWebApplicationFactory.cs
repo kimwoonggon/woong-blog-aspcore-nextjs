@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using WoongBlog.Api.Infrastructure.Auth;
+using WoongBlog.Api.Modules.Identity.Application;
 
 namespace WoongBlog.Api.Tests;
 

@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Options;
 using WoongBlog.Api.Infrastructure.Ai;
 using WoongBlog.Api.Infrastructure.Auth;
+using WoongBlog.Api.Modules.AI.Application;
 
 namespace WoongBlog.Api.Tests;
 

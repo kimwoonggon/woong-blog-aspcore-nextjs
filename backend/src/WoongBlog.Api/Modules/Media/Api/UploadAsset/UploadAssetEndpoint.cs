@@ -1,7 +1,9 @@
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using WoongBlog.Api.Common.Api;
 using WoongBlog.Api.Modules.Media.Application.Commands.UploadMediaAsset;
+using WoongBlog.Api.Modules.Media.Application.Results;
 
 namespace WoongBlog.Api.Modules.Media.Api.UploadAsset;
 
@@ -16,13 +18,13 @@ internal static class UploadAssetEndpoint
             {
                 var formData = await httpContext.Request.ReadFormAsync(cancellationToken);
                 var result = await sender.Send(new UploadMediaAssetCommand(
-                    formData.Files["file"],
+                    FormFileUpload.From(formData.Files["file"]),
                     formData["bucket"].ToString(),
                     httpContext.User), cancellationToken);
 
                 if (!result.Success)
                 {
-                    return Results.Json(new { error = result.Error }, statusCode: result.StatusCode);
+                    return Results.Json(new { error = result.Error }, statusCode: ToStatusCode(result.Status));
                 }
 
                 return Results.Ok(new
@@ -36,4 +38,11 @@ internal static class UploadAssetEndpoint
             .WithTags("Media")
             .WithName("UploadAsset");
     }
+
+    private static int ToStatusCode(MediaUploadStatus status) => status switch
+    {
+        MediaUploadStatus.BadRequest => StatusCodes.Status400BadRequest,
+        MediaUploadStatus.Failed => StatusCodes.Status500InternalServerError,
+        _ => StatusCodes.Status200OK
+    };
 }

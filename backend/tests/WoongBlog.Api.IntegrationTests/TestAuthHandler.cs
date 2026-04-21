@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using WoongBlog.Api.Infrastructure.Auth;
+using WoongBlog.Api.Modules.Identity.Application;
 
 namespace WoongBlog.Api.Tests;
 

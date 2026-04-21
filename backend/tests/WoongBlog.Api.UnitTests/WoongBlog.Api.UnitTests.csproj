@@ -33,7 +33,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\WoongBlog.Api\WoongBlog.Api.csproj" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\WoongBlog.Application\WoongBlog.Application.csproj" />
+    <ProjectReference Include="..\..\src\WoongBlog.Domain\WoongBlog.Domain.csproj" />
+    <ProjectReference Include="..\..\src\WoongBlog.Infrastructure\WoongBlog.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

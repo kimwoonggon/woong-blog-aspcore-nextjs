@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using WoongBlog.Api.Common.Api;
 using WoongBlog.Api.Common.Api.Validation.Requests;
 using WoongBlog.Api.Modules.Content.Works.Application.WorkVideos;
 
@@ -42,7 +43,7 @@ internal static class WorkVideoEndpoints
                 }
 
                 var form = await httpContext.Request.ReadFormAsync(cancellationToken);
-                var result = await sender.Send(new UploadLocalWorkVideoCommand(id, uploadSessionId, form.Files["file"]), cancellationToken);
+                var result = await sender.Send(new UploadLocalWorkVideoCommand(id, uploadSessionId, FormFileUpload.From(form.Files["file"])), cancellationToken);
                 return ToResult(result);
             })
             .RequireAuthorization("AdminOnly")
@@ -63,7 +64,7 @@ internal static class WorkVideoEndpoints
 
                 var result = await sender.Send(new StartWorkVideoHlsJobCommand(
                     id,
-                    form.Files["file"],
+                    FormFileUpload.From(form.Files["file"]),
                     expectedVideosVersion), cancellationToken);
                 return ToResult(result);
             })
