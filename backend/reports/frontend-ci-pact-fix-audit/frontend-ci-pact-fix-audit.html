@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Frontend CI Pact Fix Audit</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 32px; line-height: 1.5; color: #202124; }
+    h1, h2 { margin-top: 1.4em; }
+    code { background: #f4f4f4; padding: 0.1rem 0.25rem; border-radius: 3px; }
+    table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+    th, td { border: 1px solid #d0d7de; padding: 0.5rem; text-align: left; vertical-align: top; }
+    th { background: #f6f8fa; }
+    .status { font-weight: 700; color: #116329; }
+  </style>
+</head>
+<body>
+  <h1>Frontend CI Pact Fix Audit</h1>
+  <p><strong>Generated:</strong> 2026-04-21T16:28:19+09:00</p>
+  <p><strong>Branch:</strong> <code>feat/phase-2-backend-discompostion</code></p>
+  <p><strong>Commit SHA at generation:</strong> <code>224a8f896e1cc5165f4419d053979787c4b8b646</code></p>
+
+  <h2>Executive Summary</h2>
+  <p class="status">Overall status: PASS</p>
+  <p>The failed PR check was <code>Frontend lint, types, and unit tests</code>. The single failing test was the Pact consumer test for public site settings.</p>
+  <p>Root cause: in the full Vitest suite, the Pact test could reach the real <code>getServerApiBaseUrl()</code>, which calls request-scoped Next.js <code>headers()</code> outside an App Router request context.</p>
+
+  <h2>Failure Evidence</h2>
+  <table>
+    <tr><th>Source</th><th>Evidence</th></tr>
+    <tr><td>GitHub Actions job</td><td><code>Frontend lint, types, and unit tests</code> failed in run <code>24705473556</code>, job <code>72257705668</code>.</td></tr>
+    <tr><td>Failing test</td><td><code>src/test/pact/public-api-consumer.pact.test.ts &gt; contracts public site settings payload</code>.</td></tr>
+    <tr><td>Error</td><td><code>headers was called outside a request scope</code> from <code>src/lib/api/server.ts:30</code>.</td></tr>
+  </table>
+
+  <h2>Fix Applied</h2>
+  <table>
+    <tr><th>File</th><th>Change</th></tr>
+    <tr><td><code>src/test/pact/public-api-consumer.pact.test.ts</code></td><td><code>withServerApi()</code> now mocks <code>next/headers</code> with the Pact mock server host/proto and an empty cookie store before importing public API clients.</td></tr>
+    <tr><td><code>src/test/pact/public-api-consumer.pact.test.ts</code></td><td>Removed unused Pact <code>string</code> matcher import.</td></tr>
+  </table>
+
+  <h2>Behavior Preservation</h2>
+  <p>No production code changed. Backend architecture, endpoint routes, DTO JSON shapes, Dockerfiles, CI files, and runtime configuration were not modified.</p>
+
+  <h2>Verification</h2>
+  <table>
+    <tr><th>Command</th><th>Result</th></tr>
+    <tr><td><code>npx vitest run src/test/pact/public-api-consumer.pact.test.ts --pool=threads</code></td><td>PASS, 6 tests passed.</td></tr>
+    <tr><td><code>npm run lint</code></td><td>PASS, 0 errors and 5 existing warnings.</td></tr>
+    <tr><td><code>npm run typecheck</code></td><td>PASS.</td></tr>
+    <tr><td><code>npm test -- --run</code></td><td>PASS, 46 files and 239 tests passed.</td></tr>
+  </table>
+
+  <h2>Remaining Notes</h2>
+  <p>Existing lint warnings remain non-blocking and outside this fix scope.</p>
+
+  <h2>Recommendation</h2>
+  <p>Push the fix commit to <code>origin/feat/phase-2-backend-discompostion</code> and let PR #13 rerun CI. The branch is ready to re-check the normal review/merge gate after the pushed commit.</p>
+</body>
+</html>

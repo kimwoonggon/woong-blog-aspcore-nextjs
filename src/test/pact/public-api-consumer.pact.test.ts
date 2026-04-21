@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Matchers, PactV3 } from '@pact-foundation/pact'
 
 const pactDirectory = path.resolve('tests/contracts/pacts')
-const { atLeastLike, boolean, integer, like, string } = Matchers
+const { atLeastLike, boolean, integer, like } = Matchers
 
 function pact() {
   return new PactV3({
@@ -16,6 +16,21 @@ function pact() {
 
 async function withServerApi<T>(baseUrl: string, callback: () => Promise<T>) {
   vi.resetModules()
+  const serverUrl = new URL(baseUrl)
+  const proto = serverUrl.protocol.replace(':', '')
+  const host = serverUrl.host
+
+  vi.doMock('next/headers', () => ({
+    headers: vi.fn(async () => new Headers({
+      host,
+      'x-forwarded-host': host,
+      'x-forwarded-proto': proto,
+    })),
+    cookies: vi.fn(async () => ({
+      getAll: () => [],
+    })),
+  }))
+
   vi.doMock('@/lib/api/server', () => ({
     getServerApiBaseUrl: vi.fn(async () => `${baseUrl}/api`),
     getServerForwardingHeaders: vi.fn(async () => ({})),
