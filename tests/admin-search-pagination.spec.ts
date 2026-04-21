@@ -2,23 +2,6 @@ import { expect, test, type APIRequestContext, type Page } from '@playwright/tes
 
 test.use({ storageState: 'test-results/playwright/admin-storage-state.json' })
 
-async function expectResponsiveTablePageSize(
-  page: Page,
-  path: string,
-  rowTestId: string,
-  expectedMaxRows: number,
-) {
-  await page.goto(path)
-  const rows = page.getByTestId(rowTestId)
-  const counter = page.getByText(/^Page \d+ of \d+$/).first()
-  await expect(rows.first()).toBeVisible()
-  await expect(rows).toHaveCount(expectedMaxRows)
-  await expect(counter).toHaveText(/Page 1 of \d+/)
-
-  await page.getByRole('button', { name: 'Next page' }).click()
-  await expect(counter).toHaveText(/Page 2 of \d+/)
-}
-
 async function expectResponsiveTablePagination(
   page: Page,
   path: string,
@@ -31,6 +14,10 @@ async function expectResponsiveTablePagination(
 
   await expect(rows.first()).toBeVisible()
   await expect(rows).toHaveCount(expectedMaxRows)
+  const pageSizeParam = new URL(page.url()).searchParams.get('pageSize')
+  if (pageSizeParam !== null) {
+    expect(pageSizeParam).toBe(String(expectedMaxRows))
+  }
   const readCounter = async () => ((await counter.textContent()) ?? '').trim()
   await expect.poll(readCounter).toMatch(/^Page 1 of \d+$/)
   const initialCounter = await readCounter()
@@ -359,6 +346,7 @@ test('admin search ignores punctuation, spacing, and case without resetting type
 
   await page.goto('/admin/blog')
   const blogSearch = page.getByLabel('Search blog titles')
+  await expect(blogSearch).toBeEnabled()
   await blogSearch.pressSequentially('tbn')
   await expect(blogSearch).toHaveValue('tbn')
   await expect(page.getByTestId('admin-blog-row').filter({ hasText: blogTitle }).first()).toBeVisible()
@@ -369,6 +357,7 @@ test('admin search ignores punctuation, spacing, and case without resetting type
 
   await page.goto('/admin/works')
   const workSearch = page.getByLabel('Search work titles')
+  await expect(workSearch).toBeEnabled()
   await workSearch.pressSequentially('TBN')
   await expect(workSearch).toHaveValue('TBN')
   await expect(page.getByTestId('admin-work-row').filter({ hasText: workTitle }).first()).toBeVisible()

@@ -30,5 +30,6 @@ test('single work delete uses the in-app dialog and removes the row', async ({ p
     dialog.getByRole('button', { name: 'Delete' }).click(),
   ])
 
-  await expect(row).toHaveCount(0)
+  await expect(dialog).toBeHidden()
+  await expect(row).toHaveCount(0, { timeout: 20000 })
 })

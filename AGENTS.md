@@ -36,6 +36,33 @@ Use the `tdd` skill actively for development work. Work in small red-green-refac
 
 Every developed feature must be represented in tests. Add coverage for new or changed behavior, remove obsolete tests for removed behavior, and ensure every newly written function or method is exercised by an appropriate test. Use Playwright for frontend validation whenever UI behavior, routing, visual behavior, or browser integration is affected.
 
+## Completion Requirement: Mandatory Audit Report
+
+A task is not complete until an audit report has been generated.
+
+For every non-trivial task, refactor, PR-sized change, or architectural update, the agent must perform a final self-audit and write a persistent audit report before finishing.
+
+The audit report must:
+- summarize what was changed
+- summarize what was intentionally not changed
+- verify the work against the stated goals and non-goals
+- list validations performed (build, tests, grep checks, architecture checks, etc.)
+- list any risks, yellow flags, or deferred follow-up items
+- state a clear final recommendation or next step
+
+Default audit artifacts (examples of if the task is targeted for backend):
+- `backend/reports/<task-slug>/<task-slug>.md`
+- `backend/reports/<task-slug>/<task-slug>.html`
+- `backend/reports/<task-slug>/<task-slug>.json`
+
+The Markdown report is the primary artifact.
+The HTML report should be static and minimal.
+The JSON report should be machine-readable.
+
+If the task is audit-only, the agent must not modify production or test code and may only generate the audit artifacts.
+
+The agent must not claim completion without providing the audit report path(s).
+
 ## Agent Workflow Requirements
 
 When a work plan is set, create or update a dated TODO file named `todolist-YYYY-MM-DD.md` before implementation. Record all TODOs carefully, include the user's instructions, and map each instruction to the TODO items that satisfy it.

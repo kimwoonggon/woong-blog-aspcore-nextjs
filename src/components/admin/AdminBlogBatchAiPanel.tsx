@@ -1,7 +1,7 @@
 'use client'
 
 import { RefreshCcw, X } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
@@ -66,6 +66,7 @@ export function AdminBlogBatchAiPanel({
   const [codexReasoningEffort, setCodexReasoningEffort] = useState('medium')
   const [customPrompt, setCustomPrompt] = useState('')
   const [savedPrompt, setSavedPrompt] = useState('')
+  const promptTouchedRef = useRef(false)
   const [workerCount, setWorkerCount] = useState('2')
   const [autoApply, setAutoApply] = useState(false)
   const [isCreatingJob, setIsCreatingJob] = useState(false)
@@ -160,6 +161,7 @@ export function AdminBlogBatchAiPanel({
 
   useEffect(() => {
     if (!isOpen) {
+      promptTouchedRef.current = false
       return
     }
 
@@ -182,8 +184,10 @@ export function AdminBlogBatchAiPanel({
         setCodexModel(savedModel || config.codexModel || 'gpt-5.4')
         setCodexReasoningEffort(savedReasoning || config.codexReasoningEffort || 'medium')
         const prompt = savedPrompt || config.defaultSystemPrompt || ''
-        setCustomPrompt(prompt)
-        setSavedPrompt(prompt)
+        if (!promptTouchedRef.current) {
+          setCustomPrompt(prompt)
+          setSavedPrompt(prompt)
+        }
         setWorkerCount(String(config.batchConcurrency || 2))
       })
       .catch((error) => {
@@ -284,6 +288,7 @@ export function AdminBlogBatchAiPanel({
   function saveSystemPrompt() {
     persistSystemPrompt(customPrompt)
     setSavedPrompt(customPrompt)
+    promptTouchedRef.current = false
     toast.success('System prompt saved')
   }
 
@@ -300,6 +305,7 @@ export function AdminBlogBatchAiPanel({
 
     setCustomPrompt(runtimeConfig?.defaultSystemPrompt || '')
     setSavedPrompt(runtimeConfig?.defaultSystemPrompt || '')
+    promptTouchedRef.current = false
     toast.success('System prompt reset')
   }
 
@@ -627,7 +633,10 @@ export function AdminBlogBatchAiPanel({
           id="batch-ai-system-prompt"
           aria-label="Batch AI system prompt"
           value={customPrompt}
-          onChange={(event) => setCustomPrompt(event.target.value)}
+          onChange={(event) => {
+            promptTouchedRef.current = true
+            setCustomPrompt(event.target.value)
+          }}
           className="max-h-44 min-h-28 resize-y text-sm"
         />
       </div>

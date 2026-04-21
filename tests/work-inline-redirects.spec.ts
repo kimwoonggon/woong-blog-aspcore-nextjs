@@ -1,14 +1,16 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { expect, test } from '@playwright/test'
+import { expectedPublicWorksPageSize } from './helpers/responsive-policy'
 
 test.use({ storageState: 'test-results/playwright/admin-storage-state.json' })
 const SAMPLE_MP4 = readFileSync(path.resolve('tests/fixtures/sample-video.mp4'))
 
 test('public works inline create returns to the first works page after save', async ({ page }) => {
   const title = `Public Redirect Work ${Date.now()}`
+  const expectedPageSize = await expectedPublicWorksPageSize(page)
 
-  await page.goto('/works?page=2&pageSize=2')
+  await page.goto(`/works?page=2&pageSize=${expectedPageSize}`)
   await page.getByRole('button', { name: '새 작업 쓰기' }).click()
   await page.getByLabel('Title').fill(title)
   await page.getByLabel('Category').fill('redirect')
@@ -21,15 +23,16 @@ test('public works inline create returns to the first works page after save', as
 
   await expect(page).toHaveURL(/\/works(?:\?|$)/)
   await expect.poll(() => new URL(page.url()).searchParams.get('page')).toBe('1')
-  await expect.poll(() => new URL(page.url()).searchParams.get('pageSize')).toBe('2')
+  await expect.poll(() => new URL(page.url()).searchParams.get('pageSize')).toBe(String(expectedPageSize))
   await expect(page.getByRole('button', { name: '뒤로가기' })).toHaveCount(0)
   await expect(page.getByLabel('Title')).toHaveCount(0)
 })
 
 test('public work detail inline edit returns the user to the originating works page after save', async ({ page }) => {
   const updatedTitle = `Redirected Work Title ${Date.now()}`
+  const expectedPageSize = await expectedPublicWorksPageSize(page)
 
-  await page.goto('/works?page=2&pageSize=2')
+  await page.goto(`/works?page=2&pageSize=${expectedPageSize}`)
   const originalListUrl = page.url()
   await page.locator('a[href^="/works/"]').first().click()
 
@@ -72,7 +75,7 @@ test('public work detail video-only edits enable Update Work without requiring b
     buffer: SAMPLE_MP4,
   })
 
-  await expect(page.locator('video')).toHaveCount(1, { timeout: 20000 })
+  await expect(page.getByText('video-only-refresh.mp4')).toBeVisible({ timeout: 20000 })
   await expect(page.getByAltText('Work thumbnail preview')).toHaveAttribute('src', /\/media\/work-thumbnails\//)
   await expect(page.getByRole('button', { name: 'Update Work' })).toBeEnabled()
 })

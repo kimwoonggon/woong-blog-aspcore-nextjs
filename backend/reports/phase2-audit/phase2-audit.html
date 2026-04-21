@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Phase 2 Backend Physical Split Audit</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f8fb;
+      --card: #ffffff;
+      --text: #182033;
+      --muted: #667085;
+      --border: #d9deea;
+      --pass: #0f7b45;
+      --warn: #a15c00;
+      --fail: #b42318;
+      --blue: #2457c5;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    main { max-width: 1180px; margin: 0 auto; padding: 32px 20px 56px; }
+    h1, h2, h3 { line-height: 1.2; }
+    h1 { margin: 0 0 8px; font-size: 2rem; }
+    h2 { margin-top: 36px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+    code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    pre { background: #101828; color: #f9fafb; padding: 16px; border-radius: 8px; overflow: auto; }
+    table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; text-align: left; }
+    th { background: #eef2f8; font-weight: 700; }
+    tr:last-child td { border-bottom: 0; }
+    .meta { color: var(--muted); margin: 0 0 24px; }
+    .cards { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); margin: 24px 0; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+    .card strong { display: block; font-size: 1.5rem; }
+    .pass { color: var(--pass); font-weight: 700; }
+    .warn { color: var(--warn); font-weight: 700; }
+    .fail { color: var(--fail); font-weight: 700; }
+    .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: .85rem; font-weight: 700; }
+    .pill.pass { background: #e8f5ee; }
+    .pill.warn { background: #fff4df; }
+    .pill.fail { background: #fdecec; }
+    .note { color: var(--muted); }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Phase 2 Backend Physical Split Audit</h1>
+  <p class="meta">
+    Generated: <code>2026-04-21T00:27:49+09:00</code><br>
+    Branch: <code>feat/phase-2-backend-discompostion</code><br>
+    Commit SHA: <code>36c6fdfafd9600039bf2561070f73878e7220f3f</code>
+  </p>
+
+  <section class="cards" aria-label="summary cards">
+    <div class="card"><span class="note">Overall</span><strong class="pass">PASS</strong><span class="note">with yellow flags</span></div>
+    <div class="card"><span class="note">High-risk violations</span><strong>0</strong></div>
+    <div class="card"><span class="note">Yellow flags</span><strong class="warn">8</strong></div>
+    <div class="card"><span class="note">Recommendation</span><strong class="pass">ready</strong><span class="note">for stabilization PR</span></div>
+  </section>
+
+  <h2>Executive Summary</h2>
+  <p>The current repository matches the intended Phase 2 physical split at the project-reference and source-boundary level. No high-risk architectural violations were found. Application has no direct Infrastructure project reference, no Infrastructure namespace imports, no ASP.NET HTTP result usage, and no service-locator/scope usage. Domain is dependency-free apart from runtime framework dependencies and contains entity/value/constant style code only.</p>
+
+  <h2>PASS/FAIL Checklist</h2>
+  <table>
+    <thead><tr><th>Criterion</th><th>Status</th><th>Evidence</th></tr></thead>
+    <tbody>
+      <tr><td>Domain has no project references</td><td><span class="pill pass">PASS</span></td><td><code>WoongBlog.Domain.csproj</code> has no <code>ProjectReference</code>.</td></tr>
+      <tr><td>Application references Domain only</td><td><span class="pill pass">PASS</span></td><td><code>WoongBlog.Application -> WoongBlog.Domain</code>.</td></tr>
+      <tr><td>Infrastructure references Application + Domain only</td><td><span class="pill pass">PASS</span></td><td><code>WoongBlog.Infrastructure -> WoongBlog.Application + WoongBlog.Domain</code>.</td></tr>
+      <tr><td>Api references Application + Infrastructure</td><td><span class="pill pass">PASS</span></td><td><code>WoongBlog.Api -> WoongBlog.Application + WoongBlog.Infrastructure</code>.</td></tr>
+      <tr><td>No circular references</td><td><span class="pill pass">PASS</span></td><td>The graph is one-way and acyclic.</td></tr>
+      <tr><td>No Application -> Infrastructure dependency</td><td><span class="pill pass">PASS</span></td><td>No project reference or source namespace references found.</td></tr>
+      <tr><td>No Domain -> Application/Infrastructure dependency</td><td><span class="pill pass">PASS</span></td><td>No higher-layer/framework references found in Domain.</td></tr>
+      <tr><td>Application does not expose ASP.NET HTTP result types</td><td><span class="pill pass">PASS</span></td><td>No <code>IResult</code>, <code>Results.</code>, or <code>StatusCodes.</code> in Application.</td></tr>
+      <tr><td>Application does not use service locator/scope APIs</td><td><span class="pill pass">PASS</span></td><td>No <code>IServiceScopeFactory</code>, <code>CreateScope</code>, or <code>GetRequiredService</code> in Application.</td></tr>
+      <tr><td>Api owns HTTP result mapping</td><td><span class="pill pass">PASS</span></td><td><code>AiHttpResultMapper</code> and <code>WorkVideoEndpoints.ToResult</code> are in Api.</td></tr>
+      <tr><td>DbContext and store implementations live in Infrastructure</td><td><span class="pill pass">PASS</span></td><td><code>WoongBlogDbContext</code> and concrete <code>*Store</code> classes are under Infrastructure.</td></tr>
+      <tr><td>Handlers and abstractions live in Application</td><td><span class="pill pass">PASS</span></td><td>45 handlers and 15 abstraction files are under Application.</td></tr>
+      <tr><td>Domain only contains pure domain-owned code</td><td><span class="pill pass">PASS</span></td><td>Domain contains entities and constants only.</td></tr>
+      <tr><td>Result types are HTTP-agnostic</td><td><span class="pill pass">PASS</span></td><td><code>AiActionResult&lt;T&gt;</code> and <code>WorkVideoResult&lt;T&gt;</code> use application enums.</td></tr>
+      <tr><td>Content CQRS direction remains intact</td><td><span class="pill pass">PASS</span></td><td>Handlers/ports in Application; stores in Infrastructure.</td></tr>
+      <tr><td>AI batch boundary remains intact</td><td><span class="pill pass">PASS</span></td><td>Use cases/contracts in Application; provider/background host/store implementation in Infrastructure; HTTP mapping in Api.</td></tr>
+      <tr><td>WorkVideo boundary remains intact</td><td><span class="pill pass">PASS</span></td><td>Handlers/ports/results in Application; HLS/storage/transcoder/cleanup implementations in Infrastructure; HTTP mapping in Api.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Project Reference Graph</h2>
+  <pre>WoongBlog.Domain
+  (no project references)
+
+WoongBlog.Application
+  -> WoongBlog.Domain
+
+WoongBlog.Infrastructure
+  -> WoongBlog.Application
+  -> WoongBlog.Domain
+
+WoongBlog.Api
+  -> WoongBlog.Application
+  -> WoongBlog.Infrastructure</pre>
+
+  <h2>High-Risk Violations</h2>
+  <table>
+    <thead><tr><th>Severity</th><th>File</th><th>Finding</th></tr></thead>
+    <tbody><tr><td>None</td><td>N/A</td><td>No hard violations found by project graph inspection or forbidden dependency searches.</td></tr></tbody>
+  </table>
+
+  <h2>Yellow-Flag Items</h2>
+  <table>
+    <thead><tr><th>Area</th><th>File(s)</th><th>Why it matters</th><th>Suggested cleanup</th></tr></thead>
+    <tbody>
+      <tr><td>Namespace clarity</td><td><code>backend/src/WoongBlog.Application</code>, <code>WoongBlog.Domain</code>, <code>WoongBlog.Infrastructure</code></td><td>Namespaces mostly remain <code>WoongBlog.Api.*</code> outside Api.</td><td>Normalize namespaces later or document the convention.</td></tr>
+      <tr><td>Application registration composition</td><td><code>backend/src/WoongBlog.Api/Common/ApiServiceCollectionExtensions.cs</code></td><td>Api scans Application assemblies and registers validation behavior directly.</td><td>Add <code>AddApplication()</code> in Application later.</td></tr>
+      <tr><td>DbContext/Application support coupling</td><td><code>backend/src/WoongBlog.Infrastructure/Infrastructure/Persistence/WoongBlogDbContext.cs</code></td><td>DbContext calls Application support helpers for content search/excerpt synchronization.</td><td>Move low-level indexing helpers to Domain or Infrastructure support if they become persistence-owned.</td></tr>
+      <tr><td>AI options placement</td><td><code>backend/src/WoongBlog.Application/Modules/AI/Application/AiOptions.cs</code></td><td>Provider secrets/runtime config live in Application.</td><td>Split Application runtime policy options from Infrastructure provider options later.</td></tr>
+      <tr><td>HTTP middleware in Infrastructure</td><td><code>AntiforgeryValidationMiddleware.cs</code>, <code>AppCookieAuthenticationEvents.cs</code>, <code>AuthRuntimeExtensions.cs</code>, <code>SecurityHeadersMiddleware.cs</code></td><td>Infrastructure is not purely non-HTTP.</td><td>Accept as host infrastructure unless Api must own all HTTP middleware.</td></tr>
+      <tr><td>EF migrations absent</td><td><code>WoongBlogDbContextDesignTimeFactory.cs</code></td><td>Factory exists and migrations assembly is configured, but no migrations folder exists.</td><td>No action unless EF migrations become part of the workflow.</td></tr>
+      <tr><td>README stale paths</td><td><code>README.md</code></td><td>Some docs still mention old single-project paths.</td><td>Update docs after stabilization.</td></tr>
+      <tr><td>Unit test layer reaches Infrastructure</td><td><code>backend/tests/WoongBlog.Api.UnitTests/WoongBlog.Api.UnitTests.csproj</code></td><td>Unit tests reference Infrastructure and ASP.NET framework.</td><td>Later move concrete infrastructure tests to IntegrationTests or classify them as component tests.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Follow-Up Recommendation</h2>
+  <p><strong class="pass">ready for stabilization PR</strong>. The split satisfies the hard Phase 2 architecture criteria. The most useful cleanup before or after review would be adding <code>AddApplication()</code> and deciding whether <code>AiOptions</code> should be split.</p>
+</main>
+</body>
+</html>

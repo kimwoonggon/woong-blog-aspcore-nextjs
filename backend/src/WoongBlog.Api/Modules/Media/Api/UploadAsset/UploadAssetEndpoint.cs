@@ -1,6 +1,9 @@
+using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using WoongBlog.Api.Modules.Media.Application;
+using WoongBlog.Api.Common.Api;
+using WoongBlog.Api.Modules.Media.Application.Commands.UploadMediaAsset;
+using WoongBlog.Api.Modules.Media.Application.Results;
 
 namespace WoongBlog.Api.Modules.Media.Api.UploadAsset;
 
@@ -10,19 +13,18 @@ internal static class UploadAssetEndpoint
     {
         app.MapPost(MediaApiPaths.Uploads, async (
                 HttpContext httpContext,
-                IMediaAssetService mediaAssetService,
+                ISender sender,
                 CancellationToken cancellationToken) =>
             {
                 var formData = await httpContext.Request.ReadFormAsync(cancellationToken);
-                var result = await mediaAssetService.UploadAsync(
-                    formData.Files["file"],
+                var result = await sender.Send(new UploadMediaAssetCommand(
+                    FormFileUpload.From(formData.Files["file"]),
                     formData["bucket"].ToString(),
-                    httpContext.User,
-                    cancellationToken);
+                    httpContext.User), cancellationToken);
 
                 if (!result.Success)
                 {
-                    return Results.Json(new { error = result.Error }, statusCode: result.StatusCode);
+                    return Results.Json(new { error = result.Error }, statusCode: ToStatusCode(result.Status));
                 }
 
                 return Results.Ok(new
@@ -36,4 +38,11 @@ internal static class UploadAssetEndpoint
             .WithTags("Media")
             .WithName("UploadAsset");
     }
+
+    private static int ToStatusCode(MediaUploadStatus status) => status switch
+    {
+        MediaUploadStatus.BadRequest => StatusCodes.Status400BadRequest,
+        MediaUploadStatus.Failed => StatusCodes.Status500InternalServerError,
+        _ => StatusCodes.Status200OK
+    };
 }

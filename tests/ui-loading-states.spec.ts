@@ -3,7 +3,7 @@ import { clickHeaderNavLink, rewriteHeaderNavHref } from './helpers/navigation'
 
 test('WQ-024 and VA-403 public route transitions expose a loading skeleton before content resolves', async ({ page }) => {
   await page.goto('/blog')
-  await rewriteHeaderNavHref(page, 'Home', '/?__qaSlow=1')
+  await rewriteHeaderNavHref(page, 'Home', `/?__qaSlow=1&__qaRun=${Date.now()}`)
   await clickHeaderNavLink(page, 'Home')
 
   const skeleton = page.locator('.animate-pulse').first()

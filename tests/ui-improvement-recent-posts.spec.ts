@@ -34,6 +34,10 @@ test('Study Notes section keeps compact spacing after copy cleanup', async ({ pa
   const section = page.getByTestId('recent-posts-section')
   const heading = section.getByRole('heading', { name: 'Study Notes' })
 
+  await expect(section).toBeVisible()
+  await section.scrollIntoViewIfNeeded()
+  await expect(heading).toBeVisible()
+
   const [sectionBox, headingBox] = await Promise.all([
     section.boundingBox(),
     heading.boundingBox(),

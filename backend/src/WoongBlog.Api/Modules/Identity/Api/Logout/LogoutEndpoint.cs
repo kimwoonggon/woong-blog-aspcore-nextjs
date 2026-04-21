@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using WoongBlog.Api.Modules.Identity.Application;
+using WoongBlog.Api.Modules.Identity.Infrastructure;
 
 namespace WoongBlog.Api.Modules.Identity.Api.Logout;
 

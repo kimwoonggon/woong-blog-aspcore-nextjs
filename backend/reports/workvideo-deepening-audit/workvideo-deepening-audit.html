@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>WorkVideo Chapter 2.5 Deepening Audit</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, sans-serif; margin: 2rem; color: #172033; line-height: 1.5; }
+    h1, h2 { color: #111827; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: 0.95rem; }
+    th, td { border: 1px solid #d0d7de; padding: 0.55rem; vertical-align: top; }
+    th { background: #f6f8fa; text-align: left; }
+    .pass { display: inline-block; background: #dcfce7; color: #166534; padding: 0.2rem 0.45rem; border-radius: 999px; font-weight: 700; }
+    .meta { color: #4b5563; }
+  </style>
+</head>
+<body>
+  <h1>WorkVideo Chapter 2.5 Deepening Audit</h1>
+  <p class="meta">
+    Generated: <code>2026-04-21T11:34:05+09:00</code><br>
+    Branch: <code>feat/phase-2-backend-discompostion</code><br>
+    Commit SHA: <code>066c48c1ed04d096d6e2a2cd9322c4b967c6aed1</code>
+  </p>
+
+  <h2>Executive Summary</h2>
+  <p>Overall status: <span class="pass">PASS</span></p>
+  <p>The WorkVideo deepening stayed within scope. HLS job planning is now isolated in <code>WorkVideoHlsJobPlan</code>, and background cleanup persistence responsibilities moved from <code>IWorkVideoCommandStore</code> to <code>IWorkVideoCleanupStore</code>.</p>
+  <p>No endpoint routes, request/response JSON shape, upload/confirm/reorder/delete/HLS/playback behavior, or API result mapping changed.</p>
+
+  <h2>Changes</h2>
+  <table>
+    <thead><tr><th>Area</th><th>Change</th><th>Behavior impact</th></tr></thead>
+    <tbody>
+      <tr><td>HLS planning</td><td>Added <code>WorkVideoHlsJobPlan</code>.</td><td>No behavior change; same source key and entity values.</td></tr>
+      <tr><td>Command handler</td><td><code>StartWorkVideoHlsJobCommandHandler</code> delegates HLS naming/entity construction.</td><td>Same orchestration sequence.</td></tr>
+      <tr><td>Cleanup port</td><td>Added <code>IWorkVideoCleanupStore</code>.</td><td>Cleanup methods no longer live on command store.</td></tr>
+      <tr><td>Cleanup adapter</td><td>Added <code>WorkVideoCleanupStore</code>.</td><td>Same DbContext-backed cleanup behavior.</td></tr>
+      <tr><td>Architecture tests</td><td>Added guard against cleanup-only methods on command store.</td><td>Prevents responsibility drift.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Tests</h2>
+  <table>
+    <thead><tr><th>Command</th><th>Result</th></tr></thead>
+    <tbody>
+      <tr><td><code>dotnet test backend/tests/WoongBlog.Api.UnitTests/WoongBlog.Api.UnitTests.csproj</code></td><td>13 passed</td></tr>
+      <tr><td><code>dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter "FullyQualifiedName~WorkVideoEndpointsTests|FullyQualifiedName~StartupCompositionTests"</code></td><td>9 passed</td></tr>
+      <tr><td><code>dotnet test backend/tests/WoongBlog.Api.ArchitectureTests/WoongBlog.Api.ArchitectureTests.csproj</code></td><td>26 passed</td></tr>
+      <tr><td><code>dotnet test backend/WoongBlog.sln</code></td><td>Contract 1, Unit 13, Component 26, Architecture 26, Integration 93 passed</td></tr>
+      <tr><td><code>npm run test:e2e:stack</code></td><td>563 passed, 8 skipped</td></tr>
+    </tbody>
+  </table>
+  <p>Full e2e passed after the unrelated UI/test failures were fixed. WorkVideo e2e create/reorder/edit/mixed upload/S3-compatible HLS/public playback/delete flows passed.</p>
+
+  <h2>Deferred Items</h2>
+  <ul>
+    <li>WorkVideo csproj/module extraction.</li>
+    <li>Larger command store decomposition into separate work/video/session stores.</li>
+    <li>Broader WorkVideo orchestration redesign.</li>
+    <li>Namespace normalization.</li>
+    <li>Moving WorkVideo module DI registration from Api to Infrastructure-owned helpers.</li>
+    <li><code>ConfirmWorkVideoUploadCommandHandler</code> deepening.</li>
+    <li>Cleanup semantics or storage deletion policy changes.</li>
+  </ul>
+
+  <h2>Final Recommendation</h2>
+  <p>The next selective chapter2.5 modular deepening PR should target <strong>AI batch</strong>.</p>
+</body>
+</html>

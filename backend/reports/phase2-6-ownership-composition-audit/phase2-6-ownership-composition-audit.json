@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-04-21T14:02:34+09:00",
+  "branch": "feat/phase-2-backend-discompostion",
+  "commit_sha": "066c48c1ed04d096d6e2a2cd9322c4b967c6aed1",
+  "overall_status": "PASS",
+  "recommendation": "ready for review/merge",
+  "summary": [
+    "Removed AI batch compatibility aggregate interface",
+    "Moved concrete Infrastructure adapter registrations behind Infrastructure-owned module helpers",
+    "Cleaned Identity infrastructure path/namespace",
+    "Deferred AiOptions split as not low-risk",
+    "Fixed two known full-e2e UI/test failures"
+  ],
+  "changes": {
+    "ai_batch": [
+      "AiBlogFixBatchStore implements IAiBatchTargetQueryStore, IAiBatchJobQueryStore, IAiBatchJobCommandStore directly",
+      "AI batch consumers depend on narrow interfaces",
+      "IAiBlogFixBatchStore aggregate removed"
+    ],
+    "composition": [
+      "Added Infrastructure module service registration helpers",
+      "Api module registrations delegate to Infrastructure helpers",
+      "Program.cs remains unchanged and clean"
+    ],
+    "identity": [
+      "Moved IIdentityInteractionService and IdentityInteractionService to Infrastructure identity namespace/path"
+    ],
+    "ui_fixes": [
+      "Added defensive wrapping to blog list cards",
+      "Added prompt-touched guard to AdminBlogBatchAiPanel"
+    ]
+  },
+  "tests_added_or_updated": [
+    "ArchitectureBoundaryTests.Ai_Batch_AggregateBatchStore_IsRemoved",
+    "ArchitectureBoundaryTests.Api_ModuleRegistrations_DoNotReference_ConcreteInfrastructureAdapters",
+    "StartupCompositionTests narrow AI batch store resolution",
+    "Existing e2e tests for blog overflow and mermaid batch prompt"
+  ],
+  "verification": [
+    {
+      "command": "npx vitest run src/test/admin-blog-batch-ai-panel.test.tsx --pool=threads",
+      "result": "10 passed"
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "passed"
+    },
+    {
+      "command": "npm run test:e2e:stack -- tests/ui-pub-overflow.spec.ts:6 tests/mermaid-batch-prompt-0419.spec.ts:126",
+      "result": "9 passed"
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.UnitTests/WoongBlog.Api.UnitTests.csproj",
+      "result": "13 passed"
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter \"FullyQualifiedName~AdminAiEndpointsTests|FullyQualifiedName~StartupCompositionTests\"",
+      "result": "16 passed"
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.ArchitectureTests/WoongBlog.Api.ArchitectureTests.csproj",
+      "result": "28 passed"
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter \"FullyQualifiedName~StartupCompositionTests|FullyQualifiedName~AdminAiEndpointsTests|FullyQualifiedName~AuthEndpointsTests|FullyQualifiedName~AdminMembersEndpointsTests|FullyQualifiedName~UploadsControllerTests|FullyQualifiedName~WorkVideoEndpointsTests\"",
+      "result": "35 passed"
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln",
+      "result": "Contract 1, Unit 13, Component 26, Architecture 28, Integration 93 passed"
+    },
+    {
+      "command": "npm run test:e2e:stack",
+      "result": "563 passed, 8 skipped"
+    }
+  ],
+  "deferred_items": [
+    "AiOptions ownership split",
+    "Atomic claim / DB concurrency redesign",
+    "Concrete AI EF store split",
+    "Broad namespace normalization",
+    "Middleware/auth ownership relocation",
+    "EF migrations workflow",
+    "Per-module csproj split"
+  ],
+  "known_warnings": [
+    "Existing low-severity NU1901 warning for AWSSDK.Core remains"
+  ]
+}

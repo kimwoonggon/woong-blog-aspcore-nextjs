@@ -13,7 +13,7 @@
 
 ## Green Evidence Chain
 
-1. `docker run --pull=never --rm -v "$PWD/backend:/src" -w /src mcr.microsoft.com/dotnet/sdk:10.0 dotnet test tests/Portfolio.Api.Tests/Portfolio.Api.Tests.csproj`
+1. `dotnet test backend/WoongBlog.sln`
 2. `./scripts/db-load-smoke.sh`
 3. `./scripts/backend-http-smoke.sh`
 4. `npm run test -- --run && npm run lint && npm run typecheck && npm run build`

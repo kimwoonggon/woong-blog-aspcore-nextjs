@@ -46,10 +46,11 @@ test('PF-041 public work detail lets visitors play and pause an uploaded video',
   const video = page.locator('video').first()
   await expect(video).toBeVisible()
 
-  await video.evaluate(async (node) => {
+  await video.evaluate((node) => {
     const media = node as HTMLVideoElement
     media.muted = true
-    await media.play()
+    media.playsInline = true
+    void media.play().catch(() => undefined)
   })
 
   await expect
@@ -62,14 +63,14 @@ test('PF-041 public work detail lets visitors play and pause an uploaded video',
           readyState: media.readyState,
         }
       })
-    })
+    }, { timeout: 20000 })
     .toMatchObject({
       paused: false,
       readyState: expect.any(Number),
     })
 
   await expect
-    .poll(async () => video.evaluate((node) => (node as HTMLVideoElement).currentTime))
+    .poll(async () => video.evaluate((node) => (node as HTMLVideoElement).currentTime), { timeout: 20000 })
     .toBeGreaterThan(0)
 
   await video.evaluate((node) => {

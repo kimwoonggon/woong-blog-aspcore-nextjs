@@ -1,0 +1,117 @@
+{
+  "generated_at": "2026-04-21T11:20:13+09:00",
+  "branch": "feat/phase-2-backend-discompostion",
+  "commit_sha": "066c48c1ed04d096d6e2a2cd9322c4b967c6aed1",
+  "overall_status": "PASS",
+  "recommendation": "ready for selective chapter2.5 modular deepening PR",
+  "changes": [
+    "Added WoongBlog.Api.ComponentTests project",
+    "Moved Infrastructure/EF/ASP.NET/filesystem/HttpClient-backed tests from UnitTests to ComponentTests",
+    "Removed Infrastructure, Domain, ASP.NET App, EF InMemory, Bogus, NSubstitute, and Shouldly dependencies from UnitTests",
+    "Added Component test category and explicit Unit traits",
+    "Added ArchitectureTests guard preventing UnitTests from referencing Infrastructure, ASP.NET App, or EF InMemory",
+    "Updated README taxonomy note",
+    "Added backend/reports/test-rebalancing/test-inventory.md",
+    "Added InternalsVisibleTo for WoongBlog.Api.ComponentTests"
+  ],
+  "moved_tests": [
+    {
+      "from": "backend/tests/WoongBlog.Api.UnitTests/AuthRecorderTests.cs",
+      "to": "backend/tests/WoongBlog.Api.ComponentTests/AuthRecorderComponentTests.cs",
+      "category": "component-style integration"
+    },
+    {
+      "from": "backend/tests/WoongBlog.Api.UnitTests/AuthRedirectUriResolverTests.cs",
+      "to": "backend/tests/WoongBlog.Api.ComponentTests/AuthRedirectUriResolverComponentTests.cs",
+      "category": "component-style integration"
+    },
+    {
+      "from": "backend/tests/WoongBlog.Api.UnitTests/BlogAiFixServiceCodexRuntimeTests.cs",
+      "to": "backend/tests/WoongBlog.Api.ComponentTests/BlogAiFixServiceCodexRuntimeComponentTests.cs",
+      "category": "component-style integration"
+    },
+    {
+      "from": "backend/tests/WoongBlog.Api.UnitTests/CodexRuntimeEnvironmentTests.cs",
+      "to": "backend/tests/WoongBlog.Api.ComponentTests/CodexRuntimeEnvironmentComponentTests.cs",
+      "category": "component-style integration"
+    },
+    {
+      "from": "backend/tests/WoongBlog.Api.UnitTests/PublicQueryHandlerTests.cs",
+      "to": "backend/tests/WoongBlog.Api.ComponentTests/PublicQueryHandlerComponentTests.cs",
+      "category": "component-style integration"
+    }
+  ],
+  "production_code_changes": [
+    {
+      "path": "backend/src/WoongBlog.Infrastructure/Properties/AssemblyInfo.cs",
+      "change": "Added InternalsVisibleTo(\"WoongBlog.Api.ComponentTests\")",
+      "reason": "Preserve prior internal test access after moving infrastructure component tests out of UnitTests",
+      "runtime_behavior_change": false
+    }
+  ],
+  "verification": [
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.UnitTests/WoongBlog.Api.UnitTests.csproj",
+      "result": "12 passed"
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj",
+      "result": "26 passed"
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.ArchitectureTests/WoongBlog.Api.ArchitectureTests.csproj",
+      "result": "25 passed"
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln",
+      "result": "Contract 1, Unit 12, Component 26, Architecture 25, Integration 93 passed"
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln --filter \"Category=Unit\"",
+      "result": "Unit 12 passed"
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln --filter \"Category=Component\"",
+      "result": "Component 26 passed"
+    },
+    {
+      "command": "rg check for Infrastructure/ASP.NET/EF InMemory/HttpClient/filesystem/runtime objects under UnitTests",
+      "result": "no matches"
+    },
+    {
+      "command": "git diff --check",
+      "result": "clean"
+    }
+  ],
+  "risks": [
+    {
+      "risk": "ComponentTests still depends on Infrastructure and ASP.NET",
+      "disposition": "intentional"
+    },
+    {
+      "risk": "IntegrationTests still mix full endpoint tests and component-style integration tests",
+      "disposition": "deferred"
+    },
+    {
+      "risk": "Codex runtime component tests overlap in coverage",
+      "disposition": "deferred"
+    },
+    {
+      "risk": "Infrastructure internal access now includes WoongBlog.Api.ComponentTests",
+      "disposition": "accepted as minimal test migration support"
+    },
+    {
+      "risk": "Existing low-severity NU1901 warning for AWSSDK.Core remains",
+      "disposition": "deferred"
+    }
+  ],
+  "deferred_items": [
+    "Separate endpoint integration tests from component-style integration tests inside IntegrationTests only if needed",
+    "Consolidate overlapping Codex runtime tests later",
+    "Namespace normalization",
+    "AI options split",
+    "Middleware relocation",
+    "EF migrations workflow",
+    "Per-module csproj extraction"
+  ]
+}

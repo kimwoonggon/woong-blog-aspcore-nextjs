@@ -4,6 +4,6 @@ internal static class BlogsModuleServiceCollectionExtensions
 {
     public static IServiceCollection AddBlogsModule(this IServiceCollection services)
     {
-        return services;
+        return services.AddBlogsInfrastructure();
     }
 }

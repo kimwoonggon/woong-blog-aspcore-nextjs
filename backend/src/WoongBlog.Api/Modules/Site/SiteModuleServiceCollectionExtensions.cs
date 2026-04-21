@@ -4,6 +4,6 @@ internal static class SiteModuleServiceCollectionExtensions
 {
     public static IServiceCollection AddSiteModule(this IServiceCollection services)
     {
-        return services;
+        return services.AddSiteInfrastructure();
     }
 }

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Routing;
-using WoongBlog.Api.Modules.AI.Application;
+using MediatR;
+using WoongBlog.Api.Modules.AI.Application.BatchJobs;
 
 namespace WoongBlog.Api.Modules.AI.Api.BatchJobs;
 
@@ -7,11 +8,20 @@ internal static class BatchJobEndpoints
 {
     internal static void MapCreateBlogFixBatchJob(this IEndpointRouteBuilder app)
     {
-        app.MapPost(AiApiPaths.BlogFixBatchJobs, (
+        app.MapPost(AiApiPaths.BlogFixBatchJobs, async (
                 BlogFixBatchJobCreateRequest request,
-                IAiAdminService service,
-                CancellationToken cancellationToken) =>
-            service.CreateBlogFixBatchJobAsync(request, cancellationToken))
+                ISender sender,
+                CancellationToken cancellationToken) => (await sender.Send(new CreateBlogFixBatchJobCommand(
+                    request.BlogIds,
+                    request.All,
+                    request.SelectionMode,
+                    request.SelectionLabel,
+                    request.AutoApply,
+                    request.WorkerCount,
+                    request.Provider,
+                    request.CodexModel,
+                    request.CodexReasoningEffort,
+                    request.CustomPrompt), cancellationToken)).ToHttpResult())
             .RequireAuthorization("AdminOnly")
             .WithTags("Admin AI")
             .WithName("AdminAiCreateBlogFixBatchJob");
@@ -19,10 +29,10 @@ internal static class BatchJobEndpoints
 
     internal static void MapListBlogFixBatchJobs(this IEndpointRouteBuilder app)
     {
-        app.MapGet(AiApiPaths.BlogFixBatchJobs, (
-                IAiAdminService service,
+        app.MapGet(AiApiPaths.BlogFixBatchJobs, async (
+                ISender sender,
                 CancellationToken cancellationToken) =>
-            service.ListBlogFixBatchJobsAsync(cancellationToken))
+            Results.Ok(await sender.Send(new ListBlogFixBatchJobsQuery(), cancellationToken)))
             .RequireAuthorization("AdminOnly")
             .WithTags("Admin AI")
             .WithName("AdminAiListBlogFixBatchJobs");
@@ -30,11 +40,13 @@ internal static class BatchJobEndpoints
 
     internal static void MapGetBlogFixBatchJob(this IEndpointRouteBuilder app)
     {
-        app.MapGet(AiApiPaths.BlogFixBatchJobById, (
+        app.MapGet(AiApiPaths.BlogFixBatchJobById, async (
                 Guid jobId,
-                IAiAdminService service,
+                ISender sender,
                 CancellationToken cancellationToken) =>
-            service.GetBlogFixBatchJobAsync(jobId, cancellationToken))
+            await sender.Send(new GetBlogFixBatchJobQuery(jobId), cancellationToken) is { } response
+                ? Results.Ok(response)
+                : Results.NotFound())
             .RequireAuthorization("AdminOnly")
             .WithTags("Admin AI")
             .WithName("AdminAiGetBlogFixBatchJob");
@@ -42,12 +54,13 @@ internal static class BatchJobEndpoints
 
     internal static void MapApplyBlogFixBatchJob(this IEndpointRouteBuilder app)
     {
-        app.MapPost(AiApiPaths.ApplyBlogFixBatchJob, (
+        app.MapPost(AiApiPaths.ApplyBlogFixBatchJob, async (
                 Guid jobId,
                 BlogFixBatchJobApplyRequest request,
-                IAiAdminService service,
-                CancellationToken cancellationToken) =>
-            service.ApplyBlogFixBatchJobAsync(jobId, request, cancellationToken))
+                ISender sender,
+                CancellationToken cancellationToken) => (await sender.Send(new ApplyBlogFixBatchJobCommand(
+                    jobId,
+                    request.JobItemIds), cancellationToken)).ToHttpResult())
             .RequireAuthorization("AdminOnly")
             .WithTags("Admin AI")
             .WithName("AdminAiApplyBlogFixBatchJob");
@@ -55,11 +68,11 @@ internal static class BatchJobEndpoints
 
     internal static void MapCancelBlogFixBatchJob(this IEndpointRouteBuilder app)
     {
-        app.MapPost(AiApiPaths.CancelBlogFixBatchJob, (
+        app.MapPost(AiApiPaths.CancelBlogFixBatchJob, async (
                 Guid jobId,
-                IAiAdminService service,
+                ISender sender,
                 CancellationToken cancellationToken) =>
-            service.CancelBlogFixBatchJobAsync(jobId, cancellationToken))
+            (await sender.Send(new CancelBlogFixBatchJobCommand(jobId), cancellationToken)).ToHttpResult())
             .RequireAuthorization("AdminOnly")
             .WithTags("Admin AI")
             .WithName("AdminAiCancelBlogFixBatchJob");
@@ -67,10 +80,10 @@ internal static class BatchJobEndpoints
 
     internal static void MapCancelQueuedBlogFixBatchJobs(this IEndpointRouteBuilder app)
     {
-        app.MapPost(AiApiPaths.CancelQueuedBlogFixBatchJobs, (
-                IAiAdminService service,
+        app.MapPost(AiApiPaths.CancelQueuedBlogFixBatchJobs, async (
+                ISender sender,
                 CancellationToken cancellationToken) =>
-            service.CancelQueuedBlogFixBatchJobsAsync(cancellationToken))
+            Results.Ok(await sender.Send(new CancelQueuedBlogFixBatchJobsCommand(), cancellationToken)))
             .RequireAuthorization("AdminOnly")
             .WithTags("Admin AI")
             .WithName("AdminAiCancelQueuedBlogFixBatchJobs");
@@ -78,10 +91,10 @@ internal static class BatchJobEndpoints
 
     internal static void MapClearCompletedBlogFixBatchJobs(this IEndpointRouteBuilder app)
     {
-        app.MapPost(AiApiPaths.ClearCompletedBlogFixBatchJobs, (
-                IAiAdminService service,
+        app.MapPost(AiApiPaths.ClearCompletedBlogFixBatchJobs, async (
+                ISender sender,
                 CancellationToken cancellationToken) =>
-            service.ClearCompletedBlogFixBatchJobsAsync(cancellationToken))
+            Results.Ok(await sender.Send(new ClearCompletedBlogFixBatchJobsCommand(), cancellationToken)))
             .RequireAuthorization("AdminOnly")
             .WithTags("Admin AI")
             .WithName("AdminAiClearCompletedBlogFixBatchJobs");
@@ -89,11 +102,11 @@ internal static class BatchJobEndpoints
 
     internal static void MapRemoveBlogFixBatchJob(this IEndpointRouteBuilder app)
     {
-        app.MapDelete(AiApiPaths.BlogFixBatchJobById, (
+        app.MapDelete(AiApiPaths.BlogFixBatchJobById, async (
                 Guid jobId,
-                IAiAdminService service,
+                ISender sender,
                 CancellationToken cancellationToken) =>
-            service.RemoveBlogFixBatchJobAsync(jobId, cancellationToken))
+            (await sender.Send(new RemoveBlogFixBatchJobCommand(jobId), cancellationToken)).ToHttpResult())
             .RequireAuthorization("AdminOnly")
             .WithTags("Admin AI")
             .WithName("AdminAiRemoveBlogFixBatchJob");

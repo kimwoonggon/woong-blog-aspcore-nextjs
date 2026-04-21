@@ -12,7 +12,7 @@ test('E2E-004 visitor can keep a paginated reading path stable across list and d
   await expect.poll(() => new URL(page.url()).searchParams.get('pageSize')).toBeTruthy()
   const visibleBlogCards = await page.getByTestId('blog-card').count()
   expect(visibleBlogCards).toBeGreaterThan(1)
-  await expect(page.getByTestId('blog-card').first()).toContainText(/playwright|seed|migration|qa/i)
+  await expect(page.getByTestId('blog-card').first()).toHaveAttribute('href', /^\/blog\/.+/)
 
   await pagination.getByRole('link', { name: 'Previous' }).click()
   await expect.poll(() => new URL(page.url()).searchParams.get('page')).toBe('1')

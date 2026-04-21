@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Phase 2.6 Ownership & Composition Consolidation Audit</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, sans-serif; margin: 2rem; color: #172033; line-height: 1.5; }
+    h1, h2 { color: #111827; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: 0.95rem; }
+    th, td { border: 1px solid #d0d7de; padding: 0.55rem; vertical-align: top; }
+    th { background: #f6f8fa; text-align: left; }
+    .pass { display: inline-block; background: #dcfce7; color: #166534; padding: 0.2rem 0.45rem; border-radius: 999px; font-weight: 700; }
+    .meta { color: #4b5563; }
+  </style>
+</head>
+<body>
+  <h1>Phase 2.6 Ownership & Composition Consolidation Audit</h1>
+  <p class="meta">
+    Generated: <code>2026-04-21T14:02:34+09:00</code><br>
+    Branch: <code>feat/phase-2-backend-discompostion</code><br>
+    Commit SHA: <code>066c48c1ed04d096d6e2a2cd9322c4b967c6aed1</code>
+  </p>
+
+  <h2>Executive Summary</h2>
+  <p>Overall status: <span class="pass">PASS</span></p>
+  <p>This Phase 2.6 consolidation preserved behavior while reducing AI batch compatibility friction, moving concrete Infrastructure registrations behind Infrastructure helpers, cleaning Identity infrastructure naming, and fixing the two known full-e2e UI/test failures.</p>
+  <p>Final recommendation: <strong>ready for review/merge</strong>.</p>
+
+  <h2>Changes</h2>
+  <table>
+    <thead><tr><th>Area</th><th>Change</th></tr></thead>
+    <tbody>
+      <tr><td>AI batch</td><td>Removed aggregate store and moved consumers to narrow target/query/command store interfaces.</td></tr>
+      <tr><td>Composition</td><td>Added Infrastructure-owned module registration helpers and made Api module registrations delegate to them.</td></tr>
+      <tr><td>Identity</td><td>Moved identity interaction service to Infrastructure namespace/path.</td></tr>
+      <tr><td>AI options</td><td>Reviewed and deferred split as not low-risk.</td></tr>
+      <tr><td>UI e2e fixes</td><td>Fixed blog overflow and batch prompt textarea race.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Verification</h2>
+  <table>
+    <thead><tr><th>Command</th><th>Result</th></tr></thead>
+    <tbody>
+      <tr><td><code>npx vitest run src/test/admin-blog-batch-ai-panel.test.tsx --pool=threads</code></td><td>10 passed</td></tr>
+      <tr><td><code>npm run typecheck</code></td><td>passed</td></tr>
+      <tr><td><code>focused e2e failures</code></td><td>9 passed</td></tr>
+      <tr><td><code>dotnet test backend/tests/WoongBlog.Api.UnitTests/WoongBlog.Api.UnitTests.csproj</code></td><td>13 passed</td></tr>
+      <tr><td><code>dotnet test backend/tests/WoongBlog.Api.ArchitectureTests/WoongBlog.Api.ArchitectureTests.csproj</code></td><td>28 passed</td></tr>
+      <tr><td><code>dotnet test backend/WoongBlog.sln</code></td><td>Contract 1, Unit 13, Component 26, Architecture 28, Integration 93 passed</td></tr>
+      <tr><td><code>npm run test:e2e:stack</code></td><td>563 passed, 8 skipped</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Deferred Items</h2>
+  <ul>
+    <li>AI options ownership split.</li>
+    <li>Atomic claim / DB concurrency redesign.</li>
+    <li>Concrete AI EF store split.</li>
+    <li>Broad namespace normalization.</li>
+    <li>Middleware/auth ownership relocation.</li>
+    <li>EF migrations workflow.</li>
+    <li>Per-module csproj split.</li>
+  </ul>
+</body>
+</html>

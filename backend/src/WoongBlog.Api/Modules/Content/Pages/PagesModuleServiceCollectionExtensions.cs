@@ -4,6 +4,6 @@ internal static class PagesModuleServiceCollectionExtensions
 {
     public static IServiceCollection AddPagesModule(this IServiceCollection services)
     {
-        return services;
+        return services.AddPagesInfrastructure();
     }
 }

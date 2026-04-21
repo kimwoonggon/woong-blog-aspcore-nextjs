@@ -1,0 +1,276 @@
+{
+  "metadata": {
+    "generatedTimestamp": "2026-04-21T00:27:49+09:00",
+    "branch": "feat/phase-2-backend-discompostion",
+    "commitSha": "36c6fdfafd9600039bf2561070f73878e7220f3f",
+    "auditMode": "current working tree inspection",
+    "modifiedProductionOrTestFilesByAudit": false
+  },
+  "summary": {
+    "overallStatus": "PASS_WITH_WARNINGS",
+    "recommendation": "ready for stabilization PR",
+    "highRiskViolationCount": 0,
+    "warningCount": 8
+  },
+  "projectReferences": {
+    "WoongBlog.Domain": [],
+    "WoongBlog.Application": [
+      "WoongBlog.Domain"
+    ],
+    "WoongBlog.Infrastructure": [
+      "WoongBlog.Application",
+      "WoongBlog.Domain"
+    ],
+    "WoongBlog.Api": [
+      "WoongBlog.Application",
+      "WoongBlog.Infrastructure"
+    ],
+    "WoongBlog.Api.ArchitectureTests": [
+      "WoongBlog.Application",
+      "WoongBlog.Api",
+      "WoongBlog.Domain",
+      "WoongBlog.Infrastructure"
+    ],
+    "WoongBlog.Api.IntegrationTests": [
+      "WoongBlog.Application",
+      "WoongBlog.Api",
+      "WoongBlog.Domain",
+      "WoongBlog.Infrastructure"
+    ],
+    "WoongBlog.Api.UnitTests": [
+      "WoongBlog.Application",
+      "WoongBlog.Domain",
+      "WoongBlog.Infrastructure"
+    ],
+    "WoongBlog.Api.ContractTests": []
+  },
+  "packageReferences": {
+    "WoongBlog.Domain": [],
+    "WoongBlog.Application": [
+      "FluentValidation 12.1.1",
+      "MediatR 14.1.0",
+      "Microsoft.Extensions.Options 10.0.0"
+    ],
+    "WoongBlog.Infrastructure": [
+      "FrameworkReference Microsoft.AspNetCore.App",
+      "AWSSDK.S3 4.0.6.2",
+      "Microsoft.AspNetCore.Authentication.OpenIdConnect 10.0.0",
+      "Microsoft.EntityFrameworkCore 10.0.0",
+      "Microsoft.EntityFrameworkCore.Design 10.0.0",
+      "Microsoft.EntityFrameworkCore.InMemory 10.0.0",
+      "Npgsql.EntityFrameworkCore.PostgreSQL 10.0.0"
+    ],
+    "WoongBlog.Api": [
+      "FluentValidation 12.1.1",
+      "FluentValidation.DependencyInjectionExtensions 12.1.1",
+      "MediatR 14.1.0",
+      "Microsoft.AspNetCore.Authentication.OpenIdConnect 10.0.0",
+      "Microsoft.AspNetCore.OpenApi 10.0.0"
+    ],
+    "WoongBlog.Api.ArchitectureTests": [
+      "NetArchTest.Rules 1.3.2",
+      "Shouldly 4.3.0",
+      "xunit.v3 3.2.0",
+      "Microsoft.NET.Test.Sdk 17.11.1",
+      "SonarAnalyzer.CSharp 10.15.0.120848"
+    ],
+    "WoongBlog.Api.ContractTests": [
+      "PactNet 5.0.1",
+      "PactNet.Output.Xunit 1.0.0",
+      "xunit 2.9.3",
+      "Microsoft.NET.Test.Sdk 17.14.1",
+      "SonarAnalyzer.CSharp 10.15.0.120848"
+    ],
+    "WoongBlog.Api.IntegrationTests": [
+      "Microsoft.AspNetCore.Mvc.Testing 10.0.1",
+      "Testcontainers 4.0.0",
+      "Testcontainers.PostgreSql 4.0.0",
+      "xunit.v3 3.2.0",
+      "SonarAnalyzer.CSharp 10.15.0.120848"
+    ],
+    "WoongBlog.Api.UnitTests": [
+      "FrameworkReference Microsoft.AspNetCore.App",
+      "Bogus 35.6.1",
+      "NSubstitute 5.3.0",
+      "Shouldly 4.3.0",
+      "xunit.v3 3.2.0",
+      "SonarAnalyzer.CSharp 10.15.0.120848"
+    ]
+  },
+  "auditCriteria": [
+    {
+      "id": "domain-no-project-references",
+      "status": "PASS",
+      "evidence": "WoongBlog.Domain.csproj has no ProjectReference entries."
+    },
+    {
+      "id": "application-domain-only",
+      "status": "PASS",
+      "evidence": "WoongBlog.Application references only WoongBlog.Domain."
+    },
+    {
+      "id": "infrastructure-application-domain-only",
+      "status": "PASS",
+      "evidence": "WoongBlog.Infrastructure references WoongBlog.Application and WoongBlog.Domain only."
+    },
+    {
+      "id": "api-application-infrastructure",
+      "status": "PASS",
+      "evidence": "WoongBlog.Api references WoongBlog.Application and WoongBlog.Infrastructure only."
+    },
+    {
+      "id": "no-circular-references",
+      "status": "PASS",
+      "evidence": "Project reference graph is acyclic and one-way."
+    },
+    {
+      "id": "no-application-to-infrastructure",
+      "status": "PASS",
+      "evidence": "No ProjectReference or source namespace references from Application to Infrastructure."
+    },
+    {
+      "id": "no-domain-to-higher-layers",
+      "status": "PASS",
+      "evidence": "No higher-layer, ASP.NET, EF Core, or MediatR references found in Domain."
+    },
+    {
+      "id": "application-no-http-results",
+      "status": "PASS",
+      "evidence": "No IResult, Results., or StatusCodes. found in Application."
+    },
+    {
+      "id": "application-no-service-locator",
+      "status": "PASS",
+      "evidence": "No IServiceScopeFactory/CreateScope/CreateAsyncScope/GetRequiredService found in Application."
+    },
+    {
+      "id": "api-owns-http-result-mapping",
+      "status": "PASS",
+      "evidence": "AiHttpResultMapper and WorkVideo ToResult live in Api."
+    },
+    {
+      "id": "dbcontext-and-stores-in-infrastructure",
+      "status": "PASS",
+      "evidence": "WoongBlogDbContext and concrete *Store classes are under WoongBlog.Infrastructure."
+    },
+    {
+      "id": "handlers-and-abstractions-in-application",
+      "status": "PASS",
+      "evidence": "45 handlers and 15 abstraction files are under WoongBlog.Application."
+    },
+    {
+      "id": "domain-pure",
+      "status": "PASS",
+      "evidence": "Domain contains entity and domain-constant files only."
+    },
+    {
+      "id": "application-result-types-http-agnostic",
+      "status": "PASS",
+      "evidence": "AiActionResult<T> and WorkVideoResult<T> use application enums, not HTTP types."
+    },
+    {
+      "id": "content-cqrs-direction",
+      "status": "PASS",
+      "evidence": "Content handlers/ports are in Application and concrete stores are in Infrastructure."
+    },
+    {
+      "id": "ai-batch-boundary",
+      "status": "PASS",
+      "evidence": "AI handlers/contracts/policies are in Application; provider/background host/dispatcher/store implementation are in Infrastructure; HTTP mapping is in Api."
+    },
+    {
+      "id": "workvideo-boundary",
+      "status": "PASS",
+      "evidence": "WorkVideo handlers/ports/results are in Application; HLS/storage/transcoder/cleanup implementations and stores are in Infrastructure; HTTP mapping is in Api."
+    }
+  ],
+  "violations": [],
+  "warnings": [
+    {
+      "id": "namespace-clarity",
+      "severity": "YELLOW",
+      "paths": [
+        "backend/src/WoongBlog.Application",
+        "backend/src/WoongBlog.Domain",
+        "backend/src/WoongBlog.Infrastructure"
+      ],
+      "finding": "Namespaces mostly remain WoongBlog.Api.* outside the Api assembly.",
+      "recommendation": "Normalize namespaces later or document the convention."
+    },
+    {
+      "id": "api-registers-application",
+      "severity": "YELLOW",
+      "paths": [
+        "backend/src/WoongBlog.Api/Common/ApiServiceCollectionExtensions.cs"
+      ],
+      "finding": "Api registers Application MediatR handlers, validators, and validation behavior directly.",
+      "recommendation": "Add an AddApplication() extension later for clearer composition."
+    },
+    {
+      "id": "dbcontext-uses-application-support",
+      "severity": "YELLOW",
+      "paths": [
+        "backend/src/WoongBlog.Infrastructure/Infrastructure/Persistence/WoongBlogDbContext.cs"
+      ],
+      "finding": "DbContext uses Application support helpers for content search/excerpt synchronization.",
+      "recommendation": "Move low-level indexing helpers to Domain or Infrastructure support if they become persistence-owned."
+    },
+    {
+      "id": "ai-options-in-application",
+      "severity": "YELLOW",
+      "paths": [
+        "backend/src/WoongBlog.Application/Modules/AI/Application/AiOptions.cs"
+      ],
+      "finding": "AiOptions contains provider/infrastructure-shaped settings including API keys and Codex runtime settings.",
+      "recommendation": "Split Application runtime options from Infrastructure provider options later."
+    },
+    {
+      "id": "http-middleware-in-infrastructure",
+      "severity": "YELLOW",
+      "paths": [
+        "backend/src/WoongBlog.Infrastructure/Infrastructure/Security/AntiforgeryValidationMiddleware.cs",
+        "backend/src/WoongBlog.Infrastructure/Infrastructure/Auth/AppCookieAuthenticationEvents.cs",
+        "backend/src/WoongBlog.Infrastructure/Infrastructure/Auth/AuthRuntimeExtensions.cs",
+        "backend/src/WoongBlog.Infrastructure/Infrastructure/Security/SecurityHeadersMiddleware.cs"
+      ],
+      "finding": "Infrastructure contains ASP.NET middleware/auth response status handling.",
+      "recommendation": "Accept as host infrastructure for now; revisit only if Api should own all HTTP middleware."
+    },
+    {
+      "id": "no-ef-migrations-yet",
+      "severity": "YELLOW",
+      "paths": [
+        "backend/src/WoongBlog.Infrastructure/Infrastructure/Persistence/WoongBlogDbContextDesignTimeFactory.cs"
+      ],
+      "finding": "Design-time factory exists and migrations assembly is configured, but no EF migrations folder exists.",
+      "recommendation": "No action unless EF migrations become part of the workflow."
+    },
+    {
+      "id": "readme-stale-paths",
+      "severity": "YELLOW",
+      "paths": [
+        "README.md"
+      ],
+      "finding": "README still references old single-project backend paths and old test project names.",
+      "recommendation": "Update docs after the split stabilizes."
+    },
+    {
+      "id": "unit-tests-reference-infrastructure",
+      "severity": "YELLOW",
+      "paths": [
+        "backend/tests/WoongBlog.Api.UnitTests/WoongBlog.Api.UnitTests.csproj"
+      ],
+      "finding": "UnitTests reference Infrastructure and Microsoft.AspNetCore.App.",
+      "recommendation": "Accept for current coverage; later move concrete infrastructure tests to IntegrationTests or classify as component tests."
+    }
+  ],
+  "specificRepoChecks": {
+    "directInfrastructureReferencesFromApplication": "PASS",
+    "aspNetHttpAbstractionsFromApplication": "PASS",
+    "serviceLocatorScopeOutsideInfrastructure": "PASS",
+    "dbContextUsageOutsideInfrastructure": "PASS",
+    "programComposition": "PASS",
+    "testsTargetCorrectLayers": "PASS",
+    "dockerBackendBuildEntry": "PASS"
+  }
+}

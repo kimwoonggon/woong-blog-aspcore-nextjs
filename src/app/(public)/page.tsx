@@ -28,7 +28,7 @@ export default async function HomePage({ searchParams }: PageProps) {
   const requestHost = (headerStore.get('x-forwarded-host') ?? headerStore.get('host') ?? '').toLowerCase()
   const isLocalQaRequest = /localhost|127\.0\.0\.1/.test(requestHost)
   if (resolvedSearchParams?.__qaSlow === '1' && isLocalQaRequest) {
-    await new Promise((resolve) => setTimeout(resolve, 600))
+    await new Promise((resolve) => setTimeout(resolve, 2000))
   }
   const payload = await fetchPublicHome()
   const homeContent = toHomeContent(parsePageContentJson(payload?.homePage?.contentJson))
@@ -46,9 +46,9 @@ export default async function HomePage({ searchParams }: PageProps) {
   return (
     <div className="container mx-auto max-w-7xl flex flex-col gap-12 px-4 py-8 md:px-6 md:py-10">
       <section className="animate-fade-in-up mx-auto flex w-full max-w-5xl flex-col-reverse items-center gap-8 md:grid md:grid-cols-[minmax(0,40rem)_15rem] md:items-center md:justify-center md:gap-12" style={{ animationDelay: '0ms' }}>
-        <div className="flex flex-col items-center text-center md:items-start md:text-left">
+        <div className="flex min-w-0 max-w-full flex-col items-center text-center md:items-start md:text-left">
           <h1
-            className="mb-4 text-4xl font-heading font-bold tracking-tight text-foreground md:text-5xl lg:text-6xl animate-fade-in-up [text-wrap:balance]"
+            className="mb-4 max-w-full break-words text-4xl font-heading font-bold tracking-tight text-foreground md:text-5xl lg:text-6xl animate-fade-in-up [text-wrap:balance]"
             style={{ animationDelay: '100ms' }}
           >
             {headline}

@@ -65,6 +65,12 @@ async function createBlog(page: Page, title: string, body: string, tags = 'playw
   return { editor, ...payload }
 }
 
+async function expectInlineEditorImageReady(page: Page) {
+  await expect(page.locator('.tiptap.ProseMirror img[src*="/media/blogs/inline/"]').first()).toBeVisible()
+  await page.getByLabel('Title').click()
+  await expect(page.getByRole('button', { name: /Create Post/i })).toBeEnabled()
+}
+
 async function createWork(page: Page, title: string, body: string, category = 'qa') {
   await page.goto('/admin/works/new')
   await page.getByLabel('Title').fill(title)
@@ -289,10 +295,16 @@ test('C-3 drag-drop image upload inserts an image into blog content', async ({ p
     editor.dispatchEvent('drop', { dataTransfer }),
   ])
 
+  await expectInlineEditorImageReady(page)
+
   const [saveResponse] = await Promise.all([
-    page.waitForResponse((res) => res.url().includes('/api/admin/blogs') && res.request().method() === 'POST' && res.ok()),
+    page.waitForResponse((res) => res.url().includes('/api/admin/blogs') && res.request().method() === 'POST'),
     page.getByRole('button', { name: /Create Post/i }).click(),
   ])
+
+  if (!saveResponse.ok()) {
+    throw new Error(`Failed to save drag-drop image blog: ${saveResponse.status()} ${await saveResponse.text()}`)
+  }
 
   const payload = await saveResponse.json() as { slug: string }
   await page.goto(`/blog/${payload.slug}`)
@@ -309,10 +321,16 @@ test('C-4 paste image upload inserts an image into blog content', async ({ page 
     dispatchEditorFileEvent(page, 'paste', '.tiptap.ProseMirror', 'tests/fixtures/avatar.png', 'avatar.png', 'image/png'),
   ])
 
+  await expectInlineEditorImageReady(page)
+
   const [saveResponse] = await Promise.all([
-    page.waitForResponse((res) => res.url().includes('/api/admin/blogs') && res.request().method() === 'POST' && res.ok()),
+    page.waitForResponse((res) => res.url().includes('/api/admin/blogs') && res.request().method() === 'POST'),
     page.getByRole('button', { name: /Create Post/i }).click(),
   ])
+
+  if (!saveResponse.ok()) {
+    throw new Error(`Failed to save pasted image blog: ${saveResponse.status()} ${await saveResponse.text()}`)
+  }
 
   const payload = await saveResponse.json() as { slug: string }
   await page.goto(`/blog/${payload.slug}`)

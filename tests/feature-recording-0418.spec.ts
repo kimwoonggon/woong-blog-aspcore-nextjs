@@ -2,6 +2,8 @@ import { copyFile, mkdir, stat } from 'node:fs/promises'
 import path from 'node:path'
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test'
 
+import { expectMermaidRendered } from './helpers/mermaid'
+
 test.use({
   storageState: 'test-results/playwright/admin-storage-state.json',
   video: 'on',
@@ -317,7 +319,7 @@ test('recording mermaid rendering', async ({ page }) => {
 
   await page.goto(`/blog/${created.slug}`)
   await expect(page.locator('main h1', { hasText: title })).toBeVisible()
-  await expect(page.locator('svg').first()).toBeVisible()
+  await expectMermaidRendered(page)
   await expect(page.getByText('Before diagram')).toBeVisible()
   await expect(page.getByText('After diagram')).toBeVisible()
 })
@@ -332,7 +334,7 @@ test('recording mermaid editor preview', async ({ page }) => {
   await setEditorHtml(page, `<p>Editor preview</p>${mermaidBlockHtml(mermaidCode)}`)
   await expect(page.getByTestId('tiptap-editor-shell')).toContainText('Mermaid Diagram')
   await expect(page.getByPlaceholder(/graph TD/)).toHaveValue(mermaidCode)
-  await expect(page.locator('[data-testid="tiptap-editor-shell"] svg').first()).toBeVisible()
+  await expectMermaidRendered(page, page.getByTestId('tiptap-editor-shell'))
 })
 
 test('recording mermaid work rendering', async ({ page }) => {
@@ -346,7 +348,7 @@ test('recording mermaid work rendering', async ({ page }) => {
   await setEditorHtml(page, `<p>Work editor diagram</p>${mermaidBlockHtml(mermaidCode)}`)
   await expect(page.getByTestId('tiptap-editor-shell')).toContainText('Mermaid Diagram')
   await expect(page.getByPlaceholder(/graph TD/)).toHaveValue(mermaidCode)
-  await expect(page.locator('[data-testid="tiptap-editor-shell"] svg').first()).toBeVisible()
+  await expectMermaidRendered(page, page.getByTestId('tiptap-editor-shell'))
 })
 
 test('recording image resize drag', async ({ page }) => {

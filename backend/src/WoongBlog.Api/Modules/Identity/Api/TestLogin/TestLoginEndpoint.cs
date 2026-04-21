@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
-using WoongBlog.Api.Infrastructure.Auth;
 using WoongBlog.Api.Modules.Identity.Application;
+using WoongBlog.Api.Modules.Identity.Infrastructure;
 
 namespace WoongBlog.Api.Modules.Identity.Api.TestLogin;
 

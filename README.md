@@ -476,11 +476,15 @@ npm run typecheck
 npm run build
 ```
 
-### Backend tests via Dockerized SDK
+### Backend tests
 
 ```bash
-docker run --pull=never --rm -v "$PWD/backend:/src" -w /src mcr.microsoft.com/dotnet/sdk:10.0 dotnet test tests/WoongBlog.Api.Tests/WoongBlog.Api.Tests.csproj
+dotnet test backend/WoongBlog.sln
 ```
+
+For a Dockerized SDK run, mount `backend` and run the same solution from `/src`. If Docker is not available inside the SDK container, exclude the Testcontainers-backed Postgres persistence contract test.
+
+Current backend test taxonomy note: `WoongBlog.Api.UnitTests` is kept to focused Application/support helper and validator tests. Infrastructure-backed, EF InMemory, ASP.NET `HttpContext`, filesystem/process, and `HttpClient` tests live in `WoongBlog.Api.ComponentTests`. Endpoint and hosted-stack tests remain in `WoongBlog.Api.IntegrationTests`.
 
 ### Database smoke/load
 
@@ -494,8 +498,8 @@ The current repository does not use a checked-in EF Core migration chain for run
 Instead, the backend boot path creates and patches the schema on startup:
 
 - `EnsureCreatedAsync(...)`
-- custom SQL bootstrap in `backend/src/WoongBlog.Api/Infrastructure/Persistence/DatabaseBootstrapper.cs`
-- seed/bootstrap logic in `backend/src/WoongBlog.Api/Infrastructure/Persistence/Seeding/SeedData.cs`
+- custom SQL bootstrap in `backend/src/WoongBlog.Infrastructure/Infrastructure/Persistence/DatabaseBootstrapper.cs`
+- seed/bootstrap logic in `backend/src/WoongBlog.Infrastructure/Infrastructure/Persistence/Seeding/SeedData.cs`
 
 That means the practical DB migration flow today is:
 
@@ -777,7 +781,10 @@ So the normal release path is:
 - `src/app/` — Next.js app router frontend
 - `src/lib/api/` — frontend/backend API boundary helpers
 - `backend/src/WoongBlog.Api/` — ASP.NET Core application
-- `backend/tests/WoongBlog.Api.Tests/` — backend tests
+- `backend/src/WoongBlog.Application/` — application handlers, validators, ports, and DTOs
+- `backend/src/WoongBlog.Infrastructure/` — persistence, auth, storage, AI provider, and host infrastructure adapters
+- `backend/src/WoongBlog.Domain/` — domain entities and constants
+- `backend/tests/WoongBlog.Api.{UnitTests,ComponentTests,IntegrationTests,ContractTests,ArchitectureTests}/` — backend test suites
 - `tests/` — Playwright stack/browser regressions
 - `nginx/default.conf` — edge routing contract
 - `docker-compose.yml` — stack orchestration

@@ -1,0 +1,55 @@
+{
+  "generated": "2026-04-21T16:28:19+09:00",
+  "branch": "feat/phase-2-backend-discompostion",
+  "commit_sha_at_generation": "224a8f896e1cc5165f4419d053979787c4b8b646",
+  "overall_status": "PASS",
+  "failed_check": {
+    "name": "Frontend lint, types, and unit tests",
+    "run_id": "24705473556",
+    "job_id": "72257705668"
+  },
+  "root_cause": "The Pact consumer test could reach the real getServerApiBaseUrl implementation during full Vitest execution, causing Next.js headers() to run without an App Router request scope.",
+  "files_changed": [
+    {
+      "path": "src/test/pact/public-api-consumer.pact.test.ts",
+      "changes": [
+        "Mock next/headers inside withServerApi using the Pact mock server host/proto and an empty cookie store.",
+        "Remove unused Pact string matcher import."
+      ]
+    }
+  ],
+  "behavior_preservation": {
+    "production_code_changed": false,
+    "backend_architecture_changed": false,
+    "endpoint_routes_changed": false,
+    "dto_json_shape_changed": false,
+    "ci_or_config_changed": false
+  },
+  "verification": [
+    {
+      "command": "npx vitest run src/test/pact/public-api-consumer.pact.test.ts --pool=threads",
+      "result": "PASS",
+      "summary": "6 tests passed"
+    },
+    {
+      "command": "npm run lint",
+      "result": "PASS",
+      "summary": "0 errors, 5 existing warnings"
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "PASS",
+      "summary": "TypeScript check passed"
+    },
+    {
+      "command": "npm test -- --run",
+      "result": "PASS",
+      "summary": "46 files passed, 239 tests passed"
+    }
+  ],
+  "remaining_notes": [
+    "Existing lint warnings remain outside this fix scope and do not fail lint.",
+    "The fix should be pushed so PR #13 reruns CI."
+  ],
+  "recommendation": "Push the fix commit and re-check PR #13."
+}
