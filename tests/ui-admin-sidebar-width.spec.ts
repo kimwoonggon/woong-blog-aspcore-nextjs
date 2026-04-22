@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 test('admin sidebar width collapses to 256px on desktop', async ({ page }) => {
   await page.setViewportSize({ width: 1920, height: 1080 })

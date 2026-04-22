@@ -1,6 +1,6 @@
 import { copyFile, mkdir, stat, writeFile } from 'node:fs/promises'
 import path from 'node:path'
-import { expect, test, type APIRequestContext } from '@playwright/test'
+import { expect, test, type APIRequestContext } from './helpers/performance-test'
 
 test.use({
   storageState: 'test-results/playwright/admin-storage-state.json',

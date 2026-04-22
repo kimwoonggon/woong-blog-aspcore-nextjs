@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 test('dashboard nav item is visually active on /admin/dashboard', async ({ page }) => {
   await page.goto('/admin/dashboard')

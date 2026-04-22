@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 test('VA-130 works archive keeps four cards aligned on the first desktop row', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1400 })

@@ -1,9 +1,10 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
+import { measureStep } from './helpers/latency'
 
 test.use({ storageState: 'test-results/playwright/admin-storage-state.json' })
 
 
-test('admin can edit an existing work entry with mixed special input', async ({ page }) => {
+test('admin can edit an existing work entry with mixed special input', async ({ page }, testInfo) => {
   const updatedTitle = `수정된 작업! ${Date.now()} ###`
   const updatedBody = `작업 본문 한국어 + English + !!! ${Date.now()}`
 
@@ -23,15 +24,25 @@ test('admin can edit an existing work entry with mixed special input', async ({ 
   await page.getByLabel('Title').fill(updatedTitle)
   await page.locator('.tiptap.ProseMirror').first().fill(updatedBody)
 
-  const [response] = await Promise.all([
-    page.waitForResponse((res) => res.url().includes('/api/admin/works/') && res.request().method() === 'PUT' && res.ok()),
-    page.getByRole('button', { name: 'Update Work' }).click(),
-  ])
+  await measureStep(
+    testInfo,
+    'Admin work update to public detail refresh',
+    'adminMutationPublicRefresh',
+    async () => {
+      const [response] = await Promise.all([
+        page.waitForResponse((res) => res.url().includes('/api/admin/works/') && res.request().method() === 'PUT' && res.ok()),
+        page.waitForResponse((res) => res.url().includes('/revalidate-public') && res.request().method() === 'POST' && res.ok()),
+        page.getByRole('button', { name: 'Update Work' }).click(),
+      ])
 
-  const payload = await response.json()
-  await expect(page).toHaveURL(/\/admin\/works(?:\?.*)?$/)
-  await expect(page.getByText(updatedTitle)).toBeVisible()
-  await page.goto(`/works/${payload.slug}`)
-  await expect(page.locator('main h1', { hasText: updatedTitle })).toBeVisible()
-  await expect(page.getByText(updatedBody).first()).toBeVisible()
+      return await response.json() as { slug: string }
+    },
+    async (payload) => {
+      await expect(page).toHaveURL(/\/admin\/works(?:\?.*)?$/)
+      await expect(page.getByText(updatedTitle)).toBeVisible()
+      await page.goto(`/works/${payload.slug}`)
+      await expect(page.locator('main h1', { hasText: updatedTitle })).toBeVisible()
+      await expect(page.getByText(updatedBody).first()).toBeVisible()
+    },
+  )
 })

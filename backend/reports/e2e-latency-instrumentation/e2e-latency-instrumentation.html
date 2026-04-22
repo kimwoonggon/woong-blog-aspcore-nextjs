@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>E2E Latency Instrumentation Audit</title>
+  <style>
+    body { font-family: system-ui, sans-serif; line-height: 1.5; margin: 2rem; max-width: 960px; }
+    h1, h2 { line-height: 1.2; }
+    code { background: #f3f4f6; padding: 0.1rem 0.25rem; border-radius: 4px; }
+    ul { padding-left: 1.25rem; }
+  </style>
+</head>
+<body>
+  <h1>E2E Latency Instrumentation Audit</h1>
+  <p><strong>Date:</strong> 2026-04-22</p>
+  <h2>Summary</h2>
+  <p>Implemented Playwright latency measurement, hard-budget helpers, per-test JSON attachments, summary generation, focused response-time coverage, and one-worker E2E scripts.</p>
+  <h2>Not Changed</h2>
+  <p>No production runtime behavior, backend APIs, auth/security semantics, page design, editor UX design, or caching behavior was intentionally changed.</p>
+  <h2>Validation</h2>
+  <ul>
+    <li><code>npm run typecheck</code> passed.</li>
+    <li><code>npm test -- --run</code> passed: 53 files, 270 tests.</li>
+    <li><code>npm run build</code> passed.</li>
+    <li><code>npm run test:e2e:latency</code> passed: 12 tests, 12 latency artifacts, 0 budget failures.</li>
+    <li>Full E2E is green: 569 passed, 8 skipped, 0 failed, 575 latency artifacts, 0 hard budget failures, 89 warning-level observations.</li>
+  </ul>
+  <h2>Risks</h2>
+  <p>The full-suite summary contains warning-level latency observations. They are not hard budget failures.</p>
+  <h2>Recommendation</h2>
+  <p>Keep the latency system. Use <code>npm run test:e2e:latency</code> for performance-sensitive changes and full exhaustive E2E before release.</p>
+</body>
+</html>

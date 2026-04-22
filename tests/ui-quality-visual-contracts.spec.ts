@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 import { getStyle } from './helpers/ui-improvement'
 
 test('VA-015 feed cards clamp titles to 2 lines and excerpts to 3 lines', async ({ page }) => {

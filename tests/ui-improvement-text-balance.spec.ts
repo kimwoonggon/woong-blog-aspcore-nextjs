@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 test('hero heading applies balanced text wrapping', async ({ page }) => {
   await page.goto('/')

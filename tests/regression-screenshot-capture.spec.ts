@@ -1,6 +1,6 @@
 import { mkdir } from 'node:fs/promises'
 import path from 'node:path'
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page } from './helpers/performance-test'
 
 const captureDir = path.join('test-results', 'playwright', 'regression-captures')
 

@@ -1,9 +1,10 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
+import { measureStep } from './helpers/latency'
 
 test.use({ storageState: 'test-results/playwright/admin-storage-state.json' })
 
 
-test('admin can create and publish a blog post that appears on public blog page', async ({ page }) => {
+test('admin can create and publish a blog post that appears on public blog page', async ({ page }, testInfo) => {
   const title = `Playwright Post ${Date.now()}`
 
   await page.goto('/admin/blog/new')
@@ -17,14 +18,24 @@ test('admin can create and publish a blog post that appears on public blog page'
   await editor.click()
   await page.keyboard.type(`This is a browser-driven published post for ${title}.`)
 
-  const [saveResponse] = await Promise.all([
-    page.waitForResponse((res) => res.url().includes('/api/admin/blogs') && res.request().method() === 'POST' && res.ok()),
-    page.getByRole('button', { name: /Create Post/i }).click(),
-  ])
+  await measureStep(
+    testInfo,
+    'Admin blog create to public detail refresh',
+    'adminMutationPublicRefresh',
+    async () => {
+      const [saveResponse] = await Promise.all([
+        page.waitForResponse((res) => res.url().includes('/api/admin/blogs') && res.request().method() === 'POST' && res.ok()),
+        page.waitForResponse((res) => res.url().includes('/revalidate-public') && res.request().method() === 'POST' && res.ok()),
+        page.getByRole('button', { name: /Create Post/i }).click(),
+      ])
 
-  const payload = await saveResponse.json()
-  await page.goto(`/blog/${payload.slug}`)
-  await expect(page.locator('main h1', { hasText: title })).toBeVisible()
+      return await saveResponse.json() as { slug: string }
+    },
+    async (payload) => {
+      await page.goto(`/blog/${payload.slug}`)
+      await expect(page.locator('main h1', { hasText: title })).toBeVisible()
+    },
+  )
   await page.screenshot({ path: 'test-results/playwright/admin-blog-publish.png', fullPage: true })
 })
 

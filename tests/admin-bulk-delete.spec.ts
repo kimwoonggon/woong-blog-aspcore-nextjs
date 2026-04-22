@@ -1,20 +1,36 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
+import { measureStep } from './helpers/latency'
 
 test.use({ storageState: 'test-results/playwright/admin-storage-state.json' })
 
-test('admin can bulk delete selected blogs and works with confirmation', async ({ page }) => {
+test('admin can bulk delete selected blogs and works with confirmation', async ({ page }, testInfo) => {
   await page.goto('/admin/blog')
   const blogRows = page.getByTestId('admin-blog-row')
   if (await blogRows.count()) {
     await blogRows.first().getByRole('checkbox').click()
     await expect(page.getByRole('button', { name: 'Delete Selected' })).toBeVisible()
-    const deleteBlogResponse = page.waitForResponse((response) =>
-      response.url().includes('/api/admin/blogs/') && response.request().method() === 'DELETE' && response.ok(),
-    )
     await page.getByRole('button', { name: 'Delete Selected' }).click()
-    await expect(page.getByRole('dialog')).toBeVisible()
-    await page.getByRole('dialog').getByRole('button', { name: 'Delete' }).click()
-    await deleteBlogResponse
+    const dialog = page.getByRole('dialog')
+    await expect(dialog).toBeVisible()
+    await measureStep(
+      testInfo,
+      'Admin blog bulk delete confirmation to backend response',
+      'adminCrud',
+      async () => {
+        await Promise.all([
+          page.waitForResponse((response) =>
+            response.url().includes('/api/admin/blogs/') && response.request().method() === 'DELETE' && response.ok(),
+          ),
+          page.waitForResponse((response) =>
+            response.url().includes('/revalidate-public') && response.request().method() === 'POST' && response.ok(),
+          ),
+          dialog.getByRole('button', { name: 'Delete' }).click(),
+        ])
+      },
+      async () => {
+        await expect(dialog).toHaveCount(0)
+      },
+    )
   }
 
   await page.goto('/admin/works')
@@ -22,12 +38,27 @@ test('admin can bulk delete selected blogs and works with confirmation', async (
   if (await workRows.count()) {
     await workRows.first().getByRole('checkbox').click()
     await expect(page.getByRole('button', { name: 'Delete Selected' })).toBeVisible()
-    const deleteWorkResponse = page.waitForResponse((response) =>
-      response.url().includes('/api/admin/works/') && response.request().method() === 'DELETE' && response.ok(),
-    )
     await page.getByRole('button', { name: 'Delete Selected' }).click()
-    await expect(page.getByRole('dialog')).toBeVisible()
-    await page.getByRole('dialog').getByRole('button', { name: 'Delete' }).click()
-    await deleteWorkResponse
+    const dialog = page.getByRole('dialog')
+    await expect(dialog).toBeVisible()
+    await measureStep(
+      testInfo,
+      'Admin work bulk delete confirmation to backend response',
+      'adminCrud',
+      async () => {
+        await Promise.all([
+          page.waitForResponse((response) =>
+            response.url().includes('/api/admin/works/') && response.request().method() === 'DELETE' && response.ok(),
+          ),
+          page.waitForResponse((response) =>
+            response.url().includes('/revalidate-public') && response.request().method() === 'POST' && response.ok(),
+          ),
+          dialog.getByRole('button', { name: 'Delete' }).click(),
+        ])
+      },
+      async () => {
+        await expect(dialog).toHaveCount(0)
+      },
+    )
   }
 })

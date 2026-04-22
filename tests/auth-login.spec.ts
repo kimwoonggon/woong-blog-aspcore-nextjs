@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 test('login page renders and sign-in CTA targets backend auth launcher', async ({ page }) => {
   await page.goto('/login')

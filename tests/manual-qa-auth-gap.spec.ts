@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 import { loginAsLocalAdmin } from './helpers/auth'
 
 test('D-2 local admin login creates an authenticated browser session', async ({ page }) => {

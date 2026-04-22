@@ -1,4 +1,4 @@
-import { expect, test, type APIRequestContext } from '@playwright/test'
+import { expect, test, type APIRequestContext } from './helpers/performance-test'
 
 import { expectMermaidRendered } from './helpers/mermaid'
 

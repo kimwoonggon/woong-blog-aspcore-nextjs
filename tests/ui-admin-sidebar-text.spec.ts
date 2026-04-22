@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 test('sidebar removes the legacy marketing helper copy', async ({ page }) => {
   await page.goto('/admin/dashboard')

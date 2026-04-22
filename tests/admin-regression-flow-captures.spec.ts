@@ -1,6 +1,6 @@
 import { mkdir } from 'node:fs/promises'
 import path from 'node:path'
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page } from './helpers/performance-test'
 
 const stamp = new Date().toISOString().replace(/[:.]/g, '-')
 const captureDir = path.join('test-results', `regression-flow-captures-${stamp}`)

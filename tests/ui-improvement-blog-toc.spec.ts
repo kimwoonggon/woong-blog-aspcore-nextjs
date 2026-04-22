@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 test('desktop blog detail renders a table of contents and anchors headings', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })

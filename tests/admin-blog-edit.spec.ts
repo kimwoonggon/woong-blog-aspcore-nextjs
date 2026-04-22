@@ -1,5 +1,6 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 import { createBlogFixture } from './helpers/content-fixtures'
+import { measureStep } from './helpers/latency'
 
 test.use({ storageState: 'test-results/playwright/admin-storage-state.json' })
 test.setTimeout(60_000)
@@ -26,15 +27,25 @@ test('admin can edit an existing blog post with mixed special input', async ({ p
   await page.keyboard.press(process.platform === 'darwin' ? 'Meta+A' : 'Control+A')
   await page.keyboard.type(updatedBody)
 
-  const [response] = await Promise.all([
-    page.waitForResponse((res) => res.url().includes('/api/admin/blogs/') && res.request().method() === 'PUT' && res.ok()),
-    page.getByRole('button', { name: 'Update Post' }).click(),
-  ])
+  await measureStep(
+    testInfo,
+    'Admin blog update to public detail refresh',
+    'adminMutationPublicRefresh',
+    async () => {
+      const [response] = await Promise.all([
+        page.waitForResponse((res) => res.url().includes('/api/admin/blogs/') && res.request().method() === 'PUT' && res.ok()),
+        page.waitForResponse((res) => res.url().includes('/revalidate-public') && res.request().method() === 'POST' && res.ok()),
+        page.getByRole('button', { name: 'Update Post' }).click(),
+      ])
 
-  const payload = await response.json()
-  await page.goto(`/blog/${payload.slug}`)
-  await expect(page.locator('main h1', { hasText: updatedTitle })).toBeVisible()
-  await expect(page.getByText(updatedBody).first()).toBeVisible()
+      return await response.json() as { slug: string }
+    },
+    async (payload) => {
+      await page.goto(`/blog/${payload.slug}`)
+      await expect(page.locator('main h1', { hasText: updatedTitle })).toBeVisible()
+      await expect(page.getByText(updatedBody).first()).toBeVisible()
+    },
+  )
 })
 
 test('blog notion view supports list selection and content autosave', async ({ page, request }, testInfo) => {

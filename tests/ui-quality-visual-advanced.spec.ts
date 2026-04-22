@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 import { getStyle } from './helpers/ui-improvement'
 
 test('VA-010 blog card excerpt keeps a readable line-height ratio and preserves the excerpt clamp', async ({ page }) => {

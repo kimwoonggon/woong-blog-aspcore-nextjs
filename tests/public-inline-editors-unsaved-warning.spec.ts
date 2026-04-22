@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 test.use({ storageState: 'test-results/playwright/admin-storage-state.json' })
 test.setTimeout(90_000)
@@ -9,7 +9,7 @@ function isPublicRevalidationResponse(response: { url(): string; request(): { me
     && response.ok()
 }
 
-async function createBlogForInlineFlow(page: import('@playwright/test').Page, title: string, body: string) {
+async function createBlogForInlineFlow(page: import('./helpers/performance-test').Page, title: string, body: string) {
   await page.goto('/admin/blog/new')
   await page.getByLabel('Title').fill(title)
   await page.locator('.tiptap.ProseMirror').first().fill(body)

@@ -1,4 +1,4 @@
-import { expect, test, type Locator } from '@playwright/test'
+import { expect, test, type Locator } from './helpers/performance-test'
 
 async function measureLineLength(locator: Locator) {
   return locator.evaluate((element: HTMLElement) => {

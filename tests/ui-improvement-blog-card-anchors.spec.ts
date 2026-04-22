@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 import { contrastRatio, getColorChannels, getStyle, gotoWithTheme } from './helpers/ui-improvement'
 
 test('blog cards expose date and tag badge anchors', async ({ page }) => {

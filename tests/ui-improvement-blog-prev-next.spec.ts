@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 test('blog detail exposes previous or next navigation links', async ({ page }) => {
   await page.goto('/blog/seeded-blog')

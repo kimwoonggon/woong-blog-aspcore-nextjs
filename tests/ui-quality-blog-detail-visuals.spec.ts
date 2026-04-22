@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 function px(value: string) {
   return Number.parseFloat(value.replace('px', ''))

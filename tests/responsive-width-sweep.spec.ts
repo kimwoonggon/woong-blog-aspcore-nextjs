@@ -1,6 +1,6 @@
 import { mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 const START_WIDTH = 200
 const END_WIDTH = 3800

@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 test('capability hint can be dismissed and stays hidden after reload', async ({ page }) => {
   await page.goto('/admin/blog/notion')

@@ -1,5 +1,5 @@
 import path from 'path'
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 test('resume page exposes a download action', async ({ page }) => {
   const response = await page.goto('/resume')

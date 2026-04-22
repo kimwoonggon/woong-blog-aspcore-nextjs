@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 const PUBLIC_PATHS = ['/', '/works', '/blog', '/introduction', '/contact', '/resume', '/works/seeded-work', '/blog/seeded-blog']
 

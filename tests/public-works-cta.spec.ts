@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 test('works archive header no longer exposes secondary template CTAs', async ({ page }) => {
   await page.goto('/works')

@@ -1,11 +1,11 @@
 import { readFileSync } from 'node:fs'
 import path from 'path'
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 test.use({ storageState: 'test-results/playwright/admin-storage-state.json' })
 const SAMPLE_VIDEO = readFileSync(path.resolve('tests/fixtures/sample-video.mp4'))
 
-async function clickInsertForVideo(page: import('@playwright/test').Page, label: string) {
+async function clickInsertForVideo(page: import('./helpers/performance-test').Page, label: string) {
   const card = page
     .locator('div.rounded-xl.border')
     .filter({ hasText: label })

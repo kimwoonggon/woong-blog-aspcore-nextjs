@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 test('PF-072 shows the no-resume message when no resume PDF is configured', async ({ page }) => {
   const response = await page.goto('/resume?__qaEmpty=1')

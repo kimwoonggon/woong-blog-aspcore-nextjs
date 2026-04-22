@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 test('introduction and contact pages keep the public reading layout', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 })

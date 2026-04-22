@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page } from './helpers/performance-test'
 import { createBlogFixture } from './helpers/content-fixtures'
 
 test.use({ storageState: 'test-results/playwright/admin-storage-state.json' })

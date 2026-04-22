@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 test('notion view does not expose the library panel by default', async ({ page }) => {
   await page.goto('/admin/blog/notion')

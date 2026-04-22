@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 test('navbar no longer renders the duplicate Latest writing link', async ({ page }) => {
   await page.setViewportSize({ width: 1920, height: 1080 })

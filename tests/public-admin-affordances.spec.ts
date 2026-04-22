@@ -1,9 +1,9 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 import { loginAsLocalAdmin } from './helpers/auth'
 
 const expectedShortcut = process.env.PLAYWRIGHT_EXPECT_LOCAL_ADMIN_SHORTCUT ?? 'hidden'
 
-async function gotoAndExpectButton(page: import('@playwright/test').Page, url: string, buttonName: string) {
+async function gotoAndExpectButton(page: import('./helpers/performance-test').Page, url: string, buttonName: string) {
   await page.goto(url, { waitUntil: 'networkidle' })
   await expect(page.getByRole('button', { name: buttonName })).toBeVisible({ timeout: 15000 })
 }

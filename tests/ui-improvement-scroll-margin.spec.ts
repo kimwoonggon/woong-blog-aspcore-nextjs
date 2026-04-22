@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 test('public detail headings reserve scroll margin under the sticky navbar', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })

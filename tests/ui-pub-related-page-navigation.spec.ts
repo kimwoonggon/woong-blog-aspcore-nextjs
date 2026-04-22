@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 test('blog detail prev-next keeps the originating related page state', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1600 })

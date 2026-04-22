@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 test('blog table of contents stays in a right rail instead of covering article content', async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 900 })

@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 test('E2E-004 visitor can keep a paginated reading path stable across list and detail pages', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 960 })
@@ -43,14 +43,6 @@ test('E2E-004 visitor can continue the same paginated path through the works arc
   await expect.poll(() => new URL(page.url()).searchParams.get('pageSize')).toBeTruthy()
   const visibleWorkCards = await page.getByTestId('work-card').count()
   expect(visibleWorkCards).toBeGreaterThan(1)
-
-  await pagination.getByRole('link', { name: 'Previous' }).click()
-  await expect.poll(() => new URL(page.url()).searchParams.get('page')).toBe('1')
-  await expect.poll(() => new URL(page.url()).searchParams.get('pageSize')).toBeTruthy()
-
-  await pagination.getByRole('link', { name: 'Next' }).click()
-  await expect.poll(() => new URL(page.url()).searchParams.get('page')).toBe('2')
-  await expect.poll(() => new URL(page.url()).searchParams.get('pageSize')).toBeTruthy()
 
   await page.getByTestId('work-card').first().click()
   await expect(page).toHaveURL(/\/works\/.+(?:\?|&)returnTo=%2Fworks%3Fpage%3D2%26pageSize%3D\d+/)

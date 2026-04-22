@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 import { expectedPublicWorksPageSize } from './helpers/responsive-policy'
 
 test.use({ storageState: 'test-results/playwright/admin-storage-state.json' })

@@ -1,4 +1,4 @@
-import { expect, test, type Locator } from '@playwright/test'
+import { expect, test, type Locator } from './helpers/performance-test'
 
 type Viewport = { width: number; height: number }
 type Rect = { left: number; right: number; top: number; bottom: number; width: number; height: number }

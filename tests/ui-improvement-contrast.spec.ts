@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 import { contrastRatio, getColorChannels, gotoWithTheme } from './helpers/ui-improvement'
 
 test('dark mode muted text contrast is at least 4.5:1', async ({ page }) => {

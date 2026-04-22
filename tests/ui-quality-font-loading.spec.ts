@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 test('WQ-025 root layout loads Next fonts with swap display behavior', async ({ page, request }) => {
   await page.goto('/')

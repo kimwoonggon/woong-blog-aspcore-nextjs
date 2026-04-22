@@ -1,4 +1,4 @@
-import { expect, test, type Locator } from '@playwright/test'
+import { expect, test, type Locator } from './helpers/performance-test'
 
 type Box = { left: number; right: number; top: number; bottom: number }
 

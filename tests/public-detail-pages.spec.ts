@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 test('contact page renders heading and contact content', async ({ page }) => {
   await page.goto('/contact')

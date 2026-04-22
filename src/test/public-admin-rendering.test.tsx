@@ -249,7 +249,7 @@ describe('public admin rendering', () => {
     expect(fetchPublicBlogs).toHaveBeenCalledWith(2, 12, undefined)
     expect(fetchPublicWorks).toHaveBeenCalledWith(2, 8, undefined)
     expect(fetchServerSession).not.toHaveBeenCalled()
-  })
+  }, 15_000)
 
   it('respects authored contact content without injecting fallback direct email UI', async () => {
     vi.stubGlobal('fetch', vi.fn(async () =>

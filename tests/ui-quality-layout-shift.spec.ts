@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page } from './helpers/performance-test'
 import { clickHeaderNavLink, rewriteHeaderNavHref } from './helpers/navigation'
 
 async function installLayoutShiftObserver(page: Page) {

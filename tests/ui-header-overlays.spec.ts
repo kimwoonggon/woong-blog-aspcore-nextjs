@@ -1,4 +1,4 @@
-import { expect, test, type Locator } from '@playwright/test'
+import { expect, test, type Locator } from './helpers/performance-test'
 import { loginAsLocalAdmin } from './helpers/auth'
 
 type Rect = { left: number; right: number; top: number; bottom: number; width: number; height: number }

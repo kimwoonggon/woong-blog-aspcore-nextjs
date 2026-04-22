@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 import { getColorChannels, gotoWithTheme, rgbToLuminance } from './helpers/ui-improvement'
 
 test('VA-002 dark mode keeps body, section, and card surfaces tonally separated', async ({ page }) => {

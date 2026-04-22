@@ -1,9 +1,10 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
+import { measureStep } from './helpers/latency'
 
 test.use({ storageState: 'test-results/playwright/admin-storage-state.json' })
 
 
-test('admin can create and publish a work that appears on public works page', async ({ page }) => {
+test('admin can create and publish a work that appears on public works page', async ({ page }, testInfo) => {
   const title = `Playwright Work ${Date.now()}`
 
   await page.goto('/admin/works/new')
@@ -35,18 +36,27 @@ test('admin can create and publish a work that appears on public works page', as
   await page.locator('.tiptap.ProseMirror').first().fill(`This is a browser-driven published work for ${title}.`)
 
   await expect(page.getByRole('button', { name: /Create Work/i })).toBeEnabled()
-  const [saveResponse] = await Promise.all([
-    page.waitForResponse((res) => res.url().includes('/api/admin/works') && res.request().method() === 'POST' && res.ok()),
-    page.getByRole('button', { name: /Create Work/i }).click(),
-  ])
+  await measureStep(
+    testInfo,
+    'Admin work create to public detail refresh',
+    'adminMutationPublicRefresh',
+    async () => {
+      const [saveResponse] = await Promise.all([
+        page.waitForResponse((res) => res.url().includes('/api/admin/works') && res.request().method() === 'POST' && res.ok()),
+        page.waitForResponse((res) => res.url().includes('/revalidate-public') && res.request().method() === 'POST' && res.ok()),
+        page.getByRole('button', { name: /Create Work/i }).click(),
+      ])
 
-  const payload = await saveResponse.json()
-  await expect(page).toHaveURL(/\/admin\/works(?:\?.*)?$/, { timeout: 20000 })
-  await expect(page.getByRole('link', { name: title }).first()).toBeVisible()
-
-  await page.goto(`/works/${payload.slug}`)
-  await expect(page.locator('main h1', { hasText: title })).toBeVisible()
-  await expect(page.getByText('Uncategorized').first()).toBeVisible()
+      return await saveResponse.json() as { slug: string }
+    },
+    async (payload) => {
+      await expect(page).toHaveURL(/\/admin\/works(?:\?.*)?$/, { timeout: 20000 })
+      await expect(page.getByRole('link', { name: title }).first()).toBeVisible()
+      await page.goto(`/works/${payload.slug}`)
+      await expect(page.locator('main h1', { hasText: title })).toBeVisible()
+      await expect(page.getByText('Uncategorized').first()).toBeVisible()
+    },
+  )
   await page.screenshot({ path: 'test-results/playwright/admin-work-publish.png', fullPage: true })
 })
 

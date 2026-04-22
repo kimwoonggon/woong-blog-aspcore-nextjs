@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 import { loginAsLocalAdmin } from './helpers/auth'
 
 

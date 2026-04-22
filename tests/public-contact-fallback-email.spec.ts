@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 test('contact page does not inject a fallback direct email block', async ({ page }) => {
   await page.goto('/contact')

@@ -1,6 +1,6 @@
 import { copyFile, mkdir, stat, writeFile } from 'node:fs/promises'
 import path from 'node:path'
-import { expect, test, type APIRequestContext } from '@playwright/test'
+import { expect, test, type APIRequestContext } from './helpers/performance-test'
 
 import { expectMermaidRendered } from './helpers/mermaid'
 

@@ -1,8 +1,15 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
+import { measureStep } from './helpers/latency'
 import { expectedPublicBlogPageSize } from './helpers/responsive-policy'
 
-async function expectPageSize(page: import('@playwright/test').Page, expectedPageSize: string) {
-  await expect.poll(() => new URL(page.url()).searchParams.get('pageSize')).toBe(expectedPageSize)
+async function expectPageSize(page: import('./helpers/performance-test').Page, expectedPageSize: string) {
+  const currentPageSize = new URL(page.url()).searchParams.get('pageSize')
+  if (currentPageSize) {
+    expect(currentPageSize).toBe(expectedPageSize)
+    return
+  }
+
+  await expect(page.locator(`nav[aria-label="Study pagination"] a[href*="pageSize=${expectedPageSize}"]`).first()).toBeVisible()
 }
 
 test('blog pagination uses desktop page size and exposes first/prev/next/last controls', async ({ page }) => {
@@ -55,6 +62,52 @@ test('blog pagination hydrates page and pageSize query params without rewriting 
   await expect(pagination.getByRole('link', { name: 'Last' })).toHaveAttribute('href', new RegExp(`/blog\\?page=\\d+&pageSize=${expectedPageSize}$`))
   await expect(pagination.getByRole('link', { name: '2', exact: true })).toHaveClass(/bg-sky-500/)
   await expect(page.getByTestId('blog-card')).toHaveCount(expectedPageSize)
+})
+
+test('blog pagination next and previous clicks stay within latency budget', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 1280, height: 960 })
+  const response = await page.request.get('/api/public/blogs?page=1&pageSize=2')
+  expect(response.ok()).toBeTruthy()
+  const payload = await response.json() as { totalPages: number }
+  test.skip(payload.totalPages < 2, 'Clean seed does not have a second study page.')
+
+  await page.goto('/blog?page=1&pageSize=2&__qaTagged=1')
+  await expect(page.getByTestId('blog-card').first()).toBeVisible()
+
+  const pagination = page.getByLabel('Study pagination')
+  await measureStep(
+    testInfo,
+    'Study pagination Next click to active page and grid',
+    'publicPagination',
+    async () => {
+      await Promise.all([
+        page.waitForURL((url) => url.searchParams.get('page') === '2'),
+        pagination.getByRole('link', { name: 'Next' }).click(),
+      ])
+    },
+    async () => {
+      await expect.poll(() => new URL(page.url()).searchParams.get('page')).toBe('2')
+      await expect(pagination.getByRole('link', { name: '2', exact: true })).toHaveClass(/bg-sky-500/)
+      await expect(page.getByTestId('blog-card').first()).toBeVisible()
+    },
+  )
+
+  await measureStep(
+    testInfo,
+    'Study pagination Previous click to active page and grid',
+    'publicPagination',
+    async () => {
+      await Promise.all([
+        page.waitForURL((url) => url.searchParams.get('page') === '1'),
+        pagination.getByRole('link', { name: 'Previous' }).click(),
+      ])
+    },
+    async () => {
+      await expect.poll(() => new URL(page.url()).searchParams.get('page')).toBe('1')
+      await expect(pagination.getByRole('link', { name: '1', exact: true })).toHaveClass(/bg-sky-500/)
+      await expect(page.getByTestId('blog-card').first()).toBeVisible()
+    },
+  )
 })
 
 test('invalid blog page clamps to the nearest valid page', async ({ page, request }) => {

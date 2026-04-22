@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 test('home container stays within max-w-7xl on large screens', async ({ page }) => {
   await page.setViewportSize({ width: 1920, height: 1080 })

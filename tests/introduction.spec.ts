@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 test('introduction page renders backend-managed content', async ({ page, request }) => {
   const response = await request.get('/api/public/pages/introduction')
