@@ -62,6 +62,7 @@ describe('public admin rendering', () => {
     cleanup()
     vi.resetModules()
     vi.clearAllMocks()
+    vi.unstubAllGlobals()
   })
 
   it('renders the public layout without fetching a session for the navbar', async () => {
@@ -137,9 +138,12 @@ describe('public admin rendering', () => {
   })
 
   it('shows page inline editor affordances only for authenticated admins', async () => {
-    vi.doMock('@/lib/api/server', () => ({
-      fetchServerSession: vi.fn(async () => ({ authenticated: true, role: 'admin' })),
-    }))
+    vi.stubGlobal('fetch', vi.fn(async () =>
+      new Response(JSON.stringify({ authenticated: true, role: 'admin' }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    ) as typeof fetch)
 
     vi.doMock('@/lib/api/pages', () => ({
       fetchPublicPageBySlug: vi.fn(async () => ({
@@ -153,15 +157,19 @@ describe('public admin rendering', () => {
     const ContactPage = (await import('@/app/(public)/contact/page')).default
     const { unmount } = render(await ContactPage())
 
-    expect(screen.getByTestId('inline-page-editor')).toBeInTheDocument()
+    expect(await screen.findByTestId('inline-page-editor')).toBeInTheDocument()
 
     unmount()
     cleanup()
     vi.resetModules()
+    vi.unstubAllGlobals()
 
-    vi.doMock('@/lib/api/server', () => ({
-      fetchServerSession: vi.fn(async () => ({ authenticated: false })),
-    }))
+    vi.stubGlobal('fetch', vi.fn(async () =>
+      new Response(JSON.stringify({ authenticated: false }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    ) as typeof fetch)
 
     vi.doMock('@/lib/api/pages', () => ({
       fetchPublicPageBySlug: vi.fn(async () => ({
@@ -179,9 +187,12 @@ describe('public admin rendering', () => {
   })
 
   it('respects authored contact content without injecting fallback direct email UI', async () => {
-    vi.doMock('@/lib/api/server', () => ({
-      fetchServerSession: vi.fn(async () => ({ authenticated: false })),
-    }))
+    vi.stubGlobal('fetch', vi.fn(async () =>
+      new Response(JSON.stringify({ authenticated: false }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    ) as typeof fetch)
 
     vi.doMock('@/lib/api/pages', () => ({
       fetchPublicPageBySlug: vi.fn(async () => ({

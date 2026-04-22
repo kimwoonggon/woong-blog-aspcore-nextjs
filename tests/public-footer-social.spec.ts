@@ -5,6 +5,7 @@ test.use({ storageState: 'test-results/playwright/admin-storage-state.json' })
 async function saveSiteSettings(page: Page) {
   await Promise.all([
     page.waitForResponse((response) => response.url().includes('/api/admin/site-settings') && response.request().method() === 'PUT' && response.ok()),
+    page.waitForResponse((response) => response.url().includes('/revalidate-public') && response.request().method() === 'POST' && response.ok()),
     page.getByRole('button', { name: 'Save Changes' }).first().click(),
   ])
 }

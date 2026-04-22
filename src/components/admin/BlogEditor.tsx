@@ -15,6 +15,8 @@ import { AlertTriangle, ArrowLeft, Save } from 'lucide-react'
 import { fetchWithCsrf } from '@/lib/api/auth'
 import { getBrowserApiBaseUrl } from '@/lib/api/browser'
 import { normalizeBlogHtmlForSave } from '@/lib/content/blog-content'
+import { revalidatePublicPathsAfterMutation } from '@/lib/public-revalidation-client'
+import { getBlogPublicRevalidationPaths } from '@/lib/public-revalidation-paths'
 import { toast } from 'sonner'
 
 interface Blog {
@@ -184,6 +186,7 @@ export function BlogEditor({ initialBlog, inlineMode = false, onSaved, inlineRet
 
             const result = await response.json().catch(() => null) as { id?: string; slug?: string } | null
             const nextSlug = result?.slug ?? initialBlog?.slug ?? null
+            await revalidatePublicPathsAfterMutation(getBlogPublicRevalidationPaths(nextSlug, initialBlog?.slug))
             const nextSnapshot = buildBlogSnapshot({
                 title,
                 excerpt,

@@ -1,11 +1,11 @@
-import { getServerApiBaseUrl, getServerForwardingHeaders } from '@/lib/api/server'
+import { getPublicServerApiBaseUrl } from '@/lib/api/public-server'
 import { throwPublicApiError } from '@/lib/api/public-errors'
+import { PUBLIC_CONTENT_TAGS, publicContentFetchInit } from '@/lib/api/public-cache'
 
 export async function fetchPublicPageBySlug(slug: string) {
-  const apiBaseUrl = await getServerApiBaseUrl()
+  const apiBaseUrl = await getPublicServerApiBaseUrl()
   const response = await fetch(`${apiBaseUrl}/public/pages/${encodeURIComponent(slug)}`, {
-    cache: 'no-store',
-    headers: await getServerForwardingHeaders(),
+    ...publicContentFetchInit([PUBLIC_CONTENT_TAGS.page(slug)]),
   })
 
   if (response.status === 404) {

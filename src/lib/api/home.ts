@@ -1,5 +1,6 @@
-import { getServerApiBaseUrl, getServerForwardingHeaders } from '@/lib/api/server'
+import { getPublicServerApiBaseUrl } from '@/lib/api/public-server'
 import { throwPublicApiError } from '@/lib/api/public-errors'
+import { PUBLIC_CONTENT_TAGS, publicContentFetchInit } from '@/lib/api/public-cache'
 
 export interface HomePagePayload {
   title: string
@@ -45,10 +46,9 @@ export interface HomePayload {
 }
 
 export async function fetchPublicHome() {
-  const apiBaseUrl = await getServerApiBaseUrl()
+  const apiBaseUrl = await getPublicServerApiBaseUrl()
   const response = await fetch(`${apiBaseUrl}/public/home`, {
-    cache: 'no-store',
-    headers: await getServerForwardingHeaders(),
+    ...publicContentFetchInit([PUBLIC_CONTENT_TAGS.home, PUBLIC_CONTENT_TAGS.siteSettings, PUBLIC_CONTENT_TAGS.blogs, PUBLIC_CONTENT_TAGS.works]),
   })
 
   if (!response.ok) {

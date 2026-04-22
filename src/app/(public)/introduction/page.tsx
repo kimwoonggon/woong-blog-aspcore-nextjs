@@ -1,12 +1,12 @@
 import { BlockRenderer } from '@/components/content/BlockRenderer'
+import { PublicAdminClientGate } from '@/components/admin/PublicAdminClientGate'
 import { InlinePageEditorSection } from '@/components/admin/InlinePageEditorSection'
 import { InteractiveRenderer } from '@/components/content/InteractiveRenderer'
 import { isBlockPageContent, isHtmlPageContent, parsePageContentJson } from '@/lib/content/page-content'
-import { getPublicAdminAffordanceState } from '@/lib/auth/public-admin'
 import { fetchPublicPageBySlug } from '@/lib/api/pages'
 import { headers } from 'next/headers'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 60
 
 interface PageProps {
     searchParams?: Promise<{ __qaBroken?: string }>
@@ -37,7 +37,6 @@ export default async function IntroductionPage({ searchParams }: PageProps) {
     }
 
     const page = await fetchPublicPageBySlug('introduction')
-    const { canShowAdminAffordances } = await getPublicAdminAffordanceState()
     const title = page?.title || 'Introduction'
     const parsedContent = parsePageContentJson(page?.contentJson)
 
@@ -61,18 +60,20 @@ export default async function IntroductionPage({ searchParams }: PageProps) {
                 )}
             </div>
 
-            {canShowAdminAffordances && page && (
-                <InlinePageEditorSection
-                    triggerLabel="소개글 수정"
-                    title="Introduction Inline Editor"
-                    description="현재 페이지를 벗어나지 않고 소개글을 바로 수정합니다."
-                    page={{
-                        id: page.id,
-                        title: page.title,
-                        slug: page.slug,
-                        content: parsedContent ?? { html: '' },
-                    }}
-                />
+            {page && (
+                <PublicAdminClientGate>
+                    <InlinePageEditorSection
+                        triggerLabel="소개글 수정"
+                        title="Introduction Inline Editor"
+                        description="현재 페이지를 벗어나지 않고 소개글을 바로 수정합니다."
+                        page={{
+                            id: page.id,
+                            title: page.title,
+                            slug: page.slug,
+                            content: parsedContent ?? { html: '' },
+                        }}
+                    />
+                </PublicAdminClientGate>
             )}
         </div>
     )

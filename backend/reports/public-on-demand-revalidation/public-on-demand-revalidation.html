@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Public On-Demand Revalidation Audit</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 900px; margin: 40px auto; line-height: 1.55; color: #111827; }
+    h1, h2 { line-height: 1.2; }
+    code { background: #f3f4f6; padding: 0.1rem 0.25rem; border-radius: 4px; }
+    li { margin: 0.25rem 0; }
+  </style>
+</head>
+<body>
+  <h1>Public On-Demand Revalidation Audit</h1>
+  <p><strong>Date:</strong> 2026-04-22</p>
+  <h2>Summary</h2>
+  <p>Added protected public cache invalidation after successful admin mutations through <code>/revalidate-public</code>, shared path/tag helpers, public fetch cache tags, and focused tests.</p>
+  <h2>Intentionally Not Changed</h2>
+  <ul>
+    <li>No backend API or auth semantic changes.</li>
+    <li>No public anonymous read restriction.</li>
+    <li>No editor UI redesign.</li>
+    <li>No mobile/feed/search/autosave work.</li>
+    <li>No global 4-worker Playwright isolation work.</li>
+  </ul>
+  <h2>Invalidation Map</h2>
+  <ul>
+    <li>Blog create/update/delete: <code>/</code>, <code>/blog</code>, relevant blog detail paths.</li>
+    <li>Work create/update/delete: <code>/</code>, <code>/works</code>, relevant work detail paths.</li>
+    <li>Contact: <code>/contact</code>.</li>
+    <li>Introduction: <code>/introduction</code>.</li>
+    <li>Home: <code>/</code>.</li>
+    <li>Resume upload/delete: <code>/resume</code>.</li>
+    <li>Site settings: <code>/</code>, <code>/blog</code>, <code>/works</code>, <code>/contact</code>, <code>/introduction</code>, <code>/resume</code>.</li>
+  </ul>
+  <h2>Validation</h2>
+  <ul>
+    <li>Focused Vitest revalidation/editor/API group: 10 files passed, 72 tests passed.</li>
+    <li><code>npm run typecheck</code>: passed.</li>
+    <li><code>npm run lint</code>: blocked by local Docker-owned <code>.tmp/postgres</code> permission.</li>
+    <li>Scoped ESLint over source/tests/config: passed with 3 existing warnings.</li>
+    <li>Docker/nginx frontend rebuild: passed.</li>
+    <li>Focused Playwright revalidation group: 16 passed.</li>
+    <li>Final full e2e single-worker: 563 passed, 8 skipped.</li>
+    <li><code>npm test -- --run</code>: 51 files passed, 259 tests passed.</li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Proceed with this focused change. Follow up by excluding local Docker <code>.tmp</code> state from root ESLint scanning.</p>
+</body>
+</html>

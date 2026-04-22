@@ -17,6 +17,7 @@ test('site settings persist mixed special-character owner and tagline values', a
 
   await Promise.all([
     page.waitForResponse((res) => res.url().includes('/api/admin/site-settings') && res.request().method() === 'PUT' && res.ok()),
+    page.waitForResponse((res) => res.url().includes('/revalidate-public') && res.request().method() === 'POST' && res.ok()),
     page.getByRole('button', { name: 'Save Changes' }).first().click(),
   ])
 

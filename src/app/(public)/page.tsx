@@ -7,7 +7,7 @@ import { headers } from 'next/headers'
 import { fetchPublicHome } from '@/lib/api/home'
 import { parsePageContentJson, toHomeContent } from '@/lib/content/page-content'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 60
 
 interface PageProps {
   searchParams?: Promise<{ __qaNoImage?: string; __qaSlow?: string }>
@@ -24,9 +24,8 @@ function formatPublishedMonth(publishedAt?: string | null) {
 
 export default async function HomePage({ searchParams }: PageProps) {
   const resolvedSearchParams = await searchParams
-  const headerStore = await headers()
-  const requestHost = (headerStore.get('x-forwarded-host') ?? headerStore.get('host') ?? '').toLowerCase()
-  const isLocalQaRequest = /localhost|127\.0\.0\.1/.test(requestHost)
+  const hasLocalQaFlag = resolvedSearchParams?.__qaSlow === '1' || resolvedSearchParams?.__qaNoImage === '1'
+  const isLocalQaRequest = hasLocalQaFlag ? await isLocalRequest() : false
   if (resolvedSearchParams?.__qaSlow === '1' && isLocalQaRequest) {
     await new Promise((resolve) => setTimeout(resolve, 2000))
   }
@@ -288,4 +287,10 @@ export default async function HomePage({ searchParams }: PageProps) {
       </section>
     </div>
   )
+}
+
+async function isLocalRequest() {
+  const headerStore = await headers()
+  const requestHost = (headerStore.get('x-forwarded-host') ?? headerStore.get('host') ?? '').toLowerCase()
+  return /localhost|127\.0\.0\.1/.test(requestHost)
 }

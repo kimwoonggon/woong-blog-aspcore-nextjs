@@ -1,5 +1,7 @@
-import { getServerApiBaseUrl, getServerCookieHeader, getServerForwardingHeaders } from '@/lib/api/server'
+import { getServerApiBaseUrl, getServerCookieHeader } from '@/lib/api/server'
+import { getPublicServerApiBaseUrl } from '@/lib/api/public-server'
 import { throwPublicApiError } from '@/lib/api/public-errors'
+import { PUBLIC_CONTENT_TAGS, publicContentFetchInit } from '@/lib/api/public-cache'
 
 export interface BlogListItem {
   id: string
@@ -56,7 +58,7 @@ async function buildAdminHeaders(): Promise<Record<string, string>> {
 }
 
 export async function fetchPublicBlogs(page = 1, pageSize = 10, searchOptions: PublicBlogSearchOptions = {}) {
-  const apiBaseUrl = await getServerApiBaseUrl()
+  const apiBaseUrl = await getPublicServerApiBaseUrl()
   const params = new URLSearchParams({
     page: String(page),
     pageSize: String(pageSize),
@@ -68,8 +70,7 @@ export async function fetchPublicBlogs(page = 1, pageSize = 10, searchOptions: P
   }
 
   const response = await fetch(`${apiBaseUrl}/public/blogs?${params.toString()}`, {
-    cache: 'no-store',
-    headers: await getServerForwardingHeaders(),
+    ...publicContentFetchInit([PUBLIC_CONTENT_TAGS.blogs]),
   })
   if (!response.ok) {
     await throwPublicApiError(response, 'Failed to load public blog posts.')
@@ -90,10 +91,9 @@ export async function fetchAllPublicBlogs(pageSize = 100) {
 }
 
 export async function fetchPublicBlogBySlug(slug: string) {
-  const apiBaseUrl = await getServerApiBaseUrl()
+  const apiBaseUrl = await getPublicServerApiBaseUrl()
   const response = await fetch(`${apiBaseUrl}/public/blogs/${encodeURIComponent(slug)}`, {
-    cache: 'no-store',
-    headers: await getServerForwardingHeaders(),
+    ...publicContentFetchInit([PUBLIC_CONTENT_TAGS.blogs, PUBLIC_CONTENT_TAGS.blog(slug)]),
   })
   if (response.status === 404) return null
   if (!response.ok) {

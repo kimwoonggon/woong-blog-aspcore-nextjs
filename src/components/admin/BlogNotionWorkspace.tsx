@@ -14,6 +14,8 @@ import { TiptapEditor } from '@/components/admin/TiptapEditor'
 import { fetchWithCsrf } from '@/lib/api/auth'
 import { getBrowserApiBaseUrl } from '@/lib/api/browser'
 import { normalizeBlogHtmlForSave } from '@/lib/content/blog-content'
+import { revalidatePublicPathsAfterMutation } from '@/lib/public-revalidation-client'
+import { getBlogPublicRevalidationPaths } from '@/lib/public-revalidation-paths'
 import { toast } from 'sonner'
 
 interface BlogWorkspaceListItem {
@@ -142,6 +144,7 @@ export function BlogNotionWorkspace({ blogs, activeBlog }: BlogNotionWorkspacePr
                     ...lastSavedRef.current,
                     html: normalizedHtml,
                 }
+                await revalidatePublicPathsAfterMutation(getBlogPublicRevalidationPaths(activeBlog.slug))
                 if (normalizedHtml !== html) {
                     setHtml(normalizedHtml)
                 }
@@ -160,7 +163,7 @@ export function BlogNotionWorkspace({ blogs, activeBlog }: BlogNotionWorkspacePr
             controller.abort()
             window.clearTimeout(timeout)
         }
-    }, [activeBlog.id, html])
+    }, [activeBlog.id, activeBlog.slug, html])
 
     const metaDirty = useMemo(() => (
         title.trim() !== lastSavedRef.current.title
@@ -229,6 +232,7 @@ export function BlogNotionWorkspace({ blogs, activeBlog }: BlogNotionWorkspacePr
                 published,
                 html: normalizedHtml,
             }
+            await revalidatePublicPathsAfterMutation(getBlogPublicRevalidationPaths(activeBlog.slug))
             if (normalizedHtml !== html) {
                 setHtml(normalizedHtml)
             }

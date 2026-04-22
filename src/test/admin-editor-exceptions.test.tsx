@@ -145,7 +145,7 @@ describe('Admin editor exception handling', () => {
     await waitFor(() => {
       expect(alert).toHaveBeenCalledWith('Home page saved successfully!')
     })
-    expect(mocks.fetchWithCsrf).toHaveBeenLastCalledWith(
+    expect(mocks.fetchWithCsrf).toHaveBeenCalledWith(
       '/api/admin/pages',
       expect.objectContaining({
         method: 'PUT',

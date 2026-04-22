@@ -1,15 +1,14 @@
 import { BlockRenderer } from '@/components/content/BlockRenderer'
+import { PublicAdminClientGate } from '@/components/admin/PublicAdminClientGate'
 import { InlinePageEditorSection } from '@/components/admin/InlinePageEditorSection'
 import { InteractiveRenderer } from '@/components/content/InteractiveRenderer'
 import { isBlockPageContent, isHtmlPageContent, parsePageContentJson } from '@/lib/content/page-content'
-import { getPublicAdminAffordanceState } from '@/lib/auth/public-admin'
 import { fetchPublicPageBySlug } from '@/lib/api/pages'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 60
 
 export default async function ContactPage() {
     const page = await fetchPublicPageBySlug('contact')
-    const { canShowAdminAffordances } = await getPublicAdminAffordanceState()
     const title = page?.title || 'Contact'
     const parsedContent = parsePageContentJson(page?.contentJson)
 
@@ -40,18 +39,20 @@ export default async function ContactPage() {
                 )}
             </div>
 
-            {canShowAdminAffordances && page && (
-                <InlinePageEditorSection
-                    triggerLabel="문의글 수정"
-                    title="Contact Inline Editor"
-                    description="현재 페이지에서 바로 문의 페이지 내용을 수정합니다."
-                    page={{
-                        id: page.id,
-                        title: page.title,
-                        slug: page.slug,
-                        content: parsedContent ?? { html: '' },
-                    }}
-                />
+            {page && (
+                <PublicAdminClientGate>
+                    <InlinePageEditorSection
+                        triggerLabel="문의글 수정"
+                        title="Contact Inline Editor"
+                        description="현재 페이지에서 바로 문의 페이지 내용을 수정합니다."
+                        page={{
+                            id: page.id,
+                            title: page.title,
+                            slug: page.slug,
+                            content: parsedContent ?? { html: '' },
+                        }}
+                    />
+                </PublicAdminClientGate>
             )}
         </div>
     )

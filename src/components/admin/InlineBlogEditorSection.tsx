@@ -48,7 +48,7 @@ export function InlineBlogEditorSection({
 
     startTransition(async () => {
       try {
-        await deleteAdminBlog(blogId)
+        await deleteAdminBlog(blogId, initialBlog?.slug)
         toast.success('Study deleted')
         router.push(afterDeleteHref)
         router.refresh()

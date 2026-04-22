@@ -14,6 +14,8 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { fetchWithCsrf } from '@/lib/api/auth'
 import { getBrowserApiBaseUrl } from '@/lib/api/browser'
+import { revalidatePublicPathsAfterMutation } from '@/lib/public-revalidation-client'
+import { getWorkPublicRevalidationPaths } from '@/lib/public-revalidation-paths'
 import type { WorkVideo } from '@/lib/api/works'
 import { extractVideoFrameThumbnailBlob, fetchRemoteImageBlob } from '@/lib/content/work-auto-thumbnail'
 import {
@@ -718,34 +720,6 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
         return await response.json() as VideoMutationPayload
     }
 
-    async function uploadVideoForExistingWork(file: File) {
-        if (!initialWork?.id) return
-
-        setIsVideoBusy(true)
-
-        try {
-            const target = await requestUploadTarget(initialWork.id, file, videosVersion)
-            await uploadToTarget(initialWork.id, file, target)
-            const payload = await confirmVideoUpload(initialWork.id, target.uploadSessionId, videosVersion)
-            syncVideos(payload)
-            setHasPersistedVideoChanges(true)
-            try {
-                const uploadedThumbnail = await maybeApplyAutoThumbnailForCandidate({ kind: 'uploaded-video', file })
-                if (uploadedThumbnail) {
-                    await persistThumbnailSelectionForWork(initialWork.id, uploadedThumbnail.id)
-                }
-            } catch (error) {
-                toast.error(error instanceof Error ? error.message : 'Failed to auto-generate a video thumbnail.')
-            }
-            refreshInlinePublicWorkIfNeeded()
-            toast.success('Video uploaded.')
-        } catch (error) {
-            toast.error(error instanceof Error ? error.message : 'Failed to upload video.')
-        } finally {
-            setIsVideoBusy(false)
-        }
-    }
-
     async function uploadHlsVideoForExistingWork(file: File) {
         if (!initialWork?.id) return
 
@@ -1053,6 +1027,7 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
             }
 
             toast.success('Work and videos created successfully')
+            await revalidatePublicPathsAfterMutation(getWorkPublicRevalidationPaths(nextSlug, initialWork?.slug))
             if (finishInlineSave(responsePayload, nextSlug, false)) {
                 return
             }
@@ -1083,6 +1058,7 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                     title,
                     initialSlug: initialWork?.slug,
                 })
+                await revalidatePublicPathsAfterMutation(getWorkPublicRevalidationPaths(nextSlug, initialWork?.slug))
                 finishUpdateSave(null, nextSlug)
                 return
             }
@@ -1099,6 +1075,7 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
             })
 
             if (isEditing) {
+                await revalidatePublicPathsAfterMutation(getWorkPublicRevalidationPaths(nextSlug, initialWork?.slug))
                 finishUpdateSave(responsePayload, nextSlug)
                 return
             }
@@ -1108,6 +1085,7 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                 return
             }
 
+            await revalidatePublicPathsAfterMutation(getWorkPublicRevalidationPaths(nextSlug, initialWork?.slug))
             finishCreateSave(responsePayload, nextSlug)
         } finally {
             setIsSaving(false)

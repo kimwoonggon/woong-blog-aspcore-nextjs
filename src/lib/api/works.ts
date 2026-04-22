@@ -1,5 +1,7 @@
-import { getServerApiBaseUrl, getServerCookieHeader, getServerForwardingHeaders } from '@/lib/api/server'
+import { getServerApiBaseUrl, getServerCookieHeader } from '@/lib/api/server'
+import { getPublicServerApiBaseUrl } from '@/lib/api/public-server'
 import { throwPublicApiError } from '@/lib/api/public-errors'
+import { PUBLIC_CONTENT_TAGS, publicContentFetchInit } from '@/lib/api/public-cache'
 
 export interface WorkVideo {
   id: string
@@ -187,7 +189,7 @@ function parseAdminWorkDetailPayload(payload: unknown): AdminWorkDetailPayload {
 }
 
 export async function fetchPublicWorks(page = 1, pageSize = 6, searchParams?: PublicWorkSearchParams) {
-  const apiBaseUrl = await getServerApiBaseUrl()
+  const apiBaseUrl = await getPublicServerApiBaseUrl()
   const params = new URLSearchParams({
     page: String(page),
     pageSize: String(pageSize),
@@ -198,8 +200,7 @@ export async function fetchPublicWorks(page = 1, pageSize = 6, searchParams?: Pu
   }
 
   const response = await fetch(`${apiBaseUrl}/public/works?${params.toString()}`, {
-    cache: 'no-store',
-    headers: await getServerForwardingHeaders(),
+    ...publicContentFetchInit([PUBLIC_CONTENT_TAGS.works]),
   })
   if (!response.ok) {
     await throwPublicApiError(response, 'Failed to load public works.')
@@ -220,10 +221,9 @@ export async function fetchAllPublicWorks(pageSize = 100) {
 }
 
 export async function fetchPublicWorkBySlug(slug: string) {
-  const apiBaseUrl = await getServerApiBaseUrl()
+  const apiBaseUrl = await getPublicServerApiBaseUrl()
   const response = await fetch(`${apiBaseUrl}/public/works/${encodeURIComponent(slug)}`, {
-    cache: 'no-store',
-    headers: await getServerForwardingHeaders(),
+    ...publicContentFetchInit([PUBLIC_CONTENT_TAGS.works, PUBLIC_CONTENT_TAGS.work(slug)]),
   })
   if (response.status === 404) return null
   if (!response.ok) {

@@ -2,6 +2,23 @@ import { expect, test } from '@playwright/test'
 
 test.use({ storageState: 'test-results/playwright/admin-storage-state.json' })
 
+function isSiteSettingsSaveResponse(response: { url(): string; request(): { method(): string }; ok(): boolean }) {
+  return response.url().includes('/api/admin/site-settings')
+    && response.request().method() === 'PUT'
+    && response.ok()
+}
+
+function isPublicRevalidationResponse(response: { url(): string; request(): { method(): string }; ok(): boolean }) {
+  return response.url().includes('/revalidate-public')
+    && response.request().method() === 'POST'
+    && response.ok()
+}
+
+function isPageSaveResponse(response: { url(): string; request(): { method(): string }; ok(): boolean }) {
+  return response.url().includes('/api/admin/pages')
+    && response.request().method() === 'PUT'
+    && response.ok()
+}
 
 test('admin can update site settings from admin pages', async ({ page }) => {
   const ownerName = `Woonggon QA ${Date.now()}`
@@ -17,7 +34,8 @@ test('admin can update site settings from admin pages', async ({ page }) => {
 
   await page.locator('#ownerName').fill(ownerName)
   await Promise.all([
-    page.waitForResponse((response) => response.url().includes('/api/admin/site-settings') && response.request().method() === 'PUT' && response.ok()),
+    page.waitForResponse(isSiteSettingsSaveResponse),
+    page.waitForResponse(isPublicRevalidationResponse),
     page.getByRole('button', { name: 'Save Changes' }).first().click(),
   ])
 
@@ -37,7 +55,8 @@ test('admin can update the introduction page from admin pages', async ({ page })
   const introSection = page.locator('#introduction-page-editor')
   await introSection.getByLabel('Content (HTML/Text)').fill(`<p>${introText}</p>`)
   await Promise.all([
-    page.waitForResponse((response) => response.url().includes('/api/admin/pages') && response.request().method() === 'PUT' && response.ok()),
+    page.waitForResponse(isPageSaveResponse),
+    page.waitForResponse(isPublicRevalidationResponse),
     introSection.getByRole('button', { name: 'Save Changes' }).click(),
   ])
 
@@ -56,7 +75,8 @@ test('admin can update the contact page from admin pages', async ({ page }) => {
   const contactSection = page.locator('#contact-page-editor')
   await contactSection.getByLabel('Content (HTML/Text)').fill(`<p>${contactText}</p>`)
   await Promise.all([
-    page.waitForResponse((response) => response.url().includes('/api/admin/pages') && response.request().method() === 'PUT' && response.ok()),
+    page.waitForResponse(isPageSaveResponse),
+    page.waitForResponse(isPublicRevalidationResponse),
     contactSection.getByRole('button', { name: 'Save Changes' }).click(),
   ])
 

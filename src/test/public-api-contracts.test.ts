@@ -26,7 +26,7 @@ describe('public API helper contracts', () => {
 
     await expect(fetchPublicPageBySlug('missing page')).resolves.toBeNull()
     await expect(fetchPublicPageBySlug('한글 slug')).resolves.toMatchObject({ title: 'Title' })
-    expect(fetchMock).toHaveBeenLastCalledWith('http://localhost/api/public/pages/%ED%95%9C%EA%B8%80%20slug', { cache: 'no-store', headers: {} })
+    expect(fetchMock).toHaveBeenLastCalledWith('http://localhost/api/public/pages/%ED%95%9C%EA%B8%80%20slug', { next: { revalidate: 60, tags: ['public-page:한글 slug'] } })
   })
 
   it('site settings helpers throw on server failure and surface parsed payload on success', async () => {
@@ -69,9 +69,9 @@ describe('public API helper contracts', () => {
     await expect(fetchPublicBlogBySlug('missing-blog')).resolves.toBeNull()
     await expect(fetchPublicBlogBySlug('seeded-blog')).resolves.toMatchObject({ title: 'Blog' })
 
-    expect(fetchMock).toHaveBeenNthCalledWith(1, 'http://localhost/api/public/works/seeded-work', { cache: 'no-store', headers: {} })
-    expect(fetchMock).toHaveBeenNthCalledWith(2, 'http://localhost/api/public/blogs/missing-blog', { cache: 'no-store', headers: {} })
-    expect(fetchMock).toHaveBeenNthCalledWith(3, 'http://localhost/api/public/blogs/seeded-blog', { cache: 'no-store', headers: {} })
+    expect(fetchMock).toHaveBeenNthCalledWith(1, 'http://localhost/api/public/works/seeded-work', { next: { revalidate: 60, tags: ['public-works', 'public-work:seeded-work'] } })
+    expect(fetchMock).toHaveBeenNthCalledWith(2, 'http://localhost/api/public/blogs/missing-blog', { next: { revalidate: 60, tags: ['public-blogs', 'public-blog:missing-blog'] } })
+    expect(fetchMock).toHaveBeenNthCalledWith(3, 'http://localhost/api/public/blogs/seeded-blog', { next: { revalidate: 60, tags: ['public-blogs', 'public-blog:seeded-blog'] } })
   })
 
   it('accepts missing videos fields but rejects malformed video arrays', async () => {
