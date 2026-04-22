@@ -9,6 +9,18 @@ namespace WoongBlog.Api.Tests;
 public class BlogAiFixServiceCodexRuntimeComponentTests
 {
     [Fact]
+    public void GetAvailableProviders_WithCodexCommand_IncludesOpenAiAndCodexChoices()
+    {
+        var providers = BlogAiFixService.GetAvailableProviders(new AiOptions
+        {
+            CodexCommand = "/bin/sh"
+        });
+
+        Assert.Contains("openai", providers);
+        Assert.Contains("codex", providers);
+    }
+
+    [Fact]
     public async Task FixHtmlAsync_WithCodexProvider_FailsClearlyWhenCodexHomeIsFile()
     {
         var tempRoot = CreateTempDirectory();
@@ -28,6 +40,46 @@ public class BlogAiFixServiceCodexRuntimeComponentTests
 
             Assert.Contains("Codex home must be a directory", exception.Message);
             Assert.Contains(codexHomeFile, exception.Message);
+        }
+        finally
+        {
+            Directory.Delete(tempRoot, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task FixHtmlAsync_WithCodexProvider_ExportsConfiguredOpenAiKeyToCodexProcess()
+    {
+        var tempRoot = CreateTempDirectory();
+        try
+        {
+            var codexHome = Path.Combine(tempRoot, "codex-home");
+            Directory.CreateDirectory(codexHome);
+            var scriptPath = Path.Combine(tempRoot, "fake-codex-openai-key.sh");
+            await File.WriteAllTextAsync(scriptPath, """
+                if [ "$OPENAI_API_KEY" != "configured-openai-key" ]; then
+                  echo "missing configured openai key" >&2
+                  exit 43
+                fi
+
+                cat >/dev/null
+                printf '<p>codex used configured key</p>'
+                """);
+
+            var service = CreateService(new AiOptions
+            {
+                Provider = "Codex",
+                OpenAiApiKey = "configured-openai-key",
+                CodexCommand = "/bin/sh",
+                CodexArguments = [scriptPath],
+                CodexHome = codexHome,
+                CodexWorkdir = tempRoot
+            });
+
+            var result = await service.FixHtmlAsync("<p>Hello</p>", CancellationToken.None);
+
+            Assert.Equal("codex", result.Provider);
+            Assert.Equal("<p>codex used configured key</p>", result.FixedHtml);
         }
         finally
         {

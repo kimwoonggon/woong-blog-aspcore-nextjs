@@ -20,15 +20,19 @@ interface AIFixDialogProps {
     extraBodyParams?: Record<string, unknown>
 }
 
-type ProviderOption = 'openai' | 'azure' | 'codex'
+type ProviderOption = 'openai' | 'codex'
 const savedSystemPromptKey = 'admin-ai-system-prompt'
 
 function normalizeProvider(value?: string | null): ProviderOption {
-    if (value === 'azure' || value === 'codex') {
-        return value
+    if (value === 'codex') {
+        return 'codex'
     }
 
     return 'openai'
+}
+
+function normalizeProviderOptions(providers: string[]) {
+    return Array.from(new Set(providers.map((provider) => normalizeProvider(provider))))
 }
 
 export function AIFixDialog({
@@ -67,8 +71,7 @@ export function AIFixDialog({
 
                 setRuntimeConfig(config)
 
-                const availableProviders = (config.availableProviders?.length ? config.availableProviders : [config.provider])
-                    .map((provider) => normalizeProvider(provider))
+                const availableProviders = normalizeProviderOptions(config.availableProviders?.length ? config.availableProviders : [config.provider])
                 const preferredProvider = normalizeProvider(savedProvider || config.provider)
                 const resolvedProvider = availableProviders.includes(preferredProvider)
                     ? preferredProvider
@@ -174,8 +177,7 @@ export function AIFixDialog({
         toast.success('System prompt reset')
     }
 
-    const availableProviders = (runtimeConfig?.availableProviders?.length ? runtimeConfig.availableProviders : runtimeConfig ? [runtimeConfig.provider] : ['openai'])
-        .map((provider) => normalizeProvider(provider))
+    const availableProviders = normalizeProviderOptions(runtimeConfig?.availableProviders?.length ? runtimeConfig.availableProviders : runtimeConfig ? [runtimeConfig.provider] : ['openai'])
     const hasUnsavedPrompt = customPrompt !== savedPrompt
 
     return (

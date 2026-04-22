@@ -191,7 +191,7 @@ describe('BlogEditor', () => {
     expect(mocks.push).not.toHaveBeenCalledWith('//evil.example')
   })
 
-  it('preserves excerpt when updating from the top quick-save action', async () => {
+  it('preserves excerpt when updating from the bottom submit action', async () => {
     mocks.pathname = '/admin/blog/blog-1'
 
     render(
@@ -209,7 +209,7 @@ describe('BlogEditor', () => {
     )
 
     fireEvent.change(screen.getByLabelText('Excerpt'), { target: { value: 'Updated excerpt' } })
-    fireEvent.click(screen.getByRole('button', { name: /Save changes from top action bar/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Update Post/i }))
 
     await waitFor(() => {
       expect(mocks.fetchWithCsrf).toHaveBeenCalledWith(
@@ -255,7 +255,7 @@ describe('BlogEditor', () => {
     )
 
     fireEvent.change(screen.getByLabelText('Excerpt'), { target: { value: 'Inline excerpt update' } })
-    fireEvent.click(screen.getByRole('button', { name: /Save changes from top action bar/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Update Post/i }))
 
     await waitFor(() => {
       expect(mocks.fetchWithCsrf).toHaveBeenCalledWith(
@@ -284,6 +284,6 @@ describe('BlogEditor', () => {
 
     expect(screen.getByTestId('blog-editor-workspace')).toHaveClass('resize-x')
     expect(screen.getByRole('button', { name: /Create Post/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Save changes from top action bar/i })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Save changes from top action bar/i })).not.toBeInTheDocument()
   })
 })

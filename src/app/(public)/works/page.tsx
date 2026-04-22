@@ -3,16 +3,15 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Search, X, BriefcaseBusiness } from 'lucide-react'
 import { PublicWorksInlineCreateShell } from '@/components/admin/PublicWorksInlineCreateShell'
+import { PublicAdminClientGate } from '@/components/admin/PublicAdminClientGate'
 import { PublicAdminLink } from '@/components/admin/PublicAdminLink'
 import { EdgePaginationNav } from '@/components/layout/EdgePaginationNav'
 import { PublicPagination } from '@/components/layout/PublicPagination'
 import { ResponsivePageSizeSync } from '@/components/layout/ResponsivePageSizeSync'
 import { Badge } from '@/components/ui/badge'
-import { headers } from 'next/headers'
-import { getPublicAdminAffordanceState } from '@/lib/auth/public-admin'
 import { fetchPublicWorks, type PublicWorkSearchParams } from '@/lib/api/works'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 60
 
 interface PageProps {
     searchParams?: Promise<{ page?: string; pageSize?: string; query?: string; searchMode?: string; __qaEmpty?: string; __qaNoImage?: string }>
@@ -21,6 +20,7 @@ interface PageProps {
 const DESKTOP_PAGE_SIZE = 8
 const TABLET_PAGE_SIZE = 6
 const MOBILE_PAGE_SIZE = 4
+const ENABLE_LOCAL_QA_FLAGS = process.env.ENABLE_LOCAL_ADMIN_SHORTCUT === 'true' || process.env.NODE_ENV !== 'production'
 
 function formatPublishedMonth(publishedAt?: string | null) {
     return publishedAt
@@ -33,10 +33,8 @@ function formatPublishedMonth(publishedAt?: string | null) {
 
 export default async function WorksPage({ searchParams }: PageProps) {
     const resolvedSearchParams = await searchParams
-    const headerStore = await headers()
-    const requestHost = (headerStore.get('x-forwarded-host') ?? headerStore.get('host') ?? '').toLowerCase()
-    const qaEmptyWorks = resolvedSearchParams?.__qaEmpty === '1' && /localhost|127\.0\.0\.1/.test(requestHost)
-    const qaNoImageWorks = resolvedSearchParams?.__qaNoImage === '1' && /localhost|127\.0\.0\.1/.test(requestHost)
+    const qaEmptyWorks = resolvedSearchParams?.__qaEmpty === '1' && ENABLE_LOCAL_QA_FLAGS
+    const qaNoImageWorks = resolvedSearchParams?.__qaNoImage === '1' && ENABLE_LOCAL_QA_FLAGS
     const currentPage = Math.max(1, Number.parseInt(resolvedSearchParams?.page ?? '1', 10) || 1)
     const currentPageSize = Math.max(1, Number.parseInt(resolvedSearchParams?.pageSize ?? String(DESKTOP_PAGE_SIZE), 10) || DESKTOP_PAGE_SIZE)
     const searchQuery = resolvedSearchParams?.query?.trim() ?? ''
@@ -46,7 +44,6 @@ export default async function WorksPage({ searchParams }: PageProps) {
     const worksPayload = qaEmptyWorks
         ? { items: [], page: 1, pageSize: currentPageSize, totalItems: 0, totalPages: 1 }
         : await fetchPublicWorks(currentPage, currentPageSize, queryParams)
-    const { canShowAdminAffordances } = await getPublicAdminAffordanceState()
     const totalPages = Math.max(1, worksPayload.totalPages)
     const page = worksPayload.page
     const pagedWorks = qaNoImageWorks
@@ -116,12 +113,14 @@ export default async function WorksPage({ searchParams }: PageProps) {
                             </Link>
                         ) : null}
                     </form>
-                    <PublicAdminLink href="/admin/works" label="작업 관리" canShow={canShowAdminAffordances} variant="manage" />
+                    <PublicAdminClientGate>
+                        <PublicAdminLink href="/admin/works" label="작업 관리" canShow variant="manage" />
+                    </PublicAdminClientGate>
                 </div>
             </div>
-            {canShowAdminAffordances && (
+            <PublicAdminClientGate>
                 <PublicWorksInlineCreateShell />
-            )}
+            </PublicAdminClientGate>
             <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
                 {pagedWorks && pagedWorks.length > 0 ? (
                     pagedWorks.map((work) => {

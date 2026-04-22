@@ -100,6 +100,30 @@ describe('AIFixDialog', () => {
     expect(mocks.fetchWithCsrf).not.toHaveBeenCalled()
   })
 
+  it('shows OpenAI and Codex provider options when the runtime config allows both', async () => {
+    mocks.fetchAdminAiRuntimeConfigBrowser.mockResolvedValueOnce({
+      provider: 'openai',
+      availableProviders: ['openai', 'codex'],
+      defaultModel: 'gpt-4.1',
+      codexModel: 'gpt-5.4',
+      codexReasoningEffort: 'medium',
+      allowedCodexModels: ['gpt-5.4'],
+      allowedCodexReasoningEfforts: ['low', 'medium', 'high'],
+      batchConcurrency: 2,
+      batchCompletedRetentionDays: 14,
+      defaultSystemPrompt: 'Default blog system prompt',
+    })
+
+    render(<AIFixDialog content="<p>draft</p>" onApply={vi.fn()} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'AI Content Fixer' }))
+
+    const providerSelect = await screen.findByLabelText('AI provider')
+    expect(providerSelect).toHaveValue('openai')
+    expect(screen.getByRole('option', { name: 'OPENAI' })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: 'CODEX' })).toBeInTheDocument()
+  })
+
   it('saves and restores the custom system prompt', async () => {
     render(<AIFixDialog content="<p>draft</p>" onApply={vi.fn()} />)
 

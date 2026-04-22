@@ -186,6 +186,71 @@ describe('public admin rendering', () => {
     expect(screen.queryByTestId('inline-page-editor')).not.toBeInTheDocument()
   })
 
+  it('renders Study and Works lists without server-side session checks blocking pagination', async () => {
+    const fetchServerSession = vi.fn(async () => ({ authenticated: true, role: 'admin' }))
+    const fetchPublicBlogs = vi.fn(async () => ({
+      items: [{
+        id: 'blog-1',
+        slug: 'cached-study',
+        title: 'Cached Study',
+        excerpt: 'Study excerpt',
+        tags: [],
+      }],
+      page: 2,
+      pageSize: 12,
+      totalItems: 24,
+      totalPages: 2,
+    }))
+    const fetchPublicWorks = vi.fn(async () => ({
+      items: [{
+        id: 'work-1',
+        slug: 'cached-work',
+        title: 'Cached Work',
+        excerpt: 'Work excerpt',
+        category: 'platform',
+        tags: [],
+      }],
+      page: 2,
+      pageSize: 8,
+      totalItems: 16,
+      totalPages: 2,
+    }))
+
+    vi.stubGlobal('fetch', vi.fn(async () =>
+      new Response(JSON.stringify({ authenticated: false }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    ) as typeof fetch)
+
+    vi.doMock('@/lib/api/server', () => ({
+      fetchServerSession,
+    }))
+    vi.doMock('@/lib/api/blogs', () => ({
+      fetchPublicBlogs,
+    }))
+    vi.doMock('@/lib/api/works', () => ({
+      fetchPublicWorks,
+    }))
+
+    const BlogPage = (await import('@/app/(public)/blog/page')).default
+    const WorksPage = (await import('@/app/(public)/works/page')).default
+
+    const { unmount } = render(await BlogPage({
+      searchParams: Promise.resolve({ page: '2', pageSize: '12' }),
+    }))
+    expect(screen.getByText('Cached Study')).toBeInTheDocument()
+    unmount()
+
+    render(await WorksPage({
+      searchParams: Promise.resolve({ page: '2', pageSize: '8' }),
+    }))
+    expect(screen.getByText('Cached Work')).toBeInTheDocument()
+    expect(fetchPublicBlogs).toHaveBeenCalledWith(2, 12, undefined)
+    expect(fetchPublicWorks).toHaveBeenCalledWith(2, 8, undefined)
+    expect(fetchServerSession).not.toHaveBeenCalled()
+  })
+
   it('respects authored contact content without injecting fallback direct email UI', async () => {
     vi.stubGlobal('fetch', vi.fn(async () =>
       new Response(JSON.stringify({ authenticated: false }), {

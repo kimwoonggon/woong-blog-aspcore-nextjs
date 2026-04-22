@@ -141,7 +141,8 @@ Rules:
         }
 
         var codexHome = EnsureCodexHomeDirectory(_options.CodexHome);
-        if (!HasCodexAuthentication(codexHome))
+        var openAiApiKey = ResolveOpenAiApiKey();
+        if (!HasCodexAuthentication(codexHome, openAiApiKey))
         {
             throw new InvalidOperationException("Codex is not authenticated on the server. Mount an authenticated CODEX_HOME directory or configure OPENAI_API_KEY.");
         }
@@ -211,6 +212,10 @@ Rules:
             }
 
             startInfo.Environment["CODEX_HOME"] = codexHome;
+            if (!string.IsNullOrWhiteSpace(openAiApiKey))
+            {
+                startInfo.Environment["OPENAI_API_KEY"] = openAiApiKey;
+            }
             var codexHomeParent = Directory.GetParent(codexHome);
             if (codexHomeParent is not null && string.Equals(Path.GetFileName(codexHome), ".codex", StringComparison.Ordinal))
             {
@@ -461,13 +466,7 @@ Rules:
 
     public static string[] GetAvailableProviders(AiOptions options)
     {
-        var providers = new List<string>();
-
-        if (!string.IsNullOrWhiteSpace(options.OpenAiApiKey)
-            || !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("OPENAI_API_KEY")))
-        {
-            providers.Add("openai");
-        }
+        var providers = new List<string> { "openai" };
 
         if ((!string.IsNullOrWhiteSpace(options.AzureOpenAiApiKey)
                 || !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("AZURE_OPENAI_API_KEY")))
@@ -477,19 +476,21 @@ Rules:
             providers.Add("azure");
         }
 
-        if (!string.IsNullOrWhiteSpace(options.CodexCommand)
-            && HasCodexAuthentication(ResolveCodexHome(options.CodexHome)))
+        if (!string.IsNullOrWhiteSpace(options.CodexCommand))
         {
             providers.Add("codex");
         }
 
-        return providers.Count > 0 ? providers.ToArray() : ["openai"];
+        return providers.Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
     }
 
     private string ResolveOpenAiApiKey() =>
-        string.IsNullOrWhiteSpace(_options.OpenAiApiKey)
+        ResolveOpenAiApiKey(_options);
+
+    private static string ResolveOpenAiApiKey(AiOptions options) =>
+        string.IsNullOrWhiteSpace(options.OpenAiApiKey)
             ? Environment.GetEnvironmentVariable("OPENAI_API_KEY") ?? string.Empty
-            : _options.OpenAiApiKey;
+            : options.OpenAiApiKey;
 
     private string ResolveOpenAiModel()
     {
@@ -536,9 +537,10 @@ Rules:
             : _options.CodexReasoningEffort;
     }
 
-    private static bool HasCodexAuthentication(string codexHome)
+    private static bool HasCodexAuthentication(string codexHome, string? configuredOpenAiApiKey = null)
     {
-        if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("OPENAI_API_KEY")))
+        if (!string.IsNullOrWhiteSpace(configuredOpenAiApiKey)
+            || !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("OPENAI_API_KEY")))
         {
             return true;
         }

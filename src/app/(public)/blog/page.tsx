@@ -3,17 +3,16 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { Search, X } from 'lucide-react'
 import { InlineBlogEditorSection } from '@/components/admin/InlineBlogEditorSection'
+import { PublicAdminClientGate } from '@/components/admin/PublicAdminClientGate'
 import { PublicAdminLink } from '@/components/admin/PublicAdminLink'
 import { EdgePaginationNav } from '@/components/layout/EdgePaginationNav'
 import { PublicPagination } from '@/components/layout/PublicPagination'
 import { ResponsivePageSizeSync } from '@/components/layout/ResponsivePageSizeSync'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { headers } from 'next/headers'
-import { getPublicAdminAffordanceState } from '@/lib/auth/public-admin'
 import { fetchPublicBlogs } from '@/lib/api/blogs'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 60
 
 interface PageProps {
     searchParams?: Promise<{ page?: string; pageSize?: string; query?: string; searchMode?: string; __qaTagged?: string; __qaEmpty?: string }>
@@ -22,6 +21,7 @@ interface PageProps {
 const DESKTOP_PAGE_SIZE = 12
 const TABLET_PAGE_SIZE = 8
 const MOBILE_PAGE_SIZE = 4
+const ENABLE_LOCAL_QA_FLAGS = process.env.ENABLE_LOCAL_ADMIN_SHORTCUT === 'true' || process.env.NODE_ENV !== 'production'
 
 function formatPublishedDate(publishedAt?: string | null) {
     return publishedAt
@@ -59,10 +59,8 @@ function buildBlogListHref({
 
 export default async function BlogPage({ searchParams }: PageProps) {
     const resolvedSearchParams = await searchParams
-    const headerStore = await headers()
-    const requestHost = (headerStore.get('x-forwarded-host') ?? headerStore.get('host') ?? '').toLowerCase()
-    const qaEmptyBlogs = resolvedSearchParams?.__qaEmpty === '1' && /localhost|127\.0\.0\.1/.test(requestHost)
-    const qaTaggedBlogs = resolvedSearchParams?.__qaTagged === '1' && /localhost|127\.0\.0\.1/.test(requestHost)
+    const qaEmptyBlogs = resolvedSearchParams?.__qaEmpty === '1' && ENABLE_LOCAL_QA_FLAGS
+    const qaTaggedBlogs = resolvedSearchParams?.__qaTagged === '1' && ENABLE_LOCAL_QA_FLAGS
     const currentPage = Math.max(1, Number.parseInt(resolvedSearchParams?.page ?? '1', 10) || 1)
     const currentPageSize = Math.max(1, Number.parseInt(resolvedSearchParams?.pageSize ?? String(DESKTOP_PAGE_SIZE), 10) || DESKTOP_PAGE_SIZE)
     const searchQuery = resolvedSearchParams?.query?.trim() ?? ''
@@ -71,7 +69,6 @@ export default async function BlogPage({ searchParams }: PageProps) {
     const blogsPayload = qaEmptyBlogs
         ? { items: [], page: 1, pageSize: currentPageSize, totalItems: 0, totalPages: 1 }
         : await fetchPublicBlogs(currentPage, currentPageSize, searchQueryParams)
-    const { canShowAdminAffordances } = await getPublicAdminAffordanceState()
     const totalPages = Math.max(1, blogsPayload.totalPages)
     const clampedPage = Math.min(currentPage, totalPages)
     if (resolvedSearchParams?.page && Number.parseInt(resolvedSearchParams.page, 10) !== clampedPage) {
@@ -163,10 +160,12 @@ export default async function BlogPage({ searchParams }: PageProps) {
                             </Link>
                         ) : null}
                     </form>
-                    <PublicAdminLink href="/admin/blog" label="글 관리" canShow={canShowAdminAffordances} variant="manage" />
+                    <PublicAdminClientGate>
+                        <PublicAdminLink href="/admin/blog" label="글 관리" canShow variant="manage" />
+                    </PublicAdminClientGate>
                 </div>
             </div>
-            {canShowAdminAffordances && (
+            <PublicAdminClientGate>
                 <InlineBlogEditorSection
                     triggerLabel="새 글 쓰기"
                     title="Study Inline Create"
@@ -176,7 +175,7 @@ export default async function BlogPage({ searchParams }: PageProps) {
                         pageSize: currentPageSize,
                     })}
                 />
-            )}
+            </PublicAdminClientGate>
             <div data-testid="blog-grid" className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
                 {pagedBlogs && pagedBlogs.length > 0 ? (
                     pagedBlogs.map((blog) => (
