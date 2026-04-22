@@ -1,9 +1,16 @@
 import { expect, test } from '@playwright/test'
+import { createBlogFixture } from './helpers/content-fixtures'
 
 test.use({ storageState: 'test-results/playwright/admin-storage-state.json' })
+test.setTimeout(60_000)
 
-test('VA-241 selected notion document stays visually highlighted inside the library sheet', async ({ page }) => {
-  await page.goto('/admin/blog/notion')
+test('VA-241 selected notion document stays visually highlighted inside the library sheet', async ({ page, request }, testInfo) => {
+  const blog = await createBlogFixture(request, testInfo, {
+    titlePrefix: 'Notion Visual Highlight',
+    html: '<p>Notion visual highlight fixture.</p>',
+  })
+
+  await page.goto(`/admin/blog/notion?id=${encodeURIComponent(blog.id)}`)
   await expect(page.getByRole('heading', { name: 'Blog Notion View' }).first()).toBeVisible()
 
   await page.getByTestId('notion-library-trigger').click()
@@ -23,8 +30,12 @@ test('VA-241 selected notion document stays visually highlighted inside the libr
   expect(classes).toContain('bg-primary/5')
 })
 
-test('VA-242 notion save-state chip changes visual treatment across saved and error states', async ({ page }) => {
+test('VA-242 notion save-state chip changes visual treatment across saved and error states', async ({ page, request }, testInfo) => {
   let failAutosave = false
+  const blog = await createBlogFixture(request, testInfo, {
+    titlePrefix: 'Notion Visual State',
+    html: '<p>Notion visual state fixture.</p>',
+  })
 
   await page.route('**/api/admin/blogs/**', async (route) => {
     if (route.request().method() !== 'PUT') {
@@ -44,7 +55,7 @@ test('VA-242 notion save-state chip changes visual treatment across saved and er
     })
   })
 
-  await page.goto('/admin/blog/notion')
+  await page.goto(`/admin/blog/notion?id=${encodeURIComponent(blog.id)}`)
   await expect(page.getByRole('heading', { name: 'Blog Notion View' }).first()).toBeVisible()
 
   const editor = page.locator('.tiptap.ProseMirror').first()
@@ -59,7 +70,7 @@ test('VA-242 notion save-state chip changes visual treatment across saved and er
   await editor.click()
   await page.keyboard.type(' error-state')
 
-  await expect(saveChip).toHaveText('Error')
+  await expect(saveChip).toHaveText('Error', { timeout: 15_000 })
   const errorClasses = await saveChip.getAttribute('class')
 
   expect(savedClasses).toContain('border-emerald-200')

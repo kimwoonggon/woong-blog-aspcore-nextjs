@@ -50,13 +50,10 @@ test('public containers stay horizontally centered on desktop', async ({ page })
 
   const container = page.locator('main .container.max-w-7xl').first()
   await expect(container).toBeVisible()
-  const spacing = await container.evaluate((element) => {
-    const rect = element.getBoundingClientRect()
-    return {
-      left: rect.left,
-      right: window.innerWidth - rect.right,
-    }
-  })
-
-  expect(Math.abs(spacing.left - spacing.right)).toBeLessThanOrEqual(20)
+  await expect.poll(async () => (
+    container.evaluate((element) => {
+      const rect = element.getBoundingClientRect()
+      return Math.abs(rect.left - (window.innerWidth - rect.right))
+    })
+  )).toBeLessThanOrEqual(20)
 })

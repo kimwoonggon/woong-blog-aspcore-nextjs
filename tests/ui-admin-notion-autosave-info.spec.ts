@@ -1,6 +1,8 @@
 import { expect, test, type Page } from '@playwright/test'
+import { createBlogFixture } from './helpers/content-fixtures'
 
 test.use({ storageState: 'test-results/playwright/admin-storage-state.json' })
+test.setTimeout(60_000)
 
 const selectAllShortcut = process.platform === 'darwin' ? 'Meta+A' : 'Control+A'
 
@@ -32,8 +34,12 @@ async function replaceEditorContent(page: Page, nextText: string) {
   await page.keyboard.type(nextText)
 }
 
-test('AF-042 autosave status shows Saving then Saved after notion content changes', async ({ page }) => {
+test('AF-042 autosave status shows Saving then Saved after notion content changes', async ({ page, request }, testInfo) => {
   const autosaveText = `AF-042 autosave success ${Date.now()}`
+  const blog = await createBlogFixture(request, testInfo, {
+    titlePrefix: 'Notion Autosave Success',
+    html: '<p>Notion autosave success fixture.</p>',
+  })
   let delayedAutosaveSeen = false
 
   await page.route('**/api/admin/blogs/*', async (route) => {
@@ -54,7 +60,7 @@ test('AF-042 autosave status shows Saving then Saved after notion content change
     await route.continue()
   })
 
-  await openNotionWorkspace(page)
+  await openNotionWorkspace(page, blog.id)
   await expect(page.getByTestId('notion-save-state')).toHaveText('Waiting')
 
   const saveResponse = page.waitForResponse((response) =>
@@ -71,8 +77,12 @@ test('AF-042 autosave status shows Saving then Saved after notion content change
   await expect(page.getByTestId('notion-save-state')).toHaveText('Saved')
 })
 
-test('AF-042 autosave status shows Error when notion autosave fails', async ({ page }) => {
+test('AF-042 autosave status shows Error when notion autosave fails', async ({ page, request }, testInfo) => {
   const autosaveText = `AF-042 autosave failure ${Date.now()}`
+  const blog = await createBlogFixture(request, testInfo, {
+    titlePrefix: 'Notion Autosave Failure',
+    html: '<p>Notion autosave failure fixture.</p>',
+  })
   let failedAutosaveSeen = false
 
   await page.route('**/api/admin/blogs/*', async (route) => {
@@ -97,7 +107,7 @@ test('AF-042 autosave status shows Error when notion autosave fails', async ({ p
     })
   })
 
-  await openNotionWorkspace(page)
+  await openNotionWorkspace(page, blog.id)
 
   await replaceEditorContent(page, autosaveText)
 
@@ -106,26 +116,24 @@ test('AF-042 autosave status shows Error when notion autosave fails', async ({ p
   expect(failedAutosaveSeen).toBeTruthy()
 })
 
-test('AF-045 notion document info panel shows timestamps and slug for the selected post', async ({ page }) => {
-  await openNotionWorkspace(page)
-
-  const blogs = await page.evaluate(async () => {
-    const response = await fetch('/api/admin/blogs')
-    if (!response.ok) {
-      throw new Error(`Failed to load blogs: ${response.status}`)
-    }
-
-    return response.json() as Promise<Array<{
-      id: string
-      slug: string
-      updatedAt?: string | null
-      publishedAt?: string | null
-    }>>
+test('AF-045 notion document info panel shows timestamps and slug for the selected post', async ({ page, request }, testInfo) => {
+  const fixture = await createBlogFixture(request, testInfo, {
+    titlePrefix: 'Notion Info Panel',
+    html: '<p>Notion info panel fixture.</p>',
   })
 
-  const candidate = blogs.find((blog) => blog.updatedAt && blog.publishedAt) ?? blogs.find((blog) => blog.updatedAt) ?? blogs[0]
+  const blogsResponse = await request.get('/api/admin/blogs')
+  expect(blogsResponse.ok()).toBeTruthy()
+  const blogs = await blogsResponse.json() as Array<{
+    id: string
+    slug: string
+    updatedAt?: string | null
+    publishedAt?: string | null
+  }>
+
+  const candidate = blogs.find((blog) => blog.id === fixture.id)
   if (!candidate) {
-    throw new Error('Expected at least one blog document for notion workspace assertions')
+    throw new Error('Expected the created blog document for notion workspace assertions')
   }
 
   await openNotionWorkspace(page, candidate.id)

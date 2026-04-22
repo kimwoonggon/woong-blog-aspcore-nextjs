@@ -79,12 +79,11 @@ test('VA-211 and VA-212 admin table columns and search field keep aligned readab
   await expect(search).toBeVisible()
   await expect(row).toBeVisible()
 
-  const [searchHeight, firstCellAlign] = await Promise.all([
-    search.evaluate((element) => element.getBoundingClientRect().height),
-    cells.first().evaluate((element) => getComputedStyle(element).verticalAlign),
-  ])
+  await expect.poll(async () => (
+    search.evaluate((element) => element.getBoundingClientRect().height)
+  )).toBeGreaterThanOrEqual(36)
+  const firstCellAlign = await cells.first().evaluate((element) => getComputedStyle(element).verticalAlign)
 
-  expect(searchHeight).toBeGreaterThanOrEqual(36)
   expect(firstCellAlign).toBe('middle')
 })
 

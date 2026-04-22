@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Playwright Notion Isolation Audit</title>
+  <style>
+    body { font-family: system-ui, sans-serif; line-height: 1.5; max-width: 920px; margin: 40px auto; padding: 0 20px; color: #172033; }
+    h1, h2 { line-height: 1.2; }
+    code { background: #eef2f7; padding: 2px 4px; border-radius: 4px; }
+    li { margin: 6px 0; }
+    .status { border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px 16px; background: #f8fafc; }
+  </style>
+</head>
+<body>
+  <h1>Playwright Notion Isolation Audit</h1>
+  <p><strong>Date:</strong> 2026-04-22</p>
+  <div class="status">
+    <p>This test-only change gives Notion/admin blog mutation specs owned blog fixtures so they stop colliding with generated baseline content under 4-worker Playwright runs.</p>
+  </div>
+
+  <h2>Changed</h2>
+  <ul>
+    <li>Added <code>createBlogFixture()</code> in <code>tests/helpers/content-fixtures.ts</code>.</li>
+    <li>Updated Notion autosave, visual, semantic color, and admin blog edit specs to open explicit owned blog ids.</li>
+    <li>Added grounded timeouts for Notion-heavy specs under parallel diagnostic load.</li>
+  </ul>
+
+  <h2>Validation</h2>
+  <ul>
+    <li>Serial target group: 8 passed.</li>
+    <li>4-worker diagnostic with plain baseline collision set: 48 passed after fix.</li>
+    <li><code>npm run lint</code>: passed with existing warnings.</li>
+    <li><code>npm run typecheck</code>: passed.</li>
+    <li>Full Playwright single-worker final run: 563 passed, 8 skipped.</li>
+    <li><code>npm run lint</code> final pass: passed with existing warnings.</li>
+    <li><code>npm run typecheck</code> final pass: passed.</li>
+  </ul>
+
+  <h2>Remaining Risks</h2>
+  <ul>
+    <li>Other global-state collision classes remain outside this slice.</li>
+    <li>Fixture records are not deleted after tests.</li>
+    <li>This does not claim the full 4-worker suite is fixed.</li>
+  </ul>
+</body>
+</html>
