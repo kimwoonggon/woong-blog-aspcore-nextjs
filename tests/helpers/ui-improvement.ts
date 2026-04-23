@@ -121,9 +121,9 @@ export async function expectLightHtml(page: Page) {
 }
 
 export async function gotoWithTheme(page: Page, url: string, theme: 'dark' | 'light' | 'system' = 'dark') {
-  await page.goto(url, { waitUntil: 'networkidle' })
+  await page.goto(url, { waitUntil: 'domcontentloaded' })
   await page.evaluate((selectedTheme) => {
     window.localStorage.setItem('theme', selectedTheme)
   }, theme)
-  await page.reload({ waitUntil: 'networkidle' })
+  await page.reload({ waitUntil: 'domcontentloaded' })
 }

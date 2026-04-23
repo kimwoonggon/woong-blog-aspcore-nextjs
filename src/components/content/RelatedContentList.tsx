@@ -108,7 +108,7 @@ function RelatedContentPager({
           <h2 className="text-2xl font-heading font-bold text-foreground text-balance">{heading}</h2>
           <p className="max-w-2xl text-sm text-muted-foreground text-pretty">{followUpCopy}</p>
         </div>
-        <span className="rounded-full border border-border/80 bg-background px-3 py-1 text-xs font-medium tabular-nums text-muted-foreground">
+        <span className="shrink-0 rounded-full border border-border/80 bg-background px-3 py-1 text-xs font-medium tabular-nums text-muted-foreground">
           {visibleItems.length} visible
         </span>
       </div>
@@ -146,10 +146,16 @@ function RelatedContentPager({
                 <h3 className="responsive-feed-title line-clamp-2 min-w-0 break-words text-lg font-heading font-bold leading-tight text-foreground text-pretty sm:text-xl">
                   {item.title}
                 </h3>
-                <div className="flex-1" aria-hidden="true" />
+                {item.excerpt && item.id !== currentItemId ? (
+                  <p className="mt-2 line-clamp-2 min-w-0 flex-1 break-words text-sm leading-relaxed text-muted-foreground [overflow-wrap:anywhere]">
+                    {item.excerpt}
+                  </p>
+                ) : (
+                  <div className="flex-1" aria-hidden="true" />
+                )}
                 {item.tags?.length ? (
-                  <ul aria-label={`${item.title} tags`} className="responsive-feed-copy mt-3 flex flex-wrap gap-2">
-                    {item.tags.slice(0, 3).map((tag) => (
+                  <ul aria-hidden="true" className="responsive-feed-copy mt-3 flex flex-wrap gap-2">
+                    {item.tags.slice(0, 1).map((tag) => (
                       <li
                         key={tag}
                         className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
@@ -168,7 +174,6 @@ function RelatedContentPager({
               <div
                 key={item.id}
                 data-testid={`${testIdBase}-current-card`}
-                aria-label={`Current ${item.title}`}
               >
                 {card}
               </div>
@@ -182,7 +187,6 @@ function RelatedContentPager({
               prefetch={false}
               className="group block h-full"
               data-testid={`${testIdBase}-card`}
-              aria-label={`Open ${item.title}`}
             >
               {card}
             </Link>

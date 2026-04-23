@@ -2,7 +2,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { Search, X, BriefcaseBusiness } from 'lucide-react'
-import { PublicWorksInlineCreateShell } from '@/components/admin/PublicWorksInlineCreateShell'
+import { PublicWorksListAdminCreate } from '@/components/admin/PublicWorksListAdminCreate'
 import { PublicAdminClientGate } from '@/components/admin/PublicAdminClientGate'
 import { PublicAdminLink } from '@/components/admin/PublicAdminLink'
 import { EdgePaginationNav } from '@/components/layout/EdgePaginationNav'
@@ -10,8 +10,14 @@ import { PublicPagination } from '@/components/layout/PublicPagination'
 import { ResponsivePageSizeSync } from '@/components/layout/ResponsivePageSizeSync'
 import { Badge } from '@/components/ui/badge'
 import { fetchPublicWorks, type PublicWorkSearchParams } from '@/lib/api/works'
+import { createPublicMetadata } from '@/lib/seo'
 
 export const revalidate = 60
+export const metadata = createPublicMetadata({
+    title: 'Works',
+    description: 'Selected portfolio work, projects, and technical case studies related to Woonggon Kim.',
+    path: '/works',
+})
 
 interface PageProps {
     searchParams?: Promise<{ page?: string; pageSize?: string; query?: string; searchMode?: string; __qaEmpty?: string; __qaNoImage?: string }>
@@ -31,12 +37,24 @@ function formatPublishedMonth(publishedAt?: string | null) {
         : 'Unknown Date'
 }
 
+function resolveRequestedPageSize(pageSizeParam?: string) {
+    const parsedPageSize = Number.parseInt(pageSizeParam ?? String(DESKTOP_PAGE_SIZE), 10) || DESKTOP_PAGE_SIZE
+    const safePageSize = Math.max(1, parsedPageSize)
+    const supportedPageSizes = new Set([DESKTOP_PAGE_SIZE, TABLET_PAGE_SIZE, MOBILE_PAGE_SIZE])
+
+    if (safePageSize < MOBILE_PAGE_SIZE || supportedPageSizes.has(safePageSize)) {
+        return safePageSize
+    }
+
+    return DESKTOP_PAGE_SIZE
+}
+
 export default async function WorksPage({ searchParams }: PageProps) {
     const resolvedSearchParams = await searchParams
     const qaEmptyWorks = resolvedSearchParams?.__qaEmpty === '1' && ENABLE_LOCAL_QA_FLAGS
     const qaNoImageWorks = resolvedSearchParams?.__qaNoImage === '1' && ENABLE_LOCAL_QA_FLAGS
     const currentPage = Math.max(1, Number.parseInt(resolvedSearchParams?.page ?? '1', 10) || 1)
-    const currentPageSize = Math.max(1, Number.parseInt(resolvedSearchParams?.pageSize ?? String(DESKTOP_PAGE_SIZE), 10) || DESKTOP_PAGE_SIZE)
+    const currentPageSize = resolveRequestedPageSize(resolvedSearchParams?.pageSize)
     const searchQuery = resolvedSearchParams?.query?.trim() ?? ''
     const searchMode = resolvedSearchParams?.searchMode === 'content' ? 'content' : 'title'
     const queryParams: PublicWorkSearchParams | undefined = searchQuery ? { query: searchQuery, searchMode } : undefined
@@ -118,9 +136,7 @@ export default async function WorksPage({ searchParams }: PageProps) {
                     </PublicAdminClientGate>
                 </div>
             </div>
-            <PublicAdminClientGate>
-                <PublicWorksInlineCreateShell />
-            </PublicAdminClientGate>
+            <PublicWorksListAdminCreate />
             <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
                 {pagedWorks && pagedWorks.length > 0 ? (
                     pagedWorks.map((work) => {
@@ -172,7 +188,7 @@ export default async function WorksPage({ searchParams }: PageProps) {
                                             {work.excerpt}
                                         </p>
                                         <div className="works-feed-tags mt-4 flex flex-wrap content-start gap-1.5 overflow-hidden">
-                                            {work.tags?.slice(0, 3).map((tag: string) => (
+                                            {work.tags?.slice(0, 2).map((tag: string) => (
                                                 <span key={tag} className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
                                                     {tag}
                                                 </span>

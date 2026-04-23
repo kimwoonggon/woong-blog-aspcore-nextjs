@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Broad Frontend Refactor Audit - 2026-04-22</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 900px; margin: 2rem auto; padding: 0 1rem; line-height: 1.55; color: #111827; }
+    h1, h2 { line-height: 1.2; }
+    code { background: #f3f4f6; padding: 0.1rem 0.25rem; border-radius: 4px; }
+    ul { padding-left: 1.25rem; }
+    .status { border: 1px solid #d1d5db; border-radius: 8px; padding: 1rem; background: #f9fafb; }
+  </style>
+</head>
+<body>
+  <h1>Broad Frontend Refactor Audit - 2026-04-22</h1>
+  <section class="status">
+    <p><strong>Recommendation:</strong> Proceed to review. Targeted browser reruns passed after fixes; one-sample benchmark still flags performance follow-up work.</p>
+  </section>
+  <h2>Changed</h2>
+  <ul>
+    <li>Moved public blog/work detail admin payloads behind lazy client admin gates.</li>
+    <li>Deduplicated public admin session checks.</li>
+    <li>Stabilized explicit pagination page-size behavior while normalizing unsupported sizes.</li>
+    <li>Added public SEO metadata helpers, sitemap, and robots.</li>
+    <li>Polished related cards, tag clutter, TOC overflow, and editor dirty-state behavior.</li>
+  </ul>
+  <h2>Validation</h2>
+  <ul>
+    <li>Focused Vitest suites passed, including the 16-file public/admin/revalidation/editor group.</li>
+    <li><code>npm run typecheck</code> passed.</li>
+    <li><code>npm run build</code> and Docker frontend rebuild passed.</li>
+    <li>Scoped ESLint passed with 3 existing warnings; full lint is blocked by <code>.tmp/postgres</code> permissions.</li>
+    <li>Full E2E ran once: 560 passed, 8 failed, 9 skipped. All failed specs were targeted-rerun after fixes and passed.</li>
+    <li>Origin/dev performance smoke report was regenerated under <code>backend/reports/frontend-performance-origin-dev-vs-current/</code>.</li>
+  </ul>
+  <h2>Risks</h2>
+  <ul>
+    <li>One-sample benchmark is noisy and still reports public cold-load/API regressions.</li>
+    <li>Public routes still show as dynamic in local build output due to remaining request-aware API-base behavior.</li>
+    <li>Full E2E was not rerun from scratch after final fixes because targeted reruns covered the failures directly.</li>
+  </ul>
+</body>
+</html>

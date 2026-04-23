@@ -6,9 +6,20 @@ vi.mock('@/lib/api/server', () => ({
   getServerForwardingHeaders: vi.fn(async () => ({})),
 }))
 
+function mockDefaultServerApi() {
+  vi.doMock('@/lib/api/server', () => ({
+    getServerApiBaseUrl: vi.fn(async () => 'http://localhost/api'),
+    getServerCookieHeader: vi.fn(async () => 'session=test'),
+    getServerForwardingHeaders: vi.fn(async () => ({})),
+  }))
+}
+
 describe('public/admin api clients', () => {
   beforeEach(() => {
+    vi.resetModules()
     vi.restoreAllMocks()
+    vi.unstubAllEnvs()
+    mockDefaultServerApi()
   })
 
   it('fetchPublicPageBySlug returns null only for 404', async () => {
@@ -30,6 +41,25 @@ describe('public/admin api clients', () => {
 
     await expect(fetchPublicBlogs(3, 7)).rejects.toThrow('Failed to load public blog posts.')
     await expect(fetchPublicWorks(2, 8)).rejects.toThrow('Failed to load public works.')
+  })
+
+  it('public server API base uses the public site URL without reading request headers', async () => {
+    vi.resetModules()
+    vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://woonglab.com/')
+
+    const getServerApiBaseUrl = vi.fn(async () => {
+      throw new Error('request headers should not be read for public API origin')
+    })
+    vi.doMock('@/lib/api/server', () => ({
+      getServerApiBaseUrl,
+      getServerCookieHeader: vi.fn(async () => 'session=test'),
+      getServerForwardingHeaders: vi.fn(async () => ({})),
+    }))
+
+    const { getPublicServerApiBaseUrl } = await import('@/lib/api/public-server')
+
+    await expect(getPublicServerApiBaseUrl()).resolves.toBe('https://woonglab.com/api')
+    expect(getServerApiBaseUrl).not.toHaveBeenCalled()
   })
 
   it('fetchPublicBlogs forwards title and content search query params', async () => {

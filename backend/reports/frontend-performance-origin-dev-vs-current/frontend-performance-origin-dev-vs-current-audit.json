@@ -1,0 +1,49 @@
+{
+  "slug": "frontend-performance-origin-dev-vs-current-audit",
+  "generatedAt": "2026-04-22",
+  "changed": [
+    "Added scripts/benchmark-frontend-performance.mjs",
+    "Added src/test/frontend-performance-benchmark.test.ts",
+    "Added .tmp to .dockerignore",
+    "Generated benchmark reports under backend/reports/frontend-performance-origin-dev-vs-current",
+    "Updated todolist-2026-04-22.md"
+  ],
+  "notChanged": [
+    "Production frontend UI behavior",
+    "Backend API/auth/persistence/domain behavior",
+    "Application performance optimization"
+  ],
+  "validations": [
+    {
+      "command": "node --check scripts/benchmark-frontend-performance.mjs",
+      "result": "passed"
+    },
+    {
+      "command": "npx vitest run src/test/frontend-performance-benchmark.test.ts --pool=threads",
+      "result": "passed"
+    },
+    {
+      "command": "npx eslint scripts/benchmark-frontend-performance.mjs src/test/frontend-performance-benchmark.test.ts",
+      "result": "passed"
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "passed"
+    },
+    {
+      "command": "node scripts/benchmark-frontend-performance.mjs --warmups 0 --iterations 1 --mutation-warmups 0 --mutation-iterations 1 --base-url http://127.0.0.1:32080 --http-port 32080 --https-port 32081 --backend-port 18180 --report-dir backend/reports/frontend-performance-origin-dev-vs-current",
+      "result": "completed with reports"
+    }
+  ],
+  "risks": [
+    "Persisted comparison used one measured iteration per scenario, not the full requested statistical profile.",
+    "Benchmark used isolated ports because 127.0.0.1:3000 was already occupied.",
+    "One current Study Next pagination click sample timed out in the final one-sample report.",
+    "One-sample timing classifications are noisy and should not be treated as a release-blocking statistical conclusion."
+  ],
+  "recommendation": "Use the runner's default profile for the full acceptance benchmark when port 3000 can be dedicated to the comparison."
+}

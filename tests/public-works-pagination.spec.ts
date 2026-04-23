@@ -60,10 +60,8 @@ test('works pagination next and previous clicks stay within latency budget', asy
     'Works pagination Next click to active page and grid',
     'publicPagination',
     async () => {
-      await Promise.all([
-        page.waitForURL((url) => url.searchParams.get('page') === '2'),
-        pagination.getByRole('link', { name: 'Next' }).click(),
-      ])
+      await pagination.getByRole('link', { name: 'Next' }).click()
+      await expect.poll(() => new URL(page.url()).searchParams.get('page')).toBe('2')
     },
     async () => {
       await expect.poll(() => new URL(page.url()).searchParams.get('page')).toBe('2')
@@ -77,10 +75,8 @@ test('works pagination next and previous clicks stay within latency budget', asy
     'Works pagination Previous click to active page and grid',
     'publicPagination',
     async () => {
-      await Promise.all([
-        page.waitForURL((url) => url.searchParams.get('page') === '1'),
-        pagination.getByRole('link', { name: 'Previous' }).click(),
-      ])
+      await pagination.getByRole('link', { name: 'Previous' }).click()
+      await expect.poll(() => new URL(page.url()).searchParams.get('page')).toBe('1')
     },
     async () => {
       await expect.poll(() => new URL(page.url()).searchParams.get('page')).toBe('1')

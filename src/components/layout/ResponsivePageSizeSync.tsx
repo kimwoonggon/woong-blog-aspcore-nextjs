@@ -30,7 +30,11 @@ export function ResponsivePageSizeSync({
       })
       const currentPageSize = Number.parseInt(searchParams.get('pageSize') ?? '', 10)
 
-      if (currentPageSize === desiredPageSize) {
+      if (
+        Number.isFinite(currentPageSize)
+        && currentPageSize > 0
+        && (currentPageSize === desiredPageSize || currentPageSize < mobilePageSize)
+      ) {
         return
       }
 

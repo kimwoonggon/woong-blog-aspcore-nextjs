@@ -2,7 +2,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { Search, X } from 'lucide-react'
-import { InlineBlogEditorSection } from '@/components/admin/InlineBlogEditorSection'
+import { PublicBlogListAdminCreate } from '@/components/admin/PublicBlogListAdminCreate'
 import { PublicAdminClientGate } from '@/components/admin/PublicAdminClientGate'
 import { PublicAdminLink } from '@/components/admin/PublicAdminLink'
 import { EdgePaginationNav } from '@/components/layout/EdgePaginationNav'
@@ -11,8 +11,14 @@ import { ResponsivePageSizeSync } from '@/components/layout/ResponsivePageSizeSy
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { fetchPublicBlogs } from '@/lib/api/blogs'
+import { createPublicMetadata } from '@/lib/seo'
 
 export const revalidate = 60
+export const metadata = createPublicMetadata({
+    title: 'Study',
+    description: 'Study notes, engineering writeups, and implementation records.',
+    path: '/blog',
+})
 
 interface PageProps {
     searchParams?: Promise<{ page?: string; pageSize?: string; query?: string; searchMode?: string; __qaTagged?: string; __qaEmpty?: string }>
@@ -57,12 +63,24 @@ function buildBlogListHref({
     return `/blog?${params.toString()}`
 }
 
+function resolveRequestedPageSize(pageSizeParam?: string) {
+    const parsedPageSize = Number.parseInt(pageSizeParam ?? String(DESKTOP_PAGE_SIZE), 10) || DESKTOP_PAGE_SIZE
+    const safePageSize = Math.max(1, parsedPageSize)
+    const supportedPageSizes = new Set([DESKTOP_PAGE_SIZE, TABLET_PAGE_SIZE, MOBILE_PAGE_SIZE])
+
+    if (safePageSize < MOBILE_PAGE_SIZE || supportedPageSizes.has(safePageSize)) {
+        return safePageSize
+    }
+
+    return DESKTOP_PAGE_SIZE
+}
+
 export default async function BlogPage({ searchParams }: PageProps) {
     const resolvedSearchParams = await searchParams
     const qaEmptyBlogs = resolvedSearchParams?.__qaEmpty === '1' && ENABLE_LOCAL_QA_FLAGS
     const qaTaggedBlogs = resolvedSearchParams?.__qaTagged === '1' && ENABLE_LOCAL_QA_FLAGS
     const currentPage = Math.max(1, Number.parseInt(resolvedSearchParams?.page ?? '1', 10) || 1)
-    const currentPageSize = Math.max(1, Number.parseInt(resolvedSearchParams?.pageSize ?? String(DESKTOP_PAGE_SIZE), 10) || DESKTOP_PAGE_SIZE)
+    const currentPageSize = resolveRequestedPageSize(resolvedSearchParams?.pageSize)
     const searchQuery = resolvedSearchParams?.query?.trim() ?? ''
     const searchMode = resolvedSearchParams?.searchMode === 'content' ? 'content' : 'title'
     const searchQueryParams = searchQuery ? { query: searchQuery, searchMode } : undefined
@@ -165,17 +183,12 @@ export default async function BlogPage({ searchParams }: PageProps) {
                     </PublicAdminClientGate>
                 </div>
             </div>
-            <PublicAdminClientGate>
-                <InlineBlogEditorSection
-                    triggerLabel="새 글 쓰기"
-                    title="Study Inline Create"
-                    description="Create a new study note inline without leaving the current public page."
-                    afterSaveHref={buildBlogListHref({
-                        page: 1,
-                        pageSize: currentPageSize,
-                    })}
-                />
-            </PublicAdminClientGate>
+            <PublicBlogListAdminCreate
+                afterSaveHref={buildBlogListHref({
+                    page: 1,
+                    pageSize: currentPageSize,
+                })}
+            />
             <div data-testid="blog-grid" className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
                 {pagedBlogs && pagedBlogs.length > 0 ? (
                     pagedBlogs.map((blog) => (
@@ -196,7 +209,7 @@ export default async function BlogPage({ searchParams }: PageProps) {
                                         <Badge variant="secondary" className="rounded-full bg-brand-navy px-2.5 py-0.5 text-xs text-white hover:bg-brand-navy/90">
                                             {formatPublishedDate(blog.publishedAt)}
                                         </Badge>
-                                        {blog.tags?.slice(0, 2).map((tag) => (
+                                        {blog.tags?.slice(0, 1).map((tag) => (
                                             <span
                                                 key={tag}
                                                 className="max-w-full rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground [overflow-wrap:anywhere]"

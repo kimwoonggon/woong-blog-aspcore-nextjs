@@ -11,8 +11,42 @@ interface PublicAdminClientGateProps {
   children: React.ReactNode
 }
 
+let canShowAdminAffordancePromise: Promise<boolean> | null = null
+let canShowAdminAffordanceCache: boolean | null = null
+
 function canShowAdminAffordance(session: BrowserSession | null) {
   return session?.authenticated === true && session.role === 'admin'
+}
+
+async function loadCanShowAdminAffordance() {
+  if (canShowAdminAffordanceCache !== null) {
+    return canShowAdminAffordanceCache
+  }
+
+  canShowAdminAffordancePromise ??= fetch('/api/auth/session', {
+    credentials: 'include',
+    cache: 'no-store',
+  })
+    .then(async (response) => {
+      if (!response.ok) {
+        return false
+      }
+
+      const session = await response.json() as BrowserSession
+      return canShowAdminAffordance(session)
+    })
+    .catch(() => false)
+    .then((canShow) => {
+      canShowAdminAffordanceCache = canShow
+      return canShow
+    })
+
+  return canShowAdminAffordancePromise
+}
+
+export function resetPublicAdminClientSessionForTests() {
+  canShowAdminAffordancePromise = null
+  canShowAdminAffordanceCache = null
 }
 
 export function PublicAdminClientGate({ children }: PublicAdminClientGateProps) {
@@ -22,23 +56,9 @@ export function PublicAdminClientGate({ children }: PublicAdminClientGateProps) 
     let cancelled = false
 
     async function loadSession() {
-      try {
-        const response = await fetch('/api/auth/session', {
-          credentials: 'include',
-          cache: 'no-store',
-        })
-
-        if (!response.ok) {
-          if (!cancelled) setCanShow(false)
-          return
-        }
-
-        const session = await response.json() as BrowserSession
-        if (!cancelled) {
-          setCanShow(canShowAdminAffordance(session))
-        }
-      } catch {
-        if (!cancelled) setCanShow(false)
+      const nextCanShow = await loadCanShowAdminAffordance()
+      if (!cancelled) {
+        setCanShow(nextCanShow)
       }
     }
 

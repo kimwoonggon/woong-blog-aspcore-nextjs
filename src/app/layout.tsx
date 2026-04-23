@@ -5,6 +5,7 @@ import "./globals.css"
 import { cn } from "@/lib/utils"
 import { fetchPublicSiteSettings } from "@/lib/api/site-settings"
 import { ThemeProvider } from "@/components/providers/ThemeProvider"
+import { getMetadataBaseUrl } from "@/lib/seo"
 
 const archivo = Archivo({
   subsets: ["latin"],
@@ -20,12 +21,31 @@ const spaceGrotesk = Space_Grotesk({
 
 export async function generateMetadata(): Promise<Metadata> {
   const siteSettings = await fetchPublicSiteSettings()
-  const ownerName = siteSettings?.ownerName || 'John Doe'
+  const ownerName = siteSettings?.ownerName || 'Woonggon Kim'
   const tagline = siteSettings?.tagline || 'Creative Technologist'
 
   return {
-    title: `${ownerName} | ${tagline}`,
+    metadataBase: new URL(getMetadataBaseUrl()),
+    title: {
+      default: `${ownerName} | ${tagline}`,
+      template: `%s | ${ownerName}`,
+    },
     description: `Personal portfolio of ${ownerName}, showcasing works and thoughts.`,
+    alternates: {
+      canonical: '/',
+    },
+    openGraph: {
+      title: `${ownerName} | ${tagline}`,
+      description: `Personal portfolio of ${ownerName}, showcasing works and thoughts.`,
+      url: '/',
+      type: 'website',
+      siteName: ownerName,
+    },
+    twitter: {
+      card: 'summary',
+      title: `${ownerName} | ${tagline}`,
+      description: `Personal portfolio of ${ownerName}, showcasing works and thoughts.`,
+    },
     icons: {
       icon: '/favicon.svg',
       shortcut: '/favicon.svg',

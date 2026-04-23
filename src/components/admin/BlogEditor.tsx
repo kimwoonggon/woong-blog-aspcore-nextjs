@@ -67,6 +67,14 @@ function normalizeBlogSnapshotHtml(html: string) {
     return collapsed
 }
 
+function plainTextFromHtml(html: string) {
+    return html
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/&nbsp;|\u00A0/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+}
+
 function buildBlogSnapshot({
     title,
     excerpt,
@@ -113,6 +121,7 @@ export function BlogEditor({ initialBlog, inlineMode = false, onSaved, inlineRet
     const [saveError, setSaveError] = useState<string | null>(null)
     const [showUnsavedDialog, setShowUnsavedDialog] = useState(false)
     const saveBlogRef = useRef<() => Promise<void>>(async () => {})
+    const acceptedInitialEditorChangeRef = useRef(false)
 
     const initialSnapshot = buildBlogSnapshot({
         title: initialBlog?.title || '',
@@ -135,6 +144,7 @@ export function BlogEditor({ initialBlog, inlineMode = false, onSaved, inlineRet
     useEffect(() => {
         setSavedSnapshot(initialSnapshot)
         setIsDirty(false)
+        acceptedInitialEditorChangeRef.current = false
     }, [initialSnapshot])
 
     const formatDate = (dateString?: string) => {
@@ -425,9 +435,35 @@ export function BlogEditor({ initialBlog, inlineMode = false, onSaved, inlineRet
                 <TiptapEditor
                     content={html}
                     onChange={(nextHtml) => {
+                        const nextSnapshot = buildBlogSnapshot({
+                            title,
+                            excerpt,
+                            tags: tagsInput,
+                            published,
+                            html: nextHtml,
+                        })
+
+                        const initialEditorText = plainTextFromHtml(initialBlog?.content?.html || '')
+                        const nextEditorText = plainTextFromHtml(nextHtml)
+                        if (
+                            isEditing
+                            && !acceptedInitialEditorChangeRef.current
+                            && !isDirty
+                            && initialEditorText === nextEditorText
+                        ) {
+                            acceptedInitialEditorChangeRef.current = true
+                            setHtml(nextHtml)
+                            setSavedSnapshot(nextSnapshot)
+                            setIsDirty(false)
+                            return
+                        }
+
+                        acceptedInitialEditorChangeRef.current = true
                         setHtml(nextHtml)
-                        setIsDirty(true)
-                        setSaveError(null)
+                        setIsDirty(nextSnapshot !== savedSnapshot)
+                        if (nextSnapshot !== savedSnapshot) {
+                            setSaveError(null)
+                        }
                     }}
                 />
             </div>

@@ -1,9 +1,10 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { PublicAdminClientGate } from '@/components/admin/PublicAdminClientGate'
+import { PublicAdminClientGate, resetPublicAdminClientSessionForTests } from '@/components/admin/PublicAdminClientGate'
 
 describe('PublicAdminClientGate', () => {
   afterEach(() => {
+    resetPublicAdminClientSessionForTests()
     vi.unstubAllGlobals()
   })
 
@@ -43,5 +44,30 @@ describe('PublicAdminClientGate', () => {
       cache: 'no-store',
     }))
     expect(screen.queryByRole('button', { name: 'Admin edit' })).not.toBeInTheDocument()
+  })
+
+  it('deduplicates browser session checks when a public page has multiple admin gates', async () => {
+    const fetchMock = vi.fn(async () =>
+      new Response(JSON.stringify({ authenticated: true, role: 'admin' }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    )
+    vi.stubGlobal('fetch', fetchMock as typeof fetch)
+
+    render(
+      <>
+        <PublicAdminClientGate>
+          <button type="button">Manage studies</button>
+        </PublicAdminClientGate>
+        <PublicAdminClientGate>
+          <button type="button">Create study</button>
+        </PublicAdminClientGate>
+      </>,
+    )
+
+    expect(await screen.findByRole('button', { name: 'Manage studies' })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: 'Create study' })).toBeInTheDocument()
+    expect(fetchMock).toHaveBeenCalledTimes(1)
   })
 })

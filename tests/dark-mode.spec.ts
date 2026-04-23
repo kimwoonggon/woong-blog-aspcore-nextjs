@@ -52,7 +52,7 @@ test.describe('theme toggle', () => {
     await page.goto('/')
     await toggleThemeForViewport(page)
     await expectDarkHtml(page)
-    await page.reload({ waitUntil: 'networkidle' })
+    await page.reload({ waitUntil: 'domcontentloaded' })
     await expectDarkHtml(page)
     await expect.poll(() => page.evaluate(() => window.localStorage.getItem('theme'))).toBe('dark')
   })
@@ -234,7 +234,7 @@ test('DM-11: contact page email link uses the semantic primary color in dark mod
     await page.screenshot({ path: 'test-results/playwright/dark-mode-works-dark.png', fullPage: true })
 
     await page.evaluate(() => window.localStorage.setItem('theme', 'light'))
-    await page.reload({ waitUntil: 'networkidle' })
+    await page.reload({ waitUntil: 'domcontentloaded' })
     await expectLightHtml(page)
     test.skip(await page.getByTestId('work-card').first().count() === 0, 'No rendered work cards available in this environment.')
     await expect(page.getByTestId('work-card').first()).toBeVisible()

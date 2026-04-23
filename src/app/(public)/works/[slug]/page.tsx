@@ -1,23 +1,26 @@
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Badge } from '@/components/ui/badge'
-import { AdminErrorPanel } from '@/components/admin/AdminErrorPanel'
-import { InlineWorkEditorSection } from '@/components/admin/InlineWorkEditorSection'
+import { PublicWorkDetailAdminActions } from '@/components/admin/PublicWorkDetailAdminActions'
+import { PublicDetailAdjacentLink } from '@/components/content/PublicDetailAdjacentLink'
 import { RelatedContentList } from '@/components/content/RelatedContentList'
 import { InteractiveRenderer } from '@/components/content/InteractiveRenderer'
 import { TableOfContents } from '@/components/content/TableOfContents'
 import { WorkVideoPlayer } from '@/components/content/WorkVideoPlayer'
 import { Metadata } from 'next'
-import { getPublicAdminAffordanceState } from '@/lib/auth/public-admin'
-import { fetchAdminWorkById, fetchAllPublicWorks, fetchPublicWorkBySlug } from '@/lib/api/works'
+import { fetchAllPublicWorks, fetchPublicWorkBySlug } from '@/lib/api/works'
 import { hasWorkVideoEmbeds } from '@/lib/content/work-video-embeds'
+import { createPublicMetadata } from '@/lib/seo'
 import { formatDetailPublishDate, parseWorkContentHtml } from './work-detail-helpers'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 60
 
 interface PageProps {
     params: Promise<{ slug: string }>
-    searchParams?: Promise<{ relatedPage?: string; returnTo?: string }>
+}
+
+export async function generateStaticParams() {
+    const works = await fetchAllPublicWorks().catch(() => [])
+    return works.map((work) => ({ slug: work.slug }))
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -27,35 +30,26 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
     if (!work) return {}
 
-    return {
+    return createPublicMetadata({
         title: work.title,
         description: work.excerpt,
-    }
+        path: `/works/${work.slug}`,
+        type: 'article',
+    })
 }
 
-export default async function WorkDetailPage({ params, searchParams }: PageProps) {
+export default async function WorkDetailPage({ params }: PageProps) {
     const { slug } = await params
-    const resolvedSearchParams = await searchParams
     const decodedSlug = decodeURIComponent(slug)
-    const work = await fetchPublicWorkBySlug(decodedSlug)
+    const [work, allWorks] = await Promise.all([
+        fetchPublicWorkBySlug(decodedSlug),
+        fetchAllPublicWorks(),
+    ])
 
     if (!work) {
         notFound()
     }
 
-    const { canShowAdminAffordances } = await getPublicAdminAffordanceState()
-    let adminWork = null
-    let adminLoadFailed = false
-
-    if (canShowAdminAffordances) {
-        try {
-            adminWork = await fetchAdminWorkById(work.id)
-        } catch {
-            adminLoadFailed = true
-        }
-    }
-
-    const allWorks = await fetchAllPublicWorks()
     const contentHtml = parseWorkContentHtml(work.contentJson)
     const orderedVideos = [...work.videos].sort((left, right) => left.sortOrder - right.sortOrder)
     const hasInlineVideoEmbeds = hasWorkVideoEmbeds(contentHtml)
@@ -74,11 +68,6 @@ export default async function WorkDetailPage({ params, searchParams }: PageProps
     const currentIndex = sortedWorks.findIndex((item) => item.id === work.id)
     const newerWork = currentIndex > 0 ? sortedWorks[currentIndex - 1] : null
     const olderWork = currentIndex >= 0 && currentIndex < sortedWorks.length - 1 ? sortedWorks[currentIndex + 1] : null
-    const returnTo = resolvedSearchParams?.returnTo ?? null
-    const relatedPageSuffix = resolvedSearchParams?.relatedPage
-        ? `?relatedPage=${encodeURIComponent(resolvedSearchParams.relatedPage)}`
-        : ''
-
     return (
         <article className="mx-auto w-full px-4 py-8 md:px-6 md:py-12">
             <div className="mx-auto xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,48rem)_minmax(0,1fr)] xl:gap-8">
@@ -111,26 +100,7 @@ export default async function WorkDetailPage({ params, searchParams }: PageProps
                         ) : null}
                     </header>
 
-                    {canShowAdminAffordances && (
-                        adminLoadFailed || !adminWork ? (
-                            <div className="mt-8">
-                                <AdminErrorPanel
-                                    title="Inline work editor is unavailable"
-                                    message="The public work view loaded, but the admin edit payload could not be loaded. Please retry after the backend is healthy."
-                                />
-                            </div>
-                        ) : (
-                            <div className="mt-8">
-                                <InlineWorkEditorSection
-                                    initialWork={adminWork}
-                                    afterDeleteHref={returnTo ? decodeURIComponent(returnTo) : resolvedSearchParams?.relatedPage ? `/works?page=${encodeURIComponent(resolvedSearchParams.relatedPage)}&pageSize=8` : '/works'}
-                                    title="Work Inline Editor"
-                                    description="현재 작업 상세 뷰를 유지한 채 바로 수정하거나 삭제합니다."
-                                    triggerLabel="작업 수정"
-                                />
-                            </div>
-                        )
-                    )}
+                    <PublicWorkDetailAdminActions workId={work.id} />
 
                     <div id="work-detail-content" className="mt-8">
                         {orderedVideos.length > 0 && !hasInlineVideoEmbeds && (
@@ -164,26 +134,12 @@ export default async function WorkDetailPage({ params, searchParams }: PageProps
                             className="mt-12 grid gap-3 border-t border-border/70 pt-8 sm:grid-cols-2"
                         >
                             {newerWork ? (
-                                <Link
-                                    href={`/works/${newerWork.slug}${returnTo ? `?returnTo=${returnTo}&relatedPage=${encodeURIComponent(resolvedSearchParams?.relatedPage ?? '')}` : relatedPageSuffix}`}
-                                    prefetch={false}
-                                    className="group rounded-2xl border border-border/80 bg-background p-4 transition hover:border-primary/30 hover:shadow-sm"
-                                >
-                                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Next</p>
-                                    <p className="mt-2 text-base font-semibold text-foreground text-balance transition-colors group-hover:text-brand-accent">{newerWork.title}</p>
-                                </Link>
+                                <PublicDetailAdjacentLink hrefBase="/works" slug={newerWork.slug} label="Next" title={newerWork.title} />
                             ) : (
                                 <div aria-hidden="true" />
                             )}
                             {olderWork ? (
-                                <Link
-                                    href={`/works/${olderWork.slug}${returnTo ? `?returnTo=${returnTo}&relatedPage=${encodeURIComponent(resolvedSearchParams?.relatedPage ?? '')}` : relatedPageSuffix}`}
-                                    prefetch={false}
-                                    className="group rounded-2xl border border-border/80 bg-background p-4 text-left transition hover:border-primary/30 hover:shadow-sm sm:justify-self-end"
-                                >
-                                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Previous</p>
-                                    <p className="mt-2 text-base font-semibold text-foreground text-balance transition-colors group-hover:text-brand-accent">{olderWork.title}</p>
-                                </Link>
+                                <PublicDetailAdjacentLink hrefBase="/works" slug={olderWork.slug} label="Previous" title={olderWork.title} alignEnd />
                             ) : null}
                         </nav>
                     )}

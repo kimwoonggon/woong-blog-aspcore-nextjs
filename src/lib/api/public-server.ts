@@ -12,6 +12,10 @@ export async function getPublicServerApiBaseUrl() {
     return normalizeApiBaseUrl(process.env.INTERNAL_API_ORIGIN)
   }
 
+  if (process.env.NEXT_PUBLIC_SITE_URL && /^https?:\/\//i.test(process.env.NEXT_PUBLIC_SITE_URL)) {
+    return normalizeApiBaseUrl(process.env.NEXT_PUBLIC_SITE_URL)
+  }
+
   if (process.env.NEXT_PUBLIC_API_BASE_URL && /^https?:\/\//i.test(process.env.NEXT_PUBLIC_API_BASE_URL)) {
     return normalizeApiBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL)
   }

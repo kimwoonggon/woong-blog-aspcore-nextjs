@@ -4,8 +4,14 @@ import { InlinePageEditorSection } from '@/components/admin/InlinePageEditorSect
 import { InteractiveRenderer } from '@/components/content/InteractiveRenderer'
 import { isBlockPageContent, isHtmlPageContent, parsePageContentJson } from '@/lib/content/page-content'
 import { fetchPublicPageBySlug } from '@/lib/api/pages'
+import { createPublicMetadata } from '@/lib/seo'
 
 export const revalidate = 60
+export const metadata = createPublicMetadata({
+    title: 'Contact',
+    description: 'Contact information and ways to reach Woonggon Kim.',
+    path: '/contact',
+})
 
 export default async function ContactPage() {
     const page = await fetchPublicPageBySlug('contact')
@@ -28,7 +34,7 @@ export default async function ContactPage() {
                         <p className="text-sm leading-relaxed text-foreground/80">
                             You can reach me directly at{' '}
                             <a
-                                href="mailto:john@example.com"
+                                href="mailto:psopen11@gmail.com"
                                 className="font-medium text-primary underline underline-offset-4 transition-colors hover:text-brand-cyan"
                             >
                                 john@example.com

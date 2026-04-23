@@ -1,0 +1,48 @@
+{
+  "task": "frontend-followup-static-e2e-performance",
+  "date": "2026-04-23",
+  "changes": [
+    "Added NEXT_PUBLIC_SITE_URL public API origin support",
+    "Added woonglab.com production site URL examples",
+    "Moved local QA query behavior for home/introduction/resume to client boundaries",
+    "Added generateStaticParams for blog and work detail routes",
+    "Moved detail return/related query preservation to a client adjacent-link component",
+    "Dynamically imported heavy public admin editor/create components",
+    "Replaced slow E2E networkidle waits with concrete readiness waits",
+    "Fixed benchmark pagination click URL wait race"
+  ],
+  "routeClassificationWithExplicitOrigin": {
+    "static": ["/", "/contact", "/introduction", "/resume", "/robots.txt", "/sitemap.xml"],
+    "ssg": ["/blog/[slug]", "/works/[slug]"],
+    "dynamicByDesign": ["/blog", "/works"]
+  },
+  "validation": {
+    "focusedVitest": "passed",
+    "typecheck": "passed",
+    "explicitOriginBuild": "passed",
+    "dockerFrontendRebuild": "passed",
+    "focusedPlaywright": "passed",
+    "fullE2E": {
+      "result": "569 passed, 8 skipped, 0 failed",
+      "latencyArtifacts": 575,
+      "budgetFailureCount": 0,
+      "warningCount": 84
+    },
+    "benchmark": {
+      "warmups": 1,
+      "iterations": 3,
+      "mutationWarmups": 1,
+      "mutationIterations": 3,
+      "reportMarkdown": "backend/reports/frontend-performance-origin-dev-vs-current/frontend-performance-origin-dev-vs-current.md",
+      "reportHtml": "backend/reports/frontend-performance-origin-dev-vs-current/frontend-performance-origin-dev-vs-current.html",
+      "reportJson": "backend/reports/frontend-performance-origin-dev-vs-current/frontend-performance-origin-dev-vs-current.json"
+    }
+  },
+  "remainingRisks": [
+    "Study/Works cold first load still regresses in benchmark",
+    "Some public API endpoint timings regress by small absolute millisecond amounts",
+    "Full E2E is green but remains long-running at roughly 13 minutes",
+    "Data-backed prerendering requires build-time public/internal API origin availability"
+  ],
+  "recommendation": "Accept follow-up changes. Full E2E is green; schedule a dedicated performance pass for Study/Works cold load and public API latency."
+}

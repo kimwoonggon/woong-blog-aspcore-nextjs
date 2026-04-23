@@ -18,6 +18,7 @@ downloads
 docs
 db_status
 .docker-data
+.tmp
 .devcontainer-data
 .refs
 .local-certs
