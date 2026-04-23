@@ -43,6 +43,62 @@ test('response time: Works list direct load meets budget', async ({ page }, test
   )
 })
 
+test('response time: Study mobile append next page meets budget', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/blog')
+  await expect(page.getByTestId('blog-card')).toHaveCount(10)
+
+  await measureStep(
+    testInfo,
+    'Study mobile load-more append',
+    'publicPagination',
+    async () => {
+      await page.getByTestId('blog-load-more').click()
+    },
+    async () => {
+      await expect(page.getByTestId('blog-card')).toHaveCount(20)
+    },
+  )
+})
+
+test('response time: Works mobile append next page meets budget', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/works')
+  await expect(page.getByTestId('work-card')).toHaveCount(10)
+
+  await measureStep(
+    testInfo,
+    'Works mobile load-more append',
+    'publicPagination',
+    async () => {
+      await page.getByTestId('works-load-more').click()
+    },
+    async () => {
+      await expect(page.getByTestId('work-card')).toHaveCount(20)
+    },
+  )
+})
+
+test('response time: unified public search submit meets budget', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 1280, height: 960 })
+  await page.goto('/blog')
+  await page.getByRole('textbox', { name: 'Search studies' }).fill('seeded')
+
+  await measureStep(
+    testInfo,
+    'Study unified search submit response-time path',
+    'publicSearch',
+    async () => {
+      await page.getByRole('button', { name: 'Search studies' }).click()
+    },
+    async () => {
+      await expect.poll(() => new URL(page.url()).searchParams.get('query')).toBe('seeded')
+      await expect.poll(() => new URL(page.url()).searchParams.get('searchMode')).toBeNull()
+      await expect(page.getByTestId('blog-card').first()).toBeVisible()
+    },
+  )
+})
+
 test.describe('authenticated response-time paths', () => {
   test.use({ storageState: 'test-results/playwright/admin-storage-state.json' })
 

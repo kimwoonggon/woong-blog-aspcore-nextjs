@@ -33,7 +33,7 @@ export interface BlogDetail extends BlogListItem {
 
 export interface PublicBlogSearchOptions {
   query?: string | null
-  searchMode?: 'title' | 'content' | string | null
+  legacySearchMode?: 'title' | 'content' | string | null
 }
 
 export interface AdminBlogDetail {
@@ -66,7 +66,9 @@ export async function fetchPublicBlogs(page = 1, pageSize = 10, searchOptions: P
   const query = searchOptions.query?.trim()
   if (query) {
     params.set('query', query)
-    params.set('searchMode', searchOptions.searchMode === 'content' ? 'content' : 'title')
+    if (searchOptions.legacySearchMode === 'content' || searchOptions.legacySearchMode === 'title') {
+      params.set('searchMode', searchOptions.legacySearchMode)
+    }
   }
 
   const response = await fetch(`${apiBaseUrl}/public/blogs?${params.toString()}`, {

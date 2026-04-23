@@ -17,7 +17,8 @@ public sealed class CreateBlogCommandHandler : IRequestHandler<CreateBlogCommand
     public async Task<AdminMutationResult> Handle(CreateBlogCommand request, CancellationToken cancellationToken)
     {
         var slug = await GenerateUniqueSlugAsync(request.Title, null, cancellationToken);
-        var excerpt = AdminContentText.GenerateExcerpt(AdminContentJson.ExtractExcerptText(request.ContentJson));
+        var contentText = AdminContentJson.ExtractExcerptText(request.ContentJson);
+        var excerpt = ResolveExcerpt(request.Excerpt, contentText);
         var now = DateTimeOffset.UtcNow;
 
         var blog = new Blog
@@ -31,7 +32,7 @@ public sealed class CreateBlogCommandHandler : IRequestHandler<CreateBlogCommand
             PublishedAt = request.Published ? now : null,
             ContentJson = request.ContentJson,
             SearchTitle = ContentSearchText.Normalize(request.Title),
-            SearchText = ContentSearchText.BuildIndex(excerpt, AdminContentJson.ExtractExcerptText(request.ContentJson)),
+            SearchText = ContentSearchText.BuildIndex(excerpt, contentText),
             CreatedAt = now,
             UpdatedAt = now
         };
@@ -39,6 +40,14 @@ public sealed class CreateBlogCommandHandler : IRequestHandler<CreateBlogCommand
         _blogCommandStore.Add(blog);
         await _blogCommandStore.SaveChangesAsync(cancellationToken);
         return new AdminMutationResult(blog.Id, blog.Slug);
+    }
+
+    private static string ResolveExcerpt(string? manualExcerpt, string contentText)
+    {
+        var normalizedManualExcerpt = manualExcerpt?.Trim();
+        return string.IsNullOrWhiteSpace(normalizedManualExcerpt)
+            ? AdminContentText.GenerateExcerpt(contentText)
+            : normalizedManualExcerpt;
     }
 
     private async Task<string> GenerateUniqueSlugAsync(string title, Guid? currentBlogId, CancellationToken cancellationToken)

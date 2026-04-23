@@ -132,8 +132,11 @@ public sealed class BlogQueryStore(WoongBlogDbContext dbContext) : IBlogQuerySto
             return query;
         }
 
-        return searchMode == ContentSearchMode.Content
-            ? query.Where(x => x.SearchText.Contains(normalizedQuery))
-            : query.Where(x => x.SearchTitle.Contains(normalizedQuery));
+        return searchMode switch
+        {
+            ContentSearchMode.Title => query.Where(x => x.SearchTitle.Contains(normalizedQuery)),
+            ContentSearchMode.Content => query.Where(x => x.SearchText.Contains(normalizedQuery)),
+            _ => query.Where(x => x.SearchTitle.Contains(normalizedQuery) || x.SearchText.Contains(normalizedQuery))
+        };
     }
 }

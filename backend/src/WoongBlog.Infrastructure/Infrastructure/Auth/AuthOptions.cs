@@ -16,7 +16,7 @@ public class AuthOptions
     public string[] AdminEmails { get; set; } = [];
     public string DataProtectionKeysPath { get; set; } = "/app/data-protection";
     public string MediaRoot { get; set; } = "/app/media";
-    public int SlidingExpirationMinutes { get; set; } = 20;
+    public int SlidingExpirationMinutes { get; set; } = 300;
     public int LastSeenRefreshIntervalSeconds { get; set; } = 30;
     public int AbsoluteExpirationHours { get; set; } = 8;
     public bool SecureCookies { get; set; }

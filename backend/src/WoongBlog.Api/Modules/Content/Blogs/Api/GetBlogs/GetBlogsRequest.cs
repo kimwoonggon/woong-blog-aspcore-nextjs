@@ -9,5 +9,5 @@ internal sealed class GetBlogsRequest
     public string? Query { get; init; }
     public string? SearchMode { get; init; }
 
-    internal GetBlogsQuery ToQuery() => new(Page ?? 1, PageSize ?? 10, Query, SearchMode ?? "title");
+    internal GetBlogsQuery ToQuery() => new(Page ?? 1, PageSize ?? 10, Query, SearchMode);
 }

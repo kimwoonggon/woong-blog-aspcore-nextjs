@@ -25,6 +25,24 @@ describe('SEO metadata helpers', () => {
     })
   })
 
+  it('adds social images when metadata image is provided', () => {
+    expect(createPublicMetadata({
+      title: 'Work detail',
+      description: 'Case study',
+      path: '/works/sample',
+      type: 'article',
+      images: 'https://cdn.example.com/thumb.jpg',
+    })).toMatchObject({
+      openGraph: {
+        images: ['https://cdn.example.com/thumb.jpg'],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        images: ['https://cdn.example.com/thumb.jpg'],
+      },
+    })
+  })
+
   it('uses configured public site URL before falling back to localhost', () => {
     vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://example.com/')
     expect(getMetadataBaseUrl()).toBe('https://example.com')

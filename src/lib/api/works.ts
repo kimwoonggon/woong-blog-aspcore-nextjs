@@ -38,7 +38,7 @@ export interface PagedWorksPayload {
 
 export interface PublicWorkSearchParams {
   query?: string
-  searchMode?: 'title' | 'content'
+  legacySearchMode?: 'title' | 'content' | string | null
 }
 
 export interface WorkAdminItem extends WorkListItem {
@@ -196,7 +196,9 @@ export async function fetchPublicWorks(page = 1, pageSize = 6, searchParams?: Pu
   })
   if (searchParams?.query?.trim()) {
     params.set('query', searchParams.query.trim())
-    params.set('searchMode', searchParams.searchMode === 'content' ? 'content' : 'title')
+    if (searchParams.legacySearchMode === 'content' || searchParams.legacySearchMode === 'title') {
+      params.set('searchMode', searchParams.legacySearchMode)
+    }
   }
 
   const response = await fetch(`${apiBaseUrl}/public/works?${params.toString()}`, {

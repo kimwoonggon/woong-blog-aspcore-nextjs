@@ -18,6 +18,8 @@ public sealed class GetAiRuntimeConfigQueryHandler(
             ? configuredProvider
             : availableProviders[0];
 
+        var blogFixPrompt = runtimeCapabilities.GetDefaultBlogFixPrompt();
+
         return Task.FromResult(new AiRuntimeConfigResponse(
             Provider: provider,
             AvailableProviders: availableProviders,
@@ -33,6 +35,8 @@ public sealed class GetAiRuntimeConfigQueryHandler(
             AllowedCodexReasoningEfforts: _options.CodexAllowedReasoningEfforts,
             BatchConcurrency: _options.BatchConcurrency,
             BatchCompletedRetentionDays: _options.BatchCompletedRetentionDays,
-            DefaultSystemPrompt: runtimeCapabilities.GetDefaultBlogFixPrompt()));
+            DefaultSystemPrompt: blogFixPrompt,
+            DefaultBlogFixPrompt: blogFixPrompt,
+            DefaultWorkEnrichPrompt: runtimeCapabilities.GetDefaultWorkEnrichPrompt()));
     }
 }

@@ -62,7 +62,7 @@ describe('public/admin api clients', () => {
     expect(getServerApiBaseUrl).not.toHaveBeenCalled()
   })
 
-  it('fetchPublicBlogs forwards title and content search query params', async () => {
+  it('fetchPublicBlogs sends query-only params by default and preserves legacy searchMode when requested', async () => {
     const fetchMock = vi.fn()
       .mockResolvedValueOnce(new Response(JSON.stringify({ items: [], page: 1, pageSize: 12, totalItems: 0, totalPages: 1 }), { status: 200, headers: { 'Content-Type': 'application/json' } }))
       .mockResolvedValueOnce(new Response(JSON.stringify({ items: [], page: 1, pageSize: 12, totalItems: 0, totalPages: 1 }), { status: 200, headers: { 'Content-Type': 'application/json' } }))
@@ -70,14 +70,14 @@ describe('public/admin api clients', () => {
 
     const { fetchPublicBlogs } = await import('@/lib/api/blogs')
 
-    await fetchPublicBlogs(1, 12, { query: 'server components', searchMode: 'title' })
-    await fetchPublicBlogs(1, 12, { query: 'renderable html', searchMode: 'content' })
+    await fetchPublicBlogs(1, 12, { query: 'server components' })
+    await fetchPublicBlogs(1, 12, { query: 'renderable html', legacySearchMode: 'content' })
 
-    expect(fetchMock).toHaveBeenNthCalledWith(1, 'http://localhost/api/public/blogs?page=1&pageSize=12&query=server+components&searchMode=title', { next: { revalidate: 60, tags: ['public-blogs'] } })
+    expect(fetchMock).toHaveBeenNthCalledWith(1, 'http://localhost/api/public/blogs?page=1&pageSize=12&query=server+components', { next: { revalidate: 60, tags: ['public-blogs'] } })
     expect(fetchMock).toHaveBeenNthCalledWith(2, 'http://localhost/api/public/blogs?page=1&pageSize=12&query=renderable+html&searchMode=content', { next: { revalidate: 60, tags: ['public-blogs'] } })
   })
 
-  it('fetchPublicWorks forwards title and content search query params', async () => {
+  it('fetchPublicWorks sends query-only params by default and preserves legacy searchMode when requested', async () => {
     const fetchMock = vi.fn()
       .mockResolvedValueOnce(new Response(JSON.stringify({ items: [], page: 1, pageSize: 8, totalItems: 0, totalPages: 1 }), { status: 200, headers: { 'Content-Type': 'application/json' } }))
       .mockResolvedValueOnce(new Response(JSON.stringify({ items: [], page: 1, pageSize: 8, totalItems: 0, totalPages: 1 }), { status: 200, headers: { 'Content-Type': 'application/json' } }))
@@ -85,10 +85,10 @@ describe('public/admin api clients', () => {
 
     const { fetchPublicWorks } = await import('@/lib/api/works')
 
-    await fetchPublicWorks(1, 8, { query: 'portfolio platform', searchMode: 'title' })
-    await fetchPublicWorks(1, 8, { query: 'migration details', searchMode: 'content' })
+    await fetchPublicWorks(1, 8, { query: 'portfolio platform' })
+    await fetchPublicWorks(1, 8, { query: 'migration details', legacySearchMode: 'content' })
 
-    expect(fetchMock).toHaveBeenNthCalledWith(1, 'http://localhost/api/public/works?page=1&pageSize=8&query=portfolio+platform&searchMode=title', { next: { revalidate: 60, tags: ['public-works'] } })
+    expect(fetchMock).toHaveBeenNthCalledWith(1, 'http://localhost/api/public/works?page=1&pageSize=8&query=portfolio+platform', { next: { revalidate: 60, tags: ['public-works'] } })
     expect(fetchMock).toHaveBeenNthCalledWith(2, 'http://localhost/api/public/works?page=1&pageSize=8&query=migration+details&searchMode=content', { next: { revalidate: 60, tags: ['public-works'] } })
   })
 

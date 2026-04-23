@@ -9,5 +9,5 @@ internal sealed class GetWorksRequest
     public string? Query { get; init; }
     public string? SearchMode { get; init; }
 
-    internal GetWorksQuery ToQuery() => new(Page ?? 1, PageSize ?? 6, Query, SearchMode ?? "title");
+    internal GetWorksQuery ToQuery() => new(Page ?? 1, PageSize ?? 6, Query, SearchMode);
 }

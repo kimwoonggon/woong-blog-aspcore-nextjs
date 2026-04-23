@@ -6,4 +6,4 @@ public sealed record GetWorksQuery(
     int Page = 1,
     int PageSize = 6,
     string? Query = null,
-    string SearchMode = "title") : IRequest<PagedWorksDto>;
+    string? SearchMode = null) : IRequest<PagedWorksDto>;

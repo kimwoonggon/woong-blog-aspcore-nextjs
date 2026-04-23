@@ -222,6 +222,28 @@ public class PublicQueryHandlerComponentTests
     }
 
     [Fact]
+    public async Task GetWorksQueryHandler_QueryOnly_PerformsUnifiedSearch()
+    {
+        await using var dbContext = CreateDbContext();
+        var bodyToken = $"body-token-{Guid.NewGuid():N}";
+        dbContext.Works.AddRange(
+            new Work { Id = Guid.NewGuid(), Title = "Unified Title Match", Slug = "unified-title-match", Excerpt = "alpha", Category = "cat", ContentJson = "{\"html\":\"<p>alpha</p>\"}", AllPropertiesJson = "{}", Published = true, PublishedAt = DateTimeOffset.UtcNow, CreatedAt = DateTimeOffset.UtcNow, UpdatedAt = DateTimeOffset.UtcNow },
+            new Work { Id = Guid.NewGuid(), Title = "No title token", Slug = "unified-content-match", Excerpt = $"contains {bodyToken}", Category = "cat", ContentJson = "{\"html\":\"<p>beta</p>\"}", AllPropertiesJson = "{}", Published = true, PublishedAt = DateTimeOffset.UtcNow, CreatedAt = DateTimeOffset.UtcNow, UpdatedAt = DateTimeOffset.UtcNow }
+        );
+        await dbContext.SaveChangesAsync();
+
+        var handler = new GetWorksQueryHandler(CreateWorkQueryStore(dbContext));
+
+        var titleResult = await handler.Handle(new GetWorksQuery(Query: "unified title"), CancellationToken.None);
+        var contentResult = await handler.Handle(new GetWorksQuery(Query: bodyToken), CancellationToken.None);
+
+        Assert.Single(titleResult.Items);
+        Assert.Equal("Unified Title Match", titleResult.Items[0].Title);
+        Assert.Single(contentResult.Items);
+        Assert.Equal("No title token", contentResult.Items[0].Title);
+    }
+
+    [Fact]
     public async Task GetBlogsQueryHandler_ReturnsPagedResults()
     {
         await using var dbContext = CreateDbContext();
@@ -257,5 +279,27 @@ public class PublicQueryHandlerComponentTests
 
         Assert.Single(result.Items);
         Assert.Equal("T,B,N 안녕하세요", result.Items[0].Title);
+    }
+
+    [Fact]
+    public async Task GetBlogsQueryHandler_QueryOnly_PerformsUnifiedSearch()
+    {
+        await using var dbContext = CreateDbContext();
+        var bodyToken = $"blog-body-token-{Guid.NewGuid():N}";
+        dbContext.Blogs.AddRange(
+            new Blog { Id = Guid.NewGuid(), Title = "Unified Blog Match", Slug = "unified-blog-match", Excerpt = "alpha", ContentJson = "{\"html\":\"<p>alpha</p>\"}", Published = true, PublishedAt = DateTimeOffset.UtcNow, CreatedAt = DateTimeOffset.UtcNow, UpdatedAt = DateTimeOffset.UtcNow },
+            new Blog { Id = Guid.NewGuid(), Title = "No title token", Slug = "unified-blog-content", Excerpt = $"contains {bodyToken}", ContentJson = "{\"html\":\"<p>beta</p>\"}", Published = true, PublishedAt = DateTimeOffset.UtcNow, CreatedAt = DateTimeOffset.UtcNow, UpdatedAt = DateTimeOffset.UtcNow }
+        );
+        await dbContext.SaveChangesAsync();
+
+        var handler = new GetBlogsQueryHandler(CreateBlogQueryStore(dbContext));
+
+        var titleResult = await handler.Handle(new GetBlogsQuery(Query: "unified blog"), CancellationToken.None);
+        var contentResult = await handler.Handle(new GetBlogsQuery(Query: bodyToken), CancellationToken.None);
+
+        Assert.Single(titleResult.Items);
+        Assert.Equal("Unified Blog Match", titleResult.Items[0].Title);
+        Assert.Single(contentResult.Items);
+        Assert.Equal("No title token", contentResult.Items[0].Title);
     }
 }

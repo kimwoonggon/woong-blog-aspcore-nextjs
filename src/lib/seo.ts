@@ -24,13 +24,20 @@ export function createPublicMetadata({
   description,
   path,
   type = 'website',
+  images,
 }: {
   title: string
   description: string
   path: string
   type?: 'website' | 'article'
+  images?: string | string[] | null
 }): Metadata {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`
+  const imageList = Array.isArray(images)
+    ? images.filter(Boolean)
+    : images
+      ? [images]
+      : undefined
 
   return {
     title,
@@ -44,11 +51,13 @@ export function createPublicMetadata({
       url: normalizedPath,
       type,
       siteName: DEFAULT_AUTHOR,
+      ...(imageList?.length ? { images: imageList } : {}),
     },
     twitter: {
-      card: 'summary',
+      card: imageList?.length ? 'summary_large_image' : 'summary',
       title,
       description,
+      ...(imageList?.length ? { images: imageList } : {}),
     },
   }
 }

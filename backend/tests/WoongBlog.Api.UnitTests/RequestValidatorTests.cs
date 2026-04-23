@@ -38,6 +38,7 @@ public class RequestValidatorTests
         var validator = new CreateBlogCommandValidator();
         var result = validator.Validate(new CreateBlogCommand(
             new string('t', 201),
+            null,
             [new string('x', 51)],
             false,
             "{\"html\":\"ok\"}"

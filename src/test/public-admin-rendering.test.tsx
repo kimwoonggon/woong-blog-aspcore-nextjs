@@ -56,6 +56,11 @@ describe('public admin rendering', () => {
     cleanup()
     vi.resetModules()
     vi.clearAllMocks()
+    vi.stubGlobal('matchMedia', vi.fn().mockReturnValue({
+      matches: false,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }))
   })
 
   afterEach(() => {
@@ -246,8 +251,10 @@ describe('public admin rendering', () => {
       searchParams: Promise.resolve({ page: '2', pageSize: '8' }),
     }))
     expect(screen.getByText('Cached Work')).toBeInTheDocument()
-    expect(fetchPublicBlogs).toHaveBeenCalledWith(2, 12, undefined)
-    expect(fetchPublicWorks).toHaveBeenCalledWith(2, 8, undefined)
+    expect(fetchPublicBlogs).toHaveBeenNthCalledWith(1, 2, 12, undefined)
+    expect(fetchPublicBlogs).toHaveBeenNthCalledWith(2, 1, 10, undefined)
+    expect(fetchPublicWorks).toHaveBeenNthCalledWith(1, 2, 8, undefined)
+    expect(fetchPublicWorks).toHaveBeenNthCalledWith(2, 1, 10, undefined)
     expect(fetchServerSession).not.toHaveBeenCalled()
   }, 15_000)
 

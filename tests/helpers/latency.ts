@@ -30,12 +30,20 @@ export type TestBudget = LatencyBudget & {
   titlePattern?: string
 }
 
+export type InteractionBudget = LatencyBudget & {
+  namePattern?: string
+  targetPattern?: string
+  filePattern?: string
+  titlePattern?: string
+}
+
 export type PerformanceBudgetConfig = {
   version: number
   defaults?: Partial<Record<'testDuration' | 'navigation' | 'api' | 'interaction', LatencyBudget>>
   steps?: Record<string, LatencyBudget>
   api?: ApiBudget[]
   tests?: TestBudget[]
+  interactions?: InteractionBudget[]
 }
 
 export type BudgetContext = {
@@ -45,6 +53,7 @@ export type BudgetContext = {
   url?: string
   file?: string
   title?: string
+  target?: string
 }
 
 export type BudgetIssue = {
@@ -209,8 +218,16 @@ export function recordInteractionMetrics(testInfo: TestInfo, interactions: Inter
   const metrics = startLatencyMetrics(testInfo)
   metrics.interactions.push(...interactions)
 
-  const budget = loadPerformanceBudgetConfig().defaults?.interaction
-  for (const interaction of interactions) {
+  const config = loadPerformanceBudgetConfig()
+  const normalizedInteractions = normalizeInteractionsForBudget(interactions)
+  for (const interaction of normalizedInteractions) {
+    const budget = resolveLatencyBudget(config, {
+      kind: 'interaction',
+      name: interaction.name,
+      file: metrics.file,
+      title: metrics.title,
+      target: interaction.target,
+    })
     recordBudgetEvaluation(metrics, 'interaction', interaction.name, interaction.durationMs, budget)
   }
 }
@@ -375,6 +392,23 @@ export function resolveLatencyBudget(
   }
 
   if (context.kind === 'interaction') {
+    const normalizedFile = normalizePath(context.file ?? '')
+    const normalizedTarget = normalizeTargetForBudget(context.target)
+    const match = config.interactions?.find((budget) => {
+      const nameMatches = !budget.namePattern || globMatches(budget.namePattern, context.name ?? '')
+      const targetMatches = !budget.targetPattern || globMatches(budget.targetPattern, normalizedTarget)
+      const fileMatches = !budget.filePattern || globMatches(budget.filePattern, normalizedFile)
+      const titleMatches = !budget.titlePattern || globMatches(budget.titlePattern, context.title ?? '')
+      return nameMatches && targetMatches && fileMatches && titleMatches
+    })
+
+    if (match) {
+      return {
+        ...match,
+        name: match.name ?? match.namePattern ?? match.targetPattern ?? match.filePattern ?? match.titlePattern,
+      }
+    }
+
     return config.defaults?.interaction
   }
 
@@ -428,6 +462,112 @@ export function roundLatency(value: number) {
 export function isTrackedApiUrl(url: string) {
   const pathname = toPathname(url)
   return pathname.startsWith('/api/') || pathname === '/revalidate-public'
+}
+
+type InteractionFamily =
+  | 'click'
+  | 'keyboard'
+  | 'input'
+  | 'hover-enter'
+  | 'hover-leave'
+  | 'other'
+
+type InteractionWithMeta = InteractionMetric & {
+  _family: InteractionFamily
+  _canonicalName: string
+  _normalizedTarget: string
+  _normalizedStartMs: number
+  _index: number
+}
+
+type InteractionCluster = {
+  family: InteractionFamily
+  canonicalName: string
+  normalizedTarget: string
+  firstIndex: number
+  endTimeMs: number
+  members: InteractionWithMeta[]
+}
+
+const INTERACTION_CLUSTER_GAP_MS: Record<InteractionFamily, number> = {
+  click: 140,
+  keyboard: 30,
+  input: 30,
+  'hover-enter': 120,
+  'hover-leave': 120,
+  other: 80,
+}
+
+const INTERACTION_SOURCE_PRIORITY: Record<InteractionMetric['source'], number> = {
+  'performance-observer': 2,
+  raf: 1,
+}
+
+export function normalizeInteractionsForBudget(interactions: InteractionMetric[]): InteractionMetric[] {
+  if (interactions.length === 0) {
+    return []
+  }
+
+  const enriched = interactions
+    .map((interaction, index) => {
+      const lowerName = interaction.name.toLowerCase()
+      const family = inferInteractionFamily(lowerName)
+      return {
+        ...interaction,
+        _family: family,
+        _canonicalName: toCanonicalInteractionName(family, lowerName),
+        _normalizedTarget: normalizeTargetForBudget(interaction.target),
+        _normalizedStartMs: Number.isFinite(interaction.startTimeMs)
+          ? Number(interaction.startTimeMs)
+          : index * 1000,
+        _index: index,
+      } satisfies InteractionWithMeta
+    })
+    .sort((left, right) => {
+      if (left._normalizedStartMs !== right._normalizedStartMs) {
+        return left._normalizedStartMs - right._normalizedStartMs
+      }
+      return left._index - right._index
+    })
+
+  const clusters: InteractionCluster[] = []
+  const groupedByInteractionId = new Map<string, InteractionCluster>()
+  const trailingByGroup = new Map<string, InteractionCluster>()
+
+  for (const interaction of enriched) {
+    const interactionIdKey = toInteractionIdKey(interaction)
+    if (interactionIdKey) {
+      const key = `${interactionIdKey}:${interaction._family}:${interaction._normalizedTarget}`
+      let cluster = groupedByInteractionId.get(key)
+      if (!cluster) {
+        cluster = createCluster(interaction)
+        groupedByInteractionId.set(key, cluster)
+        clusters.push(cluster)
+      } else {
+        appendCluster(cluster, interaction)
+      }
+      continue
+    }
+
+    const groupKey = `${interaction._family}:${interaction._normalizedTarget}`
+    const trailingCluster = trailingByGroup.get(groupKey)
+    const clusterGapMs = INTERACTION_CLUSTER_GAP_MS[interaction._family]
+    if (
+      trailingCluster
+      && interaction._normalizedStartMs - trailingCluster.endTimeMs <= clusterGapMs
+    ) {
+      appendCluster(trailingCluster, interaction)
+      continue
+    }
+
+    const cluster = createCluster(interaction)
+    trailingByGroup.set(groupKey, cluster)
+    clusters.push(cluster)
+  }
+
+  return clusters
+    .sort((left, right) => left.firstIndex - right.firstIndex)
+    .map((cluster) => toRepresentativeInteraction(cluster))
 }
 
 function recordBudgetEvaluation(
@@ -489,6 +629,10 @@ function normalizePath(value: string) {
   return value.replaceAll('\\', '/')
 }
 
+function normalizeTargetForBudget(value?: string) {
+  return (value ?? '[unknown]').trim().toLowerCase()
+}
+
 function toPathname(url: string) {
   try {
     return new URL(url, 'http://local.test').pathname
@@ -499,6 +643,113 @@ function toPathname(url: string) {
 
 function globMatches(pattern: string, value: string) {
   return globToRegExp(pattern).test(normalizePath(value))
+}
+
+function inferInteractionFamily(name: string): InteractionFamily {
+  if (name === 'click' || name === 'pointerdown' || name === 'mousedown' || name === 'pointerup' || name === 'mouseup') {
+    return 'click'
+  }
+
+  if (name === 'keydown' || name === 'keypress') {
+    return 'keyboard'
+  }
+
+  if (name === 'input' || name === 'beforeinput') {
+    return 'input'
+  }
+
+  if (name === 'pointerover' || name === 'pointerenter' || name === 'mouseover') {
+    return 'hover-enter'
+  }
+
+  if (name === 'pointerout' || name === 'pointerleave' || name === 'mouseout') {
+    return 'hover-leave'
+  }
+
+  return 'other'
+}
+
+function toCanonicalInteractionName(family: InteractionFamily, fallbackName: string) {
+  if (family === 'click') {
+    return 'click'
+  }
+
+  if (family === 'keyboard') {
+    return 'keydown'
+  }
+
+  if (family === 'input') {
+    return 'input'
+  }
+
+  if (family === 'hover-enter') {
+    return 'hover-enter'
+  }
+
+  if (family === 'hover-leave') {
+    return 'hover-leave'
+  }
+
+  return fallbackName
+}
+
+function toInteractionIdKey(interaction: InteractionWithMeta) {
+  if (!Number.isFinite(interaction.interactionId)) {
+    return undefined
+  }
+
+  const numericId = Number(interaction.interactionId)
+  if (numericId <= 0) {
+    return undefined
+  }
+
+  return `iid:${numericId}`
+}
+
+function createCluster(interaction: InteractionWithMeta): InteractionCluster {
+  return {
+    family: interaction._family,
+    canonicalName: interaction._canonicalName,
+    normalizedTarget: interaction._normalizedTarget,
+    firstIndex: interaction._index,
+    endTimeMs: interaction._normalizedStartMs,
+    members: [interaction],
+  }
+}
+
+function appendCluster(cluster: InteractionCluster, interaction: InteractionWithMeta) {
+  cluster.members.push(interaction)
+  cluster.endTimeMs = Math.max(cluster.endTimeMs, interaction._normalizedStartMs)
+}
+
+function toRepresentativeInteraction(cluster: InteractionCluster): InteractionMetric {
+  const representative = cluster.members.reduce((best, candidate) => {
+    if (candidate.durationMs !== best.durationMs) {
+      return candidate.durationMs > best.durationMs ? candidate : best
+    }
+
+    const sourcePriorityDelta = INTERACTION_SOURCE_PRIORITY[candidate.source] - INTERACTION_SOURCE_PRIORITY[best.source]
+    if (sourcePriorityDelta !== 0) {
+      return sourcePriorityDelta > 0 ? candidate : best
+    }
+
+    return candidate._index < best._index ? candidate : best
+  })
+
+  return {
+    ...stripInteractionMeta(representative),
+    name: cluster.canonicalName,
+  }
+}
+
+function stripInteractionMeta(interaction: InteractionWithMeta): InteractionMetric {
+  const publicInteraction: Partial<InteractionWithMeta> = { ...interaction }
+  delete publicInteraction._family
+  delete publicInteraction._canonicalName
+  delete publicInteraction._normalizedTarget
+  delete publicInteraction._normalizedStartMs
+  delete publicInteraction._index
+  return publicInteraction as InteractionMetric
 }
 
 function globToRegExp(pattern: string) {

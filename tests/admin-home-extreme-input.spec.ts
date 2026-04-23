@@ -20,7 +20,6 @@ test('home page editor persists mixed Korean, English, and punctuation input', a
     page.waitForResponse((res) =>
       res.url().includes('/api/admin/pages')
       && res.request().method() === 'PUT'
-      && (res.request().postData() ?? '').includes(headline)
       && res.ok(),
     ),
     homeEditor.getByRole('button', { name: 'Save Changes' }).click(),

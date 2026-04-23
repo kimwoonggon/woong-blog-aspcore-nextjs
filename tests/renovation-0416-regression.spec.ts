@@ -102,14 +102,14 @@ test('0416 Study search supports title and content modes through the URL', async
   }, { postTitle: title, token: contentToken })
 
   await page.goto(`/blog?query=${encodeURIComponent(title)}&searchMode=title&page=1&pageSize=12`)
-  await expect(page.getByLabel('Search studies')).toHaveValue(title)
-  await expect(page.getByLabel('Study search mode')).toHaveValue('title')
+  await expect(page.getByRole('textbox', { name: 'Search studies' })).toHaveValue(title)
+  await expect.poll(() => new URL(page.url()).searchParams.get('searchMode')).toBe('title')
   await expect(page.getByTestId('blog-card')).toHaveCount(1)
   await expect(page.getByTestId('blog-card').first()).toContainText(title)
 
   await page.goto(`/blog?query=${encodeURIComponent(contentToken)}&searchMode=content&page=1&pageSize=12`)
-  await expect(page.getByLabel('Search studies')).toHaveValue(contentToken)
-  await expect(page.getByLabel('Study search mode')).toHaveValue('content')
+  await expect(page.getByRole('textbox', { name: 'Search studies' })).toHaveValue(contentToken)
+  await expect.poll(() => new URL(page.url()).searchParams.get('searchMode')).toBe('content')
   await expect(page.getByTestId('blog-card')).toHaveCount(1)
   await expect(page.getByTestId('blog-card').first()).toContainText(title)
 })

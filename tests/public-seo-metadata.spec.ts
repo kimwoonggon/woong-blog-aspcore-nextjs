@@ -25,6 +25,17 @@ test('work detail metadata uses the visible project title and excerpt', async ({
   await expectVisibleHeaderMetadata(page)
 })
 
+test('work detail exposes og:image and twitter:image when thumbnail is available', async ({ page }) => {
+  await page.goto(`/works/${await firstPublicSlug(page, 'works')}`)
+
+  const ogImage = page.locator('meta[property="og:image"]').first()
+  const twitterImage = page.locator('meta[name="twitter:image"]').first()
+  const hasSocialImageMeta = await ogImage.count() > 0 && await twitterImage.count() > 0
+  test.skip(!hasSocialImageMeta, 'No work thumbnail/video thumbnail metadata is available in this environment.')
+  await expect(ogImage).toHaveAttribute('content', /.+/)
+  await expect(twitterImage).toHaveAttribute('content', /.+/)
+})
+
 test('site exposes a branded svg favicon', async ({ page, request }) => {
   await page.goto('/')
 

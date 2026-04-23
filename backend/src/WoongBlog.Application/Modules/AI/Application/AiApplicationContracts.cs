@@ -32,7 +32,9 @@ public sealed record AiRuntimeConfigResponse(
     IReadOnlyList<string> AllowedCodexReasoningEfforts,
     int BatchConcurrency,
     int BatchCompletedRetentionDays,
-    string DefaultSystemPrompt);
+    string DefaultSystemPrompt,
+    string DefaultBlogFixPrompt,
+    string DefaultWorkEnrichPrompt);
 
 public sealed record BlogFixBatchJobCancelQueuedResponse(int Cancelled);
 

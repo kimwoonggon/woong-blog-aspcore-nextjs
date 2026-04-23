@@ -1,34 +1,41 @@
 import { expect, test } from './helpers/performance-test'
 import { measureStep } from './helpers/latency'
 
-test('works search filters cards by title', async ({ page }, testInfo) => {
+test('public study search submits query without searchMode', async ({ page }, testInfo) => {
+  await page.goto('/blog')
+  await page.getByRole('textbox', { name: 'Search studies' }).fill('seeded')
+
   await measureStep(
     testInfo,
-    'Works search title query to filtered cards',
+    'Study unified search submit',
     'publicSearch',
     async () => {
-      await page.goto('/works?query=Portfolio%20Platform&searchMode=title&page=1&pageSize=8')
+      await page.getByRole('button', { name: 'Search studies' }).click()
     },
     async () => {
-      await expect(page.getByLabel('Search work')).toHaveValue('Portfolio Platform')
-      await expect(page.getByLabel('Work search mode')).toHaveValue('title')
-      await expect(page.getByTestId('work-card').first()).toContainText('Portfolio Platform Rebuild')
+      await expect.poll(() => new URL(page.url()).searchParams.get('query')).toBe('seeded')
+      await expect.poll(() => new URL(page.url()).searchParams.get('searchMode')).toBeNull()
+      await expect(page.getByRole('textbox', { name: 'Search studies' })).toHaveValue('seeded')
     },
   )
 })
 
-test('works search supports content mode and empty results', async ({ page }, testInfo) => {
+test('public works search submits query without searchMode', async ({ page }, testInfo) => {
+  await page.goto('/works')
+  await page.getByRole('textbox', { name: 'Search work' }).fill('Portfolio Platform')
+
   await measureStep(
     testInfo,
-    'Works search content query to empty state',
+    'Works unified search submit',
     'publicSearch',
     async () => {
-      await page.goto('/works?query=no-such-work-token&searchMode=content&page=1&pageSize=8')
+      await page.getByRole('button', { name: 'Search works' }).click()
     },
     async () => {
-      await expect(page.getByLabel('Search work')).toHaveValue('no-such-work-token')
-      await expect(page.getByLabel('Work search mode')).toHaveValue('content')
-      await expect(page.getByText('No works found.')).toBeVisible()
+      await expect.poll(() => new URL(page.url()).searchParams.get('query')).toBe('Portfolio Platform')
+      await expect.poll(() => new URL(page.url()).searchParams.get('searchMode')).toBeNull()
+      await expect(page.getByRole('textbox', { name: 'Search work' })).toHaveValue('Portfolio Platform')
+      await expect(page.getByTestId('work-card').first()).toContainText('Portfolio Platform Rebuild')
     },
   )
 })

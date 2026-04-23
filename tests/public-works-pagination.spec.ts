@@ -1,101 +1,56 @@
 import { expect, test } from './helpers/performance-test'
 import { measureStep } from './helpers/latency'
-import { expectedPublicWorksPageSize } from './helpers/responsive-policy'
 
-test('works pagination uses desktop page size and exposes first/prev/next/last controls', async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 1800 })
+test('works list uses infinite feed on mobile (390px)', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/works')
 
-  const pagination = page.getByLabel('Works pagination')
-
-  await expect(pagination).toBeVisible()
-  await expect(pagination.getByText(/\d+\s*\/\s*\d+/)).toBeVisible()
-  await expect(page.locator('nav[aria-label="Works pagination"] a[href="/works?page=1&pageSize=8"]').first()).toHaveText('1')
-  await expect(pagination.getByText('First')).toBeVisible()
-  await expect(pagination.getByText('Previous')).toBeVisible()
-  await expect(pagination.getByRole('link', { name: 'Next' })).toHaveAttribute('href', /\/works\?page=2&pageSize=8$/)
-  await expect(pagination.getByRole('link', { name: 'Last' })).toHaveAttribute('href', /\/works\?page=\d+&pageSize=8$/)
-  await expect(pagination.getByRole('link', { name: '1', exact: true })).toHaveClass(/bg-sky-500/)
+  await expect(page.getByLabel('Works pagination')).toBeHidden()
+  await expect(page.getByTestId('work-card')).toHaveCount(10)
+  await expect(page.getByTestId('works-load-more')).toBeVisible()
 })
 
-test('works pagination uses stable tablet page size instead of height-driven collapse', async ({ page }) => {
-  await page.setViewportSize({ width: 1024, height: 720 })
+test('works list uses infinite feed on tablet (820px) and appends next page', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 820, height: 1180 })
   await page.goto('/works')
 
-  const expectedPageSize = await expectedPublicWorksPageSize(page)
-  await expect(page.getByTestId('work-card')).toHaveCount(expectedPageSize)
-  await expect(page.locator(`nav[aria-label="Works pagination"] a[href="/works?page=1&pageSize=${expectedPageSize}"]`)).toBeVisible()
-})
+  await expect(page.getByLabel('Works pagination')).toBeHidden()
+  await expect(page.getByTestId('work-card')).toHaveCount(10)
 
-test('works pagination hydrates page and pageSize query params without rewriting the requested page', async ({ page }) => {
-  await page.setViewportSize({ width: 1024, height: 720 })
-  const expectedPageSize = await expectedPublicWorksPageSize(page)
-  await page.goto(`/works?page=2&pageSize=${expectedPageSize}`)
-
-  const pagination = page.getByLabel('Works pagination')
-
-  await expect.poll(() => new URL(page.url()).searchParams.get('page')).toBe('2')
-  await expect(pagination.getByText('2 /')).toBeVisible()
-  await expect(pagination.getByRole('link', { name: '1', exact: true })).toHaveAttribute('href', `/works?page=1&pageSize=${expectedPageSize}`)
-  await expect(pagination.getByRole('link', { name: 'Previous' })).toHaveAttribute('href', `/works?page=1&pageSize=${expectedPageSize}`)
-  await expect(pagination.getByRole('link', { name: 'Next' })).toHaveAttribute('href', `/works?page=3&pageSize=${expectedPageSize}`)
-  await expect(pagination.getByRole('link', { name: 'Last' })).toHaveAttribute('href', new RegExp(`/works\\?page=\\d+&pageSize=${expectedPageSize}$`))
-  await expect(pagination.getByRole('link', { name: '2', exact: true })).toHaveClass(/bg-sky-500/)
-  await expect(page.getByTestId('work-card')).toHaveCount(expectedPageSize)
-})
-
-test('works pagination next and previous clicks stay within latency budget', async ({ page }, testInfo) => {
-  await page.setViewportSize({ width: 1280, height: 960 })
-  const response = await page.request.get('/api/public/works?page=1&pageSize=2')
-  expect(response.ok()).toBeTruthy()
-  const payload = await response.json() as { totalPages: number }
-  test.skip(payload.totalPages < 2, 'Clean seed does not have a second works page.')
-
-  await page.goto('/works?page=1&pageSize=2')
-  await expect(page.getByTestId('work-card').first()).toBeVisible()
-
-  const pagination = page.getByLabel('Works pagination')
   await measureStep(
     testInfo,
-    'Works pagination Next click to active page and grid',
+    'Works tablet load more appends next page',
+    'publicPagination',
+    async () => {
+      await page.getByTestId('works-load-more').click()
+    },
+    async () => {
+      await expect(page.getByTestId('work-card')).toHaveCount(20)
+    },
+  )
+})
+
+test('works list keeps desktop pagination and hides infinite controls at >=1024px', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 1280, height: 960 })
+  await page.goto('/works')
+
+  const pagination = page.getByLabel('Works pagination')
+  await expect(pagination).toBeVisible()
+  await expect(page.getByTestId('works-load-more')).toHaveCount(0)
+  const payload = await (await page.request.get('/api/public/works?page=1&pageSize=8')).json() as { totalPages: number }
+  test.skip(payload.totalPages < 2, 'Clean seed does not have a second works page.')
+  await expect(pagination.getByRole('link', { name: 'Next' })).toBeVisible()
+
+  await measureStep(
+    testInfo,
+    'Works desktop pagination next navigation',
     'publicPagination',
     async () => {
       await pagination.getByRole('link', { name: 'Next' }).click()
       await expect.poll(() => new URL(page.url()).searchParams.get('page')).toBe('2')
     },
     async () => {
-      await expect.poll(() => new URL(page.url()).searchParams.get('page')).toBe('2')
-      await expect(pagination.getByRole('link', { name: '2', exact: true })).toHaveClass(/bg-sky-500/)
-      await expect(page.getByTestId('work-card').first()).toBeVisible()
+      await expect(page.getByLabel('Works pagination').getByRole('link', { name: '2', exact: true })).toHaveClass(/bg-sky-500/)
     },
   )
-
-  await measureStep(
-    testInfo,
-    'Works pagination Previous click to active page and grid',
-    'publicPagination',
-    async () => {
-      await pagination.getByRole('link', { name: 'Previous' }).click()
-      await expect.poll(() => new URL(page.url()).searchParams.get('page')).toBe('1')
-    },
-    async () => {
-      await expect.poll(() => new URL(page.url()).searchParams.get('page')).toBe('1')
-      await expect(pagination.getByRole('link', { name: '1', exact: true })).toHaveClass(/bg-sky-500/)
-      await expect(page.getByTestId('work-card').first()).toBeVisible()
-    },
-  )
-})
-
-test('works density is stable at tablet width regardless of intermediate height', async ({ page }) => {
-  await page.setViewportSize({ width: 1024, height: 960 })
-  await page.goto('/works')
-
-  const expectedPageSize = await expectedPublicWorksPageSize(page)
-  await expect(page.getByTestId('work-card')).toHaveCount(expectedPageSize)
-
-  const heights = await page.getByTestId('work-card').evaluateAll((elements) =>
-    elements.map((element) => Math.round(element.getBoundingClientRect().height))
-  )
-
-  expect(Math.max(...heights) - Math.min(...heights)).toBeLessThan(4)
 })

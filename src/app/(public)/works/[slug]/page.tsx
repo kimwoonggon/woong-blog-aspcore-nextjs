@@ -18,6 +18,24 @@ interface PageProps {
     params: Promise<{ slug: string }>
 }
 
+function resolveYouTubeThumbnail(sourceKey: string) {
+    const videoId = sourceKey.trim()
+    return videoId ? `https://img.youtube.com/vi/${encodeURIComponent(videoId)}/hqdefault.jpg` : null
+}
+
+function resolveWorkMetadataImage(work: Awaited<ReturnType<typeof fetchPublicWorkBySlug>>) {
+    if (!work) {
+        return null
+    }
+
+    if (work.thumbnailUrl) {
+        return work.thumbnailUrl
+    }
+
+    const youtubeVideo = work.videos.find((video) => video.sourceType === 'youtube' && video.sourceKey)
+    return youtubeVideo ? resolveYouTubeThumbnail(youtubeVideo.sourceKey) : null
+}
+
 export async function generateStaticParams() {
     const works = await fetchAllPublicWorks().catch(() => [])
     return works.map((work) => ({ slug: work.slug }))
@@ -35,6 +53,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         description: work.excerpt,
         path: `/works/${work.slug}`,
         type: 'article',
+        images: resolveWorkMetadataImage(work),
     })
 }
 
@@ -70,7 +89,7 @@ export default async function WorkDetailPage({ params }: PageProps) {
     const olderWork = currentIndex >= 0 && currentIndex < sortedWorks.length - 1 ? sortedWorks[currentIndex + 1] : null
     return (
         <article className="mx-auto w-full px-4 py-8 md:px-6 md:py-12">
-            <div className="mx-auto xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,48rem)_minmax(0,1fr)] xl:gap-8">
+            <div data-testid="work-article-content-layout" className="mx-auto xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,48rem)_minmax(0,1fr)] xl:gap-8">
                 <div data-testid="work-detail-body" className="mx-auto min-w-0 w-full max-w-3xl xl:col-start-2">
                     <header className="mb-8">
                         <h1 className="mb-4 text-3xl font-heading font-bold leading-tight text-foreground text-balance md:text-4xl">
@@ -127,40 +146,43 @@ export default async function WorkDetailPage({ params }: PageProps) {
                         )}
                     </div>
 
-                    {(olderWork || newerWork) && (
-                        <nav
-                            aria-label="Work navigation"
-                            data-testid="work-prev-next"
-                            className="mt-12 grid gap-3 border-t border-border/70 pt-8 sm:grid-cols-2"
-                        >
-                            {newerWork ? (
-                                <PublicDetailAdjacentLink hrefBase="/works" slug={newerWork.slug} label="Next" title={newerWork.title} />
-                            ) : (
-                                <div aria-hidden="true" />
-                            )}
-                            {olderWork ? (
-                                <PublicDetailAdjacentLink hrefBase="/works" slug={olderWork.slug} label="Previous" title={olderWork.title} alignEnd />
-                            ) : null}
-                        </nav>
-                    )}
-
-                    <div data-testid="work-related-shell" className="mx-auto mt-16 max-w-3xl border-t pt-12">
-                        <RelatedContentList
-                            heading="More Works"
-                            hrefBase="/works"
-                            items={sortedWorks}
-                            currentItemId={work.id}
-                            desktopPageSize={9}
-                            tabletPageSize={4}
-                            mobilePageSize={2}
-                            testIdBase="related-work"
-                        />
-                    </div>
                 </div>
 
                 <aside className="hidden xl:col-start-3 xl:block xl:w-full xl:max-w-72 xl:justify-self-start xl:pl-6">
                     <TableOfContents contentRootId="work-detail-content" />
                 </aside>
+            </div>
+
+            <div className="mx-auto max-w-3xl">
+                {(olderWork || newerWork) && (
+                    <nav
+                        aria-label="Work navigation"
+                        data-testid="work-prev-next"
+                        className="mt-12 grid gap-3 border-t border-border/70 pt-8 sm:grid-cols-2"
+                    >
+                        {newerWork ? (
+                            <PublicDetailAdjacentLink hrefBase="/works" slug={newerWork.slug} label="Next" title={newerWork.title} />
+                        ) : (
+                            <div aria-hidden="true" />
+                        )}
+                        {olderWork ? (
+                            <PublicDetailAdjacentLink hrefBase="/works" slug={olderWork.slug} label="Previous" title={olderWork.title} alignEnd />
+                        ) : null}
+                    </nav>
+                )}
+
+                <div data-testid="work-related-shell" className="mt-16 border-t pt-12">
+                    <RelatedContentList
+                        heading="More Works"
+                        hrefBase="/works"
+                        items={sortedWorks}
+                        currentItemId={work.id}
+                        desktopPageSize={9}
+                        tabletPageSize={4}
+                        mobilePageSize={2}
+                        testIdBase="related-work"
+                    />
+                </div>
             </div>
         </article>
     )

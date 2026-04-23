@@ -51,4 +51,41 @@ describe('ResponsivePageSizeSync', () => {
       expect(navigationMocks.replace).toHaveBeenCalledWith('/works?page=2&pageSize=8', { scroll: false })
     })
   })
+
+  it('switches to infinite-list params below desktop when enabled', async () => {
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 820 })
+    navigationMocks.search = 'page=3&pageSize=12&searchMode=title&query=test'
+
+    render(
+      <ResponsivePageSizeSync
+        desktopPageSize={12}
+        tabletPageSize={8}
+        mobilePageSize={4}
+        infiniteBelowDesktop
+        infinitePageSize={10}
+      />,
+    )
+
+    await waitFor(() => {
+      expect(navigationMocks.replace).toHaveBeenCalledWith('/blog?page=1&pageSize=10&query=test', { scroll: false })
+    })
+  })
+
+  it('keeps desktop pagination params when infinite mode is enabled but viewport is desktop', async () => {
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1280 })
+    navigationMocks.search = 'page=2&pageSize=12'
+
+    render(
+      <ResponsivePageSizeSync
+        desktopPageSize={12}
+        tabletPageSize={8}
+        mobilePageSize={4}
+        infiniteBelowDesktop
+        infinitePageSize={10}
+      />,
+    )
+
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(navigationMocks.replace).not.toHaveBeenCalled()
+  })
 })

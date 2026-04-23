@@ -3,6 +3,8 @@ using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
+using WoongBlog.Api.Infrastructure.Auth;
 using WoongBlog.Api.Infrastructure.Persistence;
 using WoongBlog.Api.Modules.AI.Application.Abstractions;
 using WoongBlog.Api.Modules.Content.Blogs.Api.CreateBlog;
@@ -52,5 +54,15 @@ public class StartupCompositionTests : IClassFixture<CustomWebApplicationFactory
         Assert.NotNull(services.GetRequiredService<IBlogCommandStore>());
         Assert.NotNull(services.GetRequiredService<IWorkVideoCleanupStore>());
         Assert.NotNull(services.GetRequiredService<WoongBlogDbContext>());
+    }
+
+    [Fact]
+    public void AuthOptions_Use300MinuteSlidingExpiration_AndEightHourAbsoluteExpiration()
+    {
+        using var scope = _factory.Services.CreateScope();
+        var authOptions = scope.ServiceProvider.GetRequiredService<IOptions<AuthOptions>>().Value;
+
+        Assert.Equal(300, authOptions.SlidingExpirationMinutes);
+        Assert.Equal(8, authOptions.AbsoluteExpirationHours);
     }
 }

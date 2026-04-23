@@ -18,9 +18,12 @@ public class GetWorksQueryHandler : IRequestHandler<GetWorksQuery, PagedWorksDto
         var pageSize = Math.Max(1, request.PageSize);
         var page = Math.Max(1, request.Page);
         var normalizedQuery = ContentSearchText.Normalize(request.Query);
-        var searchMode = string.Equals(request.SearchMode.Trim(), "content", StringComparison.OrdinalIgnoreCase)
-            ? ContentSearchMode.Content
-            : ContentSearchMode.Title;
+        var searchMode = request.SearchMode?.Trim().ToLowerInvariant() switch
+        {
+            "title" => ContentSearchMode.Title,
+            "content" => ContentSearchMode.Content,
+            _ => ContentSearchMode.Unified
+        };
 
         return await _workQueryStore.GetPublishedPageAsync(
             page,

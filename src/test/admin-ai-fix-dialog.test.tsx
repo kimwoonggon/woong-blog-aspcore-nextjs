@@ -48,6 +48,8 @@ describe('AIFixDialog', () => {
       batchConcurrency: 2,
       batchCompletedRetentionDays: 14,
       defaultSystemPrompt: 'Default blog system prompt',
+      defaultBlogFixPrompt: 'Default blog system prompt',
+      defaultWorkEnrichPrompt: 'Work prompt for {title}',
     })
     mocks.fetchWithCsrf.mockResolvedValue(makeJsonResponse({ fixedHtml: '<p>fixed</p>' }))
   })
@@ -79,7 +81,7 @@ describe('AIFixDialog', () => {
       codexReasoningEffort: 'medium',
       customPrompt: 'Apply this single-fix prompt.',
     })
-    expect(window.localStorage.getItem('admin-ai-system-prompt')).toBe('Apply this single-fix prompt.')
+    expect(window.localStorage.getItem('admin-ai-blog-fix-system-prompt')).toBe('Apply this single-fix prompt.')
   })
 
   it('requires saving prompt edits before generating', async () => {
@@ -112,6 +114,8 @@ describe('AIFixDialog', () => {
       batchConcurrency: 2,
       batchCompletedRetentionDays: 14,
       defaultSystemPrompt: 'Default blog system prompt',
+      defaultBlogFixPrompt: 'Default blog system prompt',
+      defaultWorkEnrichPrompt: 'Work prompt for {title}',
     })
 
     render(<AIFixDialog content="<p>draft</p>" onApply={vi.fn()} />)
@@ -138,7 +142,7 @@ describe('AIFixDialog', () => {
     })
     fireEvent.click(screen.getByRole('button', { name: 'Save prompt' }))
 
-    expect(window.localStorage.getItem('admin-ai-system-prompt')).toBe('Saved single prompt.')
+    expect(window.localStorage.getItem('admin-ai-blog-fix-system-prompt')).toBe('Saved single prompt.')
     expect(mocks.toast.success).toHaveBeenCalledWith('System prompt saved')
 
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
@@ -163,7 +167,7 @@ describe('AIFixDialog', () => {
     fireEvent.click(screen.getByRole('button', { name: 'AI Enrich' }))
 
     await waitFor(() => {
-      expect(screen.getByLabelText('AI system prompt')).toHaveValue('Default blog system prompt')
+      expect(screen.getByLabelText('AI system prompt')).toHaveValue('Work prompt for Work title')
     })
 
     fireEvent.change(screen.getByLabelText('AI system prompt'), {
@@ -182,7 +186,7 @@ describe('AIFixDialog', () => {
       title: 'Work title',
       customPrompt: 'Saved enrich prompt.',
     })
-    expect(window.localStorage.getItem('admin-ai-system-prompt')).toBe('Saved enrich prompt.')
+    expect(window.localStorage.getItem('admin-ai-work-enrich-system-prompt')).toBe('Saved enrich prompt.')
     expect(screen.getByLabelText('AI system prompt')).toHaveValue('Saved enrich prompt.')
   })
 })

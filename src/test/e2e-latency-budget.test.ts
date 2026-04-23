@@ -9,6 +9,7 @@ import {
   evaluateLatencyBudget,
   getLatencyMetrics,
   measureStep,
+  normalizeInteractionsForBudget,
   recordApiResponseMetric,
   resolveLatencyBudget,
   resolveNamedStepBudget,
@@ -21,6 +22,7 @@ const budgetConfig: PerformanceBudgetConfig = {
   defaults: {
     api: { warnMs: 300, hardMs: 600, failOnHard: false },
     testDuration: { warnMs: 10000, failOnHard: false },
+    interaction: { warnMs: 150, hardMs: 250, failOnHard: false },
   },
   steps: {
     publicPagination: { warnMs: 800, hardMs: 1200, failOnHard: true },
@@ -41,6 +43,16 @@ const budgetConfig: PerformanceBudgetConfig = {
       filePattern: '**/admin-work-video-*.spec.ts',
       warnMs: 60000,
       hardMs: 180000,
+      failOnHard: false,
+    },
+  ],
+  interactions: [
+    {
+      name: 'interaction-keyboard-notion',
+      namePattern: 'keydown',
+      filePattern: '**/ui-admin-notion-*.spec.ts',
+      warnMs: 260,
+      hardMs: 450,
       failOnHard: false,
     },
   ],
@@ -85,6 +97,22 @@ describe('E2E latency budgets', () => {
     })
   })
 
+  it('matches interaction profile budgets by event name and file pattern', () => {
+    const budget = resolveLatencyBudget(budgetConfig, {
+      kind: 'interaction',
+      name: 'keydown',
+      file: '/repo/tests/ui-admin-notion-autosave-info.spec.ts',
+      title: 'AF-042 autosave',
+      target: '[data-testid="notion-editor"]',
+    })
+
+    expect(budget).toMatchObject({
+      name: 'interaction-keyboard-notion',
+      warnMs: 260,
+      hardMs: 450,
+    })
+  })
+
   it('classifies warn and hard budget issues', () => {
     expect(evaluateLatencyBudget('step', 'next page', 900, { warnMs: 800, hardMs: 1200, failOnHard: true })).toMatchObject({
       severity: 'warn',
@@ -95,6 +123,38 @@ describe('E2E latency budgets', () => {
       severity: 'hard',
       failOnHard: true,
     })
+  })
+})
+
+describe('E2E interaction normalization', () => {
+  it('collapses click-family duplicate events into one representative interaction', () => {
+    const normalized = normalizeInteractionsForBudget([
+      { name: 'pointerdown', durationMs: 176, startTimeMs: 100, source: 'performance-observer', target: '[data-testid="notion-library-trigger"]' },
+      { name: 'mousedown', durationMs: 176, startTimeMs: 101, source: 'performance-observer', target: '[data-testid="notion-library-trigger"]' },
+      { name: 'pointerup', durationMs: 176, startTimeMs: 128, source: 'performance-observer', target: '[data-testid="notion-library-trigger"]' },
+      { name: 'mouseup', durationMs: 176, startTimeMs: 129, source: 'performance-observer', target: '[data-testid="notion-library-trigger"]' },
+      { name: 'click', durationMs: 176, startTimeMs: 130, source: 'performance-observer', target: '[data-testid="notion-library-trigger"]' },
+    ])
+
+    expect(normalized).toHaveLength(1)
+    expect(normalized[0]).toMatchObject({
+      name: 'click',
+      durationMs: 176,
+      target: '[data-testid="notion-library-trigger"]',
+    })
+  })
+
+  it('collapses keyboard keydown+keypress duplicates into one keyboard interaction', () => {
+    const normalized = normalizeInteractionsForBudget([
+      { name: 'keydown', durationMs: 232.8, startTimeMs: 200, source: 'performance-observer', target: '.ProseMirror' },
+      { name: 'keypress', durationMs: 232.8, startTimeMs: 205, source: 'performance-observer', target: '.ProseMirror' },
+      { name: 'keydown', durationMs: 188, startTimeMs: 480, source: 'performance-observer', target: '.ProseMirror' },
+      { name: 'keypress', durationMs: 188, startTimeMs: 485, source: 'performance-observer', target: '.ProseMirror' },
+    ])
+
+    expect(normalized).toHaveLength(2)
+    expect(normalized[0].name).toBe('keydown')
+    expect(normalized[1].name).toBe('keydown')
   })
 })
 

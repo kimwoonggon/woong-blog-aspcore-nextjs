@@ -53,6 +53,7 @@ Rules:
     }
 
     public static string GetDefaultBlogFixPrompt() => LoadPromptCatalog().BlogFix;
+    public static string GetDefaultWorkEnrichPrompt() => LoadPromptCatalog().WorkEnrichTemplate;
 
     public async Task<BlogAiFixResult> FixHtmlAsync(string html, CancellationToken cancellationToken, AiFixRequestOptions? options = null)
     {
@@ -601,6 +602,8 @@ public sealed class AiRuntimeCapabilities(IOptions<AiOptions> options) : IAiRunt
     public IReadOnlyList<string> GetAvailableProviders() => BlogAiFixService.GetAvailableProviders(_options);
 
     public string GetDefaultBlogFixPrompt() => BlogAiFixService.GetDefaultBlogFixPrompt();
+
+    public string GetDefaultWorkEnrichPrompt() => BlogAiFixService.GetDefaultWorkEnrichPrompt();
 }
 
 internal sealed record AiPromptCatalog(string BlogFix, string WorkEnrichTemplate);

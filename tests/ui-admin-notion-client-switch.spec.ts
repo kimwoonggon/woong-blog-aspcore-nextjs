@@ -7,9 +7,10 @@ test('switching documents in notion view keeps the editor visible while changing
 
   await page.getByTestId('notion-library-trigger').click()
   const listItems = page.getByTestId('notion-blog-list-item')
-  await expect(listItems.first()).toBeVisible()
+  await page.waitForTimeout(500)
   const itemCount = await listItems.count()
   test.skip(itemCount < 2, 'Need at least two blog documents for client-side switching coverage')
+  await expect(listItems.first()).toBeVisible()
 
   const hrefs = await listItems.evaluateAll((elements) =>
     elements.map((element) => (element as HTMLAnchorElement).getAttribute('href') ?? ''),
@@ -38,10 +39,10 @@ test('selected notion document persists after reload via url state', async ({ pa
 
   await page.getByTestId('notion-library-trigger').click()
   const listItems = page.getByTestId('notion-blog-list-item')
-  await expect(listItems.first()).toBeVisible()
-
+  await page.waitForTimeout(500)
   const itemCount = await listItems.count()
   test.skip(itemCount < 2, 'Need at least two blog documents for reload persistence coverage')
+  await expect(listItems.first()).toBeVisible()
 
   const hrefs = await listItems.evaluateAll((elements) =>
     elements.map((element) => (element as HTMLAnchorElement).getAttribute('href') ?? ''),

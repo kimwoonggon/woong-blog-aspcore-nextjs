@@ -6,6 +6,7 @@ namespace WoongBlog.Api.Modules.Content.Blogs.Application.UpdateBlog;
 public sealed record UpdateBlogCommand(
     Guid Id,
     string Title,
+    string? Excerpt,
     string[] Tags,
     bool Published,
     string ContentJson

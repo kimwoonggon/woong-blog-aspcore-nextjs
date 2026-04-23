@@ -52,6 +52,8 @@ describe('AdminBlogBatchAiPanel', () => {
       batchConcurrency: 2,
       batchCompletedRetentionDays: 14,
       defaultSystemPrompt: 'Default blog system prompt',
+      defaultBlogFixPrompt: 'Default blog system prompt',
+      defaultWorkEnrichPrompt: 'Work prompt for {title}',
     })
     mocks.listBlogAiBatchJobsBrowser.mockResolvedValue({
       jobs: [],
@@ -153,7 +155,7 @@ describe('AdminBlogBatchAiPanel', () => {
     expect(JSON.parse(request.body)).toMatchObject({
       customPrompt: 'Use this batch-specific prompt.',
     })
-    expect(window.localStorage.getItem('admin-ai-system-prompt')).toBe('Use this batch-specific prompt.')
+    expect(window.localStorage.getItem('admin-ai-blog-batch-system-prompt')).toBe('Use this batch-specific prompt.')
   })
 
   it('requires saving batch prompt edits before generating a batch job', async () => {
@@ -184,7 +186,7 @@ describe('AdminBlogBatchAiPanel', () => {
     })
     fireEvent.click(screen.getByRole('button', { name: 'Save prompt' }))
 
-    expect(window.localStorage.getItem('admin-ai-system-prompt')).toBe('Saved batch prompt.')
+    expect(window.localStorage.getItem('admin-ai-blog-batch-system-prompt')).toBe('Saved batch prompt.')
     expect(mocks.toast.success).toHaveBeenCalledWith('System prompt saved')
 
     unmount()
@@ -243,6 +245,8 @@ describe('AdminBlogBatchAiPanel', () => {
       batchConcurrency: 2,
       batchCompletedRetentionDays: 14,
       defaultSystemPrompt: 'Default blog system prompt',
+      defaultBlogFixPrompt: 'Default blog system prompt',
+      defaultWorkEnrichPrompt: 'Work prompt for {title}',
     })
     renderPanel()
 
