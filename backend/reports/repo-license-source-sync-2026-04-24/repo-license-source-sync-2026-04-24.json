@@ -1,0 +1,20 @@
+{
+  "task": "repo-license-source-sync-2026-04-24",
+  "summary": [
+    "Added LICENSE to the source tree.",
+    "Updated README.md and package.json to carry the same custom license metadata."
+  ],
+  "not_changed": [
+    "No application behavior changes.",
+    "No OSS license switch."
+  ],
+  "validations": [
+    "Verified LICENSE exists.",
+    "Verified README.md license section.",
+    "Verified package.json license metadata."
+  ],
+  "risks": [
+    "This remains a custom proprietary license."
+  ],
+  "recommendation": "Keep source and runtime promotion paths aligned on the same root license files."
+}
