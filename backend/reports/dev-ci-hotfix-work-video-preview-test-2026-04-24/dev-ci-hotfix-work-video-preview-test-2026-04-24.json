@@ -1,0 +1,23 @@
+{
+  "task": "dev-ci-hotfix-work-video-preview-test-2026-04-24",
+  "summary": [
+    "Inspected failed CI Dev run 24891406974 and identified src/test/work-video-player.test.tsx as the concrete failing step.",
+    "Updated the unit test to derive expected preview sizing from the implementation preview scale constant."
+  ],
+  "not_changed": [
+    "No hover preview runtime behavior changes.",
+    "No backend processing changes.",
+    "No Playwright artifact files committed."
+  ],
+  "validations": [
+    "gh run view 24891406974 --log-failed",
+    "npx vitest run src/test/work-video-player.test.tsx",
+    "npm run typecheck",
+    "npm run lint"
+  ],
+  "risks": [
+    "A separate local full-suite failure in src/test/work-detail-metadata.test.ts was observed but was not part of the inspected dev CI failure.",
+    "Local working tree still contains uncommitted recording artifacts and backups."
+  ],
+  "recommendation": "Push the hotfix and re-run dev CI, then inspect only newly failing checks if any remain."
+}

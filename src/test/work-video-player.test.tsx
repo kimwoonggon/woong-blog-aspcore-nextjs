@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { parseTimelinePreviewVtt, WorkVideoPlayer } from '@/components/content/WorkVideoPlayer'
+import { parseTimelinePreviewVtt, timelinePreviewDisplayScale, WorkVideoPlayer } from '@/components/content/WorkVideoPlayer'
 
 const hlsMocks = vi.hoisted(() => ({
   attachMedia: vi.fn(),
@@ -241,11 +241,19 @@ timeline-sprite.jpg#xywh=0,0,320,180
 
     const bubble = screen.getByTestId('work-video-timeline-preview')
     const previewImage = bubble.querySelector('div')
-    expect(previewImage).toHaveStyle({
-      width: '240px',
-      height: '135px',
-      backgroundSize: '240px 135px',
-    })
+    expect(previewImage).toBeTruthy()
+
+    const previewElement = previewImage as HTMLDivElement
+    const width = Number.parseFloat(previewElement.style.width)
+    const height = Number.parseFloat(previewElement.style.height)
+    const [backgroundWidth, backgroundHeight] = previewElement.style.backgroundSize
+      .split(' ')
+      .map((value) => Number.parseFloat(value))
+
+    expect(width).toBeCloseTo(320 * timelinePreviewDisplayScale, 4)
+    expect(height).toBeCloseTo(180 * timelinePreviewDisplayScale, 4)
+    expect(backgroundWidth).toBeCloseTo(width, 4)
+    expect(backgroundHeight).toBeCloseTo(height, 4)
   })
 
   it('supports desktop resize modes when enabled', () => {
