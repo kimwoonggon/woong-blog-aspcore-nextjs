@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Public Session + Blog Editor QoL Audit</title>
+  <style>
+    body { font-family: system-ui, sans-serif; line-height: 1.5; max-width: 920px; margin: 40px auto; padding: 0 20px; color: #172033; }
+    h1, h2 { line-height: 1.2; }
+    code { background: #eef2f7; padding: 2px 4px; border-radius: 4px; }
+    li { margin: 6px 0; }
+    .status { border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px 16px; background: #f8fafc; }
+  </style>
+</head>
+<body>
+  <h1>Public Session + Blog Editor QoL Audit</h1>
+  <p><strong>Date:</strong> 2026-04-21</p>
+  <div class="status">
+    <p>This focused PR cleans public admin affordance session handling, preserves contact authored content, and improves BlogEditor save/excerpt ergonomics.</p>
+  </div>
+
+  <h2>Changed</h2>
+  <ul>
+    <li>Removed the redundant public layout session fetch and unused Navbar session prop.</li>
+    <li>Centralized public admin affordance visibility in <code>src/lib/auth/public-admin.ts</code>.</li>
+    <li>Updated public blog, works, contact, introduction, and resume pages to use the shared gate.</li>
+    <li>Removed contact fallback direct-email injection.</li>
+    <li>Added BlogEditor top quick save/back actions, kept bottom Create/Update submit, and added horizontal workspace resizing.</li>
+    <li>Kept excerpt-aware create/update/inline update flows.</li>
+    <li>Changed browser API default to same-origin <code>/api</code> for CSP-compatible Docker mutations.</li>
+  </ul>
+
+  <h2>Not Changed</h2>
+  <ul>
+    <li>Backend auth, role checks, session endpoint contract, CSRF behavior, and routes.</li>
+    <li>Anonymous public read access.</li>
+    <li>Excerpt-first card presentation.</li>
+    <li>Mobile/feed/search redesign, broad density tuning, related-content refactors, and autosave debounce redesign.</li>
+    <li>Resume PDF <code>DOMMatrix</code> SSR issue; diagnosed and deferred.</li>
+  </ul>
+
+  <h2>Validation</h2>
+  <ul>
+    <li>Focused Vitest: 6 files, 38 tests passed.</li>
+    <li><code>npm run lint</code>: passed with 5 existing warnings.</li>
+    <li><code>npm run typecheck</code>: passed.</li>
+    <li><code>npm test -- --run</code>: 47 files, 247 tests passed.</li>
+    <li>Docker dev stack rebuild: passed.</li>
+    <li>Focused Playwright subset: 14 passed, 1 existing skipped.</li>
+    <li>Full Playwright with 4 workers: 552 passed, 10 failed, 9 skipped; failed lines passed serial rerun.</li>
+    <li>Serial rerun of failed full-e2e lines: 29 passed.</li>
+  </ul>
+
+  <h2>Risks</h2>
+  <ul>
+    <li>Full e2e is not clean under 4 workers; failures point to parallel shared-state/test isolation.</li>
+    <li><code>DOMMatrix is not defined</code> remains in frontend logs from <code>react-pdf</code>/<code>pdfjs-dist</code> SSR evaluation on <code>/resume</code>.</li>
+    <li>Browser API base defaults to <code>/api</code>; absolute browser API deployments should set <code>NEXT_PUBLIC_API_BASE_URL</code>.</li>
+  </ul>
+
+  <h2>Recommendation</h2>
+  <p>Proceed with this focused PR and follow up separately on the resume PDF SSR issue and 4-worker e2e isolation.</p>
+</body>
+</html>

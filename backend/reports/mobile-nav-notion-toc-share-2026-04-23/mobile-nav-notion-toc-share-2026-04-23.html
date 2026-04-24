@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mobile Nav / Notion Perf / TOC / Work Share Meta Audit</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 2rem; line-height: 1.5; color: #111; }
+    h1, h2 { margin: 0 0 .6rem; }
+    section { margin: 1.2rem 0; }
+    ul { margin: .4rem 0 .2rem 1.2rem; }
+    code { background: #f3f4f6; padding: .1rem .3rem; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>Mobile Nav / Notion Perf / TOC / Work Share Meta Audit (2026-04-23)</h1>
+  <section>
+    <h2>Summary</h2>
+    <ul>
+      <li>Implemented requested mobile nav/header/footer-safe-area UX updates.</li>
+      <li>Implemented TOC rail spacing/boundary/fallback behavior.</li>
+      <li>Implemented Works share-message storage and metadata description priority.</li>
+      <li>Implemented notion autosave revalidation throttle and save-state decoupling.</li>
+      <li>Updated related Vitest/xUnit/Playwright coverage and stabilized flaky selectors/timing assumptions.</li>
+    </ul>
+  </section>
+  <section>
+    <h2>Validation</h2>
+    <ul>
+      <li><code>npm test</code>: passed (61 files, 302 tests)</li>
+      <li><code>npm run lint</code>: passed (warnings only)</li>
+      <li><code>npm run typecheck</code>: passed</li>
+      <li><code>dotnet test backend/WoongBlog.sln</code>: passed</li>
+      <li>Full <code>npm run test:e2e</code>: 572 passed / 9 skipped / 1 failed, then targeted fix+rerun for failing case passed</li>
+      <li>Latency (latest full run): artifacts 580, budget failures 0, warnings 77</li>
+    </ul>
+  </section>
+  <section>
+    <h2>Recommendation</h2>
+    <p>Scope is complete; run one final clean-run full Playwright in CI to lock a fully green baseline after the last targeted fix.</p>
+  </section>
+</body>
+</html>

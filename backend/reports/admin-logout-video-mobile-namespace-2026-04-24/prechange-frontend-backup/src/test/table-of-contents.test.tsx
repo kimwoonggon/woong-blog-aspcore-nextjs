@@ -1,0 +1,33 @@
+import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { afterEach, describe, expect, it } from 'vitest'
+import { TableOfContents, slugifyHeading } from '@/components/content/TableOfContents'
+
+afterEach(() => {
+  cleanup()
+  document.body.innerHTML = ''
+})
+
+describe('slugifyHeading', () => {
+  it('normalizes heading copy into stable slugs', () => {
+    expect(slugifyHeading('Why Seed Data Matters')).toBe('why-seed-data-matters')
+    expect(slugifyHeading('운영 관점의 이점')).toBe('운영-관점의-이점')
+  })
+
+  it('appends suffixes for duplicate headings', () => {
+    const usedSlugs = new Map<string, number>()
+
+    expect(slugifyHeading('Highlights', usedSlugs)).toBe('highlights')
+    expect(slugifyHeading('Highlights', usedSlugs)).toBe('highlights-2')
+  })
+
+  it('keeps TOC shell visible with a fallback message when no headings exist', async () => {
+    document.body.innerHTML = '<article id="toc-empty-content"><p>No headings yet.</p></article>'
+
+    render(<TableOfContents contentRootId="toc-empty-content" />)
+
+    await waitFor(() => {
+      expect(screen.getByTestId('blog-toc')).toBeInTheDocument()
+    })
+    expect(screen.getByTestId('blog-toc-empty')).toHaveTextContent('No sections yet')
+  })
+})

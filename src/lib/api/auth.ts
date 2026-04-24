@@ -10,6 +10,9 @@ export function getLocalAdminLoginUrl(returnUrl = '/admin', email = 'admin@examp
 
 let csrfTokenCache: string | null = null
 let csrfHeaderNameCache = 'X-CSRF-TOKEN'
+const SESSION_CACHE_TTL_MS = 10_000
+let authenticatedSessionCacheUntil = 0
+let authenticatedSessionPromise: Promise<boolean> | null = null
 
 function redirectToLoginForAuthFailure() {
   if (typeof window === 'undefined') {
@@ -25,31 +28,48 @@ async function ensureBrowserAuthenticatedSession() {
     return true
   }
 
-  try {
-    const response = await fetch(`${getApiBaseUrl()}/auth/session`, {
-      credentials: 'include',
-      cache: 'no-store',
-    })
+  if (authenticatedSessionCacheUntil > Date.now()) {
+    return true
+  }
 
-    if (response.status === 401 || response.status === 403) {
+  if (authenticatedSessionPromise) {
+    return authenticatedSessionPromise
+  }
+
+  authenticatedSessionPromise = (async () => {
+    try {
+      const response = await fetch(`${getApiBaseUrl()}/auth/session`, {
+        credentials: 'include',
+        cache: 'no-store',
+      })
+
+      if (response.status === 401 || response.status === 403) {
+        authenticatedSessionCacheUntil = 0
+        redirectToLoginForAuthFailure()
+        return false
+      }
+
+      if (!response.ok) {
+        throw new Error(`Session check failed with status ${response.status}.`)
+      }
+
+      const payload = await response.json() as { authenticated?: boolean }
+      if (payload.authenticated === true) {
+        authenticatedSessionCacheUntil = Date.now() + SESSION_CACHE_TTL_MS
+        return true
+      }
+
+      authenticatedSessionCacheUntil = 0
       redirectToLoginForAuthFailure()
       return false
+    } catch {
+      throw new Error('Session check failed. Please retry after the server is healthy.')
+    } finally {
+      authenticatedSessionPromise = null
     }
+  })()
 
-    if (!response.ok) {
-      throw new Error(`Session check failed with status ${response.status}.`)
-    }
-
-    const payload = await response.json() as { authenticated?: boolean }
-    if (payload.authenticated === true) {
-      return true
-    }
-
-    redirectToLoginForAuthFailure()
-    return false
-  } catch {
-    throw new Error('Session check failed. Please retry after the server is healthy.')
-  }
+  return authenticatedSessionPromise
 }
 
 function shouldRedirectToLogin(response: Response) {
@@ -127,12 +147,14 @@ export async function fetchWithCsrf(input: RequestInfo | URL, init: RequestInit 
     headers.set(csrf.headerName, csrf.requestToken)
     const retriedResponse = await fetch(input, requestInit)
     if (mutationRequest && shouldRedirectToLogin(retriedResponse)) {
+      authenticatedSessionCacheUntil = 0
       redirectToLoginForAuthFailure()
     }
     return retriedResponse
   }
 
   if (mutationRequest && shouldRedirectToLogin(response)) {
+    authenticatedSessionCacheUntil = 0
     redirectToLoginForAuthFailure()
   }
 
@@ -150,6 +172,7 @@ export async function logoutWithCsrf(returnUrl = '/') {
   }
 
   csrfTokenCache = null
+  authenticatedSessionCacheUntil = 0
 
   const payload = await response.json().catch(() => ({ redirectUrl: returnUrl })) as { redirectUrl?: string }
   return payload.redirectUrl ?? returnUrl

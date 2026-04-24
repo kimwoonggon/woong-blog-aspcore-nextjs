@@ -1,58 +1,26 @@
-
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { AdminErrorPanel } from '@/components/admin/AdminErrorPanel'
-import { InlineBlogEditorSection } from '@/components/admin/InlineBlogEditorSection'
+import { PublicBlogDetailAdminActions } from '@/components/admin/PublicBlogDetailAdminActions'
+import { PublicDetailAdjacentLink } from '@/components/content/PublicDetailAdjacentLink'
 import { RelatedContentList } from '@/components/content/RelatedContentList'
 import { InteractiveRenderer } from '@/components/content/InteractiveRenderer'
 import { TableOfContents } from '@/components/content/TableOfContents'
 import { Badge } from '@/components/ui/badge'
 import { Metadata } from 'next'
-import { fetchServerSession } from '@/lib/api/server'
+import { Suspense } from 'react'
 import { resolveBlogRenderableHtml } from '@/lib/content/blog-content'
-import { fetchAdminBlogById, fetchAllPublicBlogs, fetchPublicBlogBySlug } from '@/lib/api/blogs'
+import { fetchAllPublicBlogs, fetchPublicBlogBySlug } from '@/lib/api/blogs'
+import { createPublicMetadata } from '@/lib/seo'
 import { formatDetailPublishDate } from './blog-detail-helpers'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 60
 
 interface PageProps {
     params: Promise<{ slug: string }>
-    searchParams?: Promise<{ relatedPage?: string; returnTo?: string }>
 }
 
-function resolveSafeReturnTo(returnTo?: string | null) {
-    if (!returnTo) {
-        return null
-    }
-
-    let decodedReturnTo = returnTo
-
-    try {
-        decodedReturnTo = decodeURIComponent(returnTo)
-    } catch {
-        decodedReturnTo = returnTo
-    }
-
-    if (!decodedReturnTo.startsWith('/') || decodedReturnTo.startsWith('//')) {
-        return null
-    }
-
-    return decodedReturnTo
-}
-
-function buildDetailQuerySuffix(returnTo: string | null, relatedPage?: string) {
-    const params = new URLSearchParams()
-
-    if (returnTo) {
-        params.set('returnTo', returnTo)
-    }
-
-    if (relatedPage) {
-        params.set('relatedPage', relatedPage)
-    }
-
-    const query = params.toString()
-    return query ? `?${query}` : ''
+export async function generateStaticParams() {
+    const blogs = await fetchAllPublicBlogs().catch(() => [])
+    return blogs.map((blog) => ({ slug: blog.slug }))
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -62,35 +30,26 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
     if (!blog) return {}
 
-    return {
+    return createPublicMetadata({
         title: blog.title,
         description: blog.excerpt,
-    }
+        path: `/blog/${blog.slug}`,
+        type: 'article',
+    })
 }
 
-export default async function BlogDetailPage({ params, searchParams }: PageProps) {
+export default async function BlogDetailPage({ params }: PageProps) {
     const { slug } = await params
-    const resolvedSearchParams = await searchParams
     const decodedSlug = decodeURIComponent(slug)
-    const blog = await fetchPublicBlogBySlug(decodedSlug)
+    const [blog, allBlogs] = await Promise.all([
+        fetchPublicBlogBySlug(decodedSlug),
+        fetchAllPublicBlogs(),
+    ])
 
     if (!blog) {
         notFound()
     }
 
-    const session = await fetchServerSession()
-    let adminBlog = null
-    let adminLoadFailed = false
-
-    if (session.authenticated && session.role === 'admin') {
-        try {
-            adminBlog = await fetchAdminBlogById(blog.id)
-        } catch {
-            adminLoadFailed = true
-        }
-    }
-
-    const allBlogs = await fetchAllPublicBlogs()
     const renderedContent = resolveBlogRenderableHtml(blog.contentJson)
 
     const publishDate = formatDetailPublishDate(blog.publishedAt)
@@ -107,19 +66,10 @@ export default async function BlogDetailPage({ params, searchParams }: PageProps
     const currentIndex = sortedBlogs.findIndex((item) => item.id === blog.id)
     const newerBlog = currentIndex > 0 ? sortedBlogs[currentIndex - 1] : null
     const olderBlog = currentIndex >= 0 && currentIndex < sortedBlogs.length - 1 ? sortedBlogs[currentIndex + 1] : null
-    const relatedPageSuffix = resolvedSearchParams?.relatedPage
-        ? `?relatedPage=${encodeURIComponent(resolvedSearchParams.relatedPage)}`
-        : ''
-    const requestedReturnTo = resolveSafeReturnTo(resolvedSearchParams?.returnTo)
-    const fallbackReturnTo = resolvedSearchParams?.relatedPage
-        ? `/blog?page=${encodeURIComponent(resolvedSearchParams.relatedPage)}&pageSize=12`
-        : null
-    const afterDeleteHref = requestedReturnTo ?? fallbackReturnTo ?? '/blog'
-    const detailQuerySuffix = buildDetailQuerySuffix(requestedReturnTo, resolvedSearchParams?.relatedPage)
 
     return (
         <article className="mx-auto w-full px-4 py-8 md:px-6 md:py-12">
-            <div className="mx-auto xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,48rem)_minmax(0,1fr)] xl:gap-8">
+            <div data-testid="blog-article-content-layout" className="mx-auto xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,48rem)_minmax(0,1fr)] xl:items-start xl:gap-12">
                 <div data-testid="blog-detail-body" className="mx-auto min-w-0 w-full max-w-3xl xl:col-start-2">
                     <header className="mb-8">
                         <h1 className="mb-4 text-3xl font-heading font-bold leading-tight text-foreground text-balance md:text-4xl">
@@ -141,26 +91,7 @@ export default async function BlogDetailPage({ params, searchParams }: PageProps
                         </div>
                     </header>
 
-                    {session.authenticated && session.role === 'admin' && (
-                        adminLoadFailed || !adminBlog ? (
-                            <div className="mt-8">
-                                <AdminErrorPanel
-                                    title="Inline blog editor is unavailable"
-                                    message="The public blog view loaded, but the admin edit payload could not be loaded. Please retry after the backend is healthy."
-                                />
-                            </div>
-                        ) : (
-                            <div className="mt-8">
-                                <InlineBlogEditorSection
-                                    initialBlog={adminBlog}
-                                    afterDeleteHref={afterDeleteHref}
-                                    title="Study Inline Editor"
-                                    description="현재 글 뷰를 유지한 채 바로 수정하거나 삭제합니다."
-                                    triggerLabel="글 수정"
-                                />
-                            </div>
-                        )
-                    )}
+                    <PublicBlogDetailAdminActions blogId={blog.id} />
 
                     <div id="blog-detail-content" className="mt-8">
                         {renderedContent && (
@@ -168,38 +99,35 @@ export default async function BlogDetailPage({ params, searchParams }: PageProps
                         )}
                     </div>
 
-                    {(olderBlog || newerBlog) && (
+                </div>
+
+                <aside className="hidden xl:col-start-3 xl:block xl:w-full xl:max-w-80 xl:justify-self-start xl:self-start xl:pl-10">
+                    <TableOfContents contentRootId="blog-detail-content" />
+                </aside>
+            </div>
+
+            <div className="mx-auto max-w-3xl">
+                {(olderBlog || newerBlog) && (
+                    <Suspense fallback={null}>
                         <nav
                             aria-label="Study navigation"
                             data-testid="blog-prev-next"
                             className="mt-12 grid gap-3 border-t border-border/70 pt-8 sm:grid-cols-2"
                         >
                             {newerBlog ? (
-                                <Link
-                                    href={`/blog/${newerBlog.slug}${detailQuerySuffix || relatedPageSuffix}`}
-                                    prefetch={false}
-                                    className="group rounded-2xl border border-border/80 bg-background p-4 transition hover:border-primary/30 hover:shadow-sm"
-                                >
-                                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Next</p>
-                                    <p className="mt-2 text-base font-semibold text-foreground text-balance transition-colors group-hover:text-brand-accent">{newerBlog.title}</p>
-                                </Link>
+                                <PublicDetailAdjacentLink hrefBase="/blog" slug={newerBlog.slug} label="Next" title={newerBlog.title} />
                             ) : (
                                 <div aria-hidden="true" />
                             )}
                             {olderBlog ? (
-                                <Link
-                                    href={`/blog/${olderBlog.slug}${detailQuerySuffix || relatedPageSuffix}`}
-                                    prefetch={false}
-                                    className="group rounded-2xl border border-border/80 bg-background p-4 text-left transition hover:border-primary/30 hover:shadow-sm sm:justify-self-end"
-                                >
-                                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Previous</p>
-                                    <p className="mt-2 text-base font-semibold text-foreground text-balance transition-colors group-hover:text-brand-accent">{olderBlog.title}</p>
-                                </Link>
+                                <PublicDetailAdjacentLink hrefBase="/blog" slug={olderBlog.slug} label="Previous" title={olderBlog.title} alignEnd />
                             ) : null}
                         </nav>
-                    )}
+                    </Suspense>
+                )}
 
-                    <div data-testid="blog-related-shell" className="mx-auto mt-16 max-w-3xl border-t pt-12">
+                <div data-testid="blog-related-shell" className="mt-16 border-t pt-12">
+                    <Suspense fallback={null}>
                         <RelatedContentList
                             heading="More Studies"
                             hrefBase="/blog"
@@ -207,15 +135,12 @@ export default async function BlogDetailPage({ params, searchParams }: PageProps
                             currentItemId={blog.id}
                             desktopPageSize={9}
                             tabletPageSize={4}
-                            mobilePageSize={2}
+                            mobilePageSize={5}
                             testIdBase="related-blog"
+                            centerCurrentOnInitialPage
                         />
-                    </div>
+                    </Suspense>
                 </div>
-
-                <aside className="hidden xl:col-start-3 xl:block xl:w-full xl:max-w-72 xl:justify-self-start xl:pl-6">
-                    <TableOfContents contentRootId="blog-detail-content" />
-                </aside>
             </div>
         </article>
     )

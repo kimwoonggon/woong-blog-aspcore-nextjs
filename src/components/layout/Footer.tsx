@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Facebook, Instagram, Twitter, Linkedin, Github } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 interface FooterProps {
     ownerName?: string
@@ -8,6 +9,7 @@ interface FooterProps {
     twitterUrl?: string
     linkedinUrl?: string
     githubUrl?: string
+    className?: string
 }
 
 export function Footer({
@@ -16,7 +18,8 @@ export function Footer({
     instagramUrl = '',
     twitterUrl = '',
     linkedinUrl = '',
-    githubUrl = ''
+    githubUrl = '',
+    className,
 }: FooterProps) {
     const socialLinks = [
         { url: facebookUrl, icon: Facebook, label: 'Facebook' },
@@ -35,7 +38,7 @@ export function Footer({
     ]
 
     return (
-        <footer className="w-full border-t border-border bg-background py-6">
+        <footer className={cn('w-full border-t border-border bg-background py-6', className)}>
             <div className="container mx-auto flex flex-col gap-6 px-4">
                 <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
                     <div className="max-w-md space-y-1">

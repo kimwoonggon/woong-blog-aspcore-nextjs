@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 const expectedShortcut = process.env.PLAYWRIGHT_EXPECT_LOCAL_ADMIN_SHORTCUT ?? 'hidden'
 

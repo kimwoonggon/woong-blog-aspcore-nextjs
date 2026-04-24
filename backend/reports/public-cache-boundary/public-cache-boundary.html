@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Public Cache Boundary Audit</title>
+  <style>
+    body { font-family: system-ui, sans-serif; line-height: 1.5; max-width: 920px; margin: 40px auto; padding: 0 20px; color: #172033; }
+    h1, h2 { line-height: 1.2; }
+    code { background: #eef2f7; padding: 2px 4px; border-radius: 4px; }
+    li { margin: 6px 0; }
+  </style>
+</head>
+<body>
+  <h1>Public Cache Boundary Audit</h1>
+  <p><strong>Date:</strong> 2026-04-22</p>
+  <h2>Summary</h2>
+  <p>Public read fetches now use revalidate-based options, and contact/introduction/resume admin affordances are gated client-side instead of forcing server session coupling.</p>
+  <h2>More Cache-Friendly Routes</h2>
+  <ul>
+    <li><code>/</code></li>
+    <li><code>/contact</code></li>
+    <li><code>/introduction</code></li>
+    <li><code>/resume</code></li>
+  </ul>
+  <h2>Still Dynamic</h2>
+  <ul>
+    <li><code>/blog</code> and <code>/works</code>: search/pagination, QA hooks, and admin create affordances remain.</li>
+    <li><code>/blog/[slug]</code> and <code>/works/[slug]</code>: admin detail payload loading remains for inline editing.</li>
+  </ul>
+  <h2>Validation</h2>
+  <ul>
+    <li>Focused Vitest: 4 files, 24 tests passed.</li>
+    <li><code>npm run typecheck</code>: passed.</li>
+    <li><code>npm run lint</code>: passed with existing warnings.</li>
+    <li><code>npm run build</code>: passed.</li>
+    <li>Focused Playwright attempt was blocked by unavailable API proxy target.</li>
+  </ul>
+</body>
+</html>

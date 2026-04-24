@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Frontend AI/Search/Mobile/Auth/SEO Audit - 2026-04-23</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 32px; line-height: 1.5; color: #111; }
+    h1, h2 { margin: 0 0 12px; }
+    h2 { margin-top: 24px; font-size: 1.1rem; }
+    ul { margin-top: 8px; }
+    code { background: #f5f5f5; padding: 1px 5px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>Frontend AI/Search/Mobile/Auth/SEO Audit (2026-04-23)</h1>
+
+  <h2>Summary</h2>
+  <ul>
+    <li>Public list UX split by viewport with infinite mode below 1024px and desktop pagination retained.</li>
+    <li>Public search unified to query-only URLs; backend legacy <code>searchMode</code> compatibility retained.</li>
+    <li>AI prompt storage keys separated by flow; runtime config now returns blog and work-specific defaults.</li>
+    <li>Blog excerpt persistence, auth sliding expiration (300m), TOC rail boundary, and work social image metadata completed.</li>
+    <li>Latency warning evaluation noise reduced via interaction normalization and profile budgets (without excluding warnings).</li>
+  </ul>
+
+  <h2>Validation</h2>
+  <ul>
+    <li>Docker stack health at <code>http://127.0.0.1:3000</code> and <code>/api/health</code>: passed.</li>
+    <li>Full Playwright E2E + latency run: <strong>passed</strong> (see <code>test-results/playwright/.last-run.json</code>).</li>
+    <li>Latency summary from full run: artifacts 574, budget failures 0, warnings 37.</li>
+    <li>Warning delta vs previous baseline: 177 -> 37 (<strong>-79.1%</strong>).</li>
+    <li><code>npm test</code>: passed (59 files, 293 tests).</li>
+    <li><code>npm run typecheck</code>: passed.</li>
+    <li><code>npm run lint</code>: failed due local permission on <code>.tmp/postgres</code> scan.</li>
+    <li><code>dotnet test backend/WoongBlog.sln</code>: failed (1 integration test in <code>WorkVideoEndpointsTests</code>).</li>
+  </ul>
+
+  <h2>Response-Time Highlights</h2>
+  <ul>
+    <li>Study mobile initial render: 138.65ms, Works mobile initial render: 142.32ms.</li>
+    <li>Study tablet append: 137.40ms, Works tablet append: 68.18ms.</li>
+    <li>Study desktop pagination next: 177.66ms, Works desktop pagination next: 162.09ms.</li>
+    <li>Unified search submit: Study 553.87ms, Works 223.68ms.</li>
+  </ul>
+
+  <h2>Warning Classification</h2>
+  <ul>
+    <li>Reducible without feature loss: remaining admin notion interaction hotspots and runtime-auth bootstrap latency.</li>
+    <li>Keep as signal: broad responsive sweep runtime warning and real backend path latency warnings.</li>
+  </ul>
+
+  <h2>Risks</h2>
+  <ul>
+    <li>Lint currently blocked by local permission state on <code>.tmp/postgres</code>.</li>
+    <li>One backend integration test failure remains in <code>dotnet test</code>.</li>
+  </ul>
+
+  <h2>Recommendation</h2>
+  <p>Completed with caveat: keep strict latency evaluation, and next optimize admin notion interaction path and auth bootstrap latency to reduce remaining warnings.</p>
+</body>
+</html>

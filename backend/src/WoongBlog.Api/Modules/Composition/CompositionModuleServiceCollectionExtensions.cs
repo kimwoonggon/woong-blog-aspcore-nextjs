@@ -1,9 +1,11 @@
+using WoongBlog.Infrastructure.Modules.Composition;
+
 namespace WoongBlog.Api.Modules.Composition;
 
 internal static class CompositionModuleServiceCollectionExtensions
 {
     public static IServiceCollection AddCompositionModule(this IServiceCollection services)
     {
-        return services;
+        return services.AddCompositionInfrastructure();
     }
 }

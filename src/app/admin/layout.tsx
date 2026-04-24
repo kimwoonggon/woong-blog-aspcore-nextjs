@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { ArrowUpRight } from 'lucide-react'
+import { AdminLogoutButton } from '@/app/admin/AdminLogoutButton'
 import { AdminSidebarNav } from '@/components/admin/AdminSidebarNav'
 import { Button } from '@/components/ui/button'
 import { fetchServerSession } from '@/lib/api/server'
@@ -28,13 +29,14 @@ export default async function AdminLayout({
                     <h1 className="mt-1 text-lg font-semibold text-foreground">Admin Panel</h1>
                 </div>
 
-                <div className="mb-6">
+                <div className="mb-6 flex flex-wrap items-center gap-2">
                     <Button asChild variant="outline" size="sm" className="gap-2">
                         <Link href="/" target="_blank">
                             <ArrowUpRight aria-hidden="true" size={14} />
                             View Site
                         </Link>
                     </Button>
+                    <AdminLogoutButton />
                 </div>
 
                 <AdminSidebarNav />

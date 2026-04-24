@@ -1,0 +1,72 @@
+{
+  "task": "pagination-ai-provider-hotfix",
+  "date": "2026-04-22",
+  "summary": "Hotfix for public Study/Works pagination responsiveness, BlogEditor top save removal, AI provider dropdown restoration, and invalid Next segment config.",
+  "changed": [
+    "Removed server-side session checks from public Study and Works list render paths",
+    "Moved Study and Works admin affordances behind PublicAdminClientGate",
+    "Removed BlogEditor top sticky save/action bar",
+    "Kept bottom Create/Update and keyboard save behavior",
+    "Constrained AIFixDialog provider options to openai and codex",
+    "Changed backend runtime provider listing so Codex appears when CodexCommand is configured",
+    "Passed configured OpenAI API key to Codex child processes",
+    "Fixed public list revalidate exports to literal 60"
+  ],
+  "notChanged": [
+    "mobile/feed/search redesign",
+    "autosave workflow",
+    "backend auth and role checks",
+    "public card/content redesign",
+    "global Playwright worker isolation"
+  ],
+  "validations": [
+    {
+      "command": "npx vitest run src/test/blog-editor.test.tsx src/test/public-admin-rendering.test.tsx src/test/admin-ai-fix-dialog.test.tsx --pool=threads",
+      "result": "passed",
+      "details": "3 files passed, 19 tests passed"
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln --filter BlogAiFixServiceCodexRuntimeComponentTests",
+      "result": "passed",
+      "details": "Component target passed, 4 tests passed; existing NU1901 warnings remain"
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "passed"
+    },
+    {
+      "command": "npm run build",
+      "result": "passed",
+      "details": "Initial invalid segment config failure fixed by literal revalidate exports"
+    },
+    {
+      "command": "Docker compose frontend/backend rebuild",
+      "result": "passed"
+    },
+    {
+      "command": "curl /api/admin/ai/runtime-config with admin cookie",
+      "result": "passed",
+      "details": "availableProviders returned [\"openai\", \"codex\"]"
+    },
+    {
+      "command": "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 PLAYWRIGHT_EXPECT_LOCAL_ADMIN_SHORTCUT=visible npx playwright test tests/public-blog-pagination.spec.ts tests/public-works-pagination.spec.ts tests/e2e-visitor-pagination-journey.spec.ts tests/ui-admin-blog-excerpt.spec.ts tests/admin-blog-ai-dialog.spec.ts --workers=1",
+      "result": "passed",
+      "details": "13 passed"
+    },
+    {
+      "command": "npx eslint src tests playwright.config.ts next.config.ts eslint.config.mjs",
+      "result": "passed",
+      "details": "0 errors, 3 existing warnings"
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    }
+  ],
+  "risks": [
+    "npm run lint may still fail when Docker-owned .tmp/postgres is unreadable during root scan",
+    "AI runtime provider list now represents selectable choices; provider execution still validates auth/configuration at run time",
+    "Public list pages are still dynamic in Next route summary due query-driven pagination/search and runtime API fetches"
+  ],
+  "recommendation": "Keep as focused hotfix; handle local Docker .tmp ESLint ignore separately."
+}

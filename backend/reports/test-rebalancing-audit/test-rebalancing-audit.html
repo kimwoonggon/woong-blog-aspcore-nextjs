@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Test Rebalancing PR Audit</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, sans-serif; margin: 2rem; color: #172033; line-height: 1.5; }
+    h1, h2 { color: #111827; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: 0.95rem; }
+    th, td { border: 1px solid #d0d7de; padding: 0.55rem; vertical-align: top; }
+    th { background: #f6f8fa; text-align: left; }
+    .pass { display: inline-block; background: #dcfce7; color: #166534; padding: 0.2rem 0.45rem; border-radius: 999px; font-weight: 700; }
+    .meta { color: #4b5563; }
+  </style>
+</head>
+<body>
+  <h1>Test Rebalancing PR Audit</h1>
+  <p class="meta">
+    Generated: <code>2026-04-21T11:20:13+09:00</code><br>
+    Branch: <code>feat/phase-2-backend-discompostion</code><br>
+    Commit SHA: <code>066c48c1ed04d096d6e2a2cd9322c4b967c6aed1</code>
+  </p>
+
+  <h2>Executive Summary</h2>
+  <p>Overall status: <span class="pass">PASS</span></p>
+  <p>The test-rebalancing work satisfies the PR direction. Unit tests now contain focused Application/support helper and validator tests only. Infrastructure-backed tests now live in <code>WoongBlog.Api.ComponentTests</code>. Endpoint/full-host tests remain in IntegrationTests, ArchitectureTests enforce boundaries, and ContractTests remain Pact provider verification.</p>
+  <p>Final recommendation: <strong>ready for selective chapter2.5 modular deepening PR</strong>.</p>
+
+  <h2>What Changed</h2>
+  <table>
+    <thead><tr><th>Area</th><th>Change</th></tr></thead>
+    <tbody>
+      <tr><td>Test project structure</td><td>Added <code>WoongBlog.Api.ComponentTests</code> and added it to the backend solution.</td></tr>
+      <tr><td>Unit test cleanup</td><td>Removed Infrastructure, Domain, ASP.NET App, EF InMemory, Bogus, NSubstitute, and Shouldly dependencies from UnitTests.</td></tr>
+      <tr><td>Test movement</td><td>Moved five component-style files out of UnitTests into ComponentTests.</td></tr>
+      <tr><td>Architecture guard</td><td>Added a guard preventing UnitTests from reintroducing Infrastructure, ASP.NET App, or EF InMemory references.</td></tr>
+      <tr><td>Documentation</td><td>Updated README taxonomy note and added <code>backend/reports/test-rebalancing/test-inventory.md</code>.</td></tr>
+      <tr><td>Tiny production support</td><td>Added <code>InternalsVisibleTo("WoongBlog.Api.ComponentTests")</code>.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Tests Moved</h2>
+  <table>
+    <thead><tr><th>Before</th><th>After</th><th>Reason</th></tr></thead>
+    <tbody>
+      <tr><td><code>AuthRecorderTests.cs</code></td><td><code>AuthRecorderComponentTests.cs</code></td><td>Infrastructure auth/persistence, EF InMemory, DefaultHttpContext.</td></tr>
+      <tr><td><code>AuthRedirectUriResolverTests.cs</code></td><td><code>AuthRedirectUriResolverComponentTests.cs</code></td><td>Infrastructure auth resolver and ASP.NET request objects.</td></tr>
+      <tr><td><code>BlogAiFixServiceCodexRuntimeTests.cs</code></td><td><code>BlogAiFixServiceCodexRuntimeComponentTests.cs</code></td><td>Infrastructure AI service, temp filesystem, fake shell process, HttpClient.</td></tr>
+      <tr><td><code>CodexRuntimeEnvironmentTests.cs</code></td><td><code>CodexRuntimeEnvironmentComponentTests.cs</code></td><td>Infrastructure AI service, temp filesystem, fake executable script, HttpClient.</td></tr>
+      <tr><td><code>PublicQueryHandlerTests.cs</code></td><td><code>PublicQueryHandlerComponentTests.cs</code></td><td>Concrete Infrastructure stores, DbContext, EF InMemory.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Verification</h2>
+  <table>
+    <thead><tr><th>Command</th><th>Result</th></tr></thead>
+    <tbody>
+      <tr><td><code>dotnet test backend/tests/WoongBlog.Api.UnitTests/WoongBlog.Api.UnitTests.csproj</code></td><td>12 passed</td></tr>
+      <tr><td><code>dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj</code></td><td>26 passed</td></tr>
+      <tr><td><code>dotnet test backend/tests/WoongBlog.Api.ArchitectureTests/WoongBlog.Api.ArchitectureTests.csproj</code></td><td>25 passed</td></tr>
+      <tr><td><code>dotnet test backend/WoongBlog.sln</code></td><td>Contract 1, Unit 12, Component 26, Architecture 25, Integration 93 passed</td></tr>
+      <tr><td><code>dotnet test backend/WoongBlog.sln --filter "Category=Unit"</code></td><td>Unit 12 passed</td></tr>
+      <tr><td><code>dotnet test backend/WoongBlog.sln --filter "Category=Component"</code></td><td>Component 26 passed</td></tr>
+      <tr><td><code>rg</code> UnitTests boundary check</td><td>No Infrastructure/ASP.NET/EF InMemory/HttpClient/filesystem/runtime object matches</td></tr>
+      <tr><td><code>git diff --check</code></td><td>clean</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Risks And Deferred Items</h2>
+  <ul>
+    <li>ComponentTests intentionally depends on Infrastructure and ASP.NET.</li>
+    <li>IntegrationTests can be further split later if selective running becomes painful.</li>
+    <li>Overlapping Codex runtime tests remain for now.</li>
+    <li>Infrastructure internal access now includes ComponentTests as test-only migration support.</li>
+    <li>Existing low-severity NU1901 warning for AWSSDK.Core remains.</li>
+  </ul>
+
+  <h2>Final Recommendation</h2>
+  <p>The repository is ready for the next <strong>selective chapter2.5 modular deepening PR</strong>.</p>
+</body>
+</html>

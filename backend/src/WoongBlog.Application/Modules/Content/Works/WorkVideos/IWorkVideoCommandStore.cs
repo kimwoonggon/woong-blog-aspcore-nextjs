@@ -1,0 +1,29 @@
+using WoongBlog.Api.Domain.Entities;
+
+namespace WoongBlog.Application.Modules.Content.Works.WorkVideos;
+
+public interface IWorkVideoCommandStore
+{
+    Task<Work?> GetWorkForUpdateAsync(Guid workId, CancellationToken cancellationToken);
+
+    Task<WorkVideoUploadSession?> GetUploadSessionForUpdateAsync(
+        Guid workId,
+        Guid uploadSessionId,
+        CancellationToken cancellationToken);
+
+    Task<WorkVideo?> GetVideoForUpdateAsync(Guid workId, Guid videoId, CancellationToken cancellationToken);
+
+    Task<IReadOnlyList<WorkVideo>> GetVideosForWorkAsync(Guid workId, CancellationToken cancellationToken);
+
+    Task<int> CountVideosAsync(Guid workId, CancellationToken cancellationToken);
+
+    Task<int> GetNextSortOrderAsync(Guid workId, CancellationToken cancellationToken);
+
+    void AddUploadSession(WorkVideoUploadSession session);
+
+    void AddWorkVideo(WorkVideo video);
+
+    void RemoveWorkVideo(WorkVideo video);
+
+    Task SaveChangesAsync(CancellationToken cancellationToken);
+}

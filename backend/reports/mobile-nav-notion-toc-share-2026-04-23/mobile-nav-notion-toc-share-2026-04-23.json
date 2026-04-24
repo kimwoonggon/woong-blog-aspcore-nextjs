@@ -1,0 +1,55 @@
+{
+  "taskSlug": "mobile-nav-notion-toc-share-2026-04-23",
+  "date": "2026-04-23",
+  "summary": {
+    "mobileNav": true,
+    "tocLayoutAndFallback": true,
+    "worksShareMessage": true,
+    "notionPerfTuning": true,
+    "testsUpdated": true
+  },
+  "intentionallyNotChanged": [
+    "Backend auth/session semantics outside requested scope",
+    "Database schema migration for share message",
+    "Unrelated design system/theme overhaul",
+    "Production secret/deployment strategy"
+  ],
+  "validations": {
+    "npmTest": {
+      "status": "passed",
+      "details": "61 files, 302 tests"
+    },
+    "npmLint": {
+      "status": "passed_with_warnings",
+      "details": "0 errors"
+    },
+    "npmTypecheck": {
+      "status": "passed"
+    },
+    "dotnetTest": {
+      "status": "passed",
+      "command": "dotnet test backend/WoongBlog.sln"
+    },
+    "playwrightFull": {
+      "status": "partial",
+      "details": "572 passed, 9 skipped, 1 failed",
+      "failingSpec": "tests/feature-recording-0418.spec.ts::recording search url stability",
+      "postFixTargetedRerun": "passed"
+    },
+    "latency": {
+      "artifacts": 580,
+      "budgetFailures": 0,
+      "warnings": 77
+    }
+  },
+  "risks": [
+    "Final full-suite run was not repeated after the last single-test stabilization patch; targeted rerun confirms the fixed failing case.",
+    "Playwright recording artifacts under tests/playwright/0418test churn heavily during full runs."
+  ],
+  "recommendation": "Accept requested scope completion and run one final clean-run full Playwright in CI to seal a green baseline.",
+  "artifacts": [
+    "backend/reports/mobile-nav-notion-toc-share-2026-04-23/mobile-nav-notion-toc-share-2026-04-23.md",
+    "backend/reports/mobile-nav-notion-toc-share-2026-04-23/mobile-nav-notion-toc-share-2026-04-23.html",
+    "backend/reports/mobile-nav-notion-toc-share-2026-04-23/mobile-nav-notion-toc-share-2026-04-23.json"
+  ]
+}

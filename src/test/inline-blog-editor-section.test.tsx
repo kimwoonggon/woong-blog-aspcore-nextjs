@@ -96,6 +96,7 @@ describe('InlineBlogEditorSection', () => {
         initialBlog={{
           id: 'blog-1',
           title: 'Deleted blog',
+          slug: 'deleted-blog',
         }}
         afterDeleteHref="/blog?page=2&pageSize=12"
       />,
@@ -105,7 +106,7 @@ describe('InlineBlogEditorSection', () => {
 
     expect(window.confirm).toHaveBeenCalled()
     await waitFor(() => {
-      expect(mocks.deleteAdminBlog).toHaveBeenCalledWith('blog-1')
+      expect(mocks.deleteAdminBlog).toHaveBeenCalledWith('blog-1', 'deleted-blog')
     })
     expect(mocks.push).toHaveBeenCalledWith('/blog?page=2&pageSize=12')
     expect(mocks.refresh).toHaveBeenCalled()

@@ -1,0 +1,57 @@
+{
+  "taskSlug": "video-preview-upload-states-2026-04-24",
+  "date": "2026-04-24",
+  "summary": {
+    "changed": [
+      "Removed default autoplay and restored manual playback.",
+      "Kept preview hover near the native progress region by using a transparent overlay instead of rendering an extra visible seek bar.",
+      "Upgraded backend FFmpeg/FFprobe preview generation to emit time-indexed sprite/VTT data.",
+      "Added works upload phase messaging for upload, processing, and ready states."
+    ],
+    "notChanged": [
+      "Native browser controls were not replaced with a full custom player.",
+      "Preview fidelity still depends on successful preview asset generation in the runtime environment."
+    ]
+  },
+  "goals": {
+    "autoplay_removed": true,
+    "native_region_hover_preview_approximation": true,
+    "backend_time_indexed_preview_pipeline": true,
+    "upload_phase_messages": true
+  },
+  "validations": [
+    {
+      "command": "npx vitest run src/test/work-editor.test.tsx src/test/work-video-player.test.tsx src/test/blog-notion-workspace.test.tsx src/test/auth-csrf.test.ts",
+      "result": "pass",
+      "details": "41 tests"
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "pass"
+    },
+    {
+      "command": "npm run lint",
+      "result": "pass",
+      "details": "warnings only"
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter WorkVideoEndpointsTests",
+      "result": "pass",
+      "details": "7 tests"
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln",
+      "result": "pass"
+    },
+    {
+      "command": "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 npx playwright test tests/ui-admin-notion-autosave-info.spec.ts tests/public-work-videos.spec.ts --workers=1",
+      "result": "pass",
+      "details": "8 passed, 1 skipped"
+    }
+  ],
+  "risks": [
+    "The overlay approach still approximates native progress interaction rather than reading native bar internals directly.",
+    "The browser preview e2e path still skips when preview assets are not generated for the uploaded fixture in that environment."
+  ],
+  "recommendation": "Keep this pass and improve preview asset density later if closer YouTube-like fidelity is still needed."
+}

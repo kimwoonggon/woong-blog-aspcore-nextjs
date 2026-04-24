@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Notion Editor Save Test Impact Audit</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2rem; color: #111; line-height: 1.5; }
+    h1, h2 { margin-bottom: 0.5rem; }
+    ul { padding-left: 1.25rem; }
+    code { background: #f3f4f6; padding: 0.1rem 0.25rem; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>Notion Editor Save Test Impact Audit</h1>
+  <p>Audit-only inspection for changing Notion editor autosave to about 1 second and adding <code>Ctrl+S</code>/<code>Meta+S</code>.</p>
+
+  <h2>Primary Targets</h2>
+  <ul>
+    <li><code>src/test/blog-notion-workspace.test.tsx</code>: replace 10-second fake-timer assumptions and add manual-save unit coverage.</li>
+    <li><code>tests/ui-admin-notion-autosave-info.spec.ts</code>: tighten autosave timing assertions and add keyboard-save E2E coverage.</li>
+    <li><code>tests/admin-blog-edit.spec.ts</code>: optional smoke extension after document switching.</li>
+    <li><code>tests/ui-admin-notion-visual-state.spec.ts</code>: optional <code>Saving...</code> and keyboard-save visual coverage.</li>
+  </ul>
+
+  <h2>Brittle Areas</h2>
+  <ul>
+    <li>Class-based editor selectors like <code>.tiptap.ProseMirror</code>.</li>
+    <li>Fixed sleeps such as <code>waitForTimeout(900)</code> and <code>waitForTimeout(1500)</code>.</li>
+    <li>Character-by-character typing under a ~1 second debounce.</li>
+  </ul>
+
+  <h2>Recommendation</h2>
+  <p>Update the dedicated unit test and autosave Playwright spec first, then extend visual-state coverage and reduce fixed sleeps while touching those tests.</p>
+</body>
+</html>

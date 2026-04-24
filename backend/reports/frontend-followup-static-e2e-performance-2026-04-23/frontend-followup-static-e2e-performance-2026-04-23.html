@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Frontend Follow-Up Audit - 2026-04-23</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 900px; margin: 2rem auto; padding: 0 1rem; line-height: 1.55; color: #111827; }
+    h1, h2 { line-height: 1.2; }
+    code { background: #f3f4f6; border-radius: 4px; padding: 0.1rem 0.25rem; }
+    ul { padding-left: 1.25rem; }
+    .status { border: 1px solid #d1d5db; border-radius: 8px; padding: 1rem; background: #f9fafb; }
+  </style>
+</head>
+<body>
+  <h1>Frontend Follow-Up Audit - 2026-04-23</h1>
+  <div class="status">
+    <p><strong>Recommendation:</strong> Accept follow-up changes. Static/SSG coverage improved and final full E2E passed with 0 failures; Study/Works cold-load remains a performance follow-up.</p>
+  </div>
+  <h2>Key Changes</h2>
+  <ul>
+    <li>Public API origin can use <code>NEXT_PUBLIC_SITE_URL</code>, including <code>https://woonglab.com</code> in production examples.</li>
+    <li>Home, contact, introduction, resume, sitemap, robots, and known blog/work detail pages can prerender when build-time API origin is explicit.</li>
+    <li>Public detail pages no longer read server <code>searchParams</code> for return-state behavior.</li>
+    <li>Heavy public admin editor components are dynamically imported behind gates.</li>
+    <li>Slow E2E <code>networkidle</code> waits were replaced with concrete readiness waits.</li>
+  </ul>
+  <h2>Validation</h2>
+  <ul>
+    <li>Focused Vitest and typecheck passed.</li>
+    <li>Explicit-origin build passed and showed static/SSG public route improvements.</li>
+    <li>Focused Playwright public/runtime checks passed.</li>
+    <li>Final full E2E rerun: 569 passed, 8 skipped, 0 failed; latency budget failures 0.</li>
+    <li>Multi-iteration origin/dev benchmark completed with 1 warmup and 3 measured iterations.</li>
+  </ul>
+  <h2>Remaining</h2>
+  <ul>
+    <li>Study/Works cold first load still regresses in benchmark.</li>
+    <li><code>/blog</code> and <code>/works</code> remain dynamic by design for server query search/pagination.</li>
+    <li>Docker image builds without a build-time API origin cannot prerender data-backed public pages.</li>
+  </ul>
+</body>
+</html>

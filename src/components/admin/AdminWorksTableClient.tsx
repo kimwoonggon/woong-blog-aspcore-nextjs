@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, useTransition } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { ChevronLeft, ChevronRight, Eye, Pencil, Trash2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
@@ -54,6 +54,18 @@ function replaceBrowserUrl(pathname: string, queryString: string) {
   window.history.replaceState(window.history.state, '', queryString ? `${pathname}?${queryString}` : pathname)
 }
 
+function subscribeToHydration() {
+  return () => undefined
+}
+
+function getHydratedSnapshot() {
+  return true
+}
+
+function getServerHydratedSnapshot() {
+  return false
+}
+
 export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
   const router = useRouter()
   const pathname = usePathname()
@@ -64,20 +76,28 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
   const lastWrittenSearchParamsRef = useRef<string | null>(null)
   const hasMountedSearchSyncRef = useRef(false)
   const hasMountedUrlWriteRef = useRef(false)
+  const searchInputRef = useRef<HTMLInputElement>(null)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [workItems, setWorkItems] = useState(works)
   const [query, setQuery] = useState(requestedQuery)
   const [pendingDelete, setPendingDelete] = useState<PendingWorkDelete | null>(null)
   const [page, setPage] = useState(requestedPage)
+  const isInteractive = useSyncExternalStore(subscribeToHydration, getHydratedSnapshot, getServerHydratedSnapshot)
   const [isPending, startTransition] = useTransition()
   const pageSize = useResponsivePageSize(12, 8, 6)
+
+  useEffect(() => {
+    setWorkItems(works)
+  }, [works])
+
   const filteredWorks = useMemo(() => {
     const trimmedQuery = query.trim()
     if (!trimmedQuery) {
-      return works
+      return workItems
     }
 
-    return works.filter((work) => matchesWorkQuery(work, trimmedQuery))
-  }, [works, query])
+    return workItems.filter((work) => matchesWorkQuery(work, trimmedQuery))
+  }, [workItems, query])
   const totalPages = Math.max(1, Math.ceil(filteredWorks.length / pageSize))
   const currentPage = Math.min(page, totalPages)
   const returnTo = useMemo(() => {
@@ -122,6 +142,9 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
     let cancelled = false
     deferStateUpdate(() => {
       if (!cancelled) {
+        if (document.activeElement === searchInputRef.current) {
+          return
+        }
         setQuery(requestedQuery)
         setPage(requestedPage)
       }
@@ -209,10 +232,12 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
     startTransition(async () => {
       try {
         if (pendingDelete.ids.length === 1) {
-          await deleteAdminWork(pendingDelete.ids[0])
+          const work = workItems.find((item) => item.id === pendingDelete.ids[0])
+          await deleteAdminWork(pendingDelete.ids[0], work?.slug)
         } else {
           await deleteManyAdminWorks(pendingDelete.ids)
         }
+        setWorkItems((current) => current.filter((work) => !pendingDelete.ids.includes(work.id)))
         setSelectedIds((current) => current.filter((id) => !pendingDelete.ids.includes(id)))
         setPendingDelete(null)
         router.refresh()
@@ -227,6 +252,7 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">
         <div className="flex min-w-[240px] flex-1 items-center gap-3">
           <Input
+            ref={searchInputRef}
             value={query}
             onChange={(event) => {
               const nextQuery = event.target.value
@@ -234,7 +260,7 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
               setPage(1)
               setSelectedIds((current) =>
                 current.filter((id) =>
-                  works.some((work) =>
+                  workItems.some((work) =>
                     work.id === id
                     && matchesWorkQuery(work, nextQuery),
                   ),
@@ -244,6 +270,7 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
             placeholder="Search by title, tags, or category…"
             aria-label="Search work titles"
             className="max-w-sm"
+            disabled={!isInteractive}
           />
           <p className="text-sm text-muted-foreground">
             {filteredWorks.length} shown · {selectedCount > 0 ? `${selectedCount} selected` : 'Select rows to enable bulk delete.'}

@@ -1,4 +1,4 @@
-using WoongBlog.Api.Modules.Media.Application;
+using WoongBlog.Infrastructure.Modules.Media;
 
 namespace WoongBlog.Api.Modules.Media;
 
@@ -6,7 +6,6 @@ internal static class MediaModuleServiceCollectionExtensions
 {
     public static IServiceCollection AddMediaModule(this IServiceCollection services)
     {
-        services.AddScoped<IMediaAssetService, MediaAssetService>();
-        return services;
+        return services.AddMediaInfrastructure();
     }
 }

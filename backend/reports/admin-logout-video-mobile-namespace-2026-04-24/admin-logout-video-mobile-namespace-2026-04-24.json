@@ -1,0 +1,35 @@
+{
+  "task": "admin-logout-video-mobile-namespace-2026-04-24",
+  "status": "completed_with_e2e_failures",
+  "summary": {
+    "implemented": true,
+    "non_goals_respected": true,
+    "mandatory_audit_artifacts_generated": true
+  },
+  "validations": [
+    { "command": "npm test", "status": "pass", "details": "62 files, 308 tests" },
+    { "command": "npm run lint", "status": "pass", "details": "0 errors, warnings only" },
+    { "command": "npm run typecheck", "status": "pass" },
+    { "command": "dotnet test backend/WoongBlog.sln", "status": "pass" },
+    {
+      "command": "npm run test:e2e",
+      "status": "fail",
+      "details": "571 passed, 2 failed, 9 skipped",
+      "failures": [
+        "tests/e2e-visitor-content-exploration.spec.ts: strict locator collision on main h1",
+        "tests/ui-admin-notion-library-sheet.spec.ts: notion-library-sheet not visible"
+      ]
+    },
+    {
+      "command": "node scripts/run-e2e-latency.mjs -- --workers=1",
+      "status": "executed_via_npm_test_e2e",
+      "details": "test:e2e script already wraps this command"
+    }
+  ],
+  "risks": [
+    "2 active Playwright failures block full browser-regression confidence",
+    "HLS preview generation is best-effort and may produce no preview assets in some ffmpeg environments",
+    "Namespace migration is phase-1 only; mixed conventions remain"
+  ],
+  "recommendation": "Fix 2 failing Playwright specs and rerun full e2e before merge"
+}

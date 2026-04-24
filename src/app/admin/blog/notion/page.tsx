@@ -16,13 +16,32 @@ interface PageProps {
 
 export default async function AdminBlogNotionPage({ searchParams }: PageProps) {
     const resolvedSearchParams = await searchParams
+    const selectedIdFromQuery = resolvedSearchParams?.id ?? null
     let blogs: BlogAdminItem[] = []
+    let selectedBlog = null
     let loadFailed = false
 
-    try {
-        blogs = await fetchAdminBlogs()
-    } catch {
-        loadFailed = true
+    if (selectedIdFromQuery) {
+        const [blogsResult, selectedBlogResult] = await Promise.allSettled([
+            fetchAdminBlogs(),
+            fetchAdminBlogById(selectedIdFromQuery),
+        ])
+
+        if (blogsResult.status === 'fulfilled') {
+            blogs = blogsResult.value
+        } else {
+            loadFailed = true
+        }
+
+        if (selectedBlogResult.status === 'fulfilled') {
+            selectedBlog = selectedBlogResult.value
+        }
+    } else {
+        try {
+            blogs = await fetchAdminBlogs()
+        } catch {
+            loadFailed = true
+        }
     }
 
     if (loadFailed) {
@@ -37,10 +56,9 @@ export default async function AdminBlogNotionPage({ searchParams }: PageProps) {
         )
     }
 
-    const selectedId = resolvedSearchParams?.id ?? blogs[0]?.id ?? null
-    let selectedBlog = null
+    const selectedId = selectedIdFromQuery ?? blogs[0]?.id ?? null
 
-    if (selectedId) {
+    if (!selectedBlog && selectedId) {
         try {
             selectedBlog = await fetchAdminBlogById(selectedId)
         } catch {

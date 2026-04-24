@@ -1,0 +1,110 @@
+{
+  "taskSlug": "frontend-ai-search-mobile-auth-seo-2026-04-23",
+  "date": "2026-04-23",
+  "status": "completed_with_caveat",
+  "summary": {
+    "publicUxViewportSplit": true,
+    "unifiedPublicSearchFrontendNoSearchMode": true,
+    "backendLegacySearchModeCompatibility": true,
+    "aiPromptKeyIsolationByFlow": true,
+    "runtimeConfigPromptSplit": true,
+    "blogExcerptEndToEnd": true,
+    "authSlidingExpirationMinutes": 300,
+    "authAbsoluteExpirationHours": 8,
+    "tocRailBoundedToArticle": true,
+    "workSeoSocialImageMetadata": true,
+    "warningNoiseReductionApplied": true
+  },
+  "validations": [
+    {
+      "command": "docker compose -f docker-compose.dev.yml ps && curl -I http://127.0.0.1:3000 && curl http://127.0.0.1:3000/api/health",
+      "result": "passed",
+      "details": {
+        "stackHealthy": true
+      }
+    },
+    {
+      "command": "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 PLAYWRIGHT_EXPECT_LOCAL_ADMIN_SHORTCUT=visible node scripts/run-e2e-latency.mjs -- --workers=1",
+      "result": "passed",
+      "details": {
+        "playwrightLastRunStatus": "passed",
+        "latencyArtifacts": 574,
+        "budgetFailures": 0,
+        "warnings": 37,
+        "generatedAt": "2026-04-23T13:29:45.297Z"
+      }
+    },
+    {
+      "command": "npm test",
+      "result": "passed",
+      "details": {
+        "testFilesPassed": 59,
+        "testsPassed": 293
+      }
+    },
+    {
+      "command": "npm run lint",
+      "result": "failed",
+      "details": {
+        "reason": "EACCES: permission denied while scanning .tmp/postgres"
+      }
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "passed"
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln",
+      "result": "failed",
+      "details": {
+        "failedTests": 1,
+        "failedTestName": "WoongBlog.Api.Tests.WorkVideoEndpointsTests.FfmpegVideoTranscoder_SegmentsHlsAndProducesTheManifest",
+        "file": "backend/tests/WoongBlog.Api.IntegrationTests/WorkVideoEndpointsTests.cs",
+        "line": 136
+      }
+    }
+  ],
+  "latencyDelta": {
+    "baselineWarnings": 177,
+    "currentWarnings": 37,
+    "warningReduction": 140,
+    "warningReductionPercent": 79.1,
+    "baselineArtifacts": 574,
+    "currentArtifacts": 574,
+    "baselineBudgetFailures": 0,
+    "currentBudgetFailures": 0
+  },
+  "responseTimeHighlightsMs": {
+    "studyMobileInitialRenderPageGoto": 138.65,
+    "studyTabletAppendNextPage": 137.4,
+    "worksMobileInitialRenderPageGoto": 142.32,
+    "worksTabletAppendNextPage": 68.18,
+    "studyDesktopPaginationNext": 177.66,
+    "worksDesktopPaginationNext": 162.09,
+    "studyUnifiedSearchSubmit": 553.87,
+    "worksUnifiedSearchSubmit": 223.68,
+    "studyUnifiedSearchSubmitResponsePath": 599.3
+  },
+  "warningClassification": {
+    "reducibleWithoutFeatureLoss": [
+      "Interaction hotspot warnings in admin notion flows (keydown/click/hover-enter).",
+      "Auth bootstrap test-login API latency in runtime-auth suites."
+    ],
+    "keepAsSignal": [
+      "Responsive width sweep runtime warning from broad viewport coverage.",
+      "Backend autosave/blog-fix/site-settings API hard warnings."
+    ]
+  },
+  "notChanged": [
+    "admin table/list pagination behavior",
+    "unrelated backend architecture refactors",
+    "unrelated visual redesign",
+    "production secret/config policy"
+  ],
+  "risks": [
+    "npm run lint is blocked by local permission issue on .tmp/postgres.",
+    "dotnet test has one integration failure unrelated to latency warning normalization.",
+    "Remaining warnings (37) are concentrated in real interaction/API hotspots."
+  ],
+  "recommendation": "Accept this patch as completed with caveat; keep strict latency evaluation and target admin notion interaction performance plus auth bootstrap latency as the next warning-reduction step."
+}

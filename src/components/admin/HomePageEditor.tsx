@@ -11,6 +11,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Upload } from 'lucide-react'
 import { fetchWithCsrf } from '@/lib/api/auth'
 import { getBrowserApiBaseUrl } from '@/lib/api/browser'
+import { revalidatePublicPathsAfterMutation } from '@/lib/public-revalidation-client'
+import { getPagePublicRevalidationPaths } from '@/lib/public-revalidation-paths'
 
 interface HomeContent {
     headline?: string
@@ -89,6 +91,7 @@ export function HomePageEditor({ pageId, pageTitle, initialContent }: HomePageEd
             })
 
             if (response.ok) {
+                await revalidatePublicPathsAfterMutation(getPagePublicRevalidationPaths('home'))
                 router.refresh()
                 alert('Home page saved successfully!')
             } else {

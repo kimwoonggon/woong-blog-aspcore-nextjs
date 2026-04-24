@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, useTransition } from 'react'
 import { ChevronLeft, ChevronRight, Eye, Pencil, Sparkles, Trash2 } from 'lucide-react'
 import { AdminBlogBatchAiPanel } from '@/components/admin/AdminBlogBatchAiPanel'
 import { Badge } from '@/components/ui/badge'
@@ -54,6 +54,18 @@ function replaceBrowserUrl(pathname: string, queryString: string) {
   window.history.replaceState(window.history.state, '', queryString ? `${pathname}?${queryString}` : pathname)
 }
 
+function subscribeToHydration() {
+  return () => undefined
+}
+
+function getHydratedSnapshot() {
+  return true
+}
+
+function getServerHydratedSnapshot() {
+  return false
+}
+
 export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
   const router = useRouter()
   const pathname = usePathname()
@@ -65,11 +77,13 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
   const lastWrittenSearchParamsRef = useRef<string | null>(null)
   const hasMountedSearchSyncRef = useRef(false)
   const hasMountedUrlWriteRef = useRef(false)
+  const searchInputRef = useRef<HTMLInputElement>(null)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [showBatchAiPanel, setShowBatchAiPanel] = useState(false)
   const [query, setQuery] = useState(requestedQuery)
   const [pendingDelete, setPendingDelete] = useState<PendingBlogDelete | null>(null)
   const [page, setPage] = useState(requestedPage)
+  const isInteractive = useSyncExternalStore(subscribeToHydration, getHydratedSnapshot, getServerHydratedSnapshot)
   const [isPending, startTransition] = useTransition()
   const pageSize = useResponsivePageSize(12, 8, 6)
   const filteredBlogs = useMemo(() => {
@@ -128,6 +142,9 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
     let cancelled = false
     deferStateUpdate(() => {
       if (!cancelled) {
+        if (document.activeElement === searchInputRef.current) {
+          return
+        }
         setQuery(requestedQuery)
       }
     })
@@ -234,7 +251,8 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
     startTransition(async () => {
       try {
         if (pendingDelete.ids.length === 1) {
-          await deleteAdminBlog(pendingDelete.ids[0])
+          const blog = blogs.find((item) => item.id === pendingDelete.ids[0])
+          await deleteAdminBlog(pendingDelete.ids[0], blog?.slug)
         } else {
           await deleteManyAdminBlogs(pendingDelete.ids)
         }
@@ -252,6 +270,7 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">
         <div className="flex min-w-[240px] flex-1 items-center gap-3">
           <Input
+            ref={searchInputRef}
             value={query}
             onChange={(event) => {
               const nextQuery = event.target.value
@@ -269,6 +288,7 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
             placeholder="Search by title or tags…"
             aria-label="Search blog titles"
             className="max-w-sm"
+            disabled={!isInteractive}
           />
           <p className="text-sm text-muted-foreground">
             {filteredBlogs.length} shown · {selectedCount > 0 ? `${selectedCount} selected` : 'Select rows to enable bulk delete.'}

@@ -1,0 +1,136 @@
+{
+  "taskSlug": "notion-editor-save-test-impact-2026-04-24",
+  "summary": "Audit-only inspection of test impact for changing the admin Notion editor autosave cadence to about 1 second and adding Ctrl+S/Meta+S manual save.",
+  "changed": [],
+  "notChanged": [
+    "Production code",
+    "Test code",
+    "Runtime environment"
+  ],
+  "goals": [
+    "Identify existing Vitest coverage to modify or extend",
+    "Identify existing Playwright coverage to modify or extend",
+    "Recommend concise new assertions",
+    "Call out brittle selectors and timing assumptions"
+  ],
+  "nonGoals": [
+    "Implement the feature",
+    "Edit tests",
+    "Run the full suite"
+  ],
+  "implementationAnchors": [
+    {
+      "file": "src/components/admin/BlogNotionWorkspace.tsx",
+      "line": 60,
+      "detail": "Current autosave debounce is 10_000ms."
+    },
+    {
+      "file": "src/components/admin/BlogNotionWorkspace.tsx",
+      "line": 181,
+      "detail": "Autosave is scheduled by a timeout-based effect."
+    },
+    {
+      "file": "src/components/admin/BlogEditor.tsx",
+      "line": 276,
+      "detail": "Full blog editor already has a Ctrl+S/Meta+S keyboard save pattern."
+    }
+  ],
+  "recommendedUpdates": [
+    {
+      "priority": "high",
+      "file": "src/test/blog-notion-workspace.test.tsx",
+      "lines": [168, 210],
+      "actions": [
+        "Replace 9500ms/500ms timer assumptions with roughly 900-950ms then threshold-crossing assertions for a 1s debounce.",
+        "Assert no PUT before the threshold and one PUT after it.",
+        "Add a keyboard-save test that dispatches ctrl/meta+s, verifies preventDefault, fires an immediate save, and does not double-save after timers advance."
+      ]
+    },
+    {
+      "priority": "high",
+      "file": "tests/ui-admin-notion-autosave-info.spec.ts",
+      "lines": [37, 166],
+      "actions": [
+        "Rename the first autosave test so it no longer encodes a long autosave wait.",
+        "Reduce 15000ms save-state waits to a tighter 3000-5000ms range aligned with a 1s debounce plus CI slack.",
+        "Match the autosave PUT by request body containing the edited text.",
+        "Add a Ctrl+S/Meta+S manual-save test that proves save happens before the autosave timer would have expired.",
+        "Replace fixed sleep inference in the throttled revalidation test with request-count based assertions."
+      ]
+    },
+    {
+      "priority": "medium",
+      "file": "tests/admin-blog-edit.spec.ts",
+      "lines": [51, 84],
+      "actions": [
+        "After switching documents and editing, assert the Notion save chip reaches Saved quickly.",
+        "Optionally add a keyboard-save branch to ensure the shortcut applies to the active document after switching."
+      ]
+    },
+    {
+      "priority": "medium",
+      "file": "tests/ui-admin-notion-visual-state.spec.ts",
+      "lines": [33, 78],
+      "actions": [
+        "Extend visual-state coverage to include the Saving... chip state.",
+        "Exercise at least one branch through the keyboard-save path so manual save shares the same chip styling contract."
+      ]
+    }
+  ],
+  "brittleAssumptions": [
+    {
+      "file": "tests/ui-admin-notion-autosave-info.spec.ts",
+      "line": 27,
+      "type": "selector",
+      "detail": "Uses .tiptap.ProseMirror instead of a stable editor-specific test surface."
+    },
+    {
+      "file": "tests/admin-blog-edit.spec.ts",
+      "line": 74,
+      "type": "selector",
+      "detail": "Uses .tiptap.ProseMirror for Notion editor targeting."
+    },
+    {
+      "file": "tests/ui-admin-notion-autosave-info.spec.ts",
+      "line": 59,
+      "type": "timing",
+      "detail": "Uses waitForTimeout(900) to manufacture a visible Saving state."
+    },
+    {
+      "file": "tests/ui-admin-notion-autosave-info.spec.ts",
+      "line": 114,
+      "type": "timing",
+      "detail": "Uses waitForTimeout(1500) as a proxy for no second revalidation."
+    },
+    {
+      "file": "src/test/blog-notion-workspace.test.tsx",
+      "line": 189,
+      "type": "timing",
+      "detail": "Hard-codes the old 10-second debounce via fake timers."
+    },
+    {
+      "file": "tests/ui-admin-notion-autosave-info.spec.ts",
+      "line": 34,
+      "type": "interaction",
+      "detail": "Character-by-character typing can race with a 1-second debounce in slower CI runs."
+    }
+  ],
+  "validations": [
+    "Reviewed src/components/admin/BlogNotionWorkspace.tsx",
+    "Reviewed src/test/blog-notion-workspace.test.tsx",
+    "Reviewed tests/ui-admin-notion-autosave-info.spec.ts",
+    "Reviewed tests/admin-blog-edit.spec.ts",
+    "Reviewed tests/ui-admin-notion-visual-state.spec.ts",
+    "Reviewed tests/ui-admin-semantic-colors.spec.ts",
+    "Reviewed tests/ui-admin-notion-client-switch.spec.ts",
+    "Reviewed tests/ui-admin-notion-library-sheet.spec.ts",
+    "Ran repo-wide ripgrep searches for Notion/autosave/save-state/keyboard-save coverage",
+    "Verified plugin cache absolute paths"
+  ],
+  "risks": [
+    "Manual save semantics are not yet defined for dirty metadata fields in Notion view.",
+    "A 1-second debounce increases flake risk for tests that type long strings character-by-character.",
+    "Saving... may become too transient for naive visibility assertions."
+  ],
+  "recommendation": "Update the unit test and the dedicated Notion autosave Playwright spec first, then extend visual-state coverage for the keyboard-save path while reducing fixed sleeps and class-based editor selectors."
+}

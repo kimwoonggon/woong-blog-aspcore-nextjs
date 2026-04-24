@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Video Player Overlay Tweak Audit</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2rem; color: #111; }
+    h1, h2 { margin-bottom: 0.5rem; }
+    ul { line-height: 1.5; }
+    code { background: #f4f4f4; padding: 0.1rem 0.3rem; }
+  </style>
+</head>
+<body>
+  <h1>Video Player Overlay Tweak Audit</h1>
+  <h2>Summary</h2>
+  <ul>
+    <li>Added a centered play overlay while paused.</li>
+    <li>Hid the overlay after playback starts.</li>
+    <li>Reduced displayed timeline preview size.</li>
+  </ul>
+  <h2>Validation</h2>
+  <ul>
+    <li><code>vitest</code> targeted player tests passed.</li>
+    <li><code>PF-044</code> Playwright coverage passed against <code>http://127.0.0.1:3000</code>.</li>
+    <li><code>typecheck</code> passed.</li>
+    <li><code>lint</code> passed with warnings only.</li>
+  </ul>
+</body>
+</html>

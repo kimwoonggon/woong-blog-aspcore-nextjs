@@ -25,6 +25,7 @@ interface RelatedContentListProps {
   tabletPageSize?: number
   mobilePageSize?: number
   testIdBase: string
+  centerCurrentOnInitialPage?: boolean
 }
 
 const relatedDateFormatter = new Intl.DateTimeFormat('en', {
@@ -48,7 +49,13 @@ function getPageWindow(currentPage: number, totalPages: number, radius = 2) {
   return Array.from({ length: end - start + 1 }, (_, index) => start + index)
 }
 
-function resolveInitialPage(searchParams: URLSearchParams, items: RelatedContentItem[], currentItemId: string | undefined, pageSize: number) {
+function resolveInitialPage(
+  searchParams: URLSearchParams,
+  items: RelatedContentItem[],
+  currentItemId: string | undefined,
+  pageSize: number,
+  centerCurrentOnInitialPage: boolean,
+) {
   const requestedPage = Number.parseInt(searchParams.get('relatedPage') ?? '', 10)
   if (Number.isFinite(requestedPage) && requestedPage > 0) {
     return requestedPage
@@ -59,7 +66,17 @@ function resolveInitialPage(searchParams: URLSearchParams, items: RelatedContent
   }
 
   const currentIndex = items.findIndex((item) => item.id === currentItemId)
-  return currentIndex >= 0 ? Math.floor(currentIndex / pageSize) + 1 : 1
+  if (currentIndex < 0) {
+    return 1
+  }
+
+  if (!centerCurrentOnInitialPage || pageSize < 5 || items.length <= pageSize) {
+    return Math.floor(currentIndex / pageSize) + 1
+  }
+
+  const totalWindows = Math.max(1, items.length - pageSize + 1)
+  const centeredWindow = Math.max(1, Math.min(totalWindows, currentIndex - 1))
+  return centeredWindow
 }
 
 function RelatedContentPager({
@@ -69,19 +86,25 @@ function RelatedContentPager({
   currentItemId,
   pageSize,
   testIdBase,
+  centerCurrentOnInitialPage = false,
 }: RelatedContentPagerProps) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const initialPage = resolveInitialPage(searchParams, items, currentItemId, pageSize)
+  const initialPage = resolveInitialPage(searchParams, items, currentItemId, pageSize, centerCurrentOnInitialPage)
   const [page, setPage] = useState(initialPage)
-  const totalPages = Math.max(1, Math.ceil(items.length / pageSize))
+  const useSlidingWindow = centerCurrentOnInitialPage && pageSize >= 5
+  const totalPages = useSlidingWindow
+    ? Math.max(1, items.length - pageSize + 1)
+    : Math.max(1, Math.ceil(items.length / pageSize))
   const currentPage = Math.min(page, totalPages)
 
   const visibleItems = useMemo(() => {
-    const start = (currentPage - 1) * pageSize
+    const start = useSlidingWindow
+      ? currentPage - 1
+      : (currentPage - 1) * pageSize
     return items.slice(start, start + pageSize)
-  }, [currentPage, items, pageSize])
+  }, [currentPage, items, pageSize, useSlidingWindow])
 
   const pageWindow = getPageWindow(currentPage, totalPages)
 
@@ -108,7 +131,7 @@ function RelatedContentPager({
           <h2 className="text-2xl font-heading font-bold text-foreground text-balance">{heading}</h2>
           <p className="max-w-2xl text-sm text-muted-foreground text-pretty">{followUpCopy}</p>
         </div>
-        <span className="rounded-full border border-border/80 bg-background px-3 py-1 text-xs font-medium tabular-nums text-muted-foreground">
+        <span className="shrink-0 rounded-full border border-border/80 bg-background px-3 py-1 text-xs font-medium tabular-nums text-muted-foreground">
           {visibleItems.length} visible
         </span>
       </div>
@@ -146,10 +169,16 @@ function RelatedContentPager({
                 <h3 className="responsive-feed-title line-clamp-2 min-w-0 break-words text-lg font-heading font-bold leading-tight text-foreground text-pretty sm:text-xl">
                   {item.title}
                 </h3>
-                <div className="flex-1" aria-hidden="true" />
+                {item.excerpt && item.id !== currentItemId ? (
+                  <p className="mt-2 line-clamp-2 min-w-0 flex-1 break-words text-sm leading-relaxed text-muted-foreground [overflow-wrap:anywhere]">
+                    {item.excerpt}
+                  </p>
+                ) : (
+                  <div className="flex-1" aria-hidden="true" />
+                )}
                 {item.tags?.length ? (
-                  <ul aria-label={`${item.title} tags`} className="responsive-feed-copy mt-3 flex flex-wrap gap-2">
-                    {item.tags.slice(0, 3).map((tag) => (
+                  <ul aria-hidden="true" className="responsive-feed-copy mt-3 flex flex-wrap gap-2">
+                    {item.tags.slice(0, 1).map((tag) => (
                       <li
                         key={tag}
                         className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
@@ -168,7 +197,6 @@ function RelatedContentPager({
               <div
                 key={item.id}
                 data-testid={`${testIdBase}-current-card`}
-                aria-label={`Current ${item.title}`}
               >
                 {card}
               </div>
@@ -182,7 +210,6 @@ function RelatedContentPager({
               prefetch={false}
               className="group block h-full"
               data-testid={`${testIdBase}-card`}
-              aria-label={`Open ${item.title}`}
             >
               {card}
             </Link>
@@ -260,6 +287,7 @@ export function RelatedContentList({
   desktopPageSize = 6,
   tabletPageSize = 4,
   mobilePageSize = 2,
+  centerCurrentOnInitialPage = false,
   ...props
 }: RelatedContentListProps) {
   const pageSize = useResponsivePageSize(desktopPageSize, tabletPageSize, mobilePageSize)
@@ -268,5 +296,12 @@ export function RelatedContentList({
     return null
   }
 
-  return <RelatedContentPager key={`${pageSize}-${props.items.length}`} {...props} pageSize={pageSize} />
+  return (
+    <RelatedContentPager
+      key={`${pageSize}-${props.items.length}-${centerCurrentOnInitialPage ? 'centered' : 'paged'}`}
+      {...props}
+      pageSize={pageSize}
+      centerCurrentOnInitialPage={centerCurrentOnInitialPage}
+    />
+  )
 }

@@ -6,9 +6,20 @@ vi.mock('@/lib/api/server', () => ({
   getServerForwardingHeaders: vi.fn(async () => ({})),
 }))
 
+function mockDefaultServerApi() {
+  vi.doMock('@/lib/api/server', () => ({
+    getServerApiBaseUrl: vi.fn(async () => 'http://localhost/api'),
+    getServerCookieHeader: vi.fn(async () => 'session=test'),
+    getServerForwardingHeaders: vi.fn(async () => ({})),
+  }))
+}
+
 describe('public/admin api clients', () => {
   beforeEach(() => {
+    vi.resetModules()
     vi.restoreAllMocks()
+    vi.unstubAllEnvs()
+    mockDefaultServerApi()
   })
 
   it('fetchPublicPageBySlug returns null only for 404', async () => {
@@ -32,7 +43,26 @@ describe('public/admin api clients', () => {
     await expect(fetchPublicWorks(2, 8)).rejects.toThrow('Failed to load public works.')
   })
 
-  it('fetchPublicBlogs forwards title and content search query params', async () => {
+  it('public server API base uses the public site URL without reading request headers', async () => {
+    vi.resetModules()
+    vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://woonglab.com/')
+
+    const getServerApiBaseUrl = vi.fn(async () => {
+      throw new Error('request headers should not be read for public API origin')
+    })
+    vi.doMock('@/lib/api/server', () => ({
+      getServerApiBaseUrl,
+      getServerCookieHeader: vi.fn(async () => 'session=test'),
+      getServerForwardingHeaders: vi.fn(async () => ({})),
+    }))
+
+    const { getPublicServerApiBaseUrl } = await import('@/lib/api/public-server')
+
+    await expect(getPublicServerApiBaseUrl()).resolves.toBe('https://woonglab.com/api')
+    expect(getServerApiBaseUrl).not.toHaveBeenCalled()
+  })
+
+  it('fetchPublicBlogs sends query-only params by default and preserves legacy searchMode when requested', async () => {
     const fetchMock = vi.fn()
       .mockResolvedValueOnce(new Response(JSON.stringify({ items: [], page: 1, pageSize: 12, totalItems: 0, totalPages: 1 }), { status: 200, headers: { 'Content-Type': 'application/json' } }))
       .mockResolvedValueOnce(new Response(JSON.stringify({ items: [], page: 1, pageSize: 12, totalItems: 0, totalPages: 1 }), { status: 200, headers: { 'Content-Type': 'application/json' } }))
@@ -40,14 +70,14 @@ describe('public/admin api clients', () => {
 
     const { fetchPublicBlogs } = await import('@/lib/api/blogs')
 
-    await fetchPublicBlogs(1, 12, { query: 'server components', searchMode: 'title' })
-    await fetchPublicBlogs(1, 12, { query: 'renderable html', searchMode: 'content' })
+    await fetchPublicBlogs(1, 12, { query: 'server components' })
+    await fetchPublicBlogs(1, 12, { query: 'renderable html', legacySearchMode: 'content' })
 
-    expect(fetchMock).toHaveBeenNthCalledWith(1, 'http://localhost/api/public/blogs?page=1&pageSize=12&query=server+components&searchMode=title', { cache: 'no-store', headers: {} })
-    expect(fetchMock).toHaveBeenNthCalledWith(2, 'http://localhost/api/public/blogs?page=1&pageSize=12&query=renderable+html&searchMode=content', { cache: 'no-store', headers: {} })
+    expect(fetchMock).toHaveBeenNthCalledWith(1, 'http://localhost/api/public/blogs?page=1&pageSize=12&query=server+components', { next: { revalidate: 60, tags: ['public-blogs'] } })
+    expect(fetchMock).toHaveBeenNthCalledWith(2, 'http://localhost/api/public/blogs?page=1&pageSize=12&query=renderable+html&searchMode=content', { next: { revalidate: 60, tags: ['public-blogs'] } })
   })
 
-  it('fetchPublicWorks forwards title and content search query params', async () => {
+  it('fetchPublicWorks sends query-only params by default and preserves legacy searchMode when requested', async () => {
     const fetchMock = vi.fn()
       .mockResolvedValueOnce(new Response(JSON.stringify({ items: [], page: 1, pageSize: 8, totalItems: 0, totalPages: 1 }), { status: 200, headers: { 'Content-Type': 'application/json' } }))
       .mockResolvedValueOnce(new Response(JSON.stringify({ items: [], page: 1, pageSize: 8, totalItems: 0, totalPages: 1 }), { status: 200, headers: { 'Content-Type': 'application/json' } }))
@@ -55,11 +85,11 @@ describe('public/admin api clients', () => {
 
     const { fetchPublicWorks } = await import('@/lib/api/works')
 
-    await fetchPublicWorks(1, 8, { query: 'portfolio platform', searchMode: 'title' })
-    await fetchPublicWorks(1, 8, { query: 'migration details', searchMode: 'content' })
+    await fetchPublicWorks(1, 8, { query: 'portfolio platform' })
+    await fetchPublicWorks(1, 8, { query: 'migration details', legacySearchMode: 'content' })
 
-    expect(fetchMock).toHaveBeenNthCalledWith(1, 'http://localhost/api/public/works?page=1&pageSize=8&query=portfolio+platform&searchMode=title', { cache: 'no-store', headers: {} })
-    expect(fetchMock).toHaveBeenNthCalledWith(2, 'http://localhost/api/public/works?page=1&pageSize=8&query=migration+details&searchMode=content', { cache: 'no-store', headers: {} })
+    expect(fetchMock).toHaveBeenNthCalledWith(1, 'http://localhost/api/public/works?page=1&pageSize=8&query=portfolio+platform', { next: { revalidate: 60, tags: ['public-works'] } })
+    expect(fetchMock).toHaveBeenNthCalledWith(2, 'http://localhost/api/public/works?page=1&pageSize=8&query=migration+details&searchMode=content', { next: { revalidate: 60, tags: ['public-works'] } })
   })
 
   it('fetchPublicBlogBySlug requests the backend slug endpoint and fetchPublicWorkBySlug returns null on 404', async () => {
@@ -78,9 +108,62 @@ describe('public/admin api clients', () => {
 
     const result = await fetchPublicBlogBySlug('seeded-blog')
 
-    expect(fetchMock).toHaveBeenNthCalledWith(1, 'http://localhost/api/public/blogs/seeded-blog', { cache: 'no-store', headers: {} })
+    expect(fetchMock).toHaveBeenNthCalledWith(1, 'http://localhost/api/public/blogs/seeded-blog', { next: { revalidate: 60, tags: ['public-blogs', 'public-blog:seeded-blog'] } })
     expect(result?.slug).toBe('seeded-blog')
     await expect(fetchPublicWorkBySlug('missing-work')).resolves.toBeNull()
+  })
+
+  it('fetchPublicWorkBySlug parses socialShareMessage when present', async () => {
+    const fetchMock = vi.fn(async () =>
+      new Response(JSON.stringify({
+        id: 'work-1',
+        slug: 'seeded-work',
+        title: 'Seeded Work',
+        excerpt: 'Excerpt fallback',
+        socialShareMessage: 'Preferred share copy',
+        contentJson: '{}',
+        category: 'platform',
+        tags: [],
+        videos: [],
+      }), { status: 200, headers: { 'Content-Type': 'application/json' } }),
+    ) as typeof fetch
+    vi.stubGlobal('fetch', fetchMock)
+
+    const { fetchPublicWorkBySlug } = await import('@/lib/api/works')
+    const payload = await fetchPublicWorkBySlug('seeded-work')
+
+    expect(payload?.socialShareMessage).toBe('Preferred share copy')
+  })
+
+  it('fetchPublicWorkBySlug parses timeline preview fields', async () => {
+    const fetchMock = vi.fn(async () =>
+      new Response(JSON.stringify({
+        id: 'work-2',
+        slug: 'preview-work',
+        title: 'Preview Work',
+        excerpt: 'Excerpt',
+        contentJson: '{}',
+        category: 'platform',
+        tags: [],
+        videos: [
+          {
+            id: 'video-1',
+            sourceType: 'hls',
+            sourceKey: 'local:videos/work-2/video-1/hls/master.m3u8',
+            sortOrder: 0,
+            timeline_preview_vtt_url: '/media/videos/work-2/video-1/hls/timeline.vtt',
+            timeline_preview_sprite_url: '/media/videos/work-2/video-1/hls/timeline-sprite.jpg',
+          },
+        ],
+      }), { status: 200, headers: { 'Content-Type': 'application/json' } }),
+    ) as typeof fetch
+    vi.stubGlobal('fetch', fetchMock)
+
+    const { fetchPublicWorkBySlug } = await import('@/lib/api/works')
+    const payload = await fetchPublicWorkBySlug('preview-work')
+
+    expect(payload?.videos[0]?.timelinePreviewVttUrl).toBe('/media/videos/work-2/video-1/hls/timeline.vtt')
+    expect(payload?.videos[0]?.timelinePreviewSpriteUrl).toBe('/media/videos/work-2/video-1/hls/timeline-sprite.jpg')
   })
 
   it('fetchAdminWorks forwards the cookie header for authenticated admin fetches', async () => {

@@ -6,6 +6,7 @@ import { RelatedContentList } from '@/components/content/RelatedContentList'
 const mocks = vi.hoisted(() => ({
   replace: vi.fn(),
   searchParams: '',
+  pageSize: 2,
 }))
 
 vi.mock('next/link', () => ({
@@ -23,7 +24,7 @@ vi.mock('next/navigation', () => ({
 }))
 
 vi.mock('@/hooks/useResponsivePageSize', () => ({
-  useResponsivePageSize: () => 2,
+  useResponsivePageSize: () => mocks.pageSize,
 }))
 
 const items = [
@@ -36,6 +37,7 @@ describe('RelatedContentList', () => {
   beforeEach(() => {
     mocks.replace.mockClear()
     mocks.searchParams = ''
+    mocks.pageSize = 2
   })
 
   it('opens on the page containing the current item and highlights it without a link', () => {
@@ -92,5 +94,30 @@ describe('RelatedContentList', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Go to next related page' }))
     expect(mocks.replace).toHaveBeenCalledWith('/blog/current?relatedPage=2', { scroll: false })
+  })
+
+  it('centers the current item on mobile when centered window mode is enabled', () => {
+    mocks.pageSize = 5
+    const longItems = Array.from({ length: 7 }, (_, index) => ({
+      id: `post-${index + 1}`,
+      slug: `post-${index + 1}`,
+      title: `Post ${index + 1}`,
+      excerpt: `Excerpt ${index + 1}`,
+      publishedAt: `2026-04-0${Math.min(index + 1, 9)}T00:00:00.000Z`,
+    }))
+
+    render(
+      <RelatedContentList
+        heading="More Studies"
+        hrefBase="/blog"
+        items={longItems}
+        currentItemId="post-5"
+        centerCurrentOnInitialPage
+        testIdBase="related-blog"
+      />,
+    )
+
+    expect(screen.getByText('Page 3 of 3')).toBeInTheDocument()
+    expect(screen.getByTestId('related-blog-current-card')).toHaveTextContent('Post 5')
   })
 })

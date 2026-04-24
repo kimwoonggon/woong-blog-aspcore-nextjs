@@ -8,6 +8,7 @@ import { getServerApiBaseUrl, getServerCookieHeader } from '@/lib/api/server'
 
 export async function createBlog(formData: FormData) {
     const title = readFormDataString(formData, 'title')
+    const excerpt = readFormDataString(formData, 'excerpt')
     const tags = readCommaSeparatedFormData(formData, 'tags').filter(Boolean)
     const published = formData.get('published') === 'on'
     const content = parseHtmlFormContent(readFormDataString(formData, 'content'))
@@ -22,6 +23,7 @@ export async function createBlog(formData: FormData) {
         },
         body: JSON.stringify({
             title,
+            excerpt,
             tags,
             published,
             contentJson: JSON.stringify({ html: content.html ?? '' }),
@@ -42,6 +44,7 @@ export async function createBlog(formData: FormData) {
 
 export async function updateBlog(id: string, formData: FormData) {
     const title = readFormDataString(formData, 'title')
+    const excerpt = readFormDataString(formData, 'excerpt')
     const tags = readCommaSeparatedFormData(formData, 'tags').filter(Boolean)
     const published = formData.get('published') === 'on'
     const content = parseHtmlFormContent(readFormDataString(formData, 'content'))
@@ -56,6 +59,7 @@ export async function updateBlog(id: string, formData: FormData) {
         },
         body: JSON.stringify({
             title,
+            excerpt,
             tags,
             published,
             contentJson: JSON.stringify({ html: content.html ?? '' }),

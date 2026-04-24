@@ -76,6 +76,7 @@ describe('InlineWorkEditorSection', () => {
         initialWork={{
           id: 'work-1',
           title: 'Deleted work',
+          slug: 'deleted-work',
         }}
         afterDeleteHref="/works?page=2&pageSize=8"
       />,
@@ -85,7 +86,7 @@ describe('InlineWorkEditorSection', () => {
 
     expect(window.confirm).toHaveBeenCalled()
     await waitFor(() => {
-      expect(mocks.deleteAdminWork).toHaveBeenCalledWith('work-1')
+      expect(mocks.deleteAdminWork).toHaveBeenCalledWith('work-1', 'deleted-work')
     })
     expect(mocks.push).toHaveBeenCalledWith('/works?page=2&pageSize=8')
     expect(mocks.refresh).toHaveBeenCalled()

@@ -1,21 +1,36 @@
 "use client"
 
+import dynamic from 'next/dynamic'
 import { useEffect, useRef, useState } from 'react'
-import { Document, Page, pdfjs } from 'react-pdf'
-
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
-  import.meta.url,
-).toString()
 
 interface ResumePdfViewerProps {
   url: string
 }
 
+interface ResumePdfDocumentProps {
+  url: string
+  containerWidth: number
+}
+
+function ResumePdfViewerLoading() {
+  return (
+    <div className="flex h-full min-h-40 items-center justify-center px-3 py-6">
+      <p className="text-center text-sm text-muted-foreground">Loading resume preview...</p>
+    </div>
+  )
+}
+
+const ResumePdfDocument = dynamic<ResumePdfDocumentProps>(
+  () => import('@/components/content/ResumePdfDocument').then((module) => module.ResumePdfDocument),
+  {
+    ssr: false,
+    loading: () => <ResumePdfViewerLoading />,
+  },
+)
+
 export function ResumePdfViewer({ url }: ResumePdfViewerProps) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const [containerWidth, setContainerWidth] = useState(720)
-  const [pageCount, setPageCount] = useState(0)
 
   useEffect(() => {
     if (!containerRef.current) {
@@ -36,24 +51,7 @@ export function ResumePdfViewer({ url }: ResumePdfViewerProps) {
       data-testid="resume-pdf-viewer"
       className="h-full w-full overflow-y-auto bg-muted/30 px-3 py-4"
     >
-      <Document
-        file={url}
-        loading={<p className="px-3 py-6 text-center text-sm text-muted-foreground">Loading resume...</p>}
-        error={<p className="px-3 py-6 text-center text-sm text-muted-foreground">Resume preview is unavailable. Use the download button to open the PDF.</p>}
-        onLoadSuccess={({ numPages }) => setPageCount(numPages)}
-        className="mx-auto flex w-full max-w-4xl flex-col items-center gap-4"
-      >
-        {Array.from({ length: pageCount }, (_, index) => (
-          <Page
-            key={index + 1}
-            pageNumber={index + 1}
-            width={Math.min(containerWidth - 24, 900)}
-            renderAnnotationLayer={false}
-            renderTextLayer={false}
-            className="overflow-hidden rounded-xl bg-background shadow-sm"
-          />
-        ))}
-      </Document>
+      <ResumePdfDocument url={url} containerWidth={containerWidth} />
     </div>
   )
 }

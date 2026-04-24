@@ -1,7 +1,7 @@
 'use client'
 
 import { RefreshCcw, X } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
@@ -27,7 +27,7 @@ import {
 import { useBatchJobPolling } from '@/components/admin/admin-blog-batch-ai-panel/useBatchJobPolling'
 import { toast } from 'sonner'
 
-const savedSystemPromptKey = 'admin-ai-system-prompt'
+const savedSystemPromptKey = 'admin-ai-blog-batch-system-prompt'
 
 interface AdminBlogBatchAiPanelProps {
   isOpen: boolean
@@ -66,6 +66,7 @@ export function AdminBlogBatchAiPanel({
   const [codexReasoningEffort, setCodexReasoningEffort] = useState('medium')
   const [customPrompt, setCustomPrompt] = useState('')
   const [savedPrompt, setSavedPrompt] = useState('')
+  const promptTouchedRef = useRef(false)
   const [workerCount, setWorkerCount] = useState('2')
   const [autoApply, setAutoApply] = useState(false)
   const [isCreatingJob, setIsCreatingJob] = useState(false)
@@ -160,6 +161,7 @@ export function AdminBlogBatchAiPanel({
 
   useEffect(() => {
     if (!isOpen) {
+      promptTouchedRef.current = false
       return
     }
 
@@ -181,9 +183,11 @@ export function AdminBlogBatchAiPanel({
         setSelectedProvider(availableProviders.includes(preferredProvider) ? preferredProvider : availableProviders[0])
         setCodexModel(savedModel || config.codexModel || 'gpt-5.4')
         setCodexReasoningEffort(savedReasoning || config.codexReasoningEffort || 'medium')
-        const prompt = savedPrompt || config.defaultSystemPrompt || ''
-        setCustomPrompt(prompt)
-        setSavedPrompt(prompt)
+        const prompt = savedPrompt || config.defaultBlogFixPrompt || config.defaultSystemPrompt || ''
+        if (!promptTouchedRef.current) {
+          setCustomPrompt(prompt)
+          setSavedPrompt(prompt)
+        }
         setWorkerCount(String(config.batchConcurrency || 2))
       })
       .catch((error) => {
@@ -284,6 +288,7 @@ export function AdminBlogBatchAiPanel({
   function saveSystemPrompt() {
     persistSystemPrompt(customPrompt)
     setSavedPrompt(customPrompt)
+    promptTouchedRef.current = false
     toast.success('System prompt saved')
   }
 
@@ -298,8 +303,10 @@ export function AdminBlogBatchAiPanel({
       window.localStorage.removeItem(savedSystemPromptKey)
     }
 
-    setCustomPrompt(runtimeConfig?.defaultSystemPrompt || '')
-    setSavedPrompt(runtimeConfig?.defaultSystemPrompt || '')
+    const defaultPrompt = runtimeConfig?.defaultBlogFixPrompt || runtimeConfig?.defaultSystemPrompt || ''
+    setCustomPrompt(defaultPrompt)
+    setSavedPrompt(defaultPrompt)
+    promptTouchedRef.current = false
     toast.success('System prompt reset')
   }
 
@@ -627,7 +634,10 @@ export function AdminBlogBatchAiPanel({
           id="batch-ai-system-prompt"
           aria-label="Batch AI system prompt"
           value={customPrompt}
-          onChange={(event) => setCustomPrompt(event.target.value)}
+          onChange={(event) => {
+            promptTouchedRef.current = true
+            setCustomPrompt(event.target.value)
+          }}
           className="max-h-44 min-h-28 resize-y text-sm"
         />
       </div>

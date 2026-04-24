@@ -1,5 +1,4 @@
-using WoongBlog.Api.Infrastructure.Auth;
-using WoongBlog.Api.Modules.Identity.Application;
+using WoongBlog.Infrastructure.Modules.Identity;
 
 namespace WoongBlog.Api.Modules.Identity;
 
@@ -10,8 +9,6 @@ internal static class IdentityModuleServiceCollectionExtensions
         IConfiguration configuration,
         IHostEnvironment environment)
     {
-        services.AddAuthInfrastructure(configuration, environment);
-        services.AddScoped<IIdentityInteractionService, IdentityInteractionService>();
-        return services;
+        return services.AddIdentityInfrastructure(configuration, environment);
     }
 }

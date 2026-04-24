@@ -1,0 +1,53 @@
+{
+  "title": "Playwright Notion Isolation Audit",
+  "date": "2026-04-22",
+  "summary": "Reduces Playwright 4-worker collisions by making Notion-related blog mutation tests create and open their own blog fixtures.",
+  "changed": [
+    "Added tests/helpers/content-fixtures.ts with createBlogFixture().",
+    "Updated admin-blog-edit to avoid editing the first global admin blog row.",
+    "Updated Notion autosave/info tests to open explicit blog ids.",
+    "Updated Notion visual and semantic color tests to use owned blog fixtures.",
+    "Added grounded 60-second timeouts to Notion-heavy specs."
+  ],
+  "rootCausesAddressed": [
+    "Notion tests mutated the default first global blog document.",
+    "admin-blog-edit mutated the first admin row, which can be generated baseline content under parallel execution.",
+    "Generated baseline specs and Notion/admin edit specs shared the same mutable blog list."
+  ],
+  "validations": [
+    {
+      "command": "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 npx playwright test tests/admin-blog-edit.spec.ts tests/ui-admin-notion-autosave-info.spec.ts tests/ui-admin-notion-visual-state.spec.ts tests/ui-admin-semantic-colors.spec.ts --workers=1",
+      "result": "8 passed"
+    },
+    {
+      "command": "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 npx playwright test tests/admin-blog-edit.spec.ts tests/ui-admin-notion-autosave-info.spec.ts tests/ui-admin-notion-visual-state.spec.ts tests/ui-admin-semantic-colors.spec.ts tests/plain-baseline-0419.spec.ts --workers=4",
+      "result": "48 passed after fix; before fix reproduced 1 baseline collision failure"
+    },
+    {
+      "command": "npm run lint",
+      "result": "passed with 5 existing warnings"
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "passed"
+    },
+    {
+      "command": "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 PLAYWRIGHT_EXPECT_LOCAL_ADMIN_SHORTCUT=visible npx playwright test --workers=1",
+      "result": "final run passed: 563 passed, 8 skipped"
+    },
+    {
+      "command": "npm run lint",
+      "result": "passed with 5 existing warnings"
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "passed"
+    }
+  ],
+  "remainingRisks": [
+    "Other global singleton areas remain: resume/site settings/pages and work media ordering.",
+    "Fixture records are not deleted after tests.",
+    "Full-suite 4-worker run was not claimed fixed by this slice."
+  ],
+  "recommendation": "Proceed with this first isolation slice; next isolate work/media thumbnail ordering or singleton resume/page/site-settings tests."
+}

@@ -14,6 +14,8 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { fetchWithCsrf } from '@/lib/api/auth'
 import { getBrowserApiBaseUrl } from '@/lib/api/browser'
+import { revalidatePublicPathsAfterMutation } from '@/lib/public-revalidation-client'
+import { getWorkPublicRevalidationPaths } from '@/lib/public-revalidation-paths'
 import type { WorkVideo } from '@/lib/api/works'
 import { extractVideoFrameThumbnailBlob, fetchRemoteImageBlob } from '@/lib/content/work-auto-thumbnail'
 import {
@@ -57,11 +59,13 @@ import { toast } from 'sonner'
 const DEFAULT_WORK_CATEGORY = 'Uncategorized'
 
 type WorkEditorTab = 'general' | 'media' | 'content'
+type VideoUploadPhase = 'uploading' | 'processing' | 'complete'
 type MetadataField = {
     id: string
     key: string
     value: string
 }
+const SOCIAL_SHARE_MESSAGE_KEY = 'socialShareMessage'
 
 function createMetadataField(key = '', value = ''): MetadataField {
     return {
@@ -93,30 +97,47 @@ function stringifyMetadataValue(value: unknown) {
     return String(value)
 }
 
+function readSocialShareMessage(record?: Record<string, unknown> | null) {
+    const value = record?.[SOCIAL_SHARE_MESSAGE_KEY]
+    return typeof value === 'string' ? value : ''
+}
+
 function createMetadataFields(record?: Record<string, unknown> | null) {
-    return Object.entries(record ?? {}).map(([key, value]) => createMetadataField(key, stringifyMetadataValue(value)))
+    return Object.entries(record ?? {})
+        .filter(([key]) => key !== SOCIAL_SHARE_MESSAGE_KEY)
+        .map(([key, value]) => createMetadataField(key, stringifyMetadataValue(value)))
 }
 
-function buildMetadataJsonFromRecord(record?: Record<string, unknown> | null) {
-    return JSON.stringify(
-        Object.fromEntries(
-            Object.entries(record ?? {}).map(([key, value]) => [key, stringifyMetadataValue(value)]),
-        ),
-    )
+function buildMetadataJsonFromRecord(record?: Record<string, unknown> | null, socialShareMessage?: string) {
+    const normalized = Object.fromEntries(
+        Object.entries(record ?? {})
+            .filter(([key]) => key !== SOCIAL_SHARE_MESSAGE_KEY)
+            .map(([key, value]) => [key, stringifyMetadataValue(value)]),
+    ) as Record<string, string>
+    const normalizedShareMessage = socialShareMessage?.trim() ?? ''
+    if (normalizedShareMessage) {
+        normalized[SOCIAL_SHARE_MESSAGE_KEY] = normalizedShareMessage
+    }
+
+    return JSON.stringify(normalized)
 }
 
-function buildMetadataJsonFromFields(fields: MetadataField[]) {
-    return JSON.stringify(
-        fields.reduce<Record<string, string>>((accumulator, field) => {
-            const key = field.key.trim()
-            if (!key) {
-                return accumulator
-            }
-
-            accumulator[key] = field.value
+function buildMetadataJsonFromFields(fields: MetadataField[], socialShareMessage: string) {
+    const normalized = fields.reduce<Record<string, string>>((accumulator, field) => {
+        const key = field.key.trim()
+        if (!key || key === SOCIAL_SHARE_MESSAGE_KEY) {
             return accumulator
-        }, {}),
-    )
+        }
+
+        accumulator[key] = field.value
+        return accumulator
+    }, {})
+    const normalizedShareMessage = socialShareMessage.trim()
+    if (normalizedShareMessage) {
+        normalized[SOCIAL_SHARE_MESSAGE_KEY] = normalizedShareMessage
+    }
+
+    return JSON.stringify(normalized)
 }
 
 function clearBeforeUnloadWarning() {
@@ -142,6 +163,8 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
     const [tags, setTags] = useState(initialWork?.tags?.join(', ') || '')
     const [published, setPublished] = useState(defaultPublished)
     const [html, setHtml] = useState(initialWork?.content?.html || '')
+    const initialSocialShareMessage = readSocialShareMessage(initialWork?.all_properties)
+    const [socialShareMessage, setSocialShareMessage] = useState(initialSocialShareMessage)
     const [metadataFields, setMetadataFields] = useState<MetadataField[]>(() => createMetadataFields(initialWork?.all_properties))
     const [thumbnailAssetId, setThumbnailAssetId] = useState(initialWork?.thumbnail_asset_id || '')
     const [thumbnailUrl, setThumbnailUrl] = useState(initialWork?.thumbnail_url || '')
@@ -157,6 +180,7 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
     const [showUnsavedDialog, setShowUnsavedDialog] = useState(false)
     const [uploadingTarget, setUploadingTarget] = useState<'thumbnail' | 'icon' | null>(null)
     const [isVideoBusy, setIsVideoBusy] = useState(false)
+    const [videoUploadStatus, setVideoUploadStatus] = useState<{ phase: VideoUploadPhase; message: string } | null>(null)
     const [hasPersistedVideoChanges, setHasPersistedVideoChanges] = useState(false)
     const [isAutoGeneratingThumbnail, setIsAutoGeneratingThumbnail] = useState(false)
     const [insertVideoRequest, setInsertVideoRequest] = useState<VideoInsertRequest | null>(null)
@@ -197,8 +221,11 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
 
         return ''
     }, [resolvedThumbnailSource, thumbnailUrl])
-    const allProperties = useMemo(() => buildMetadataJsonFromFields(metadataFields), [metadataFields])
-    const initialAllProperties = buildMetadataJsonFromRecord(initialWork?.all_properties)
+    const allProperties = useMemo(
+        () => buildMetadataJsonFromFields(metadataFields, socialShareMessage),
+        [metadataFields, socialShareMessage],
+    )
+    const initialAllProperties = buildMetadataJsonFromRecord(initialWork?.all_properties, initialSocialShareMessage)
 
     const initialSnapshot = buildWorkSnapshot({
         title: initialWork?.title || '',
@@ -229,6 +256,7 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
     const searchParamsString = searchParams.toString()
     const currentQuerySuffix = searchParamsString ? `?${searchParamsString}` : ''
     const primarySaveMode: 'default' | 'with-videos' = !isEditing && hasStagedVideos ? 'with-videos' : 'default'
+    const videoUploadStatusTimeoutRef = useRef<number | null>(null)
 
     const formatDate = (dateString?: string | null) => {
         if (!dateString) return 'Not yet'
@@ -241,9 +269,41 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
         })
     }
 
+    function clearVideoUploadStatusTimeout() {
+        if (videoUploadStatusTimeoutRef.current !== null) {
+            window.clearTimeout(videoUploadStatusTimeoutRef.current)
+            videoUploadStatusTimeoutRef.current = null
+        }
+    }
+
+    function setVideoUploadPhase(phase: VideoUploadPhase, fileLabel?: string) {
+        clearVideoUploadStatusTimeout()
+
+        const message = phase === 'uploading'
+            ? `${fileLabel ?? '영상'} 업로드 중...`
+            : phase === 'processing'
+                ? `${fileLabel ?? '영상'} 처리 중...`
+                : `${fileLabel ?? '영상'} 준비 완료`
+
+        setVideoUploadStatus({ phase, message })
+
+        if (phase === 'complete') {
+            videoUploadStatusTimeoutRef.current = window.setTimeout(() => {
+                setVideoUploadStatus(null)
+                videoUploadStatusTimeoutRef.current = null
+            }, 2400)
+        }
+    }
+
     useEffect(() => {
         setSavedSnapshot(initialSnapshot)
     }, [initialSnapshot])
+
+    useEffect(() => {
+        return () => {
+            clearVideoUploadStatusTimeout()
+        }
+    }, [])
 
     const syncVideos = (payload: VideoMutationPayload) => {
         const nextVersion = getNextVideosVersion(payload, videosVersion)
@@ -718,38 +778,14 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
         return await response.json() as VideoMutationPayload
     }
 
-    async function uploadVideoForExistingWork(file: File) {
-        if (!initialWork?.id) return
-
-        setIsVideoBusy(true)
-
-        try {
-            const target = await requestUploadTarget(initialWork.id, file, videosVersion)
-            await uploadToTarget(initialWork.id, file, target)
-            const payload = await confirmVideoUpload(initialWork.id, target.uploadSessionId, videosVersion)
-            syncVideos(payload)
-            setHasPersistedVideoChanges(true)
-            try {
-                const uploadedThumbnail = await maybeApplyAutoThumbnailForCandidate({ kind: 'uploaded-video', file })
-                if (uploadedThumbnail) {
-                    await persistThumbnailSelectionForWork(initialWork.id, uploadedThumbnail.id)
-                }
-            } catch (error) {
-                toast.error(error instanceof Error ? error.message : 'Failed to auto-generate a video thumbnail.')
-            }
-            refreshInlinePublicWorkIfNeeded()
-            toast.success('Video uploaded.')
-        } catch (error) {
-            toast.error(error instanceof Error ? error.message : 'Failed to upload video.')
-        } finally {
-            setIsVideoBusy(false)
-        }
-    }
-
     async function uploadHlsVideoForExistingWork(file: File) {
         if (!initialWork?.id) return
 
         setIsVideoBusy(true)
+        setVideoUploadPhase('uploading', file.name)
+        const processingPhaseTimer = window.setTimeout(() => {
+            setVideoUploadPhase('processing', file.name)
+        }, 700)
 
         try {
             const payload = await uploadHlsVideo(initialWork.id, file, videosVersion)
@@ -764,8 +800,12 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                 toast.error(error instanceof Error ? error.message : 'Failed to auto-generate a video thumbnail.')
             }
             refreshInlinePublicWorkIfNeeded()
+            window.clearTimeout(processingPhaseTimer)
+            setVideoUploadPhase('complete', file.name)
             toast.success('HLS video uploaded.')
         } catch (error) {
+            window.clearTimeout(processingPhaseTimer)
+            setVideoUploadStatus(null)
             toast.error(error instanceof Error ? error.message : 'Failed to upload HLS video.')
         } finally {
             setIsVideoBusy(false)
@@ -941,7 +981,13 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
             }
 
             if (draft.kind === 'file' && draft.file) {
+                setVideoUploadPhase('uploading', draft.label)
+                const processingPhaseTimer = window.setTimeout(() => {
+                    setVideoUploadPhase('processing', draft.label)
+                }, 700)
                 const result = await addStagedUploadedVideo(workId, draft, currentVersion)
+                window.clearTimeout(processingPhaseTimer)
+                setVideoUploadPhase('complete', draft.label)
                 currentVersion = result.currentVersion
                 latestPayload = result.latestPayload
             }
@@ -1053,6 +1099,7 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
             }
 
             toast.success('Work and videos created successfully')
+            await revalidatePublicPathsAfterMutation(getWorkPublicRevalidationPaths(nextSlug, initialWork?.slug))
             if (finishInlineSave(responsePayload, nextSlug, false)) {
                 return
             }
@@ -1083,6 +1130,7 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                     title,
                     initialSlug: initialWork?.slug,
                 })
+                await revalidatePublicPathsAfterMutation(getWorkPublicRevalidationPaths(nextSlug, initialWork?.slug))
                 finishUpdateSave(null, nextSlug)
                 return
             }
@@ -1099,6 +1147,7 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
             })
 
             if (isEditing) {
+                await revalidatePublicPathsAfterMutation(getWorkPublicRevalidationPaths(nextSlug, initialWork?.slug))
                 finishUpdateSave(responsePayload, nextSlug)
                 return
             }
@@ -1108,6 +1157,7 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                 return
             }
 
+            await revalidatePublicPathsAfterMutation(getWorkPublicRevalidationPaths(nextSlug, initialWork?.slug))
             finishCreateSave(responsePayload, nextSlug)
         } finally {
             setIsSaving(false)
@@ -1262,6 +1312,22 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                             setSaveError(null)
                         }}
                     />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="social-share-message">Share Message</Label>
+                    <Input
+                        id="social-share-message"
+                        name="socialShareMessage"
+                        value={socialShareMessage}
+                        onChange={(event) => {
+                            setSocialShareMessage(event.target.value)
+                            setSaveError(null)
+                        }}
+                        placeholder="Optional short message for link previews on /works/{slug}"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                        Shared link descriptions use this value first. Stored in flexible metadata as <code>socialShareMessage</code>.
+                    </p>
                 </div>
                 <div className="flex flex-wrap gap-6 pt-2 md:col-span-2">
                     <div className="space-y-1">
@@ -1550,6 +1616,19 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                         <p className="text-xs text-muted-foreground">
                             Creates an m3u8 playlist from the original MP4 without downscaling. Use H.264/AAC MP4 files for browser playback.
                         </p>
+                        {videoUploadStatus ? (
+                            <p
+                                data-testid="work-video-upload-status"
+                                className={cn(
+                                    'text-xs font-medium',
+                                    videoUploadStatus.phase === 'complete'
+                                        ? 'text-emerald-600'
+                                        : 'text-muted-foreground',
+                                )}
+                            >
+                                {videoUploadStatus.message}
+                            </p>
+                        ) : null}
                     </div>
 
                     {isEditing ? (

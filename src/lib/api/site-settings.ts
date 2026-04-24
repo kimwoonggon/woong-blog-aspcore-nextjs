@@ -1,5 +1,6 @@
-import { getServerApiBaseUrl, getServerForwardingHeaders } from '@/lib/api/server'
+import { getPublicServerApiBaseUrl } from '@/lib/api/public-server'
 import { throwPublicApiError } from '@/lib/api/public-errors'
+import { PUBLIC_CONTENT_TAGS, publicContentFetchInit } from '@/lib/api/public-cache'
 
 export interface PublicSiteSettings {
   ownerName: string
@@ -19,10 +20,9 @@ export interface ResumePayload {
 }
 
 export async function fetchPublicSiteSettings() {
-  const apiBaseUrl = await getServerApiBaseUrl()
+  const apiBaseUrl = await getPublicServerApiBaseUrl()
   const response = await fetch(`${apiBaseUrl}/public/site-settings`, {
-    cache: 'no-store',
-    headers: await getServerForwardingHeaders(),
+    ...publicContentFetchInit([PUBLIC_CONTENT_TAGS.siteSettings]),
   })
 
   if (!response.ok) {
@@ -32,11 +32,14 @@ export async function fetchPublicSiteSettings() {
   return response.json() as Promise<PublicSiteSettings>
 }
 
-export async function fetchResume() {
-  const apiBaseUrl = await getServerApiBaseUrl()
+interface FetchResumeOptions {
+  cache?: 'public' | 'no-store'
+}
+
+export async function fetchResume(options: FetchResumeOptions = {}) {
+  const apiBaseUrl = await getPublicServerApiBaseUrl()
   const response = await fetch(`${apiBaseUrl}/public/resume`, {
-    cache: 'no-store',
-    headers: await getServerForwardingHeaders(),
+    ...(options.cache === 'no-store' ? { cache: 'no-store' as const } : publicContentFetchInit([PUBLIC_CONTENT_TAGS.resume])),
   })
 
   if (response.status === 404) {

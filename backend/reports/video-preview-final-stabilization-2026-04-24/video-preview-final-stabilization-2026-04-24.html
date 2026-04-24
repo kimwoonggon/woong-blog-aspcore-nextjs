@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Video Preview Final Stabilization Audit</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2rem; color: #111; }
+    h1, h2 { margin-bottom: 0.5rem; }
+    ul { line-height: 1.5; }
+    code { background: #f4f4f4; padding: 0.1rem 0.3rem; }
+  </style>
+</head>
+<body>
+  <h1>Video Preview Final Stabilization Audit</h1>
+  <h2>Summary</h2>
+  <ul>
+    <li>Frontend hover math now uses the progress overlay rect and frame-relative preview positioning.</li>
+    <li>Playwright waits for preview readiness and handles raw snake_case API payloads correctly.</li>
+    <li>Backend now generates a single-frame preview for short uploads and omits preview keys when files do not exist.</li>
+  </ul>
+  <h2>Validation</h2>
+  <ul>
+    <li><code>vitest</code> targeted suites passed.</li>
+    <li><code>dotnet test</code> targeted unit/integration suites passed.</li>
+    <li><code>typecheck</code> passed.</li>
+    <li><code>lint</code> passed with warnings only.</li>
+    <li>Playwright `PF-044` and `video-preview-recording-0424` passed against <code>http://127.0.0.1:3000</code>.</li>
+    <li>New short-upload preview assets returned <code>200</code> for both VTT and sprite.</li>
+  </ul>
+  <h2>Risks</h2>
+  <ul>
+    <li>Old rows created before this fix may still have stale preview URLs.</li>
+    <li>The recording spec should stay serialized to avoid artifact copy races.</li>
+  </ul>
+</body>
+</html>

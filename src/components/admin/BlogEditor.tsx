@@ -15,6 +15,8 @@ import { AlertTriangle } from 'lucide-react'
 import { fetchWithCsrf } from '@/lib/api/auth'
 import { getBrowserApiBaseUrl } from '@/lib/api/browser'
 import { normalizeBlogHtmlForSave } from '@/lib/content/blog-content'
+import { revalidatePublicPathsAfterMutation } from '@/lib/public-revalidation-client'
+import { getBlogPublicRevalidationPaths } from '@/lib/public-revalidation-paths'
 import { toast } from 'sonner'
 
 interface Blog {
@@ -65,6 +67,14 @@ function normalizeBlogSnapshotHtml(html: string) {
     return collapsed
 }
 
+function plainTextFromHtml(html: string) {
+    return html
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/&nbsp;|\u00A0/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+}
+
 function buildBlogSnapshot({
     title,
     excerpt,
@@ -111,6 +121,7 @@ export function BlogEditor({ initialBlog, inlineMode = false, onSaved, inlineRet
     const [saveError, setSaveError] = useState<string | null>(null)
     const [showUnsavedDialog, setShowUnsavedDialog] = useState(false)
     const saveBlogRef = useRef<() => Promise<void>>(async () => {})
+    const acceptedInitialEditorChangeRef = useRef(false)
 
     const initialSnapshot = buildBlogSnapshot({
         title: initialBlog?.title || '',
@@ -128,10 +139,12 @@ export function BlogEditor({ initialBlog, inlineMode = false, onSaved, inlineRet
         html,
     })
     const hasUnsavedChanges = isDirty || savedSnapshot !== currentSnapshot
+    const isSaveDisabled = isSaving || !hasUnsavedChanges || !title.trim()
 
     useEffect(() => {
         setSavedSnapshot(initialSnapshot)
         setIsDirty(false)
+        acceptedInitialEditorChangeRef.current = false
     }, [initialSnapshot])
 
     const formatDate = (dateString?: string) => {
@@ -183,6 +196,7 @@ export function BlogEditor({ initialBlog, inlineMode = false, onSaved, inlineRet
 
             const result = await response.json().catch(() => null) as { id?: string; slug?: string } | null
             const nextSlug = result?.slug ?? initialBlog?.slug ?? null
+            await revalidatePublicPathsAfterMutation(getBlogPublicRevalidationPaths(nextSlug, initialBlog?.slug))
             const nextSnapshot = buildBlogSnapshot({
                 title,
                 excerpt,
@@ -304,10 +318,19 @@ export function BlogEditor({ initialBlog, inlineMode = false, onSaved, inlineRet
         }
     }, [hasUnsavedChanges])
 
+    const requestBack = () => {
+        if (hasUnsavedChanges) {
+            setShowUnsavedDialog(true)
+            return
+        }
+
+        router.back()
+    }
+
     return (
         <>
         <form
-            className="space-y-8 max-w-4xl"
+            className="max-w-5xl space-y-8"
             onSubmit={(event) => {
                 event.preventDefault()
                 void saveBlog()
@@ -398,7 +421,10 @@ export function BlogEditor({ initialBlog, inlineMode = false, onSaved, inlineRet
                 </div>
             </div>
 
-            <div className="space-y-4 rounded-2xl border border-border/80 bg-card p-6 shadow-sm">
+            <div
+                data-testid="blog-editor-workspace"
+                className="min-w-0 max-w-full resize-x space-y-4 overflow-auto rounded-2xl border border-border/80 bg-card p-6 shadow-sm md:min-w-[42rem]"
+            >
                 <div className="mb-2 flex items-center justify-between">
                     <h3 className="text-lg font-medium">Content</h3>
                     <div className="flex items-center gap-2">
@@ -409,9 +435,35 @@ export function BlogEditor({ initialBlog, inlineMode = false, onSaved, inlineRet
                 <TiptapEditor
                     content={html}
                     onChange={(nextHtml) => {
+                        const nextSnapshot = buildBlogSnapshot({
+                            title,
+                            excerpt,
+                            tags: tagsInput,
+                            published,
+                            html: nextHtml,
+                        })
+
+                        const initialEditorText = plainTextFromHtml(initialBlog?.content?.html || '')
+                        const nextEditorText = plainTextFromHtml(nextHtml)
+                        if (
+                            isEditing
+                            && !acceptedInitialEditorChangeRef.current
+                            && !isDirty
+                            && initialEditorText === nextEditorText
+                        ) {
+                            acceptedInitialEditorChangeRef.current = true
+                            setHtml(nextHtml)
+                            setSavedSnapshot(nextSnapshot)
+                            setIsDirty(false)
+                            return
+                        }
+
+                        acceptedInitialEditorChangeRef.current = true
                         setHtml(nextHtml)
-                        setIsDirty(true)
-                        setSaveError(null)
+                        setIsDirty(nextSnapshot !== savedSnapshot)
+                        if (nextSnapshot !== savedSnapshot) {
+                            setSaveError(null)
+                        }
                     }}
                 />
             </div>
@@ -432,11 +484,7 @@ export function BlogEditor({ initialBlog, inlineMode = false, onSaved, inlineRet
                         type="button"
                         variant="outline"
                         onClick={() => {
-                            if (hasUnsavedChanges) {
-                                setShowUnsavedDialog(true)
-                                return
-                            }
-                            router.back()
+                            requestBack()
                         }}
                     >
                         Cancel
@@ -444,7 +492,7 @@ export function BlogEditor({ initialBlog, inlineMode = false, onSaved, inlineRet
                 )}
                 <Button
                     type="submit"
-                    disabled={isSaving || !isDirty || !title.trim()}
+                    disabled={isSaveDisabled}
                     className="px-8 font-medium"
                 >
                     {isSaving ? 'Saving…' : isEditing ? 'Update Post' : 'Create Post'}

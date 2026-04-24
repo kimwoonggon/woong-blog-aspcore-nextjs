@@ -10,6 +10,8 @@ import { isHtmlPageContent } from '@/lib/content/page-content'
 import { fetchWithCsrf } from '@/lib/api/auth'
 import { toast } from 'sonner'
 import { getBrowserApiBaseUrl } from '@/lib/api/browser'
+import { revalidatePublicPathsAfterMutation } from '@/lib/public-revalidation-client'
+import { getPagePublicRevalidationPaths } from '@/lib/public-revalidation-paths'
 
 interface Page {
     id: string
@@ -51,6 +53,7 @@ export function PageEditor({ page, inlineMode = false, onSaved }: PageEditorProp
                 const message = await response.text()
                 toast.error(`Error saving page: ${message}`, { id: toastId })
             } else {
+                await revalidatePublicPathsAfterMutation(getPagePublicRevalidationPaths(page.slug))
                 toast.success('Page updated successfully!', { id: toastId })
                 router.refresh()
                 onSaved?.()

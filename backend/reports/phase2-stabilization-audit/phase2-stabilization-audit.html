@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Phase 2 Stabilization Architecture Audit</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, sans-serif; margin: 2rem; line-height: 1.5; color: #172033; background: #fff; }
+    h1, h2 { color: #111827; }
+    code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    pre { background: #f6f8fa; border: 1px solid #d0d7de; border-radius: 6px; padding: 1rem; overflow: auto; }
+    table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: 0.95rem; }
+    th, td { border: 1px solid #d0d7de; padding: 0.55rem; vertical-align: top; }
+    th { background: #f6f8fa; text-align: left; }
+    .status { display: inline-block; padding: 0.2rem 0.45rem; border-radius: 999px; font-weight: 700; }
+    .pass { background: #dcfce7; color: #166534; }
+    .yellow { background: #fef9c3; color: #854d0e; }
+    .fail { background: #fee2e2; color: #991b1b; }
+    .meta { color: #4b5563; }
+  </style>
+</head>
+<body>
+  <h1>Phase 2 Stabilization Architecture Audit</h1>
+  <p class="meta">
+    Generated: <code>2026-04-21T10:37:19+09:00</code><br>
+    Branch: <code>feat/phase-2-backend-discompostion</code><br>
+    Commit SHA: <code>066c48c1ed04d096d6e2a2cd9322c4b967c6aed1</code><br>
+    Audit mode: source/project/test inspection only. No production code, test code, project files, Dockerfiles, CI files, or configuration files were modified by this audit.
+  </p>
+
+  <h2>1. Executive Summary</h2>
+  <p>Overall status: <span class="status yellow">PASS with yellow flags</span></p>
+  <p>High-risk violations: <strong>0</strong></p>
+  <p>Yellow flags: <strong>8</strong></p>
+  <p>Recommendation: <strong>ready for test-rebalancing PR</strong></p>
+  <p>The backend physical split remains aligned with the intended Phase 2 project graph. Domain has no project references, Application references only Domain, Infrastructure references Application and Domain, and Api references Application and Infrastructure. No circular references were found from project files.</p>
+  <p>The stabilization work preserved the main architecture boundaries. Application has no direct Infrastructure project reference or Infrastructure namespace usage, Domain does not reference Application/Infrastructure, Application does not expose ASP.NET HTTP result abstractions, and Application does not use service locator or scope factory APIs. HTTP result mapping for AI and WorkVideo flows remains in Api.</p>
+
+  <h2>2. PASS/FAIL Checklist</h2>
+  <table>
+    <thead><tr><th>Criterion</th><th>Status</th><th>Evidence</th></tr></thead>
+    <tbody>
+      <tr><td>Domain is dependency-free apart from runtime framework basics</td><td>PASS</td><td>Domain csproj has no package, framework, or project references; source search found no higher-layer or framework refs.</td></tr>
+      <tr><td>Application depends on Domain only</td><td>PASS</td><td>Application csproj references only WoongBlog.Domain.</td></tr>
+      <tr><td>Infrastructure depends on Application + Domain only</td><td>PASS</td><td>Infrastructure csproj references Application and Domain only.</td></tr>
+      <tr><td>Api depends on Application + Infrastructure</td><td>PASS</td><td>Api csproj references Application and Infrastructure only.</td></tr>
+      <tr><td>No circular references</td><td>PASS</td><td>Project graph is acyclic.</td></tr>
+      <tr><td>No Application -> Infrastructure dependency</td><td>PASS</td><td>No project reference and no Infrastructure namespace matches under Application.</td></tr>
+      <tr><td>No Domain -> Application/Infrastructure dependency</td><td>PASS</td><td>No higher-layer namespace matches under Domain.</td></tr>
+      <tr><td>Application must not expose ASP.NET HTTP result abstractions</td><td>PASS</td><td>No ASP.NET HTTP result/source tokens under Application; ArchitectureTests include reflected type-surface checks.</td></tr>
+      <tr><td>Application must not use IServiceScopeFactory/CreateScope/GetRequiredService</td><td>PASS</td><td>No service scope or service locator tokens found under Application.</td></tr>
+      <tr><td>Api owns HTTP result mapping</td><td>PASS</td><td>AiHttpResultMapper and WorkVideoEndpoints map application results to IResult in Api.</td></tr>
+      <tr><td>DbContext and concrete stores live in Infrastructure</td><td>PASS</td><td>WoongBlogDbContext and concrete *Store implementations are under WoongBlog.Infrastructure; production source search found no DbContext usage outside Infrastructure.</td></tr>
+      <tr><td>Handlers and abstraction interfaces live in Application</td><td>PASS with yellow flag</td><td>MediatR handlers and primary store/port abstractions live in Application; Infrastructure has a framework-facing identity interaction interface with Application naming.</td></tr>
+      <tr><td>AiActionResult&lt;T&gt; remains HTTP-agnostic</td><td>PASS</td><td>Uses AiActionStatus enum only; HTTP mapping is in Api.</td></tr>
+      <tr><td>WorkVideoResult&lt;T&gt; remains HTTP-agnostic</td><td>PASS</td><td>Uses WorkVideoResultStatus enum only; HTTP mapping is in Api.</td></tr>
+      <tr><td>Content CQRS direction remains intact</td><td>PASS</td><td>Handlers/interfaces are in Application, concrete persistence stores in Infrastructure, endpoints in Api.</td></tr>
+      <tr><td>AI batch boundary remains intact</td><td>PASS</td><td>Commands/queries/policies/contracts are in Application; provider/background/store implementations are in Infrastructure.</td></tr>
+      <tr><td>WorkVideo handler/store/support boundary remains intact</td><td>PASS</td><td>Handlers/ports/results are in Application; storage/HLS/transcoder/cleanup implementations are in Infrastructure.</td></tr>
+      <tr><td>Cleaner composition boundaries exist</td><td>PASS with yellow flag</td><td>AddApplication and AddInfrastructure exist; Api module extensions still register concrete Infrastructure adapters.</td></tr>
+      <tr><td>EF design-time/runtime setup remains viable</td><td>PASS with yellow flag</td><td>DbContext and design-time factory are in Infrastructure; migrations assembly points to Infrastructure; runtime bootstrap remains schema-patch based.</td></tr>
+      <tr><td>Test taxonomy supports next phase</td><td>PASS with yellow flag</td><td>Projects are split, but UnitTests references Infrastructure/ASP.NET and contains component-style tests.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>3. Project Reference Graph</h2>
+  <pre>WoongBlog.Domain
+  (no project references)
+
+WoongBlog.Application
+  -> WoongBlog.Domain
+
+WoongBlog.Infrastructure
+  -> WoongBlog.Application
+  -> WoongBlog.Domain
+
+WoongBlog.Api
+  -> WoongBlog.Application
+  -> WoongBlog.Infrastructure</pre>
+
+  <table>
+    <thead><tr><th>Project</th><th>Package/framework references</th></tr></thead>
+    <tbody>
+      <tr><td><code>WoongBlog.Domain</code></td><td>none</td></tr>
+      <tr><td><code>WoongBlog.Application</code></td><td>FluentValidation, FluentValidation.DependencyInjectionExtensions, MediatR, Microsoft.Extensions.DependencyInjection.Abstractions, Microsoft.Extensions.Options</td></tr>
+      <tr><td><code>WoongBlog.Infrastructure</code></td><td>FrameworkReference Microsoft.AspNetCore.App, AWSSDK.S3, Microsoft.AspNetCore.Authentication.OpenIdConnect, Microsoft.EntityFrameworkCore, Microsoft.EntityFrameworkCore.Design, Microsoft.EntityFrameworkCore.InMemory, Npgsql.EntityFrameworkCore.PostgreSQL</td></tr>
+      <tr><td><code>WoongBlog.Api</code></td><td>Web SDK, FluentValidation, FluentValidation.DependencyInjectionExtensions, MediatR, Microsoft.AspNetCore.Authentication.OpenIdConnect, Microsoft.AspNetCore.OpenApi</td></tr>
+    </tbody>
+  </table>
+
+  <h2>4. High-Risk Violations</h2>
+  <table>
+    <thead><tr><th>Severity</th><th>File path(s)</th><th>Finding</th><th>Why it matters</th></tr></thead>
+    <tbody>
+      <tr><td>None</td><td>N/A</td><td>No high-risk Phase 2 boundary violations found.</td><td>The intended physical split and stabilization boundaries remain intact.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>5. Yellow-Flag Items</h2>
+  <table>
+    <thead><tr><th>Area</th><th>File path(s)</th><th>Why it matters</th><th>Suggested cleanup</th></tr></thead>
+    <tbody>
+      <tr><td>Namespace clarity</td><td><code>backend/src/WoongBlog.Application</code>, <code>backend/src/WoongBlog.Domain</code>, <code>backend/src/WoongBlog.Infrastructure</code></td><td>Split assemblies still use <code>WoongBlog.Api.*</code> namespaces, weakening readability and grep-based ownership checks.</td><td>Normalize namespaces in a dedicated low-risk PR or document the convention.</td></tr>
+      <tr><td>Api composition knows concrete Infrastructure adapters</td><td><code>backend/src/WoongBlog.Api/Modules/*/*ServiceCollectionExtensions.cs</code></td><td>Api module registration extensions import and register concrete Infrastructure types.</td><td>Move module infrastructure registrations behind Infrastructure-owned helpers later.</td></tr>
+      <tr><td>DbContext search synchronization depends on Application support helpers</td><td><code>backend/src/WoongBlog.Infrastructure/Infrastructure/Persistence/ContentSearchFieldSynchronizer.cs</code></td><td>Persistence uses Application support helpers during SaveChanges.</td><td>Move search helper ownership to Domain or Infrastructure if persistence owns indexing long-term.</td></tr>
+      <tr><td>Infrastructure-shaped AI options live in Application</td><td><code>backend/src/WoongBlog.Application/Modules/AI/Application/AiOptions.cs</code></td><td>Provider secrets/runtime settings blur option ownership.</td><td>Split Application runtime policy options from Infrastructure provider options later.</td></tr>
+      <tr><td>Infrastructure includes ASP.NET host/middleware concerns</td><td><code>backend/src/WoongBlog.Infrastructure/Infrastructure/Auth</code>, <code>Security</code>, <code>ValidationExceptionFilter.cs</code></td><td>Infrastructure is host infrastructure rather than pure non-HTTP infrastructure.</td><td>Defer unless an Api-only HTTP boundary is desired.</td></tr>
+      <tr><td>EF migration workflow remains bootstrap/schema-patch based</td><td><code>WoongBlogDbContextDesignTimeFactory.cs</code>, <code>DatabaseBootstrapper.cs</code></td><td>Design-time factory exists, but no checked-in migrations folder is present.</td><td>Decide separately whether EF migrations should become the deployment workflow.</td></tr>
+      <tr><td>Unit test project includes component/infrastructure tests</td><td><code>PublicQueryHandlerTests.cs</code>, <code>AuthRecorderTests.cs</code>, <code>BlogAiFixServiceCodexRuntimeTests.cs</code>, <code>CodexRuntimeEnvironmentTests.cs</code>, <code>AuthRedirectUriResolverTests.cs</code></td><td>These tests use Infrastructure, EF InMemory, ASP.NET contexts, filesystem/process fakes, or HttpClient.</td><td>Move or relabel during the next test-rebalancing PR.</td></tr>
+      <tr><td>Identity infrastructure namespace/path classification</td><td><code>backend/src/WoongBlog.Infrastructure/Modules/Identity/Application/IIdentityInteractionService.cs</code>, <code>IdentityInteractionService.cs</code></td><td>Infrastructure code uses an Application namespace segment, which can confuse boundary scans.</td><td>Rename/repath to Infrastructure identity interaction naming later.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>6. Follow-Up Recommendation</h2>
+  <p>The repository is <strong>ready for the next test-rebalancing PR</strong>. No additional stabilization pass is required before moving to test rebalancing. The high-risk project and source boundaries are correct.</p>
+  <p>The next PR should move or relabel tests in <code>WoongBlog.Api.UnitTests</code> that instantiate Infrastructure, EF InMemory, ASP.NET contexts, filesystem/process fakes, or HttpClient. Consider a separate component test project or moving those tests into IntegrationTests with narrower traits.</p>
+
+  <h2>7. Deferred Items</h2>
+  <ul>
+    <li>Namespace normalization from <code>WoongBlog.Api.*</code> to assembly-aligned namespaces.</li>
+    <li>Moving <code>ContentSearchText</code> and <code>AdminContentJson</code> if search indexing ownership moves to Domain or Infrastructure.</li>
+    <li>Splitting AI configuration into Application runtime policy options and Infrastructure provider options.</li>
+    <li>Deciding whether ASP.NET middleware/auth/validation filters should remain in Infrastructure or move closer to Api.</li>
+    <li>Introducing an EF migrations workflow.</li>
+    <li>Per-module physical splits.</li>
+    <li>Broad handler/store redesign.</li>
+    <li>Reclassifying component-style tests currently under <code>WoongBlog.Api.UnitTests</code>.</li>
+  </ul>
+</body>
+</html>

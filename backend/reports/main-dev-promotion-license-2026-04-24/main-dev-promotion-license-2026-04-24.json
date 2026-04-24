@@ -1,0 +1,21 @@
+{
+  "task": "main-dev-promotion-license-2026-04-24",
+  "summary": [
+    "Promoted the runtime-only main tree from origin/dev using the repository promotion workflow.",
+    "Added a custom Woonggon Kim proprietary license and linked it from README and package.json."
+  ],
+  "not_changed": [
+    "No Apache/MIT style license was applied.",
+    "No direct manual dev-to-main merge was used.",
+    "No cleanup of local artifact noise in the original working tree."
+  ],
+  "validations": [
+    "Inspected failed direct merge path and switched to scripts/promote-main-runtime.sh.",
+    "Verified LICENSE, README.md, and package.json in the promotion worktree."
+  ],
+  "risks": [
+    "Future runtime promotions must continue preserving the license change.",
+    "This is a custom proprietary license, not an OSI-approved open-source license."
+  ],
+  "recommendation": "Use the runtime-only promotion workflow for future dev-to-main promotions and keep the root LICENSE as the source of truth."
+}

@@ -1,0 +1,106 @@
+{
+  "generated_at": "2026-04-21T13:13:26+09:00",
+  "branch": "feat/phase-2-backend-discompostion",
+  "commit_sha": "066c48c1ed04d096d6e2a2cd9322c4b967c6aed1",
+  "overall_status": "PASS",
+  "recommendation": "ready for the next low-risk cleanup PR",
+  "ui_fixes": [
+    {
+      "failure": "tests/ui-pub-overflow.spec.ts / /blog avoids horizontal overflow on mobile",
+      "root_cause": "Blog list cards could be widened by unbroken/generated title, excerpt, or tag text.",
+      "fix": "Added min-width and overflow-wrap protections to blog list card elements.",
+      "files": [
+        "src/app/(public)/blog/page.tsx"
+      ]
+    },
+    {
+      "failure": "tests/mermaid-batch-prompt-0419.spec.ts / save batch ai prompt before reading mermaid posts",
+      "root_cause": "Async runtime-config initialization could overwrite prompt textarea state after user input.",
+      "fix": "Added prompt-touched guard before applying async initialized prompt state.",
+      "files": [
+        "src/components/admin/AdminBlogBatchAiPanel.tsx"
+      ]
+    }
+  ],
+  "ai_batch_deepening": {
+    "summary": [
+      "Split IAiBlogFixBatchStore responsibilities into target query, job query, and job command interfaces",
+      "Kept IAiBlogFixBatchStore as a compatibility aggregate",
+      "Updated AI batch handlers/scheduler/runner/dispatcher/processor to depend on narrower interfaces",
+      "Kept existing concrete EF store and current behavior"
+    ],
+    "interfaces_added": [
+      "IAiBatchTargetQueryStore",
+      "IAiBatchJobQueryStore",
+      "IAiBatchJobCommandStore"
+    ],
+    "behavior_changed": false
+  },
+  "files_changed": [
+    "src/app/(public)/blog/page.tsx",
+    "src/components/admin/AdminBlogBatchAiPanel.tsx",
+    "backend/src/WoongBlog.Application/Modules/AI/Application/Abstractions/IAiBlogFixBatchStore.cs",
+    "backend/src/WoongBlog.Application/Modules/AI/Application/BlogFix/FixBlogBatchCommandHandler.cs",
+    "backend/src/WoongBlog.Application/Modules/AI/Application/BatchJobs/CreateBlogFixBatchJobCommandHandler.cs",
+    "backend/src/WoongBlog.Application/Modules/AI/Application/BatchJobs/ListBlogFixBatchJobsQueryHandler.cs",
+    "backend/src/WoongBlog.Application/Modules/AI/Application/BatchJobs/GetBlogFixBatchJobQueryHandler.cs",
+    "backend/src/WoongBlog.Application/Modules/AI/Application/BatchJobs/ApplyBlogFixBatchJobCommandHandler.cs",
+    "backend/src/WoongBlog.Application/Modules/AI/Application/BatchJobs/CancelBlogFixBatchJobCommandHandler.cs",
+    "backend/src/WoongBlog.Application/Modules/AI/Application/BatchJobs/CancelQueuedBlogFixBatchJobsCommandHandler.cs",
+    "backend/src/WoongBlog.Application/Modules/AI/Application/BatchJobs/ClearCompletedBlogFixBatchJobsCommandHandler.cs",
+    "backend/src/WoongBlog.Application/Modules/AI/Application/BatchJobs/RemoveBlogFixBatchJobCommandHandler.cs",
+    "backend/src/WoongBlog.Application/Modules/AI/Application/BatchJobs/AiBatchJobScheduler.cs",
+    "backend/src/WoongBlog.Application/Modules/AI/Application/BatchJobs/AiBatchJobRunner.cs",
+    "backend/src/WoongBlog.Application/Modules/AI/Application/BatchJobs/AiBatchJobItemProcessor.cs",
+    "backend/src/WoongBlog.Infrastructure/Infrastructure/Ai/AiBatchJobItemDispatcher.cs",
+    "backend/src/WoongBlog.Api/Modules/AI/AiModuleServiceCollectionExtensions.cs",
+    "backend/tests/WoongBlog.Api.ArchitectureTests/ArchitectureBoundaryTests.cs",
+    "backend/tests/WoongBlog.Api.IntegrationTests/StartupCompositionTests.cs"
+  ],
+  "verification": [
+    {
+      "command": "npx vitest run src/test/admin-blog-batch-ai-panel.test.tsx --pool=threads",
+      "result": "10 passed"
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "passed"
+    },
+    {
+      "command": "npm run test:e2e:stack -- tests/ui-pub-overflow.spec.ts:6 tests/mermaid-batch-prompt-0419.spec.ts:126",
+      "result": "9 passed"
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.UnitTests/WoongBlog.Api.UnitTests.csproj",
+      "result": "13 passed"
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter \"FullyQualifiedName~AdminAiEndpointsTests|FullyQualifiedName~StartupCompositionTests\"",
+      "result": "16 passed"
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.ArchitectureTests/WoongBlog.Api.ArchitectureTests.csproj",
+      "result": "27 passed"
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln",
+      "result": "Contract 1, Unit 13, Component 26, Architecture 27, Integration 93 passed"
+    },
+    {
+      "command": "npm run test:e2e:stack",
+      "result": "563 passed, 8 skipped"
+    }
+  ],
+  "deferred_items": [
+    "Remove or shrink IAiBlogFixBatchStore compatibility aggregate later",
+    "Split concrete EF store only if future churn justifies it",
+    "Atomic claim / DB concurrency redesign",
+    "AI options ownership split",
+    "Namespace normalization",
+    "Middleware relocation",
+    "Per-module csproj split"
+  ],
+  "known_warnings": [
+    "Existing low-severity NU1901 warning for AWSSDK.Core remains"
+  ]
+}

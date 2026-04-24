@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mobile Search / Notion Autosave Audit</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; color: #111; line-height: 1.5; }
+    h1, h2 { margin-bottom: 0.4rem; }
+    ul { padding-left: 1.2rem; }
+    code { background: #f3f4f6; padding: 0.1rem 0.3rem; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>Mobile Search / Notion Autosave Audit</h1>
+  <p>Date: 2026-04-24</p>
+  <h2>Changed</h2>
+  <ul>
+    <li>Mobile search now opens from the shared navbar and appears under the sticky header.</li>
+    <li>Page-level mobile search UI is hidden by default; desktop search stays inline.</li>
+    <li>Compact feeds no longer auto-append on scroll and now extend only via <code>Load more</code>.</li>
+    <li>Notion autosave shows <code>Saving...</code> earlier and uses a shorter debounce.</li>
+    <li>Repeated mutation session preflight now uses a short TTL cache.</li>
+  </ul>
+  <h2>Not Changed</h2>
+  <ul>
+    <li>Card preview surfaces still use excerpt-based summaries by design.</li>
+    <li>Desktop pagination behavior remains unchanged.</li>
+    <li>Notion autosave still uses the existing full blog update endpoint.</li>
+  </ul>
+  <h2>Validation</h2>
+  <ul>
+    <li>Targeted Vitest suite: pass</li>
+    <li><code>npm run typecheck</code>: pass</li>
+    <li><code>npm run lint</code>: pass with warnings only</li>
+    <li>Targeted Playwright suite against external Docker HTTP server: pass</li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Keep this pass and, if notion latency still matters, follow with a content-only autosave endpoint and server-side content parsing deduplication.</p>
+</body>
+</html>

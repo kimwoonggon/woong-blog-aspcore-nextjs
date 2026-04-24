@@ -9,6 +9,8 @@ import { Label } from '@/components/ui/label'
 import { Facebook, Instagram, Twitter, Linkedin, Github } from 'lucide-react'
 import { fetchWithCsrf } from '@/lib/api/auth'
 import { getBrowserApiBaseUrl } from '@/lib/api/browser'
+import { revalidatePublicPathsAfterMutation } from '@/lib/public-revalidation-client'
+import { getSiteSettingsPublicRevalidationPaths } from '@/lib/public-revalidation-paths'
 
 interface SiteSettings {
     owner_name: string
@@ -54,6 +56,7 @@ export function SiteSettingsEditor({ initialSettings }: SiteSettingsEditorProps)
             })
 
             if (response.ok) {
+                await revalidatePublicPathsAfterMutation(getSiteSettingsPublicRevalidationPaths())
                 router.refresh()
                 alert('Site settings saved successfully!')
             } else {
