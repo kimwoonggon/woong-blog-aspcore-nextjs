@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useTransition } from 'react'
+import { Suspense, useEffect, useState, useTransition } from 'react'
 import dynamic from 'next/dynamic'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Trash2 } from 'lucide-react'
@@ -16,10 +16,6 @@ import { toast } from 'sonner'
 
 interface PublicBlogDetailAdminActionsProps {
   blogId: string
-}
-
-interface PublicBlogDetailAdminActionsContentProps extends PublicBlogDetailAdminActionsProps {
-  afterDeleteHref: string
 }
 
 type LoadState = 'idle' | 'loading' | 'loaded' | 'error'
@@ -48,7 +44,7 @@ async function fetchAdminBlogDetail(blogId: string) {
   return response.json() as Promise<AdminBlogDetail>
 }
 
-function PublicBlogDetailAdminActionsContent({ blogId, afterDeleteHref }: PublicBlogDetailAdminActionsContentProps) {
+function PublicBlogDetailAdminActionsContent({ blogId, afterDeleteHref }: { blogId: string; afterDeleteHref: string }) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [state, setState] = useState<LoadState>('idle')
@@ -143,6 +139,16 @@ function PublicBlogDetailAdminActionsContent({ blogId, afterDeleteHref }: Public
   )
 }
 
+export function PublicBlogDetailAdminActions(props: PublicBlogDetailAdminActionsProps) {
+  return (
+    <PublicAdminClientGate>
+      <Suspense fallback={null}>
+        <PublicBlogDetailAdminActionsGate {...props} />
+      </Suspense>
+    </PublicAdminClientGate>
+  )
+}
+
 function resolveSafeReturnTo(returnTo?: string | null) {
   if (!returnTo) {
     return null
@@ -173,21 +179,13 @@ function resolveBlogAfterDeleteHref(searchParams: URLSearchParams) {
   return relatedPage ? `/blog?page=${encodeURIComponent(relatedPage)}&pageSize=12` : '/blog'
 }
 
-function PublicBlogDetailAdminActionsGate(props: PublicBlogDetailAdminActionsProps) {
+function PublicBlogDetailAdminActionsGate({ blogId }: PublicBlogDetailAdminActionsProps) {
   const searchParams = useSearchParams()
 
   return (
     <PublicBlogDetailAdminActionsContent
-      {...props}
+      blogId={blogId}
       afterDeleteHref={resolveBlogAfterDeleteHref(searchParams)}
     />
-  )
-}
-
-export function PublicBlogDetailAdminActions(props: PublicBlogDetailAdminActionsProps) {
-  return (
-    <PublicAdminClientGate>
-      <PublicBlogDetailAdminActionsGate {...props} />
-    </PublicAdminClientGate>
   )
 }

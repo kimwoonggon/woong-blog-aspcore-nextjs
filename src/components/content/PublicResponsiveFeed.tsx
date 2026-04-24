@@ -101,7 +101,6 @@ export function PublicResponsiveFeed({
   const [totalPages, setTotalPages] = useState(Math.max(1, mobileInitialPayload.totalPages))
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const sentinelRef = useRef<HTMLDivElement | null>(null)
   const loadingRef = useRef(false)
 
   useEffect(() => {
@@ -157,31 +156,6 @@ export function PublicResponsiveFeed({
     }
   }, [hasMore, isCompact, kind, page, query])
 
-  useEffect(() => {
-    if (!isCompact || !hasMore || typeof IntersectionObserver === 'undefined') {
-      return
-    }
-
-    const sentinel = sentinelRef.current
-    if (!sentinel) {
-      return
-    }
-
-    const observer = new IntersectionObserver((entries) => {
-      if (entries.some((entry) => entry.isIntersecting)) {
-        void loadNextPage()
-      }
-    }, {
-      rootMargin: '320px 0px',
-    })
-
-    observer.observe(sentinel)
-
-    return () => {
-      observer.disconnect()
-    }
-  }, [hasMore, isCompact, loadNextPage])
-
   const renderedItems = isCompact ? items : desktopPayload.items
   const returnTo = isCompact ? buildMobileReturnTo(kind, query) : desktopReturnTo
   const emptyText = kind === 'blog'
@@ -196,7 +170,7 @@ export function PublicResponsiveFeed({
       <div
         data-testid={kind === 'blog' ? 'blog-grid' : 'works-grid'}
         data-feed-testid={`${kind}-responsive-feed`}
-        data-feed-mode={isCompact ? 'infinite' : 'pagination'}
+        data-feed-mode={isCompact ? 'load-more' : 'pagination'}
         className={gridClassName}
       >
         {renderedItems.length > 0 ? (
@@ -214,7 +188,6 @@ export function PublicResponsiveFeed({
 
       {isCompact ? (
         <div className="mt-8 flex flex-col items-center gap-3" data-testid={`${kind}-infinite-controls`}>
-          <div ref={sentinelRef} data-testid={`${kind}-infinite-sentinel`} className="h-1 w-full" aria-hidden="true" />
           {error ? (
             <p role="status" className="text-sm text-destructive">{error}</p>
           ) : null}

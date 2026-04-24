@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using WoongBlog.Api.Domain.Entities;
-using WoongBlog.Api.Infrastructure.Persistence;
-using WoongBlog.Api.Modules.AI.Application.Abstractions;
+using WoongBlog.Infrastructure.Persistence;
+using WoongBlog.Application.Modules.AI.Abstractions;
 
-namespace WoongBlog.Api.Modules.AI.Persistence;
+namespace WoongBlog.Infrastructure.Modules.AI.Persistence;
 
 public sealed class AiBlogFixBatchStore(WoongBlogDbContext dbContext) :
     IAiBatchTargetQueryStore,

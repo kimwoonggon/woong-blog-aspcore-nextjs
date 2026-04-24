@@ -1,6 +1,6 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { WorkVideoPlayer } from '@/components/content/WorkVideoPlayer'
+import { parseTimelinePreviewVtt, WorkVideoPlayer } from '@/components/content/WorkVideoPlayer'
 
 const hlsMocks = vi.hoisted(() => ({
   attachMedia: vi.fn(),
@@ -38,6 +38,7 @@ describe('WorkVideoPlayer', () => {
 
   afterEach(() => {
     vi.restoreAllMocks()
+    vi.unstubAllGlobals()
   })
 
   it('renders YouTube videos with the nocookie embed domain', () => {
@@ -52,7 +53,7 @@ describe('WorkVideoPlayer', () => {
       />,
     )
 
-    expect(screen.getByTitle(/YouTube video/i)).toHaveAttribute('src', 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ')
+    expect(screen.getByTitle(/YouTube video/i)).toHaveAttribute('src', 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?playsinline=1&rel=0')
   })
 
   it('renders uploaded videos with a native video source', () => {
@@ -131,5 +132,144 @@ describe('WorkVideoPlayer', () => {
     const video = container.querySelector('video')
     await waitFor(() => expect(hlsMocks.loadSource).toHaveBeenCalledWith('https://cdn.example.com/videos/work-1/hls/master.m3u8'))
     expect(hlsMocks.attachMedia).toHaveBeenCalledWith(video)
+  })
+
+  it('parses timeline preview VTT cues', () => {
+    const cues = parseTimelinePreviewVtt(`WEBVTT
+
+00:00:00.000 --> 00:00:05.000
+timeline-sprite.jpg#xywh=0,0,320,180
+`)
+
+    expect(cues).toHaveLength(1)
+    expect(cues[0]).toMatchObject({
+      start: 0,
+      end: 5,
+      x: 0,
+      y: 0,
+      width: 320,
+      height: 180,
+    })
+  })
+
+  it('shows a center play overlay while paused and hides it after playback starts', async () => {
+    const playSpy = vi.spyOn(HTMLMediaElement.prototype, 'play').mockImplementation(async () => undefined)
+    const pauseSpy = vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined)
+
+    const { container } = render(
+      <WorkVideoPlayer
+        video={{
+          id: 'video-overlay',
+          sourceType: 'local',
+          sourceKey: 'videos/work-1/demo.mp4',
+          playbackUrl: '/media/videos/work-1/demo.mp4',
+          mimeType: 'video/mp4',
+          sortOrder: 0,
+        }}
+      />,
+    )
+
+    const video = container.querySelector('video') as HTMLVideoElement
+    expect(screen.getByTestId('work-video-center-play')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByTestId('work-video-center-play'))
+    expect(playSpy).toHaveBeenCalledTimes(1)
+
+    fireEvent.play(video)
+    await waitFor(() => {
+      expect(screen.queryByTestId('work-video-center-play')).not.toBeInTheDocument()
+    })
+
+    fireEvent.pause(video)
+    expect(pauseSpy).not.toHaveBeenCalled()
+    expect(screen.getByTestId('work-video-center-play')).toBeInTheDocument()
+  })
+
+  it('shows a hover preview when the lower video frame is hovered and preview assets are available', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(`WEBVTT
+
+00:00:00.000 --> 00:00:05.000
+timeline-sprite.jpg#xywh=0,0,320,180
+`, { status: 200 })))
+
+    const { container } = render(
+      <WorkVideoPlayer
+        video={{
+          id: 'video-preview',
+          sourceType: 'hls',
+          sourceKey: 'local:videos/work-1/hls/master.m3u8',
+          playbackUrl: '/media/videos/work-1/hls/master.m3u8',
+          mimeType: 'application/vnd.apple.mpegurl',
+          durationSeconds: 20,
+          timelinePreviewSpriteUrl: '/media/videos/work-1/hls/timeline-sprite.jpg',
+          timelinePreviewVttUrl: '/media/videos/work-1/hls/timeline.vtt',
+          sortOrder: 0,
+        }}
+      />,
+    )
+
+    const video = container.querySelector('video') as HTMLVideoElement
+    Object.defineProperty(video, 'duration', { configurable: true, value: 20 })
+
+    fireEvent.durationChange(video)
+
+    const frame = screen.getByTestId('work-video-frame')
+    const overlay = screen.getByTestId('work-video-progress-overlay')
+    Object.defineProperty(frame, 'getBoundingClientRect', {
+      configurable: true,
+      value: () => ({
+        width: 200,
+        left: 0,
+        height: 120,
+        bottom: 120,
+      }),
+    })
+    Object.defineProperty(overlay, 'getBoundingClientRect', {
+      configurable: true,
+      value: () => ({
+        width: 168,
+        left: 16,
+      }),
+    })
+    await waitFor(() => {
+      fireEvent.mouseMove(overlay, {
+        clientX: 40,
+        clientY: 110,
+      })
+      expect(screen.getByTestId('work-video-timeline-preview')).toBeInTheDocument()
+    })
+
+    const bubble = screen.getByTestId('work-video-timeline-preview')
+    const previewImage = bubble.querySelector('div')
+    expect(previewImage).toHaveStyle({
+      width: '240px',
+      height: '135px',
+      backgroundSize: '240px 135px',
+    })
+  })
+
+  it('supports desktop resize modes when enabled', () => {
+    render(
+      <WorkVideoPlayer
+        video={{
+          id: 'video-size',
+          sourceType: 'local',
+          sourceKey: 'videos/work-1/demo.mp4',
+          playbackUrl: '/media/videos/work-1/demo.mp4',
+          mimeType: 'video/mp4',
+          sortOrder: 0,
+        }}
+        allowDesktopResize
+      />,
+    )
+
+    const player = screen.getByTestId('work-video-player')
+    expect(player).toHaveAttribute('data-size-mode', 'wide')
+
+    fireEvent.click(screen.getByTestId('work-video-size-fit'))
+    expect(player).toHaveAttribute('data-size-mode', 'fit')
+
+    fireEvent.click(screen.getByTestId('work-video-size-theater'))
+    expect(player).toHaveAttribute('data-size-mode', 'theater')
   })
 })

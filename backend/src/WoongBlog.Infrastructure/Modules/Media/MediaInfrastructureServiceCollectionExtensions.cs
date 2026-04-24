@@ -1,9 +1,9 @@
-using WoongBlog.Api.Modules.Media.Application.Abstractions;
-using WoongBlog.Api.Modules.Media.Persistence;
-using WoongBlog.Api.Modules.Media.Policies;
-using WoongBlog.Api.Modules.Media.Storage;
+using WoongBlog.Application.Modules.Media.Abstractions;
+using WoongBlog.Infrastructure.Modules.Media.Persistence;
+using WoongBlog.Infrastructure.Modules.Media.Policies;
+using WoongBlog.Infrastructure.Modules.Media.Storage;
 
-namespace WoongBlog.Api.Modules.Media;
+namespace WoongBlog.Infrastructure.Modules.Media;
 
 public static class MediaInfrastructureServiceCollectionExtensions
 {

@@ -1,0 +1,78 @@
+{
+  "taskSlug": "admin-blog-notion-autosave-request-path-2026-04-24",
+  "summary": "Audit-only inspection of the current working tree autosave request path for /admin/blog/notion, focused on HTTP/API handlers and autosave-triggered public revalidation.",
+  "scope": {
+    "currentWorkingTree": true,
+    "productionCodeChanged": false,
+    "testCodeChanged": false,
+    "runtimeTestsExecuted": false
+  },
+  "findings": [
+    {
+      "id": "autosave-session-preflight",
+      "summary": "Each autosave mutation performs an extra browser-side session check before the blog PUT.",
+      "references": [
+        "src/components/admin/BlogNotionWorkspace.tsx:166",
+        "src/lib/api/auth.ts:102",
+        "src/lib/api/auth.ts:111",
+        "src/lib/api/auth.ts:28"
+      ],
+      "latencyImpact": "high"
+    },
+    {
+      "id": "put-auth-and-db-path",
+      "summary": "The protected blog update path is thin, but auth validation adds DB lookups and occasional writes around the actual blog update.",
+      "references": [
+        "backend/src/WoongBlog.Api/Modules/Content/Blogs/Api/UpdateBlog/UpdateBlogEndpoint.cs:12",
+        "backend/src/WoongBlog.Application/Modules/Content/Blogs/Application/UpdateBlog/UpdateBlogCommandHandler.cs:18",
+        "backend/src/WoongBlog.Infrastructure/Modules/Content/Blogs/Persistence/BlogCommandStore.cs:17",
+        "backend/src/WoongBlog.Infrastructure/Infrastructure/Auth/AppCookieAuthenticationEvents.cs:37",
+        "backend/src/WoongBlog.Infrastructure/Infrastructure/Auth/AuthRecorder.cs:169"
+      ],
+      "latencyImpact": "high"
+    },
+    {
+      "id": "autosave-revalidation-throttled",
+      "summary": "Autosave-triggered revalidation is throttled and does not block the Saved UI state.",
+      "references": [
+        "src/components/admin/BlogNotionWorkspace.tsx:60",
+        "src/components/admin/BlogNotionWorkspace.tsx:195",
+        "src/components/admin/BlogNotionWorkspace.tsx:196",
+        "src/components/admin/BlogNotionWorkspace.tsx:98"
+      ],
+      "latencyImpact": "medium"
+    },
+    {
+      "id": "revalidate-route-auth-hop",
+      "summary": "When revalidation runs, nested auth/session fetches are more likely to dominate than the small revalidatePath/revalidateTag loops.",
+      "references": [
+        "src/lib/public-revalidation-client.ts:13",
+        "src/app/revalidate-public/route.ts:33",
+        "src/lib/auth/public-admin.ts:7",
+        "src/lib/api/server.ts:43",
+        "src/app/revalidate-public/route.ts:43",
+        "src/lib/public-revalidation-paths.ts:18",
+        "src/lib/public-revalidation-paths.ts:71"
+      ],
+      "latencyImpact": "medium"
+    },
+    {
+      "id": "csrf-bootstrap-overhead",
+      "summary": "Cold-cache CSRF bootstrap can add another round trip, including for /revalidate-public even though antiforgery middleware does not target that route.",
+      "references": [
+        "src/lib/api/auth.ts:82",
+        "src/lib/api/auth.ts:118",
+        "backend/src/WoongBlog.Infrastructure/Infrastructure/Security/AntiforgeryValidationMiddleware.cs:39"
+      ],
+      "latencyImpact": "medium"
+    }
+  ],
+  "dominantSteps": [
+    "GET /api/auth/session preflight before autosave PUT",
+    "Protected PUT /api/admin/blogs/{id} auth principal validation",
+    "Blog load + slug existence check + SaveChangesAsync",
+    "Throttled POST /revalidate-public and its nested session fetch",
+    "GET /api/auth/csrf on cold-cache or retry paths"
+  ],
+  "recommendation": "Profile and reduce repeated auth/session hops before optimizing excerpt/search-text processing or revalidate loops."
+}

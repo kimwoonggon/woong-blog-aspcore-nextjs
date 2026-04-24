@@ -140,8 +140,12 @@ test('0416 admin home edits read back in admin and public home', async ({ page }
   await expect(page.locator('#introText')).toHaveValue(intro)
 
   await page.goto('/')
-  await expect(page.getByRole('heading', { name: headline })).toBeVisible()
-  await expect(page.getByText(intro)).toBeVisible()
+  await expect.poll(async () => {
+    await page.reload({ waitUntil: 'domcontentloaded' })
+    const visibleHeadline = await page.getByRole('heading').first().textContent()
+    const mainText = await page.locator('main').textContent()
+    return (visibleHeadline?.includes(headline) ?? false) && (mainText?.includes(intro) ?? false)
+  }, { timeout: 30_000 }).toBe(true)
 })
 
 test('0416 batch AI jobs refresh only on explicit user action', async ({ page }) => {

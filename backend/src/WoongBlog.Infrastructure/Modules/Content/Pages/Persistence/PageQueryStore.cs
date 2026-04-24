@@ -1,11 +1,11 @@
 using Microsoft.EntityFrameworkCore;
-using WoongBlog.Api.Infrastructure.Persistence;
-using WoongBlog.Api.Modules.Content.Common.Application.Support;
-using WoongBlog.Api.Modules.Content.Pages.Application.Abstractions;
-using WoongBlog.Api.Modules.Content.Pages.Application.GetAdminPages;
-using WoongBlog.Api.Modules.Content.Pages.Application.GetPageBySlug;
+using WoongBlog.Infrastructure.Persistence;
+using WoongBlog.Application.Modules.Content.Common.Support;
+using WoongBlog.Application.Modules.Content.Pages.Abstractions;
+using WoongBlog.Application.Modules.Content.Pages.GetAdminPages;
+using WoongBlog.Application.Modules.Content.Pages.GetPageBySlug;
 
-namespace WoongBlog.Api.Modules.Content.Pages.Persistence;
+namespace WoongBlog.Infrastructure.Modules.Content.Pages.Persistence;
 
 public sealed class PageQueryStore(WoongBlogDbContext dbContext) : IPageQueryStore
 {

@@ -1,3 +1,5 @@
+using WoongBlog.Infrastructure.Modules.Identity;
+
 namespace WoongBlog.Api.Modules.Identity;
 
 internal static class IdentityModuleServiceCollectionExtensions

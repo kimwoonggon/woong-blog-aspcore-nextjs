@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using WoongBlog.Api.Domain.Entities;
-using WoongBlog.Api.Infrastructure.Persistence;
-using WoongBlog.Api.Modules.Content.Works.Application.WorkVideos;
+using WoongBlog.Infrastructure.Persistence;
+using WoongBlog.Infrastructure.Modules.Content.Works.WorkVideos;
 
-namespace WoongBlog.Api.Modules.Content.Works.Persistence;
+namespace WoongBlog.Infrastructure.Modules.Content.Works.Persistence;
 
 public sealed class WorkVideoCommandStore(WoongBlogDbContext dbContext) : IWorkVideoCommandStore
 {

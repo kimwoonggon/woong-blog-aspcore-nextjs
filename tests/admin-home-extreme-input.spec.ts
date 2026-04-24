@@ -26,10 +26,20 @@ test('home page editor persists mixed Korean, English, and punctuation input', a
   ])
 
   await page.goto('/admin/pages')
-  await expect(page.getByRole('heading', { name: 'Home Page - Hero Section' }).locator('xpath=ancestor::div[contains(@class, "space-y-6")][1]').getByLabel('Headline')).toHaveValue(headline)
-  await expect(page.getByRole('heading', { name: 'Home Page - Hero Section' }).locator('xpath=ancestor::div[contains(@class, "space-y-6")][1]').getByLabel('Intro Text')).toHaveValue(introText)
+  await expect.poll(async () => {
+    await page.reload({ waitUntil: 'domcontentloaded' })
+    const refreshedEditor = page.getByRole('heading', { name: 'Home Page - Hero Section' })
+      .locator('xpath=ancestor::div[contains(@class, "space-y-6")][1]')
+    const refreshedHeadline = await refreshedEditor.getByLabel('Headline').inputValue()
+    const refreshedIntro = await refreshedEditor.getByLabel('Intro Text').inputValue()
+    return refreshedHeadline === headline && refreshedIntro === introText
+  }, { timeout: 30_000 }).toBe(true)
 
   await page.goto('/')
-  await expect(page.getByRole('heading', { name: headline })).toBeVisible()
-  await expect(page.getByText(introText)).toBeVisible()
+  await expect.poll(async () => {
+    await page.reload({ waitUntil: 'domcontentloaded' })
+    const headingText = await page.getByRole('heading').first().textContent()
+    const mainText = await page.locator('main').textContent()
+    return (headingText?.includes(headline) ?? false) && (mainText?.includes(introText) ?? false)
+  }, { timeout: 30_000 }).toBe(true)
 })

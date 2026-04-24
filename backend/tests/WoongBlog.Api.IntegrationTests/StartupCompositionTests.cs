@@ -4,14 +4,14 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using WoongBlog.Api.Infrastructure.Auth;
-using WoongBlog.Api.Infrastructure.Persistence;
-using WoongBlog.Api.Modules.AI.Application.Abstractions;
-using WoongBlog.Api.Modules.Content.Blogs.Api.CreateBlog;
-using WoongBlog.Api.Modules.Content.Blogs.Application.Abstractions;
-using WoongBlog.Api.Modules.Content.Blogs.Application.CreateBlog;
-using WoongBlog.Api.Modules.Content.Common.Application.Support;
-using WoongBlog.Api.Modules.Content.Works.Application.WorkVideos;
+using WoongBlog.Infrastructure.Auth;
+using WoongBlog.Infrastructure.Persistence;
+using WoongBlog.Application.Modules.AI.Abstractions;
+using WoongBlog.Api.Modules.Content.Blogs.CreateBlog;
+using WoongBlog.Application.Modules.Content.Blogs.Abstractions;
+using WoongBlog.Application.Modules.Content.Blogs.CreateBlog;
+using WoongBlog.Application.Modules.Content.Common.Support;
+using WoongBlog.Application.Modules.Content.Works.WorkVideos;
 
 namespace WoongBlog.Api.Tests;
 

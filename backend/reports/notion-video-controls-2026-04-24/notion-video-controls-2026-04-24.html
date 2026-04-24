@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Notion / Video Controls Audit</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; color: #111; line-height: 1.5; }
+    h1, h2 { margin-bottom: 0.4rem; }
+    ul { padding-left: 1.2rem; }
+    code { background: #f3f4f6; padding: 0.1rem 0.3rem; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>Notion / Video Controls Audit</h1>
+  <p>Date: 2026-04-24</p>
+  <h2>Changed</h2>
+  <ul>
+    <li>Notion autosave now uses an idle debounce around 1 second.</li>
+    <li><code>Ctrl+S</code> / <code>Cmd+S</code> now performs an immediate save in notion view.</li>
+    <li>Work videos now expose a custom seek bar with click seek and optional hover preview.</li>
+    <li>Public works detail videos now support desktop resize modes.</li>
+  </ul>
+  <h2>Validation</h2>
+  <ul>
+    <li>Targeted Vitest: pass</li>
+    <li><code>npm run typecheck</code>: pass</li>
+    <li><code>npm run lint</code>: pass with warnings only</li>
+    <li>Targeted Playwright against docker HTTP server: pass</li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Keep the current pass. If richer frame-by-frame hover preview is still needed later, upgrade the backend preview asset generation rather than pushing more logic into the frontend alone.</p>
+</body>
+</html>

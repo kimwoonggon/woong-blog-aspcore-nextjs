@@ -7,6 +7,7 @@ import { InteractiveRenderer } from '@/components/content/InteractiveRenderer'
 import { TableOfContents } from '@/components/content/TableOfContents'
 import { WorkVideoPlayer } from '@/components/content/WorkVideoPlayer'
 import { Metadata } from 'next'
+import { Suspense } from 'react'
 import { fetchAllPublicWorks, fetchPublicWorkBySlug } from '@/lib/api/works'
 import { hasWorkVideoEmbeds } from '@/lib/content/work-video-embeds'
 import { createPublicMetadata } from '@/lib/seo'
@@ -36,6 +37,15 @@ function resolveWorkMetadataImage(work: Awaited<ReturnType<typeof fetchPublicWor
     return youtubeVideo ? resolveYouTubeThumbnail(youtubeVideo.sourceKey) : null
 }
 
+function resolveWorkMetadataDescription(work: Awaited<ReturnType<typeof fetchPublicWorkBySlug>>) {
+    if (!work) {
+        return ''
+    }
+
+    const shareMessage = work.socialShareMessage?.trim()
+    return shareMessage ? shareMessage : work.excerpt
+}
+
 export async function generateStaticParams() {
     const works = await fetchAllPublicWorks().catch(() => [])
     return works.map((work) => ({ slug: work.slug }))
@@ -50,7 +60,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
     return createPublicMetadata({
         title: work.title,
-        description: work.excerpt,
+        description: resolveWorkMetadataDescription(work),
         path: `/works/${work.slug}`,
         type: 'article',
         images: resolveWorkMetadataImage(work),
@@ -89,7 +99,7 @@ export default async function WorkDetailPage({ params }: PageProps) {
     const olderWork = currentIndex >= 0 && currentIndex < sortedWorks.length - 1 ? sortedWorks[currentIndex + 1] : null
     return (
         <article className="mx-auto w-full px-4 py-8 md:px-6 md:py-12">
-            <div data-testid="work-article-content-layout" className="mx-auto xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,48rem)_minmax(0,1fr)] xl:gap-8">
+            <div data-testid="work-article-content-layout" className="mx-auto xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,48rem)_minmax(0,1fr)] xl:items-start xl:gap-12">
                 <div data-testid="work-detail-body" className="mx-auto min-w-0 w-full max-w-3xl xl:col-start-2">
                     <header className="mb-8">
                         <h1 className="mb-4 text-3xl font-heading font-bold leading-tight text-foreground text-balance md:text-4xl">
@@ -125,7 +135,7 @@ export default async function WorkDetailPage({ params }: PageProps) {
                         {orderedVideos.length > 0 && !hasInlineVideoEmbeds && (
                             <div className="mb-8 space-y-4">
                                 <div data-testid="work-lead-video">
-                                    <WorkVideoPlayer video={orderedVideos[0]} />
+                                    <WorkVideoPlayer video={orderedVideos[0]} allowDesktopResize />
                                 </div>
                                 {orderedVideos.length > 1 && (
                                     <details data-testid="work-more-videos" className="rounded-2xl border border-border/80 p-4">
@@ -134,7 +144,7 @@ export default async function WorkDetailPage({ params }: PageProps) {
                                         </summary>
                                         <div className="mt-4 space-y-4">
                                             {orderedVideos.slice(1).map((video) => (
-                                                <WorkVideoPlayer key={video.id} video={video} />
+                                                <WorkVideoPlayer key={video.id} video={video} allowDesktopResize />
                                             ))}
                                         </div>
                                     </details>
@@ -148,40 +158,44 @@ export default async function WorkDetailPage({ params }: PageProps) {
 
                 </div>
 
-                <aside className="hidden xl:col-start-3 xl:block xl:w-full xl:max-w-72 xl:justify-self-start xl:pl-6">
+                <aside className="hidden xl:col-start-3 xl:block xl:w-full xl:max-w-80 xl:justify-self-start xl:self-start xl:pl-10">
                     <TableOfContents contentRootId="work-detail-content" />
                 </aside>
             </div>
 
             <div className="mx-auto max-w-3xl">
                 {(olderWork || newerWork) && (
-                    <nav
-                        aria-label="Work navigation"
-                        data-testid="work-prev-next"
-                        className="mt-12 grid gap-3 border-t border-border/70 pt-8 sm:grid-cols-2"
-                    >
-                        {newerWork ? (
-                            <PublicDetailAdjacentLink hrefBase="/works" slug={newerWork.slug} label="Next" title={newerWork.title} />
-                        ) : (
-                            <div aria-hidden="true" />
-                        )}
-                        {olderWork ? (
-                            <PublicDetailAdjacentLink hrefBase="/works" slug={olderWork.slug} label="Previous" title={olderWork.title} alignEnd />
-                        ) : null}
-                    </nav>
+                    <Suspense fallback={null}>
+                        <nav
+                            aria-label="Work navigation"
+                            data-testid="work-prev-next"
+                            className="mt-12 grid gap-3 border-t border-border/70 pt-8 sm:grid-cols-2"
+                        >
+                            {newerWork ? (
+                                <PublicDetailAdjacentLink hrefBase="/works" slug={newerWork.slug} label="Next" title={newerWork.title} />
+                            ) : (
+                                <div aria-hidden="true" />
+                            )}
+                            {olderWork ? (
+                                <PublicDetailAdjacentLink hrefBase="/works" slug={olderWork.slug} label="Previous" title={olderWork.title} alignEnd />
+                            ) : null}
+                        </nav>
+                    </Suspense>
                 )}
 
                 <div data-testid="work-related-shell" className="mt-16 border-t pt-12">
-                    <RelatedContentList
-                        heading="More Works"
-                        hrefBase="/works"
-                        items={sortedWorks}
-                        currentItemId={work.id}
-                        desktopPageSize={9}
-                        tabletPageSize={4}
-                        mobilePageSize={2}
-                        testIdBase="related-work"
-                    />
+                    <Suspense fallback={null}>
+                        <RelatedContentList
+                            heading="More Works"
+                            hrefBase="/works"
+                            items={sortedWorks}
+                            currentItemId={work.id}
+                            desktopPageSize={9}
+                            tabletPageSize={4}
+                            mobilePageSize={2}
+                            testIdBase="related-work"
+                        />
+                    </Suspense>
                 </div>
             </div>
         </article>

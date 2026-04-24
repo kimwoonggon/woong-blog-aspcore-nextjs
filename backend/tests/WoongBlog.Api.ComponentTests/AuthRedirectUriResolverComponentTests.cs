@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Http;
-using WoongBlog.Api.Infrastructure.Auth;
+using WoongBlog.Infrastructure.Auth;
 
 namespace WoongBlog.Api.Tests;
 

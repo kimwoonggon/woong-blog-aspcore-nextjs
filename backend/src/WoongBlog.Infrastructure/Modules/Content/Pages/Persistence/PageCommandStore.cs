@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using WoongBlog.Api.Domain.Entities;
-using WoongBlog.Api.Infrastructure.Persistence;
-using WoongBlog.Api.Modules.Content.Pages.Application.Abstractions;
+using WoongBlog.Infrastructure.Persistence;
+using WoongBlog.Application.Modules.Content.Pages.Abstractions;
 
-namespace WoongBlog.Api.Modules.Content.Pages.Persistence;
+namespace WoongBlog.Infrastructure.Modules.Content.Pages.Persistence;
 
 public sealed class PageCommandStore(WoongBlogDbContext dbContext) : IPageCommandStore
 {

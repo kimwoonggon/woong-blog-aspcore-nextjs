@@ -1,4 +1,4 @@
-using WoongBlog.Api.Modules.Content.Common.Application.Support;
+using WoongBlog.Application.Modules.Content.Common.Support;
 
 namespace WoongBlog.Api.Tests;
 

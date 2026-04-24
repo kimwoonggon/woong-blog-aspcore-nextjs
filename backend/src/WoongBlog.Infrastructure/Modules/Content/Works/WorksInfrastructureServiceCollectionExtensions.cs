@@ -1,9 +1,9 @@
-using WoongBlog.Api.Infrastructure.Storage;
-using WoongBlog.Api.Modules.Content.Works.Application.Abstractions;
-using WoongBlog.Api.Modules.Content.Works.Application.WorkVideos;
-using WoongBlog.Api.Modules.Content.Works.Persistence;
+using WoongBlog.Infrastructure.Storage;
+using WoongBlog.Application.Modules.Content.Works.Abstractions;
+using WoongBlog.Infrastructure.Modules.Content.Works.WorkVideos;
+using WoongBlog.Infrastructure.Modules.Content.Works.Persistence;
 
-namespace WoongBlog.Api.Modules.Content.Works;
+namespace WoongBlog.Infrastructure.Modules.Content.Works;
 
 public static class WorksInfrastructureServiceCollectionExtensions
 {

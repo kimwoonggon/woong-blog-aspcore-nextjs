@@ -1,0 +1,25 @@
+{
+  "taskSlug": "video-preview-recording-2026-04-24",
+  "date": "2026-04-24",
+  "summary": {
+    "changed": [
+      "Added a Playwright recording spec for long-video hover preview verification.",
+      "Executed the recording spec and copied the resulting .webm to a stable output path."
+    ],
+    "result": "spec_failed_recording_saved"
+  },
+  "artifacts": {
+    "stableWebm": "tests/playwright/0424test/video-preview/work-video-hover-preview-long.webm",
+    "rawVideo": "test-results/playwright/video-preview-recording-04-64aed-er-preview-after-processing-chromium-public/video.webm",
+    "rawTrace": "test-results/playwright/video-preview-recording-04-64aed-er-preview-after-processing-chromium-public/trace.zip",
+    "rawScreenshot": "test-results/playwright/video-preview-recording-04-64aed-er-preview-after-processing-chromium-public/test-failed-1.png"
+  },
+  "validation": [
+    {
+      "command": "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 npx playwright test tests/video-preview-recording-0424.spec.ts --workers=1",
+      "result": "fail",
+      "details": "hover preview bubble did not become visible"
+    }
+  ],
+  "recommendation": "Inspect the saved recording and trace, then run a focused browser-debug pass on overlay hit testing and preview cue loading."
+}

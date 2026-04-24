@@ -1,9 +1,9 @@
 using Microsoft.Extensions.Options;
-using WoongBlog.Api.Infrastructure.Auth;
+using WoongBlog.Infrastructure.Auth;
 using WoongBlog.Api.Common.Application.Files;
-using WoongBlog.Api.Modules.Media.Application.Abstractions;
+using WoongBlog.Application.Modules.Media.Abstractions;
 
-namespace WoongBlog.Api.Modules.Media.Storage;
+namespace WoongBlog.Infrastructure.Modules.Media.Storage;
 
 public sealed class MediaAssetStorage(IOptions<AuthOptions> authOptions) : IMediaAssetStorage
 {

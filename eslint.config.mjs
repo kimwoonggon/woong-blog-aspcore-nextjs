@@ -19,6 +19,7 @@ const eslintConfig = defineConfig([
     ".codex/**",
     ".agents/**",
     ".docker-data/**",
+    ".tmp/**",
     "logs/**",
   ]),
 ]);

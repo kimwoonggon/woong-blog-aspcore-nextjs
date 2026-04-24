@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
-using WoongBlog.Api.Infrastructure.Persistence;
-using WoongBlog.Api.Modules.Composition.Application.Abstractions;
-using WoongBlog.Api.Modules.Composition.Application.GetDashboardSummary;
+using WoongBlog.Infrastructure.Persistence;
+using WoongBlog.Application.Modules.Composition.Abstractions;
+using WoongBlog.Application.Modules.Composition.GetDashboardSummary;
 
-namespace WoongBlog.Api.Modules.Composition.Persistence;
+namespace WoongBlog.Infrastructure.Modules.Composition.Persistence;
 
 public sealed class AdminDashboardQueryStore(WoongBlogDbContext dbContext) : IAdminDashboardQueryStore
 {

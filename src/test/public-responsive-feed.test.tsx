@@ -63,6 +63,30 @@ describe('PublicResponsiveFeed', () => {
     })
   })
 
+  it('does not auto-fetch the next page on mobile until load more is clicked', () => {
+    vi.stubGlobal('matchMedia', vi.fn().mockReturnValue({
+      matches: true,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }))
+
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock as typeof fetch)
+
+    render(
+      <PublicResponsiveFeed
+        kind="blog"
+        query=""
+        desktopPayload={{ items: buildBlogItems('desktop', 3), page: 1, pageSize: 12, totalItems: 3, totalPages: 1 }}
+        mobileInitialPayload={{ items: buildBlogItems('mobile', 10), page: 1, pageSize: 10, totalItems: 20, totalPages: 2 }}
+        desktopReturnTo={encodeURIComponent('/blog?page=1&pageSize=12')}
+      />,
+    )
+
+    expect(screen.getByTestId('blog-load-more')).toBeInTheDocument()
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
   it('resets to page-1 items when query changes', async () => {
     vi.stubGlobal('matchMedia', vi.fn().mockReturnValue({
       matches: true,

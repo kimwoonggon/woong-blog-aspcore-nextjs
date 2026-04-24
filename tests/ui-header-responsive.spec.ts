@@ -6,7 +6,6 @@ type Rect = { left: number; right: number; top: number; bottom: number; width: n
 const drawerOnlyViewports: Viewport[] = [
   { width: 390, height: 844 },
   { width: 768, height: 1024 },
-  { width: 1024, height: 768 },
 ]
 
 const desktopInlineNavViewports: Viewport[] = [
@@ -28,15 +27,17 @@ async function box(locator: Locator) {
 
 test.describe('responsive header', () => {
   for (const viewport of drawerOnlyViewports) {
-    test(`uses drawer-only navigation on compact viewports at ${viewport.width}x${viewport.height}`, async ({ page }) => {
+    test(`uses drawer navigation plus bottom tabs on compact viewports at ${viewport.width}x${viewport.height}`, async ({ page }) => {
       await page.setViewportSize(viewport)
       await page.goto('/')
 
       const banner = page.getByRole('banner')
-      const desktopNav = banner.getByRole('navigation')
+      const inlineNav = banner.getByRole('navigation')
+      const bottomNav = page.getByTestId('mobile-bottom-nav')
       const menuButton = page.getByRole('button', { name: 'Toggle Menu' })
 
-      await expect(desktopNav).toBeHidden()
+      await expect(inlineNav).toBeHidden()
+      await expect(bottomNav).toBeVisible()
       await expect(menuButton).toBeVisible()
 
       await menuButton.click()
@@ -49,7 +50,7 @@ test.describe('responsive header', () => {
     })
   }
 
-  test('keeps the mobile menu trigger at the right edge with safe spacing', async ({ page }) => {
+  test('keeps the mobile menu trigger at the left edge with safe spacing', async ({ page }) => {
     await page.setViewportSize({ width: 360, height: 740 })
     await page.goto('/')
 
@@ -62,8 +63,8 @@ test.describe('responsive header', () => {
     ])
 
     expect(menuBox.width).toBeGreaterThanOrEqual(44)
-    expect(menuBox.right).toBeLessThanOrEqual(360 - 8)
-    expect(menuBox.left).toBeGreaterThan(brandBox.right)
+    expect(menuBox.left).toBeGreaterThanOrEqual(8)
+    expect(menuBox.right).toBeLessThan(brandBox.left)
 
     const overflow = await page.locator('header').evaluate((element: HTMLElement) => element.scrollWidth - element.clientWidth)
     expect(overflow).toBeLessThanOrEqual(1)

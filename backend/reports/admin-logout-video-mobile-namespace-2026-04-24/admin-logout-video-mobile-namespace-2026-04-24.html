@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Audit Report - admin-logout-video-mobile-namespace-2026-04-24</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2rem; color: #111; }
+    h1 { margin-bottom: 0.5rem; }
+    h2 { margin-top: 1.5rem; }
+    ul { line-height: 1.45; }
+    code { background: #f2f2f2; padding: 0.1rem 0.25rem; }
+  </style>
+</head>
+<body>
+  <h1>Audit Report</h1>
+  <p><strong>Task:</strong> admin-logout-video-mobile-namespace-2026-04-24</p>
+  <h2>Status</h2>
+  <ul>
+    <li>Core implementation: Completed</li>
+    <li>Mandatory checks: Completed with 2 Playwright failures</li>
+  </ul>
+  <h2>Validation Snapshot</h2>
+  <ul>
+    <li><code>npm test</code>: pass</li>
+    <li><code>npm run lint</code>: pass (warnings only)</li>
+    <li><code>npm run typecheck</code>: pass</li>
+    <li><code>dotnet test backend/WoongBlog.sln</code>: pass</li>
+    <li><code>npm run test:e2e</code>: fail (2 tests)</li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Fix the 2 failing Playwright tests, rerun the full e2e suite, then merge.</p>
+</body>
+</html>

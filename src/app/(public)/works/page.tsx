@@ -1,11 +1,10 @@
 
-import Link from 'next/link'
-import { Search, X } from 'lucide-react'
 import { PublicWorksListAdminCreate } from '@/components/admin/PublicWorksListAdminCreate'
 import { PublicAdminClientGate } from '@/components/admin/PublicAdminClientGate'
 import { PublicAdminLink } from '@/components/admin/PublicAdminLink'
 import { PublicResponsiveFeed } from '@/components/content/PublicResponsiveFeed'
 import { EdgePaginationNav } from '@/components/layout/EdgePaginationNav'
+import { PublicSearchForm } from '@/components/layout/PublicSearchForm'
 import { PublicPagination } from '@/components/layout/PublicPagination'
 import { ResponsivePageSizeSync } from '@/components/layout/ResponsivePageSizeSync'
 import { fetchPublicWorks, type PublicWorkSearchParams } from '@/lib/api/works'
@@ -19,7 +18,15 @@ export const metadata = createPublicMetadata({
 })
 
 interface PageProps {
-    searchParams?: Promise<{ page?: string; pageSize?: string; query?: string; searchMode?: string; __qaEmpty?: string; __qaNoImage?: string }>
+    searchParams?: Promise<{
+        page?: string
+        pageSize?: string
+        query?: string
+        searchMode?: string
+        focusSearch?: string
+        __qaEmpty?: string
+        __qaNoImage?: string
+    }>
 }
 
 const DESKTOP_PAGE_SIZE = 8
@@ -47,6 +54,7 @@ export default async function WorksPage({ searchParams }: PageProps) {
     const currentPage = Math.max(1, Number.parseInt(resolvedSearchParams?.page ?? '1', 10) || 1)
     const currentPageSize = resolveRequestedPageSize(resolvedSearchParams?.pageSize)
     const searchQuery = resolvedSearchParams?.query?.trim() ?? ''
+    const shouldFocusSearch = resolvedSearchParams?.focusSearch === '1'
     const legacySearchMode = resolvedSearchParams?.searchMode === 'content' || resolvedSearchParams?.searchMode === 'title'
         ? resolvedSearchParams.searchMode
         : undefined
@@ -97,38 +105,17 @@ export default async function WorksPage({ searchParams }: PageProps) {
             <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <h1 className="text-3xl font-heading font-bold text-foreground md:text-4xl">Works</h1>
                 <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
-                    <form action="/works" method="get" role="search" className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                        <label htmlFor="work-search" className="sr-only">Search work</label>
-                        <div className="flex min-h-11 items-center gap-2 rounded-full border border-border bg-background px-3 transition-colors focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/20">
-                            <Search className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-                            <input
-                                id="work-search"
-                                name="query"
-                                defaultValue={searchQuery}
-                                placeholder="Search work"
-                                className="w-full min-w-0 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground sm:w-56"
-                            />
-                        </div>
-                        <button
-                            type="submit"
-                            aria-label="Search works"
-                            title="Search works"
-                            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full bg-foreground p-2 text-sm font-semibold text-background transition-colors hover:bg-foreground/90"
-                        >
-                            <Search className="h-4 w-4" aria-hidden="true" />
-                        </button>
-                        {searchQuery ? (
-                            <Link
-                                href="/works"
-                                aria-label="Clear works search"
-                                title="Clear works search"
-                                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                            >
-                                <X className="h-4 w-4" aria-hidden="true" />
-                                Clear
-                            </Link>
-                        ) : null}
-                    </form>
+                    <PublicSearchForm
+                        action="/works"
+                        inputId="work-search"
+                        inputName="query"
+                        query={searchQuery}
+                        placeholder="Search work"
+                        inputAriaLabel="Search works"
+                        shouldFocusSearch={shouldFocusSearch}
+                        clearHref="/works"
+                        clearLabel="Clear works search"
+                    />
                     <PublicAdminClientGate>
                         <PublicAdminLink href="/admin/works" label="작업 관리" canShow variant="manage" />
                     </PublicAdminClientGate>

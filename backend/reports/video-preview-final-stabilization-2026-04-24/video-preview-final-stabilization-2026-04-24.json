@@ -1,0 +1,30 @@
+{
+  "task": "video-preview-final-stabilization-2026-04-24",
+  "summary": [
+    "Fixed frontend hover preview hit-testing and frame-relative preview positioning.",
+    "Updated Playwright preview specs to use raw snake_case API fields, wait for readiness, and scroll targets into view.",
+    "Fixed backend short-video preview generation and prevented publishing preview URLs when files are absent."
+  ],
+  "not_changed": [
+    "Autoplay was not reintroduced.",
+    "Browser-native controls were not restored.",
+    "Older broken preview rows were not backfilled."
+  ],
+  "validations": [
+    "npx vitest run src/test/work-video-player.test.tsx",
+    "npx vitest run src/test/work-editor.test.tsx src/test/work-video-player.test.tsx src/test/blog-notion-workspace.test.tsx src/test/auth-csrf.test.ts",
+    "dotnet test backend/tests/WoongBlog.Api.UnitTests/WoongBlog.Api.UnitTests.csproj --filter WorkVideoHlsJobPlanTests",
+    "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter WorkVideoEndpointsTests",
+    "npm run typecheck",
+    "npm run lint",
+    "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 npx playwright test tests/public-work-videos.spec.ts --grep \"PF-044\" --workers=1",
+    "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 npx playwright test tests/video-preview-recording-0424.spec.ts --workers=1",
+    "curl verification for public-video-preview-1777023334596 preview assets"
+  ],
+  "risks": [
+    "Older pre-fix HLS rows may still reference preview URLs that 404.",
+    "The recording spec artifact copy is vulnerable to races if multiple Playwright runs target the same stable output file in parallel.",
+    "Lint warnings remain in unrelated backup/scripts/test files."
+  ],
+  "recommendation": "Keep the recording spec serialized and add a reprocessing path if historical HLS videos also need repaired preview assets."
+}

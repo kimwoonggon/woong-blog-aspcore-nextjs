@@ -1,4 +1,3 @@
-import { getServerApiBaseUrl, getServerCookieHeader } from '@/lib/api/server'
 import { getPublicServerApiBaseUrl } from '@/lib/api/public-server'
 import { throwPublicApiError } from '@/lib/api/public-errors'
 import { PUBLIC_CONTENT_TAGS, publicContentFetchInit } from '@/lib/api/public-cache'
@@ -11,6 +10,11 @@ export interface WorkVideo {
   originalFileName?: string | null
   mimeType?: string | null
   fileSize?: number | null
+  width?: number | null
+  height?: number | null
+  durationSeconds?: number | null
+  timelinePreviewVttUrl?: string | null
+  timelinePreviewSpriteUrl?: string | null
   sortOrder: number
   createdAt?: string
 }
@@ -49,11 +53,13 @@ export interface WorkAdminItem extends WorkListItem {
 
 export interface WorkDetail extends WorkListItem {
   contentJson: string
+  socialShareMessage?: string | null
   videosVersion: number
   videos: WorkVideo[]
 }
 
 async function buildAdminHeaders(): Promise<Record<string, string>> {
+  const { getServerCookieHeader } = await import('@/lib/api/server')
   const cookieHeader = await getServerCookieHeader()
   if (!cookieHeader) {
     return {}
@@ -89,6 +95,31 @@ function parseWorkVideo(value: unknown): WorkVideo {
     originalFileName: typeof record.originalFileName === 'string' || record.originalFileName === null ? record.originalFileName : null,
     mimeType: typeof record.mimeType === 'string' || record.mimeType === null ? record.mimeType : null,
     fileSize: typeof record.fileSize === 'number' || record.fileSize === null ? record.fileSize : null,
+    width: typeof record.width === 'number'
+      ? record.width
+      : typeof record.videoWidth === 'number'
+        ? record.videoWidth
+        : null,
+    height: typeof record.height === 'number'
+      ? record.height
+      : typeof record.videoHeight === 'number'
+        ? record.videoHeight
+        : null,
+    durationSeconds: typeof record.durationSeconds === 'number'
+      ? record.durationSeconds
+      : typeof record.duration_seconds === 'number'
+        ? record.duration_seconds
+        : null,
+    timelinePreviewVttUrl: typeof record.timelinePreviewVttUrl === 'string' || record.timelinePreviewVttUrl === null
+      ? record.timelinePreviewVttUrl
+      : typeof record.timeline_preview_vtt_url === 'string' || record.timeline_preview_vtt_url === null
+        ? record.timeline_preview_vtt_url
+        : null,
+    timelinePreviewSpriteUrl: typeof record.timelinePreviewSpriteUrl === 'string' || record.timelinePreviewSpriteUrl === null
+      ? record.timelinePreviewSpriteUrl
+      : typeof record.timeline_preview_sprite_url === 'string' || record.timeline_preview_sprite_url === null
+        ? record.timeline_preview_sprite_url
+        : null,
     sortOrder,
     createdAt: typeof record.createdAt === 'string' ? record.createdAt : undefined,
   }
@@ -127,6 +158,11 @@ function parseWorkDetailPayload(payload: unknown): WorkDetail {
     title: String(record.title ?? ''),
     excerpt: String(record.excerpt ?? ''),
     contentJson: String(record.contentJson ?? ''),
+    socialShareMessage: typeof record.socialShareMessage === 'string' || record.socialShareMessage === null
+      ? record.socialShareMessage
+      : typeof record.social_share_message === 'string' || record.social_share_message === null
+        ? record.social_share_message
+        : null,
     category: String(record.category ?? ''),
     period: typeof record.period === 'string' || record.period === null ? record.period : null,
     tags: Array.isArray(record.tags) ? record.tags.map((tag) => String(tag)) : [],
@@ -235,6 +271,7 @@ export async function fetchPublicWorkBySlug(slug: string) {
 }
 
 export async function fetchAdminWorks() {
+  const { getServerApiBaseUrl } = await import('@/lib/api/server')
   const apiBaseUrl = await getServerApiBaseUrl()
   const response = await fetch(`${apiBaseUrl}/admin/works`, {
     cache: 'no-store',
@@ -245,6 +282,7 @@ export async function fetchAdminWorks() {
 }
 
 export async function fetchAdminWorkById(id: string) {
+  const { getServerApiBaseUrl } = await import('@/lib/api/server')
   const apiBaseUrl = await getServerApiBaseUrl()
   const response = await fetch(`${apiBaseUrl}/admin/works/${encodeURIComponent(id)}`, {
     cache: 'no-store',

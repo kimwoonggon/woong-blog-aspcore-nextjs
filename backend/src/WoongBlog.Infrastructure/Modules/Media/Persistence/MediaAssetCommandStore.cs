@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using WoongBlog.Api.Domain.Entities;
-using WoongBlog.Api.Infrastructure.Persistence;
-using WoongBlog.Api.Modules.Media.Application.Abstractions;
+using WoongBlog.Infrastructure.Persistence;
+using WoongBlog.Application.Modules.Media.Abstractions;
 
-namespace WoongBlog.Api.Modules.Media.Persistence;
+namespace WoongBlog.Infrastructure.Modules.Media.Persistence;
 
 public sealed class MediaAssetCommandStore(WoongBlogDbContext dbContext) : IMediaAssetCommandStore
 {

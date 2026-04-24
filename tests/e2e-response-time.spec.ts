@@ -82,14 +82,19 @@ test('response time: Works mobile append next page meets budget', async ({ page 
 test('response time: unified public search submit meets budget', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 1280, height: 960 })
   await page.goto('/blog')
-  await page.getByRole('textbox', { name: 'Search studies' }).fill('seeded')
+  await expect.poll(() => new URL(page.url()).searchParams.get('pageSize')).not.toBeNull()
+
+  const studySearchForm = page.getByRole('search')
+  const studySearchInput = studySearchForm.getByRole('textbox', { name: 'Search studies' })
+  await studySearchInput.fill('seeded')
+  await expect(studySearchInput).toHaveValue('seeded')
 
   await measureStep(
     testInfo,
     'Study unified search submit response-time path',
     'publicSearch',
     async () => {
-      await page.getByRole('button', { name: 'Search studies' }).click()
+      await studySearchForm.getByRole('button', { name: 'Search studies' }).click()
     },
     async () => {
       await expect.poll(() => new URL(page.url()).searchParams.get('query')).toBe('seeded')

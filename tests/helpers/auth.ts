@@ -15,7 +15,7 @@ async function gotoStable(page: Page, url: string) {
 }
 
 export async function loginAsLocalAdmin(page: Page, returnPath = '/') {
-  const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost'
+  const baseUrl = (process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000').replace(/\/$/, '')
 
   await gotoStable(
     page,

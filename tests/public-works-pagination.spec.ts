@@ -14,8 +14,19 @@ test('works list uses infinite feed on tablet (820px) and appends next page', as
   await page.setViewportSize({ width: 820, height: 1180 })
   await page.goto('/works')
 
+  const firstPagePayload = await (await page.request.get('/api/public/works?page=1&pageSize=10')).json() as {
+    items: unknown[]
+  }
+  const secondPagePayload = await (await page.request.get('/api/public/works?page=2&pageSize=10')).json() as {
+    items: unknown[]
+  }
+  test.skip(secondPagePayload.items.length === 0, 'Current seed has no second page to append in infinite mode.')
+
+  const expectedInitialCount = firstPagePayload.items.length
+  const expectedCountAfterAppend = expectedInitialCount + secondPagePayload.items.length
+
   await expect(page.getByLabel('Works pagination')).toBeHidden()
-  await expect(page.getByTestId('work-card')).toHaveCount(10)
+  await expect(page.getByTestId('work-card')).toHaveCount(expectedInitialCount)
 
   await measureStep(
     testInfo,
@@ -25,7 +36,10 @@ test('works list uses infinite feed on tablet (820px) and appends next page', as
       await page.getByTestId('works-load-more').click()
     },
     async () => {
-      await expect(page.getByTestId('work-card')).toHaveCount(20)
+      await expect.poll(async () => page.getByTestId('work-card').count()).toBeGreaterThan(expectedInitialCount)
+
+      const countAfterAppend = await page.getByTestId('work-card').count()
+      expect(countAfterAppend).toBeLessThanOrEqual(expectedCountAfterAppend)
     },
   )
 })

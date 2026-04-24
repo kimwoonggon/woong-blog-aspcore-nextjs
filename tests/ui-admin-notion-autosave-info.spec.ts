@@ -2,7 +2,7 @@ import { expect, test, type Page } from './helpers/performance-test'
 import { createBlogFixture } from './helpers/content-fixtures'
 
 test.use({ storageState: 'test-results/playwright/admin-storage-state.json' })
-test.setTimeout(60_000)
+test.setTimeout(90_000)
 
 const selectAllShortcut = process.platform === 'darwin' ? 'Meta+A' : 'Control+A'
 
@@ -34,7 +34,7 @@ async function replaceEditorContent(page: Page, nextText: string) {
   await page.keyboard.type(nextText)
 }
 
-test('AF-042 autosave status shows Saving then Saved after notion content changes', async ({ page, request }, testInfo) => {
+test('AF-042 autosave status waits for the autosave interval, then shows Saving and Saved after notion content changes', async ({ page, request }, testInfo) => {
   const autosaveText = `AF-042 autosave success ${Date.now()}`
   const blog = await createBlogFixture(request, testInfo, {
     titlePrefix: 'Notion Autosave Success',
@@ -71,10 +71,61 @@ test('AF-042 autosave status shows Saving then Saved after notion content change
 
   await replaceEditorContent(page, autosaveText)
 
-  await expect(page.getByTestId('notion-save-state')).toHaveText('Saving...')
+  await expect(page.getByTestId('notion-save-state')).toHaveText('Waiting')
+  await expect(page.getByTestId('notion-save-state')).toHaveText('Saving...', { timeout: 15_000 })
   await saveResponse
   expect(delayedAutosaveSeen).toBeTruthy()
   await expect(page.getByTestId('notion-save-state')).toHaveText('Saved')
+})
+
+test('AF-042 autosave revalidation is throttled while explicit metadata save revalidates immediately', async ({ page, request }, testInfo) => {
+  const firstText = `AF-042 throttled autosave first ${Date.now()}`
+  const secondText = `AF-042 throttled autosave second ${Date.now()}`
+  const blog = await createBlogFixture(request, testInfo, {
+    titlePrefix: 'Notion Autosave Revalidation Throttle',
+    html: '<p>Notion autosave throttle fixture.</p>',
+  })
+
+  let revalidationRequestCount = 0
+  const revalidationListener = (event: { method: () => string; url: () => string }) => {
+    if (event.method() === 'POST' && event.url().includes('/revalidate-public')) {
+      revalidationRequestCount += 1
+    }
+  }
+  page.on('request', revalidationListener)
+
+  await openNotionWorkspace(page, blog.id)
+
+  const firstRevalidation = page.waitForResponse((response) =>
+    response.url().includes('/revalidate-public')
+    && response.request().method() === 'POST'
+    && response.ok(),
+  )
+
+  await replaceEditorContent(page, firstText)
+  await expect.poll(async () => (await page.getByTestId('notion-save-state').textContent()) ?? '', { timeout: 15_000 }).toMatch(/Saving\.\.\.|Saved/)
+  await expect(page.getByTestId('notion-save-state')).toHaveText('Saved')
+  await firstRevalidation
+  const afterFirstAutosaveRevalidation = revalidationRequestCount
+
+  await replaceEditorContent(page, secondText)
+  await expect.poll(async () => (await page.getByTestId('notion-save-state').textContent()) ?? '', { timeout: 15_000 }).toMatch(/Saving\.\.\.|Saved/)
+  await expect(page.getByTestId('notion-save-state')).toHaveText('Saved')
+  await page.waitForTimeout(1_500)
+  expect(revalidationRequestCount).toBe(afterFirstAutosaveRevalidation)
+
+  const titleInput = page.getByLabel('Title')
+  await titleInput.fill(`${blog.title} (metadata save)`)
+  const metadataRevalidation = page.waitForResponse((response) =>
+    response.url().includes('/revalidate-public')
+    && response.request().method() === 'POST'
+    && response.ok(),
+  )
+  await page.getByRole('button', { name: 'Save Post Settings' }).click()
+  await metadataRevalidation
+  expect(revalidationRequestCount).toBeGreaterThan(afterFirstAutosaveRevalidation)
+
+  page.off('request', revalidationListener)
 })
 
 test('AF-042 autosave status shows Error when notion autosave fails', async ({ page, request }, testInfo) => {
@@ -111,7 +162,7 @@ test('AF-042 autosave status shows Error when notion autosave fails', async ({ p
 
   await replaceEditorContent(page, autosaveText)
 
-  await expect(page.getByTestId('notion-save-state')).toHaveText('Saving...')
+  await expect(page.getByTestId('notion-save-state')).toHaveText('Saving...', { timeout: 15_000 })
   await expect(page.getByTestId('notion-save-state')).toHaveText('Error')
   expect(failedAutosaveSeen).toBeTruthy()
 })
@@ -155,4 +206,28 @@ test('AF-045 notion document info panel shows timestamps and slug for the select
   }
 
   await expect(page.getByRole('button', { name: 'Save Post Settings' })).toBeDisabled()
+})
+
+test('AF-046 Ctrl+S saves notion content and metadata immediately', async ({ page, request }, testInfo) => {
+  const shortcutText = `AF-046 shortcut save ${Date.now()}`
+  const blog = await createBlogFixture(request, testInfo, {
+    titlePrefix: 'Notion Shortcut Save',
+    html: '<p>Notion shortcut save fixture.</p>',
+  })
+
+  await openNotionWorkspace(page, blog.id)
+
+  await page.getByLabel('Title').fill(`${blog.title} ctrl-s`)
+  await replaceEditorContent(page, shortcutText)
+
+  const saveResponse = page.waitForResponse((response) =>
+    response.url().includes('/api/admin/blogs/')
+    && response.request().method() === 'PUT'
+    && response.ok(),
+  )
+
+  await page.keyboard.press(selectAllShortcut === 'Meta+A' ? 'Meta+S' : 'Control+S')
+
+  await saveResponse
+  await expect(page.getByTestId('notion-save-state')).toHaveText('Saved')
 })

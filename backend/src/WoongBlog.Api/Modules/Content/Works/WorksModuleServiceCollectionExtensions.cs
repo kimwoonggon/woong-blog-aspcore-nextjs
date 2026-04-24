@@ -1,3 +1,5 @@
+using WoongBlog.Infrastructure.Modules.Content.Works;
+
 namespace WoongBlog.Api.Modules.Content.Works;
 
 internal static class WorksModuleServiceCollectionExtensions

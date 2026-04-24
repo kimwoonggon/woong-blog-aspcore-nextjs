@@ -114,3 +114,75 @@ test('PF-043 public work detail keeps public video render order aligned with sav
   await expect(orderedMedia.nth(0)).toHaveJSProperty('tagName', 'VIDEO')
   await expect(orderedMedia.nth(1)).toHaveAttribute('src', /youtube-nocookie\.com\/embed\/9bZkp7q19f0/)
 })
+
+test('PF-044 public work detail exposes hover preview near the native progress region and desktop resize modes for uploaded videos', async ({ page }) => {
+  const title = `Public Video Preview ${Date.now()}`
+  await page.goto('/admin/works/new')
+  await page.getByLabel('Title').fill(title)
+  await page.getByLabel('Category').fill('video')
+  await page.locator('.tiptap.ProseMirror').first().fill('Preview coverage for public work videos')
+  await page.locator('#work-video-upload').setInputFiles(path.resolve('tests/fixtures/sample-video.mp4'))
+
+  const [createResponse] = await Promise.all([
+    page.waitForResponse((res) => new URL(res.url()).pathname === '/api/admin/works' && res.request().method() === 'POST' && res.ok()),
+    page.getByRole('button', { name: /Create with 1 Video|Create with Videos/ }).click(),
+  ])
+
+  const created = await createResponse.json()
+  await page.waitForURL(new RegExp(`/admin/works/${created.id}\\?videoInline=1$`), { timeout: 20000 })
+
+  await expect
+    .poll(async () => {
+      const apiResponse = await page.request.get(`/api/public/works/${created.slug}`)
+      if (!apiResponse.ok()) {
+        return false
+      }
+
+      const payload = await apiResponse.json() as {
+        videos?: Array<{
+          timelinePreviewSpriteUrl?: string | null
+          timelinePreviewVttUrl?: string | null
+          timeline_preview_sprite_url?: string | null
+          timeline_preview_vtt_url?: string | null
+        }>
+      }
+
+      return payload.videos?.some((video) => (
+        (video.timelinePreviewSpriteUrl ?? video.timeline_preview_sprite_url)
+        && (video.timelinePreviewVttUrl ?? video.timeline_preview_vtt_url)
+      )) ?? false
+    }, {
+      timeout: 60_000,
+      message: 'Expected uploaded work video preview assets to finish processing',
+    })
+    .toBe(true)
+
+  await page.goto(`/works/${created.slug}`)
+
+  const player = page.getByTestId('work-video-player').first()
+  const video = page.locator('video').first()
+  await expect(player).toHaveAttribute('data-size-mode', 'wide')
+  await expect(player).toHaveAttribute('data-preview-ready', 'true')
+  await expect(page.getByTestId('work-video-progress-overlay').first()).toBeVisible()
+  await expect.poll(async () => video.evaluate((node) => Number.isFinite((node as HTMLVideoElement).duration) && (node as HTMLVideoElement).duration > 0)).toBe(true)
+  await expect(page.getByTestId('work-video-center-play').first()).toBeVisible()
+
+  await page.getByTestId('work-video-size-fit').first().click()
+  await expect(player).toHaveAttribute('data-size-mode', 'fit')
+  await page.getByTestId('work-video-size-theater').first().click()
+  await expect(player).toHaveAttribute('data-size-mode', 'theater')
+
+  await page.getByTestId('work-video-center-play').first().click()
+  await expect.poll(async () => video.evaluate((node) => (node as HTMLVideoElement).paused)).toBe(false)
+  await expect(page.getByTestId('work-video-center-play').first()).toBeHidden()
+
+  const overlay = page.getByTestId('work-video-progress-overlay').first()
+  await overlay.scrollIntoViewIfNeeded()
+  const overlayBox = await overlay.boundingBox()
+  if (!overlayBox) {
+    throw new Error('Expected progress overlay bounding box for preview hover assertions')
+  }
+
+  await page.mouse.move(overlayBox.x + (overlayBox.width * 0.5), overlayBox.y + (overlayBox.height * 0.5))
+  await expect(page.getByTestId('work-video-timeline-preview').first()).toBeVisible()
+})

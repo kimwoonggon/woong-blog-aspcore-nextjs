@@ -37,7 +37,7 @@ export default async function HomePage() {
   const headline = homeContent.headline || 'Hi, I am John, Creative Technologist'
   const introText = homeContent.introText || 'Amet minim mollit non deserunt ullamco est sit aliqua dolor do amet sint. Velit officia consequat duis enim velit mollit. Exercitation veniam consequat sunt nostrud amet.'
   const profileImageUrl = homeContent.profileImageUrl || ''
-  const recentPosts = payload?.recentPosts || []
+  const recentPosts = (payload?.recentPosts || []).slice(0, 6)
   const featuredWorks = payload?.featuredWorks || []
 
   return (
@@ -189,7 +189,7 @@ export default async function HomePage() {
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Link>
         </div>
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-2 md:gap-6">
           {recentPosts.length > 0 ? (
             recentPosts.map((post) => {
               const publishDate = post.publishedAt
@@ -241,7 +241,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section data-testid="home-navigation-section" className="animate-fade-in-up rounded-[2rem] border border-border/70 bg-background px-5 py-5 shadow-sm md:px-6" style={{ animationDelay: '550ms' }}>
+      <section data-testid="home-navigation-section" className="hidden animate-fade-in-up rounded-[2rem] border border-border/70 bg-background px-5 py-5 shadow-sm lg:block md:px-6" style={{ animationDelay: '550ms' }}>
         <div className="grid gap-3 md:grid-cols-3">
           {[
             {

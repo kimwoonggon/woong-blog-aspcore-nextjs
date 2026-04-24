@@ -1,6 +1,6 @@
 import { expect, test } from './helpers/performance-test'
 
-const BASE_URL = process.env.PLAYWRIGHT_BASE_URL ?? 'https://localhost'
+const BASE_URL = (process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000').replace(/\/$/, '')
 
 test('switching documents in notion view keeps the editor visible while changing the active document', async ({ page }) => {
   await page.goto('/admin/blog/notion')

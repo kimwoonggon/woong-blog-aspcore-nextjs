@@ -1,0 +1,62 @@
+{
+  "taskSlug": "notion-slug-backend-structure-2026-04-24",
+  "date": "2026-04-24",
+  "summary": {
+    "changed": [
+      "Decoupled live notion editor typing from full workspace rerenders.",
+      "Moved notion autosave to a 10-second interval and kept explicit metadata save behavior.",
+      "Added a short TTL cache for authenticated mutation preflight.",
+      "Fixed public blog/work slug routes in production-style runtime by making search-param readers Suspense-safe.",
+      "Flattened duplicate folder layers under WoongBlog.Application and WoongBlog.Api, and renamed redundant infrastructure identity foldering.",
+      "Flattened the redundant WoongBlog.Infrastructure/Infrastructure root layer into WoongBlog.Infrastructure/*.",
+      "Realigned backend namespaces and test references across Application, Api, Infrastructure, and backend tests."
+    ],
+    "notChanged": [
+      "Preview cards still render explicit excerpt text.",
+      "Broader backend naming beyond duplicated layers was not fully redesigned."
+    ]
+  },
+  "goals": {
+    "notion_interval_autosave": true,
+    "notion_typing_hot_path_reduced": true,
+    "public_slug_routes_recovered": true,
+    "backend_folder_duplication_reduced": true,
+    "test_references_updated": true
+  },
+  "validations": [
+    {
+      "command": "npm run typecheck",
+      "result": "pass"
+    },
+    {
+      "command": "npm run lint",
+      "result": "pass",
+      "details": "warnings only"
+    },
+    {
+      "command": "npx vitest run src/test/blog-notion-workspace.test.tsx src/test/auth-csrf.test.ts",
+      "result": "pass",
+      "details": "14 tests"
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln",
+      "result": "pass"
+    },
+    {
+      "command": "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 npx playwright test tests/mobile-public-navigation.spec.ts tests/public-blog-pagination.spec.ts tests/public-works-pagination.spec.ts tests/public-seo-metadata.spec.ts tests/public-blog-toc-layout.spec.ts tests/ui-admin-notion-autosave-info.spec.ts --workers=1",
+      "result": "pass",
+      "details": "18 passed, 1 skipped"
+    },
+    {
+      "command": "curl http://127.0.0.1:3000/blog/<slug> && curl http://127.0.0.1:3000/works/<slug>",
+      "result": "pass",
+      "details": "both returned 200 after docker rebuild"
+    }
+  ],
+  "risks": [
+    "Longer autosave interval means a larger unsaved in-memory window.",
+    "Mutation session TTL caching prefers fewer network round-trips over strict preflight freshness.",
+    "Backend namespace cleanup is substantial but not the final architectural end-state."
+  ],
+  "recommendation": "Accept this pass and, if notion typing still feels heavy in real use, profile the Tiptap serialization path next."
+}

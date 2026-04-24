@@ -88,6 +88,26 @@ describe('auth csrf helpers', () => {
     expect((fetchMock.mock.calls[2][1]?.headers as Headers).get('X-CSRF-1')).toBe('token-1')
   })
 
+  it('reuses the authenticated session check across consecutive mutations within the ttl window', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(mockJsonResponse({ authenticated: true }))
+      .mockResolvedValueOnce(mockJsonResponse({ requestToken: 'token-1', headerName: 'X-CSRF-1' }))
+      .mockResolvedValueOnce(mockJsonResponse({}, 200))
+      .mockResolvedValueOnce(mockJsonResponse({}, 200))
+    vi.stubGlobal('fetch', fetchMock)
+
+    const { fetchWithCsrf } = await import('@/lib/api/auth')
+
+    await fetchWithCsrf('/api/admin/site-settings', { method: 'PUT' })
+    await fetchWithCsrf('/api/admin/site-settings', { method: 'PATCH' })
+
+    expect(fetchMock).toHaveBeenCalledTimes(4)
+    expect(fetchMock.mock.calls[0][0]).toContain('/api/auth/session')
+    expect(fetchMock.mock.calls[1][0]).toContain('/api/auth/csrf')
+    expect((fetchMock.mock.calls[2][1]?.headers as Headers).get('X-CSRF-1')).toBe('token-1')
+    expect((fetchMock.mock.calls[3][1]?.headers as Headers).get('X-CSRF-1')).toBe('token-1')
+  })
+
   it('posts logout with csrf and returns redirect url', async () => {
     const fetchMock = vi.fn()
       .mockResolvedValueOnce(mockJsonResponse({ authenticated: true }))

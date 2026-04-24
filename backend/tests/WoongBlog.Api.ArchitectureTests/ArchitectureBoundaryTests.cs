@@ -1,12 +1,12 @@
 using System.Reflection;
 using System.Xml.Linq;
 using MediatR;
-using WoongBlog.Api.Infrastructure.Persistence;
-using WoongBlog.Api.Modules.AI.Application;
-using WoongBlog.Api.Modules.AI.Application.Abstractions;
-using WoongBlog.Api.Modules.Content.Blogs.Application.Abstractions;
-using WoongBlog.Api.Modules.Content.Works.Application.Abstractions;
-using WoongBlog.Api.Modules.Content.Works.Application.WorkVideos;
+using WoongBlog.Infrastructure.Persistence;
+using WoongBlog.Application.Modules.AI;
+using WoongBlog.Application.Modules.AI.Abstractions;
+using WoongBlog.Application.Modules.Content.Blogs.Abstractions;
+using WoongBlog.Application.Modules.Content.Works.Abstractions;
+using WoongBlog.Application.Modules.Content.Works.WorkVideos;
 
 namespace WoongBlog.Api.Tests;
 
@@ -234,7 +234,7 @@ public class ArchitectureBoundaryTests
             ],
             [InfrastructureAssembly] =
             [
-                "WoongBlog.Api.Infrastructure.InfrastructureServiceCollectionExtensions",
+                "WoongBlog.Infrastructure.InfrastructureServiceCollectionExtensions",
             ],
         };
 
@@ -311,7 +311,7 @@ public class ArchitectureBoundaryTests
                 var typeNamespace = type.Namespace ?? string.Empty;
                 return typeNamespace.Contains(".Modules.", StringComparison.Ordinal)
                     && typeNamespace.EndsWith(".Persistence", StringComparison.Ordinal)
-                    && !typeNamespace.StartsWith("WoongBlog.Api.Modules.Composition.Persistence", StringComparison.Ordinal);
+                    && !typeNamespace.StartsWith("WoongBlog.Infrastructure.Modules.Composition.Persistence", StringComparison.Ordinal);
             })
             .ToArray();
 
@@ -345,7 +345,7 @@ public class ArchitectureBoundaryTests
 
         var violatingTypes = ApplicationAssembly.GetTypes()
             .Where(type => type.IsClass)
-            .Where(type => (type.Namespace ?? string.Empty).StartsWith("WoongBlog.Api.Modules.", StringComparison.Ordinal))
+            .Where(type => (type.Namespace ?? string.Empty).StartsWith("WoongBlog.Application.Modules.", StringComparison.Ordinal))
             .Where(type => type.Name.EndsWith("Handler", StringComparison.Ordinal))
             .Where(type => DependsOnTypeNamed(type, disallowedFacadeNames))
             .Select(type => type.FullName ?? type.Name)
@@ -360,18 +360,18 @@ public class ArchitectureBoundaryTests
     {
         var removedTypes = new[]
         {
-            "WoongBlog.Api.Modules.Content.Blogs.Application.Abstractions.IAdminBlogService",
-            "WoongBlog.Api.Modules.Content.Blogs.Application.Abstractions.IPublicBlogService",
-            "WoongBlog.Api.Modules.Content.Works.Application.Abstractions.IAdminWorkService",
-            "WoongBlog.Api.Modules.Content.Works.Application.Abstractions.IPublicWorkService",
-            "WoongBlog.Api.Modules.Content.Pages.Application.Abstractions.IAdminPageService",
-            "WoongBlog.Api.Modules.Content.Pages.Application.Abstractions.IPublicPageService",
-            "WoongBlog.Api.Modules.Site.Application.Abstractions.IAdminSiteSettingsService",
-            "WoongBlog.Api.Modules.Site.Application.Abstractions.IPublicSiteService",
-            "WoongBlog.Api.Modules.Composition.Application.Abstractions.IAdminDashboardService",
-            "WoongBlog.Api.Modules.Composition.Application.Abstractions.IPublicHomeService",
-            "WoongBlog.Api.Modules.Identity.Application.Abstractions.IAdminMemberService",
-            "WoongBlog.Api.Modules.AI.Application.IAiAdminService",
+            "WoongBlog.Application.Modules.Content.Blogs.Abstractions.IAdminBlogService",
+            "WoongBlog.Application.Modules.Content.Blogs.Abstractions.IPublicBlogService",
+            "WoongBlog.Application.Modules.Content.Works.Abstractions.IAdminWorkService",
+            "WoongBlog.Application.Modules.Content.Works.Abstractions.IPublicWorkService",
+            "WoongBlog.Application.Modules.Content.Pages.Abstractions.IAdminPageService",
+            "WoongBlog.Application.Modules.Content.Pages.Abstractions.IPublicPageService",
+            "WoongBlog.Application.Modules.Site.Abstractions.IAdminSiteSettingsService",
+            "WoongBlog.Application.Modules.Site.Abstractions.IPublicSiteService",
+            "WoongBlog.Application.Modules.Composition.Abstractions.IAdminDashboardService",
+            "WoongBlog.Application.Modules.Composition.Abstractions.IPublicHomeService",
+            "WoongBlog.Application.Modules.Identity.Abstractions.IAdminMemberService",
+            "WoongBlog.Application.Modules.AI.IAiAdminService",
         };
 
         var productionAssemblies = new[] { ApiAssembly, ApplicationAssembly, InfrastructureAssembly };
@@ -393,7 +393,6 @@ public class ArchitectureBoundaryTests
             "Modules",
             "Content",
             "Works",
-            "Application",
             "WorkVideos");
 
         var violatingFiles = Directory.EnumerateFiles(workVideoApplicationDirectory, "*.cs", SearchOption.AllDirectories)
@@ -410,6 +409,64 @@ public class ArchitectureBoundaryTests
     }
 
     [Fact]
+    public void Works_GetWorkBySlug_Uses_New_Application_Namespace_Phase1()
+    {
+        var requiredTypeNames = new[]
+        {
+            "WoongBlog.Application.Modules.Content.Works.GetWorkBySlug.GetWorkBySlugQuery",
+            "WoongBlog.Application.Modules.Content.Works.GetWorkBySlug.GetWorkBySlugQueryHandler",
+            "WoongBlog.Application.Modules.Content.Works.GetWorkBySlug.GetWorkBySlugQueryValidator",
+            "WoongBlog.Application.Modules.Content.Works.GetWorkBySlug.WorkDetailDto",
+        };
+        var legacyTypeNames = new[]
+        {
+            "WoongBlog.Api.Modules.Content.Works.Application.GetWorkBySlug.GetWorkBySlugQuery",
+            "WoongBlog.Api.Modules.Content.Works.Application.GetWorkBySlug.GetWorkBySlugQueryHandler",
+            "WoongBlog.Api.Modules.Content.Works.Application.GetWorkBySlug.GetWorkBySlugQueryValidator",
+            "WoongBlog.Api.Modules.Content.Works.Application.GetWorkBySlug.WorkDetailDto",
+        };
+
+        var missingRequired = requiredTypeNames
+            .Where(typeName => ApplicationAssembly.GetType(typeName) is null)
+            .ToArray();
+        var stillLegacy = legacyTypeNames
+            .Where(typeName => ApplicationAssembly.GetType(typeName) is not null)
+            .ToArray();
+
+        Assert.Empty(missingRequired);
+        Assert.Empty(stillLegacy);
+    }
+
+    [Fact]
+    public void Identity_Application_Subset_Uses_New_Namespace_Phase1()
+    {
+        var requiredTypeNames = new[]
+        {
+            "WoongBlog.Application.Modules.Identity.AuthClaimTypes",
+            "WoongBlog.Application.Modules.Identity.Abstractions.IAdminMemberQueryStore",
+            "WoongBlog.Application.Modules.Identity.GetAdminMembers.GetAdminMembersQuery",
+            "WoongBlog.Application.Modules.Identity.GetAdminMembers.GetAdminMembersQueryHandler",
+        };
+        var legacyTypeNames = new[]
+        {
+            "WoongBlog.Api.Modules.Identity.Application.AuthClaimTypes",
+            "WoongBlog.Api.Modules.Identity.Application.Abstractions.IAdminMemberQueryStore",
+            "WoongBlog.Api.Modules.Identity.Application.GetAdminMembers.GetAdminMembersQuery",
+            "WoongBlog.Api.Modules.Identity.Application.GetAdminMembers.GetAdminMembersQueryHandler",
+        };
+
+        var missingRequired = requiredTypeNames
+            .Where(typeName => ApplicationAssembly.GetType(typeName) is null)
+            .ToArray();
+        var stillLegacy = legacyTypeNames
+            .Where(typeName => ApplicationAssembly.GetType(typeName) is not null)
+            .ToArray();
+
+        Assert.Empty(missingRequired);
+        Assert.Empty(stillLegacy);
+    }
+
+    [Fact]
     public void Ai_Application_Types_DoNot_Directly_Use_ServiceScopeFactory_Or_ServiceLocator()
     {
         var aiApplicationDirectory = Path.Combine(
@@ -419,7 +476,7 @@ public class ArchitectureBoundaryTests
             "WoongBlog.Application",
             "Modules",
             "AI",
-            "Application");
+            "");
 
         var disallowedTokens = new[]
         {
@@ -440,8 +497,8 @@ public class ArchitectureBoundaryTests
     {
         var abstractionTypes = ApplicationAssembly.GetTypes()
             .Where(type => type.IsInterface)
-            .Where(type => (type.Namespace ?? string.Empty).StartsWith("WoongBlog.Api.Modules.", StringComparison.Ordinal))
-            .Where(type => (type.Namespace ?? string.Empty).Contains(".Application.Abstractions", StringComparison.Ordinal))
+            .Where(type => (type.Namespace ?? string.Empty).StartsWith("WoongBlog.Application.Modules.", StringComparison.Ordinal))
+            .Where(type => (type.Namespace ?? string.Empty).Contains(".Abstractions", StringComparison.Ordinal))
             .ToArray();
 
         var violatingMethods = abstractionTypes
@@ -479,7 +536,7 @@ public class ArchitectureBoundaryTests
     [Fact]
     public void Ai_Batch_AggregateBatchStore_IsRemoved()
     {
-        var aggregateType = ApplicationAssembly.GetType("WoongBlog.Api.Modules.AI.Application.Abstractions.IAiBlogFixBatchStore");
+        var aggregateType = ApplicationAssembly.GetType("WoongBlog.Application.Modules.AI.Abstractions.IAiBlogFixBatchStore");
         var sourceHits = FindSourceFilesContainingTokens(
             Path.Combine(FindRepositoryRoot(), "backend", "src"),
             ["IAiBlogFixBatchStore"]);
@@ -503,8 +560,8 @@ public class ArchitectureBoundaryTests
             ".Persistence;",
             ".Storage;",
             ".Policies;",
-            "WoongBlog.Api.Infrastructure.Ai",
-            "WoongBlog.Api.Infrastructure.Storage"
+            "WoongBlog.Infrastructure.Ai",
+            "WoongBlog.Infrastructure.Storage"
         };
         var violatingFiles = registrationFiles
             .Where(path =>

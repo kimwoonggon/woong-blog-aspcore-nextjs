@@ -25,6 +25,7 @@ interface RelatedContentListProps {
   tabletPageSize?: number
   mobilePageSize?: number
   testIdBase: string
+  centerCurrentOnInitialPage?: boolean
 }
 
 const relatedDateFormatter = new Intl.DateTimeFormat('en', {
@@ -48,7 +49,13 @@ function getPageWindow(currentPage: number, totalPages: number, radius = 2) {
   return Array.from({ length: end - start + 1 }, (_, index) => start + index)
 }
 
-function resolveInitialPage(searchParams: URLSearchParams, items: RelatedContentItem[], currentItemId: string | undefined, pageSize: number) {
+function resolveInitialPage(
+  searchParams: URLSearchParams,
+  items: RelatedContentItem[],
+  currentItemId: string | undefined,
+  pageSize: number,
+  centerCurrentOnInitialPage: boolean,
+) {
   const requestedPage = Number.parseInt(searchParams.get('relatedPage') ?? '', 10)
   if (Number.isFinite(requestedPage) && requestedPage > 0) {
     return requestedPage
@@ -59,7 +66,17 @@ function resolveInitialPage(searchParams: URLSearchParams, items: RelatedContent
   }
 
   const currentIndex = items.findIndex((item) => item.id === currentItemId)
-  return currentIndex >= 0 ? Math.floor(currentIndex / pageSize) + 1 : 1
+  if (currentIndex < 0) {
+    return 1
+  }
+
+  if (!centerCurrentOnInitialPage || pageSize < 5 || items.length <= pageSize) {
+    return Math.floor(currentIndex / pageSize) + 1
+  }
+
+  const totalWindows = Math.max(1, items.length - pageSize + 1)
+  const centeredWindow = Math.max(1, Math.min(totalWindows, currentIndex - 1))
+  return centeredWindow
 }
 
 function RelatedContentPager({
@@ -69,19 +86,25 @@ function RelatedContentPager({
   currentItemId,
   pageSize,
   testIdBase,
+  centerCurrentOnInitialPage = false,
 }: RelatedContentPagerProps) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const initialPage = resolveInitialPage(searchParams, items, currentItemId, pageSize)
+  const initialPage = resolveInitialPage(searchParams, items, currentItemId, pageSize, centerCurrentOnInitialPage)
   const [page, setPage] = useState(initialPage)
-  const totalPages = Math.max(1, Math.ceil(items.length / pageSize))
+  const useSlidingWindow = centerCurrentOnInitialPage && pageSize >= 5
+  const totalPages = useSlidingWindow
+    ? Math.max(1, items.length - pageSize + 1)
+    : Math.max(1, Math.ceil(items.length / pageSize))
   const currentPage = Math.min(page, totalPages)
 
   const visibleItems = useMemo(() => {
-    const start = (currentPage - 1) * pageSize
+    const start = useSlidingWindow
+      ? currentPage - 1
+      : (currentPage - 1) * pageSize
     return items.slice(start, start + pageSize)
-  }, [currentPage, items, pageSize])
+  }, [currentPage, items, pageSize, useSlidingWindow])
 
   const pageWindow = getPageWindow(currentPage, totalPages)
 
@@ -264,6 +287,7 @@ export function RelatedContentList({
   desktopPageSize = 6,
   tabletPageSize = 4,
   mobilePageSize = 2,
+  centerCurrentOnInitialPage = false,
   ...props
 }: RelatedContentListProps) {
   const pageSize = useResponsivePageSize(desktopPageSize, tabletPageSize, mobilePageSize)
@@ -272,5 +296,12 @@ export function RelatedContentList({
     return null
   }
 
-  return <RelatedContentPager key={`${pageSize}-${props.items.length}`} {...props} pageSize={pageSize} />
+  return (
+    <RelatedContentPager
+      key={`${pageSize}-${props.items.length}-${centerCurrentOnInitialPage ? 'centered' : 'paged'}`}
+      {...props}
+      pageSize={pageSize}
+      centerCurrentOnInitialPage={centerCurrentOnInitialPage}
+    />
+  )
 }

@@ -113,6 +113,59 @@ describe('public/admin api clients', () => {
     await expect(fetchPublicWorkBySlug('missing-work')).resolves.toBeNull()
   })
 
+  it('fetchPublicWorkBySlug parses socialShareMessage when present', async () => {
+    const fetchMock = vi.fn(async () =>
+      new Response(JSON.stringify({
+        id: 'work-1',
+        slug: 'seeded-work',
+        title: 'Seeded Work',
+        excerpt: 'Excerpt fallback',
+        socialShareMessage: 'Preferred share copy',
+        contentJson: '{}',
+        category: 'platform',
+        tags: [],
+        videos: [],
+      }), { status: 200, headers: { 'Content-Type': 'application/json' } }),
+    ) as typeof fetch
+    vi.stubGlobal('fetch', fetchMock)
+
+    const { fetchPublicWorkBySlug } = await import('@/lib/api/works')
+    const payload = await fetchPublicWorkBySlug('seeded-work')
+
+    expect(payload?.socialShareMessage).toBe('Preferred share copy')
+  })
+
+  it('fetchPublicWorkBySlug parses timeline preview fields', async () => {
+    const fetchMock = vi.fn(async () =>
+      new Response(JSON.stringify({
+        id: 'work-2',
+        slug: 'preview-work',
+        title: 'Preview Work',
+        excerpt: 'Excerpt',
+        contentJson: '{}',
+        category: 'platform',
+        tags: [],
+        videos: [
+          {
+            id: 'video-1',
+            sourceType: 'hls',
+            sourceKey: 'local:videos/work-2/video-1/hls/master.m3u8',
+            sortOrder: 0,
+            timeline_preview_vtt_url: '/media/videos/work-2/video-1/hls/timeline.vtt',
+            timeline_preview_sprite_url: '/media/videos/work-2/video-1/hls/timeline-sprite.jpg',
+          },
+        ],
+      }), { status: 200, headers: { 'Content-Type': 'application/json' } }),
+    ) as typeof fetch
+    vi.stubGlobal('fetch', fetchMock)
+
+    const { fetchPublicWorkBySlug } = await import('@/lib/api/works')
+    const payload = await fetchPublicWorkBySlug('preview-work')
+
+    expect(payload?.videos[0]?.timelinePreviewVttUrl).toBe('/media/videos/work-2/video-1/hls/timeline.vtt')
+    expect(payload?.videos[0]?.timelinePreviewSpriteUrl).toBe('/media/videos/work-2/video-1/hls/timeline-sprite.jpg')
+  })
+
   it('fetchAdminWorks forwards the cookie header for authenticated admin fetches', async () => {
     const fetchMock = vi.fn(async () =>
       new Response(JSON.stringify([{ id: '1', slug: 'seeded-work', title: 'Seeded Work', excerpt: 'excerpt', category: 'platform', tags: [], published: true }]), {

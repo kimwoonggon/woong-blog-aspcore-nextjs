@@ -1,5 +1,5 @@
 import { expect, test } from './helpers/performance-test'
-import { contrastRatio, getColorChannels, getStyle, gotoWithTheme } from './helpers/ui-improvement'
+import { contrastRatio, getColorChannels, gotoWithTheme } from './helpers/ui-improvement'
 
 test('blog cards expose date and tag badge anchors', async ({ page }) => {
   await page.goto('/blog?__qaTagged=1')
@@ -26,7 +26,13 @@ test('blog grid uses three columns at xl breakpoint', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 })
   await page.goto('/blog?__qaTagged=1')
 
-  const grid = page.getByTestId('blog-grid')
-  const templateColumns = await getStyle(grid, 'grid-template-columns')
-  expect(templateColumns.split(' ').length).toBe(3)
+  const cards = page.getByTestId('blog-card')
+  await expect(cards.nth(2)).toBeVisible()
+
+  const firstRowLefts = await cards.evaluateAll((elements) =>
+    elements.slice(0, 3).map((element) => Math.round((element as HTMLElement).getBoundingClientRect().left)),
+  )
+  const distinctColumnPositions = new Set(firstRowLefts)
+
+  expect(distinctColumnPositions.size).toBe(3)
 })

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useTransition } from 'react'
+import { Suspense, useEffect, useState, useTransition } from 'react'
 import dynamic from 'next/dynamic'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Trash2 } from 'lucide-react'
@@ -16,10 +16,6 @@ import { toast } from 'sonner'
 
 interface PublicWorkDetailAdminActionsProps {
   workId: string
-}
-
-interface PublicWorkDetailAdminActionsContentProps extends PublicWorkDetailAdminActionsProps {
-  afterDeleteHref: string
 }
 
 type LoadState = 'idle' | 'loading' | 'loaded' | 'error'
@@ -48,7 +44,7 @@ async function fetchAdminWorkDetail(workId: string) {
   return response.json() as Promise<AdminWorkDetailPayload>
 }
 
-function PublicWorkDetailAdminActionsContent({ workId, afterDeleteHref }: PublicWorkDetailAdminActionsContentProps) {
+function PublicWorkDetailAdminActionsContent({ workId, afterDeleteHref }: { workId: string; afterDeleteHref: string }) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [state, setState] = useState<LoadState>('idle')
@@ -143,6 +139,16 @@ function PublicWorkDetailAdminActionsContent({ workId, afterDeleteHref }: Public
   )
 }
 
+export function PublicWorkDetailAdminActions(props: PublicWorkDetailAdminActionsProps) {
+  return (
+    <PublicAdminClientGate>
+      <Suspense fallback={null}>
+        <PublicWorkDetailAdminActionsGate {...props} />
+      </Suspense>
+    </PublicAdminClientGate>
+  )
+}
+
 function resolveSafeReturnTo(returnTo?: string | null) {
   if (!returnTo) {
     return null
@@ -173,21 +179,13 @@ function resolveWorkAfterDeleteHref(searchParams: URLSearchParams) {
   return relatedPage ? `/works?page=${encodeURIComponent(relatedPage)}&pageSize=8` : '/works'
 }
 
-function PublicWorkDetailAdminActionsGate(props: PublicWorkDetailAdminActionsProps) {
+function PublicWorkDetailAdminActionsGate({ workId }: PublicWorkDetailAdminActionsProps) {
   const searchParams = useSearchParams()
 
   return (
     <PublicWorkDetailAdminActionsContent
-      {...props}
+      workId={workId}
       afterDeleteHref={resolveWorkAfterDeleteHref(searchParams)}
     />
-  )
-}
-
-export function PublicWorkDetailAdminActions(props: PublicWorkDetailAdminActionsProps) {
-  return (
-    <PublicAdminClientGate>
-      <PublicWorkDetailAdminActionsGate {...props} />
-    </PublicAdminClientGate>
   )
 }

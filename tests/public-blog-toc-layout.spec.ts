@@ -20,6 +20,6 @@ test('blog table of contents stays in a right rail instead of covering article c
   expect(bodyBox).toBeTruthy()
   expect(tocBox).toBeTruthy()
   expect(contentLayoutBox).toBeTruthy()
-  expect(bodyBox!.x + bodyBox!.width).toBeLessThanOrEqual(tocBox!.x - 16)
+  expect(bodyBox!.x + bodyBox!.width).toBeLessThanOrEqual(tocBox!.x - 24)
   expect(tocBox!.y + tocBox!.height).toBeLessThanOrEqual(contentLayoutBox!.y + contentLayoutBox!.height + 2)
 })

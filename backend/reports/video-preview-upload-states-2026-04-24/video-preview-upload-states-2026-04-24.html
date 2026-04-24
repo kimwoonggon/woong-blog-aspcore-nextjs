@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Video Preview / Upload States Audit</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; color: #111; line-height: 1.5; }
+    h1, h2 { margin-bottom: 0.4rem; }
+    ul { padding-left: 1.2rem; }
+    code { background: #f3f4f6; padding: 0.1rem 0.3rem; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>Video Preview / Upload States Audit</h1>
+  <p>Date: 2026-04-24</p>
+  <h2>Changed</h2>
+  <ul>
+    <li>Removed default autoplay and restored manual playback.</li>
+    <li>Kept hover preview near the native progress region by using a transparent overlay instead of a visible extra bar.</li>
+    <li>Upgraded backend preview generation to produce time-indexed sprite/VTT data.</li>
+    <li>Added works upload phase messaging: upload, processing, ready.</li>
+  </ul>
+  <h2>Validation</h2>
+  <ul>
+    <li>Targeted Vitest: pass</li>
+    <li><code>npm run typecheck</code>: pass</li>
+    <li><code>npm run lint</code>: pass with warnings only</li>
+    <li>Targeted backend integration tests: pass</li>
+    <li>Solution-wide backend tests: pass</li>
+    <li>Targeted Playwright against docker HTTP server: pass</li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Keep this pass. The next quality step is denser preview asset generation and a non-skipped end-to-end preview assertion with a stable long-video fixture.</p>
+</body>
+</html>

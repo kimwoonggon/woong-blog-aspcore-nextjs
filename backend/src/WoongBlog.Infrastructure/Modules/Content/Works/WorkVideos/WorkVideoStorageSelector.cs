@@ -1,9 +1,9 @@
 using Microsoft.Extensions.Options;
 using WoongBlog.Api.Domain.Entities;
-using WoongBlog.Api.Infrastructure.Storage;
-using WoongBlog.Api.Modules.Content.Works.Application.WorkVideos;
+using WoongBlog.Infrastructure.Storage;
+using WoongBlog.Infrastructure.Modules.Content.Works.WorkVideos;
 
-namespace WoongBlog.Api.Modules.Content.Works.Application.WorkVideos;
+namespace WoongBlog.Infrastructure.Modules.Content.Works.WorkVideos;
 
 public sealed class WorkVideoStorageSelector(
     IEnumerable<IVideoObjectStorage> storages,

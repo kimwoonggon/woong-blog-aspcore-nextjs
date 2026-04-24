@@ -2,9 +2,9 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using WoongBlog.Api.Infrastructure.Auth;
-using WoongBlog.Api.Infrastructure.Persistence;
-using WoongBlog.Api.Modules.Identity.Application;
+using WoongBlog.Infrastructure.Auth;
+using WoongBlog.Infrastructure.Persistence;
+using WoongBlog.Application.Modules.Identity;
 
 namespace WoongBlog.Api.Tests;
 

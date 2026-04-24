@@ -9,7 +9,7 @@ interface TableOfContentsProps {
 interface HeadingItem {
   id: string
   text: string
-  level: 2 | 3
+  level: 1 | 2 | 3
 }
 
 function normalizeSlugPart(value: string) {
@@ -35,7 +35,7 @@ export function slugifyHeading(text: string, usedSlugs?: Map<string, number>) {
 
 function collectHeadings(root: HTMLElement) {
   const usedSlugs = new Map<string, number>()
-  const headings = Array.from(root.querySelectorAll<HTMLElement>('h2, h3'))
+  const headings = Array.from(root.querySelectorAll<HTMLElement>('h1, h2, h3'))
 
   return headings
     .map((heading) => {
@@ -44,7 +44,7 @@ function collectHeadings(root: HTMLElement) {
         return null
       }
 
-      const level = heading.tagName === 'H3' ? 3 : 2
+      const level = heading.tagName === 'H1' ? 1 : heading.tagName === 'H2' ? 2 : 3
       const id = heading.id || slugifyHeading(text, usedSlugs)
       heading.id = id
 
@@ -104,10 +104,7 @@ export function TableOfContents({ contentRootId }: TableOfContentsProps) {
   }, [contentRootId])
 
   const renderedItems = useMemo(() => items, [items])
-
-  if (renderedItems.length === 0) {
-    return null
-  }
+  const hasItems = renderedItems.length > 0
 
   return (
     <nav
@@ -122,13 +119,14 @@ export function TableOfContents({ contentRootId }: TableOfContentsProps) {
         <button
           type="button"
           onClick={() => setCollapsed((value) => !value)}
+          disabled={!hasItems}
           className="rounded-full border border-border/80 px-2 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           aria-expanded={!collapsed}
         >
           {collapsed ? 'Expand' : 'Collapse'}
         </button>
       </div>
-      {!collapsed ? (
+      {hasItems && !collapsed ? (
         <ol className="space-y-2 text-sm">
           {renderedItems.map((item) => (
             <li key={item.id}>
@@ -136,7 +134,7 @@ export function TableOfContents({ contentRootId }: TableOfContentsProps) {
                 href={`#${item.id}`}
                 className={[
                   'block rounded-xl px-3 py-2 leading-snug transition-colors [overflow-wrap:anywhere]',
-                  item.level === 3 ? 'ml-3 text-muted-foreground' : 'font-medium',
+                  item.level === 3 ? 'ml-5 text-muted-foreground' : item.level === 2 ? 'ml-2 font-medium' : 'font-semibold',
                   activeId === item.id
                     ? 'bg-muted text-foreground'
                     : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground',
@@ -147,6 +145,11 @@ export function TableOfContents({ contentRootId }: TableOfContentsProps) {
             </li>
           ))}
         </ol>
+      ) : null}
+      {!hasItems ? (
+        <p data-testid="blog-toc-empty" className="rounded-xl border border-dashed border-border/70 px-3 py-2 text-sm text-muted-foreground">
+          No sections yet. This page does not include headings.
+        </p>
       ) : null}
     </nav>
   )

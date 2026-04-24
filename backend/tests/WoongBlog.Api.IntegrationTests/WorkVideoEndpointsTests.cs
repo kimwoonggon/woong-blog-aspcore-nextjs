@@ -7,8 +7,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using WoongBlog.Api.Domain.Entities;
-using WoongBlog.Api.Infrastructure.Persistence;
-using WoongBlog.Api.Modules.Content.Works.Application.WorkVideos;
+using WoongBlog.Infrastructure.Persistence;
+using WoongBlog.Application.Modules.Content.Works.WorkVideos;
+using WoongBlog.Infrastructure.Modules.Content.Works.WorkVideos;
 
 namespace WoongBlog.Api.Tests;
 
@@ -106,7 +107,7 @@ public class WorkVideoEndpointsTests : IClassFixture<CustomWebApplicationFactory
     [Fact]
     public async Task FfmpegVideoTranscoder_SegmentsHlsAndProducesTheManifest()
     {
-        var fakeFfmpeg = CreateFakeFfmpeg();
+        var fakeFfTools = CreateFakeFfTools();
         var tempDirectory = Path.Combine(Path.GetTempPath(), $"portfolio-tests-hls-{Guid.NewGuid():N}");
 
         try
@@ -120,8 +121,11 @@ public class WorkVideoEndpointsTests : IClassFixture<CustomWebApplicationFactory
 
             var transcoder = new FfmpegVideoTranscoder(Options.Create(new WorkVideoHlsOptions
             {
-                FfmpegPath = fakeFfmpeg.ScriptPath,
+                FfmpegPath = fakeFfTools.FfmpegPath,
+                FfprobePath = fakeFfTools.FfprobePath,
                 SegmentDurationSeconds = 4,
+                TimelinePreviewIntervalSeconds = 5,
+                TimelinePreviewTileColumns = 4,
                 TimeoutSeconds = 30
             }));
 
@@ -129,11 +133,13 @@ public class WorkVideoEndpointsTests : IClassFixture<CustomWebApplicationFactory
 
             Assert.Null(error);
             Assert.True(File.Exists(Path.Combine(hlsDirectory, "master.m3u8")));
-
-            var ffmpegArgs = await File.ReadAllTextAsync(fakeFfmpeg.ArgsPath);
-            Assert.Contains("-c\ncopy", ffmpegArgs, StringComparison.OrdinalIgnoreCase);
-            Assert.DoesNotContain("scale", ffmpegArgs, StringComparison.OrdinalIgnoreCase);
-            Assert.DoesNotContain("720", ffmpegArgs, StringComparison.OrdinalIgnoreCase);
+            Assert.True(File.Exists(Path.Combine(hlsDirectory, WorkVideoPolicy.TimelinePreviewSpriteFileName)));
+            var vttPath = Path.Combine(hlsDirectory, WorkVideoPolicy.TimelinePreviewVttFileName);
+            Assert.True(File.Exists(vttPath));
+            var vtt = await File.ReadAllTextAsync(vttPath);
+            Assert.Contains("00:00:00.000 --> 00:00:05.000", vtt, StringComparison.Ordinal);
+            Assert.Contains("00:00:15.000 --> 00:00:20.000", vtt, StringComparison.Ordinal);
+            Assert.Contains("timeline-sprite.jpg#xywh=960,0,320,180", vtt, StringComparison.Ordinal);
         }
         finally
         {
@@ -142,9 +148,9 @@ public class WorkVideoEndpointsTests : IClassFixture<CustomWebApplicationFactory
                 Directory.Delete(tempDirectory, recursive: true);
             }
 
-            if (Directory.Exists(fakeFfmpeg.DirectoryPath))
+            if (Directory.Exists(fakeFfTools.DirectoryPath))
             {
-                Directory.Delete(fakeFfmpeg.DirectoryPath, recursive: true);
+                Directory.Delete(fakeFfTools.DirectoryPath, recursive: true);
             }
         }
     }
@@ -152,7 +158,7 @@ public class WorkVideoEndpointsTests : IClassFixture<CustomWebApplicationFactory
     [Fact]
     public async Task HlsJob_StoresManifestAndProjectsPlaybackUrl()
     {
-        var fakeFfmpeg = CreateFakeFfmpeg();
+        var fakeFfTools = CreateFakeFfTools();
         try
         {
             using var factory = _factory.WithWebHostBuilder(builder =>
@@ -161,8 +167,11 @@ public class WorkVideoEndpointsTests : IClassFixture<CustomWebApplicationFactory
                 {
                     configBuilder.AddInMemoryCollection(new Dictionary<string, string?>
                     {
-                        ["WorkVideos:Hls:FfmpegPath"] = fakeFfmpeg.ScriptPath,
-                        ["WorkVideos:Hls:SegmentDurationSeconds"] = "4"
+                        ["WorkVideos:Hls:FfmpegPath"] = fakeFfTools.FfmpegPath,
+                        ["WorkVideos:Hls:FfprobePath"] = fakeFfTools.FfprobePath,
+                        ["WorkVideos:Hls:SegmentDurationSeconds"] = "4",
+                        ["WorkVideos:Hls:TimelinePreviewIntervalSeconds"] = "5",
+                        ["WorkVideos:Hls:TimelinePreviewTileColumns"] = "4"
                     });
                 });
             });
@@ -185,6 +194,8 @@ public class WorkVideoEndpointsTests : IClassFixture<CustomWebApplicationFactory
             Assert.Equal(WorkVideoSourceTypes.Hls, video.SourceType);
             Assert.NotNull(video.PlaybackUrl);
             Assert.EndsWith("/master.m3u8", video.PlaybackUrl, StringComparison.OrdinalIgnoreCase);
+            Assert.EndsWith("/timeline.vtt", video.TimelinePreviewVttUrl, StringComparison.OrdinalIgnoreCase);
+            Assert.EndsWith("/timeline-sprite.jpg", video.TimelinePreviewSpriteUrl, StringComparison.OrdinalIgnoreCase);
             Assert.EndsWith(":videos/" + created.Id.ToString("N") + "/" + video.Id.ToString("N") + "/hls/master.m3u8", video.SourceKey, StringComparison.OrdinalIgnoreCase);
             Assert.False(video.SourceKey.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase));
 
@@ -195,9 +206,9 @@ public class WorkVideoEndpointsTests : IClassFixture<CustomWebApplicationFactory
         }
         finally
         {
-            if (Directory.Exists(fakeFfmpeg.DirectoryPath))
+            if (Directory.Exists(fakeFfTools.DirectoryPath))
             {
-                Directory.Delete(fakeFfmpeg.DirectoryPath, recursive: true);
+                Directory.Delete(fakeFfTools.DirectoryPath, recursive: true);
             }
         }
     }
@@ -346,15 +357,16 @@ public class WorkVideoEndpointsTests : IClassFixture<CustomWebApplicationFactory
         return client;
     }
 
-    private static FakeFfmpeg CreateFakeFfmpeg()
+    private static FakeFfTools CreateFakeFfTools()
     {
         var directory = Path.Combine(Path.GetTempPath(), $"portfolio-tests-ffmpeg-{Guid.NewGuid():N}");
         Directory.CreateDirectory(directory);
-        var scriptPath = Path.Combine(directory, "ffmpeg");
+        var ffmpegPath = Path.Combine(directory, "ffmpeg");
+        var ffprobePath = Path.Combine(directory, "ffprobe");
         var argsPath = Path.Combine(directory, "args.txt");
         var escapedArgsPath = QuoteShellValue(argsPath);
 
-        File.WriteAllText(scriptPath, $$"""
+        File.WriteAllText(ffmpegPath, $$"""
 #!/bin/sh
 printf '%s\n' "$@" > {{escapedArgsPath}}
 out=""
@@ -372,15 +384,22 @@ segment_00000.ts
 EOF
 printf 'segment' > "$dir/segment_00000.ts"
 """);
+        File.WriteAllText(ffprobePath, """
+#!/bin/sh
+printf '20.0'
+""");
 
         if (!OperatingSystem.IsWindows())
         {
             File.SetUnixFileMode(
-                scriptPath,
+                ffmpegPath,
+                UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+            File.SetUnixFileMode(
+                ffprobePath,
                 UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
         }
 
-        return new FakeFfmpeg(directory, scriptPath, argsPath);
+        return new FakeFfTools(directory, ffmpegPath, ffprobePath, argsPath);
     }
 
     private static string QuoteShellValue(string value)
@@ -415,11 +434,15 @@ printf 'segment' > "$dir/segment_00000.ts"
         public string SourceType { get; set; } = string.Empty;
         public string SourceKey { get; set; } = string.Empty;
         public string? PlaybackUrl { get; set; }
+        [JsonPropertyName("timeline_preview_vtt_url")]
+        public string? TimelinePreviewVttUrl { get; set; }
+        [JsonPropertyName("timeline_preview_sprite_url")]
+        public string? TimelinePreviewSpriteUrl { get; set; }
     }
 
     private sealed record CsrfTokenResponse(string RequestToken, string HeaderName);
 
-    private sealed record FakeFfmpeg(string DirectoryPath, string ScriptPath, string ArgsPath);
+    private sealed record FakeFfTools(string DirectoryPath, string FfmpegPath, string FfprobePath, string ArgsPath);
 
     private static readonly byte[] SampleMp4Bytes =
     [

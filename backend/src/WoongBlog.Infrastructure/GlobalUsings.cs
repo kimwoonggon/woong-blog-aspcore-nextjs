@@ -3,3 +3,4 @@ global using Microsoft.AspNetCore.Http;
 global using Microsoft.Extensions.Configuration;
 global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Hosting;
+global using WoongBlog.Application.Modules.Content.Works.WorkVideos;

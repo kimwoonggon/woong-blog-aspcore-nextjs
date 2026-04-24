@@ -1,9 +1,9 @@
-using WoongBlog.Api.Infrastructure.Ai;
-using WoongBlog.Api.Modules.AI.Application.Abstractions;
-using WoongBlog.Api.Modules.AI.Application.BatchJobs;
-using WoongBlog.Api.Modules.AI.Persistence;
+using WoongBlog.Infrastructure.Ai;
+using WoongBlog.Application.Modules.AI.Abstractions;
+using WoongBlog.Application.Modules.AI.BatchJobs;
+using WoongBlog.Infrastructure.Modules.AI.Persistence;
 
-namespace WoongBlog.Api.Modules.AI;
+namespace WoongBlog.Infrastructure.Modules.AI;
 
 public static class AiInfrastructureModuleServiceCollectionExtensions
 {

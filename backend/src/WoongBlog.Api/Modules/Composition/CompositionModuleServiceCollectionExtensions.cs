@@ -1,3 +1,5 @@
+using WoongBlog.Infrastructure.Modules.Composition;
+
 namespace WoongBlog.Api.Modules.Composition;
 
 internal static class CompositionModuleServiceCollectionExtensions

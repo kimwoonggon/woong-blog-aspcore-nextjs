@@ -6,6 +6,7 @@ import { InteractiveRenderer } from '@/components/content/InteractiveRenderer'
 import { TableOfContents } from '@/components/content/TableOfContents'
 import { Badge } from '@/components/ui/badge'
 import { Metadata } from 'next'
+import { Suspense } from 'react'
 import { resolveBlogRenderableHtml } from '@/lib/content/blog-content'
 import { fetchAllPublicBlogs, fetchPublicBlogBySlug } from '@/lib/api/blogs'
 import { createPublicMetadata } from '@/lib/seo'
@@ -68,7 +69,7 @@ export default async function BlogDetailPage({ params }: PageProps) {
 
     return (
         <article className="mx-auto w-full px-4 py-8 md:px-6 md:py-12">
-            <div data-testid="blog-article-content-layout" className="mx-auto xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,48rem)_minmax(0,1fr)] xl:gap-8">
+            <div data-testid="blog-article-content-layout" className="mx-auto xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,48rem)_minmax(0,1fr)] xl:items-start xl:gap-12">
                 <div data-testid="blog-detail-body" className="mx-auto min-w-0 w-full max-w-3xl xl:col-start-2">
                     <header className="mb-8">
                         <h1 className="mb-4 text-3xl font-heading font-bold leading-tight text-foreground text-balance md:text-4xl">
@@ -100,40 +101,45 @@ export default async function BlogDetailPage({ params }: PageProps) {
 
                 </div>
 
-                <aside className="hidden xl:col-start-3 xl:block xl:w-full xl:max-w-72 xl:justify-self-start xl:pl-6">
+                <aside className="hidden xl:col-start-3 xl:block xl:w-full xl:max-w-80 xl:justify-self-start xl:self-start xl:pl-10">
                     <TableOfContents contentRootId="blog-detail-content" />
                 </aside>
             </div>
 
             <div className="mx-auto max-w-3xl">
                 {(olderBlog || newerBlog) && (
-                    <nav
-                        aria-label="Study navigation"
-                        data-testid="blog-prev-next"
-                        className="mt-12 grid gap-3 border-t border-border/70 pt-8 sm:grid-cols-2"
-                    >
-                        {newerBlog ? (
-                            <PublicDetailAdjacentLink hrefBase="/blog" slug={newerBlog.slug} label="Next" title={newerBlog.title} />
-                        ) : (
-                            <div aria-hidden="true" />
-                        )}
-                        {olderBlog ? (
-                            <PublicDetailAdjacentLink hrefBase="/blog" slug={olderBlog.slug} label="Previous" title={olderBlog.title} alignEnd />
-                        ) : null}
-                    </nav>
+                    <Suspense fallback={null}>
+                        <nav
+                            aria-label="Study navigation"
+                            data-testid="blog-prev-next"
+                            className="mt-12 grid gap-3 border-t border-border/70 pt-8 sm:grid-cols-2"
+                        >
+                            {newerBlog ? (
+                                <PublicDetailAdjacentLink hrefBase="/blog" slug={newerBlog.slug} label="Next" title={newerBlog.title} />
+                            ) : (
+                                <div aria-hidden="true" />
+                            )}
+                            {olderBlog ? (
+                                <PublicDetailAdjacentLink hrefBase="/blog" slug={olderBlog.slug} label="Previous" title={olderBlog.title} alignEnd />
+                            ) : null}
+                        </nav>
+                    </Suspense>
                 )}
 
                 <div data-testid="blog-related-shell" className="mt-16 border-t pt-12">
-                    <RelatedContentList
-                        heading="More Studies"
-                        hrefBase="/blog"
-                        items={sortedBlogs}
-                        currentItemId={blog.id}
-                        desktopPageSize={9}
-                        tabletPageSize={4}
-                        mobilePageSize={2}
-                        testIdBase="related-blog"
-                    />
+                    <Suspense fallback={null}>
+                        <RelatedContentList
+                            heading="More Studies"
+                            hrefBase="/blog"
+                            items={sortedBlogs}
+                            currentItemId={blog.id}
+                            desktopPageSize={9}
+                            tabletPageSize={4}
+                            mobilePageSize={5}
+                            testIdBase="related-blog"
+                            centerCurrentOnInitialPage
+                        />
+                    </Suspense>
                 </div>
             </div>
         </article>

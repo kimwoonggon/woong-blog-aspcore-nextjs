@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Admin Blog Notion Autosave Request Path Audit</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 900px; margin: 40px auto; line-height: 1.5; color: #111; }
+    code { background: #f4f4f4; padding: 0.1rem 0.3rem; }
+    h1, h2 { margin-top: 1.4rem; }
+  </style>
+</head>
+<body>
+  <h1>Admin Blog Notion Autosave Request Path Audit</h1>
+  <p>Audit-only inspection of the current working tree for autosave from <code>/admin/blog/notion</code>.</p>
+  <h2>Likely Latency-Dominant Steps</h2>
+  <ol>
+    <li>Browser preflight <code>GET /api/auth/session</code> before each autosave mutation.</li>
+    <li>Protected blog update auth/session validation against session and profile tables.</li>
+    <li>Blog load, slug existence check, and save in the update handler.</li>
+    <li>Throttled autosave-triggered <code>/revalidate-public</code> request and its nested session fetch.</li>
+    <li>Cold-cache or retry-time <code>GET /api/auth/csrf</code> bootstrap.</li>
+  </ol>
+  <h2>Recommendation</h2>
+  <p>Profile the repeated auth/session hops first. The autosave business handler is relatively small compared with the extra request and validation layers around it.</p>
+</body>
+</html>
