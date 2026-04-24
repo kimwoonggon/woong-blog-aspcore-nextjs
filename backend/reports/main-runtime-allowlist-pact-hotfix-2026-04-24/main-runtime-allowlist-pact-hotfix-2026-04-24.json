@@ -1,0 +1,21 @@
+{
+  "task": "main-runtime-allowlist-pact-hotfix-2026-04-24",
+  "summary": [
+    "Added missing CI helper and script files to scripts/main-runtime-allowlist.txt.",
+    "Fixed Pact consumer tests by mocking the public API base resolver directly."
+  ],
+  "not_changed": [
+    "No production runtime logic changes.",
+    "No backend API contract changes.",
+    "No local artifact cleanup."
+  ],
+  "validations": [
+    "gh run view 24893006800 --log-failed",
+    "npx vitest run src/test/pact/public-api-consumer.pact.test.ts src/test/e2e-latency-budget.test.ts"
+  ],
+  "risks": [
+    "Future CI-referenced files can still be missed if the allowlist is not maintained.",
+    "The Pact helper may need further updates if API base resolution changes again."
+  ],
+  "recommendation": "Keep the runtime allowlist aligned with CI Main Runtime dependencies and unit-test imports."
+}
