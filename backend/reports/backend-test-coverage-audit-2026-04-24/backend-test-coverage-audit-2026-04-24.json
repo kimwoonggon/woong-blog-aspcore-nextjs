@@ -2,7 +2,10 @@
   "report": "backend-test-coverage-audit-2026-04-24",
   "updateDate": "2026-04-25",
   "scope": "backend only",
-  "task": "Priority 1 auth/session/login/logout/CSRF/admin authorization tests",
+  "tasks": [
+    "Priority 1 auth/session/login/logout/CSRF/admin authorization tests",
+    "Priority 1 destructive or state-changing admin command tests"
+  ],
   "productionCodeChanged": false,
   "testsAdded": [
     {
@@ -31,9 +34,34 @@
         "absolute-expired session does not authenticate and is revoked",
         "session with missing profile does not authenticate and is revoked"
       ]
+    },
+    {
+      "file": "backend/tests/WoongBlog.Api.IntegrationTests/AdminMutationEndpointsTests.cs",
+      "category": "Integration",
+      "behaviors": [
+        "admin page/blog/work/site-settings mutations reject anonymous requests when CSRF is valid",
+        "admin page/blog/work/site-settings mutations reject non-admin requests when CSRF is valid",
+        "page update returns success payload and persists only the target page",
+        "invalid page update returns bad request and does not persist",
+        "blog create returns id/slug and persists expected fields",
+        "invalid blog create returns bad request and does not create a row",
+        "blog update returns id/slug, changes expected fields, and can unpublish",
+        "missing blog update returns not found and preserves existing blogs",
+        "blog delete hard-deletes only the target blog",
+        "missing blog delete returns not found and preserves existing blogs",
+        "work create returns id/slug and persists expected fields",
+        "invalid work create returns bad request and does not create a row",
+        "work update returns id/slug, changes expected fields, and can unpublish",
+        "missing work update returns not found and preserves existing works",
+        "work delete hard-deletes only the target work",
+        "missing work delete returns not found and preserves existing works",
+        "site settings partial update persists supplied fields and preserves omitted fields",
+        "invalid site settings update returns bad request and does not persist"
+      ]
     }
   ],
   "filesChanged": [
+    "backend/tests/WoongBlog.Api.IntegrationTests/AdminMutationEndpointsTests.cs",
     "backend/tests/WoongBlog.Api.IntegrationTests/AuthFlowIntegrationTests.cs",
     "backend/tests/WoongBlog.Api.IntegrationTests/TestOidcChallengeHandler.cs",
     "backend/tests/WoongBlog.Api.IntegrationTests/TestAuthHandler.cs",
@@ -58,39 +86,46 @@
       "summary": "12 component tests passed"
     },
     {
+      "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~AdminMutationEndpointsTests",
+      "exitCode": 0,
+      "result": "passed",
+      "summary": "32 integration test cases passed"
+    },
+    {
       "command": "dotnet test backend/WoongBlog.sln",
       "exitCode": 0,
       "result": "passed",
-      "summary": "Contract 1, Unit 14, Component 37, Architecture 30, Integration 129"
+      "summary": "Contract 1, Unit 14, Component 37, Architecture 30, Integration 161"
     },
     {
-      "command": "dotnet test backend/WoongBlog.sln --filter \"Category=Unit\"",
+      "command": "dotnet test backend/WoongBlog.sln --filter \"Category=Integration\"",
       "exitCode": 0,
       "result": "passed",
-      "summary": "Unit 14"
+      "summary": "Integration 105"
     },
     {
       "command": "dotnet test backend/WoongBlog.sln --filter \"Category=Component\"",
       "exitCode": 0,
       "result": "passed",
       "summary": "Component 37"
-    },
-    {
-      "command": "dotnet test backend/WoongBlog.sln --filter \"Category=Integration\"",
-      "exitCode": 0,
-      "result": "passed",
-      "summary": "Integration 73"
     }
   ],
   "warnings": [
     "All dotnet test runs emitted existing NU1901 low-severity advisory warning for AWSSDK.Core 4.0.0.17 / GHSA-9cvc-h2w8-phrp"
   ],
-  "remainingGaps": [
-    "OIDC callback success/failure, provider failure, disabled-auth login, and callback missing-claims behavior remain untested through the full host",
-    "Endpoint-level logout revocation and audit side effects with a real cookie-authenticated session remain untested",
-    "Admin mutation, media upload/delete, AI batch, and work-video auth/CSRF matrices remain representative rather than exhaustive",
-    "CSRF stale token, missing cookie, duplicate header, multipart upload token behavior, and rejected-mutation side effects outside site settings remain untested",
-    "Existing-profile login update, multiple concurrent auth sessions, admin override changes, role downgrade semantics, IP capture, user-agent truncation, and session-key collision behavior remain component-test gaps"
+  "adminMutationCoverageImproved": [
+    "Page update endpoint now covers auth rejection, success response shape, persistence, invalid-request no-write behavior, and unrelated-record preservation",
+    "Blog create/update/delete endpoints now cover auth rejection, validation failure, missing-entity behavior, hard delete, publish/unpublish, response shape, DB persistence, and unrelated-record preservation",
+    "Work create/update/delete endpoints now cover auth rejection, validation failure, missing-entity behavior, hard delete, publish/unpublish, response shape, DB persistence, and unrelated-record preservation without WorkVideo-specific endpoint tests",
+    "Site settings update endpoint now covers auth rejection, response shape, partial update, omitted-field preservation, and invalid-request no-write behavior"
   ],
-  "recommendation": "Keep this P1 auth test update and continue next with auth/CSRF coverage for media, AI batch, and work-video mutations, including side-effect assertions for rejected requests."
+  "remainingGaps": [
+    "Page create/delete endpoints do not exist in the current API surface",
+    "Admin member create/update/delete/update-role endpoints do not exist in the current API surface",
+    "Invalid, missing, or stale CSRF behavior is still not sampled for every page/blog/work mutation",
+    "Blog/work duplicate slug on update, invalid JSON semantics, tag boundaries beyond existing validator samples, search-field updates, asset update semantics, and detailed UpdatedAt behavior remain incomplete",
+    "Media upload/delete, AI batch mutations, and WorkVideo mutation endpoints remain outside this step",
+    "OIDC callback success/failure and endpoint-level logout revocation/audit side effects remain auth-session gaps"
+  ],
+  "recommendation": "Keep the P1 auth and admin mutation test updates. Continue next with dedicated media, AI batch, and WorkVideo mutation slices, including side-effect assertions for rejected requests."
 }

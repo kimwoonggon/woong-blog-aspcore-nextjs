@@ -2,7 +2,7 @@
 
 ## Scope And Method
 
-Scope was backend production code and backend test projects only. The original audit did not modify production or test code; subsequent dated implementation updates in this report document test-only changes.
+Scope was backend production code and backend test projects only. No production code and no test code were modified for this audit.
 
 This is a strict, pessimistic coverage audit. A feature is not classified as `Covered` unless an existing test file can be named and the asserted behavior is described. Classifications are based on source/test inspection, not line coverage tooling.
 
@@ -27,11 +27,11 @@ Test inventory scanned:
 |---|---|---:|---|---|
 | `WoongBlog.Api.UnitTests` | Pure Application/helper/validator tests only | 4 files, 12 facts/theories | Command/query validators, `AdminContentText.GenerateExcerpt`, `WorkVideoHlsJobPlan` | Taxonomy is preserved by `ArchitectureBoundaryTests.UnitTestProject_DoesNotReference_Infrastructure_AspNetCore_Or_EfInMemory`. Unit coverage is narrow. |
 | `WoongBlog.Api.ComponentTests` | Application + Infrastructure + EF InMemory/fakes/filesystem/HttpClient style tests, no full HTTP host | 5 files, 37 facts | Auth recorder/session persistence including malformed/expired/missing-profile sessions, public query handlers/stores, Codex runtime process environment | Good middle-layer coverage for selected public/auth/AI paths only. Most admin command handlers and stores are not component-tested. |
-| `WoongBlog.Api.IntegrationTests` | Full ASP.NET test host and endpoint behavior | 17 test files, 127 facts/theories; 161 expanded test cases | Auth/session/login/logout/CSRF/admin authorization slices, admin content mutation endpoints, public endpoints, media upload/delete, work videos, AI endpoints, startup/options, persistence bootstrapping | Auth and state-changing admin command coverage are stronger after the P1 updates, but media/AI/work-video mutation matrices and several edge cases remain representative rather than exhaustive. |
+| `WoongBlog.Api.IntegrationTests` | Full ASP.NET test host and endpoint behavior | 16 test files, 110 facts/theories; 129 expanded test cases | Auth/session/login/logout/CSRF/admin authorization slices, admin content endpoints, public endpoints, media upload/delete, work videos, AI endpoints, startup/options, persistence bootstrapping | Auth boundary coverage is stronger after the P1 auth update, but many admin mutation families still rely on representative authorization/CSRF sampling rather than exhaustive endpoint matrices. |
 | `WoongBlog.Api.ArchitectureTests` | Project/layer/dependency boundary tests | 1 file, 30 facts | Layer references, HTTP-agnostic Application, removed legacy controllers/services, module boundary checks, unit-test project dependency guard | Strong architecture regression net, but not behavior coverage. |
 | `WoongBlog.Api.ContractTests` | Provider/contract verification tests | 1 file, 1 fact | Pact provider verification from pact files if `PACT_PROVIDER_BASE_URL` and pact files exist | Test self-skips when env or pact files are missing, so normal `dotnet test` can pass without contract verification. |
 
-Observed source totals after the P1 auth and admin mutation test updates: 28 backend test files containing facts/theories and 207 facts/theories. `dotnet test` executed 243 test cases because xUnit theories expand inline data. Production C# inventory remains unchanged for these updates.
+Observed source totals after the P1 auth test update: 27 backend test files containing facts/theories and 190 facts/theories. `dotnet test` executed 211 test cases because xUnit theories expand inline data. Production C# inventory remains unchanged for this update.
 
 ## Coverage Classification Legend
 
@@ -61,9 +61,9 @@ Observed source totals after the P1 auth and admin mutation test updates: 28 bac
 
 | Feature | Production files involved | Existing test files | Existing test level | Current coverage classification | Missing happy-path tests | Missing failure/edge-case tests | Missing auth/authorization tests | Missing persistence/side-effect tests | Recommended test project | Priority |
 |---|---|---|---|---|---|---|---|---|---|---|
-| Admin pages query/update | `Modules/Content/Pages/*`; `GetAdminPagesQueryHandler.cs`; `UpdatePageCommandHandler.cs`; `PageQueryStore.cs`; `PageCommandStore.cs` | `AdminContentEndpointsTests.cs` asserts slug-filtered admin pages, structured home content, bad request when id missing, not found when page missing; `AdminEndpointsTests.cs` asserts update page persists and public page reflects new HTML; `AdminMutationEndpointsTests.cs` asserts valid update response shape/persistence, invalid update no-write behavior, and anonymous/non-admin mutation rejection with valid CSRF | Integration | Partially covered | Get all admin pages; update each page type including home/introduction/contact payload shapes | Malformed `contentJson`, invalid slug filters, overly long title through endpoint, concurrency/last update | Admin page update now has anonymous 401 and non-admin 403 mutation coverage with valid CSRF | Store-level side effects are still not isolated in component tests; selected unrelated page preservation is now asserted through the endpoint | Integration + Component | P1 |
-| Admin blog create/read/update/delete | `Modules/Content/Blogs/*`; `CreateBlogCommandHandler.cs`; `UpdateBlogCommandHandler.cs`; `DeleteBlogCommandHandler.cs`; `BlogCommandStore.cs`; `BlogQueryStore.cs` | `AdminContentEndpointsTests.cs` asserts missing title 400, create slug/excerpt, manual/blank/markdown/wrapped-markdown excerpts, duplicate slug, update missing 404; `AdminEndpointsTests.cs` asserts too-long title 400, create/delete removes blog, admin detail extracts HTML; `AdminMutationEndpointsTests.cs` asserts create/update/delete success and failure, response shape, DB persistence, publish/unpublish via `Published`, missing update/delete no side effects, invalid create no-write behavior, unrelated record preservation, and anonymous/non-admin mutation rejection with valid CSRF | Integration | Partially covered | Get admin blog list remains outside this destructive-command slice; cover asset behavior remains untested | Invalid JSON, duplicate slug under updates, tag boundaries beyond one case, markdown edge cases, empty content variants | Blog mutations now have representative anonymous 401 and non-admin 403 coverage with valid CSRF | DB `PublishedAt` on create, create/update/delete persistence, and unrelated-record preservation are now asserted; search field updates and asset links remain incomplete | Integration + Component | P1 |
-| Admin work create/read/update/delete | `Modules/Content/Works/*`; `CreateWorkCommandHandler.cs`; `UpdateWorkCommandHandler.cs`; `DeleteWorkCommandHandler.cs`; `WorkCommandStore.cs`; `WorkQueryStore.cs` | `AdminEndpointsTests.cs` asserts invalid payload 400, create then get persists excerpt/category; `AdminContentEndpointsTests.cs` asserts missing category 400, malformed metadata falls back to `{}`, duplicate slug, update missing 404, thumbnail/icon asset persistence; `WorkVideoEndpointsTests.cs` asserts delete work removes videos/sessions and queues cleanup; `AdminMutationEndpointsTests.cs` asserts create/update/delete success and failure, response shape, DB persistence, publish/unpublish via `Published`, missing update/delete no side effects, invalid create no-write behavior, unrelated record preservation, and anonymous/non-admin mutation rejection with valid CSRF | Integration | Partially covered | Get admin work list remains outside this destructive-command slice; thumbnail/icon asset update semantics remain lightly covered elsewhere | Malformed content JSON, invalid asset ids, duplicate slug on update, stale video version interaction with work update | Work mutations now have representative anonymous 401 and non-admin 403 coverage with valid CSRF | DB `PublishedAt` on create, create/update/delete persistence, and unrelated-record preservation are now asserted; search field updates and thumbnail/icon delete semantics remain incomplete | Integration + Component | P1 |
+| Admin pages query/update | `Modules/Content/Pages/*`; `GetAdminPagesQueryHandler.cs`; `UpdatePageCommandHandler.cs`; `PageQueryStore.cs`; `PageCommandStore.cs` | `AdminContentEndpointsTests.cs` asserts slug-filtered admin pages, structured home content, bad request when id missing, not found when page missing; `AdminEndpointsTests.cs` asserts update page persists and public page reflects new HTML | Integration | Partially covered | Get all admin pages; update each page type including home/introduction/contact payload shapes | Malformed `contentJson`, invalid slug filters, overly long title through endpoint, concurrency/last update | Anonymous and non-admin admin-pages requests not tested | Store-level side effects and `UpdatedAt` not asserted | Integration + Component | P1 |
+| Admin blog create/read/update/delete | `Modules/Content/Blogs/*`; `CreateBlogCommandHandler.cs`; `UpdateBlogCommandHandler.cs`; `DeleteBlogCommandHandler.cs`; `BlogCommandStore.cs`; `BlogQueryStore.cs` | `AdminContentEndpointsTests.cs` asserts missing title 400, create slug/excerpt, manual/blank/markdown/wrapped-markdown excerpts, duplicate slug, update missing 404; `AdminEndpointsTests.cs` asserts too-long title 400, create/delete removes blog, admin detail extracts HTML | Integration | Partially covered | Update blog success, get admin blog list, delete missing, unpublished/published transitions, cover asset behavior | Invalid JSON, duplicate slug under updates, tag boundaries beyond one case, markdown edge cases, empty content variants | Anonymous/non-admin/CSRF coverage missing for blog mutations and admin reads | DB `PublishedAt`, `UpdatedAt`, search field updates, asset links not fully asserted | Integration + Component | P1 |
+| Admin work create/read/update/delete | `Modules/Content/Works/*`; `CreateWorkCommandHandler.cs`; `UpdateWorkCommandHandler.cs`; `DeleteWorkCommandHandler.cs`; `WorkCommandStore.cs`; `WorkQueryStore.cs` | `AdminEndpointsTests.cs` asserts invalid payload 400, create then get persists excerpt/category; `AdminContentEndpointsTests.cs` asserts missing category 400, malformed metadata falls back to `{}`, duplicate slug, update missing 404, thumbnail/icon asset persistence; `WorkVideoEndpointsTests.cs` asserts delete work removes videos/sessions and queues cleanup | Integration | Partially covered | Update work success, get admin work list, delete missing without videos, published/draft transitions, period/tags/all-properties full round trip | Malformed content JSON, invalid asset ids, duplicate slug on update, stale video version interaction with work update | Anonymous/non-admin/CSRF coverage missing for work mutations/admin reads | `PublishedAt`, `UpdatedAt`, search fields, thumbnail/icon delete semantics only lightly asserted | Integration + Component | P1 |
 | Request validators for admin content | API request validators and Application command validators for pages/blogs/works/site settings/work videos | `RequestValidatorTests.cs` asserts selected Application validators reject empty/too-long fields; endpoint tests assert selected 400 responses | Unit, Integration | Unit-only | Valid command cases for all validators | Missing validators for update blog/work request details, work-video request validators, API request validators directly | Not applicable | Not applicable | Unit | P2 |
 | Admin content excerpt/text helpers | `AdminContentText.cs`; `AdminContentJson.cs`; `ContentSearchText.cs`; command handlers using generated excerpts | `AdminContentTextTests.cs` asserts mermaid-block removal and plain fence preservation; `AdminContentEndpointsTests.cs` asserts several blog excerpt paths | Unit, Integration | Partially covered | Excerpt generation across HTML, markdown, wrapped markdown, empty values as unit tests | XSS/script stripping expectations, images/alt text edge cases, malformed JSON helper behavior | Not applicable | Search-text side effects only indirectly covered in persistence tests | Unit + Component | P2 |
 
@@ -84,7 +84,7 @@ Observed source totals after the P1 auth and admin mutation test updates: 28 bac
 | Feature | Production files involved | Existing test files | Existing test level | Current coverage classification | Missing happy-path tests | Missing failure/edge-case tests | Missing auth/authorization tests | Missing persistence/side-effect tests | Recommended test project | Priority |
 |---|---|---|---|---|---|---|---|---|---|---|
 | Public site settings | `GetSiteSettingsEndpoint.cs`; `GetSiteSettingsQueryHandler.cs`; `SiteSettingsQueryStore.cs`; `SiteSetting` | `PublicEndpointsTests.cs` asserts seeded owner appears; `PublicQueryHandlerComponentTests.cs` asserts handler returns null when settings missing | Integration, Component | Partially covered | Full DTO fields including socials and resume URL | Missing settings returns 404 at endpoint level, malformed linked resume asset | Public endpoint should remain anonymous; no negative auth needed | Resume asset join is component-tested through home/resume only, not full site settings endpoint | Component + Integration | P2 |
-| Admin get/update site settings | `GetAdminSiteSettingsEndpoint.cs`; `UpdateSiteSettingsEndpoint.cs`; `UpdateSiteSettingsCommandHandler.cs`; stores | `AdminEndpointsTests.cs` and `AdminContentEndpointsTests.cs` assert update owner/tagline persistence; `AdminContentEndpointsTests.cs` asserts resume asset explicit null clears, omitted id preserves, empty GUID 400; `AuthSecurityTests.cs` asserts CSRF on update; `AuthFlowIntegrationTests.cs` asserts invalid/valid CSRF for update; `AdminMutationEndpointsTests.cs` asserts partial update preserves omitted fields, invalid overlong owner no-write behavior, response shape, and anonymous/non-admin mutation rejection with valid CSRF | Integration | Partially covered | Admin get settings endpoint, all social fields update in one full DTO case, resume asset set to valid asset id | Missing singleton/settings not found and invalid resume asset id that is non-empty but absent remain untested | Admin site-settings update now has anonymous 401 and non-admin 403 mutation coverage with valid CSRF | Selected field preservation and invalid-request no-write behavior are now asserted; `UpdatedAt` and linked asset integrity remain incomplete | Integration + Component | P1 |
+| Admin get/update site settings | `GetAdminSiteSettingsEndpoint.cs`; `UpdateSiteSettingsEndpoint.cs`; `UpdateSiteSettingsCommandHandler.cs`; stores | `AdminEndpointsTests.cs` and `AdminContentEndpointsTests.cs` assert update owner/tagline persistence; `AdminContentEndpointsTests.cs` asserts resume asset explicit null clears, omitted id preserves, empty GUID 400; `AuthSecurityTests.cs` asserts CSRF on update | Integration | Partially covered | Admin get settings endpoint, all social fields update, resume asset set to valid asset id | Missing singleton/settings not found, invalid resume asset id that is non-empty but absent, overlong URL/name fields | Anonymous/non-admin admin-get and update are not tested; CSRF only site-settings is sampled | `UpdatedAt` and linked asset integrity not asserted | Integration + Component | P1 |
 | Public resume | `GetResumeEndpoint.cs`; `GetResumeQueryHandler.cs`; `SiteSettingsQueryStore.cs`; `Asset` | `PublicEndpointsTests.cs` asserts seeded resume URL; `PublicQueryHandlerComponentTests.cs` asserts null when resume asset missing | Integration, Component | Partially covered | Endpoint 404 when resume missing | Invalid/missing asset, non-PDF asset if constrained | Public endpoint should remain anonymous | Asset join is component-tested but not failure through endpoint | Integration | P2 |
 
 ## 6. Public home/page/blog/work queries
@@ -155,8 +155,8 @@ Observed source totals after the P1 auth and admin mutation test updates: 28 bac
 
 | Gap | Evidence | Recommended project | Priority |
 |---|---|---|---|
-| Admin authorization is not consistently asserted | `AuthFlowIntegrationTests.cs` samples representative admin GET endpoints; `AdminMutationEndpointsTests.cs` now samples anonymous 401 and non-admin 403 with valid CSRF across page update, blog create/update/delete, work create/update/delete, and site-settings update. Media, AI batch, work-video, and upload/delete mutation families still lack endpoint-specific matrices. | Integration | P1 |
-| CSRF is only sampled against site settings | `AuthFlowIntegrationTests.cs` adds invalid-token/no-persist, valid-token, logout missing-token, and valid-token auth-failure samples; `AdminMutationEndpointsTests.cs` uses valid CSRF for admin mutation auth checks. Invalid/missing/stale CSRF behavior for blog/work/page/media/AI/work-video mutations still relies on middleware inference. | Integration | P1 |
+| Admin authorization is not consistently asserted | `AuthFlowIntegrationTests.cs` now samples anonymous 401, non-admin 403, and admin 200 for representative admin GET endpoints across pages/blogs/works/site/dashboard/members/AI runtime config; many admin mutations and media/work-video endpoints still lack endpoint-specific anonymous/non-admin tests | Integration | P1 |
+| CSRF is only sampled against site settings | `AuthFlowIntegrationTests.cs` now adds invalid-token/no-persist, valid-token, logout missing-token, and valid-token auth-failure samples; all other POST/PUT/DELETE endpoint families still rely on middleware by inference | Integration | P1 |
 | Component coverage is thin for admin command handlers/stores | Most admin content behavior is endpoint-only; no component tests for `BlogCommandStore`, `WorkCommandStore`, `PageCommandStore`, AI batch store failure paths, media store | Component | P1 |
 | Contract tests can silently skip | `ProviderContractVerificationTests.cs` returns when env or pact files are missing | Contract | P2 |
 | Postgres behavior is only partly covered | Postgres test checks schema/search indexes, but most query/store behavior runs on EF InMemory/test host | Integration | P1 |
@@ -166,7 +166,7 @@ Observed source totals after the P1 auth and admin mutation test updates: 28 bac
 
 P1 direct additions should focus on risk boundaries:
 
-- Continue the admin auth/authorization and CSRF matrix for media, AI, and work-video mutations beyond the page/blog/work/site mutation samples added on 2026-04-25.
+- Continue the admin auth/authorization and CSRF matrix for blog/page/work/site/media/AI/work-video mutations beyond the representative P1 auth samples added on 2026-04-25.
 - Component tests for admin command handlers/stores and AI batch state transitions.
 - Media/work-video storage failure and cleanup behavior, especially R2/object-storage abstractions.
 - Postgres-backed query behavior for search/pagination if CI can support Testcontainers reliably.
@@ -238,59 +238,6 @@ This update implemented only the requested backend Priority 1 auth/session/login
 
 Backups were prepared before test/report edits under `.agent-backups/priority1-auth-tests-2026-04-25/`.
 
-## Priority 1 Admin Mutation Test Implementation Update - 2026-04-25
-
-This update implemented only the requested backend Priority 1 destructive/state-changing admin command tests. No production code was changed. No public read tests were added, and no WorkVideo-specific endpoint tests were added.
-
-### Tests Added
-
-- `AdminMutationEndpointsTests.cs`
-  - Page update rejects anonymous and non-admin principals when CSRF is valid.
-  - Page update success returns `{ success: true }`, persists target page changes, and leaves an unrelated page unchanged.
-  - Page update invalid body returns `400 Bad Request` and does not persist.
-  - Blog create/update/delete reject anonymous and non-admin principals when CSRF is valid.
-  - Blog create success returns `{ id, slug }` and persists title, excerpt, tags, content JSON, `Published`, and `PublishedAt`.
-  - Blog invalid create returns `400 Bad Request` and does not create a row.
-  - Blog update success returns `{ id, slug }`, changes expected fields, can unpublish via `Published = false`, preserves `CreatedAt`, and leaves an unrelated blog unchanged.
-  - Blog missing update/delete return `404 Not Found` and do not affect existing blogs.
-  - Blog delete success hard-deletes only the target blog.
-  - Work create/update/delete reject anonymous and non-admin principals when CSRF is valid.
-  - Work create success returns `{ id, slug }` and persists title, category, period, tags, content JSON, all-properties JSON, `Published`, and `PublishedAt`.
-  - Work invalid create returns `400 Bad Request` and does not create a row.
-  - Work update success returns `{ id, slug }`, changes expected fields, can unpublish via `Published = false`, preserves `CreatedAt`, and leaves an unrelated work unchanged.
-  - Work missing update/delete return `404 Not Found` and do not affect existing works.
-  - Work delete success hard-deletes only the target work.
-  - Site settings update rejects anonymous and non-admin principals when CSRF is valid.
-  - Site settings partial update returns `{ success: true }`, persists supplied fields, and preserves omitted fields.
-  - Site settings invalid body returns `400 Bad Request` and does not persist.
-
-### Files Changed
-
-- `backend/tests/WoongBlog.Api.IntegrationTests/AdminMutationEndpointsTests.cs` added.
-- `todolist-2026-04-25.md` updated with this admin mutation test TODO, backups, and verification results.
-- `backend/reports/backend-test-coverage-audit-2026-04-24/backend-test-coverage-audit-2026-04-24.md` updated with this implementation report and validation results.
-- `backend/reports/backend-test-coverage-audit-2026-04-24/backend-test-coverage-audit-2026-04-24.html` updated.
-- `backend/reports/backend-test-coverage-audit-2026-04-24/backend-test-coverage-audit-2026-04-24.json` updated.
-
-### Admin Mutation Coverage Improved
-
-- Page update now has endpoint-level auth rejection, success response-shape, DB persistence, invalid-request no-write, and unrelated-record preservation coverage.
-- Blog create/update/delete now have endpoint-level auth rejection, validation failure, missing-entity, hard-delete, publish/unpublish, response-shape, DB persistence, and unrelated-record preservation coverage.
-- Work create/update/delete now have endpoint-level auth rejection, validation failure, missing-entity, hard-delete, publish/unpublish, response-shape, DB persistence, and unrelated-record preservation coverage, without invoking WorkVideo-specific endpoints.
-- Site settings update now has endpoint-level auth rejection, response-shape, partial update, omitted-field preservation, and invalid-request no-write coverage.
-
-### Remaining Admin Mutation Gaps
-
-- Page create/delete endpoints do not exist in the current API surface; only page update was testable.
-- Admin member create/update/delete/update-role endpoints do not exist in the current API surface; only member listing exists and remains outside this destructive-command slice.
-- Invalid/missing/stale CSRF behavior is still not sampled for every page/blog/work mutation; this slice used valid CSRF for auth rejection and focused invalid-CSRF coverage remains in the auth slice.
-- Blog/work duplicate slug on update, invalid JSON semantics, tag boundaries beyond existing validator samples, search-field updates, asset link/update semantics, and detailed `UpdatedAt` behavior remain incomplete.
-- Media upload/delete, AI batch mutations, and WorkVideo mutation endpoints remain outside this step and should be handled in later focused slices.
-
-### Backup
-
-Backups were prepared before test/report edits under `.agent-backups/priority1-admin-mutation-tests-2026-04-25/`.
-
 ## 8-Step Direct Origin Push Plan
 
 This is a direct origin push plan, not a PR plan.
@@ -316,11 +263,7 @@ This is a direct origin push plan, not a PR plan.
 | `dotnet test backend/WoongBlog.sln --filter "Category=Unit"` | Passed, exit code 0 | Unit filter passed: 14 tests. Other projects reported no tests matching the filter. |
 | `dotnet test backend/WoongBlog.sln --filter "Category=Component"` | Passed, exit code 0 | Component filter passed: 37 tests. Other projects reported no tests matching the filter. |
 | `dotnet test backend/WoongBlog.sln --filter "Category=Integration"` | Passed, exit code 0 | Integration category filter passed: 73 tests. The full integration project has 129 test cases because pre-existing integration classes without `Category=Integration` traits are not selected by this filter. |
-| `dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~AdminMutationEndpointsTests` | Passed, exit code 0 | 32 integration test cases passed for the P1 admin mutation slice. |
-| `dotnet test backend/WoongBlog.sln` | Passed, exit code 0 | All five backend test projects passed after the P1 admin mutation update: Contract 1, Unit 14, Component 37, Architecture 30, Integration 161. Restore/build emitted NU1901 warnings for `AWSSDK.Core` 4.0.0.17 low-severity advisory `GHSA-9cvc-h2w8-phrp`. |
-| `dotnet test backend/WoongBlog.sln --filter "Category=Integration"` | Passed, exit code 0 | Integration category filter passed: 105 tests. The full integration project has 161 test cases because pre-existing integration classes without `Category=Integration` traits are not selected by this filter. |
-| `dotnet test backend/WoongBlog.sln --filter "Category=Component"` | Passed, exit code 0 | Component filter passed: 37 tests. Other projects reported no tests matching the filter. |
 
 ## Final Audit Recommendation
 
-The Priority 1 auth/session/login/logout/CSRF and admin mutation slices are materially stronger after these updates and should be kept. Do not treat backend coverage as strict feature-complete yet: remaining risk is concentrated in media upload/delete, AI batch mutations, WorkVideo mutations, endpoint-level cookie-session side effects, storage/R2 behavior, AI batch failure states, and Postgres-backed query semantics. The next backend test work should continue with the planned dedicated WorkVideo and media/AI mutation slices, with side-effect assertions on rejected requests.
+The Priority 1 auth/session/login/logout/CSRF slice is materially stronger after this update and should be kept. Do not treat backend coverage as strict feature-complete yet: remaining risk is concentrated in exhaustive admin mutation authorization/CSRF matrices, endpoint-level cookie-session side effects, storage/R2 behavior, AI batch failure states, and Postgres-backed query semantics. The next backend test work should continue with auth/CSRF coverage for media, AI batch, and work-video mutations, with side-effect assertions on rejected requests.
