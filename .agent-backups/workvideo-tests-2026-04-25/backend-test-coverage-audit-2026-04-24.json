@@ -5,8 +5,7 @@
   "tasks": [
     "Priority 1 auth/session/login/logout/CSRF/admin authorization tests",
     "Priority 1 destructive or state-changing admin command tests",
-    "Public read/query behavior tests",
-    "WorkVideo behavior tests"
+    "Public read/query behavior tests"
   ],
   "productionCodeChanged": false,
   "testsAdded": [
@@ -91,37 +90,6 @@
         "public blogs list excludes drafts, orders by published date, maps cover assets, and returns typed paging data",
         "public work and blog lists return stable empty paged responses when content tables are empty"
       ]
-    },
-    {
-      "file": "backend/tests/WoongBlog.Api.IntegrationTests/WorkVideoEndpointsTests.cs",
-      "category": "Integration",
-      "behaviors": [
-        "WorkVideo endpoint tests are selected by the Integration category filter",
-        "upload-url rejects anonymous and non-admin callers when CSRF is valid",
-        "upload-url to a missing work returns not found",
-        "invalid upload metadata returns bad request",
-        "multipart upload without a file part returns bad request",
-        "successful local upload and confirm persist metadata, mark the upload session confirmed, store a local file, increment videos_version, and project through public work detail",
-        "individual video delete removes the database row, increments videos_version, schedules cleanup, and removes the public projection",
-        "missing video delete returns not found",
-        "successful reorder persists deterministic database sort order",
-        "invalid reorder IDs return bad request and leave persisted order unchanged",
-        "public work detail returns published video data and hides draft work videos"
-      ]
-    },
-    {
-      "file": "backend/tests/WoongBlog.Api.ComponentTests/WorkVideoComponentTests.cs",
-      "category": "Component",
-      "behaviors": [
-        "local video storage saves, reads metadata and prefixes, returns upload target shape, and deletes a temp-root file",
-        "local HLS manifest delete removes the HLS directory",
-        "cleanup service deletes a local file and marks the job succeeded",
-        "cleanup service marks a job failed when no storage backend exists",
-        "cleanup service increments attempts and marks a job failed on the fifth delete failure",
-        "expired unconfirmed upload sessions are marked expired and enqueue cleanup while confirmed and active sessions are ignored",
-        "reorder handler rewrites sort order deterministically through EF-backed stores",
-        "delete handler removes the video, compacts remaining order, and normalizes HLS cleanup to the local manifest key"
-      ]
     }
   ],
   "filesChanged": [
@@ -133,8 +101,6 @@
     "backend/tests/WoongBlog.Api.ComponentTests/AuthRecorderComponentTests.cs",
     "backend/tests/WoongBlog.Api.ComponentTests/PublicQueryHandlerComponentTests.cs",
     "backend/tests/WoongBlog.Api.IntegrationTests/PublicEndpointsTests.cs",
-    "backend/tests/WoongBlog.Api.IntegrationTests/WorkVideoEndpointsTests.cs",
-    "backend/tests/WoongBlog.Api.ComponentTests/WorkVideoComponentTests.cs",
     "todolist-2026-04-25.md",
     "backend/reports/backend-test-coverage-audit-2026-04-24/backend-test-coverage-audit-2026-04-24.md",
     "backend/reports/backend-test-coverage-audit-2026-04-24/backend-test-coverage-audit-2026-04-24.html",
@@ -190,36 +156,6 @@
       "summary": "Integration 116"
     },
     {
-      "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~WorkVideoEndpointsTests",
-      "exitCode": 0,
-      "result": "passed",
-      "summary": "17 integration tests passed"
-    },
-    {
-      "command": "dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj --filter FullyQualifiedName~WorkVideoComponentTests",
-      "exitCode": 0,
-      "result": "passed",
-      "summary": "8 component tests passed"
-    },
-    {
-      "command": "dotnet test backend/WoongBlog.sln",
-      "exitCode": 0,
-      "result": "passed",
-      "summary": "Contract 1, Unit 14, Component 60, Architecture 30, Integration 182"
-    },
-    {
-      "command": "dotnet test backend/WoongBlog.sln --filter \"Category=Component\"",
-      "exitCode": 0,
-      "result": "passed",
-      "summary": "Component 60"
-    },
-    {
-      "command": "dotnet test backend/WoongBlog.sln --filter \"Category=Integration\"",
-      "exitCode": 0,
-      "result": "passed",
-      "summary": "Integration 133"
-    },
-    {
       "command": "git diff --check",
       "exitCode": 0,
       "result": "passed",
@@ -242,13 +178,6 @@
     "Public blog/work lists cover draft exclusion, published-date ordering, asset mapping, stable empty responses, pagination boundaries, and anonymous endpoint access",
     "Public blog/work details cover draft/missing slug exclusion and related asset/media DTO fields"
   ],
-  "workVideoCoverageImproved": [
-    "WorkVideo upload covers endpoint auth rejection, missing work, invalid metadata, missing multipart file, response shape, DB persistence, confirmed session status, local file side effect, and public projection",
-    "WorkVideo metadata persistence verifies source type, source key, original file name, MIME type, file size, sort order, and videos_version",
-    "WorkVideo reorder and delete cover deterministic persisted order, invalid IDs, missing video, individual delete row removal, cleanup scheduling, and public projection after delete",
-    "Component tests cover local storage save/read/delete, HLS directory deletion, cleanup service success/failure/max attempts, expired-session cleanup, reorder handler/store behavior, and delete cleanup normalization",
-    "Public query coverage confirms published work videos are returned and draft work videos are hidden with the draft work"
-  ],
   "remainingGaps": [
     "Page create/delete endpoints do not exist in the current API surface",
     "Admin member create/update/delete/update-role endpoints do not exist in the current API surface",
@@ -257,13 +186,8 @@
     "Endpoint-level missing singleton/site settings, missing home page, and missing public resume asset behavior remain public read gaps",
     "Invalid pageSize=0 normalization and unknown searchMode fallback remain explicit endpoint public read gaps",
     "Public query semantics still run against EF InMemory/test-host storage; direct PostgreSQL ordering/search behavior remains unverified",
-    "Media upload/delete and AI batch mutations remain outside this step",
-    "WorkVideo R2/object-storage behavior remains untested without a fake S3/R2 client or adapter seam",
-    "WorkVideo confirm-upload failures still need coverage for invalid session, expired session, missing object, wrong size or MIME, invalid MP4 bytes, stale version, and repeated confirm or upload attempts",
-    "WorkVideo HLS job failures still need coverage for ffmpeg or ffprobe failure, timeout, malformed manifest, unsupported MIME, empty file, stale version, workspace cleanup, and output publish rollback",
-    "WorkVideo invalid or missing CSRF and auth matrices for upload, confirm, HLS job, YouTube add, reorder, and delete remain representative rather than exhaustive",
-    "Hosted VideoStorageCleanupWorker lifecycle and cleanup cancellation behavior remain untested",
+    "Media upload/delete, AI batch mutations, and WorkVideo mutation endpoints remain outside this step",
     "OIDC callback success/failure and endpoint-level logout revocation/audit side effects remain auth-session gaps"
   ],
-  "recommendation": "Keep the P1 auth, admin mutation, public read/query, and WorkVideo test updates. Continue next with dedicated media and AI mutation slices, plus deeper WorkVideo R2/HLS failure coverage when a fake object-storage seam is available."
+  "recommendation": "Keep the P1 auth, admin mutation, and public read/query test updates. Continue next with dedicated media, AI batch, and WorkVideo mutation slices, including side-effect assertions for rejected requests."
 }

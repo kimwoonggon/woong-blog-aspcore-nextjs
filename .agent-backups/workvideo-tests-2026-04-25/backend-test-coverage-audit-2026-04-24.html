@@ -14,7 +14,7 @@
 </head>
 <body>
   <h1>Backend Test Coverage Updates - 2026-04-25</h1>
-  <p>Scope: backend only. This report now includes the Priority 1 auth/session/CSRF update, the Priority 1 destructive admin mutation update, the public read/query update, and the WorkVideo behavior update. No production code was changed.</p>
+  <p>Scope: backend only. This report now includes the Priority 1 auth/session/CSRF update, the Priority 1 destructive admin mutation update, and the public read/query update. No production code was changed.</p>
 
   <h2>Tests Added</h2>
   <ul>
@@ -23,8 +23,6 @@
     <li><code>AdminMutationEndpointsTests.cs</code>: page update, blog create/update/delete, work create/update/delete, site-settings update, valid-CSRF auth rejection, validation failures, response shapes, persistence, publish/unpublish behavior, missing-entity behavior, and unrelated-record preservation.</li>
     <li><code>PublicQueryHandlerComponentTests.cs</code>: public home/site/page/blog/work query behavior, draft exclusion, ordering, pagination boundaries, missing slugs, stable empty pages, and asset/media DTO fields.</li>
     <li><code>PublicEndpointsTests.cs</code>: public endpoint status, routes, typed serialization shape, anonymous access, not-found behavior, draft exclusion, ordering, asset/media DTO fields, and stable empty list responses.</li>
-    <li><code>WorkVideoEndpointsTests.cs</code>: WorkVideo upload auth, missing work, invalid/missing file handling, successful local upload metadata and file persistence, public projection, individual delete, cleanup scheduling, invalid reorder IDs, persisted order, missing video, and draft work video hiding.</li>
-    <li><code>WorkVideoComponentTests.cs</code>: local video storage side effects, HLS directory deletion, cleanup service success/failure/max-attempt behavior, expired-session cleanup, reorder handler/store ordering, and delete cleanup normalization.</li>
   </ul>
 
   <h2>Files Changed</h2>
@@ -37,8 +35,6 @@
     <li><code>backend/tests/WoongBlog.Api.ComponentTests/AuthRecorderComponentTests.cs</code></li>
     <li><code>backend/tests/WoongBlog.Api.ComponentTests/PublicQueryHandlerComponentTests.cs</code></li>
     <li><code>backend/tests/WoongBlog.Api.IntegrationTests/PublicEndpointsTests.cs</code></li>
-    <li><code>backend/tests/WoongBlog.Api.IntegrationTests/WorkVideoEndpointsTests.cs</code></li>
-    <li><code>backend/tests/WoongBlog.Api.ComponentTests/WorkVideoComponentTests.cs</code></li>
     <li><code>todolist-2026-04-25.md</code></li>
     <li><code>backend/reports/backend-test-coverage-audit-2026-04-24/backend-test-coverage-audit-2026-04-24.md</code></li>
     <li><code>backend/reports/backend-test-coverage-audit-2026-04-24/backend-test-coverage-audit-2026-04-24.html</code></li>
@@ -62,14 +58,6 @@
     <li>Public blog/work details now cover draft/missing slug exclusion and related asset/media DTO fields.</li>
   </ul>
 
-  <h2>WorkVideo Coverage Improved</h2>
-  <ul>
-    <li>Upload now covers endpoint auth rejection, missing work, invalid metadata, missing multipart file, response shape, DB persistence, confirmed session status, local file side effect, and public projection.</li>
-    <li>Metadata persistence verifies source type/key, original file name, MIME type, file size, sort order, and <code>videos_version</code>.</li>
-    <li>Reorder/delete coverage now includes deterministic persisted order, invalid IDs, missing video, individual delete DB removal, cleanup scheduling, and public projection after delete.</li>
-    <li>Component tests now cover local storage save/read/delete, HLS directory delete semantics, cleanup service success/failure/max attempts, expired-session cleanup, reorder handler/store behavior, and delete cleanup normalization.</li>
-  </ul>
-
   <h2>Validation</h2>
   <table>
     <thead>
@@ -79,18 +67,16 @@
       <tr><td><code>dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~AdminMutationEndpointsTests</code></td><td>Passed: 32 integration cases.</td></tr>
       <tr><td><code>dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj --filter FullyQualifiedName~PublicQueryHandlerComponentTests</code></td><td>Passed: 32 component tests.</td></tr>
       <tr><td><code>dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~PublicEndpointsTests</code></td><td>Passed: 27 integration tests.</td></tr>
-      <tr><td><code>dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~WorkVideoEndpointsTests</code></td><td>Passed: 17 integration tests.</td></tr>
-      <tr><td><code>dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj --filter FullyQualifiedName~WorkVideoComponentTests</code></td><td>Passed: 8 component tests.</td></tr>
-      <tr><td><code>dotnet test backend/WoongBlog.sln</code></td><td>Passed: Contract 1, Unit 14, Component 60, Architecture 30, Integration 182.</td></tr>
-      <tr><td><code>dotnet test backend/WoongBlog.sln --filter "Category=Component"</code></td><td>Passed: Component 60.</td></tr>
-      <tr><td><code>dotnet test backend/WoongBlog.sln --filter "Category=Integration"</code></td><td>Passed: Integration 133.</td></tr>
+      <tr><td><code>dotnet test backend/WoongBlog.sln</code></td><td>Passed: Contract 1, Unit 14, Component 52, Architecture 30, Integration 172.</td></tr>
+      <tr><td><code>dotnet test backend/WoongBlog.sln --filter "Category=Component"</code></td><td>Passed: Component 52.</td></tr>
+      <tr><td><code>dotnet test backend/WoongBlog.sln --filter "Category=Integration"</code></td><td>Passed: Integration 116.</td></tr>
     </tbody>
   </table>
 
   <h2>Remaining Gaps</h2>
-  <p>Remaining risk includes nonexistent page/member mutation endpoints being out of scope, invalid/missing/stale CSRF sampling for every mutation family, blog/work duplicate slug update behavior, invalid JSON semantics, asset update semantics, endpoint-level missing-site/home/resume public read paths, PostgreSQL-backed public query semantics, media upload/delete, AI batch mutations, WorkVideo R2/object-storage behavior, confirm-upload failure paths, HLS failure/rollback behavior, and cleanup worker lifecycle/cancellation behavior.</p>
+  <p>Remaining risk includes nonexistent page/member mutation endpoints being out of scope, invalid/missing/stale CSRF sampling for every mutation family, blog/work duplicate slug update behavior, invalid JSON semantics, asset update semantics, endpoint-level missing-site/home/resume public read paths, PostgreSQL-backed public query semantics, media upload/delete, AI batch mutations, and WorkVideo mutation endpoints.</p>
 
   <h2>Recommendation</h2>
-  <p>Keep the P1 auth, admin mutation, public read/query, and WorkVideo test updates. Continue next with dedicated media and AI mutation slices, plus deeper WorkVideo R2/HLS failure coverage when a fake object-storage seam is available.</p>
+  <p>Keep the P1 auth, admin mutation, and public read/query test updates. Continue next with dedicated media, AI batch, and WorkVideo mutation slices, including side-effect assertions for rejected requests.</p>
 </body>
 </html>
