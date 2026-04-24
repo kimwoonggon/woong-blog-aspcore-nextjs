@@ -1,6 +1,6 @@
 using WoongBlog.Api.Domain.Entities;
 
-namespace WoongBlog.Api.Modules.Content.Works.Application.WorkVideos;
+namespace WoongBlog.Infrastructure.Modules.Content.Works.WorkVideos;
 
 public sealed class WorkVideoService(
     IWorkVideoCleanupStore cleanupStore,

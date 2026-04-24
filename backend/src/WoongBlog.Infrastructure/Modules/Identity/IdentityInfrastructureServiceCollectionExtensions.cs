@@ -1,9 +1,9 @@
-using WoongBlog.Api.Infrastructure.Auth;
-using WoongBlog.Api.Modules.Identity.Application.Abstractions;
-using WoongBlog.Api.Modules.Identity.Infrastructure;
-using WoongBlog.Api.Modules.Identity.Persistence;
+using WoongBlog.Infrastructure.Auth;
+using WoongBlog.Application.Modules.Identity.Abstractions;
+using WoongBlog.Infrastructure.Modules.Identity.Services;
+using WoongBlog.Infrastructure.Modules.Identity.Persistence;
 
-namespace WoongBlog.Api.Modules.Identity;
+namespace WoongBlog.Infrastructure.Modules.Identity;
 
 public static class IdentityInfrastructureServiceCollectionExtensions
 {

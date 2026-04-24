@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 test('library search filters visible notion documents', async ({ page }) => {
   await page.goto('/admin/blog/notion')

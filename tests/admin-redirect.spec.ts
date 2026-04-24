@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 test('unauthenticated admin access redirects to login', async ({ page }) => {
   await page.goto('/admin/dashboard')

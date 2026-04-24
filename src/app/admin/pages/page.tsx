@@ -25,7 +25,7 @@ export default async function AdminPagesPage() {
     try {
         siteSettings = await fetchAdminSiteSettings()
         pages = await fetchAdminPages(['home', 'introduction', 'contact'])
-        resume = await fetchResume()
+        resume = await fetchResume({ cache: 'no-store' })
     } catch {
         loadFailed = true
     }

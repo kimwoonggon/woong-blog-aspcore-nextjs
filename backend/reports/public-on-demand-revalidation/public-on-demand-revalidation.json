@@ -1,0 +1,77 @@
+{
+  "task": "public-on-demand-revalidation",
+  "date": "2026-04-22",
+  "summary": "Protected Next.js public cache invalidation was added after successful admin mutations.",
+  "changed": [
+    "Added /revalidate-public route with same-host and admin checks",
+    "Added public revalidation path and tag helpers",
+    "Added client helper for mutation-side revalidation calls",
+    "Tagged public fetches for immediate data cache invalidation",
+    "Wired blog, work, page, home, resume, and site settings mutations",
+    "Updated focused unit tests and Playwright waits for revalidation completion"
+  ],
+  "notChanged": [
+    "backend APIs",
+    "auth and role semantics",
+    "anonymous public read access",
+    "editor UI redesign",
+    "mobile/feed/search/autosave work",
+    "global Playwright 4-worker isolation"
+  ],
+  "invalidatedPaths": {
+    "blogCreateUpdateDelete": ["/", "/blog", "/blog/<nextSlug>", "/blog/<previousSlug>"],
+    "workCreateUpdateDelete": ["/", "/works", "/works/<nextSlug>", "/works/<previousSlug>"],
+    "contactSave": ["/contact"],
+    "introductionSave": ["/introduction"],
+    "homeSave": ["/"],
+    "resumeUploadDelete": ["/resume"],
+    "siteSettingsSave": ["/", "/blog", "/works", "/contact", "/introduction", "/resume"]
+  },
+  "validations": [
+    {
+      "command": "npx vitest run src/test/public-revalidation-paths.test.ts src/test/public-revalidation-route.test.ts src/test/blog-editor.test.tsx src/test/work-editor.test.tsx src/test/page-editor.test.tsx src/test/resume-editor.test.tsx src/test/inline-blog-editor-section.test.tsx src/test/inline-work-editor-section.test.tsx src/test/public-api-clients.test.ts src/test/public-api-contracts.test.ts --pool=threads",
+      "result": "passed",
+      "details": "10 files passed, 72 tests passed"
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "passed"
+    },
+    {
+      "command": "npm run lint",
+      "result": "blocked",
+      "details": "Local Docker-owned .tmp/postgres directory caused EACCES during root ESLint scan"
+    },
+    {
+      "command": "npx eslint src tests playwright.config.ts next.config.ts eslint.config.mjs",
+      "result": "passed",
+      "details": "0 errors, 3 existing warnings"
+    },
+    {
+      "command": "Docker/nginx frontend rebuild",
+      "result": "passed",
+      "details": "Next production build succeeded"
+    },
+    {
+      "command": "focused Playwright revalidation group",
+      "result": "passed",
+      "details": "16 passed"
+    },
+    {
+      "command": "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 PLAYWRIGHT_EXPECT_LOCAL_ADMIN_SHORTCUT=visible npx playwright test --workers=1",
+      "result": "passed",
+      "details": "563 passed, 8 skipped"
+    },
+    {
+      "command": "npm test -- --run",
+      "result": "passed",
+      "details": "51 files passed, 259 tests passed"
+    }
+  ],
+  "risks": [
+    "Root npm run lint remains blocked when local Docker .tmp/postgres is present and inaccessible",
+    "The route depends on the current public admin affordance/session helper",
+    "Tag invalidation uses revalidateTag(tag, 'max') and should be re-reviewed if Next cache semantics are changed"
+  ],
+  "recommendation": "Proceed with the focused change and follow up by excluding local Docker .tmp state from root ESLint scanning."
+}

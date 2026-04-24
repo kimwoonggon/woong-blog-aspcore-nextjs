@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 test('hero profile image uses descriptive alt text', async ({ page }) => {
   await page.goto('/')

@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 test('works archive header no longer exposes secondary template CTAs', async ({ page }) => {
   await page.goto('/works')
@@ -11,6 +11,7 @@ test('works archive header no longer exposes secondary template CTAs', async ({ 
 test('works archive keeps search as the primary header action', async ({ page }) => {
   await page.goto('/works')
 
-  await expect(page.getByLabel('Search work')).toBeVisible()
-  await expect(page.getByLabel('Work search mode')).toBeVisible()
+  await expect(page.getByRole('textbox', { name: 'Search work' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Search works' })).toBeVisible()
+  await expect(page.getByLabel('Work search mode')).toHaveCount(0)
 })

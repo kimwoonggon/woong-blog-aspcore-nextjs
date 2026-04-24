@@ -20,15 +20,35 @@ interface AIFixDialogProps {
     extraBodyParams?: Record<string, unknown>
 }
 
-type ProviderOption = 'openai' | 'azure' | 'codex'
-const savedSystemPromptKey = 'admin-ai-system-prompt'
+type ProviderOption = 'openai' | 'codex'
+const blogFixSystemPromptKey = 'admin-ai-blog-fix-system-prompt'
+const workEnrichSystemPromptKey = 'admin-ai-work-enrich-system-prompt'
 
 function normalizeProvider(value?: string | null): ProviderOption {
-    if (value === 'azure' || value === 'codex') {
-        return value
+    if (value === 'codex') {
+        return 'codex'
     }
 
     return 'openai'
+}
+
+function normalizeProviderOptions(providers: string[]) {
+    return Array.from(new Set(providers.map((provider) => normalizeProvider(provider))))
+}
+
+function resolvePromptStorageKey(apiEndpoint: string) {
+    return apiEndpoint.includes('/work-enrich')
+        ? workEnrichSystemPromptKey
+        : blogFixSystemPromptKey
+}
+
+function resolveDefaultPrompt(config: AdminAiRuntimeConfig, apiEndpoint: string, enrichTitle?: string) {
+    if (apiEndpoint.includes('/work-enrich')) {
+        const title = enrichTitle && enrichTitle.trim() ? enrichTitle.trim() : 'Untitled Project'
+        return (config.defaultWorkEnrichPrompt || config.defaultSystemPrompt || '').replaceAll('{title}', title)
+    }
+
+    return config.defaultBlogFixPrompt || config.defaultSystemPrompt || ''
 }
 
 export function AIFixDialog({
@@ -47,6 +67,8 @@ export function AIFixDialog({
     const [codexReasoningEffort, setCodexReasoningEffort] = useState('medium')
     const [customPrompt, setCustomPrompt] = useState('')
     const [savedPrompt, setSavedPrompt] = useState('')
+    const promptStorageKey = resolvePromptStorageKey(apiEndpoint)
+    const enrichTitle = typeof extraBodyParams.title === 'string' ? extraBodyParams.title : ''
 
     useEffect(() => {
         if (!open) {
@@ -57,7 +79,7 @@ export function AIFixDialog({
         const savedProvider = typeof window !== 'undefined' ? window.localStorage.getItem('admin-ai-provider') : null
         const savedModel = typeof window !== 'undefined' ? window.localStorage.getItem('admin-ai-codex-model') : null
         const savedReasoning = typeof window !== 'undefined' ? window.localStorage.getItem('admin-ai-codex-reasoning') : null
-        const savedPrompt = typeof window !== 'undefined' ? window.localStorage.getItem(savedSystemPromptKey) : null
+        const savedPrompt = typeof window !== 'undefined' ? window.localStorage.getItem(promptStorageKey) : null
 
         void fetchAdminAiRuntimeConfigBrowser()
             .then((config) => {
@@ -67,8 +89,7 @@ export function AIFixDialog({
 
                 setRuntimeConfig(config)
 
-                const availableProviders = (config.availableProviders?.length ? config.availableProviders : [config.provider])
-                    .map((provider) => normalizeProvider(provider))
+                const availableProviders = normalizeProviderOptions(config.availableProviders?.length ? config.availableProviders : [config.provider])
                 const preferredProvider = normalizeProvider(savedProvider || config.provider)
                 const resolvedProvider = availableProviders.includes(preferredProvider)
                     ? preferredProvider
@@ -77,7 +98,7 @@ export function AIFixDialog({
                 setSelectedProvider(resolvedProvider)
                 setCodexModel(savedModel || config.codexModel || 'gpt-5.4')
                 setCodexReasoningEffort(savedReasoning || config.codexReasoningEffort || 'medium')
-                const prompt = savedPrompt || config.defaultSystemPrompt || ''
+                const prompt = savedPrompt || resolveDefaultPrompt(config, apiEndpoint, enrichTitle)
                 setCustomPrompt(prompt)
                 setSavedPrompt(prompt)
             })
@@ -90,7 +111,7 @@ export function AIFixDialog({
         return () => {
             cancelled = true
         }
-    }, [open])
+    }, [apiEndpoint, enrichTitle, open, promptStorageKey])
 
     async function handleFix() {
         if (customPrompt !== savedPrompt) {
@@ -160,22 +181,22 @@ export function AIFixDialog({
 
     function persistSystemPrompt(value: string) {
         if (typeof window !== 'undefined') {
-            window.localStorage.setItem(savedSystemPromptKey, value)
+            window.localStorage.setItem(promptStorageKey, value)
         }
     }
 
     function resetSystemPrompt() {
         if (typeof window !== 'undefined') {
-            window.localStorage.removeItem(savedSystemPromptKey)
+            window.localStorage.removeItem(promptStorageKey)
         }
 
-        setCustomPrompt(runtimeConfig?.defaultSystemPrompt || '')
-        setSavedPrompt(runtimeConfig?.defaultSystemPrompt || '')
+        const defaultPrompt = runtimeConfig ? resolveDefaultPrompt(runtimeConfig, apiEndpoint, enrichTitle) : ''
+        setCustomPrompt(defaultPrompt)
+        setSavedPrompt(defaultPrompt)
         toast.success('System prompt reset')
     }
 
-    const availableProviders = (runtimeConfig?.availableProviders?.length ? runtimeConfig.availableProviders : runtimeConfig ? [runtimeConfig.provider] : ['openai'])
-        .map((provider) => normalizeProvider(provider))
+    const availableProviders = normalizeProviderOptions(runtimeConfig?.availableProviders?.length ? runtimeConfig.availableProviders : runtimeConfig ? [runtimeConfig.provider] : ['openai'])
     const hasUnsavedPrompt = customPrompt !== savedPrompt
 
     return (

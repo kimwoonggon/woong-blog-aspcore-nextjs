@@ -251,7 +251,8 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
     startTransition(async () => {
       try {
         if (pendingDelete.ids.length === 1) {
-          await deleteAdminBlog(pendingDelete.ids[0])
+          const blog = blogs.find((item) => item.id === pendingDelete.ids[0])
+          await deleteAdminBlog(pendingDelete.ids[0], blog?.slug)
         } else {
           await deleteManyAdminBlogs(pendingDelete.ids)
         }

@@ -1,4 +1,4 @@
-import { expect, test, type APIRequestContext } from '@playwright/test'
+import { expect, test, type APIRequestContext } from './helpers/performance-test'
 
 import { expectMermaidRendered } from './helpers/mermaid'
 
@@ -86,8 +86,8 @@ test('public blog and work pages stay stable when mermaid content exists', async
 
   await page.goto(`/blog?query=${encodeURIComponent(tag)}&searchMode=content`)
   const blogGrid = page.getByTestId('blog-grid')
-  await expect(blogGrid.getByText(mermaidBlogTitle)).toBeVisible()
-  await expect(blogGrid.getByText(plainBlogTitle)).toBeVisible()
+  await expect(page.getByTestId('blog-card').filter({ hasText: mermaidBlogTitle }).first()).toBeVisible()
+  await expect(page.getByTestId('blog-card').filter({ hasText: plainBlogTitle }).first()).toBeVisible()
   await expect(blogGrid).not.toContainText('sequenceDiagram')
   await expect(blogGrid).not.toContainText('User->>Frontend')
   await expect(blogGrid).not.toContainText('data-code')
@@ -102,8 +102,9 @@ test('public blog and work pages stay stable when mermaid content exists', async
   await page.goto(`/blog/${mermaidBlog.slug}`)
   await expect(page.locator('main h1', { hasText: mermaidBlogTitle })).toBeVisible()
   await expectMermaidRendered(page)
-  await expect(page.getByText('Blog before diagram')).toBeVisible()
-  await expect(page.getByText('Blog after diagram')).toBeVisible()
+  const blogBody = page.getByTestId('blog-detail-body')
+  await expect(blogBody.getByText(`${tag} Blog before diagram`)).toBeVisible()
+  await expect(blogBody.getByText('Blog after diagram')).toBeVisible()
   await page.goto(`/blog/${plainBlog.slug}`)
   await expect(page.locator('main h1', { hasText: plainBlogTitle })).toBeVisible()
   await expect(page.getByText('Plain blog body')).toBeVisible()
@@ -111,8 +112,9 @@ test('public blog and work pages stay stable when mermaid content exists', async
   await page.goto(`/works/${mermaidWork.slug}`)
   await expect(page.locator('main h1', { hasText: mermaidWorkTitle })).toBeVisible()
   await expectMermaidRendered(page)
-  await expect(page.getByText('Work before diagram')).toBeVisible()
-  await expect(page.getByText('Work after diagram')).toBeVisible()
+  const workBody = page.getByTestId('work-detail-body')
+  await expect(workBody.getByText(`${tag} Work before diagram`)).toBeVisible()
+  await expect(workBody.getByText('Work after diagram')).toBeVisible()
   const relatedNext = page.getByRole('button', { name: 'Go to next related page' })
   if (await relatedNext.isEnabled()) {
     await relatedNext.click()
@@ -126,5 +128,5 @@ test('public blog and work pages stay stable when mermaid content exists', async
 
   await page.goto(`/works/${plainWork.slug}`)
   await expect(page.locator('main h1', { hasText: plainWorkTitle })).toBeVisible()
-  await expect(page.getByText('Plain work body')).toBeVisible()
+  await expect(page.getByTestId('work-detail-body').getByText(`${tag} Plain work body`)).toBeVisible()
 })

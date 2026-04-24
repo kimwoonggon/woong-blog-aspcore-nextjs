@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 test.use({ storageState: 'test-results/playwright/admin-storage-state.json' })
 
@@ -102,14 +102,14 @@ test('0416 Study search supports title and content modes through the URL', async
   }, { postTitle: title, token: contentToken })
 
   await page.goto(`/blog?query=${encodeURIComponent(title)}&searchMode=title&page=1&pageSize=12`)
-  await expect(page.getByLabel('Search studies')).toHaveValue(title)
-  await expect(page.getByLabel('Study search mode')).toHaveValue('title')
+  await expect(page.getByRole('textbox', { name: 'Search studies' })).toHaveValue(title)
+  await expect.poll(() => new URL(page.url()).searchParams.get('searchMode')).toBe('title')
   await expect(page.getByTestId('blog-card')).toHaveCount(1)
   await expect(page.getByTestId('blog-card').first()).toContainText(title)
 
   await page.goto(`/blog?query=${encodeURIComponent(contentToken)}&searchMode=content&page=1&pageSize=12`)
-  await expect(page.getByLabel('Search studies')).toHaveValue(contentToken)
-  await expect(page.getByLabel('Study search mode')).toHaveValue('content')
+  await expect(page.getByRole('textbox', { name: 'Search studies' })).toHaveValue(contentToken)
+  await expect.poll(() => new URL(page.url()).searchParams.get('searchMode')).toBe('content')
   await expect(page.getByTestId('blog-card')).toHaveCount(1)
   await expect(page.getByTestId('blog-card').first()).toContainText(title)
 })
@@ -140,8 +140,12 @@ test('0416 admin home edits read back in admin and public home', async ({ page }
   await expect(page.locator('#introText')).toHaveValue(intro)
 
   await page.goto('/')
-  await expect(page.getByRole('heading', { name: headline })).toBeVisible()
-  await expect(page.getByText(intro)).toBeVisible()
+  await expect.poll(async () => {
+    await page.reload({ waitUntil: 'domcontentloaded' })
+    const visibleHeadline = await page.getByRole('heading').first().textContent()
+    const mainText = await page.locator('main').textContent()
+    return (visibleHeadline?.includes(headline) ?? false) && (mainText?.includes(intro) ?? false)
+  }, { timeout: 30_000 }).toBe(true)
 })
 
 test('0416 batch AI jobs refresh only on explicit user action', async ({ page }) => {

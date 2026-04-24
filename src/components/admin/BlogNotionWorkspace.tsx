@@ -1,7 +1,7 @@
 "use client"
 
 import Link from 'next/link'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FileText, X } from 'lucide-react'
 import { AIFixDialog } from '@/components/admin/AIFixDialog'
 import { Button } from '@/components/ui/button'
@@ -14,6 +14,8 @@ import { TiptapEditor } from '@/components/admin/TiptapEditor'
 import { fetchWithCsrf } from '@/lib/api/auth'
 import { getBrowserApiBaseUrl } from '@/lib/api/browser'
 import { normalizeBlogHtmlForSave } from '@/lib/content/blog-content'
+import { revalidatePublicPathsAfterMutation } from '@/lib/public-revalidation-client'
+import { getBlogPublicRevalidationPaths } from '@/lib/public-revalidation-paths'
 import { toast } from 'sonner'
 
 interface BlogWorkspaceListItem {
@@ -55,6 +57,8 @@ function formatTimestamp(value?: string | null) {
 }
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error'
+const AUTOSAVE_DEBOUNCE_MS = 1_000
+const AUTOSAVE_REVALIDATION_THROTTLE_MS = 25_000
 
 export function BlogNotionWorkspace({ blogs, activeBlog }: BlogNotionWorkspaceProps) {
     const [isLibraryOpen, setIsLibraryOpen] = useState(false)
@@ -64,9 +68,11 @@ export function BlogNotionWorkspace({ blogs, activeBlog }: BlogNotionWorkspacePr
     const [title, setTitle] = useState(activeBlog.title)
     const [tagsInput, setTagsInput] = useState(activeBlog.tags?.join(', ') ?? '')
     const [published, setPublished] = useState(activeBlog.published)
-    const [html, setHtml] = useState(activeBlog.content.html ?? '')
+    const [editorContent, setEditorContent] = useState(activeBlog.content.html ?? '')
     const [saveState, setSaveState] = useState<SaveState>('idle')
     const [isSavingMeta, setIsSavingMeta] = useState(false)
+    const currentHtmlRef = useRef(activeBlog.content.html ?? '')
+    const autosaveTimerRef = useRef<number | null>(null)
     const lastSavedRef = useRef({
         title: activeBlog.title,
         tags: activeBlog.tags ?? [],
@@ -77,6 +83,49 @@ export function BlogNotionWorkspace({ blogs, activeBlog }: BlogNotionWorkspacePr
     const libraryScrollRef = useRef(0)
     const libraryScrollContainerRef = useRef<HTMLDivElement | null>(null)
     const activeLibraryItemRef = useRef<HTMLDivElement | null>(null)
+    const lastAutosaveRevalidationAtRef = useRef(0)
+    const pendingAutosaveRevalidationTimerRef = useRef<number | null>(null)
+
+    const clearPendingAutosaveRevalidation = useCallback(() => {
+        if (pendingAutosaveRevalidationTimerRef.current !== null) {
+            window.clearTimeout(pendingAutosaveRevalidationTimerRef.current)
+            pendingAutosaveRevalidationTimerRef.current = null
+        }
+    }, [])
+
+    const clearAutosaveTimer = useCallback(() => {
+        if (autosaveTimerRef.current !== null) {
+            window.clearTimeout(autosaveTimerRef.current)
+            autosaveTimerRef.current = null
+        }
+    }, [])
+
+    const runImmediateRevalidation = useCallback(async (slug: string) => {
+        await revalidatePublicPathsAfterMutation(getBlogPublicRevalidationPaths(slug))
+        lastAutosaveRevalidationAtRef.current = Date.now()
+    }, [])
+
+    const scheduleAutosaveRevalidation = useCallback((slug: string) => {
+        const now = Date.now()
+        const elapsed = now - lastAutosaveRevalidationAtRef.current
+        const remaining = AUTOSAVE_REVALIDATION_THROTTLE_MS - elapsed
+
+        if (remaining <= 0 && pendingAutosaveRevalidationTimerRef.current === null) {
+            lastAutosaveRevalidationAtRef.current = now
+            void revalidatePublicPathsAfterMutation(getBlogPublicRevalidationPaths(slug)).catch(() => {})
+            return
+        }
+
+        if (pendingAutosaveRevalidationTimerRef.current !== null) {
+            return
+        }
+
+        pendingAutosaveRevalidationTimerRef.current = window.setTimeout(() => {
+            pendingAutosaveRevalidationTimerRef.current = null
+            lastAutosaveRevalidationAtRef.current = Date.now()
+            void revalidatePublicPathsAfterMutation(getBlogPublicRevalidationPaths(slug)).catch(() => {})
+        }, Math.max(remaining, 0))
+    }, [])
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -86,11 +135,15 @@ export function BlogNotionWorkspace({ blogs, activeBlog }: BlogNotionWorkspacePr
 
     useEffect(() => {
         setIsLibraryOpen(false)
+        clearPendingAutosaveRevalidation()
+        lastAutosaveRevalidationAtRef.current = 0
         setTitle(activeBlog.title)
         setTagsInput(activeBlog.tags?.join(', ') ?? '')
         setPublished(activeBlog.published)
-        setHtml(activeBlog.content.html ?? '')
+        setEditorContent(activeBlog.content.html ?? '')
         setSaveState('idle')
+        currentHtmlRef.current = activeBlog.content.html ?? ''
+        clearAutosaveTimer()
         lastSavedRef.current = {
             title: activeBlog.title,
             tags: activeBlog.tags ?? [],
@@ -98,69 +151,153 @@ export function BlogNotionWorkspace({ blogs, activeBlog }: BlogNotionWorkspacePr
             html: activeBlog.content.html ?? '',
         }
         skipAutosaveRef.current = true
-    }, [activeBlog])
+    }, [activeBlog, clearAutosaveTimer, clearPendingAutosaveRevalidation])
+
+    useEffect(() => {
+        return () => {
+            clearAutosaveTimer()
+            clearPendingAutosaveRevalidation()
+        }
+    }, [clearAutosaveTimer, clearPendingAutosaveRevalidation])
+
+    const saveDocument = useCallback(async ({
+        useDraftMetadata = false,
+        revalidateImmediately = false,
+        showSuccessToast = false,
+    }: {
+        useDraftMetadata?: boolean
+        revalidateImmediately?: boolean
+        showSuccessToast?: boolean
+    } = {}) => {
+        clearAutosaveTimer()
+        const nextTitle = (useDraftMetadata ? title : lastSavedRef.current.title).trim()
+        if (!nextTitle) {
+            return false
+        }
+
+        const nextTags = useDraftMetadata ? normalizeTagsInput(tagsInput) : lastSavedRef.current.tags
+        const nextPublished = useDraftMetadata ? published : lastSavedRef.current.published
+        const normalizedHtml = normalizeBlogHtmlForSave(currentHtmlRef.current)
+
+        setSaveState('saving')
+
+        const response = await fetchWithCsrf(
+            `${getBrowserApiBaseUrl()}/admin/blogs/${encodeURIComponent(activeBlog.id)}`,
+            {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    title: nextTitle,
+                    tags: nextTags,
+                    published: nextPublished,
+                    contentJson: JSON.stringify({ html: normalizedHtml }),
+                }),
+            },
+        )
+
+        if (!response.ok) {
+            const message = await response.text()
+            throw new Error(message || 'Save failed')
+        }
+
+        lastSavedRef.current = {
+            title: nextTitle,
+            tags: nextTags,
+            published: nextPublished,
+            html: normalizedHtml,
+        }
+        currentHtmlRef.current = normalizedHtml
+        if (normalizedHtml !== editorContent) {
+            setEditorContent(normalizedHtml)
+        }
+
+        if (revalidateImmediately) {
+            clearPendingAutosaveRevalidation()
+            await runImmediateRevalidation(activeBlog.slug)
+        } else {
+            scheduleAutosaveRevalidation(activeBlog.slug)
+        }
+
+        setSaveState('saved')
+        if (showSuccessToast) {
+            toast.success('Blog details saved')
+        }
+
+        return true
+    }, [
+        activeBlog.id,
+        activeBlog.slug,
+        clearAutosaveTimer,
+        clearPendingAutosaveRevalidation,
+        editorContent,
+        published,
+        runImmediateRevalidation,
+        scheduleAutosaveRevalidation,
+        tagsInput,
+        title,
+    ])
+
+    const handleEditorChange = useCallback((nextHtml: string) => {
+        currentHtmlRef.current = nextHtml
+
+        if (nextHtml === lastSavedRef.current.html) {
+            clearAutosaveTimer()
+            return
+        }
+
+        clearAutosaveTimer()
+        autosaveTimerRef.current = window.setTimeout(() => {
+            void saveDocument().catch((error) => {
+                setSaveState('error')
+                toast.error(error instanceof Error ? error.message : 'Autosave failed')
+            }).finally(() => {
+                autosaveTimerRef.current = null
+            })
+        }, AUTOSAVE_DEBOUNCE_MS)
+    }, [clearAutosaveTimer, saveDocument])
+
+    const handleAiApply = useCallback((nextHtml: string) => {
+        setEditorContent(nextHtml)
+        handleEditorChange(nextHtml)
+    }, [handleEditorChange])
 
     useEffect(() => {
         if (skipAutosaveRef.current) {
             skipAutosaveRef.current = false
-            return
         }
+    }, [])
 
-        if (html === lastSavedRef.current.html) {
-            return
-        }
-
-        const controller = new AbortController()
-        const timeout = window.setTimeout(async () => {
-            setSaveState('saving')
-            const normalizedHtml = normalizeBlogHtmlForSave(html)
-
-            try {
-                const response = await fetchWithCsrf(
-                    `${getBrowserApiBaseUrl()}/admin/blogs/${encodeURIComponent(activeBlog.id)}`,
-                    {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            title: lastSavedRef.current.title,
-                            tags: lastSavedRef.current.tags,
-                            published: lastSavedRef.current.published,
-                            contentJson: JSON.stringify({ html: normalizedHtml }),
-                        }),
-                        signal: controller.signal,
-                    },
-                )
-
-                if (!response.ok) {
-                    const message = await response.text()
-                    throw new Error(message || 'Autosave failed')
-                }
-
-                lastSavedRef.current = {
-                    ...lastSavedRef.current,
-                    html: normalizedHtml,
-                }
-                if (normalizedHtml !== html) {
-                    setHtml(normalizedHtml)
-                }
-                setSaveState('saved')
-            } catch (error) {
-                if (controller.signal.aborted) {
-                    return
-                }
-
-                setSaveState('error')
-                toast.error(error instanceof Error ? error.message : 'Autosave failed')
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== 's') {
+                return
             }
-        }, 700)
 
-        return () => {
-            controller.abort()
-            window.clearTimeout(timeout)
+            event.preventDefault()
+            if (isSavingMeta) {
+                return
+            }
+
+            setIsSavingMeta(true)
+            void saveDocument({
+                useDraftMetadata: true,
+                revalidateImmediately: true,
+                showSuccessToast: true,
+            }).catch((error) => {
+                setSaveState('error')
+                toast.error(error instanceof Error ? error.message : 'Failed to save metadata')
+            }).finally(() => {
+                setIsSavingMeta(false)
+            })
         }
-    }, [activeBlog.id, html])
+
+        window.addEventListener('keydown', handleKeyDown)
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown)
+        }
+    }, [isSavingMeta, saveDocument])
 
     const metaDirty = useMemo(() => (
         title.trim() !== lastSavedRef.current.title
@@ -200,40 +337,11 @@ export function BlogNotionWorkspace({ blogs, activeBlog }: BlogNotionWorkspacePr
         setIsSavingMeta(true)
 
         try {
-            const nextTags = normalizeTagsInput(tagsInput)
-            const normalizedHtml = normalizeBlogHtmlForSave(html)
-            const response = await fetchWithCsrf(
-                `${getBrowserApiBaseUrl()}/admin/blogs/${encodeURIComponent(activeBlog.id)}`,
-                {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        title,
-                        tags: nextTags,
-                        published,
-                        contentJson: JSON.stringify({ html: normalizedHtml }),
-                    }),
-                },
-            )
-
-            if (!response.ok) {
-                const message = await response.text()
-                throw new Error(message || 'Failed to save metadata')
-            }
-
-            lastSavedRef.current = {
-                title: title.trim(),
-                tags: nextTags,
-                published,
-                html: normalizedHtml,
-            }
-            if (normalizedHtml !== html) {
-                setHtml(normalizedHtml)
-            }
-            setSaveState('saved')
-            toast.success('Blog details saved')
+            await saveDocument({
+                useDraftMetadata: true,
+                revalidateImmediately: true,
+                showSuccessToast: true,
+            })
         } catch (error) {
             setSaveState('error')
             toast.error(error instanceof Error ? error.message : 'Failed to save metadata')
@@ -342,7 +450,7 @@ export function BlogNotionWorkspace({ blogs, activeBlog }: BlogNotionWorkspacePr
                         <div>
                             <h1 className="text-2xl font-semibold tracking-tight text-gray-900 dark:text-gray-50">Blog Notion View</h1>
                             <p className="mt-1 text-sm text-muted-foreground">
-                                Content autosaves after a short pause. Title, tags, and publish state stay explicit so high-impact changes remain deliberate.
+                                Content autosaves after a short pause. Press Ctrl+S to save content and post settings immediately.
                             </p>
                         </div>
                         <div className="flex items-center gap-2">
@@ -369,7 +477,7 @@ export function BlogNotionWorkspace({ blogs, activeBlog }: BlogNotionWorkspacePr
                             >
                                 {saveState === 'saving' ? 'Saving...' : saveState === 'saved' ? 'Saved' : saveState === 'error' ? 'Error' : 'Waiting'}
                             </span>
-                            <AIFixDialog content={html} onApply={setHtml} />
+                            <AIFixDialog content={currentHtmlRef.current} onApply={handleAiApply} />
                             <Link href={`/admin/blog/${activeBlog.id}`}>
                                 <Button variant="outline">Open full editor</Button>
                             </Link>
@@ -434,8 +542,8 @@ export function BlogNotionWorkspace({ blogs, activeBlog }: BlogNotionWorkspacePr
                         )}
 
                         <TiptapEditor
-                            content={html}
-                            onChange={setHtml}
+                            content={editorContent}
+                            onChange={handleEditorChange}
                             placeholder="Start writing. Content autosaves here while metadata stays explicit."
                         />
                     </div>

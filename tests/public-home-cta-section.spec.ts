@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 const ctaCards = [
   { label: 'Works', href: '/works', heading: 'Works' },

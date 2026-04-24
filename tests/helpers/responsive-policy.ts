@@ -19,12 +19,12 @@ export async function getViewportClass(page: Page): Promise<ViewportClass> {
 
 export async function expectedPublicBlogPageSize(page: Page) {
   const viewportClass = await getViewportClass(page)
-  return viewportClass === 'desktop' ? 12 : viewportClass === 'tablet' ? 8 : 4
+  return viewportClass === 'desktop' ? 12 : 10
 }
 
 export async function expectedPublicWorksPageSize(page: Page) {
   const viewportClass = await getViewportClass(page)
-  return viewportClass === 'desktop' ? 8 : viewportClass === 'tablet' ? 6 : 4
+  return viewportClass === 'desktop' ? 8 : 10
 }
 
 export async function expectedAdminTablePageSize(page: Page) {

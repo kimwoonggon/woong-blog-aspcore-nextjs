@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 import { expectedPublicWorksPageSize } from './helpers/responsive-policy'
 
 test.use({ storageState: 'test-results/playwright/admin-storage-state.json' })
@@ -37,7 +37,7 @@ test('public work detail inline edit returns the user to the originating works p
   await page.locator('a[href^="/works/"]').first().click()
 
   await page.getByRole('button', { name: '작업 수정' }).click()
-  await page.getByLabel('Title').fill(updatedTitle)
+  await page.locator('input#title').fill(updatedTitle)
 
   await Promise.all([
     page.waitForResponse((res) => res.url().includes('/api/admin/works/') && res.request().method() === 'PUT' && res.ok()),
@@ -46,7 +46,7 @@ test('public work detail inline edit returns the user to the originating works p
 
   await expect(page).toHaveURL(originalListUrl)
   await expect(page).not.toHaveURL(/\/admin\/works\//)
-  await expect(page.getByLabel('Title')).toHaveCount(0)
+  await expect(page.locator('input#title')).toHaveCount(0)
   await expect(page.getByRole('button', { name: '새 작업 쓰기' })).toBeVisible()
 })
 

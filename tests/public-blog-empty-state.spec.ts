@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 test('PF-014 shows an empty-state message when no blog posts are available', async ({ page }) => {
   await page.goto('/blog?__qaEmpty=1')

@@ -1,7 +1,7 @@
-using WoongBlog.Api.Modules.Content.Blogs.Application.Abstractions;
-using WoongBlog.Api.Modules.Content.Blogs.Persistence;
+using WoongBlog.Application.Modules.Content.Blogs.Abstractions;
+using WoongBlog.Infrastructure.Modules.Content.Blogs.Persistence;
 
-namespace WoongBlog.Api.Modules.Content.Blogs;
+namespace WoongBlog.Infrastructure.Modules.Content.Blogs;
 
 public static class BlogsInfrastructureServiceCollectionExtensions
 {

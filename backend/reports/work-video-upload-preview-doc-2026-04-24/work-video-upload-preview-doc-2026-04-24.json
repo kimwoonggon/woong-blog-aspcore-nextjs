@@ -1,0 +1,21 @@
+{
+  "task": "work-video-upload-preview-doc-2026-04-24",
+  "summary": [
+    "Added a markdown document describing the current uploaded work video registration and hover preview pipeline.",
+    "Documented admin upload flow, backend HLS and preview asset generation, DTO projection, and public player hover rendering."
+  ],
+  "not_changed": [
+    "No production code changes.",
+    "No test changes.",
+    "No data reprocessing."
+  ],
+  "validations": [
+    "Source trace across WorkEditor, WorkVideoPlayer, works API parsing, HLS job handler, transcoder, publisher, and query stores.",
+    "Documentation artifact written to docs/work-video-upload-preview-flow-2026-04-24.md"
+  ],
+  "risks": [
+    "The document can drift if the implementation changes later.",
+    "The explanation reflects the current custom overlay player approach, not browser-native controls."
+  ],
+  "recommendation": "Update the document whenever the upload or preview pipeline changes."
+}

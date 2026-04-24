@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 test('Tab reveals the skip link and Enter moves focus to main content', async ({ page }) => {
   await page.goto('/')

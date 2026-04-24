@@ -1,6 +1,6 @@
 import { copyFile, mkdir, stat, writeFile } from 'node:fs/promises'
 import path from 'node:path'
-import { expect, test, type APIRequestContext } from '@playwright/test'
+import { expect, test, type APIRequestContext } from './helpers/performance-test'
 
 import { expectMermaidRendered } from './helpers/mermaid'
 
@@ -125,7 +125,7 @@ test.afterEach(async ({ page }, testInfo) => {
 
 test('save batch ai prompt before reading mermaid posts', async ({ page }) => {
   await page.goto('/', { waitUntil: 'domcontentloaded' })
-  await page.evaluate(() => window.localStorage.removeItem('admin-ai-system-prompt'))
+  await page.evaluate(() => window.localStorage.removeItem('admin-ai-blog-batch-system-prompt'))
   await page.goto('/admin/blog', { waitUntil: 'domcontentloaded' })
   await expect(page.getByTestId('admin-blog-row').first()).toBeVisible()
   await page.getByRole('button', { name: /^Batch AI Fix/ }).click()
@@ -138,7 +138,7 @@ test('save batch ai prompt before reading mermaid posts', async ({ page }) => {
   await expect(panel.getByText('Unsaved')).toBeVisible()
   await panel.getByRole('button', { name: 'Save prompt' }).click()
   await expect(panel.getByText('Unsaved')).toHaveCount(0)
-  await expect.poll(async () => page.evaluate(() => window.localStorage.getItem('admin-ai-system-prompt') ?? '')).toBe(BATCH_AI_PROMPT)
+  await expect.poll(async () => page.evaluate(() => window.localStorage.getItem('admin-ai-blog-batch-system-prompt') ?? '')).toBe(BATCH_AI_PROMPT)
 })
 
 for (let index = 1; index <= COUNT; index += 1) {

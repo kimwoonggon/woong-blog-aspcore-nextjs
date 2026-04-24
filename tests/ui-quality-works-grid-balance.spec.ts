@@ -1,14 +1,16 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 test('VA-130 works archive keeps four cards aligned on the first desktop row', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1400 })
   await page.goto('/works')
 
   const cards = page.getByTestId('work-card')
-  expect(await cards.count()).toBeGreaterThanOrEqual(4)
+  await expect.poll(() => cards.count()).toBeGreaterThanOrEqual(4)
 
   const boxes = await Promise.all([0, 1, 2, 3].map(async (index) => {
-    const box = await cards.nth(index).boundingBox()
+    const card = cards.nth(index)
+    await expect(card).toBeVisible()
+    const box = await card.boundingBox()
     expect(box).toBeTruthy()
     return box!
   }))

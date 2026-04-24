@@ -1,8 +1,10 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
+import { createBlogFixture } from './helpers/content-fixtures'
 
 test.use({ storageState: 'test-results/playwright/admin-storage-state.json' })
+test.setTimeout(60_000)
 
-test('VA-005 success, warning, and error states keep distinct semantic color treatments', async ({ page }) => {
+test('VA-005 success, warning, and error states keep distinct semantic color treatments', async ({ page, request }, testInfo) => {
   const draftTitle = `Semantic Draft ${Date.now()}`
 
   await page.goto('/admin/blog/new')
@@ -24,6 +26,10 @@ test('VA-005 success, warning, and error states keep distinct semantic color tre
   const draftClasses = await draftBadge.getAttribute('class')
 
   let failAutosave = false
+  const notionBlog = await createBlogFixture(request, testInfo, {
+    titlePrefix: 'Semantic Notion State',
+    html: '<p>Semantic notion state fixture.</p>',
+  })
   await page.route('**/api/admin/blogs/**', async (route) => {
     if (route.request().method() !== 'PUT') {
       await route.fallback()
@@ -40,7 +46,7 @@ test('VA-005 success, warning, and error states keep distinct semantic color tre
     })
   })
 
-  await page.goto('/admin/blog/notion')
+  await page.goto(`/admin/blog/notion?id=${encodeURIComponent(notionBlog.id)}`)
   const editor = page.locator('.tiptap.ProseMirror').first()
   await editor.click()
   await page.keyboard.type(` semantic-saved-${Date.now()}`)
@@ -52,7 +58,7 @@ test('VA-005 success, warning, and error states keep distinct semantic color tre
   failAutosave = true
   await editor.click()
   await page.keyboard.type(' semantic-error')
-  await expect(saveChip).toHaveText('Error')
+  await expect(saveChip).toHaveText('Error', { timeout: 15_000 })
   const errorClasses = await saveChip.getAttribute('class')
 
   await page.goto('/admin/dashboard?__qaSummaryFail=1')

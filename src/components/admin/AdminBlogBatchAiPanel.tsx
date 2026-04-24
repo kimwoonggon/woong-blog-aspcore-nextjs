@@ -27,7 +27,7 @@ import {
 import { useBatchJobPolling } from '@/components/admin/admin-blog-batch-ai-panel/useBatchJobPolling'
 import { toast } from 'sonner'
 
-const savedSystemPromptKey = 'admin-ai-system-prompt'
+const savedSystemPromptKey = 'admin-ai-blog-batch-system-prompt'
 
 interface AdminBlogBatchAiPanelProps {
   isOpen: boolean
@@ -183,7 +183,7 @@ export function AdminBlogBatchAiPanel({
         setSelectedProvider(availableProviders.includes(preferredProvider) ? preferredProvider : availableProviders[0])
         setCodexModel(savedModel || config.codexModel || 'gpt-5.4')
         setCodexReasoningEffort(savedReasoning || config.codexReasoningEffort || 'medium')
-        const prompt = savedPrompt || config.defaultSystemPrompt || ''
+        const prompt = savedPrompt || config.defaultBlogFixPrompt || config.defaultSystemPrompt || ''
         if (!promptTouchedRef.current) {
           setCustomPrompt(prompt)
           setSavedPrompt(prompt)
@@ -303,8 +303,9 @@ export function AdminBlogBatchAiPanel({
       window.localStorage.removeItem(savedSystemPromptKey)
     }
 
-    setCustomPrompt(runtimeConfig?.defaultSystemPrompt || '')
-    setSavedPrompt(runtimeConfig?.defaultSystemPrompt || '')
+    const defaultPrompt = runtimeConfig?.defaultBlogFixPrompt || runtimeConfig?.defaultSystemPrompt || ''
+    setCustomPrompt(defaultPrompt)
+    setSavedPrompt(defaultPrompt)
     promptTouchedRef.current = false
     toast.success('System prompt reset')
   }

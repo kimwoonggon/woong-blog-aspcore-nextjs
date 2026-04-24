@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 test('introduction does not expose left/right edge navigation links', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1080 })

@@ -3,7 +3,7 @@ using System.Net.Http.Json;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
-using WoongBlog.Api.Infrastructure.Persistence;
+using WoongBlog.Infrastructure.Persistence;
 
 namespace WoongBlog.Api.Tests;
 
@@ -217,6 +217,58 @@ public class AdminContentEndpointsTests : IClassFixture<CustomWebApplicationFact
         publicResponse.EnsureSuccessStatusCode();
         var publicBody = await publicResponse.Content.ReadAsStringAsync();
         Assert.Contains("This is a long enough body", publicBody, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task CreateBlog_UsesManualExcerpt_WhenProvided()
+    {
+        var client = _factory.CreateAuthenticatedClient();
+        var manualExcerpt = $"manual excerpt {Guid.NewGuid():N}";
+
+        var response = await client.PostAsJsonAsync("/api/admin/blogs", new
+        {
+            title = $"Manual Excerpt Blog {Guid.NewGuid():N}",
+            excerpt = manualExcerpt,
+            tags = new[] { "qa", "excerpt" },
+            published = true,
+            contentJson = "{\"html\":\"<p>Body that should not replace manual excerpt.</p>\"}"
+        });
+
+        response.EnsureSuccessStatusCode();
+        var payload = JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement;
+        var slug = payload.GetProperty("slug").GetString();
+        Assert.False(string.IsNullOrWhiteSpace(slug));
+
+        var publicResponse = await client.GetAsync($"/api/public/blogs/{slug}");
+        publicResponse.EnsureSuccessStatusCode();
+        var publicBody = await publicResponse.Content.ReadAsStringAsync();
+        Assert.Contains(manualExcerpt, publicBody, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task CreateBlog_FallsBackToGeneratedExcerpt_WhenManualExcerptIsBlank()
+    {
+        var client = _factory.CreateAuthenticatedClient();
+        var contentToken = $"generated excerpt token {Guid.NewGuid():N}";
+
+        var response = await client.PostAsJsonAsync("/api/admin/blogs", new
+        {
+            title = $"Generated Excerpt Blog {Guid.NewGuid():N}",
+            excerpt = "   ",
+            tags = new[] { "qa", "excerpt" },
+            published = true,
+            contentJson = JsonSerializer.Serialize(new { html = $"<p>{contentToken}</p>" })
+        });
+
+        response.EnsureSuccessStatusCode();
+        var payload = JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement;
+        var slug = payload.GetProperty("slug").GetString();
+        Assert.False(string.IsNullOrWhiteSpace(slug));
+
+        var publicResponse = await client.GetAsync($"/api/public/blogs/{slug}");
+        publicResponse.EnsureSuccessStatusCode();
+        var publicBody = await publicResponse.Content.ReadAsStringAsync();
+        Assert.Contains(contentToken, publicBody, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

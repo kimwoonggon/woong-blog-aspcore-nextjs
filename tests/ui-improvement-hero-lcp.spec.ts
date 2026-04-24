@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 import { getStyle } from './helpers/ui-improvement'
 
 test('hero heading is visible within one second', async ({ page }) => {

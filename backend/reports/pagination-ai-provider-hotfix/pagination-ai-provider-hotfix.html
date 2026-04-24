@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Pagination And AI Provider Hotfix Audit</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 900px; margin: 40px auto; line-height: 1.55; color: #111827; }
+    h1, h2 { line-height: 1.2; }
+    code { background: #f3f4f6; padding: 0.1rem 0.25rem; border-radius: 4px; }
+    li { margin: 0.25rem 0; }
+  </style>
+</head>
+<body>
+  <h1>Pagination And AI Provider Hotfix Audit</h1>
+  <p><strong>Date:</strong> 2026-04-22</p>
+  <h2>Summary</h2>
+  <p>This hotfix removes server-side admin session blocking from public Study/Works list rendering, removes the unwanted BlogEditor top save bar, restores OpenAI/Codex provider choices, and fixes invalid Next segment config exports.</p>
+  <h2>Changed</h2>
+  <ul>
+    <li>Study and Works admin affordances now load through <code>PublicAdminClientGate</code>.</li>
+    <li>Study and Works pages no longer call server session helpers during public list render.</li>
+    <li>BlogEditor no longer renders the top sticky save/action bar.</li>
+    <li>AI Fix provider choices are constrained to <code>openai</code> and <code>codex</code>.</li>
+    <li>Backend runtime config exposes Codex when <code>CodexCommand</code> exists, with execution-time auth validation preserved.</li>
+    <li>List page <code>revalidate</code> exports use literal <code>60</code>.</li>
+  </ul>
+  <h2>Validation</h2>
+  <ul>
+    <li>Focused Vitest: 3 files passed, 19 tests passed.</li>
+    <li>Backend Codex runtime component tests: 4 passed.</li>
+    <li><code>npm run typecheck</code>: passed.</li>
+    <li><code>npm run build</code>: passed after fixing literal segment config.</li>
+    <li>Docker compose frontend/backend rebuild: passed.</li>
+    <li>Runtime config curl: <code>availableProviders:["openai","codex"]</code>.</li>
+    <li>Focused Playwright: 13 passed.</li>
+    <li>Scoped ESLint: 0 errors, 3 existing warnings.</li>
+    <li><code>git diff --check</code>: passed.</li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Keep this as a focused hotfix. Handle local Docker <code>.tmp</code> ESLint scanning in a separate infrastructure cleanup.</p>
+</body>
+</html>

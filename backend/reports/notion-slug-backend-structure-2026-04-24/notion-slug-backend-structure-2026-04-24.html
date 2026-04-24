@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Notion / Slug / Backend Structure Audit</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; color: #111; line-height: 1.5; }
+    h1, h2 { margin-bottom: 0.4rem; }
+    ul { padding-left: 1.2rem; }
+    code { background: #f3f4f6; padding: 0.1rem 0.3rem; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>Notion / Slug / Backend Structure Audit</h1>
+  <p>Date: 2026-04-24</p>
+  <h2>Changed</h2>
+  <ul>
+    <li>Notion typing was decoupled from full workspace rerenders and autosave moved to a 10-second interval.</li>
+    <li>Public slug detail routes were fixed by making client search-param readers Suspense-safe in production.</li>
+    <li>Duplicate backend folder layers under Application, Api, and Infrastructure were flattened, including the redundant infrastructure root layer.</li>
+  </ul>
+  <h2>Validation</h2>
+  <ul>
+    <li><code>npm run typecheck</code>: pass</li>
+    <li><code>npm run lint</code>: pass with warnings only</li>
+    <li>Targeted Vitest: pass</li>
+    <li><code>dotnet test backend/WoongBlog.sln</code>: pass</li>
+    <li>Targeted Playwright against docker HTTP server: pass</li>
+    <li>Slug detail curl checks on <code>127.0.0.1:3000</code>: pass</li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Keep this pass. If notion typing still feels heavy later, profile and reduce the Tiptap HTML serialization path next.</p>
+</body>
+</html>

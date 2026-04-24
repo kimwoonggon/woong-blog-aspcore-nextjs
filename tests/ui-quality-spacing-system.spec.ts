@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 function isMultipleOfFour(value: number) {
   return Math.abs(value - Math.round(value / 4) * 4) < 0.1

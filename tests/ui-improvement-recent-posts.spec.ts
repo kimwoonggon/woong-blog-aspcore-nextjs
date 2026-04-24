@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 import { getStyle } from './helpers/ui-improvement'
 
 test('Study Notes section uses the default page background', async ({ page }) => {

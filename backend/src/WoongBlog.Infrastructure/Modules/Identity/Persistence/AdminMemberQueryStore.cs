@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
-using WoongBlog.Api.Infrastructure.Persistence;
-using WoongBlog.Api.Modules.Identity.Application.Abstractions;
-using WoongBlog.Api.Modules.Identity.Application.GetAdminMembers;
+using WoongBlog.Infrastructure.Persistence;
+using WoongBlog.Application.Modules.Identity.Abstractions;
+using WoongBlog.Application.Modules.Identity.GetAdminMembers;
 
-namespace WoongBlog.Api.Modules.Identity.Persistence;
+namespace WoongBlog.Infrastructure.Modules.Identity.Persistence;
 
 public sealed class AdminMemberQueryStore(WoongBlogDbContext dbContext) : IAdminMemberQueryStore
 {

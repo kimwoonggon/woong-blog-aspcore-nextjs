@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Video Preview Recording Audit</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; color: #111; line-height: 1.5; }
+    h1, h2 { margin-bottom: 0.4rem; }
+    ul { padding-left: 1.2rem; }
+  </style>
+</head>
+<body>
+  <h1>Video Preview Recording Audit</h1>
+  <p>Date: 2026-04-24</p>
+  <h2>Outcome</h2>
+  <ul>
+    <li>Playwright recording spec was added and executed.</li>
+    <li>The hover preview bubble did not become visible, so the spec failed.</li>
+    <li>The browser recording was still captured and copied to a stable <code>.webm</code> path.</li>
+  </ul>
+  <h2>Artifacts</h2>
+  <ul>
+    <li><code>tests/playwright/0424test/video-preview/work-video-hover-preview-long.webm</code></li>
+    <li>Raw Playwright artifacts under <code>test-results/playwright/video-preview-recording-04-64aed-er-preview-after-processing-chromium-public/</code></li>
+  </ul>
+</body>
+</html>

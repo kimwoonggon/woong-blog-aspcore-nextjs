@@ -1,4 +1,4 @@
-using WoongBlog.Api.Modules.Content.Pages.Application.GetPageBySlug;
+using WoongBlog.Application.Modules.Content.Pages.GetPageBySlug;
 
 namespace WoongBlog.Api.Tests;
 

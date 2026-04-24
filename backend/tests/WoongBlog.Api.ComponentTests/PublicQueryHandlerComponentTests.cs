@@ -1,20 +1,21 @@
 using Microsoft.EntityFrameworkCore;
 using WoongBlog.Api.Domain.Entities;
-using WoongBlog.Api.Infrastructure.Persistence;
-using WoongBlog.Api.Modules.Composition.Application.Abstractions;
-using WoongBlog.Api.Modules.Composition.Application.GetHome;
-using WoongBlog.Api.Modules.Composition.Persistence;
-using WoongBlog.Api.Modules.Content.Blogs.Application.Abstractions;
-using WoongBlog.Api.Modules.Content.Blogs.Application.GetBlogs;
-using WoongBlog.Api.Modules.Content.Blogs.Persistence;
-using WoongBlog.Api.Modules.Content.Works.Application.Abstractions;
-using WoongBlog.Api.Modules.Content.Works.Application.GetWorks;
-using WoongBlog.Api.Modules.Content.Works.Application.WorkVideos;
-using WoongBlog.Api.Modules.Content.Works.Persistence;
-using WoongBlog.Api.Modules.Site.Application.Abstractions;
-using WoongBlog.Api.Modules.Site.Application.GetResume;
-using WoongBlog.Api.Modules.Site.Application.GetSiteSettings;
-using WoongBlog.Api.Modules.Site.Persistence;
+using WoongBlog.Infrastructure.Persistence;
+using WoongBlog.Application.Modules.Composition.Abstractions;
+using WoongBlog.Application.Modules.Composition.GetHome;
+using WoongBlog.Infrastructure.Modules.Composition.Persistence;
+using WoongBlog.Application.Modules.Content.Blogs.Abstractions;
+using WoongBlog.Application.Modules.Content.Blogs.GetBlogs;
+using WoongBlog.Infrastructure.Modules.Content.Blogs.Persistence;
+using WoongBlog.Application.Modules.Content.Works.Abstractions;
+using WoongBlog.Application.Modules.Content.Works.GetWorkBySlug;
+using WoongBlog.Application.Modules.Content.Works.GetWorks;
+using WoongBlog.Application.Modules.Content.Works.WorkVideos;
+using WoongBlog.Infrastructure.Modules.Content.Works.Persistence;
+using WoongBlog.Application.Modules.Site.Abstractions;
+using WoongBlog.Application.Modules.Site.GetResume;
+using WoongBlog.Application.Modules.Site.GetSiteSettings;
+using WoongBlog.Infrastructure.Modules.Site.Persistence;
 
 namespace WoongBlog.Api.Tests;
 
@@ -40,6 +41,11 @@ public class PublicQueryHandlerComponentTests
         public string? BuildPlaybackUrl(string sourceType, string sourceKey)
         {
             return sourceType == WorkVideoSourceTypes.YouTube ? null : $"/media/{sourceKey}";
+        }
+
+        public string? BuildStorageObjectUrl(string storageType, string storageKey)
+        {
+            return $"/media/{storageKey}";
         }
     }
 
@@ -222,6 +228,165 @@ public class PublicQueryHandlerComponentTests
     }
 
     [Fact]
+    public async Task GetWorksQueryHandler_QueryOnly_PerformsUnifiedSearch()
+    {
+        await using var dbContext = CreateDbContext();
+        var bodyToken = $"body-token-{Guid.NewGuid():N}";
+        dbContext.Works.AddRange(
+            new Work { Id = Guid.NewGuid(), Title = "Unified Title Match", Slug = "unified-title-match", Excerpt = "alpha", Category = "cat", ContentJson = "{\"html\":\"<p>alpha</p>\"}", AllPropertiesJson = "{}", Published = true, PublishedAt = DateTimeOffset.UtcNow, CreatedAt = DateTimeOffset.UtcNow, UpdatedAt = DateTimeOffset.UtcNow },
+            new Work { Id = Guid.NewGuid(), Title = "No title token", Slug = "unified-content-match", Excerpt = $"contains {bodyToken}", Category = "cat", ContentJson = "{\"html\":\"<p>beta</p>\"}", AllPropertiesJson = "{}", Published = true, PublishedAt = DateTimeOffset.UtcNow, CreatedAt = DateTimeOffset.UtcNow, UpdatedAt = DateTimeOffset.UtcNow }
+        );
+        await dbContext.SaveChangesAsync();
+
+        var handler = new GetWorksQueryHandler(CreateWorkQueryStore(dbContext));
+
+        var titleResult = await handler.Handle(new GetWorksQuery(Query: "unified title"), CancellationToken.None);
+        var contentResult = await handler.Handle(new GetWorksQuery(Query: bodyToken), CancellationToken.None);
+
+        Assert.Single(titleResult.Items);
+        Assert.Equal("Unified Title Match", titleResult.Items[0].Title);
+        Assert.Single(contentResult.Items);
+        Assert.Equal("No title token", contentResult.Items[0].Title);
+    }
+
+    [Fact]
+    public async Task GetHomeQueryHandler_ReturnsUpToSixRecentPosts()
+    {
+        await using var dbContext = CreateDbContext();
+        dbContext.SiteSettings.Add(new SiteSetting
+        {
+            Singleton = true,
+            OwnerName = "Owner",
+            Tagline = "Tagline",
+        });
+        dbContext.Pages.Add(new PageEntity { Id = Guid.NewGuid(), Slug = "home", Title = "Home", ContentJson = "{}" });
+
+        var now = DateTimeOffset.UtcNow;
+        for (var index = 0; index < 8; index += 1)
+        {
+            dbContext.Blogs.Add(new Blog
+            {
+                Id = Guid.NewGuid(),
+                Title = $"Published Blog {index}",
+                Slug = $"published-blog-{index}",
+                Excerpt = "published",
+                ContentJson = "{}",
+                Published = true,
+                PublishedAt = now.AddMinutes(-index),
+                CreatedAt = now,
+                UpdatedAt = now
+            });
+        }
+
+        await dbContext.SaveChangesAsync();
+        var handler = new GetHomeQueryHandler(CreateHomeQueryStore(dbContext));
+
+        var result = await handler.Handle(new GetHomeQuery(), CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Equal(6, result!.RecentPosts.Count);
+    }
+
+    [Fact]
+    public async Task GetWorkBySlugQueryHandler_MapsSocialShareMessage_FromAllProperties()
+    {
+        await using var dbContext = CreateDbContext();
+        dbContext.Works.Add(new Work
+        {
+            Id = Guid.NewGuid(),
+            Title = "Share-ready Work",
+            Slug = "share-ready-work",
+            Excerpt = "default excerpt",
+            Category = "cat",
+            ContentJson = "{}",
+            AllPropertiesJson = """{"socialShareMessage":"Custom share message"}""",
+            Published = true,
+            PublishedAt = DateTimeOffset.UtcNow,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        });
+        await dbContext.SaveChangesAsync();
+
+        var handler = new GetWorkBySlugQueryHandler(CreateWorkQueryStore(dbContext));
+
+        var result = await handler.Handle(new GetWorkBySlugQuery("share-ready-work"), CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Equal("Custom share message", result!.SocialShareMessage);
+    }
+
+    [Fact]
+    public async Task GetWorkBySlugQueryHandler_ReturnsNullSocialShareMessage_WhenReservedKeyMissing()
+    {
+        await using var dbContext = CreateDbContext();
+        dbContext.Works.Add(new Work
+        {
+            Id = Guid.NewGuid(),
+            Title = "Share default Work",
+            Slug = "share-default-work",
+            Excerpt = "default excerpt",
+            Category = "cat",
+            ContentJson = "{}",
+            AllPropertiesJson = "{}",
+            Published = true,
+            PublishedAt = DateTimeOffset.UtcNow,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        });
+        await dbContext.SaveChangesAsync();
+
+        var handler = new GetWorkBySlugQueryHandler(CreateWorkQueryStore(dbContext));
+
+        var result = await handler.Handle(new GetWorkBySlugQuery("share-default-work"), CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Null(result!.SocialShareMessage);
+    }
+
+    [Fact]
+    public async Task GetWorkBySlugQueryHandler_MapsTimelinePreviewUrls_ForHlsVideo()
+    {
+        await using var dbContext = CreateDbContext();
+        var workId = Guid.NewGuid();
+        var videoId = Guid.NewGuid();
+        dbContext.Works.Add(new Work
+        {
+            Id = workId,
+            Title = "Preview Work",
+            Slug = "preview-work",
+            Excerpt = "preview",
+            Category = "cat",
+            ContentJson = "{}",
+            AllPropertiesJson = "{}",
+            Published = true,
+            PublishedAt = DateTimeOffset.UtcNow,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        });
+        dbContext.WorkVideos.Add(new WorkVideo
+        {
+            Id = videoId,
+            WorkId = workId,
+            SourceType = WorkVideoSourceTypes.Hls,
+            SourceKey = $"{WorkVideoSourceTypes.Local}:videos/{workId:N}/{videoId:N}/hls/master.m3u8",
+            MimeType = WorkVideoPolicy.HlsManifestContentType,
+            TimelinePreviewVttStorageKey = $"videos/{workId:N}/{videoId:N}/hls/{WorkVideoPolicy.TimelinePreviewVttFileName}",
+            TimelinePreviewSpriteStorageKey = $"videos/{workId:N}/{videoId:N}/hls/{WorkVideoPolicy.TimelinePreviewSpriteFileName}",
+            SortOrder = 0,
+            CreatedAt = DateTimeOffset.UtcNow
+        });
+        await dbContext.SaveChangesAsync();
+
+        var handler = new GetWorkBySlugQueryHandler(CreateWorkQueryStore(dbContext));
+        var result = await handler.Handle(new GetWorkBySlugQuery("preview-work"), CancellationToken.None);
+
+        Assert.NotNull(result);
+        var video = Assert.Single(result!.Videos);
+        Assert.Equal($"/media/videos/{workId:N}/{videoId:N}/hls/{WorkVideoPolicy.TimelinePreviewVttFileName}", video.TimelinePreviewVttUrl);
+        Assert.Equal($"/media/videos/{workId:N}/{videoId:N}/hls/{WorkVideoPolicy.TimelinePreviewSpriteFileName}", video.TimelinePreviewSpriteUrl);
+    }
+
+    [Fact]
     public async Task GetBlogsQueryHandler_ReturnsPagedResults()
     {
         await using var dbContext = CreateDbContext();
@@ -257,5 +422,27 @@ public class PublicQueryHandlerComponentTests
 
         Assert.Single(result.Items);
         Assert.Equal("T,B,N 안녕하세요", result.Items[0].Title);
+    }
+
+    [Fact]
+    public async Task GetBlogsQueryHandler_QueryOnly_PerformsUnifiedSearch()
+    {
+        await using var dbContext = CreateDbContext();
+        var bodyToken = $"blog-body-token-{Guid.NewGuid():N}";
+        dbContext.Blogs.AddRange(
+            new Blog { Id = Guid.NewGuid(), Title = "Unified Blog Match", Slug = "unified-blog-match", Excerpt = "alpha", ContentJson = "{\"html\":\"<p>alpha</p>\"}", Published = true, PublishedAt = DateTimeOffset.UtcNow, CreatedAt = DateTimeOffset.UtcNow, UpdatedAt = DateTimeOffset.UtcNow },
+            new Blog { Id = Guid.NewGuid(), Title = "No title token", Slug = "unified-blog-content", Excerpt = $"contains {bodyToken}", ContentJson = "{\"html\":\"<p>beta</p>\"}", Published = true, PublishedAt = DateTimeOffset.UtcNow, CreatedAt = DateTimeOffset.UtcNow, UpdatedAt = DateTimeOffset.UtcNow }
+        );
+        await dbContext.SaveChangesAsync();
+
+        var handler = new GetBlogsQueryHandler(CreateBlogQueryStore(dbContext));
+
+        var titleResult = await handler.Handle(new GetBlogsQuery(Query: "unified blog"), CancellationToken.None);
+        var contentResult = await handler.Handle(new GetBlogsQuery(Query: bodyToken), CancellationToken.None);
+
+        Assert.Single(titleResult.Items);
+        Assert.Equal("Unified Blog Match", titleResult.Items[0].Title);
+        Assert.Single(contentResult.Items);
+        Assert.Equal("No title token", contentResult.Items[0].Title);
     }
 }

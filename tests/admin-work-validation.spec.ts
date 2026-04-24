@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 test.use({ storageState: 'test-results/playwright/admin-storage-state.json' })
 
@@ -7,7 +7,7 @@ test('work editor exposes structured metadata controls instead of raw json', asy
   await expect(page).toHaveURL(/\/admin\/works\/new/)
 
   await page.getByRole('tab', { name: 'Media & Videos' }).click()
-  await expect(page.getByText('Flexible Metadata')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Flexible Metadata' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Add Field' })).toBeVisible()
   await expect(page.locator('#work-editor-media-section textarea')).toHaveCount(0)
 })

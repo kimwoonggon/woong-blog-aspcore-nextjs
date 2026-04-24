@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 import { expectRgbClose, getColorChannels, getRootVariableChannels } from './helpers/ui-improvement'
 
 test('Works appears before Study Notes on the home page', async ({ page }) => {

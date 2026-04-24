@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 test.skip(!process.env.PLAYWRIGHT_MANUAL_AUTH, 'Manual auth verification runs only when explicitly requested.')
 

@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 import { expectedPublicBlogPageSize } from './helpers/responsive-policy'
 
 test.use({ storageState: 'test-results/playwright/admin-storage-state.json' })
@@ -18,7 +18,7 @@ test('admin can edit a public blog detail inline and return to the originating b
   const saveButton = page.getByRole('button', { name: 'Update Post' })
   await expect(saveButton).toBeDisabled()
 
-  await page.getByLabel('Title').fill(updatedTitle)
+  await page.locator('input#title').fill(updatedTitle)
   await expect(saveButton).toBeEnabled()
 
   await Promise.all([

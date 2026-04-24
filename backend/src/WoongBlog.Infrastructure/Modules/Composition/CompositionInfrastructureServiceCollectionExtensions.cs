@@ -1,7 +1,7 @@
-using WoongBlog.Api.Modules.Composition.Application.Abstractions;
-using WoongBlog.Api.Modules.Composition.Persistence;
+using WoongBlog.Application.Modules.Composition.Abstractions;
+using WoongBlog.Infrastructure.Modules.Composition.Persistence;
 
-namespace WoongBlog.Api.Modules.Composition;
+namespace WoongBlog.Infrastructure.Modules.Composition;
 
 public static class CompositionInfrastructureServiceCollectionExtensions
 {

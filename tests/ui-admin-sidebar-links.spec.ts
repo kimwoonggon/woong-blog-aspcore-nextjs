@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 test('sidebar exposes a single View Site link', async ({ page }) => {
   await page.goto('/admin/dashboard')

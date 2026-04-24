@@ -3,13 +3,15 @@ using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
-using WoongBlog.Api.Infrastructure.Persistence;
-using WoongBlog.Api.Modules.AI.Application.Abstractions;
-using WoongBlog.Api.Modules.Content.Blogs.Api.CreateBlog;
-using WoongBlog.Api.Modules.Content.Blogs.Application.Abstractions;
-using WoongBlog.Api.Modules.Content.Blogs.Application.CreateBlog;
-using WoongBlog.Api.Modules.Content.Common.Application.Support;
-using WoongBlog.Api.Modules.Content.Works.Application.WorkVideos;
+using Microsoft.Extensions.Options;
+using WoongBlog.Infrastructure.Auth;
+using WoongBlog.Infrastructure.Persistence;
+using WoongBlog.Application.Modules.AI.Abstractions;
+using WoongBlog.Api.Modules.Content.Blogs.CreateBlog;
+using WoongBlog.Application.Modules.Content.Blogs.Abstractions;
+using WoongBlog.Application.Modules.Content.Blogs.CreateBlog;
+using WoongBlog.Application.Modules.Content.Common.Support;
+using WoongBlog.Application.Modules.Content.Works.WorkVideos;
 
 namespace WoongBlog.Api.Tests;
 
@@ -52,5 +54,15 @@ public class StartupCompositionTests : IClassFixture<CustomWebApplicationFactory
         Assert.NotNull(services.GetRequiredService<IBlogCommandStore>());
         Assert.NotNull(services.GetRequiredService<IWorkVideoCleanupStore>());
         Assert.NotNull(services.GetRequiredService<WoongBlogDbContext>());
+    }
+
+    [Fact]
+    public void AuthOptions_Use300MinuteSlidingExpiration_AndEightHourAbsoluteExpiration()
+    {
+        using var scope = _factory.Services.CreateScope();
+        var authOptions = scope.ServiceProvider.GetRequiredService<IOptions<AuthOptions>>().Value;
+
+        Assert.Equal(300, authOptions.SlidingExpirationMinutes);
+        Assert.Equal(8, authOptions.AbsoluteExpirationHours);
     }
 }

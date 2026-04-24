@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 test('work detail keeps the first video upfront and folds the rest', async ({ page }) => {
   await page.goto('/works/seeded-work')

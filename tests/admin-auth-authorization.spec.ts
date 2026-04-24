@@ -1,9 +1,9 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 test.use({ storageState: { cookies: [], origins: [] } })
 
 test('non-admin local login attempts are rejected before admin access is granted', async ({ page }) => {
-  const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost'
+  const baseUrl = (process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000').replace(/\/$/, '')
 
   await page.goto(
     `${baseUrl}/api/auth/test-login?email=${encodeURIComponent('user@example.com')}&returnUrl=%2Fadmin%2Fdashboard`,

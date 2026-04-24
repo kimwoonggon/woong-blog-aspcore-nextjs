@@ -1,6 +1,6 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
-async function getWidth(page: import('@playwright/test').Page, testId: string) {
+async function getWidth(page: import('./helpers/performance-test').Page, testId: string) {
   return page.getByTestId(testId).evaluate((element) => element.getBoundingClientRect().width)
 }
 

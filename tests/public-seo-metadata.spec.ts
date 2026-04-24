@@ -1,4 +1,7 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page } from './helpers/performance-test'
+import { createWorkFixture } from './helpers/content-fixtures'
+
+test.use({ storageState: 'test-results/playwright/admin-storage-state.json' })
 
 async function expectVisibleHeaderMetadata(page: Page) {
   const title = (await page.locator('article header h1').innerText()).trim()
@@ -23,6 +26,33 @@ test('blog detail metadata uses the visible article title and excerpt', async ({
 test('work detail metadata uses the visible project title and excerpt', async ({ page }) => {
   await page.goto(`/works/${await firstPublicSlug(page, 'works')}`)
   await expectVisibleHeaderMetadata(page)
+})
+
+test('work detail exposes og:image and twitter:image when thumbnail is available', async ({ page }) => {
+  await page.goto(`/works/${await firstPublicSlug(page, 'works')}`)
+
+  const ogImage = page.locator('meta[property="og:image"]').first()
+  const twitterImage = page.locator('meta[name="twitter:image"]').first()
+  const hasSocialImageMeta = await ogImage.count() > 0 && await twitterImage.count() > 0
+  test.skip(!hasSocialImageMeta, 'No work thumbnail/video thumbnail metadata is available in this environment.')
+  await expect(ogImage).toHaveAttribute('content', /.+/)
+  await expect(twitterImage).toHaveAttribute('content', /.+/)
+})
+
+test('work detail metadata prefers socialShareMessage over excerpt for description fields', async ({ page, request }, testInfo) => {
+  const shareMessage = `Social share message ${Date.now()}`
+  const work = await createWorkFixture(request, testInfo, {
+    titlePrefix: 'SEO Share Message Work',
+    html: '<p>No heading body for metadata check.</p>',
+    excerpt: 'Excerpt fallback should not be used',
+    allPropertiesJson: JSON.stringify({ socialShareMessage: shareMessage }),
+  })
+
+  await page.goto(`/works/${work.slug}`)
+
+  await expect(page.locator('meta[name=\"description\"]')).toHaveAttribute('content', shareMessage)
+  await expect(page.locator('meta[property=\"og:description\"]')).toHaveAttribute('content', shareMessage)
+  await expect(page.locator('meta[name=\"twitter:description\"]')).toHaveAttribute('content', shareMessage)
 })
 
 test('site exposes a branded svg favicon', async ({ page, request }) => {

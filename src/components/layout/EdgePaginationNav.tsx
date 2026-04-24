@@ -9,7 +9,7 @@ interface EdgePaginationNavProps {
 }
 
 function navButtonClass(side: 'left' | 'right', disabled: boolean) {
-  return `fixed top-1/2 z-40 hidden h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-border/80 bg-background/90 text-lg font-semibold shadow-sm backdrop-blur transition-colors md:inline-flex ${
+  return `fixed top-1/2 z-40 hidden h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-border/80 bg-background/90 text-lg font-semibold shadow-sm backdrop-blur transition-colors lg:inline-flex ${
     side === 'left' ? 'left-4 lg:left-6' : 'right-4 lg:right-6'
   } ${disabled ? 'cursor-not-allowed opacity-40' : 'hover:bg-accent'}`
 }

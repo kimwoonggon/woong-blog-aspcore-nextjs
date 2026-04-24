@@ -1,11 +1,9 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
-test('PF-061 shows the fallback email when the contact content has no mailto link', async ({ page }) => {
-  await page.goto('/contact?__qaNoMailto=1')
+test('contact page does not inject a fallback direct email block', async ({ page }) => {
+  await page.goto('/contact')
 
   await expect(page.getByRole('heading', { name: 'Contact', exact: true })).toBeVisible()
-  await expect(page.locator('main a[href="mailto:woong@example.com"]')).toBeVisible()
-  await expect(page.locator('main')).toContainText('Direct email')
-  await expect(page.locator('main')).toContainText('woong@example.com')
-  await expect(page.locator('main a[href="mailto:john@example.com"]')).toHaveCount(0)
+  await expect(page.locator('main')).not.toContainText('Direct email')
+  await expect(page.locator('main a[href="mailto:woong@example.com"]')).toHaveCount(0)
 })

@@ -9,6 +9,11 @@ public class WorkVideo
     public string? OriginalFileName { get; set; }
     public string? MimeType { get; set; }
     public long? FileSize { get; set; }
+    public int? Width { get; set; }
+    public int? Height { get; set; }
+    public double? DurationSeconds { get; set; }
+    public string? TimelinePreviewVttStorageKey { get; set; }
+    public string? TimelinePreviewSpriteStorageKey { get; set; }
     public int SortOrder { get; set; }
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 }

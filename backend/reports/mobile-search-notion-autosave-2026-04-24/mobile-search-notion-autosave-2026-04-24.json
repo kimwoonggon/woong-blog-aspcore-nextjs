@@ -1,0 +1,53 @@
+{
+  "taskSlug": "mobile-search-notion-autosave-2026-04-24",
+  "date": "2026-04-24",
+  "summary": {
+    "changed": [
+      "Moved mobile public search opening into the shared navbar and rendered the mobile search row under the sticky header.",
+      "Made the page-level public search form desktop-only.",
+      "Removed automatic compact-feed append on scroll and kept explicit load-more behavior.",
+      "Reduced notion autosave debounce and surfaced saving state immediately.",
+      "Added a short TTL cache for authenticated session preflight before repeated CSRF mutations."
+    ],
+    "notChanged": [
+      "Preview/card surfaces still use excerpt rather than full body by design.",
+      "Desktop pagination behavior was left intact.",
+      "Notion autosave still uses the existing full blog update API."
+    ]
+  },
+  "goals": {
+    "singleMobileSearchTrigger": true,
+    "mobileSearchKeepsScrollPosition": true,
+    "mobilePageSearchHiddenByDefault": true,
+    "noAutoInfiniteScrollAppend": true,
+    "notionAutosaveFeelsFaster": true,
+    "excerptBodyRootCauseClarified": true
+  },
+  "validations": [
+    {
+      "command": "npx vitest run src/test/navbar-mobile-nav.test.tsx src/test/public-responsive-feed.test.tsx src/test/blog-notion-workspace.test.tsx src/test/auth-csrf.test.ts",
+      "result": "pass",
+      "details": "23 tests"
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "pass"
+    },
+    {
+      "command": "npm run lint",
+      "result": "pass",
+      "details": "warnings only"
+    },
+    {
+      "command": "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 npx playwright test tests/mobile-public-navigation.spec.ts tests/public-blog-pagination.spec.ts tests/public-works-pagination.spec.ts tests/ui-admin-notion-autosave-info.spec.ts --workers=1",
+      "result": "pass",
+      "details": "13 tests"
+    }
+  ],
+  "risks": [
+    "Authenticated-session TTL caching may delay redirect by one mutation request compared with strict preflight on expired sessions.",
+    "The excerpt-versus-body preview policy may still need a product decision later.",
+    "Playwright internal webServer configuration still assumes localhost:8080 and was bypassed with external-server mode for this validation."
+  ],
+  "recommendation": "Accept this pass; next, split notion autosave to a content-only backend path if more latency reduction is needed."
+}

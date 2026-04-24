@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using WoongBlog.Api.Domain.Entities;
-using WoongBlog.Api.Infrastructure.Persistence;
-using WoongBlog.Api.Modules.Content.Works.Application.Abstractions;
+using WoongBlog.Infrastructure.Persistence;
+using WoongBlog.Application.Modules.Content.Works.Abstractions;
 
-namespace WoongBlog.Api.Modules.Content.Works.Persistence;
+namespace WoongBlog.Infrastructure.Modules.Content.Works.Persistence;
 
 public sealed class WorkCommandStore(WoongBlogDbContext dbContext) : IWorkCommandStore
 {

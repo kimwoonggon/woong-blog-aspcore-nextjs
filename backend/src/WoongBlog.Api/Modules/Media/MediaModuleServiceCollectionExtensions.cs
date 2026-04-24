@@ -1,3 +1,5 @@
+using WoongBlog.Infrastructure.Modules.Media;
+
 namespace WoongBlog.Api.Modules.Media;
 
 internal static class MediaModuleServiceCollectionExtensions

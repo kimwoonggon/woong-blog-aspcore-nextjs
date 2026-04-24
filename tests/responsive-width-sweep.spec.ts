@@ -1,6 +1,6 @@
 import { mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 const START_WIDTH = 200
 const END_WIDTH = 3800
@@ -28,7 +28,8 @@ test('capture homepage across a full width sweep and record layout metrics', asy
 
   for (let width = START_WIDTH; width <= END_WIDTH; width += STEP) {
     await page.setViewportSize({ width, height: HEIGHT })
-    await page.goto('/', { waitUntil: 'networkidle' })
+    await page.goto('/', { waitUntil: 'domcontentloaded' })
+    await page.getByRole('heading', { name: 'Works', exact: true }).waitFor({ state: 'visible' })
 
     const metric = await page.evaluate(() => {
       const header = document.querySelector('header')

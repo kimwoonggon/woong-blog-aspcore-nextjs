@@ -1,15 +1,23 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 test.use({ storageState: 'test-results/playwright/admin-storage-state.json' })
 test.setTimeout(90_000)
 
-async function createBlogForInlineFlow(page: import('@playwright/test').Page, title: string, body: string) {
+function isPublicRevalidationResponse(response: { url(): string; request(): { method(): string }; ok(): boolean }) {
+  return response.url().includes('/revalidate-public')
+    && response.request().method() === 'POST'
+    && response.ok()
+}
+
+async function createBlogForInlineFlow(page: import('./helpers/performance-test').Page, title: string, body: string) {
   await page.goto('/admin/blog/new')
   await page.getByLabel('Title').fill(title)
   await page.locator('.tiptap.ProseMirror').first().fill(body)
 
   const [response] = await Promise.all([
     page.waitForResponse((res) => res.url().includes('/api/admin/blogs') && res.request().method() === 'POST' && res.ok(), { timeout: 60_000 }),
+    page.waitForResponse(isPublicRevalidationResponse, { timeout: 60_000 }),
+    page.waitForURL(/\/admin\/blog(?:\?.*)?$/, { timeout: 60_000 }),
     page.getByRole('button', { name: /Create Post/i }).click(),
   ])
 
@@ -41,6 +49,7 @@ test('public blog inline editor clears beforeunload after save', async ({ page }
 
   await Promise.all([
     page.waitForResponse((res) => res.url().includes('/api/admin/blogs/') && res.request().method() === 'PUT' && res.ok(), { timeout: 60_000 }),
+    page.waitForResponse(isPublicRevalidationResponse, { timeout: 60_000 }),
     saveButton.click(),
   ])
 
@@ -71,6 +80,7 @@ test('public work inline editor clears beforeunload after save', async ({ page }
 
   await Promise.all([
     page.waitForResponse((res) => res.url().includes('/api/admin/works/') && res.request().method() === 'PUT' && res.ok(), { timeout: 60_000 }),
+    page.waitForResponse(isPublicRevalidationResponse, { timeout: 60_000 }),
     saveButton.click(),
   ])
 

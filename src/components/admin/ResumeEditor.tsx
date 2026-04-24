@@ -9,6 +9,8 @@ import { fetchWithCsrf } from '@/lib/api/auth'
 import { toast } from 'sonner'
 import { getBrowserApiBaseUrl } from '@/lib/api/browser'
 import { getErrorMessage } from '@/lib/error-message'
+import { revalidatePublicPathsAfterMutation } from '@/lib/public-revalidation-client'
+import { getResumePublicRevalidationPaths } from '@/lib/public-revalidation-paths'
 
 interface Asset {
     id: string
@@ -67,6 +69,7 @@ export function ResumeEditor({ resumeAsset }: ResumeEditorProps) {
             if (!settingsRes.ok) throw new Error('Failed to link resume to settings')
 
             setAsset({ id: uploadData.id, bucket: 'public-resume', path: uploadData.path })
+            await revalidatePublicPathsAfterMutation(getResumePublicRevalidationPaths())
             toast.success('Resume uploaded and linked!', { id: toastId })
             router.refresh()
         } catch (error: unknown) {
@@ -101,6 +104,7 @@ export function ResumeEditor({ resumeAsset }: ResumeEditorProps) {
             }
 
             setAsset(null)
+            await revalidatePublicPathsAfterMutation(getResumePublicRevalidationPaths())
             toast.success('Resume removed successfully!', { id: toastId })
             router.refresh()
         } catch (error: unknown) {

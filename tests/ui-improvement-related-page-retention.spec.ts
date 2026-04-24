@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 test('blog detail prev-next keeps relatedPage in the url', async ({ page }) => {
   await page.goto('/blog/seeded-blog?relatedPage=5')

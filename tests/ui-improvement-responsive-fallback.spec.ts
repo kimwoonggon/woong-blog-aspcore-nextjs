@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 test('narrow but tall viewports still use the compact card typography fallback', async ({ page }) => {
   await page.setViewportSize({ width: 480, height: 1024 })

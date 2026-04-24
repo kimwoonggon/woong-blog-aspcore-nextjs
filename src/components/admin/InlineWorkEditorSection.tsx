@@ -36,7 +36,7 @@ export function InlineWorkEditorSection({
 
     startTransition(async () => {
       try {
-        await deleteAdminWork(workId)
+        await deleteAdminWork(workId, initialWork?.slug)
         toast.success('Work deleted')
         router.push(afterDeleteHref)
         router.refresh()

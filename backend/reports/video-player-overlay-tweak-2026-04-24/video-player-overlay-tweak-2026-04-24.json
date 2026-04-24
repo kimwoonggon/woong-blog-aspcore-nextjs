@@ -1,0 +1,24 @@
+{
+  "task": "video-player-overlay-tweak-2026-04-24",
+  "summary": [
+    "Added a centered paused-state play overlay for uploaded/HLS videos.",
+    "Shrank the displayed timeline preview bubble with a dedicated preview scale constant.",
+    "Updated unit and Playwright coverage for the new player behavior."
+  ],
+  "not_changed": [
+    "Autoplay policy",
+    "Backend preview generation",
+    "YouTube player behavior"
+  ],
+  "validations": [
+    "npx vitest run src/test/work-video-player.test.tsx",
+    "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 npx playwright test tests/public-work-videos.spec.ts --grep \"PF-044\" --workers=1",
+    "npm run typecheck",
+    "npm run lint"
+  ],
+  "risks": [
+    "The center overlay reappears on any pause, not only before first play.",
+    "Preview size tuning is now centralized in one frontend constant and may need retuning later."
+  ],
+  "recommendation": "Adjust the preview scale constant in WorkVideoPlayer if you want further size tuning."
+}

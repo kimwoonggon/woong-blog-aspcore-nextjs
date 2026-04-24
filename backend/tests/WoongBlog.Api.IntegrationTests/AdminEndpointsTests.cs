@@ -1,7 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using Microsoft.Extensions.DependencyInjection;
-using WoongBlog.Api.Infrastructure.Persistence;
+using WoongBlog.Infrastructure.Persistence;
 
 namespace WoongBlog.Api.Tests;
 

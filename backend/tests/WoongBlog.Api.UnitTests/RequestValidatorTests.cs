@@ -1,9 +1,9 @@
-using WoongBlog.Api.Modules.Content.Blogs.Application.CreateBlog;
-using WoongBlog.Api.Modules.Content.Blogs.Application.GetBlogBySlug;
-using WoongBlog.Api.Modules.Content.Pages.Application.UpdatePage;
-using WoongBlog.Api.Modules.Content.Works.Application.CreateWork;
-using WoongBlog.Api.Modules.Content.Works.Application.GetWorkBySlug;
-using WoongBlog.Api.Modules.Site.Application.UpdateSiteSettings;
+using WoongBlog.Application.Modules.Content.Blogs.CreateBlog;
+using WoongBlog.Application.Modules.Content.Blogs.GetBlogBySlug;
+using WoongBlog.Application.Modules.Content.Pages.UpdatePage;
+using WoongBlog.Application.Modules.Content.Works.CreateWork;
+using WoongBlog.Application.Modules.Content.Works.GetWorkBySlug;
+using WoongBlog.Application.Modules.Site.UpdateSiteSettings;
 
 namespace WoongBlog.Api.Tests;
 
@@ -38,6 +38,7 @@ public class RequestValidatorTests
         var validator = new CreateBlogCommandValidator();
         var result = validator.Validate(new CreateBlogCommand(
             new string('t', 201),
+            null,
             [new string('x', 51)],
             false,
             "{\"html\":\"ok\"}"

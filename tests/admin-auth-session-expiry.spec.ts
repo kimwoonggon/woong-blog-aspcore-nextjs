@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 import { loginAsLocalAdmin } from './helpers/auth'
 
 test('expired admin sessions redirect protected routes back to login', async ({ page }) => {

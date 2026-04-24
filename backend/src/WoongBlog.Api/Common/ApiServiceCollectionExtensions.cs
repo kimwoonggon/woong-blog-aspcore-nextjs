@@ -1,5 +1,5 @@
 using FluentValidation;
-using WoongBlog.Api.Infrastructure.Validation;
+using WoongBlog.Infrastructure.Validation;
 
 namespace WoongBlog.Api.Common;
 

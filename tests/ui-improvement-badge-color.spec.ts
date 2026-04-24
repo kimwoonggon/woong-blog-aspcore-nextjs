@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 import { contrastRatio, getColorChannels, gotoWithTheme } from './helpers/ui-improvement'
 
 test('blog detail date badge uses brand navy', async ({ page }) => {

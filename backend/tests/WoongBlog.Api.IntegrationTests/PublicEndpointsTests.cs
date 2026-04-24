@@ -2,7 +2,7 @@ using System.Net;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using WoongBlog.Api.Domain.Entities;
-using WoongBlog.Api.Infrastructure.Persistence;
+using WoongBlog.Infrastructure.Persistence;
 
 namespace WoongBlog.Api.Tests;
 
@@ -164,6 +164,61 @@ public class PublicEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
+    public async Task GetPublicWorks_QueryOnly_UsesUnifiedSearch()
+    {
+        var client = _factory.CreateClient();
+        var bodyToken = $"works-unified-{Guid.NewGuid():N}";
+        var title = $"Unified Works Title {Guid.NewGuid():N}";
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
+            dbContext.Works.AddRange(
+                new Work
+                {
+                    Id = Guid.NewGuid(),
+                    Title = title,
+                    Slug = $"unified-works-title-{Guid.NewGuid():N}",
+                    Excerpt = "title only",
+                    Category = "search",
+                    Tags = ["search"],
+                    Published = true,
+                    PublishedAt = DateTimeOffset.UtcNow.AddYears(-1),
+                    ContentJson = JsonSerializer.Serialize(new { html = "<p>plain body</p>" }),
+                    AllPropertiesJson = "{}",
+                    CreatedAt = DateTimeOffset.UtcNow,
+                    UpdatedAt = DateTimeOffset.UtcNow
+                },
+                new Work
+                {
+                    Id = Guid.NewGuid(),
+                    Title = $"Other Work {Guid.NewGuid():N}",
+                    Slug = $"unified-works-body-{Guid.NewGuid():N}",
+                    Excerpt = $"contains {bodyToken}",
+                    Category = "search",
+                    Tags = ["search"],
+                    Published = true,
+                    PublishedAt = DateTimeOffset.UtcNow.AddYears(-1),
+                    ContentJson = JsonSerializer.Serialize(new { html = $"<p>{bodyToken}</p>" }),
+                    AllPropertiesJson = "{}",
+                    CreatedAt = DateTimeOffset.UtcNow,
+                    UpdatedAt = DateTimeOffset.UtcNow
+                });
+            await dbContext.SaveChangesAsync();
+        }
+
+        var titleResponse = await client.GetAsync($"/api/public/works?page=1&pageSize=12&query={Uri.EscapeDataString(title)}");
+        titleResponse.EnsureSuccessStatusCode();
+        var titleBody = await titleResponse.Content.ReadAsStringAsync();
+        Assert.Contains(title, titleBody, StringComparison.OrdinalIgnoreCase);
+
+        var contentResponse = await client.GetAsync($"/api/public/works?page=1&pageSize=12&query={Uri.EscapeDataString(bodyToken)}");
+        contentResponse.EnsureSuccessStatusCode();
+        var contentBody = await contentResponse.Content.ReadAsStringAsync();
+        Assert.Contains(bodyToken, contentBody, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task GetPublicBlogs_ReturnsPagedPayloadShape()
     {
         var client = _factory.CreateClient();
@@ -243,6 +298,57 @@ public class PublicEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         var body = await response.Content.ReadAsStringAsync();
         Assert.Contains(title, body, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("\"totalItems\":1", body, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task GetPublicBlogs_QueryOnly_UsesUnifiedSearch()
+    {
+        var client = _factory.CreateClient();
+        var bodyToken = $"blogs-unified-{Guid.NewGuid():N}";
+        var title = $"Unified Blogs Title {Guid.NewGuid():N}";
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
+            dbContext.Blogs.AddRange(
+                new Blog
+                {
+                    Id = Guid.NewGuid(),
+                    Title = title,
+                    Slug = $"unified-blogs-title-{Guid.NewGuid():N}",
+                    Excerpt = "title only",
+                    Tags = ["search"],
+                    Published = true,
+                    PublishedAt = DateTimeOffset.UtcNow.AddYears(-1),
+                    ContentJson = JsonSerializer.Serialize(new { html = "<p>plain body</p>" }),
+                    CreatedAt = DateTimeOffset.UtcNow,
+                    UpdatedAt = DateTimeOffset.UtcNow
+                },
+                new Blog
+                {
+                    Id = Guid.NewGuid(),
+                    Title = $"Other Blog {Guid.NewGuid():N}",
+                    Slug = $"unified-blogs-body-{Guid.NewGuid():N}",
+                    Excerpt = $"contains {bodyToken}",
+                    Tags = ["search"],
+                    Published = true,
+                    PublishedAt = DateTimeOffset.UtcNow.AddYears(-1),
+                    ContentJson = JsonSerializer.Serialize(new { html = $"<p>{bodyToken}</p>" }),
+                    CreatedAt = DateTimeOffset.UtcNow,
+                    UpdatedAt = DateTimeOffset.UtcNow
+                });
+            await dbContext.SaveChangesAsync();
+        }
+
+        var titleResponse = await client.GetAsync($"/api/public/blogs?page=1&pageSize=12&query={Uri.EscapeDataString(title)}");
+        titleResponse.EnsureSuccessStatusCode();
+        var titleBody = await titleResponse.Content.ReadAsStringAsync();
+        Assert.Contains(title, titleBody, StringComparison.OrdinalIgnoreCase);
+
+        var contentResponse = await client.GetAsync($"/api/public/blogs?page=1&pageSize=12&query={Uri.EscapeDataString(bodyToken)}");
+        contentResponse.EnsureSuccessStatusCode();
+        var contentBody = await contentResponse.Content.ReadAsStringAsync();
+        Assert.Contains(bodyToken, contentBody, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

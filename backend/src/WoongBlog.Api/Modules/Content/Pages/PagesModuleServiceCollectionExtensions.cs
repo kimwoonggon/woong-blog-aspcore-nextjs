@@ -1,3 +1,5 @@
+using WoongBlog.Infrastructure.Modules.Content.Pages;
+
 namespace WoongBlog.Api.Modules.Content.Pages;
 
 internal static class PagesModuleServiceCollectionExtensions

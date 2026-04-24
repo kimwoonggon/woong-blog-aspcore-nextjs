@@ -11,6 +11,8 @@ export interface AdminAiRuntimeConfig {
   batchConcurrency: number
   batchCompletedRetentionDays: number
   defaultSystemPrompt: string
+  defaultBlogFixPrompt?: string
+  defaultWorkEnrichPrompt?: string
 }
 
 export interface BlogAiBatchJobSummary {

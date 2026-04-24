@@ -1,13 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using WoongBlog.Api.Domain.Entities;
-using WoongBlog.Api.Infrastructure.Persistence;
-using WoongBlog.Api.Modules.Composition.Application.Abstractions;
-using WoongBlog.Api.Modules.Composition.Application.GetHome;
-using WoongBlog.Api.Modules.Content.Blogs.Application.GetBlogs;
-using WoongBlog.Api.Modules.Content.Works.Application.GetWorks;
-using WoongBlog.Api.Modules.Content.Works.Application.Support;
+using WoongBlog.Infrastructure.Persistence;
+using WoongBlog.Application.Modules.Composition.Abstractions;
+using WoongBlog.Application.Modules.Composition.GetHome;
+using WoongBlog.Application.Modules.Content.Blogs.GetBlogs;
+using WoongBlog.Application.Modules.Content.Works.GetWorks;
+using WoongBlog.Application.Modules.Content.Works.Support;
 
-namespace WoongBlog.Api.Modules.Composition.Persistence;
+namespace WoongBlog.Infrastructure.Modules.Composition.Persistence;
 
 public sealed class HomeQueryStore(WoongBlogDbContext dbContext) : IHomeQueryStore
 {
@@ -89,7 +89,7 @@ public sealed class HomeQueryStore(WoongBlogDbContext dbContext) : IHomeQuerySto
             .AsNoTracking()
             .Where(x => x.Published)
             .OrderByDescending(x => x.PublishedAt)
-            .Take(2)
+            .Take(6)
             .ToListAsync(cancellationToken);
 
         return recentPosts.Select(post => new BlogCardDto(

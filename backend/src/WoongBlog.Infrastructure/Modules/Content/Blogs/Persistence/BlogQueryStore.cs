@@ -1,15 +1,15 @@
 using Microsoft.EntityFrameworkCore;
 using WoongBlog.Api.Domain.Entities;
-using WoongBlog.Api.Infrastructure.Persistence;
-using WoongBlog.Api.Modules.Composition.Application.GetHome;
-using WoongBlog.Api.Modules.Content.Blogs.Application.Abstractions;
-using WoongBlog.Api.Modules.Content.Blogs.Application.GetAdminBlogById;
-using WoongBlog.Api.Modules.Content.Blogs.Application.GetAdminBlogs;
-using WoongBlog.Api.Modules.Content.Blogs.Application.GetBlogBySlug;
-using WoongBlog.Api.Modules.Content.Blogs.Application.GetBlogs;
-using WoongBlog.Api.Modules.Content.Common.Application.Support;
+using WoongBlog.Infrastructure.Persistence;
+using WoongBlog.Application.Modules.Composition.GetHome;
+using WoongBlog.Application.Modules.Content.Blogs.Abstractions;
+using WoongBlog.Application.Modules.Content.Blogs.GetAdminBlogById;
+using WoongBlog.Application.Modules.Content.Blogs.GetAdminBlogs;
+using WoongBlog.Application.Modules.Content.Blogs.GetBlogBySlug;
+using WoongBlog.Application.Modules.Content.Blogs.GetBlogs;
+using WoongBlog.Application.Modules.Content.Common.Support;
 
-namespace WoongBlog.Api.Modules.Content.Blogs.Persistence;
+namespace WoongBlog.Infrastructure.Modules.Content.Blogs.Persistence;
 
 public sealed class BlogQueryStore(WoongBlogDbContext dbContext) : IBlogQueryStore
 {
@@ -132,8 +132,11 @@ public sealed class BlogQueryStore(WoongBlogDbContext dbContext) : IBlogQuerySto
             return query;
         }
 
-        return searchMode == ContentSearchMode.Content
-            ? query.Where(x => x.SearchText.Contains(normalizedQuery))
-            : query.Where(x => x.SearchTitle.Contains(normalizedQuery));
+        return searchMode switch
+        {
+            ContentSearchMode.Title => query.Where(x => x.SearchTitle.Contains(normalizedQuery)),
+            ContentSearchMode.Content => query.Where(x => x.SearchText.Contains(normalizedQuery)),
+            _ => query.Where(x => x.SearchTitle.Contains(normalizedQuery) || x.SearchText.Contains(normalizedQuery))
+        };
     }
 }

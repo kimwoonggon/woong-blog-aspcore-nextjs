@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 import { clickHeaderNavLink } from './helpers/navigation'
 
 test('E2E-003 visitor can move from home to works, through related content, and into blog details', async ({ page }) => {

@@ -1,0 +1,57 @@
+{
+  "slug": "e2e-latency-instrumentation",
+  "date": "2026-04-22",
+  "summary": "Implemented Playwright E2E latency metric collection, explicit hard-budget measured steps, latency summary generation, and focused response-time coverage.",
+  "changed": [
+    "Added Playwright performance fixture and latency helper",
+    "Added performance budget configuration",
+    "Added E2E latency summary and wrapper scripts",
+    "Switched root Playwright specs to the performance fixture",
+    "Added explicit measured public, admin, and AI latency flows",
+    "Added helper-level Vitest coverage",
+    "Updated E2E npm scripts for latency summary generation"
+  ],
+  "intentionallyNotChanged": [
+    "Production runtime behavior",
+    "Backend API semantics",
+    "Auth/security semantics",
+    "UI redesign",
+    "Parallel worker strategy"
+  ],
+  "validations": [
+    {
+      "command": "npm run typecheck",
+      "result": "passed"
+    },
+    {
+      "command": "npm test -- --run",
+      "result": "passed: 53 files, 270 tests"
+    },
+    {
+      "command": "npm run build",
+      "result": "passed"
+    },
+    {
+      "command": "npx eslint src tests playwright.config.ts next.config.ts eslint.config.mjs",
+      "result": "passed with 3 existing warnings"
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    },
+    {
+      "command": "npm run test:e2e:latency",
+      "result": "passed: 12 tests, 12 latency artifacts, 0 budget failures, 0 warnings"
+    },
+    {
+      "command": "npm run test:e2e",
+      "result": "passed: 569 passed, 8 skipped, 0 failed, 575 latency artifacts, 0 hard budget failures, 89 warnings"
+    }
+  ],
+  "risks": [
+    "Full-suite summary contains 89 warning-level latency observations",
+    "Heavy media/corpus/visual specs remain measurement-first until thresholds are calibrated from multiple full-run summaries",
+    "Browser interaction timings should be treated as trend data outside explicit measured step budgets"
+  ],
+  "recommendation": "Keep the latency system and run npm run test:e2e:latency for performance-sensitive changes. The full 577-test E2E suite is green against the compose stack with latency artifacts generated."
+}

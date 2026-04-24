@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { ReactNode } from 'react'
 import { BlogNotionWorkspace } from '@/components/admin/BlogNotionWorkspace'
@@ -33,6 +33,10 @@ vi.mock('@/lib/api/auth', () => ({
 
 vi.mock('@/lib/api/browser', () => ({
   getBrowserApiBaseUrl: () => 'http://localhost/api',
+}))
+
+vi.mock('@/lib/public-revalidation-client', () => ({
+  revalidatePublicPathsAfterMutation: vi.fn(async () => undefined),
 }))
 
 vi.mock('@/lib/api/admin-ai', () => ({
@@ -78,11 +82,24 @@ vi.mock('@/lib/api/admin-ai', () => ({
 }))
 
 vi.mock('@/components/admin/TiptapEditor', () => ({
-  TiptapEditor: () => <div data-testid="mock-tiptap-editor" />,
+  TiptapEditor: ({
+    content,
+    onChange,
+  }: {
+    content: string
+    onChange: (value: string) => void
+  }) => (
+    <textarea
+      data-testid="mock-tiptap-editor"
+      value={content}
+      onChange={(event) => onChange(event.target.value)}
+    />
+  ),
 }))
 
 describe('BlogNotionWorkspace selection state', () => {
   afterEach(() => {
+    vi.useRealTimers()
     vi.clearAllMocks()
   })
 
@@ -144,6 +161,76 @@ describe('BlogNotionWorkspace selection state', () => {
       'http://localhost/api/admin/blogs/blog-1',
       expect.objectContaining({
         method: 'PUT',
+      }),
+    )
+  })
+
+  it('waits for the autosave interval before saving notion content', async () => {
+    vi.useFakeTimers()
+    vi.mocked(fetchWithCsrf).mockResolvedValue({
+      ok: true,
+      text: async () => '',
+    } as Response)
+
+    render(
+      <BlogNotionWorkspace
+        blogs={blogs}
+        activeBlog={blogs[0]}
+      />,
+    )
+
+    await act(async () => {
+      fireEvent.change(screen.getByTestId('mock-tiptap-editor'), { target: { value: '<p>Updated body</p>' } })
+    })
+
+    expect(screen.getByTestId('notion-save-state')).toHaveTextContent('Waiting')
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(900)
+    })
+
+    expect(fetchWithCsrf).not.toHaveBeenCalled()
+    expect(screen.getByTestId('notion-save-state')).toHaveTextContent('Waiting')
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(100)
+    })
+
+    expect(fetchWithCsrf).toHaveBeenCalledWith(
+      'http://localhost/api/admin/blogs/blog-1',
+      expect.objectContaining({
+        method: 'PUT',
+      }),
+    )
+
+    await act(async () => {
+      await Promise.resolve()
+    })
+
+    expect(screen.getByTestId('notion-save-state')).toHaveTextContent(/Saving...|Saved/)
+  })
+
+  it('saves immediately when Ctrl+S is pressed', async () => {
+    vi.mocked(fetchWithCsrf).mockResolvedValue({
+      ok: true,
+      text: async () => '',
+    } as Response)
+
+    render(
+      <BlogNotionWorkspace
+        blogs={blogs}
+        activeBlog={blogs[0]}
+      />,
+    )
+
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Saved with shortcut' } })
+    fireEvent.keyDown(window, { key: 's', ctrlKey: true })
+
+    expect(fetchWithCsrf).toHaveBeenCalledWith(
+      'http://localhost/api/admin/blogs/blog-1',
+      expect.objectContaining({
+        method: 'PUT',
+        body: expect.stringContaining('Saved with shortcut'),
       }),
     )
   })

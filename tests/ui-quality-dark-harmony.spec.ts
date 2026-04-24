@@ -1,12 +1,13 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 import { getColorChannels, gotoWithTheme, rgbToLuminance } from './helpers/ui-improvement'
 
 test('VA-002 dark mode keeps body, section, and card surfaces tonally separated', async ({ page }) => {
   await gotoWithTheme(page, '/')
 
   const body = page.locator('body')
-  const featured = page.getByTestId('featured-works-section')
-  const recent = page.getByTestId('recent-posts-section')
+  const main = page.locator('#main-content')
+  const featured = main.getByTestId('featured-works-section').first()
+  const recent = main.getByTestId('recent-posts-section').first()
 
   await expect(featured).toBeVisible()
   await expect(recent).toBeVisible()

@@ -1,0 +1,48 @@
+{
+  "taskSlug": "notion-video-controls-2026-04-24",
+  "date": "2026-04-24",
+  "summary": {
+    "changed": [
+      "Changed notion autosave to a true idle debounce of about 1 second.",
+      "Added Ctrl+S / Cmd+S immediate save in notion view.",
+      "Added a custom work video seek bar with click seek and hover preview support when preview assets are present.",
+      "Added desktop resize modes for public works detail videos."
+    ],
+    "notChanged": [
+      "Backend preview generation was not reworked beyond the current preview asset pipeline.",
+      "Native browser video controls remain in place; the custom seek bar is additive."
+    ]
+  },
+  "goals": {
+    "notion_autosave_1s": true,
+    "notion_shortcut_save": true,
+    "video_hover_preview": true,
+    "video_desktop_resize": true
+  },
+  "validations": [
+    {
+      "command": "npx vitest run src/test/blog-notion-workspace.test.tsx src/test/work-video-player.test.tsx src/test/auth-csrf.test.ts",
+      "result": "pass",
+      "details": "24 tests"
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "pass"
+    },
+    {
+      "command": "npm run lint",
+      "result": "pass",
+      "details": "warnings only"
+    },
+    {
+      "command": "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 npx playwright test tests/ui-admin-notion-autosave-info.spec.ts tests/public-work-videos.spec.ts --workers=1",
+      "result": "pass",
+      "details": "8 passed, 1 skipped"
+    }
+  ],
+  "risks": [
+    "Hover preview quality is still limited by current backend preview asset generation in some environments.",
+    "The custom seek bar is supplementary rather than a full custom player replacement."
+  ],
+  "recommendation": "Keep this pass and only pursue backend preview pipeline upgrades if richer scrub previews are still needed."
+}

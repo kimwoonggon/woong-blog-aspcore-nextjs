@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 test('works cards use the richer no-image placeholder treatment', async ({ page }) => {
   await page.goto('/works?__qaNoImage=1')

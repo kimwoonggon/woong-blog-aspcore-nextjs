@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 import { expectDarkHtml, getStyle, selectTheme } from './helpers/ui-improvement'
 
 test('light mode sets html color-scheme to light', async ({ page }) => {

@@ -1,0 +1,54 @@
+{
+  "title": "Public Cache Boundary Audit",
+  "date": "2026-04-22",
+  "summary": "Makes public read fetches revalidate-friendly and decouples contact/introduction/resume admin affordances from server-side session checks.",
+  "changed": [
+    "Added shared public content revalidate fetch options.",
+    "Added public server API base helper that avoids next/headers when an absolute API origin is configured.",
+    "Changed public read helpers from no-store to next revalidate.",
+    "Added PublicAdminClientGate.",
+    "Moved contact/introduction/resume admin affordance checks to client-side gate.",
+    "Set revalidate=60 on home/contact/introduction/resume.",
+    "Updated focused unit tests."
+  ],
+  "cacheFriendlyRoutes": [
+    "/",
+    "/contact",
+    "/introduction",
+    "/resume"
+  ],
+  "intentionallyDynamicRoutes": {
+    "/blog": "Search/pagination, local QA hooks, and server-side admin create affordance remain.",
+    "/blog/[slug]": "Server-side admin detail payload loading remains for inline editing.",
+    "/works": "Search/pagination, local QA hooks, and server-side admin create affordance remain.",
+    "/works/[slug]": "Server-side admin detail payload loading remains for inline editing."
+  },
+  "validations": [
+    {
+      "command": "npx vitest run src/test/public-api-clients.test.ts src/test/public-api-contracts.test.ts src/test/public-admin-rendering.test.tsx src/test/public-admin-client-gate.test.tsx --pool=threads",
+      "result": "4 files passed, 24 tests passed"
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "passed"
+    },
+    {
+      "command": "npm run lint",
+      "result": "passed with 5 existing warnings"
+    },
+    {
+      "command": "npm run build",
+      "result": "passed"
+    },
+    {
+      "command": "focused Playwright via local dev server",
+      "result": "blocked by unavailable Docker/nginx API target at 127.0.0.1:3000"
+    }
+  ],
+  "risks": [
+    "Default Docker build without absolute API origin still marks public routes dynamic to avoid requiring a live backend at image build time.",
+    "Client-side admin gates hydrate after initial page render.",
+    "Blog and works server-side admin affordances remain to be decoupled in a later pass."
+  ],
+  "recommendation": "Proceed with this focused public read caching boundary improvement; handle blog/works admin affordance decoupling separately."
+}

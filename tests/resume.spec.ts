@@ -1,8 +1,9 @@
 import path from 'path'
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 test('resume page exposes a download action', async ({ page }) => {
-  await page.goto('/resume')
+  const response = await page.goto('/resume')
+  expect(response?.status()).toBe(200)
   await expect(page.getByRole('heading', { name: 'Resume', exact: true })).toBeVisible()
 
   const downloadLink = page.getByRole('link', { name: /Download/i })
@@ -49,7 +50,8 @@ test('resume page exposes a download action', async ({ page }) => {
 
 test('resume page keeps the PDF viewer usable on mobile', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
-  await page.goto('/resume')
+  const response = await page.goto('/resume')
+  expect(response?.status()).toBe(200)
 
   await expect(page.getByRole('heading', { name: 'Resume', exact: true })).toBeVisible()
   await expect(page.getByTestId('resume-pdf-viewer')).toBeVisible()

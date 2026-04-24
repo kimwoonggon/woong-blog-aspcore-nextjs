@@ -1,5 +1,6 @@
-using WoongBlog.Api.Modules.AI.Application;
-using WoongBlog.Api.Modules.AI.Application.BatchJobs;
+using WoongBlog.Application.Modules.AI;
+using WoongBlog.Application.Modules.AI.BatchJobs;
+using WoongBlog.Infrastructure.Modules.AI;
 
 namespace WoongBlog.Api.Modules.AI;
 

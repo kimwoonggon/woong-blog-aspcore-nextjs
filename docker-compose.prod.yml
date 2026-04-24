@@ -6,6 +6,7 @@ services:
       PORT: 3000
       HOSTNAME: 0.0.0.0
       INTERNAL_API_ORIGIN: http://backend:8080
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
       ENABLE_LOCAL_ADMIN_SHORTCUT: "false"
     expose:
       - "3000"

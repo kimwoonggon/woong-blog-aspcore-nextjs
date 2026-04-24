@@ -1,0 +1,167 @@
+
+import Link from 'next/link'
+import { Search, X } from 'lucide-react'
+import { PublicWorksListAdminCreate } from '@/components/admin/PublicWorksListAdminCreate'
+import { PublicAdminClientGate } from '@/components/admin/PublicAdminClientGate'
+import { PublicAdminLink } from '@/components/admin/PublicAdminLink'
+import { PublicResponsiveFeed } from '@/components/content/PublicResponsiveFeed'
+import { EdgePaginationNav } from '@/components/layout/EdgePaginationNav'
+import { PublicPagination } from '@/components/layout/PublicPagination'
+import { ResponsivePageSizeSync } from '@/components/layout/ResponsivePageSizeSync'
+import { fetchPublicWorks, type PublicWorkSearchParams } from '@/lib/api/works'
+import { createPublicMetadata } from '@/lib/seo'
+
+export const revalidate = 60
+export const metadata = createPublicMetadata({
+    title: 'Works',
+    description: 'Selected portfolio work, projects, and technical case studies related to Woonggon Kim.',
+    path: '/works',
+})
+
+interface PageProps {
+    searchParams?: Promise<{
+        page?: string
+        pageSize?: string
+        query?: string
+        searchMode?: string
+        focusSearch?: string
+        __qaEmpty?: string
+        __qaNoImage?: string
+    }>
+}
+
+const DESKTOP_PAGE_SIZE = 8
+const TABLET_PAGE_SIZE = 6
+const MOBILE_PAGE_SIZE = 4
+const INFINITE_PAGE_SIZE = 10
+const ENABLE_LOCAL_QA_FLAGS = process.env.ENABLE_LOCAL_ADMIN_SHORTCUT === 'true' || process.env.NODE_ENV !== 'production'
+
+function resolveRequestedPageSize(pageSizeParam?: string) {
+    const parsedPageSize = Number.parseInt(pageSizeParam ?? String(DESKTOP_PAGE_SIZE), 10) || DESKTOP_PAGE_SIZE
+    const safePageSize = Math.max(1, parsedPageSize)
+    const supportedPageSizes = new Set([DESKTOP_PAGE_SIZE, TABLET_PAGE_SIZE, MOBILE_PAGE_SIZE])
+
+    if (safePageSize < MOBILE_PAGE_SIZE || supportedPageSizes.has(safePageSize)) {
+        return safePageSize
+    }
+
+    return DESKTOP_PAGE_SIZE
+}
+
+export default async function WorksPage({ searchParams }: PageProps) {
+    const resolvedSearchParams = await searchParams
+    const qaEmptyWorks = resolvedSearchParams?.__qaEmpty === '1' && ENABLE_LOCAL_QA_FLAGS
+    const qaNoImageWorks = resolvedSearchParams?.__qaNoImage === '1' && ENABLE_LOCAL_QA_FLAGS
+    const currentPage = Math.max(1, Number.parseInt(resolvedSearchParams?.page ?? '1', 10) || 1)
+    const currentPageSize = resolveRequestedPageSize(resolvedSearchParams?.pageSize)
+    const searchQuery = resolvedSearchParams?.query?.trim() ?? ''
+    const shouldFocusSearch = resolvedSearchParams?.focusSearch === '1'
+    const legacySearchMode = resolvedSearchParams?.searchMode === 'content' || resolvedSearchParams?.searchMode === 'title'
+        ? resolvedSearchParams.searchMode
+        : undefined
+    const queryParams: PublicWorkSearchParams | undefined = searchQuery ? { query: searchQuery, legacySearchMode } : undefined
+    const paginationQueryParams: Record<string, string> | undefined = searchQuery ? { query: searchQuery } : undefined
+    const [worksPayload, mobileWorksPayload] = qaEmptyWorks
+        ? [
+            { items: [], page: 1, pageSize: currentPageSize, totalItems: 0, totalPages: 1 },
+            { items: [], page: 1, pageSize: INFINITE_PAGE_SIZE, totalItems: 0, totalPages: 1 },
+        ]
+        : await Promise.all([
+            fetchPublicWorks(currentPage, currentPageSize, queryParams),
+            fetchPublicWorks(1, INFINITE_PAGE_SIZE, queryParams),
+        ])
+    const totalPages = Math.max(1, worksPayload.totalPages)
+    const page = worksPayload.page
+    const pagedWorks = qaNoImageWorks
+        ? worksPayload.items.map((work) => ({
+            ...work,
+            thumbnailUrl: null,
+        }))
+        : worksPayload.items
+    const returnToParams = new URLSearchParams({
+        page: String(page),
+        pageSize: String(currentPageSize),
+    })
+    if (searchQuery) {
+        returnToParams.set('query', searchQuery)
+    }
+    const returnTo = encodeURIComponent(`/works?${returnToParams.toString()}`)
+
+    return (
+        <div className="container mx-auto max-w-7xl px-4 py-8 md:px-6 md:py-12">
+            <EdgePaginationNav
+                pathname="/works"
+                currentPage={page}
+                totalPages={totalPages}
+                pageSize={currentPageSize}
+                queryParams={paginationQueryParams}
+            />
+            <ResponsivePageSizeSync
+                desktopPageSize={DESKTOP_PAGE_SIZE}
+                tabletPageSize={TABLET_PAGE_SIZE}
+                mobilePageSize={MOBILE_PAGE_SIZE}
+                infiniteBelowDesktop
+                infinitePageSize={INFINITE_PAGE_SIZE}
+            />
+            <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <h1 className="text-3xl font-heading font-bold text-foreground md:text-4xl">Works</h1>
+                <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+                    <form action="/works" method="get" role="search" className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                        <label htmlFor="work-search" className="sr-only">Search work</label>
+                        <div className="flex min-h-11 items-center gap-2 rounded-full border border-border bg-background px-3 transition-colors focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/20">
+                            <Search className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                            <input
+                                id="work-search"
+                                name="query"
+                                defaultValue={searchQuery}
+                                autoFocus={shouldFocusSearch}
+                                placeholder="Search work"
+                                className="w-full min-w-0 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground sm:w-56"
+                            />
+                        </div>
+                        <button
+                            type="submit"
+                            aria-label="Search works"
+                            title="Search works"
+                            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full bg-foreground p-2 text-sm font-semibold text-background transition-colors hover:bg-foreground/90"
+                        >
+                            <Search className="h-4 w-4" aria-hidden="true" />
+                        </button>
+                        {searchQuery ? (
+                            <Link
+                                href="/works"
+                                aria-label="Clear works search"
+                                title="Clear works search"
+                                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                            >
+                                <X className="h-4 w-4" aria-hidden="true" />
+                                Clear
+                            </Link>
+                        ) : null}
+                    </form>
+                    <PublicAdminClientGate>
+                        <PublicAdminLink href="/admin/works" label="작업 관리" canShow variant="manage" />
+                    </PublicAdminClientGate>
+                </div>
+            </div>
+            <PublicWorksListAdminCreate />
+            <PublicResponsiveFeed
+                kind="works"
+                query={searchQuery}
+                desktopPayload={{ ...worksPayload, items: pagedWorks }}
+                mobileInitialPayload={mobileWorksPayload}
+                desktopReturnTo={returnTo}
+            />
+            <div className="mt-6 hidden rounded-2xl border border-border/70 bg-background/80 p-4 shadow-sm lg:block">
+                <PublicPagination
+                    pathname="/works"
+                    currentPage={page}
+                    totalPages={totalPages}
+                    pageSize={currentPageSize}
+                    ariaLabel="Works pagination"
+                    queryParams={paginationQueryParams}
+                />
+            </div>
+        </div>
+    )
+}

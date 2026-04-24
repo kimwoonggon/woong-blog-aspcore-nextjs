@@ -1,22 +1,25 @@
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 using WoongBlog.Api.Domain.Entities;
-using WoongBlog.Api.Infrastructure.Persistence;
-using WoongBlog.Api.Modules.Composition.Application.GetHome;
-using WoongBlog.Api.Modules.Content.Common.Application.Support;
-using WoongBlog.Api.Modules.Content.Works.Application.Abstractions;
-using WoongBlog.Api.Modules.Content.Works.Application.GetAdminWorkById;
-using WoongBlog.Api.Modules.Content.Works.Application.GetAdminWorks;
-using WoongBlog.Api.Modules.Content.Works.Application.GetWorkBySlug;
-using WoongBlog.Api.Modules.Content.Works.Application.GetWorks;
-using WoongBlog.Api.Modules.Content.Works.Application.Support;
-using WoongBlog.Api.Modules.Content.Works.Application.WorkVideos;
+using WoongBlog.Infrastructure.Persistence;
+using WoongBlog.Application.Modules.Composition.GetHome;
+using WoongBlog.Application.Modules.Content.Common.Support;
+using WoongBlog.Application.Modules.Content.Works.Abstractions;
+using WoongBlog.Application.Modules.Content.Works.GetAdminWorkById;
+using WoongBlog.Application.Modules.Content.Works.GetAdminWorks;
+using WoongBlog.Application.Modules.Content.Works.GetWorkBySlug;
+using WoongBlog.Application.Modules.Content.Works.GetWorks;
+using WoongBlog.Application.Modules.Content.Works.Support;
+using WoongBlog.Infrastructure.Modules.Content.Works.WorkVideos;
 
-namespace WoongBlog.Api.Modules.Content.Works.Persistence;
+namespace WoongBlog.Infrastructure.Modules.Content.Works.Persistence;
 
 public sealed class WorkQueryStore(
     WoongBlogDbContext dbContext,
     IWorkVideoPlaybackUrlBuilder playbackUrlBuilder) : IWorkQueryStore
 {
+    private const string SocialShareMessagePropertyName = "socialShareMessage";
+
     public async Task<IReadOnlyList<AdminWorkListItemDto>> GetAdminListAsync(CancellationToken cancellationToken)
     {
         var works = await dbContext.Works
@@ -186,6 +189,7 @@ public sealed class WorkQueryStore(
             thumbnailUrl,
             ResolveAssetUrl(work.IconAssetId, assets),
             work.PublishedAt,
+            ResolveSocialShareMessage(work.AllPropertiesJson),
             work.VideosVersion,
             videos);
     }
@@ -236,8 +240,29 @@ public sealed class WorkQueryStore(
             x.OriginalFileName,
             x.MimeType,
             x.FileSize,
+            x.Width,
+            x.Height,
+            x.DurationSeconds,
+            ResolveTimelinePreviewUrl(x, x.TimelinePreviewVttStorageKey),
+            ResolveTimelinePreviewUrl(x, x.TimelinePreviewSpriteStorageKey),
             x.SortOrder,
             x.CreatedAt)).ToList();
+    }
+
+    private string? ResolveTimelinePreviewUrl(WorkVideo video, string? storageKey)
+    {
+        if (string.IsNullOrWhiteSpace(storageKey))
+        {
+            return null;
+        }
+
+        if (string.Equals(video.SourceType, WorkVideoSourceTypes.Hls, StringComparison.OrdinalIgnoreCase)
+            && WorkVideoHlsSourceKey.TryParse(video.SourceKey, out var storageType, out _))
+        {
+            return playbackUrlBuilder.BuildStorageObjectUrl(storageType, storageKey);
+        }
+
+        return playbackUrlBuilder.BuildStorageObjectUrl(video.SourceType, storageKey);
     }
 
     private static IQueryable<Work> ApplySearch(
@@ -250,9 +275,12 @@ public sealed class WorkQueryStore(
             return query;
         }
 
-        return searchMode == ContentSearchMode.Content
-            ? query.Where(x => x.SearchText.Contains(normalizedQuery))
-            : query.Where(x => x.SearchTitle.Contains(normalizedQuery));
+        return searchMode switch
+        {
+            ContentSearchMode.Title => query.Where(x => x.SearchTitle.Contains(normalizedQuery)),
+            ContentSearchMode.Content => query.Where(x => x.SearchText.Contains(normalizedQuery)),
+            _ => query.Where(x => x.SearchTitle.Contains(normalizedQuery) || x.SearchText.Contains(normalizedQuery))
+        };
     }
 
     private static string ResolveAssetUrl(Guid? assetId, IReadOnlyDictionary<Guid, string> assets)
@@ -260,5 +288,35 @@ public sealed class WorkQueryStore(
         return assetId is not null && assets.TryGetValue(assetId.Value, out var url)
             ? url
             : string.Empty;
+    }
+
+    private static string? ResolveSocialShareMessage(string allPropertiesJson)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(allPropertiesJson);
+            if (document.RootElement.ValueKind != JsonValueKind.Object)
+            {
+                return null;
+            }
+
+            if (!document.RootElement.TryGetProperty(SocialShareMessagePropertyName, out var propertyValue))
+            {
+                return null;
+            }
+
+            var message = propertyValue.ValueKind switch
+            {
+                JsonValueKind.String => propertyValue.GetString(),
+                JsonValueKind.Null => null,
+                _ => propertyValue.ToString()
+            };
+
+            return string.IsNullOrWhiteSpace(message) ? null : message.Trim();
+        }
+        catch
+        {
+            return null;
+        }
     }
 }

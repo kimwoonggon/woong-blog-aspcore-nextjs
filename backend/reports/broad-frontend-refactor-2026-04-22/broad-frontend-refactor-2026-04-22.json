@@ -1,0 +1,56 @@
+{
+  "task": "broad-frontend-refactor",
+  "date": "2026-04-22",
+  "summary": {
+    "changed": [
+      "Moved public blog/work detail admin payloads behind lazy client admin gates",
+      "Deduplicated public admin affordance session checks",
+      "Stabilized public pagination page-size handling",
+      "Added SEO metadata helper, route metadata, sitemap, and robots",
+      "Improved related-card readability and accessibility behavior",
+      "Fixed blog editor dirty-state behavior after Tiptap normalization"
+    ],
+    "intentionallyNotChanged": [
+      "Backend auth/security semantics",
+      "Browser same-origin /api defaults",
+      "Excerpt-first card strategy",
+      "Existing revalidation map semantics",
+      "Broad infinite-scroll or autosave redesigns"
+    ]
+  },
+  "validation": {
+    "vitestFocusedGroup": "16 files passed, 90 tests passed",
+    "additionalVitest": [
+      "blog-editor: 8 passed",
+      "related-content-list: 3 passed",
+      "public-admin-rendering + responsive-page-size-sync: 9 passed",
+      "blog-editor + related-content-list + responsive-page-size-sync + seo-metadata: 16 passed"
+    ],
+    "typecheck": "passed",
+    "build": "passed locally and in Docker frontend rebuild",
+    "lint": {
+      "npmRunLint": "blocked by EACCES scanning .tmp/postgres",
+      "scopedEslint": "passed with 3 existing warnings"
+    },
+    "playwright": {
+      "fullE2E": "560 passed, 8 failed, 9 skipped before targeted fixes",
+      "targetedFailedSpecsAfterFixes": "passed",
+      "fullE2ERerunAfterFinalFixes": "not run"
+    },
+    "benchmark": {
+      "type": "origin/dev comparison smoke",
+      "warmups": 0,
+      "iterations": 1,
+      "reportMarkdown": "backend/reports/frontend-performance-origin-dev-vs-current/frontend-performance-origin-dev-vs-current.md",
+      "reportHtml": "backend/reports/frontend-performance-origin-dev-vs-current/frontend-performance-origin-dev-vs-current.html",
+      "reportJson": "backend/reports/frontend-performance-origin-dev-vs-current/frontend-performance-origin-dev-vs-current.json"
+    }
+  },
+  "risks": [
+    "One-sample benchmark remains noisy and reports public cold-load/API regressions",
+    "Benchmark reports a current Study Next timeout while focused Playwright pagination passes",
+    "Public routes still show as dynamic in local build output due to request-aware API-base fallback",
+    "Full E2E was not rerun from scratch after final targeted fixes"
+  ],
+  "recommendation": "Proceed to review, then run a dedicated multi-iteration performance pass on a clean stack before using the benchmark as release evidence."
+}

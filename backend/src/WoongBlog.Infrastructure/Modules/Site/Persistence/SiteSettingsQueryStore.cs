@@ -1,11 +1,11 @@
 using Microsoft.EntityFrameworkCore;
-using WoongBlog.Api.Infrastructure.Persistence;
-using WoongBlog.Api.Modules.Site.Application.Abstractions;
-using WoongBlog.Api.Modules.Site.Application.GetAdminSiteSettings;
-using WoongBlog.Api.Modules.Site.Application.GetResume;
-using WoongBlog.Api.Modules.Site.Application.GetSiteSettings;
+using WoongBlog.Infrastructure.Persistence;
+using WoongBlog.Application.Modules.Site.Abstractions;
+using WoongBlog.Application.Modules.Site.GetAdminSiteSettings;
+using WoongBlog.Application.Modules.Site.GetResume;
+using WoongBlog.Application.Modules.Site.GetSiteSettings;
 
-namespace WoongBlog.Api.Modules.Site.Persistence;
+namespace WoongBlog.Infrastructure.Modules.Site.Persistence;
 
 public sealed class SiteSettingsQueryStore(WoongBlogDbContext dbContext) : ISiteSettingsQueryStore
 {

@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using WoongBlog.Api.Domain.Entities;
-using WoongBlog.Api.Infrastructure.Persistence;
-using WoongBlog.Api.Infrastructure.Persistence.Seeding;
+using WoongBlog.Infrastructure.Persistence;
+using WoongBlog.Infrastructure.Persistence.Seeding;
 
 namespace WoongBlog.Api.Tests;
 

@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 test('unknown public routes render the shared 404 page', async ({ page }) => {
   await page.goto('/this-route-does-not-exist')

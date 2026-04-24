@@ -150,6 +150,7 @@ describe('WorkEditor', () => {
   })
 
   afterEach(() => {
+    vi.useRealTimers()
     cleanup()
   })
 
@@ -185,6 +186,45 @@ describe('WorkEditor', () => {
       expect(mocks.toast.error).toHaveBeenCalledWith('MP4 must be H.264/AAC compatible for copy-mode HLS.')
     })
   })
+
+  it('shows staged HLS upload progress text while an uploaded video is being prepared', async () => {
+    mocks.fetchWithCsrf.mockImplementationOnce(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 1200))
+      return okJson(hlsMutationPayload()) as Response
+    })
+
+    render(
+      <WorkEditor
+        initialWork={{
+          id: 'work-1',
+          title: 'Existing work',
+          category: 'platform',
+          tags: [],
+          published: true,
+          thumbnail_asset_id: 'thumb-manual',
+          thumbnail_url: '/media/work-thumbnails/existing.jpg',
+          content: { html: '<p>Existing</p>' },
+          all_properties: {},
+          videos_version: 0,
+          videos: [],
+        }}
+      />,
+    )
+
+    const fileInput = screen.getByLabelText('Upload MP4 Video as HLS')
+    const file = new File(['\x00\x00\x00\x18ftypmp42'], 'demo.mp4', { type: 'video/mp4' })
+    fireEvent.change(fileInput, { target: { files: [file] } })
+
+    expect(screen.getByTestId('work-video-upload-status')).toHaveTextContent('demo.mp4 업로드 중...')
+
+    await waitFor(() => {
+      expect(screen.getByTestId('work-video-upload-status')).toHaveTextContent('demo.mp4 처리 중...')
+    })
+
+    await waitFor(() => {
+      expect(screen.getByTestId('work-video-upload-status')).toHaveTextContent('demo.mp4 준비 완료')
+    })
+  }, 5000)
 
   it('accepts flexible metadata through structured key/value inputs', async () => {
     render(<WorkEditor />)
@@ -238,6 +278,38 @@ describe('WorkEditor', () => {
       }),
     )
     expect(mocks.push).toHaveBeenCalledWith('/admin/works')
+  })
+
+  it('stores share message under all_properties.socialShareMessage when saving', async () => {
+    mocks.fetchWithCsrf.mockResolvedValueOnce(okJson({ id: 'work-share', slug: 'work-share' }))
+
+    render(<WorkEditor />)
+
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Share-ready work' } })
+    fireEvent.change(screen.getByLabelText('Share Message'), { target: { value: 'This message should be used for sharing.' } })
+    changeContent('<p>Share-ready body</p>')
+
+    fireEvent.click(screen.getByRole('button', { name: /Create Work/i }))
+
+    await waitFor(() => {
+      expect(mocks.fetchWithCsrf).toHaveBeenCalledWith(
+        '/api/admin/works',
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify({
+            title: 'Share-ready work',
+            category: 'Uncategorized',
+            period: '',
+            tags: [],
+            published: true,
+            contentJson: JSON.stringify({ html: '<p>Share-ready body</p>' }),
+            allPropertiesJson: JSON.stringify({ socialShareMessage: 'This message should be used for sharing.' }),
+            thumbnailAssetId: null,
+            iconAssetId: null,
+          }),
+        }),
+      )
+    })
   })
 
   it('allows save completion after video-only edits on an existing work', async () => {

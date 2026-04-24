@@ -1,5 +1,5 @@
 import path from 'node:path'
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 test.use({ storageState: 'test-results/playwright/admin-storage-state.json' })
 
@@ -7,7 +7,7 @@ test('admin work editor no longer exposes raw json metadata editing', async ({ p
   await page.goto('/admin/works/new')
 
   await page.getByRole('tab', { name: 'Media & Videos' }).click()
-  await expect(page.getByText('Flexible Metadata')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Flexible Metadata' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Add Field' })).toBeVisible()
   await expect(page.locator('textarea')).toHaveCount(0)
 })

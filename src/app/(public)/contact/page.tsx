@@ -1,30 +1,22 @@
 import { BlockRenderer } from '@/components/content/BlockRenderer'
+import { PublicAdminClientGate } from '@/components/admin/PublicAdminClientGate'
 import { InlinePageEditorSection } from '@/components/admin/InlinePageEditorSection'
 import { InteractiveRenderer } from '@/components/content/InteractiveRenderer'
 import { isBlockPageContent, isHtmlPageContent, parsePageContentJson } from '@/lib/content/page-content'
-import { fetchServerSession } from '@/lib/api/server'
 import { fetchPublicPageBySlug } from '@/lib/api/pages'
-import { headers } from 'next/headers'
+import { createPublicMetadata } from '@/lib/seo'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 60
+export const metadata = createPublicMetadata({
+    title: 'Contact',
+    description: 'Contact information and ways to reach Woonggon Kim.',
+    path: '/contact',
+})
 
-interface ContactPageProps {
-    searchParams?: Promise<{ __qaNoMailto?: string }>
-}
-
-export default async function ContactPage({ searchParams }: ContactPageProps) {
-    const resolvedSearchParams = await searchParams
-    const headerStore = await headers()
-    const requestHost = (headerStore.get('x-forwarded-host') ?? headerStore.get('host') ?? '').toLowerCase()
-    const qaNoMailto = resolvedSearchParams?.__qaNoMailto === '1' && /localhost|127\.0\.0\.1/.test(requestHost)
+export default async function ContactPage() {
     const page = await fetchPublicPageBySlug('contact')
-    const session = await fetchServerSession()
     const title = page?.title || 'Contact'
-    const parsedContent = qaNoMailto
-        ? { html: '<p>Please use the direct fallback email below for project inquiries.</p>' }
-        : parsePageContentJson(page?.contentJson)
-    const fallbackEmail = 'woong@example.com'
-    const hasMailtoLink = JSON.stringify(parsedContent ?? {}).toLowerCase().includes('mailto:')
+    const parsedContent = parsePageContentJson(page?.contentJson)
 
     return (
         <div data-testid="static-public-shell" className="container mx-auto max-w-3xl px-4 py-7 md:px-6 md:py-10">
@@ -42,7 +34,7 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
                         <p className="text-sm leading-relaxed text-foreground/80">
                             You can reach me directly at{' '}
                             <a
-                                href="mailto:john@example.com"
+                                href="mailto:psopen11@gmail.com"
                                 className="font-medium text-primary underline underline-offset-4 transition-colors hover:text-brand-cyan"
                             >
                                 john@example.com
@@ -53,37 +45,20 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
                 )}
             </div>
 
-            {!hasMailtoLink && (
-                <div className="mt-8 rounded-[2rem] border border-border/70 bg-muted/30 px-5 py-5 shadow-sm md:px-6">
-                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
-                        Direct email
-                    </p>
-                    <p className="mt-2 text-sm font-medium text-foreground">
-                        Prefer a plain email thread?
-                    </p>
-                    <p className="mt-2 text-sm text-muted-foreground">
-                        <a
-                            href={`mailto:${fallbackEmail}`}
-                            className="font-medium text-primary underline underline-offset-4 transition-colors hover:text-brand-cyan"
-                        >
-                            {fallbackEmail}
-                        </a>
-                    </p>
-                </div>
-            )}
-
-            {session.authenticated && session.role === 'admin' && page && (
-                <InlinePageEditorSection
-                    triggerLabel="문의글 수정"
-                    title="Contact Inline Editor"
-                    description="현재 페이지에서 바로 문의 페이지 내용을 수정합니다."
-                    page={{
-                        id: page.id,
-                        title: page.title,
-                        slug: page.slug,
-                        content: parsedContent ?? { html: '' },
-                    }}
-                />
+            {page && (
+                <PublicAdminClientGate>
+                    <InlinePageEditorSection
+                        triggerLabel="문의글 수정"
+                        title="Contact Inline Editor"
+                        description="현재 페이지에서 바로 문의 페이지 내용을 수정합니다."
+                        page={{
+                            id: page.id,
+                            title: page.title,
+                            slug: page.slug,
+                            content: parsedContent ?? { html: '' },
+                        }}
+                    />
+                </PublicAdminClientGate>
             )}
         </div>
     )

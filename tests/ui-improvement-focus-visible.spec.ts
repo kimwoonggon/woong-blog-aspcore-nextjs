@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 test('keyboard-focused public links keep a visible focus outline', async ({ page }) => {
   await page.setViewportSize({ width: 1920, height: 1080 })

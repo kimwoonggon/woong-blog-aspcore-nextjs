@@ -1,0 +1,4186 @@
+{
+  "slug": "frontend-performance-origin-dev-vs-current",
+  "generatedAt": "2026-04-22T17:18:09.171Z",
+  "startedAt": "2026-04-22T17:18:09.171Z",
+  "completedAt": "2026-04-22T17:28:10.302Z",
+  "environment": {
+    "baseUrl": "http://127.0.0.1:32080",
+    "currentBranch": "feat/phase-2-backend-discompostion",
+    "currentCommit": "246d8577180df4b1a457a7f973a9dcbdfc395471",
+    "baselineRef": "origin/dev",
+    "baselineCommit": "0318861952a9ec2ab58150be65f9a74492601f65",
+    "nodeVersion": "v22.22.0",
+    "platform": "linux x64",
+    "hostname": "DESKTOP-PVN76TL",
+    "dockerVersion": "Docker version 29.2.1, build a5c7197",
+    "playwrightBrowser": "chromium",
+    "workers": 1,
+    "httpPort": 32080,
+    "httpsPort": 32081,
+    "backendPort": 18180,
+    "routeWarmups": 1,
+    "routeIterations": 3,
+    "mutationWarmups": 1,
+    "mutationIterations": 3
+  },
+  "candidates": [
+    {
+      "key": "baseline",
+      "label": "Baseline",
+      "ref": "origin/dev",
+      "commit": "0318861952a9ec2ab58150be65f9a74492601f65",
+      "workdir": "/tmp/woong-blog-perf-GlJ3fc/origin-dev-worktree",
+      "dockerProject": "woong-blog-perf-baseline",
+      "startedAt": "2026-04-22T17:18:12.006Z",
+      "completedAt": "2026-04-22T17:25:30.687Z",
+      "seed": {
+        "stamp": "perf-baseline-abgprx",
+        "blogs": [
+          {
+            "id": "73fea162-b42a-45b1-a50b-926c08342702",
+            "slug": "perf-blog-public-1776878451735-7zip8",
+            "title": "Perf Blog Public 1776878451735 7zip8"
+          },
+          {
+            "id": "6791d2de-df51-4851-8893-aaee98503bf2",
+            "slug": "perf-study-baseline-02-perf-baseline-abgprx",
+            "title": "Perf Study baseline 02 perf-baseline-abgprx"
+          },
+          {
+            "id": "96f727b3-b455-43d4-ba21-20914d48707f",
+            "slug": "perf-study-baseline-03-perf-baseline-abgprx",
+            "title": "Perf Study baseline 03 perf-baseline-abgprx"
+          },
+          {
+            "id": "68384591-9d1c-45d9-b9b8-9ac82a50913a",
+            "slug": "perf-study-baseline-04-perf-baseline-abgprx",
+            "title": "Perf Study baseline 04 perf-baseline-abgprx"
+          },
+          {
+            "id": "0e9fdbc3-5715-42bb-93c4-4b0fbe2668df",
+            "slug": "perf-study-baseline-05-perf-baseline-abgprx",
+            "title": "Perf Study baseline 05 perf-baseline-abgprx"
+          },
+          {
+            "id": "687a5aa0-e214-416e-bba4-a65e24e721f7",
+            "slug": "perf-study-baseline-06-perf-baseline-abgprx",
+            "title": "Perf Study baseline 06 perf-baseline-abgprx"
+          },
+          {
+            "id": "b95ce6f4-df0f-4979-a108-02613a1cf9e7",
+            "slug": "perf-study-baseline-07-perf-baseline-abgprx",
+            "title": "Perf Study baseline 07 perf-baseline-abgprx"
+          },
+          {
+            "id": "517598bc-e749-40ba-b928-628d4249dd3a",
+            "slug": "perf-study-baseline-08-perf-baseline-abgprx",
+            "title": "Perf Study baseline 08 perf-baseline-abgprx"
+          },
+          {
+            "id": "0c15d677-fd38-43bf-abca-a6a4bc611dda",
+            "slug": "perf-study-baseline-09-perf-baseline-abgprx",
+            "title": "Perf Study baseline 09 perf-baseline-abgprx"
+          },
+          {
+            "id": "33f657db-be28-4a2a-a771-8d927e78b201",
+            "slug": "perf-study-baseline-10-perf-baseline-abgprx",
+            "title": "Perf Study baseline 10 perf-baseline-abgprx"
+          },
+          {
+            "id": "56abd202-bc90-4b75-babf-185b516ccc2c",
+            "slug": "perf-study-baseline-11-perf-baseline-abgprx",
+            "title": "Perf Study baseline 11 perf-baseline-abgprx"
+          },
+          {
+            "id": "e226a779-561e-4bd8-a1bd-b76ec67dc395",
+            "slug": "perf-study-baseline-12-perf-baseline-abgprx",
+            "title": "Perf Study baseline 12 perf-baseline-abgprx"
+          },
+          {
+            "id": "bde4ddb8-310e-438a-8b86-a6b7ebafd67b",
+            "slug": "perf-study-baseline-13-perf-baseline-abgprx",
+            "title": "Perf Study baseline 13 perf-baseline-abgprx"
+          },
+          {
+            "id": "9529d92b-9ab0-4c77-8b72-358f92c01c84",
+            "slug": "perf-study-baseline-14-perf-baseline-abgprx",
+            "title": "Perf Study baseline 14 perf-baseline-abgprx"
+          },
+          {
+            "id": "7727106b-b25d-4e08-bb32-19f9971a803c",
+            "slug": "perf-study-baseline-15-perf-baseline-abgprx",
+            "title": "Perf Study baseline 15 perf-baseline-abgprx"
+          },
+          {
+            "id": "d1a77f07-163c-4773-9a86-073f12656d26",
+            "slug": "perf-study-baseline-16-perf-baseline-abgprx",
+            "title": "Perf Study baseline 16 perf-baseline-abgprx"
+          },
+          {
+            "id": "58bb0ee9-bfc5-4330-b79d-a529b0d58af3",
+            "slug": "perf-study-baseline-17-perf-baseline-abgprx",
+            "title": "Perf Study baseline 17 perf-baseline-abgprx"
+          },
+          {
+            "id": "03ffbbe6-cdd3-49bc-b72f-3a5d363de691",
+            "slug": "perf-study-baseline-18-perf-baseline-abgprx",
+            "title": "Perf Study baseline 18 perf-baseline-abgprx"
+          },
+          {
+            "id": "4fd1585c-fbf3-4478-aa1f-71b79f2b9cc1",
+            "slug": "perf-study-baseline-19-perf-baseline-abgprx",
+            "title": "Perf Study baseline 19 perf-baseline-abgprx"
+          },
+          {
+            "id": "f3cc7491-fb0e-45d2-b79d-a0eaffacef6c",
+            "slug": "perf-study-baseline-20-perf-baseline-abgprx",
+            "title": "Perf Study baseline 20 perf-baseline-abgprx"
+          },
+          {
+            "id": "77f76d4a-5969-476e-bfa5-deb59f60baaa",
+            "slug": "perf-study-baseline-21-perf-baseline-abgprx",
+            "title": "Perf Study baseline 21 perf-baseline-abgprx"
+          },
+          {
+            "id": "c8ef3da6-7924-437f-8487-5d60368170ed",
+            "slug": "perf-study-baseline-22-perf-baseline-abgprx",
+            "title": "Perf Study baseline 22 perf-baseline-abgprx"
+          },
+          {
+            "id": "a951c24d-beb1-4c8b-9b9c-9ffe05136d33",
+            "slug": "perf-study-baseline-23-perf-baseline-abgprx",
+            "title": "Perf Study baseline 23 perf-baseline-abgprx"
+          },
+          {
+            "id": "a613fd4b-917b-4c0f-bc9a-70da2e45ea9b",
+            "slug": "perf-study-baseline-24-perf-baseline-abgprx",
+            "title": "Perf Study baseline 24 perf-baseline-abgprx"
+          },
+          {
+            "id": "f3fd1f79-5eb9-4679-9cd5-76f77a7a377d",
+            "slug": "perf-study-baseline-25-perf-baseline-abgprx",
+            "title": "Perf Study baseline 25 perf-baseline-abgprx"
+          },
+          {
+            "id": "06da4490-0809-481e-ad42-cbab72040994",
+            "slug": "perf-study-baseline-26-perf-baseline-abgprx",
+            "title": "Perf Study baseline 26 perf-baseline-abgprx"
+          }
+        ],
+        "works": [
+          {
+            "id": "970b8ee6-dd71-4cd6-91e8-e081289fa07a",
+            "slug": "perf-work-public-1776878577289-ftg6i",
+            "title": "Perf Work Public 1776878577289 ftg6i"
+          },
+          {
+            "id": "96bde75e-c599-486a-b7e9-d991723d319b",
+            "slug": "perf-work-baseline-02-perf-baseline-abgprx",
+            "title": "Perf Work baseline 02 perf-baseline-abgprx"
+          },
+          {
+            "id": "0c105eb2-cd34-4351-9d28-d743f30980f5",
+            "slug": "perf-work-baseline-03-perf-baseline-abgprx",
+            "title": "Perf Work baseline 03 perf-baseline-abgprx"
+          },
+          {
+            "id": "bcf98844-7c2a-4c1d-af0c-863f82487541",
+            "slug": "perf-work-baseline-04-perf-baseline-abgprx",
+            "title": "Perf Work baseline 04 perf-baseline-abgprx"
+          },
+          {
+            "id": "98f42f29-6590-401d-ac01-a4906e7545c0",
+            "slug": "perf-work-baseline-05-perf-baseline-abgprx",
+            "title": "Perf Work baseline 05 perf-baseline-abgprx"
+          },
+          {
+            "id": "38a834ac-6148-44b2-80d1-4b576f6f8a64",
+            "slug": "perf-work-baseline-06-perf-baseline-abgprx",
+            "title": "Perf Work baseline 06 perf-baseline-abgprx"
+          },
+          {
+            "id": "b70756d3-3d75-48a1-a1ed-e22256ab0bb0",
+            "slug": "perf-work-baseline-07-perf-baseline-abgprx",
+            "title": "Perf Work baseline 07 perf-baseline-abgprx"
+          },
+          {
+            "id": "ca66be85-ba09-41fe-be9b-fbdc4072fe75",
+            "slug": "perf-work-baseline-08-perf-baseline-abgprx",
+            "title": "Perf Work baseline 08 perf-baseline-abgprx"
+          },
+          {
+            "id": "892988b6-e44a-4b87-add5-2799889d8a99",
+            "slug": "perf-work-baseline-09-perf-baseline-abgprx",
+            "title": "Perf Work baseline 09 perf-baseline-abgprx"
+          },
+          {
+            "id": "1e2ca93e-3492-46ed-9b26-1d6704481021",
+            "slug": "perf-work-baseline-10-perf-baseline-abgprx",
+            "title": "Perf Work baseline 10 perf-baseline-abgprx"
+          },
+          {
+            "id": "01326f66-3f45-44fa-afc2-4e1c3f90a99d",
+            "slug": "perf-work-baseline-11-perf-baseline-abgprx",
+            "title": "Perf Work baseline 11 perf-baseline-abgprx"
+          },
+          {
+            "id": "a2853e5f-07b7-4ded-b6d1-b292787b1283",
+            "slug": "perf-work-baseline-12-perf-baseline-abgprx",
+            "title": "Perf Work baseline 12 perf-baseline-abgprx"
+          },
+          {
+            "id": "0c532b8e-ab15-4d11-8cd6-f404a9fe4503",
+            "slug": "perf-work-baseline-13-perf-baseline-abgprx",
+            "title": "Perf Work baseline 13 perf-baseline-abgprx"
+          },
+          {
+            "id": "0d5dd263-8c96-45e8-ae12-84e211d07f41",
+            "slug": "perf-work-baseline-14-perf-baseline-abgprx",
+            "title": "Perf Work baseline 14 perf-baseline-abgprx"
+          },
+          {
+            "id": "240686c3-7239-41d0-b161-fba69d720851",
+            "slug": "perf-work-baseline-15-perf-baseline-abgprx",
+            "title": "Perf Work baseline 15 perf-baseline-abgprx"
+          },
+          {
+            "id": "99479e61-a9cc-458f-89f2-bae26600f6f0",
+            "slug": "perf-work-baseline-16-perf-baseline-abgprx",
+            "title": "Perf Work baseline 16 perf-baseline-abgprx"
+          },
+          {
+            "id": "c0a53ff0-a2c9-46e9-a4c8-b1ac1f3f962d",
+            "slug": "perf-work-baseline-17-perf-baseline-abgprx",
+            "title": "Perf Work baseline 17 perf-baseline-abgprx"
+          },
+          {
+            "id": "487c9ce5-05aa-4556-8782-74e872007d85",
+            "slug": "perf-work-baseline-18-perf-baseline-abgprx",
+            "title": "Perf Work baseline 18 perf-baseline-abgprx"
+          }
+        ],
+        "editableBlog": {
+          "id": "73fea162-b42a-45b1-a50b-926c08342702",
+          "slug": "perf-blog-public-1776878451735-7zip8",
+          "title": "Perf Blog Public 1776878451735 7zip8"
+        },
+        "editableWork": {
+          "id": "970b8ee6-dd71-4cd6-91e8-e081289fa07a",
+          "slug": "perf-work-public-1776878577289-ftg6i",
+          "title": "Perf Work Public 1776878577289 ftg6i"
+        },
+        "pages": [
+          {
+            "id": "d2263982-ff57-4307-835a-6e7f2a1f91ac",
+            "slug": "contact"
+          },
+          {
+            "id": "d99c5931-0a8a-4ec4-8af7-1ea2cf3eeb4c",
+            "slug": "home"
+          },
+          {
+            "id": "05531439-9904-4cd3-af4f-dc6e170c6537",
+            "slug": "introduction"
+          }
+        ],
+        "siteSettingsOwnerName": "Perf Owner baseline 1776878303613",
+        "resumeAsset": {
+          "id": "bb02c5b4-9f58-4b1b-bffc-7cda30475e35",
+          "url": "/media/public-resume/0393d6d4422e4e5ba41edb8a08a8146e.pdf",
+          "path": "public-resume/0393d6d4422e4e5ba41edb8a08a8146e.pdf"
+        }
+      },
+      "scenarios": [
+        {
+          "id": "public-route.home.cold-primary-visible",
+          "area": "Public cache/revalidation",
+          "name": "Home cold first load to primary content visible",
+          "metric": "time-to-primary-content-ms",
+          "status": "passed",
+          "sampleCount": 1,
+          "samples": [
+            208.74
+          ],
+          "stats": {
+            "min": 208.74,
+            "median": 208.74,
+            "p90": 208.74,
+            "p95": 208.74,
+            "max": 208.74
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-route.home.primary-visible",
+          "area": "Public cache/revalidation",
+          "name": "Home warm load to primary content visible",
+          "metric": "time-to-primary-content-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            163.82,
+            123.37,
+            131.13
+          ],
+          "stats": {
+            "min": 123.37,
+            "median": 131.13,
+            "p90": 157.28,
+            "p95": 160.55,
+            "max": 163.82
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-route.home.navigation",
+          "area": "Public cache/revalidation",
+          "name": "Home warm browser navigation",
+          "metric": "browser-navigation-duration-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            143,
+            110.2,
+            115.8
+          ],
+          "stats": {
+            "min": 110.2,
+            "median": 115.8,
+            "p90": 137.56,
+            "p95": 140.28,
+            "max": 143
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-route.home.ttfb",
+          "area": "Public cache/revalidation",
+          "name": "Home warm route TTFB",
+          "metric": "route-ttfb-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            37.6,
+            22.5,
+            28.3
+          ],
+          "stats": {
+            "min": 22.5,
+            "median": 28.3,
+            "p90": 35.74,
+            "p95": 36.67,
+            "max": 37.6
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-route.blog.cold-primary-visible",
+          "area": "Public cache/revalidation",
+          "name": "Study list cold first load to primary content visible",
+          "metric": "time-to-primary-content-ms",
+          "status": "passed",
+          "sampleCount": 1,
+          "samples": [
+            198.48
+          ],
+          "stats": {
+            "min": 198.48,
+            "median": 198.48,
+            "p90": 198.48,
+            "p95": 198.48,
+            "max": 198.48
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-route.blog.primary-visible",
+          "area": "Public cache/revalidation",
+          "name": "Study list warm load to primary content visible",
+          "metric": "time-to-primary-content-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            152.31,
+            138.61,
+            137.48
+          ],
+          "stats": {
+            "min": 137.48,
+            "median": 138.61,
+            "p90": 149.57,
+            "p95": 150.94,
+            "max": 152.31
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-route.blog.navigation",
+          "area": "Public cache/revalidation",
+          "name": "Study list warm browser navigation",
+          "metric": "browser-navigation-duration-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            116.5,
+            123.4,
+            120.5
+          ],
+          "stats": {
+            "min": 116.5,
+            "median": 120.5,
+            "p90": 122.82,
+            "p95": 123.11,
+            "max": 123.4
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-route.blog.ttfb",
+          "area": "Public cache/revalidation",
+          "name": "Study list warm route TTFB",
+          "metric": "route-ttfb-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            24.2,
+            22.2,
+            20
+          ],
+          "stats": {
+            "min": 20,
+            "median": 22.2,
+            "p90": 23.8,
+            "p95": 24,
+            "max": 24.2
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-route.works.cold-primary-visible",
+          "area": "Public cache/revalidation",
+          "name": "Works list cold first load to primary content visible",
+          "metric": "time-to-primary-content-ms",
+          "status": "passed",
+          "sampleCount": 1,
+          "samples": [
+            164.98
+          ],
+          "stats": {
+            "min": 164.98,
+            "median": 164.98,
+            "p90": 164.98,
+            "p95": 164.98,
+            "max": 164.98
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-route.works.primary-visible",
+          "area": "Public cache/revalidation",
+          "name": "Works list warm load to primary content visible",
+          "metric": "time-to-primary-content-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            152.85,
+            145.13,
+            176.61
+          ],
+          "stats": {
+            "min": 145.13,
+            "median": 152.85,
+            "p90": 171.86,
+            "p95": 174.23,
+            "max": 176.61
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-route.works.navigation",
+          "area": "Public cache/revalidation",
+          "name": "Works list warm browser navigation",
+          "metric": "browser-navigation-duration-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            126.7,
+            128.3,
+            139.1
+          ],
+          "stats": {
+            "min": 126.7,
+            "median": 128.3,
+            "p90": 136.94,
+            "p95": 138.02,
+            "max": 139.1
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-route.works.ttfb",
+          "area": "Public cache/revalidation",
+          "name": "Works list warm route TTFB",
+          "metric": "route-ttfb-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            24.8,
+            22.1,
+            23.1
+          ],
+          "stats": {
+            "min": 22.1,
+            "median": 23.1,
+            "p90": 24.46,
+            "p95": 24.63,
+            "max": 24.8
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-route.contact.cold-primary-visible",
+          "area": "Public cache/revalidation",
+          "name": "Contact cold first load to primary content visible",
+          "metric": "time-to-primary-content-ms",
+          "status": "passed",
+          "sampleCount": 1,
+          "samples": [
+            195.99
+          ],
+          "stats": {
+            "min": 195.99,
+            "median": 195.99,
+            "p90": 195.99,
+            "p95": 195.99,
+            "max": 195.99
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-route.contact.primary-visible",
+          "area": "Public cache/revalidation",
+          "name": "Contact warm load to primary content visible",
+          "metric": "time-to-primary-content-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            118.93,
+            104.81,
+            119.21
+          ],
+          "stats": {
+            "min": 104.81,
+            "median": 118.93,
+            "p90": 119.15,
+            "p95": 119.18,
+            "max": 119.21
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-route.contact.navigation",
+          "area": "Public cache/revalidation",
+          "name": "Contact warm browser navigation",
+          "metric": "browser-navigation-duration-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            116.9,
+            102.7,
+            116.9
+          ],
+          "stats": {
+            "min": 102.7,
+            "median": 116.9,
+            "p90": 116.9,
+            "p95": 116.9,
+            "max": 116.9
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-route.contact.ttfb",
+          "area": "Public cache/revalidation",
+          "name": "Contact warm route TTFB",
+          "metric": "route-ttfb-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            18.5,
+            15.2,
+            20.8
+          ],
+          "stats": {
+            "min": 15.2,
+            "median": 18.5,
+            "p90": 20.34,
+            "p95": 20.57,
+            "max": 20.8
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-route.introduction.cold-primary-visible",
+          "area": "Public cache/revalidation",
+          "name": "Introduction cold first load to primary content visible",
+          "metric": "time-to-primary-content-ms",
+          "status": "passed",
+          "sampleCount": 1,
+          "samples": [
+            113.15
+          ],
+          "stats": {
+            "min": 113.15,
+            "median": 113.15,
+            "p90": 113.15,
+            "p95": 113.15,
+            "max": 113.15
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-route.introduction.primary-visible",
+          "area": "Public cache/revalidation",
+          "name": "Introduction warm load to primary content visible",
+          "metric": "time-to-primary-content-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            96.83,
+            99.67,
+            92.86
+          ],
+          "stats": {
+            "min": 92.86,
+            "median": 96.83,
+            "p90": 99.1,
+            "p95": 99.39,
+            "max": 99.67
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-route.introduction.navigation",
+          "area": "Public cache/revalidation",
+          "name": "Introduction warm browser navigation",
+          "metric": "browser-navigation-duration-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            102.2,
+            105,
+            97.6
+          ],
+          "stats": {
+            "min": 97.6,
+            "median": 102.2,
+            "p90": 104.44,
+            "p95": 104.72,
+            "max": 105
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-route.introduction.ttfb",
+          "area": "Public cache/revalidation",
+          "name": "Introduction warm route TTFB",
+          "metric": "route-ttfb-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            14.5,
+            16,
+            15.8
+          ],
+          "stats": {
+            "min": 14.5,
+            "median": 15.8,
+            "p90": 15.96,
+            "p95": 15.98,
+            "max": 16
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-route.resume.cold-primary-visible",
+          "area": "Resume PDF SSR",
+          "name": "Resume cold first load to primary content visible",
+          "metric": "time-to-primary-content-ms",
+          "status": "passed",
+          "sampleCount": 1,
+          "samples": [
+            181.42
+          ],
+          "stats": {
+            "min": 181.42,
+            "median": 181.42,
+            "p90": 181.42,
+            "p95": 181.42,
+            "max": 181.42
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-route.resume.primary-visible",
+          "area": "Resume PDF SSR",
+          "name": "Resume warm load to primary content visible",
+          "metric": "time-to-primary-content-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            109.45,
+            105.66,
+            95.89
+          ],
+          "stats": {
+            "min": 95.89,
+            "median": 105.66,
+            "p90": 108.69,
+            "p95": 109.07,
+            "max": 109.45
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-route.resume.navigation",
+          "area": "Resume PDF SSR",
+          "name": "Resume warm browser navigation",
+          "metric": "browser-navigation-duration-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            107.1,
+            103.8,
+            93
+          ],
+          "stats": {
+            "min": 93,
+            "median": 103.8,
+            "p90": 106.44,
+            "p95": 106.77,
+            "max": 107.1
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-route.resume.ttfb",
+          "area": "Resume PDF SSR",
+          "name": "Resume warm route TTFB",
+          "metric": "route-ttfb-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            16.4,
+            18.8,
+            14.5
+          ],
+          "stats": {
+            "min": 14.5,
+            "median": 16.4,
+            "p90": 18.32,
+            "p95": 18.56,
+            "max": 18.8
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-api.home",
+          "area": "Public cache/revalidation",
+          "name": "Public API home",
+          "metric": "api-response-duration-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            8.06,
+            7.23,
+            9.19
+          ],
+          "stats": {
+            "min": 7.23,
+            "median": 8.06,
+            "p90": 8.96,
+            "p95": 9.08,
+            "max": 9.19
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-api.blogs",
+          "area": "Public cache/revalidation",
+          "name": "Public API blogs",
+          "metric": "api-response-duration-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            6.52,
+            5.43,
+            5.29
+          ],
+          "stats": {
+            "min": 5.29,
+            "median": 5.43,
+            "p90": 6.3,
+            "p95": 6.41,
+            "max": 6.52
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-api.works",
+          "area": "Public cache/revalidation",
+          "name": "Public API works",
+          "metric": "api-response-duration-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            5.61,
+            5.97,
+            5.6
+          ],
+          "stats": {
+            "min": 5.6,
+            "median": 5.61,
+            "p90": 5.9,
+            "p95": 5.93,
+            "max": 5.97
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-api.page.contact",
+          "area": "Public cache/revalidation",
+          "name": "Public API contact page",
+          "metric": "api-response-duration-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            2.93,
+            2.93,
+            3.07
+          ],
+          "stats": {
+            "min": 2.93,
+            "median": 2.93,
+            "p90": 3.04,
+            "p95": 3.06,
+            "max": 3.07
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-api.page.introduction",
+          "area": "Public cache/revalidation",
+          "name": "Public API introduction page",
+          "metric": "api-response-duration-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            2.92,
+            3.04,
+            2.91
+          ],
+          "stats": {
+            "min": 2.91,
+            "median": 2.92,
+            "p90": 3.02,
+            "p95": 3.03,
+            "max": 3.04
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-api.resume",
+          "area": "Resume PDF SSR",
+          "name": "Public API resume",
+          "metric": "api-response-duration-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            4.31,
+            3.48,
+            3.31
+          ],
+          "stats": {
+            "min": 3.31,
+            "median": 3.48,
+            "p90": 4.14,
+            "p95": 4.23,
+            "max": 4.31
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-api.site-settings",
+          "area": "Public cache/revalidation",
+          "name": "Public API site settings",
+          "metric": "api-response-duration-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            3.07,
+            4.11,
+            3.11
+          ],
+          "stats": {
+            "min": 3.07,
+            "median": 3.11,
+            "p90": 3.91,
+            "p95": 4.01,
+            "max": 4.11
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "pagination.study.next",
+          "area": "Study/Works pagination",
+          "name": "Study Next click to page 2 grid visible",
+          "metric": "interaction-to-ready-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            149.1,
+            142.92,
+            150.78
+          ],
+          "stats": {
+            "min": 142.92,
+            "median": 149.1,
+            "p90": 150.44,
+            "p95": 150.61,
+            "max": 150.78
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "pagination.study.previous",
+          "area": "Study/Works pagination",
+          "name": "Study Previous click to page 1 grid visible",
+          "metric": "interaction-to-ready-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            176.53,
+            220.57,
+            148.05
+          ],
+          "stats": {
+            "min": 148.05,
+            "median": 176.53,
+            "p90": 211.76,
+            "p95": 216.17,
+            "max": 220.57
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "pagination.works.next",
+          "area": "Study/Works pagination",
+          "name": "Works Next click to page 2 grid visible",
+          "metric": "interaction-to-ready-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            150.51,
+            151.19,
+            157.03
+          ],
+          "stats": {
+            "min": 150.51,
+            "median": 151.19,
+            "p90": 155.86,
+            "p95": 156.45,
+            "max": 157.03
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "pagination.works.previous",
+          "area": "Study/Works pagination",
+          "name": "Works Previous click to page 1 grid visible",
+          "metric": "interaction-to-ready-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            171.18,
+            139.16,
+            135.93
+          ],
+          "stats": {
+            "min": 135.93,
+            "median": 139.16,
+            "p90": 164.78,
+            "p95": 167.98,
+            "max": 171.18
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "pagination.blog-page-2.direct-load",
+          "area": "Study/Works pagination",
+          "name": "Study direct page 2 load to grid visible",
+          "metric": "time-to-primary-content-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            153.74,
+            147.03,
+            146.15
+          ],
+          "stats": {
+            "min": 146.15,
+            "median": 147.03,
+            "p90": 152.4,
+            "p95": 153.07,
+            "max": 153.74
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "pagination.works-page-2.direct-load",
+          "area": "Study/Works pagination",
+          "name": "Works direct page 2 load to grid visible",
+          "metric": "time-to-primary-content-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            128.23,
+            139.41,
+            135.93
+          ],
+          "stats": {
+            "min": 128.23,
+            "median": 135.93,
+            "p90": 138.71,
+            "p95": 139.06,
+            "max": 139.41
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "admin.blog-editor.open",
+          "area": "Admin editor UX",
+          "name": "Blog editor open to form ready",
+          "metric": "time-to-form-ready-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            413.99,
+            432.21,
+            330.93
+          ],
+          "stats": {
+            "min": 330.93,
+            "median": 413.99,
+            "p90": 428.57,
+            "p95": 430.39,
+            "max": 432.21
+          },
+          "notes": [],
+          "correctness": [
+            "Only one Update Post action is present; top save action is absent."
+          ],
+          "details": {}
+        },
+        {
+          "id": "admin.blog-editor.bottom-save",
+          "area": "Admin editor UX",
+          "name": "Blog bottom save to saved/navigation state",
+          "metric": "mutation-to-navigation-ready-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            127.72,
+            124.3,
+            4104.94
+          ],
+          "stats": {
+            "min": 124.3,
+            "median": 127.72,
+            "p90": 3309.5,
+            "p95": 3707.22,
+            "max": 4104.94
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "admin.blog-editor.keyboard-save",
+          "area": "Admin editor UX",
+          "name": "Blog keyboard save to saved/navigation state",
+          "metric": "mutation-to-navigation-ready-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            4094.02,
+            100.39,
+            101.68
+          ],
+          "stats": {
+            "min": 100.39,
+            "median": 101.68,
+            "p90": 3295.55,
+            "p95": 3694.79,
+            "max": 4094.02
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "admin.work-editor.save",
+          "area": "Admin editor UX",
+          "name": "Work editor save to saved/navigation state",
+          "metric": "mutation-to-navigation-ready-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            135.86,
+            135.17,
+            4110.93
+          ],
+          "stats": {
+            "min": 135.17,
+            "median": 135.86,
+            "p90": 3315.92,
+            "p95": 3713.42,
+            "max": 4110.93
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "ai-fix-dialog.open",
+          "area": "AI Fix dialog",
+          "name": "AI Fix click to runtime config and provider dropdown visible",
+          "metric": "interaction-to-provider-ready-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            115.46,
+            107.61,
+            92.82
+          ],
+          "stats": {
+            "min": 92.82,
+            "median": 107.61,
+            "p90": 113.89,
+            "p95": 114.68,
+            "max": 115.46
+          },
+          "notes": [
+            "Runtime providers: codex"
+          ],
+          "correctness": [
+            "Provider correctness issue: expected OPENAI and CODEX when OpenAI/Codex access is configured; got codex."
+          ],
+          "details": {
+            "runtimeConfig": {
+              "ok": true,
+              "durationMs": 45.36,
+              "providers": [
+                "codex"
+              ],
+              "payload": {
+                "provider": "codex",
+                "availableProviders": [
+                  "codex"
+                ],
+                "defaultModel": "gpt-5.4",
+                "codexModel": "gpt-5.4",
+                "codexReasoningEffort": "medium",
+                "allowedCodexModels": [
+                  "gpt-5.4",
+                  "gpt-5.3-codex",
+                  "gpt-5.3-codex-spark"
+                ],
+                "allowedCodexReasoningEfforts": [
+                  "low",
+                  "medium",
+                  "high",
+                  "xhigh"
+                ],
+                "batchConcurrency": 4,
+                "batchCompletedRetentionDays": 3,
+                "defaultSystemPrompt": "You are an expert technical blog editor and educator.\nYour task is to clean up, enhance, expand, and format the provided HTML content from a Tiptap editor into a high-quality developer blog post.\n\nRules:\n1. Rewrite the content into a cleaner, better-organized article while preserving the original meaning, technical depth, and core intent.\n2. Improve headings, section structure, grammar, readability, and logical flow so the result feels like a polished technical blog post.\n3. If parts of the content are too brief, unclear, underexplained, or abrupt, add necessary explanatory paragraphs to improve understanding. Expand existing ideas when helpful, but do not invent unrelated new topics or unsupported technical claims.\n4. Write for developers and technically curious readers. Make the article understandable to someone who is not the original author, while keeping enough detail for technical readers.\n5. Preserve every <img> tag. Keep image placement unless a nearby move clearly improves readability. Do not change the source URL.\n6. If an image appears without enough surrounding explanation, add a short paragraph before or after it explaining what the image likely shows, why it is relevant, and how it connects to the surrounding discussion by image content input of GPT or Codex. Do not fabricate precise visual details that are not reasonably inferable from context.\n7. Preserve code blocks, inline code, commands, filenames, configuration snippets, and technical terms. If code is obviously malformed, you may repair it, but keep the original intent.\n8. When useful, add brief explanations before or after important code blocks so readers can understand what the code is doing and why it matters.\n9. Do not over-explain trivial details. Focus on strengthening weak or thin sections so the final article is more complete, readable, and helpful.\n10. Return valid HTML only. Do not emit markdown fences, commentary, JSON, or any wrapper outside the final HTML.\n11. If written in a language other than Korean, write the output in English. If written in Korean, write the output in Korean.\n12. If images are present, infer their likely purpose and meaning based on surrounding context. Use this inference to enhance explanations, clarify concepts, and better connect the visual content with the written material."
+              }
+            }
+          }
+        },
+        {
+          "id": "admin-mutation.blog-public-refresh",
+          "area": "Public cache/revalidation",
+          "name": "Admin blog save to public route refreshed and visible",
+          "metric": "mutation-to-public-visible-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            30403.77,
+            30402.75,
+            30488.83
+          ],
+          "stats": {
+            "min": 30402.75,
+            "median": 30403.77,
+            "p90": 30471.82,
+            "p95": 30480.32,
+            "max": 30488.83
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "admin-mutation.work-public-refresh",
+          "area": "Public cache/revalidation",
+          "name": "Admin work save to public route refreshed and visible",
+          "metric": "mutation-to-public-visible-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            30404.42,
+            30405.6,
+            30407.42
+          ],
+          "stats": {
+            "min": 30404.42,
+            "median": 30405.6,
+            "p90": 30407.06,
+            "p95": 30407.24,
+            "max": 30407.42
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "admin-mutation.resume-upload-public-refresh",
+          "area": "Resume PDF SSR",
+          "name": "Admin resume upload to public resume visible",
+          "metric": "mutation-to-public-visible-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            30144.11,
+            30151.74,
+            30149.82
+          ],
+          "stats": {
+            "min": 30144.11,
+            "median": 30149.82,
+            "p90": 30151.36,
+            "p95": 30151.55,
+            "max": 30151.74
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        }
+      ],
+      "notes": []
+    },
+    {
+      "key": "current",
+      "label": "Current",
+      "ref": "current-working-tree",
+      "commit": "246d8577180df4b1a457a7f973a9dcbdfc395471",
+      "workdir": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs",
+      "dockerProject": "woong-blog-perf-current",
+      "startedAt": "2026-04-22T17:25:34.474Z",
+      "completedAt": "2026-04-22T17:28:06.678Z",
+      "seed": {
+        "stamp": "perf-current-abqy9c",
+        "blogs": [
+          {
+            "id": "e4561887-230d-4b5e-83fa-c6f4da975db3",
+            "slug": "perf-blog-public-1776878876499-w05pi",
+            "title": "Perf Blog Public 1776878876499 w05pi"
+          },
+          {
+            "id": "61a62562-051c-4bb3-86af-6e81268f812a",
+            "slug": "perf-study-current-02-perf-current-abqy9c",
+            "title": "Perf Study current 02 perf-current-abqy9c"
+          },
+          {
+            "id": "950d2108-c460-4b68-af57-5c73aa1fe1d6",
+            "slug": "perf-study-current-03-perf-current-abqy9c",
+            "title": "Perf Study current 03 perf-current-abqy9c"
+          },
+          {
+            "id": "a3a3a273-bc56-47c6-9ef9-2cef2c0a7c93",
+            "slug": "perf-study-current-04-perf-current-abqy9c",
+            "title": "Perf Study current 04 perf-current-abqy9c"
+          },
+          {
+            "id": "f7e561aa-3014-49cb-a47a-ea48e8d392f6",
+            "slug": "perf-study-current-05-perf-current-abqy9c",
+            "title": "Perf Study current 05 perf-current-abqy9c"
+          },
+          {
+            "id": "30dcb103-3b87-4eb6-aae6-920816f4897d",
+            "slug": "perf-study-current-06-perf-current-abqy9c",
+            "title": "Perf Study current 06 perf-current-abqy9c"
+          },
+          {
+            "id": "bbd5b913-fcd7-47f8-9ef1-5c4fb79cebe4",
+            "slug": "perf-study-current-07-perf-current-abqy9c",
+            "title": "Perf Study current 07 perf-current-abqy9c"
+          },
+          {
+            "id": "02a95dd4-234f-495f-a977-c1734f5954c8",
+            "slug": "perf-study-current-08-perf-current-abqy9c",
+            "title": "Perf Study current 08 perf-current-abqy9c"
+          },
+          {
+            "id": "e0656719-cdb9-4b93-aa36-6e0e60d11c67",
+            "slug": "perf-study-current-09-perf-current-abqy9c",
+            "title": "Perf Study current 09 perf-current-abqy9c"
+          },
+          {
+            "id": "b8043740-5d86-46d9-bab8-b4c25d9f05af",
+            "slug": "perf-study-current-10-perf-current-abqy9c",
+            "title": "Perf Study current 10 perf-current-abqy9c"
+          },
+          {
+            "id": "45cba163-07d2-4c9b-af5d-f4fb9af921f0",
+            "slug": "perf-study-current-11-perf-current-abqy9c",
+            "title": "Perf Study current 11 perf-current-abqy9c"
+          },
+          {
+            "id": "d1a48211-ac7b-43a5-8313-721d6fe27151",
+            "slug": "perf-study-current-12-perf-current-abqy9c",
+            "title": "Perf Study current 12 perf-current-abqy9c"
+          },
+          {
+            "id": "bcf97341-acbf-4b6d-8faf-fb7c2ea38477",
+            "slug": "perf-study-current-13-perf-current-abqy9c",
+            "title": "Perf Study current 13 perf-current-abqy9c"
+          },
+          {
+            "id": "b7d37f84-02c8-4240-94ae-eb9492a5bd72",
+            "slug": "perf-study-current-14-perf-current-abqy9c",
+            "title": "Perf Study current 14 perf-current-abqy9c"
+          },
+          {
+            "id": "032c9c32-a5d8-4b8d-914d-220a1d733957",
+            "slug": "perf-study-current-15-perf-current-abqy9c",
+            "title": "Perf Study current 15 perf-current-abqy9c"
+          },
+          {
+            "id": "fd6b701a-9492-4b5d-842d-32aec51d5a8d",
+            "slug": "perf-study-current-16-perf-current-abqy9c",
+            "title": "Perf Study current 16 perf-current-abqy9c"
+          },
+          {
+            "id": "b0f7602c-8cde-444b-b601-9816c4f9a77f",
+            "slug": "perf-study-current-17-perf-current-abqy9c",
+            "title": "Perf Study current 17 perf-current-abqy9c"
+          },
+          {
+            "id": "599d3441-e6c9-49ea-b705-8c5082f52063",
+            "slug": "perf-study-current-18-perf-current-abqy9c",
+            "title": "Perf Study current 18 perf-current-abqy9c"
+          },
+          {
+            "id": "b60f267d-24de-429b-a94a-9fe1daa4f5f0",
+            "slug": "perf-study-current-19-perf-current-abqy9c",
+            "title": "Perf Study current 19 perf-current-abqy9c"
+          },
+          {
+            "id": "6a94cc39-eb6b-4628-a7d8-808e14961c27",
+            "slug": "perf-study-current-20-perf-current-abqy9c",
+            "title": "Perf Study current 20 perf-current-abqy9c"
+          },
+          {
+            "id": "28445429-b3c4-431e-8759-6059fca4dd9f",
+            "slug": "perf-study-current-21-perf-current-abqy9c",
+            "title": "Perf Study current 21 perf-current-abqy9c"
+          },
+          {
+            "id": "25a87c19-8437-443a-98e3-886c83322a11",
+            "slug": "perf-study-current-22-perf-current-abqy9c",
+            "title": "Perf Study current 22 perf-current-abqy9c"
+          },
+          {
+            "id": "a85cb0c1-570b-4e32-b740-906fbb837d1e",
+            "slug": "perf-study-current-23-perf-current-abqy9c",
+            "title": "Perf Study current 23 perf-current-abqy9c"
+          },
+          {
+            "id": "4c73d8fd-771e-4199-b03d-2d6ff55505e6",
+            "slug": "perf-study-current-24-perf-current-abqy9c",
+            "title": "Perf Study current 24 perf-current-abqy9c"
+          },
+          {
+            "id": "799817c6-ef18-4334-b6f9-a87bddcaebbe",
+            "slug": "perf-study-current-25-perf-current-abqy9c",
+            "title": "Perf Study current 25 perf-current-abqy9c"
+          },
+          {
+            "id": "98d55a3d-6c4f-4543-a917-fdb61f91b509",
+            "slug": "perf-study-current-26-perf-current-abqy9c",
+            "title": "Perf Study current 26 perf-current-abqy9c"
+          }
+        ],
+        "works": [
+          {
+            "id": "5db5843f-c85b-4edc-a510-8c1834b03fa9",
+            "slug": "perf-work-public-1776878881622-zdk19",
+            "title": "Perf Work Public 1776878881622 zdk19"
+          },
+          {
+            "id": "2b6f0845-bc26-4abe-80c4-fdbca636e6b2",
+            "slug": "perf-work-current-02-perf-current-abqy9c",
+            "title": "Perf Work current 02 perf-current-abqy9c"
+          },
+          {
+            "id": "e628670a-6f14-4df7-836b-d97aad3f521f",
+            "slug": "perf-work-current-03-perf-current-abqy9c",
+            "title": "Perf Work current 03 perf-current-abqy9c"
+          },
+          {
+            "id": "a48ef132-152e-4cd8-a415-a9b31d9213cb",
+            "slug": "perf-work-current-04-perf-current-abqy9c",
+            "title": "Perf Work current 04 perf-current-abqy9c"
+          },
+          {
+            "id": "2b585333-9f15-46a8-87aa-4d3fa01bbb0f",
+            "slug": "perf-work-current-05-perf-current-abqy9c",
+            "title": "Perf Work current 05 perf-current-abqy9c"
+          },
+          {
+            "id": "7f21bd72-736a-425a-85b6-0ddf3fc2c79f",
+            "slug": "perf-work-current-06-perf-current-abqy9c",
+            "title": "Perf Work current 06 perf-current-abqy9c"
+          },
+          {
+            "id": "523ce400-da39-4097-8a09-ea1cb2cd13a5",
+            "slug": "perf-work-current-07-perf-current-abqy9c",
+            "title": "Perf Work current 07 perf-current-abqy9c"
+          },
+          {
+            "id": "9ca813bb-16ca-4efc-91a9-cf8364afd1b4",
+            "slug": "perf-work-current-08-perf-current-abqy9c",
+            "title": "Perf Work current 08 perf-current-abqy9c"
+          },
+          {
+            "id": "e937be8d-cd78-4524-925d-368b74be84bb",
+            "slug": "perf-work-current-09-perf-current-abqy9c",
+            "title": "Perf Work current 09 perf-current-abqy9c"
+          },
+          {
+            "id": "d7ea9ce8-e5b7-4040-91bf-359ad6fae2b3",
+            "slug": "perf-work-current-10-perf-current-abqy9c",
+            "title": "Perf Work current 10 perf-current-abqy9c"
+          },
+          {
+            "id": "b274a230-d7ba-4261-be1f-daab1d250a13",
+            "slug": "perf-work-current-11-perf-current-abqy9c",
+            "title": "Perf Work current 11 perf-current-abqy9c"
+          },
+          {
+            "id": "061b8636-a827-4e07-a0bf-7d5e07732c27",
+            "slug": "perf-work-current-12-perf-current-abqy9c",
+            "title": "Perf Work current 12 perf-current-abqy9c"
+          },
+          {
+            "id": "63fdffa6-1807-4dee-8821-baa7cbebd776",
+            "slug": "perf-work-current-13-perf-current-abqy9c",
+            "title": "Perf Work current 13 perf-current-abqy9c"
+          },
+          {
+            "id": "26e97eb2-0de7-4d05-a5ab-8d13553c2cbd",
+            "slug": "perf-work-current-14-perf-current-abqy9c",
+            "title": "Perf Work current 14 perf-current-abqy9c"
+          },
+          {
+            "id": "72c72d9d-1d95-4ec2-b1ea-1d90dc81f54d",
+            "slug": "perf-work-current-15-perf-current-abqy9c",
+            "title": "Perf Work current 15 perf-current-abqy9c"
+          },
+          {
+            "id": "f5e8487d-6fe0-4751-97dc-af6a7fc3f842",
+            "slug": "perf-work-current-16-perf-current-abqy9c",
+            "title": "Perf Work current 16 perf-current-abqy9c"
+          },
+          {
+            "id": "bd69dffd-c822-4821-b43f-aee8005eb9ac",
+            "slug": "perf-work-current-17-perf-current-abqy9c",
+            "title": "Perf Work current 17 perf-current-abqy9c"
+          },
+          {
+            "id": "7a7edafe-3b4e-4f60-9b83-27c2919e53a8",
+            "slug": "perf-work-current-18-perf-current-abqy9c",
+            "title": "Perf Work current 18 perf-current-abqy9c"
+          }
+        ],
+        "editableBlog": {
+          "id": "e4561887-230d-4b5e-83fa-c6f4da975db3",
+          "slug": "perf-blog-public-1776878876499-w05pi",
+          "title": "Perf Blog Public 1776878876499 w05pi"
+        },
+        "editableWork": {
+          "id": "5db5843f-c85b-4edc-a510-8c1834b03fa9",
+          "slug": "perf-work-public-1776878881622-zdk19",
+          "title": "Perf Work Public 1776878881622 zdk19"
+        },
+        "pages": [
+          {
+            "id": "8d099300-f931-44f5-874d-379f8fddb59e",
+            "slug": "contact"
+          },
+          {
+            "id": "07874286-c8b0-4775-b35f-d118dc91eaca",
+            "slug": "home"
+          },
+          {
+            "id": "521473ae-6d64-400c-9ced-f2e3def93e99",
+            "slug": "introduction"
+          }
+        ],
+        "siteSettingsOwnerName": "Perf Owner current 1776878781168",
+        "resumeAsset": {
+          "id": "a1b71c07-1267-4bbf-943d-6afe5bdf641e",
+          "url": "/media/public-resume/eb45178896d24e23bacc122491e3ed2b.pdf",
+          "path": "public-resume/eb45178896d24e23bacc122491e3ed2b.pdf"
+        }
+      },
+      "scenarios": [
+        {
+          "id": "public-route.home.cold-primary-visible",
+          "area": "Public cache/revalidation",
+          "name": "Home cold first load to primary content visible",
+          "metric": "time-to-primary-content-ms",
+          "status": "passed",
+          "sampleCount": 1,
+          "samples": [
+            160.03
+          ],
+          "stats": {
+            "min": 160.03,
+            "median": 160.03,
+            "p90": 160.03,
+            "p95": 160.03,
+            "max": 160.03
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-route.home.primary-visible",
+          "area": "Public cache/revalidation",
+          "name": "Home warm load to primary content visible",
+          "metric": "time-to-primary-content-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            113.47,
+            159.71,
+            207.7
+          ],
+          "stats": {
+            "min": 113.47,
+            "median": 159.71,
+            "p90": 198.1,
+            "p95": 202.9,
+            "max": 207.7
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-route.home.navigation",
+          "area": "Public cache/revalidation",
+          "name": "Home warm browser navigation",
+          "metric": "browser-navigation-duration-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            101.9,
+            145.9,
+            169.8
+          ],
+          "stats": {
+            "min": 101.9,
+            "median": 145.9,
+            "p90": 165.02,
+            "p95": 167.41,
+            "max": 169.8
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-route.home.ttfb",
+          "area": "Public cache/revalidation",
+          "name": "Home warm route TTFB",
+          "metric": "route-ttfb-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            20.2,
+            20.4,
+            50.5
+          ],
+          "stats": {
+            "min": 20.2,
+            "median": 20.4,
+            "p90": 44.48,
+            "p95": 47.49,
+            "max": 50.5
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-route.blog.cold-primary-visible",
+          "area": "Public cache/revalidation",
+          "name": "Study list cold first load to primary content visible",
+          "metric": "time-to-primary-content-ms",
+          "status": "passed",
+          "sampleCount": 1,
+          "samples": [
+            386.17
+          ],
+          "stats": {
+            "min": 386.17,
+            "median": 386.17,
+            "p90": 386.17,
+            "p95": 386.17,
+            "max": 386.17
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-route.blog.primary-visible",
+          "area": "Public cache/revalidation",
+          "name": "Study list warm load to primary content visible",
+          "metric": "time-to-primary-content-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            141.98,
+            130.58,
+            125.33
+          ],
+          "stats": {
+            "min": 125.33,
+            "median": 130.58,
+            "p90": 139.7,
+            "p95": 140.84,
+            "max": 141.98
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-route.blog.navigation",
+          "area": "Public cache/revalidation",
+          "name": "Study list warm browser navigation",
+          "metric": "browser-navigation-duration-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            99.2,
+            103.3,
+            97.8
+          ],
+          "stats": {
+            "min": 97.8,
+            "median": 99.2,
+            "p90": 102.48,
+            "p95": 102.89,
+            "max": 103.3
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-route.blog.ttfb",
+          "area": "Public cache/revalidation",
+          "name": "Study list warm route TTFB",
+          "metric": "route-ttfb-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            18.2,
+            16.7,
+            16.4
+          ],
+          "stats": {
+            "min": 16.4,
+            "median": 16.7,
+            "p90": 17.9,
+            "p95": 18.05,
+            "max": 18.2
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-route.works.cold-primary-visible",
+          "area": "Public cache/revalidation",
+          "name": "Works list cold first load to primary content visible",
+          "metric": "time-to-primary-content-ms",
+          "status": "passed",
+          "sampleCount": 1,
+          "samples": [
+            438.06
+          ],
+          "stats": {
+            "min": 438.06,
+            "median": 438.06,
+            "p90": 438.06,
+            "p95": 438.06,
+            "max": 438.06
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-route.works.primary-visible",
+          "area": "Public cache/revalidation",
+          "name": "Works list warm load to primary content visible",
+          "metric": "time-to-primary-content-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            128.61,
+            156.54,
+            135.16
+          ],
+          "stats": {
+            "min": 128.61,
+            "median": 135.16,
+            "p90": 152.26,
+            "p95": 154.4,
+            "max": 156.54
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-route.works.navigation",
+          "area": "Public cache/revalidation",
+          "name": "Works list warm browser navigation",
+          "metric": "browser-navigation-duration-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            102.9,
+            109.6,
+            109.5
+          ],
+          "stats": {
+            "min": 102.9,
+            "median": 109.5,
+            "p90": 109.58,
+            "p95": 109.59,
+            "max": 109.6
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-route.works.ttfb",
+          "area": "Public cache/revalidation",
+          "name": "Works list warm route TTFB",
+          "metric": "route-ttfb-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            16.9,
+            23.4,
+            21.4
+          ],
+          "stats": {
+            "min": 16.9,
+            "median": 21.4,
+            "p90": 23,
+            "p95": 23.2,
+            "max": 23.4
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-route.contact.cold-primary-visible",
+          "area": "Public cache/revalidation",
+          "name": "Contact cold first load to primary content visible",
+          "metric": "time-to-primary-content-ms",
+          "status": "passed",
+          "sampleCount": 1,
+          "samples": [
+            178.01
+          ],
+          "stats": {
+            "min": 178.01,
+            "median": 178.01,
+            "p90": 178.01,
+            "p95": 178.01,
+            "max": 178.01
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-route.contact.primary-visible",
+          "area": "Public cache/revalidation",
+          "name": "Contact warm load to primary content visible",
+          "metric": "time-to-primary-content-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            103.54,
+            95.07,
+            102.65
+          ],
+          "stats": {
+            "min": 95.07,
+            "median": 102.65,
+            "p90": 103.36,
+            "p95": 103.45,
+            "max": 103.54
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-route.contact.navigation",
+          "area": "Public cache/revalidation",
+          "name": "Contact warm browser navigation",
+          "metric": "browser-navigation-duration-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            101.8,
+            93.4,
+            100.8
+          ],
+          "stats": {
+            "min": 93.4,
+            "median": 100.8,
+            "p90": 101.6,
+            "p95": 101.7,
+            "max": 101.8
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-route.contact.ttfb",
+          "area": "Public cache/revalidation",
+          "name": "Contact warm route TTFB",
+          "metric": "route-ttfb-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            11.2,
+            12.3,
+            12.1
+          ],
+          "stats": {
+            "min": 11.2,
+            "median": 12.1,
+            "p90": 12.26,
+            "p95": 12.28,
+            "max": 12.3
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-route.introduction.cold-primary-visible",
+          "area": "Public cache/revalidation",
+          "name": "Introduction cold first load to primary content visible",
+          "metric": "time-to-primary-content-ms",
+          "status": "passed",
+          "sampleCount": 1,
+          "samples": [
+            104.91
+          ],
+          "stats": {
+            "min": 104.91,
+            "median": 104.91,
+            "p90": 104.91,
+            "p95": 104.91,
+            "max": 104.91
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-route.introduction.primary-visible",
+          "area": "Public cache/revalidation",
+          "name": "Introduction warm load to primary content visible",
+          "metric": "time-to-primary-content-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            93.06,
+            103.07,
+            108.28
+          ],
+          "stats": {
+            "min": 93.06,
+            "median": 103.07,
+            "p90": 107.24,
+            "p95": 107.76,
+            "max": 108.28
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-route.introduction.navigation",
+          "area": "Public cache/revalidation",
+          "name": "Introduction warm browser navigation",
+          "metric": "browser-navigation-duration-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            98.6,
+            100.5,
+            106.1
+          ],
+          "stats": {
+            "min": 98.6,
+            "median": 100.5,
+            "p90": 104.98,
+            "p95": 105.54,
+            "max": 106.1
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-route.introduction.ttfb",
+          "area": "Public cache/revalidation",
+          "name": "Introduction warm route TTFB",
+          "metric": "route-ttfb-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            11.8,
+            10.9,
+            11.5
+          ],
+          "stats": {
+            "min": 10.9,
+            "median": 11.5,
+            "p90": 11.74,
+            "p95": 11.77,
+            "max": 11.8
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-route.resume.cold-primary-visible",
+          "area": "Resume PDF SSR",
+          "name": "Resume cold first load to primary content visible",
+          "metric": "time-to-primary-content-ms",
+          "status": "passed",
+          "sampleCount": 1,
+          "samples": [
+            126.37
+          ],
+          "stats": {
+            "min": 126.37,
+            "median": 126.37,
+            "p90": 126.37,
+            "p95": 126.37,
+            "max": 126.37
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-route.resume.primary-visible",
+          "area": "Resume PDF SSR",
+          "name": "Resume warm load to primary content visible",
+          "metric": "time-to-primary-content-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            101.89,
+            118.82,
+            89.21
+          ],
+          "stats": {
+            "min": 89.21,
+            "median": 101.89,
+            "p90": 115.43,
+            "p95": 117.13,
+            "max": 118.82
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-route.resume.navigation",
+          "area": "Resume PDF SSR",
+          "name": "Resume warm browser navigation",
+          "metric": "browser-navigation-duration-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            90.1,
+            107.8,
+            78.7
+          ],
+          "stats": {
+            "min": 78.7,
+            "median": 90.1,
+            "p90": 104.26,
+            "p95": 106.03,
+            "max": 107.8
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-route.resume.ttfb",
+          "area": "Resume PDF SSR",
+          "name": "Resume warm route TTFB",
+          "metric": "route-ttfb-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            10.4,
+            14.6,
+            10.4
+          ],
+          "stats": {
+            "min": 10.4,
+            "median": 10.4,
+            "p90": 13.76,
+            "p95": 14.18,
+            "max": 14.6
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-api.home",
+          "area": "Public cache/revalidation",
+          "name": "Public API home",
+          "metric": "api-response-duration-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            10.23,
+            7.51,
+            8.62
+          ],
+          "stats": {
+            "min": 7.51,
+            "median": 8.62,
+            "p90": 9.91,
+            "p95": 10.07,
+            "max": 10.23
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-api.blogs",
+          "area": "Public cache/revalidation",
+          "name": "Public API blogs",
+          "metric": "api-response-duration-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            6.18,
+            5.65,
+            5.08
+          ],
+          "stats": {
+            "min": 5.08,
+            "median": 5.65,
+            "p90": 6.07,
+            "p95": 6.13,
+            "max": 6.18
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-api.works",
+          "area": "Public cache/revalidation",
+          "name": "Public API works",
+          "metric": "api-response-duration-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            9.53,
+            5.86,
+            6.46
+          ],
+          "stats": {
+            "min": 5.86,
+            "median": 6.46,
+            "p90": 8.92,
+            "p95": 9.22,
+            "max": 9.53
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-api.page.contact",
+          "area": "Public cache/revalidation",
+          "name": "Public API contact page",
+          "metric": "api-response-duration-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            4.11,
+            4.92,
+            3.94
+          ],
+          "stats": {
+            "min": 3.94,
+            "median": 4.11,
+            "p90": 4.76,
+            "p95": 4.84,
+            "max": 4.92
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-api.page.introduction",
+          "area": "Public cache/revalidation",
+          "name": "Public API introduction page",
+          "metric": "api-response-duration-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            4.35,
+            4.47,
+            3.82
+          ],
+          "stats": {
+            "min": 3.82,
+            "median": 4.35,
+            "p90": 4.45,
+            "p95": 4.46,
+            "max": 4.47
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-api.resume",
+          "area": "Resume PDF SSR",
+          "name": "Public API resume",
+          "metric": "api-response-duration-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            6.26,
+            4.35,
+            4.38
+          ],
+          "stats": {
+            "min": 4.35,
+            "median": 4.38,
+            "p90": 5.88,
+            "p95": 6.07,
+            "max": 6.26
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "public-api.site-settings",
+          "area": "Public cache/revalidation",
+          "name": "Public API site settings",
+          "metric": "api-response-duration-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            4.78,
+            3.94,
+            3.64
+          ],
+          "stats": {
+            "min": 3.64,
+            "median": 3.94,
+            "p90": 4.61,
+            "p95": 4.7,
+            "max": 4.78
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "pagination.study.next",
+          "area": "Study/Works pagination",
+          "name": "Study Next click to page 2 grid visible",
+          "metric": "interaction-to-ready-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            136.58,
+            141.91,
+            133.87
+          ],
+          "stats": {
+            "min": 133.87,
+            "median": 136.58,
+            "p90": 140.84,
+            "p95": 141.38,
+            "max": 141.91
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "pagination.study.previous",
+          "area": "Study/Works pagination",
+          "name": "Study Previous click to page 1 grid visible",
+          "metric": "interaction-to-ready-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            140.63,
+            137.41,
+            120.36
+          ],
+          "stats": {
+            "min": 120.36,
+            "median": 137.41,
+            "p90": 139.99,
+            "p95": 140.31,
+            "max": 140.63
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "pagination.works.next",
+          "area": "Study/Works pagination",
+          "name": "Works Next click to page 2 grid visible",
+          "metric": "interaction-to-ready-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            130.68,
+            141.78,
+            162.22
+          ],
+          "stats": {
+            "min": 130.68,
+            "median": 141.78,
+            "p90": 158.13,
+            "p95": 160.18,
+            "max": 162.22
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "pagination.works.previous",
+          "area": "Study/Works pagination",
+          "name": "Works Previous click to page 1 grid visible",
+          "metric": "interaction-to-ready-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            157.82,
+            175.34,
+            173.7
+          ],
+          "stats": {
+            "min": 157.82,
+            "median": 173.7,
+            "p90": 175.01,
+            "p95": 175.18,
+            "max": 175.34
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "pagination.blog-page-2.direct-load",
+          "area": "Study/Works pagination",
+          "name": "Study direct page 2 load to grid visible",
+          "metric": "time-to-primary-content-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            136.14,
+            211.19,
+            141.72
+          ],
+          "stats": {
+            "min": 136.14,
+            "median": 141.72,
+            "p90": 197.3,
+            "p95": 204.24,
+            "max": 211.19
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "pagination.works-page-2.direct-load",
+          "area": "Study/Works pagination",
+          "name": "Works direct page 2 load to grid visible",
+          "metric": "time-to-primary-content-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            124.04,
+            129.81,
+            126.53
+          ],
+          "stats": {
+            "min": 124.04,
+            "median": 126.53,
+            "p90": 129.15,
+            "p95": 129.48,
+            "max": 129.81
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "admin.blog-editor.open",
+          "area": "Admin editor UX",
+          "name": "Blog editor open to form ready",
+          "metric": "time-to-form-ready-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            352.32,
+            413.77,
+            389.22
+          ],
+          "stats": {
+            "min": 352.32,
+            "median": 389.22,
+            "p90": 408.86,
+            "p95": 411.32,
+            "max": 413.77
+          },
+          "notes": [],
+          "correctness": [
+            "Only one Update Post action is present; top save action is absent."
+          ],
+          "details": {}
+        },
+        {
+          "id": "admin.blog-editor.bottom-save",
+          "area": "Admin editor UX",
+          "name": "Blog bottom save to saved/navigation state",
+          "metric": "mutation-to-navigation-ready-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            150.15,
+            144.42,
+            137.87
+          ],
+          "stats": {
+            "min": 137.87,
+            "median": 144.42,
+            "p90": 149,
+            "p95": 149.58,
+            "max": 150.15
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "admin.blog-editor.keyboard-save",
+          "area": "Admin editor UX",
+          "name": "Blog keyboard save to saved/navigation state",
+          "metric": "mutation-to-navigation-ready-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            104.06,
+            135.99,
+            122.38
+          ],
+          "stats": {
+            "min": 104.06,
+            "median": 122.38,
+            "p90": 133.27,
+            "p95": 134.63,
+            "max": 135.99
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "admin.work-editor.save",
+          "area": "Admin editor UX",
+          "name": "Work editor save to saved/navigation state",
+          "metric": "mutation-to-navigation-ready-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            143.72,
+            141.66,
+            147.64
+          ],
+          "stats": {
+            "min": 141.66,
+            "median": 143.72,
+            "p90": 146.86,
+            "p95": 147.25,
+            "max": 147.64
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "ai-fix-dialog.open",
+          "area": "AI Fix dialog",
+          "name": "AI Fix click to runtime config and provider dropdown visible",
+          "metric": "interaction-to-provider-ready-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            97.34,
+            104.52,
+            102.26
+          ],
+          "stats": {
+            "min": 97.34,
+            "median": 102.26,
+            "p90": 104.07,
+            "p95": 104.29,
+            "max": 104.52
+          },
+          "notes": [
+            "Runtime providers: openai, codex"
+          ],
+          "correctness": [],
+          "details": {
+            "runtimeConfig": {
+              "ok": true,
+              "durationMs": 15.44,
+              "providers": [
+                "openai",
+                "codex"
+              ],
+              "payload": {
+                "provider": "codex",
+                "availableProviders": [
+                  "openai",
+                  "codex"
+                ],
+                "defaultModel": "gpt-5.4",
+                "codexModel": "gpt-5.4",
+                "codexReasoningEffort": "medium",
+                "allowedCodexModels": [
+                  "gpt-5.4",
+                  "gpt-5.3-codex",
+                  "gpt-5.3-codex-spark"
+                ],
+                "allowedCodexReasoningEfforts": [
+                  "low",
+                  "medium",
+                  "high",
+                  "xhigh"
+                ],
+                "batchConcurrency": 4,
+                "batchCompletedRetentionDays": 3,
+                "defaultSystemPrompt": "You are an expert technical blog editor and educator.\nYour task is to clean up, enhance, expand, and format the provided HTML content from a Tiptap editor into a high-quality developer blog post.\n\nRules:\n1. Rewrite the content into a cleaner, better-organized article while preserving the original meaning, technical depth, and core intent.\n2. Improve headings, section structure, grammar, readability, and logical flow so the result feels like a polished technical blog post.\n3. If parts of the content are too brief, unclear, underexplained, or abrupt, add necessary explanatory paragraphs to improve understanding. Expand existing ideas when helpful, but do not invent unrelated new topics or unsupported technical claims.\n4. Write for developers and technically curious readers. Make the article understandable to someone who is not the original author, while keeping enough detail for technical readers.\n5. Preserve every <img> tag. Keep image placement unless a nearby move clearly improves readability. Do not change the source URL.\n6. If an image appears without enough surrounding explanation, add a short paragraph before or after it explaining what the image likely shows, why it is relevant, and how it connects to the surrounding discussion by image content input of GPT or Codex. Do not fabricate precise visual details that are not reasonably inferable from context.\n7. Preserve code blocks, inline code, commands, filenames, configuration snippets, and technical terms. If code is obviously malformed, you may repair it, but keep the original intent.\n8. When useful, add brief explanations before or after important code blocks so readers can understand what the code is doing and why it matters.\n9. Do not over-explain trivial details. Focus on strengthening weak or thin sections so the final article is more complete, readable, and helpful.\n10. Return valid HTML only. Do not emit markdown fences, commentary, JSON, or any wrapper outside the final HTML.\n11. If written in a language other than Korean, write the output in English. If written in Korean, write the output in Korean.\n12. If images are present, infer their likely purpose and meaning based on surrounding context. Use this inference to enhance explanations, clarify concepts, and better connect the visual content with the written material."
+              }
+            }
+          }
+        },
+        {
+          "id": "admin-mutation.blog-public-refresh",
+          "area": "Public cache/revalidation",
+          "name": "Admin blog save to public route refreshed and visible",
+          "metric": "mutation-to-public-visible-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            288.17,
+            308.26,
+            280.89
+          ],
+          "stats": {
+            "min": 280.89,
+            "median": 288.17,
+            "p90": 304.24,
+            "p95": 306.25,
+            "max": 308.26
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "admin-mutation.work-public-refresh",
+          "area": "Public cache/revalidation",
+          "name": "Admin work save to public route refreshed and visible",
+          "metric": "mutation-to-public-visible-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            308.05,
+            274.63,
+            297.97
+          ],
+          "stats": {
+            "min": 274.63,
+            "median": 297.97,
+            "p90": 306.03,
+            "p95": 307.04,
+            "max": 308.05
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        },
+        {
+          "id": "admin-mutation.resume-upload-public-refresh",
+          "area": "Resume PDF SSR",
+          "name": "Admin resume upload to public resume visible",
+          "metric": "mutation-to-public-visible-ms",
+          "status": "passed",
+          "sampleCount": 3,
+          "samples": [
+            224.82,
+            491.47,
+            481.88
+          ],
+          "stats": {
+            "min": 224.82,
+            "median": 481.88,
+            "p90": 489.55,
+            "p95": 490.51,
+            "max": 491.47
+          },
+          "notes": [],
+          "correctness": [],
+          "details": {}
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "comparisons": [
+    {
+      "id": "public-route.home.cold-primary-visible",
+      "area": "Public cache/revalidation",
+      "name": "Home cold first load to primary content visible",
+      "metric": "time-to-primary-content-ms",
+      "baseline": {
+        "status": "passed",
+        "sampleCount": 1,
+        "stats": {
+          "min": 208.74,
+          "median": 208.74,
+          "p90": 208.74,
+          "p95": 208.74,
+          "max": 208.74
+        }
+      },
+      "current": {
+        "status": "passed",
+        "sampleCount": 1,
+        "stats": {
+          "min": 160.03,
+          "median": 160.03,
+          "p90": 160.03,
+          "p95": 160.03,
+          "max": 160.03
+        }
+      },
+      "deltaMedianPct": -23.34,
+      "deltaP95Pct": -23.34,
+      "classification": "Improved",
+      "notes": []
+    },
+    {
+      "id": "public-route.home.primary-visible",
+      "area": "Public cache/revalidation",
+      "name": "Home warm load to primary content visible",
+      "metric": "time-to-primary-content-ms",
+      "baseline": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 123.37,
+          "median": 131.13,
+          "p90": 157.28,
+          "p95": 160.55,
+          "max": 163.82
+        }
+      },
+      "current": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 113.47,
+          "median": 159.71,
+          "p90": 198.1,
+          "p95": 202.9,
+          "max": 207.7
+        }
+      },
+      "deltaMedianPct": 21.8,
+      "deltaP95Pct": 26.38,
+      "classification": "Regression",
+      "notes": []
+    },
+    {
+      "id": "public-route.home.navigation",
+      "area": "Public cache/revalidation",
+      "name": "Home warm browser navigation",
+      "metric": "browser-navigation-duration-ms",
+      "baseline": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 110.2,
+          "median": 115.8,
+          "p90": 137.56,
+          "p95": 140.28,
+          "max": 143
+        }
+      },
+      "current": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 101.9,
+          "median": 145.9,
+          "p90": 165.02,
+          "p95": 167.41,
+          "max": 169.8
+        }
+      },
+      "deltaMedianPct": 25.99,
+      "deltaP95Pct": 19.34,
+      "classification": "Regression",
+      "notes": []
+    },
+    {
+      "id": "public-route.home.ttfb",
+      "area": "Public cache/revalidation",
+      "name": "Home warm route TTFB",
+      "metric": "route-ttfb-ms",
+      "baseline": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 22.5,
+          "median": 28.3,
+          "p90": 35.74,
+          "p95": 36.67,
+          "max": 37.6
+        }
+      },
+      "current": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 20.2,
+          "median": 20.4,
+          "p90": 44.48,
+          "p95": 47.49,
+          "max": 50.5
+        }
+      },
+      "deltaMedianPct": -27.92,
+      "deltaP95Pct": 29.51,
+      "classification": "Regression",
+      "notes": []
+    },
+    {
+      "id": "public-route.blog.cold-primary-visible",
+      "area": "Public cache/revalidation",
+      "name": "Study list cold first load to primary content visible",
+      "metric": "time-to-primary-content-ms",
+      "baseline": {
+        "status": "passed",
+        "sampleCount": 1,
+        "stats": {
+          "min": 198.48,
+          "median": 198.48,
+          "p90": 198.48,
+          "p95": 198.48,
+          "max": 198.48
+        }
+      },
+      "current": {
+        "status": "passed",
+        "sampleCount": 1,
+        "stats": {
+          "min": 386.17,
+          "median": 386.17,
+          "p90": 386.17,
+          "p95": 386.17,
+          "max": 386.17
+        }
+      },
+      "deltaMedianPct": 94.56,
+      "deltaP95Pct": 94.56,
+      "classification": "Regression",
+      "notes": []
+    },
+    {
+      "id": "public-route.blog.primary-visible",
+      "area": "Public cache/revalidation",
+      "name": "Study list warm load to primary content visible",
+      "metric": "time-to-primary-content-ms",
+      "baseline": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 137.48,
+          "median": 138.61,
+          "p90": 149.57,
+          "p95": 150.94,
+          "max": 152.31
+        }
+      },
+      "current": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 125.33,
+          "median": 130.58,
+          "p90": 139.7,
+          "p95": 140.84,
+          "max": 141.98
+        }
+      },
+      "deltaMedianPct": -5.79,
+      "deltaP95Pct": -6.69,
+      "classification": "Neutral",
+      "notes": []
+    },
+    {
+      "id": "public-route.blog.navigation",
+      "area": "Public cache/revalidation",
+      "name": "Study list warm browser navigation",
+      "metric": "browser-navigation-duration-ms",
+      "baseline": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 116.5,
+          "median": 120.5,
+          "p90": 122.82,
+          "p95": 123.11,
+          "max": 123.4
+        }
+      },
+      "current": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 97.8,
+          "median": 99.2,
+          "p90": 102.48,
+          "p95": 102.89,
+          "max": 103.3
+        }
+      },
+      "deltaMedianPct": -17.68,
+      "deltaP95Pct": -16.42,
+      "classification": "Improved",
+      "notes": []
+    },
+    {
+      "id": "public-route.blog.ttfb",
+      "area": "Public cache/revalidation",
+      "name": "Study list warm route TTFB",
+      "metric": "route-ttfb-ms",
+      "baseline": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 20,
+          "median": 22.2,
+          "p90": 23.8,
+          "p95": 24,
+          "max": 24.2
+        }
+      },
+      "current": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 16.4,
+          "median": 16.7,
+          "p90": 17.9,
+          "p95": 18.05,
+          "max": 18.2
+        }
+      },
+      "deltaMedianPct": -24.77,
+      "deltaP95Pct": -24.79,
+      "classification": "Improved",
+      "notes": []
+    },
+    {
+      "id": "public-route.works.cold-primary-visible",
+      "area": "Public cache/revalidation",
+      "name": "Works list cold first load to primary content visible",
+      "metric": "time-to-primary-content-ms",
+      "baseline": {
+        "status": "passed",
+        "sampleCount": 1,
+        "stats": {
+          "min": 164.98,
+          "median": 164.98,
+          "p90": 164.98,
+          "p95": 164.98,
+          "max": 164.98
+        }
+      },
+      "current": {
+        "status": "passed",
+        "sampleCount": 1,
+        "stats": {
+          "min": 438.06,
+          "median": 438.06,
+          "p90": 438.06,
+          "p95": 438.06,
+          "max": 438.06
+        }
+      },
+      "deltaMedianPct": 165.52,
+      "deltaP95Pct": 165.52,
+      "classification": "Regression",
+      "notes": []
+    },
+    {
+      "id": "public-route.works.primary-visible",
+      "area": "Public cache/revalidation",
+      "name": "Works list warm load to primary content visible",
+      "metric": "time-to-primary-content-ms",
+      "baseline": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 145.13,
+          "median": 152.85,
+          "p90": 171.86,
+          "p95": 174.23,
+          "max": 176.61
+        }
+      },
+      "current": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 128.61,
+          "median": 135.16,
+          "p90": 152.26,
+          "p95": 154.4,
+          "max": 156.54
+        }
+      },
+      "deltaMedianPct": -11.57,
+      "deltaP95Pct": -11.38,
+      "classification": "Improved",
+      "notes": []
+    },
+    {
+      "id": "public-route.works.navigation",
+      "area": "Public cache/revalidation",
+      "name": "Works list warm browser navigation",
+      "metric": "browser-navigation-duration-ms",
+      "baseline": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 126.7,
+          "median": 128.3,
+          "p90": 136.94,
+          "p95": 138.02,
+          "max": 139.1
+        }
+      },
+      "current": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 102.9,
+          "median": 109.5,
+          "p90": 109.58,
+          "p95": 109.59,
+          "max": 109.6
+        }
+      },
+      "deltaMedianPct": -14.65,
+      "deltaP95Pct": -20.6,
+      "classification": "Improved",
+      "notes": []
+    },
+    {
+      "id": "public-route.works.ttfb",
+      "area": "Public cache/revalidation",
+      "name": "Works list warm route TTFB",
+      "metric": "route-ttfb-ms",
+      "baseline": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 22.1,
+          "median": 23.1,
+          "p90": 24.46,
+          "p95": 24.63,
+          "max": 24.8
+        }
+      },
+      "current": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 16.9,
+          "median": 21.4,
+          "p90": 23,
+          "p95": 23.2,
+          "max": 23.4
+        }
+      },
+      "deltaMedianPct": -7.36,
+      "deltaP95Pct": -5.81,
+      "classification": "Neutral",
+      "notes": []
+    },
+    {
+      "id": "public-route.contact.cold-primary-visible",
+      "area": "Public cache/revalidation",
+      "name": "Contact cold first load to primary content visible",
+      "metric": "time-to-primary-content-ms",
+      "baseline": {
+        "status": "passed",
+        "sampleCount": 1,
+        "stats": {
+          "min": 195.99,
+          "median": 195.99,
+          "p90": 195.99,
+          "p95": 195.99,
+          "max": 195.99
+        }
+      },
+      "current": {
+        "status": "passed",
+        "sampleCount": 1,
+        "stats": {
+          "min": 178.01,
+          "median": 178.01,
+          "p90": 178.01,
+          "p95": 178.01,
+          "max": 178.01
+        }
+      },
+      "deltaMedianPct": -9.17,
+      "deltaP95Pct": -9.17,
+      "classification": "Neutral",
+      "notes": []
+    },
+    {
+      "id": "public-route.contact.primary-visible",
+      "area": "Public cache/revalidation",
+      "name": "Contact warm load to primary content visible",
+      "metric": "time-to-primary-content-ms",
+      "baseline": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 104.81,
+          "median": 118.93,
+          "p90": 119.15,
+          "p95": 119.18,
+          "max": 119.21
+        }
+      },
+      "current": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 95.07,
+          "median": 102.65,
+          "p90": 103.36,
+          "p95": 103.45,
+          "max": 103.54
+        }
+      },
+      "deltaMedianPct": -13.69,
+      "deltaP95Pct": -13.2,
+      "classification": "Improved",
+      "notes": []
+    },
+    {
+      "id": "public-route.contact.navigation",
+      "area": "Public cache/revalidation",
+      "name": "Contact warm browser navigation",
+      "metric": "browser-navigation-duration-ms",
+      "baseline": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 102.7,
+          "median": 116.9,
+          "p90": 116.9,
+          "p95": 116.9,
+          "max": 116.9
+        }
+      },
+      "current": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 93.4,
+          "median": 100.8,
+          "p90": 101.6,
+          "p95": 101.7,
+          "max": 101.8
+        }
+      },
+      "deltaMedianPct": -13.77,
+      "deltaP95Pct": -13,
+      "classification": "Improved",
+      "notes": []
+    },
+    {
+      "id": "public-route.contact.ttfb",
+      "area": "Public cache/revalidation",
+      "name": "Contact warm route TTFB",
+      "metric": "route-ttfb-ms",
+      "baseline": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 15.2,
+          "median": 18.5,
+          "p90": 20.34,
+          "p95": 20.57,
+          "max": 20.8
+        }
+      },
+      "current": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 11.2,
+          "median": 12.1,
+          "p90": 12.26,
+          "p95": 12.28,
+          "max": 12.3
+        }
+      },
+      "deltaMedianPct": -34.59,
+      "deltaP95Pct": -40.3,
+      "classification": "Improved",
+      "notes": []
+    },
+    {
+      "id": "public-route.introduction.cold-primary-visible",
+      "area": "Public cache/revalidation",
+      "name": "Introduction cold first load to primary content visible",
+      "metric": "time-to-primary-content-ms",
+      "baseline": {
+        "status": "passed",
+        "sampleCount": 1,
+        "stats": {
+          "min": 113.15,
+          "median": 113.15,
+          "p90": 113.15,
+          "p95": 113.15,
+          "max": 113.15
+        }
+      },
+      "current": {
+        "status": "passed",
+        "sampleCount": 1,
+        "stats": {
+          "min": 104.91,
+          "median": 104.91,
+          "p90": 104.91,
+          "p95": 104.91,
+          "max": 104.91
+        }
+      },
+      "deltaMedianPct": -7.28,
+      "deltaP95Pct": -7.28,
+      "classification": "Neutral",
+      "notes": []
+    },
+    {
+      "id": "public-route.introduction.primary-visible",
+      "area": "Public cache/revalidation",
+      "name": "Introduction warm load to primary content visible",
+      "metric": "time-to-primary-content-ms",
+      "baseline": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 92.86,
+          "median": 96.83,
+          "p90": 99.1,
+          "p95": 99.39,
+          "max": 99.67
+        }
+      },
+      "current": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 93.06,
+          "median": 103.07,
+          "p90": 107.24,
+          "p95": 107.76,
+          "max": 108.28
+        }
+      },
+      "deltaMedianPct": 6.44,
+      "deltaP95Pct": 8.42,
+      "classification": "Neutral",
+      "notes": []
+    },
+    {
+      "id": "public-route.introduction.navigation",
+      "area": "Public cache/revalidation",
+      "name": "Introduction warm browser navigation",
+      "metric": "browser-navigation-duration-ms",
+      "baseline": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 97.6,
+          "median": 102.2,
+          "p90": 104.44,
+          "p95": 104.72,
+          "max": 105
+        }
+      },
+      "current": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 98.6,
+          "median": 100.5,
+          "p90": 104.98,
+          "p95": 105.54,
+          "max": 106.1
+        }
+      },
+      "deltaMedianPct": -1.66,
+      "deltaP95Pct": 0.78,
+      "classification": "Neutral",
+      "notes": []
+    },
+    {
+      "id": "public-route.introduction.ttfb",
+      "area": "Public cache/revalidation",
+      "name": "Introduction warm route TTFB",
+      "metric": "route-ttfb-ms",
+      "baseline": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 14.5,
+          "median": 15.8,
+          "p90": 15.96,
+          "p95": 15.98,
+          "max": 16
+        }
+      },
+      "current": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 10.9,
+          "median": 11.5,
+          "p90": 11.74,
+          "p95": 11.77,
+          "max": 11.8
+        }
+      },
+      "deltaMedianPct": -27.22,
+      "deltaP95Pct": -26.35,
+      "classification": "Improved",
+      "notes": []
+    },
+    {
+      "id": "public-route.resume.cold-primary-visible",
+      "area": "Resume PDF SSR",
+      "name": "Resume cold first load to primary content visible",
+      "metric": "time-to-primary-content-ms",
+      "baseline": {
+        "status": "passed",
+        "sampleCount": 1,
+        "stats": {
+          "min": 181.42,
+          "median": 181.42,
+          "p90": 181.42,
+          "p95": 181.42,
+          "max": 181.42
+        }
+      },
+      "current": {
+        "status": "passed",
+        "sampleCount": 1,
+        "stats": {
+          "min": 126.37,
+          "median": 126.37,
+          "p90": 126.37,
+          "p95": 126.37,
+          "max": 126.37
+        }
+      },
+      "deltaMedianPct": -30.34,
+      "deltaP95Pct": -30.34,
+      "classification": "Improved",
+      "notes": []
+    },
+    {
+      "id": "public-route.resume.primary-visible",
+      "area": "Resume PDF SSR",
+      "name": "Resume warm load to primary content visible",
+      "metric": "time-to-primary-content-ms",
+      "baseline": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 95.89,
+          "median": 105.66,
+          "p90": 108.69,
+          "p95": 109.07,
+          "max": 109.45
+        }
+      },
+      "current": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 89.21,
+          "median": 101.89,
+          "p90": 115.43,
+          "p95": 117.13,
+          "max": 118.82
+        }
+      },
+      "deltaMedianPct": -3.57,
+      "deltaP95Pct": 7.39,
+      "classification": "Neutral",
+      "notes": []
+    },
+    {
+      "id": "public-route.resume.navigation",
+      "area": "Resume PDF SSR",
+      "name": "Resume warm browser navigation",
+      "metric": "browser-navigation-duration-ms",
+      "baseline": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 93,
+          "median": 103.8,
+          "p90": 106.44,
+          "p95": 106.77,
+          "max": 107.1
+        }
+      },
+      "current": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 78.7,
+          "median": 90.1,
+          "p90": 104.26,
+          "p95": 106.03,
+          "max": 107.8
+        }
+      },
+      "deltaMedianPct": -13.2,
+      "deltaP95Pct": -0.69,
+      "classification": "Improved",
+      "notes": []
+    },
+    {
+      "id": "public-route.resume.ttfb",
+      "area": "Resume PDF SSR",
+      "name": "Resume warm route TTFB",
+      "metric": "route-ttfb-ms",
+      "baseline": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 14.5,
+          "median": 16.4,
+          "p90": 18.32,
+          "p95": 18.56,
+          "max": 18.8
+        }
+      },
+      "current": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 10.4,
+          "median": 10.4,
+          "p90": 13.76,
+          "p95": 14.18,
+          "max": 14.6
+        }
+      },
+      "deltaMedianPct": -36.59,
+      "deltaP95Pct": -23.6,
+      "classification": "Improved",
+      "notes": []
+    },
+    {
+      "id": "public-api.home",
+      "area": "Public cache/revalidation",
+      "name": "Public API home",
+      "metric": "api-response-duration-ms",
+      "baseline": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 7.23,
+          "median": 8.06,
+          "p90": 8.96,
+          "p95": 9.08,
+          "max": 9.19
+        }
+      },
+      "current": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 7.51,
+          "median": 8.62,
+          "p90": 9.91,
+          "p95": 10.07,
+          "max": 10.23
+        }
+      },
+      "deltaMedianPct": 6.95,
+      "deltaP95Pct": 10.9,
+      "classification": "Regression",
+      "notes": []
+    },
+    {
+      "id": "public-api.blogs",
+      "area": "Public cache/revalidation",
+      "name": "Public API blogs",
+      "metric": "api-response-duration-ms",
+      "baseline": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 5.29,
+          "median": 5.43,
+          "p90": 6.3,
+          "p95": 6.41,
+          "max": 6.52
+        }
+      },
+      "current": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 5.08,
+          "median": 5.65,
+          "p90": 6.07,
+          "p95": 6.13,
+          "max": 6.18
+        }
+      },
+      "deltaMedianPct": 4.05,
+      "deltaP95Pct": -4.37,
+      "classification": "Neutral",
+      "notes": []
+    },
+    {
+      "id": "public-api.works",
+      "area": "Public cache/revalidation",
+      "name": "Public API works",
+      "metric": "api-response-duration-ms",
+      "baseline": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 5.6,
+          "median": 5.61,
+          "p90": 5.9,
+          "p95": 5.93,
+          "max": 5.97
+        }
+      },
+      "current": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 5.86,
+          "median": 6.46,
+          "p90": 8.92,
+          "p95": 9.22,
+          "max": 9.53
+        }
+      },
+      "deltaMedianPct": 15.15,
+      "deltaP95Pct": 55.48,
+      "classification": "Regression",
+      "notes": []
+    },
+    {
+      "id": "public-api.page.contact",
+      "area": "Public cache/revalidation",
+      "name": "Public API contact page",
+      "metric": "api-response-duration-ms",
+      "baseline": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 2.93,
+          "median": 2.93,
+          "p90": 3.04,
+          "p95": 3.06,
+          "max": 3.07
+        }
+      },
+      "current": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 3.94,
+          "median": 4.11,
+          "p90": 4.76,
+          "p95": 4.84,
+          "max": 4.92
+        }
+      },
+      "deltaMedianPct": 40.27,
+      "deltaP95Pct": 58.17,
+      "classification": "Regression",
+      "notes": []
+    },
+    {
+      "id": "public-api.page.introduction",
+      "area": "Public cache/revalidation",
+      "name": "Public API introduction page",
+      "metric": "api-response-duration-ms",
+      "baseline": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 2.91,
+          "median": 2.92,
+          "p90": 3.02,
+          "p95": 3.03,
+          "max": 3.04
+        }
+      },
+      "current": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 3.82,
+          "median": 4.35,
+          "p90": 4.45,
+          "p95": 4.46,
+          "max": 4.47
+        }
+      },
+      "deltaMedianPct": 48.97,
+      "deltaP95Pct": 47.19,
+      "classification": "Regression",
+      "notes": []
+    },
+    {
+      "id": "public-api.resume",
+      "area": "Resume PDF SSR",
+      "name": "Public API resume",
+      "metric": "api-response-duration-ms",
+      "baseline": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 3.31,
+          "median": 3.48,
+          "p90": 4.14,
+          "p95": 4.23,
+          "max": 4.31
+        }
+      },
+      "current": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 4.35,
+          "median": 4.38,
+          "p90": 5.88,
+          "p95": 6.07,
+          "max": 6.26
+        }
+      },
+      "deltaMedianPct": 25.86,
+      "deltaP95Pct": 43.5,
+      "classification": "Regression",
+      "notes": []
+    },
+    {
+      "id": "public-api.site-settings",
+      "area": "Public cache/revalidation",
+      "name": "Public API site settings",
+      "metric": "api-response-duration-ms",
+      "baseline": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 3.07,
+          "median": 3.11,
+          "p90": 3.91,
+          "p95": 4.01,
+          "max": 4.11
+        }
+      },
+      "current": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 3.64,
+          "median": 3.94,
+          "p90": 4.61,
+          "p95": 4.7,
+          "max": 4.78
+        }
+      },
+      "deltaMedianPct": 26.69,
+      "deltaP95Pct": 17.21,
+      "classification": "Regression",
+      "notes": []
+    },
+    {
+      "id": "pagination.study.next",
+      "area": "Study/Works pagination",
+      "name": "Study Next click to page 2 grid visible",
+      "metric": "interaction-to-ready-ms",
+      "baseline": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 142.92,
+          "median": 149.1,
+          "p90": 150.44,
+          "p95": 150.61,
+          "max": 150.78
+        }
+      },
+      "current": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 133.87,
+          "median": 136.58,
+          "p90": 140.84,
+          "p95": 141.38,
+          "max": 141.91
+        }
+      },
+      "deltaMedianPct": -8.4,
+      "deltaP95Pct": -6.13,
+      "classification": "Neutral",
+      "notes": []
+    },
+    {
+      "id": "pagination.study.previous",
+      "area": "Study/Works pagination",
+      "name": "Study Previous click to page 1 grid visible",
+      "metric": "interaction-to-ready-ms",
+      "baseline": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 148.05,
+          "median": 176.53,
+          "p90": 211.76,
+          "p95": 216.17,
+          "max": 220.57
+        }
+      },
+      "current": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 120.36,
+          "median": 137.41,
+          "p90": 139.99,
+          "p95": 140.31,
+          "max": 140.63
+        }
+      },
+      "deltaMedianPct": -22.16,
+      "deltaP95Pct": -35.09,
+      "classification": "Improved",
+      "notes": []
+    },
+    {
+      "id": "pagination.works.next",
+      "area": "Study/Works pagination",
+      "name": "Works Next click to page 2 grid visible",
+      "metric": "interaction-to-ready-ms",
+      "baseline": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 150.51,
+          "median": 151.19,
+          "p90": 155.86,
+          "p95": 156.45,
+          "max": 157.03
+        }
+      },
+      "current": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 130.68,
+          "median": 141.78,
+          "p90": 158.13,
+          "p95": 160.18,
+          "max": 162.22
+        }
+      },
+      "deltaMedianPct": -6.22,
+      "deltaP95Pct": 2.38,
+      "classification": "Neutral",
+      "notes": []
+    },
+    {
+      "id": "pagination.works.previous",
+      "area": "Study/Works pagination",
+      "name": "Works Previous click to page 1 grid visible",
+      "metric": "interaction-to-ready-ms",
+      "baseline": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 135.93,
+          "median": 139.16,
+          "p90": 164.78,
+          "p95": 167.98,
+          "max": 171.18
+        }
+      },
+      "current": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 157.82,
+          "median": 173.7,
+          "p90": 175.01,
+          "p95": 175.18,
+          "max": 175.34
+        }
+      },
+      "deltaMedianPct": 24.82,
+      "deltaP95Pct": 4.29,
+      "classification": "Regression",
+      "notes": []
+    },
+    {
+      "id": "pagination.blog-page-2.direct-load",
+      "area": "Study/Works pagination",
+      "name": "Study direct page 2 load to grid visible",
+      "metric": "time-to-primary-content-ms",
+      "baseline": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 146.15,
+          "median": 147.03,
+          "p90": 152.4,
+          "p95": 153.07,
+          "max": 153.74
+        }
+      },
+      "current": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 136.14,
+          "median": 141.72,
+          "p90": 197.3,
+          "p95": 204.24,
+          "max": 211.19
+        }
+      },
+      "deltaMedianPct": -3.61,
+      "deltaP95Pct": 33.43,
+      "classification": "Regression",
+      "notes": []
+    },
+    {
+      "id": "pagination.works-page-2.direct-load",
+      "area": "Study/Works pagination",
+      "name": "Works direct page 2 load to grid visible",
+      "metric": "time-to-primary-content-ms",
+      "baseline": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 128.23,
+          "median": 135.93,
+          "p90": 138.71,
+          "p95": 139.06,
+          "max": 139.41
+        }
+      },
+      "current": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 124.04,
+          "median": 126.53,
+          "p90": 129.15,
+          "p95": 129.48,
+          "max": 129.81
+        }
+      },
+      "deltaMedianPct": -6.92,
+      "deltaP95Pct": -6.89,
+      "classification": "Neutral",
+      "notes": []
+    },
+    {
+      "id": "admin.blog-editor.open",
+      "area": "Admin editor UX",
+      "name": "Blog editor open to form ready",
+      "metric": "time-to-form-ready-ms",
+      "baseline": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 330.93,
+          "median": 413.99,
+          "p90": 428.57,
+          "p95": 430.39,
+          "max": 432.21
+        }
+      },
+      "current": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 352.32,
+          "median": 389.22,
+          "p90": 408.86,
+          "p95": 411.32,
+          "max": 413.77
+        }
+      },
+      "deltaMedianPct": -5.98,
+      "deltaP95Pct": -4.43,
+      "classification": "Neutral",
+      "notes": [
+        "baseline correctness: Only one Update Post action is present; top save action is absent.",
+        "current correctness: Only one Update Post action is present; top save action is absent."
+      ]
+    },
+    {
+      "id": "admin.blog-editor.bottom-save",
+      "area": "Admin editor UX",
+      "name": "Blog bottom save to saved/navigation state",
+      "metric": "mutation-to-navigation-ready-ms",
+      "baseline": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 124.3,
+          "median": 127.72,
+          "p90": 3309.5,
+          "p95": 3707.22,
+          "max": 4104.94
+        }
+      },
+      "current": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 137.87,
+          "median": 144.42,
+          "p90": 149,
+          "p95": 149.58,
+          "max": 150.15
+        }
+      },
+      "deltaMedianPct": 13.08,
+      "deltaP95Pct": -95.97,
+      "classification": "Regression",
+      "notes": []
+    },
+    {
+      "id": "admin.blog-editor.keyboard-save",
+      "area": "Admin editor UX",
+      "name": "Blog keyboard save to saved/navigation state",
+      "metric": "mutation-to-navigation-ready-ms",
+      "baseline": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 100.39,
+          "median": 101.68,
+          "p90": 3295.55,
+          "p95": 3694.79,
+          "max": 4094.02
+        }
+      },
+      "current": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 104.06,
+          "median": 122.38,
+          "p90": 133.27,
+          "p95": 134.63,
+          "max": 135.99
+        }
+      },
+      "deltaMedianPct": 20.36,
+      "deltaP95Pct": -96.36,
+      "classification": "Regression",
+      "notes": []
+    },
+    {
+      "id": "admin.work-editor.save",
+      "area": "Admin editor UX",
+      "name": "Work editor save to saved/navigation state",
+      "metric": "mutation-to-navigation-ready-ms",
+      "baseline": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 135.17,
+          "median": 135.86,
+          "p90": 3315.92,
+          "p95": 3713.42,
+          "max": 4110.93
+        }
+      },
+      "current": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 141.66,
+          "median": 143.72,
+          "p90": 146.86,
+          "p95": 147.25,
+          "max": 147.64
+        }
+      },
+      "deltaMedianPct": 5.79,
+      "deltaP95Pct": -96.03,
+      "classification": "Neutral",
+      "notes": []
+    },
+    {
+      "id": "ai-fix-dialog.open",
+      "area": "AI Fix dialog",
+      "name": "AI Fix click to runtime config and provider dropdown visible",
+      "metric": "interaction-to-provider-ready-ms",
+      "baseline": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 92.82,
+          "median": 107.61,
+          "p90": 113.89,
+          "p95": 114.68,
+          "max": 115.46
+        }
+      },
+      "current": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 97.34,
+          "median": 102.26,
+          "p90": 104.07,
+          "p95": 104.29,
+          "max": 104.52
+        }
+      },
+      "deltaMedianPct": -4.97,
+      "deltaP95Pct": -9.06,
+      "classification": "Neutral",
+      "notes": [
+        "baseline: Runtime providers: codex",
+        "current: Runtime providers: openai, codex",
+        "baseline correctness: Provider correctness issue: expected OPENAI and CODEX when OpenAI/Codex access is configured; got codex."
+      ]
+    },
+    {
+      "id": "admin-mutation.blog-public-refresh",
+      "area": "Public cache/revalidation",
+      "name": "Admin blog save to public route refreshed and visible",
+      "metric": "mutation-to-public-visible-ms",
+      "baseline": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 30402.75,
+          "median": 30403.77,
+          "p90": 30471.82,
+          "p95": 30480.32,
+          "max": 30488.83
+        }
+      },
+      "current": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 280.89,
+          "median": 288.17,
+          "p90": 304.24,
+          "p95": 306.25,
+          "max": 308.26
+        }
+      },
+      "deltaMedianPct": -99.05,
+      "deltaP95Pct": -99,
+      "classification": "Improved",
+      "notes": []
+    },
+    {
+      "id": "admin-mutation.work-public-refresh",
+      "area": "Public cache/revalidation",
+      "name": "Admin work save to public route refreshed and visible",
+      "metric": "mutation-to-public-visible-ms",
+      "baseline": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 30404.42,
+          "median": 30405.6,
+          "p90": 30407.06,
+          "p95": 30407.24,
+          "max": 30407.42
+        }
+      },
+      "current": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 274.63,
+          "median": 297.97,
+          "p90": 306.03,
+          "p95": 307.04,
+          "max": 308.05
+        }
+      },
+      "deltaMedianPct": -99.02,
+      "deltaP95Pct": -98.99,
+      "classification": "Improved",
+      "notes": []
+    },
+    {
+      "id": "admin-mutation.resume-upload-public-refresh",
+      "area": "Resume PDF SSR",
+      "name": "Admin resume upload to public resume visible",
+      "metric": "mutation-to-public-visible-ms",
+      "baseline": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 30144.11,
+          "median": 30149.82,
+          "p90": 30151.36,
+          "p95": 30151.55,
+          "max": 30151.74
+        }
+      },
+      "current": {
+        "status": "passed",
+        "sampleCount": 3,
+        "stats": {
+          "min": 224.82,
+          "median": 481.88,
+          "p90": 489.55,
+          "p95": 490.51,
+          "max": 491.47
+        }
+      },
+      "deltaMedianPct": -98.4,
+      "deltaP95Pct": -98.37,
+      "classification": "Improved",
+      "notes": []
+    }
+  ],
+  "areaRecommendations": [
+    {
+      "area": "Public cache/revalidation",
+      "recommendation": "Investigate before release: 10 regression(s) detected.",
+      "counts": {
+        "Improved": 11,
+        "Regression": 10,
+        "Neutral": 7
+      }
+    },
+    {
+      "area": "Resume PDF SSR",
+      "recommendation": "Investigate before release: 1 regression(s) detected.",
+      "counts": {
+        "Improved": 4,
+        "Neutral": 1,
+        "Regression": 1
+      }
+    },
+    {
+      "area": "Study/Works pagination",
+      "recommendation": "Investigate before release: 2 regression(s) detected.",
+      "counts": {
+        "Neutral": 3,
+        "Improved": 1,
+        "Regression": 2
+      }
+    },
+    {
+      "area": "Admin editor UX",
+      "recommendation": "Investigate before release: 2 regression(s) detected.",
+      "counts": {
+        "Neutral": 2,
+        "Regression": 2
+      }
+    },
+    {
+      "area": "AI Fix dialog",
+      "recommendation": "Accept: no runtime regression detected in this area.",
+      "counts": {
+        "Neutral": 1
+      }
+    }
+  ],
+  "reportPaths": {
+    "jsonPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/backend/reports/frontend-performance-origin-dev-vs-current/frontend-performance-origin-dev-vs-current.json",
+    "mdPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/backend/reports/frontend-performance-origin-dev-vs-current/frontend-performance-origin-dev-vs-current.md",
+    "htmlPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/backend/reports/frontend-performance-origin-dev-vs-current/frontend-performance-origin-dev-vs-current.html"
+  }
+}

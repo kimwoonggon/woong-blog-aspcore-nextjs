@@ -1,17 +1,51 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
+import { measureStep } from './helpers/latency'
 
-test('works search filters cards by title', async ({ page }) => {
-  await page.goto('/works?query=Portfolio%20Platform&searchMode=title&page=1&pageSize=8')
+test('public study search submits query without searchMode', async ({ page }, testInfo) => {
+  await page.goto('/blog')
+  await expect.poll(() => new URL(page.url()).searchParams.get('pageSize')).not.toBeNull()
 
-  await expect(page.getByLabel('Search work')).toHaveValue('Portfolio Platform')
-  await expect(page.getByLabel('Work search mode')).toHaveValue('title')
-  await expect(page.getByTestId('work-card').first()).toContainText('Portfolio Platform Rebuild')
+  const studySearchForm = page.getByRole('search')
+  const studySearchInput = studySearchForm.getByRole('textbox', { name: 'Search studies' })
+  await studySearchInput.fill('seeded')
+  await expect(studySearchInput).toHaveValue('seeded')
+
+  await measureStep(
+    testInfo,
+    'Study unified search submit',
+    'publicSearch',
+    async () => {
+      await studySearchForm.getByRole('button', { name: 'Search studies' }).click()
+    },
+    async () => {
+      await expect.poll(() => new URL(page.url()).searchParams.get('query')).toBe('seeded')
+      await expect.poll(() => new URL(page.url()).searchParams.get('searchMode')).toBeNull()
+      await expect(studySearchInput).toHaveValue('seeded')
+    },
+  )
 })
 
-test('works search supports content mode and empty results', async ({ page }) => {
-  await page.goto('/works?query=no-such-work-token&searchMode=content&page=1&pageSize=8')
+test('public works search submits query without searchMode', async ({ page }, testInfo) => {
+  await page.goto('/works')
+  await expect.poll(() => new URL(page.url()).searchParams.get('pageSize')).not.toBeNull()
 
-  await expect(page.getByLabel('Search work')).toHaveValue('no-such-work-token')
-  await expect(page.getByLabel('Work search mode')).toHaveValue('content')
-  await expect(page.getByText('No works found.')).toBeVisible()
+  const worksSearchForm = page.getByRole('search')
+  const worksSearchInput = worksSearchForm.getByRole('textbox', { name: 'Search work' })
+  await worksSearchInput.fill('Portfolio Platform')
+  await expect(worksSearchInput).toHaveValue('Portfolio Platform')
+
+  await measureStep(
+    testInfo,
+    'Works unified search submit',
+    'publicSearch',
+    async () => {
+      await worksSearchForm.getByRole('button', { name: 'Search works' }).click()
+    },
+    async () => {
+      await expect.poll(() => new URL(page.url()).searchParams.get('query')).toBe('Portfolio Platform')
+      await expect.poll(() => new URL(page.url()).searchParams.get('searchMode')).toBeNull()
+      await expect(worksSearchInput).toHaveValue('Portfolio Platform')
+      await expect(page.getByTestId('work-card').first()).toContainText('Portfolio Platform Rebuild')
+    },
+  )
 })

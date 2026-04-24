@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 import { clickHeaderNavLink } from './helpers/navigation'
 
 test('public home page renders the full primary navigation', async ({ page }) => {

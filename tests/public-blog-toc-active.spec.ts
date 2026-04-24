@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 test('blog detail TOC updates its active heading as the reader moves deeper into the article', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })

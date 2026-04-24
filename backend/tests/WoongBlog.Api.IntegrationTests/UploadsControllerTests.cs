@@ -3,8 +3,8 @@ using System.Net;
 using System.Net.Http.Headers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using WoongBlog.Api.Infrastructure.Auth;
-using WoongBlog.Api.Infrastructure.Persistence;
+using WoongBlog.Infrastructure.Auth;
+using WoongBlog.Infrastructure.Persistence;
 
 namespace WoongBlog.Api.Tests;
 

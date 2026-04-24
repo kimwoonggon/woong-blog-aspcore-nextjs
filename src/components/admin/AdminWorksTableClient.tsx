@@ -232,7 +232,8 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
     startTransition(async () => {
       try {
         if (pendingDelete.ids.length === 1) {
-          await deleteAdminWork(pendingDelete.ids[0])
+          const work = workItems.find((item) => item.id === pendingDelete.ids[0])
+          await deleteAdminWork(pendingDelete.ids[0], work?.slug)
         } else {
           await deleteManyAdminWorks(pendingDelete.ids)
         }

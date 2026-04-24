@@ -1,13 +1,13 @@
 import { describe, expect, it, vi } from 'vitest'
 
 describe('getLoginUrl', () => {
-  it('builds a localhost-backed auth launcher url for admin in dev', async () => {
+  it('builds a same-origin auth launcher url for admin by default', async () => {
     vi.resetModules()
     delete process.env.NEXT_PUBLIC_API_BASE_URL
 
     const { getLoginUrl } = await import('@/lib/api/auth')
 
-    expect(getLoginUrl()).toBe('http://localhost/api/auth/login?returnUrl=%2Fadmin')
+    expect(getLoginUrl()).toBe('/api/auth/login?returnUrl=%2Fadmin')
   })
 
   it('encodes custom return urls', async () => {

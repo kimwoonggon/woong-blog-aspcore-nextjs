@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using WoongBlog.Api.Domain.Entities;
-using WoongBlog.Api.Infrastructure.Persistence;
-using WoongBlog.Api.Modules.Site.Application.Abstractions;
+using WoongBlog.Infrastructure.Persistence;
+using WoongBlog.Application.Modules.Site.Abstractions;
 
-namespace WoongBlog.Api.Modules.Site.Persistence;
+namespace WoongBlog.Infrastructure.Modules.Site.Persistence;
 
 public sealed class SiteSettingsCommandStore(WoongBlogDbContext dbContext) : ISiteSettingsCommandStore
 {

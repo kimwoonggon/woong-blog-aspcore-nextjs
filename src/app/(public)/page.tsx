@@ -3,15 +3,11 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowRight, BriefcaseBusiness, FileText, User } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { headers } from 'next/headers'
+import { LocalQaNoImageBoundary } from '@/components/content/LocalQaQueryBoundary'
 import { fetchPublicHome } from '@/lib/api/home'
 import { parsePageContentJson, toHomeContent } from '@/lib/content/page-content'
 
-export const dynamic = 'force-dynamic'
-
-interface PageProps {
-  searchParams?: Promise<{ __qaNoImage?: string; __qaSlow?: string }>
-}
+export const revalidate = 60
 
 function formatPublishedMonth(publishedAt?: string | null) {
   return publishedAt
@@ -22,26 +18,27 @@ function formatPublishedMonth(publishedAt?: string | null) {
     : 'Unknown Date'
 }
 
-export default async function HomePage({ searchParams }: PageProps) {
-  const resolvedSearchParams = await searchParams
-  const headerStore = await headers()
-  const requestHost = (headerStore.get('x-forwarded-host') ?? headerStore.get('host') ?? '').toLowerCase()
-  const isLocalQaRequest = /localhost|127\.0\.0\.1/.test(requestHost)
-  if (resolvedSearchParams?.__qaSlow === '1' && isLocalQaRequest) {
-    await new Promise((resolve) => setTimeout(resolve, 2000))
-  }
+function FeaturedWorkNoImagePlaceholder() {
+  return (
+    <div
+      data-testid="featured-work-no-image-placeholder"
+      className="flex h-full w-full flex-col items-center justify-center gap-2 bg-gradient-to-br from-muted to-muted/80 text-muted-foreground"
+    >
+      <BriefcaseBusiness className="h-8 w-8" aria-hidden="true" />
+      <span className="text-xs font-medium">No Image</span>
+    </div>
+  )
+}
+
+export default async function HomePage() {
   const payload = await fetchPublicHome()
   const homeContent = toHomeContent(parsePageContentJson(payload?.homePage?.contentJson))
 
   const headline = homeContent.headline || 'Hi, I am John, Creative Technologist'
   const introText = homeContent.introText || 'Amet minim mollit non deserunt ullamco est sit aliqua dolor do amet sint. Velit officia consequat duis enim velit mollit. Exercitation veniam consequat sunt nostrud amet.'
   const profileImageUrl = homeContent.profileImageUrl || ''
-  const recentPosts = payload?.recentPosts || []
+  const recentPosts = (payload?.recentPosts || []).slice(0, 6)
   const featuredWorks = payload?.featuredWorks || []
-  const qaNoImageFeaturedWorks = resolvedSearchParams?.__qaNoImage === '1' && isLocalQaRequest
-  const visibleFeaturedWorks = qaNoImageFeaturedWorks
-    ? featuredWorks.map((work) => ({ ...work, thumbnailUrl: null }))
-    : featuredWorks
 
   return (
     <div className="container mx-auto max-w-7xl flex flex-col gap-12 px-4 py-8 md:px-6 md:py-10">
@@ -122,8 +119,8 @@ export default async function HomePage({ searchParams }: PageProps) {
           </Link>
         </div>
         <div data-testid="featured-works-grid" className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {visibleFeaturedWorks.length > 0 ? (
-            visibleFeaturedWorks.map((work) => {
+          {featuredWorks.length > 0 ? (
+            featuredWorks.map((work) => {
               const thumbnailUrl = work.thumbnailUrl || null
               const publishDate = formatPublishedMonth(work.publishedAt)
 
@@ -132,21 +129,17 @@ export default async function HomePage({ searchParams }: PageProps) {
                   <Card className="flex h-full flex-col overflow-hidden rounded-2xl border-border/80 bg-background py-0 shadow-sm transition hover:border-primary/30 hover:shadow-md">
                     <div className="relative aspect-[4/3] overflow-hidden bg-muted">
                       {thumbnailUrl ? (
-                        <Image
-                          src={thumbnailUrl}
-                          alt={work.title}
-                          fill
-                          className="object-cover transition-transform duration-500 group-hover:scale-105"
-                          unoptimized
-                        />
+                        <LocalQaNoImageBoundary fallback={<FeaturedWorkNoImagePlaceholder />}>
+                          <Image
+                            src={thumbnailUrl}
+                            alt={work.title}
+                            fill
+                            className="object-cover transition-transform duration-500 group-hover:scale-105"
+                            unoptimized
+                          />
+                        </LocalQaNoImageBoundary>
                       ) : (
-                        <div
-                          data-testid="featured-work-no-image-placeholder"
-                          className="flex h-full w-full flex-col items-center justify-center gap-2 bg-gradient-to-br from-muted to-muted/80 text-muted-foreground"
-                        >
-                          <BriefcaseBusiness className="h-8 w-8" aria-hidden="true" />
-                          <span className="text-xs font-medium">No Image</span>
-                        </div>
+                        <FeaturedWorkNoImagePlaceholder />
                       )}
                     </div>
                     <CardContent className="flex flex-1 flex-col p-4 sm:p-5">
@@ -196,7 +189,7 @@ export default async function HomePage({ searchParams }: PageProps) {
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Link>
         </div>
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-2 md:gap-6">
           {recentPosts.length > 0 ? (
             recentPosts.map((post) => {
               const publishDate = post.publishedAt
@@ -248,7 +241,7 @@ export default async function HomePage({ searchParams }: PageProps) {
         </div>
       </section>
 
-      <section data-testid="home-navigation-section" className="animate-fade-in-up rounded-[2rem] border border-border/70 bg-background px-5 py-5 shadow-sm md:px-6" style={{ animationDelay: '550ms' }}>
+      <section data-testid="home-navigation-section" className="hidden animate-fade-in-up rounded-[2rem] border border-border/70 bg-background px-5 py-5 shadow-sm lg:block md:px-6" style={{ animationDelay: '550ms' }}>
         <div className="grid gap-3 md:grid-cols-3">
           {[
             {

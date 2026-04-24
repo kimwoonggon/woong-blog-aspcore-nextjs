@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers/performance-test'
 
 test('works cards use a flexible height instead of a fixed 30rem height', async ({ page }) => {
   await page.goto('/works')

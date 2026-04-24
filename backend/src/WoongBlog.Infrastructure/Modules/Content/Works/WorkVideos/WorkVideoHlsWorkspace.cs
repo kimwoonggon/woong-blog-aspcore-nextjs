@@ -1,7 +1,7 @@
 using WoongBlog.Api.Common.Application.Files;
-using WoongBlog.Api.Modules.Content.Works.Application.WorkVideos;
+using WoongBlog.Infrastructure.Modules.Content.Works.WorkVideos;
 
-namespace WoongBlog.Api.Modules.Content.Works.Application.WorkVideos;
+namespace WoongBlog.Infrastructure.Modules.Content.Works.WorkVideos;
 
 public sealed class WorkVideoHlsWorkspace : IWorkVideoHlsWorkspace
 {

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Frontend Performance Benchmark Audit</title>
+  <style>
+    body { color: #111827; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.5; margin: 2rem; max-width: 960px; }
+    code, pre { background: #f3f4f6; border-radius: 6px; padding: 0.1rem 0.3rem; }
+    pre { padding: 1rem; overflow: auto; }
+  </style>
+</head>
+<body>
+  <h1>Frontend Performance Benchmark Audit</h1>
+  <p><strong>Generated:</strong> 2026-04-22</p>
+  <h2>Changed</h2>
+  <ul>
+    <li>Added the external benchmark runner and focused report-generation test.</li>
+    <li>Excluded local <code>.tmp</code> runtime data from Docker build contexts.</li>
+    <li>Generated benchmark reports and updated the dated TODO.</li>
+  </ul>
+  <h2>Not Changed</h2>
+  <ul>
+    <li>No production frontend/backend behavior, auth semantics, persistence, or UI design was changed.</li>
+    <li>No performance optimization was attempted.</li>
+  </ul>
+  <h2>Validation</h2>
+  <ul>
+    <li><code>node --check scripts/benchmark-frontend-performance.mjs</code> passed.</li>
+    <li><code>npx vitest run src/test/frontend-performance-benchmark.test.ts --pool=threads</code> passed.</li>
+    <li><code>npx eslint scripts/benchmark-frontend-performance.mjs src/test/frontend-performance-benchmark.test.ts</code> passed.</li>
+    <li><code>git diff --check</code> passed.</li>
+    <li><code>npm run typecheck</code> passed.</li>
+    <li>Comparative Docker smoke generated Markdown, HTML, and JSON reports.</li>
+  </ul>
+  <h2>Risks</h2>
+  <p>The persisted comparison is a one-sample smoke run on isolated ports, not the full requested statistical profile. One current Study Next click sample timed out and should be rerun in the full benchmark.</p>
+  <h2>Recommendation</h2>
+  <p>Run the default benchmark profile when <code>127.0.0.1:3000</code> can be dedicated to the comparison.</p>
+</body>
+</html>

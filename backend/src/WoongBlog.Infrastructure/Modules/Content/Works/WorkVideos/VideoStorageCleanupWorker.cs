@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Hosting;
 
-namespace WoongBlog.Api.Modules.Content.Works.Application.WorkVideos;
+namespace WoongBlog.Infrastructure.Modules.Content.Works.WorkVideos;
 
 public sealed class VideoStorageCleanupWorker(
     IServiceScopeFactory scopeFactory) : BackgroundService
