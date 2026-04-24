@@ -1,21 +1,22 @@
 {
   "task": "main-dev-promotion-license-2026-04-24",
   "summary": [
-    "Promoted the runtime-only main tree from origin/dev using the repository promotion workflow.",
-    "Added a custom Woonggon Kim proprietary license and linked it from README and package.json."
+    "Rebuilt main from the dev runtime tree using the repository promotion workflow.",
+    "Fixed allowlist omissions required by CI Main Runtime and preserved the custom Woonggon Kim license."
   ],
   "not_changed": [
-    "No Apache/MIT style license was applied.",
-    "No direct manual dev-to-main merge was used.",
+    "No direct manual dev-to-main merge.",
+    "No Apache/MIT style license.",
     "No cleanup of local artifact noise in the original working tree."
   ],
   "validations": [
-    "Inspected failed direct merge path and switched to scripts/promote-main-runtime.sh.",
-    "Verified LICENSE, README.md, and package.json in the promotion worktree."
+    "Inspected failed CI Main Runtime logs.",
+    "Verified required helper and script files in the regenerated main runtime tree.",
+    "Verified LICENSE, README.md, and package.json license metadata."
   ],
   "risks": [
-    "Future runtime promotions must continue preserving the license change.",
-    "This is a custom proprietary license, not an OSI-approved open-source license."
+    "Future runtime promotions still depend on allowlist upkeep.",
+    "The license must remain part of the promotion path going forward."
   ],
-  "recommendation": "Use the runtime-only promotion workflow for future dev-to-main promotions and keep the root LICENSE as the source of truth."
+  "recommendation": "Keep main-runtime-allowlist.txt aligned with CI Main Runtime dependencies and preserve the root LICENSE in future promotions."
 }

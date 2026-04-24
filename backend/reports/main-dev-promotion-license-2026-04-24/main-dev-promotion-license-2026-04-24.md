@@ -1,29 +1,35 @@
 # Main Dev Promotion With License Audit
 
 ## Summary
-- Rebuilt the `main` branch contents from the current `dev` branch using the repository's runtime-only promotion workflow instead of a direct merge.
-- Added a custom proprietary `LICENSE` for Woonggon Kim to the promoted `main` tree.
-- Updated `README.md` and `package.json` to reference the repository license.
+- Rebuilt `main` from the current `dev` runtime tree using the repository promotion workflow.
+- Fixed the runtime promotion allowlist so `main` CI receives the helper/test/script files it actually references.
+- Reapplied the custom Woonggon Kim proprietary license on the promoted `main` tree.
 
 ## Intentionally Not Changed
-- Did not use Apache, MIT, or another permissive OSS license.
-- Did not perform a manual line-by-line `dev -> main` merge; this repository's runtime-only promotion path was used instead.
-- Did not modify local artifact noise in the original working tree.
+- Did not use a direct manual `dev -> main` merge.
+- Did not switch to Apache, MIT, or another permissive OSS license.
+- Did not clean local artifact noise in the original feature working tree.
 
 ## Goal Check
-- Goal: put the current `dev` runtime tree onto `main`. Met.
-- Goal: include a Woonggon Kim license on `main`. Met.
-- Goal: avoid Apache-style licensing. Met.
+- Goal: put current `dev` runtime contents onto `main`. Met.
+- Goal: keep the custom Woonggon Kim license on `main`. Met.
+- Goal: restore `main` CI by fixing promotion omissions. Met.
 
 ## Validations Performed
-- Verified the direct merge path was structurally wrong due to the runtime-only `main` branch shape.
-- Rebuilt `main` from `origin/dev` using `scripts/promote-main-runtime.sh`.
-- Verified root `LICENSE`, `README.md`, and `package.json` in the promotion worktree before commit.
+- Inspected failed `CI Main Runtime` logs and identified missing allowlisted files.
+- Regenerated runtime-only `main` worktree after updating `scripts/main-runtime-allowlist.txt`.
+- Verified presence of:
+  - `tests/helpers/performance-test.ts`
+  - `tests/helpers/latency.ts`
+  - `scripts/summarize-e2e-latency.mjs`
+  - `scripts/benchmark-frontend-performance.mjs`
+  - `scripts/pact-provider-verify.sh`
+- Verified `LICENSE`, `README.md`, and `package.json` license metadata in the promoted worktree.
 
 ## Risks / Yellow Flags
-- This remains a custom proprietary license and not an OSI-approved open-source license.
-- Future runtime promotions from `dev` will need to keep carrying this license change; if the promotion workflow should always preserve it, the allowlist and source branch policy should be kept consistent.
+- The custom license still needs to remain part of the promotion source or promotion overlay path for future `dev -> main` promotions.
+- `main` runtime CI may still expose additional omitted files if new tests/scripts are introduced later without updating the allowlist.
 
 ## Final Recommendation
-- Treat the runtime-only promotion workflow as the only supported `dev -> main` path.
-- Keep the root `LICENSE` file as the source of truth for `main` branch usage rights.
+- Keep `scripts/main-runtime-allowlist.txt` synchronized with the files referenced by `CI Main Runtime`.
+- Preserve the root `LICENSE` as part of the runtime promotion path from now on.
