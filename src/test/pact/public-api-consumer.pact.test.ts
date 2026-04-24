@@ -37,12 +37,17 @@ async function withServerApi<T>(baseUrl: string, callback: () => Promise<T>) {
     getServerCookieHeader: vi.fn(async () => ''),
   }))
 
+  vi.doMock('@/lib/api/public-server', () => ({
+    getPublicServerApiBaseUrl: vi.fn(async () => `${baseUrl}/api`),
+  }))
+
   return await callback()
 }
 
 describe('public API consumer Pact contracts', () => {
   afterEach(() => {
     vi.doUnmock('@/lib/api/server')
+    vi.doUnmock('@/lib/api/public-server')
     vi.doUnmock('next/headers')
     vi.unstubAllGlobals()
   })
