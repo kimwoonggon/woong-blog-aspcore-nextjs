@@ -6,8 +6,7 @@
     "Priority 1 auth/session/login/logout/CSRF/admin authorization tests",
     "Priority 1 destructive or state-changing admin command tests",
     "Public read/query behavior tests",
-    "WorkVideo behavior tests",
-    "AI/Codex/batch/runtime config behavior tests"
+    "WorkVideo behavior tests"
   ],
   "productionCodeChanged": false,
   "testsAdded": [
@@ -123,51 +122,15 @@
         "reorder handler rewrites sort order deterministically through EF-backed stores",
         "delete handler removes the video, compacts remaining order, and normalizes HLS cleanup to the local manifest key"
       ]
-    },
-    {
-      "file": "backend/tests/WoongBlog.Api.IntegrationTests/AdminAiEndpointsTests.cs",
-      "category": "Integration",
-      "behaviors": [
-        "admin AI blog-fix rejects anonymous requests when CSRF is valid",
-        "runtime config rejects anonymous requests",
-        "persistent batch job creation returns bad request when no target is requested",
-        "repeated active batch job creation returns the existing queued job and does not duplicate job or item records"
-      ]
-    },
-    {
-      "file": "backend/tests/WoongBlog.Api.ComponentTests/AiBatchRuntimeComponentTests.cs",
-      "category": "Component",
-      "behaviors": [
-        "batch job command persists queued jobs and pending items for selected targets",
-        "batch target store selects requested or all targets deterministically",
-        "scheduler resets interrupted running jobs to queued",
-        "scheduler moves queued work through running to completed and persists fixed HTML results",
-        "full runtime failure marks the job failed and stores item errors",
-        "partial runtime failure with auto-apply updates only successful blogs and preserves failed or unrelated content",
-        "runtime config handler returns stable defaults and provider fallback",
-        "AI options post-configure applies environment-style overrides and defaults",
-        "AI options validation fails safely for invalid runtime configuration"
-      ]
-    },
-    {
-      "file": "backend/tests/WoongBlog.Api.ComponentTests/BlogAiFixServiceCodexRuntimeComponentTests.cs",
-      "category": "Component",
-      "behaviors": [
-        "fake Codex process receives model, reasoning effort, and workdir arguments",
-        "non-zero fake Codex process exit surfaces stderr in the thrown exception"
-      ]
     }
   ],
   "filesChanged": [
     "backend/tests/WoongBlog.Api.IntegrationTests/AdminMutationEndpointsTests.cs",
-    "backend/tests/WoongBlog.Api.IntegrationTests/AdminAiEndpointsTests.cs",
     "backend/tests/WoongBlog.Api.IntegrationTests/AuthFlowIntegrationTests.cs",
     "backend/tests/WoongBlog.Api.IntegrationTests/TestOidcChallengeHandler.cs",
     "backend/tests/WoongBlog.Api.IntegrationTests/TestAuthHandler.cs",
     "backend/tests/WoongBlog.Api.IntegrationTests/CustomWebApplicationFactory.cs",
-    "backend/tests/WoongBlog.Api.ComponentTests/AiBatchRuntimeComponentTests.cs",
     "backend/tests/WoongBlog.Api.ComponentTests/AuthRecorderComponentTests.cs",
-    "backend/tests/WoongBlog.Api.ComponentTests/BlogAiFixServiceCodexRuntimeComponentTests.cs",
     "backend/tests/WoongBlog.Api.ComponentTests/PublicQueryHandlerComponentTests.cs",
     "backend/tests/WoongBlog.Api.IntegrationTests/PublicEndpointsTests.cs",
     "backend/tests/WoongBlog.Api.IntegrationTests/WorkVideoEndpointsTests.cs",
@@ -257,52 +220,10 @@
       "summary": "Integration 133"
     },
     {
-      "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~AdminAiEndpointsTests",
-      "exitCode": 0,
-      "result": "passed",
-      "summary": "17 integration tests passed"
-    },
-    {
-      "command": "dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj --filter FullyQualifiedName~AiBatchRuntimeComponentTests",
-      "exitCode": 0,
-      "result": "passed",
-      "summary": "10 component tests passed"
-    },
-    {
-      "command": "dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj --filter \"FullyQualifiedName~AiBatchRuntimeComponentTests|FullyQualifiedName~BlogAiFixServiceCodexRuntimeComponentTests\"",
-      "exitCode": 0,
-      "result": "passed",
-      "summary": "16 component tests passed"
-    },
-    {
-      "command": "dotnet test backend/WoongBlog.sln",
-      "exitCode": 0,
-      "result": "passed",
-      "summary": "Contract 1, Unit 14, Component 72, Architecture 30, Integration 185"
-    },
-    {
-      "command": "dotnet test backend/WoongBlog.sln --filter \"Category=Component\"",
-      "exitCode": 0,
-      "result": "passed",
-      "summary": "Component 72"
-    },
-    {
-      "command": "dotnet test backend/WoongBlog.sln --filter \"Category=Integration\"",
-      "exitCode": 0,
-      "result": "passed",
-      "summary": "Integration 136"
-    },
-    {
-      "command": "node -e \"JSON.parse(...)\"",
-      "exitCode": 0,
-      "result": "passed",
-      "summary": "machine-readable audit JSON parsed successfully after AI batch/runtime update"
-    },
-    {
       "command": "git diff --check",
       "exitCode": 0,
       "result": "passed",
-      "summary": "no whitespace errors after AI batch/runtime update"
+      "summary": "no whitespace errors"
     }
   ],
   "warnings": [
@@ -328,14 +249,6 @@
     "Component tests cover local storage save/read/delete, HLS directory deletion, cleanup service success/failure/max attempts, expired-session cleanup, reorder handler/store behavior, and delete cleanup normalization",
     "Public query coverage confirms published work videos are returned and draft work videos are hidden with the draft work"
   ],
-  "aiBatchRuntimeCoverageImproved": [
-    "Admin AI endpoints cover representative anonymous rejection and invalid persistent batch target validation",
-    "Batch creation covers selected/all target selection, queued job and pending item persistence, custom prompt normalization, provider/model/reasoning metadata, worker-count clamping, and batch signal emission",
-    "Batch status transitions cover running reset, queued-to-running-to-completed success, all-failed final failed state, partial failure final completed state, and persisted item FixedHtml/Error results",
-    "Failure handling asserts runtime exceptions are stored on failed items without corrupting unrelated blog content",
-    "Runtime config covers stable DTO defaults, provider fallback, environment-style option loading, and invalid options validation",
-    "Codex runtime covers fake-process model/reasoning/workdir arguments and non-zero stderr failure handling"
-  ],
   "remainingGaps": [
     "Page create/delete endpoints do not exist in the current API surface",
     "Admin member create/update/delete/update-role endpoints do not exist in the current API surface",
@@ -344,12 +257,7 @@
     "Endpoint-level missing singleton/site settings, missing home page, and missing public resume asset behavior remain public read gaps",
     "Invalid pageSize=0 normalization and unknown searchMode fallback remain explicit endpoint public read gaps",
     "Public query semantics still run against EF InMemory/test-host storage; direct PostgreSQL ordering/search behavior remains unverified",
-    "Media upload/delete remains outside this step",
-    "AI batch endpoint auth remains representative; anonymous/non-admin/invalid-CSRF matrices for every batch endpoint are incomplete",
-    "AI batch cancel-queued, clear-completed, not-found get/apply/cancel/delete, queued/running apply rejection, and cancellation during execution need focused tests",
-    "Runtime prompt-file missing or invalid JSON fallback and full environment override precedence remain incomplete",
-    "Codex timeout, output-size handling, missing auth file, invalid command path, and remote image artifact behavior remain untested",
-    "OpenAI/Azure HTTP provider paths need fake HttpClient success and failure coverage",
+    "Media upload/delete and AI batch mutations remain outside this step",
     "WorkVideo R2/object-storage behavior remains untested without a fake S3/R2 client or adapter seam",
     "WorkVideo confirm-upload failures still need coverage for invalid session, expired session, missing object, wrong size or MIME, invalid MP4 bytes, stale version, and repeated confirm or upload attempts",
     "WorkVideo HLS job failures still need coverage for ffmpeg or ffprobe failure, timeout, malformed manifest, unsupported MIME, empty file, stale version, workspace cleanup, and output publish rollback",
@@ -357,5 +265,5 @@
     "Hosted VideoStorageCleanupWorker lifecycle and cleanup cancellation behavior remain untested",
     "OIDC callback success/failure and endpoint-level logout revocation/audit side effects remain auth-session gaps"
   ],
-  "recommendation": "Keep the P1 auth, admin mutation, public read/query, WorkVideo, and AI batch/runtime test updates. Continue next with dedicated media tests, remaining AI endpoint matrices, and deeper WorkVideo R2/HLS failure coverage when a fake object-storage seam is available."
+  "recommendation": "Keep the P1 auth, admin mutation, public read/query, and WorkVideo test updates. Continue next with dedicated media and AI mutation slices, plus deeper WorkVideo R2/HLS failure coverage when a fake object-storage seam is available."
 }
