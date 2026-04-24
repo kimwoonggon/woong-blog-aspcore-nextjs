@@ -26,12 +26,12 @@ Test inventory scanned:
 | Test project | Intended taxonomy | Current files / tests observed | What is actually covered | Strict notes |
 |---|---|---:|---|---|
 | `WoongBlog.Api.UnitTests` | Pure Application/helper/validator tests only | 4 files, 12 facts/theories | Command/query validators, `AdminContentText.GenerateExcerpt`, `WorkVideoHlsJobPlan` | Taxonomy is preserved by `ArchitectureBoundaryTests.UnitTestProject_DoesNotReference_Infrastructure_AspNetCore_Or_EfInMemory`. Unit coverage is narrow. |
-| `WoongBlog.Api.ComponentTests` | Application + Infrastructure + EF InMemory/fakes/filesystem/HttpClient style tests, no full HTTP host | 5 files, 37 facts | Auth recorder/session persistence including malformed/expired/missing-profile sessions, public query handlers/stores, Codex runtime process environment | Good middle-layer coverage for selected public/auth/AI paths only. Most admin command handlers and stores are not component-tested. |
-| `WoongBlog.Api.IntegrationTests` | Full ASP.NET test host and endpoint behavior | 16 test files, 110 facts/theories; 129 expanded test cases | Auth/session/login/logout/CSRF/admin authorization slices, admin content endpoints, public endpoints, media upload/delete, work videos, AI endpoints, startup/options, persistence bootstrapping | Auth boundary coverage is stronger after the P1 auth update, but many admin mutation families still rely on representative authorization/CSRF sampling rather than exhaustive endpoint matrices. |
+| `WoongBlog.Api.ComponentTests` | Application + Infrastructure + EF InMemory/fakes/filesystem/HttpClient style tests, no full HTTP host | 5 files, 34 facts | Auth recorder/session persistence, public query handlers/stores, Codex runtime process environment | Good middle-layer coverage for selected public/auth/AI paths only. Most admin command handlers and stores are not component-tested. |
+| `WoongBlog.Api.IntegrationTests` | Full ASP.NET test host and endpoint behavior | 15 files, 98 facts | Auth/session/CSRF slices, admin content endpoints, public endpoints, media upload/delete, work videos, AI endpoints, startup/options, persistence bootstrapping | Most endpoint coverage is happy-path or selected failure only. Authorization coverage is inconsistent outside members/dashboard. |
 | `WoongBlog.Api.ArchitectureTests` | Project/layer/dependency boundary tests | 1 file, 30 facts | Layer references, HTTP-agnostic Application, removed legacy controllers/services, module boundary checks, unit-test project dependency guard | Strong architecture regression net, but not behavior coverage. |
 | `WoongBlog.Api.ContractTests` | Provider/contract verification tests | 1 file, 1 fact | Pact provider verification from pact files if `PACT_PROVIDER_BASE_URL` and pact files exist | Test self-skips when env or pact files are missing, so normal `dotnet test` can pass without contract verification. |
 
-Observed source totals after the P1 auth test update: 27 backend test files containing facts/theories and 190 facts/theories. `dotnet test` executed 211 test cases because xUnit theories expand inline data. Production C# inventory remains unchanged for this update.
+Observed source totals: 26 backend test files and 175 facts/theories. `dotnet test` executed 177 test cases because xUnit theories expand inline data. Production C# inventory contains 353 `.cs` files.
 
 ## Coverage Classification Legend
 
@@ -50,11 +50,11 @@ Observed source totals after the P1 auth test update: 27 backend test files cont
 
 | Feature | Production files involved | Existing test files | Existing test level | Current coverage classification | Missing happy-path tests | Missing failure/edge-case tests | Missing auth/authorization tests | Missing persistence/side-effect tests | Recommended test project | Priority |
 |---|---|---|---|---|---|---|---|---|---|---|
-| Session endpoint | `backend/src/WoongBlog.Api/Modules/Identity/GetSession/GetSessionEndpoint.cs`; `backend/src/WoongBlog.Infrastructure/Auth/AuthRecorder.cs`; auth events/options | `AuthEndpointsTests.cs` asserts anonymous session returns `authenticated:false`, authenticated test header returns `authenticated:true` and `role:"admin"`; `AuthFlowIntegrationTests.cs` asserts full admin payload and authenticated non-admin `user` role payload; `AuthSecurityTests.cs` asserts security headers on session response | Integration | Partially covered | Unauthenticated response still does not assert null profile fields | Invalid/stale cookie path only indirectly covered at component level, not endpoint level | Non-admin authenticated role response is now tested through the test auth handler | Cookie/session validation side effects are not asserted through endpoint host | Integration | P1 |
-| CSRF token endpoint and antiforgery middleware | `GetCsrfEndpoint.cs`; `AntiforgeryValidationMiddleware.cs`; `SecurityServiceCollectionExtensions.cs` | `AuthEndpointsTests.cs` asserts `/api/auth/csrf` returns request token/header; `AuthSecurityTests.cs` asserts `PUT /api/admin/site-settings` fails without CSRF and succeeds with CSRF; `AuthFlowIntegrationTests.cs` asserts invalid CSRF rejects without persisting, valid CSRF accepts, logout without CSRF rejects, and valid-CSRF anonymous/non-admin mutations reach 401/403 auth failures | Integration | Partially covered | Broader cookie/header interaction across multipart and all mutation families | Stale token, missing cookie, duplicate header, and multipart mutation paths remain untested | Representative admin mutation and logout CSRF behavior is now sampled, but not every admin POST/PUT/DELETE endpoint | Site-settings invalid-token rejection now asserts no DB side effect; other rejected mutations still lack side-effect assertions | Integration | P1 |
-| Login and OIDC callback flow | `LoginEndpoint.cs`; `TestLoginEndpoint.cs`; `AppOpenIdConnectEvents.cs`; `PublicOriginUrlResolver.cs`; `IdentityInteractionService.cs`; `AuthRecorder.cs` | `AuthEndpointsTests.cs` asserts test-login is not application-rate-limited; `AuthRedirectUriResolverComponentTests.cs` asserts callback URI uses configured public origin or request origin; `AuthFlowIntegrationTests.cs` asserts `/api/auth/login` challenges a fake OIDC provider and external return URLs are not exposed | Integration, Component | Partially covered | OIDC callback success through the host and profile/session/audit creation through the callback endpoint | Disabled auth, provider failure, missing claims, and callback failure remain untested | Non-admin user login and admin email promotion through endpoint host remain untested | Profile/session/audit creation is component-tested only in `AuthRecorderComponentTests.cs`, not through callback endpoint | Integration + Component | P1 |
-| Logout flow | `LogoutEndpoint.cs`; `AuthRecorder.cs`; cookie auth events | `AuthEndpointsTests.cs` asserts `GET /api/auth/logout` returns 405; `AuthFlowIntegrationTests.cs` asserts `POST /api/auth/logout` rejects missing CSRF, succeeds with valid CSRF, returns redirect payload, and clears the auth cookie; `AuthRecorderComponentTests.cs` asserts recorder revokes session and adds audit log | Integration, Component | Partially covered | Basic POST success, JSON redirect contract, cookie clear, and missing-CSRF failure are now tested | Anonymous logout, invalid return URL, and repeated logout remain untested | Logout POST is not an auth-required endpoint by current production mapping | Endpoint-level revocation/audit side effects are not asserted with a real cookie-authenticated principal | Integration | P1 |
-| Auth session recorder | `AuthRecorder.cs`; `AuthOptions.cs`; `AuthClaimTypes.cs`; `Profile`, `AuthSession`, `AuthAuditLog` | `AuthRecorderComponentTests.cs` asserts successful login creates profile/session/audit, admin email grants admin, normal email keeps user, logout revokes, missing/malformed claims, revoked sessions, sliding expiration, absolute expiration, missing profile, role drift, valid refresh, and recently seen no-refresh behavior | Component | Partially covered | Existing profile login update and multiple concurrent sessions | Missing email/name/provider subject and audit failure reasons remain untested | Admin override changes over time and role downgrade semantics remain untested | IP address capture, user agent truncation, session key uniqueness collision handling | Component | P1 |
+| Session endpoint | `backend/src/WoongBlog.Api/Modules/Identity/GetSession/GetSessionEndpoint.cs`; `backend/src/WoongBlog.Infrastructure/Auth/AuthRecorder.cs`; auth events/options | `AuthEndpointsTests.cs` asserts anonymous session returns `authenticated:false`, authenticated test header returns `authenticated:true` and `role:"admin"`; `AuthSecurityTests.cs` asserts security headers on session response | Integration | Partially covered | Assert full session payload shape including profile id/email/display name and unauthenticated null fields | Invalid/stale cookie path only indirectly covered at component level, not endpoint level | Non-admin authenticated role response is not tested | Cookie/session validation side effects are not asserted through endpoint host | Integration | P1 |
+| CSRF token endpoint and antiforgery middleware | `GetCsrfEndpoint.cs`; `AntiforgeryValidationMiddleware.cs`; `SecurityServiceCollectionExtensions.cs` | `AuthEndpointsTests.cs` asserts `/api/auth/csrf` returns request token/header; `AuthSecurityTests.cs` asserts `PUT /api/admin/site-settings` fails without CSRF and succeeds with CSRF | Integration | Endpoint-only | Token response shape and cookie/header interaction across real mutating endpoints | Invalid token, stale token, missing cookie, duplicate header, multipart mutation paths | CSRF behavior for all admin POST/PUT/DELETE endpoints is not sampled | No assertion that rejected mutations avoid DB/file side effects | Integration | P1 |
+| Login and OIDC callback flow | `LoginEndpoint.cs`; `TestLoginEndpoint.cs`; `AppOpenIdConnectEvents.cs`; `PublicOriginUrlResolver.cs`; `IdentityInteractionService.cs`; `AuthRecorder.cs` | `AuthEndpointsTests.cs` asserts test-login is not application-rate-limited; `AuthRedirectUriResolverComponentTests.cs` asserts callback URI uses configured public origin or request origin | Integration, Component | Partially covered | Real `/api/auth/login` challenge/redirect behavior and return URL handling | Invalid return URL, disabled auth, provider failure, missing claims, callback failure | Non-admin user login and admin email promotion through endpoint host | Profile/session/audit creation is component-tested only in `AuthRecorderComponentTests.cs`, not through callback endpoint | Integration + Component | P1 |
+| Logout flow | `LogoutEndpoint.cs`; `AuthRecorder.cs`; cookie auth events | `AuthEndpointsTests.cs` asserts `GET /api/auth/logout` returns 405; `AuthRecorderComponentTests.cs` asserts recorder revokes session and adds audit log | Integration, Component | Partially covered | `POST /api/auth/logout` endpoint success, redirect/JSON contract, cookie clear | Anonymous logout, missing CSRF, invalid return URL, repeated logout | Require/auth behavior for logout POST not asserted | Endpoint-level session revocation and audit log not asserted | Integration | P1 |
+| Auth session recorder | `AuthRecorder.cs`; `AuthOptions.cs`; `AuthClaimTypes.cs`; `Profile`, `AuthSession`, `AuthAuditLog` | `AuthRecorderComponentTests.cs` asserts successful login creates profile/session/audit, admin email grants admin, normal email keeps user, logout revokes, missing claims/revoked/expired/role drift invalidates, valid sessions refresh or skip `LastSeenAt` | Component | Partially covered | Existing profile login update and multiple concurrent sessions | Absolute expiration boundary, malformed GUID claims, missing email/name/provider subject, audit failure reasons | Admin override changes over time and role downgrade semantics | IP address capture, user agent truncation, session key uniqueness collision handling | Component | P1 |
 | Security headers | `SecurityHeadersMiddleware.cs`; `SecurityOptions.cs`; `SecurityOptionsValidator.cs` | `AuthSecurityTests.cs` asserts `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, and CSP on `/api/auth/session` | Integration | Happy-path only | Headers on representative public/admin/media responses | Disabled/configured security option variants, HSTS/HTTPS behavior | Not applicable except ensuring headers on unauthorized responses | No side-effect concerns | Integration | P2 |
 
 ## 2. Admin content/page/blog/work management
@@ -155,8 +155,8 @@ Observed source totals after the P1 auth test update: 27 backend test files cont
 
 | Gap | Evidence | Recommended project | Priority |
 |---|---|---|---|
-| Admin authorization is not consistently asserted | `AuthFlowIntegrationTests.cs` now samples anonymous 401, non-admin 403, and admin 200 for representative admin GET endpoints across pages/blogs/works/site/dashboard/members/AI runtime config; many admin mutations and media/work-video endpoints still lack endpoint-specific anonymous/non-admin tests | Integration | P1 |
-| CSRF is only sampled against site settings | `AuthFlowIntegrationTests.cs` now adds invalid-token/no-persist, valid-token, logout missing-token, and valid-token auth-failure samples; all other POST/PUT/DELETE endpoint families still rely on middleware by inference | Integration | P1 |
+| Admin authorization is not consistently asserted | Members and dashboard test anonymous 401; many admin blog/work/page/site/media/AI/work-video endpoints have no anonymous/non-admin tests | Integration | P1 |
+| CSRF is only sampled against site settings | `AuthSecurityTests.cs` tests update site settings only; all other POST/PUT/DELETE endpoints rely on middleware by inference | Integration | P1 |
 | Component coverage is thin for admin command handlers/stores | Most admin content behavior is endpoint-only; no component tests for `BlogCommandStore`, `WorkCommandStore`, `PageCommandStore`, AI batch store failure paths, media store | Component | P1 |
 | Contract tests can silently skip | `ProviderContractVerificationTests.cs` returns when env or pact files are missing | Contract | P2 |
 | Postgres behavior is only partly covered | Postgres test checks schema/search indexes, but most query/store behavior runs on EF InMemory/test host | Integration | P1 |
@@ -166,7 +166,7 @@ Observed source totals after the P1 auth test update: 27 backend test files cont
 
 P1 direct additions should focus on risk boundaries:
 
-- Continue the admin auth/authorization and CSRF matrix for blog/page/work/site/media/AI/work-video mutations beyond the representative P1 auth samples added on 2026-04-25.
+- Admin auth/authorization and CSRF matrix for blog/page/work/site/media/AI/work-video mutations.
 - Component tests for admin command handlers/stores and AI batch state transitions.
 - Media/work-video storage failure and cleanup behavior, especially R2/object-storage abstractions.
 - Postgres-backed query behavior for search/pagination if CI can support Testcontainers reliably.
@@ -181,62 +181,6 @@ P2 additions should deepen edge cases:
 P3 additions should cover low-risk observability gaps:
 
 - Health payload shape and future mapped health checks/metrics if intentionally exposed.
-
-## Priority 1 Auth Test Implementation Update - 2026-04-25
-
-This update implemented only the requested backend Priority 1 auth/session/login/logout/CSRF/admin-authorization tests. No production auth architecture was rewritten.
-
-### Tests Added
-
-- `AuthFlowIntegrationTests.cs`
-  - Full session payload for authenticated admin.
-  - Authenticated non-admin session role payload.
-  - Representative admin GET endpoints return 401 for anonymous requests.
-  - Representative admin GET endpoints return 403 for authenticated non-admin requests.
-  - Representative admin GET endpoints return success for authenticated admin requests.
-  - `/api/auth/login` challenges a fake OIDC provider without real Google OAuth.
-  - External login return URLs are not exposed in the auth redirect.
-  - `POST /api/auth/logout` rejects missing CSRF.
-  - `POST /api/auth/logout` succeeds with valid CSRF, returns redirect payload, and clears the auth cookie.
-  - Admin site-settings mutation rejects invalid CSRF and preserves existing DB state.
-  - Admin site-settings mutation accepts valid CSRF and persists.
-  - Valid-CSRF admin mutation returns 401 for anonymous and 403 for non-admin principals.
-- `AuthRecorderComponentTests.cs`
-  - Malformed session-id claim does not authenticate.
-  - Absolute-expired session does not authenticate and is revoked.
-  - Session with missing profile does not authenticate and is revoked.
-
-### Files Changed
-
-- `backend/tests/WoongBlog.Api.IntegrationTests/AuthFlowIntegrationTests.cs` added.
-- `backend/tests/WoongBlog.Api.IntegrationTests/TestOidcChallengeHandler.cs` added as fake test auth infrastructure for OIDC challenge behavior.
-- `backend/tests/WoongBlog.Api.IntegrationTests/TestAuthHandler.cs` updated to include a non-admin `user` identity and fuller admin/user claims.
-- `backend/tests/WoongBlog.Api.IntegrationTests/CustomWebApplicationFactory.cs` updated to register the fake OIDC challenge handler under the production OIDC scheme name.
-- `backend/tests/WoongBlog.Api.ComponentTests/AuthRecorderComponentTests.cs` updated with three session invalidation edge tests.
-- `todolist-2026-04-25.md` updated with the required implementation TODO, scope mapping, backups, and verification results.
-- `backend/reports/backend-test-coverage-audit-2026-04-24/backend-test-coverage-audit-2026-04-24.md` updated with this implementation report and validation results.
-
-### Behavior Covered
-
-- Authenticated admin, authenticated non-admin, and anonymous identity paths through the session endpoint and representative admin HTTP endpoints.
-- API unauthorized behavior returns 401 without browser redirect for anonymous admin GET requests.
-- API forbidden behavior returns 403 for authenticated non-admin admin GET requests.
-- Login challenge redirect behavior is covered through a fake OIDC challenge handler, not real Google OAuth.
-- Logout POST is covered for missing CSRF and valid-CSRF success including cookie clearing.
-- CSRF missing/invalid/valid behavior is covered for logout and site-settings mutation, including a no-persist assertion on invalid token rejection.
-- Invalid session claim, absolute expiration, and missing-profile invalidation are covered at component level through `AuthRecorder`.
-
-### Remaining Auth/Session/CSRF Gaps
-
-- OIDC callback success/failure, provider failure, disabled-auth login, missing claims in callback, and non-admin login rejection through the full callback host remain untested.
-- Endpoint-level revocation/audit side effects for logout with a real cookie-authenticated session remain untested because the integration host still uses the test auth handler for request identity.
-- Anonymous/non-admin and CSRF matrices are still representative, not exhaustive, for every admin mutation, media upload/delete, AI batch, and work-video endpoint.
-- CSRF stale token, missing cookie, duplicate header, multipart upload token behavior, and rejected-mutation side effects outside site settings remain untested.
-- Existing-profile login update, multiple concurrent auth sessions, admin override changes over time, role downgrade semantics, IP capture, user-agent truncation, and session-key collision behavior remain component-test gaps.
-
-### Backup
-
-Backups were prepared before test/report edits under `.agent-backups/priority1-auth-tests-2026-04-25/`.
 
 ## 8-Step Direct Origin Push Plan
 
@@ -257,13 +201,8 @@ This is a direct origin push plan, not a PR plan.
 |---|---|---|
 | `rg --files backend/src backend/tests` | Passed | Used to inventory backend production and test files. |
 | `rg -n "\[Fact\]\|\[Theory\]" backend/tests` | Passed | Used to enumerate existing test evidence. |
-| `dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~AuthFlowIntegrationTests` | Passed, exit code 0 | 31 integration test cases passed after adding the fake OIDC challenge handler. Initial red run failed because the test host had no `OpenIdConnect` challenge scheme registered. |
-| `dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj --filter FullyQualifiedName~AuthRecorderComponentTests` | Passed, exit code 0 | 12 component tests passed, including 3 new session invalidation cases. |
-| `dotnet test backend/WoongBlog.sln` | Passed, exit code 0 | All five backend test projects passed after the P1 auth update: Contract 1, Unit 14, Component 37, Architecture 30, Integration 129. Restore/build emitted NU1901 warnings for `AWSSDK.Core` 4.0.0.17 low-severity advisory `GHSA-9cvc-h2w8-phrp`. |
-| `dotnet test backend/WoongBlog.sln --filter "Category=Unit"` | Passed, exit code 0 | Unit filter passed: 14 tests. Other projects reported no tests matching the filter. |
-| `dotnet test backend/WoongBlog.sln --filter "Category=Component"` | Passed, exit code 0 | Component filter passed: 37 tests. Other projects reported no tests matching the filter. |
-| `dotnet test backend/WoongBlog.sln --filter "Category=Integration"` | Passed, exit code 0 | Integration category filter passed: 73 tests. The full integration project has 129 test cases because pre-existing integration classes without `Category=Integration` traits are not selected by this filter. |
+| `dotnet test backend/WoongBlog.sln` | Passed, exit code 0 | All five backend test projects passed: Contract 1, Unit 14, Component 34, Architecture 30, Integration 98. Restore/build emitted NU1901 warnings for `AWSSDK.Core` 4.0.0.17 low-severity advisory `GHSA-9cvc-h2w8-phrp`. |
 
 ## Final Audit Recommendation
 
-The Priority 1 auth/session/login/logout/CSRF slice is materially stronger after this update and should be kept. Do not treat backend coverage as strict feature-complete yet: remaining risk is concentrated in exhaustive admin mutation authorization/CSRF matrices, endpoint-level cookie-session side effects, storage/R2 behavior, AI batch failure states, and Postgres-backed query semantics. The next backend test work should continue with auth/CSRF coverage for media, AI batch, and work-video mutations, with side-effect assertions on rejected requests.
+Do not treat the backend test suite as strict feature-complete coverage. It has useful endpoint smoke/regression tests and strong architecture checks, but the current coverage is uneven and optimistic around admin authorization, CSRF breadth, failure side effects, storage/R2 behavior, AI batch failure states, and Postgres-backed query semantics. The next backend test work should start with P1 authorization/CSRF and side-effect tests before expanding happy-path breadth.

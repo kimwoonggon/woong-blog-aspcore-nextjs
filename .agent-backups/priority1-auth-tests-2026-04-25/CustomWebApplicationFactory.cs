@@ -1,6 +1,5 @@
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
@@ -79,11 +78,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IDisp
                 options.DefaultAuthenticateScheme = "Test";
                 options.DefaultChallengeScheme = "Test";
                 options.DefaultScheme = "Test";
-            })
-            .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>("Test", _ => { })
-            .AddScheme<AuthenticationSchemeOptions, TestOidcChallengeHandler>(
-                OpenIdConnectDefaults.AuthenticationScheme,
-                _ => { });
+            }).AddScheme<AuthenticationSchemeOptions, TestAuthHandler>("Test", _ => { });
 
             services.AddAuthorization(options =>
             {
