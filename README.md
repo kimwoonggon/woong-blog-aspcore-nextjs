@@ -836,3 +836,12 @@ Security baseline:
 - HSTS / HTTPS redirection / security headers / auth rate limiting
 
 See [`SECURITY.md`](./SECURITY.md) for the rationale, deployment checklist, and secure reverse-proxy sample config.
+
+## License
+
+This repository is not distributed under Apache, MIT, or another permissive
+open-source license.
+
+Copyright (c) 2026 Woonggon Kim. All rights reserved.
+
+See [LICENSE](./LICENSE) for the repository license terms.
