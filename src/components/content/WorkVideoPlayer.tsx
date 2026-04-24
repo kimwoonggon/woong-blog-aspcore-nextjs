@@ -12,7 +12,7 @@ interface WorkVideoPlayerProps {
 const hlsMimeType = 'application/vnd.apple.mpegurl'
 const defaultAspectRatio = 16 / 9
 const progressBarHeightPx = 10
-const timelinePreviewDisplayScale = 0.55
+export const timelinePreviewDisplayScale = 0.55
 
 interface TimelinePreviewCue {
   start: number
