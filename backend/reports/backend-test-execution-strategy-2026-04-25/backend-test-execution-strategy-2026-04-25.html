@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Backend Test Execution Strategy Audit</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, sans-serif; margin: 2rem; color: #172033; line-height: 1.5; }
+    h1, h2 { color: #111827; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: 0.95rem; }
+    th, td { border: 1px solid #d0d7de; padding: 0.55rem; vertical-align: top; }
+    th { background: #f6f8fa; text-align: left; }
+    .pass { display: inline-block; background: #dcfce7; color: #166534; padding: 0.2rem 0.45rem; border-radius: 999px; font-weight: 700; }
+    .meta { color: #4b5563; }
+  </style>
+</head>
+<body>
+  <h1>Backend Test Execution Strategy Audit</h1>
+  <p class="meta">
+    Generated: <code>2026-04-25T18:16:12+09:00</code><br>
+    Branch: <code>feat/backend-architecture-test-code</code><br>
+    Commit SHA at start: <code>a3c8a9afc117159c260e72c9f075082548d76ee4</code>
+  </p>
+
+  <h2>Executive Summary</h2>
+  <p>Overall status: <span class="pass">PASS</span></p>
+  <p>Backend test execution is now split by category for local and CI use. Runner scripts were added, backend testing documentation was created, and both CI workflows now run unit, component, architecture, and integration tests as separate jobs.</p>
+
+  <h2>What Changed</h2>
+  <table>
+    <thead><tr><th>Area</th><th>Change</th></tr></thead>
+    <tbody>
+      <tr><td>Taxonomy</td><td>Standardized <code>Contract</code> constants and ContractTests trait usage.</td></tr>
+      <tr><td>Runner scripts</td><td>Added category and full backend test scripts under <code>scripts/</code>.</td></tr>
+      <tr><td>Documentation</td><td>Added <code>backend/TESTING.md</code> and updated the README backend test section.</td></tr>
+      <tr><td>CI</td><td>Split backend tests in dev and main-runtime workflows into unit, component, architecture, and integration jobs.</td></tr>
+      <tr><td>Audit</td><td>Generated Markdown, HTML, and JSON audit artifacts for this execution-strategy update.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Validation</h2>
+  <table>
+    <thead><tr><th>Command</th><th>Result</th></tr></thead>
+    <tbody>
+      <tr><td><code>dotnet test backend/WoongBlog.sln --filter "Category=Unit"</code></td><td>Passed: 14 unit tests.</td></tr>
+      <tr><td><code>dotnet test backend/WoongBlog.sln --filter "Category=Component"</code></td><td>Passed: 76 component tests.</td></tr>
+      <tr><td><code>dotnet test backend/WoongBlog.sln --filter "Category=Architecture"</code></td><td>Passed: 31 architecture tests.</td></tr>
+      <tr><td><code>dotnet test backend/WoongBlog.sln --filter "Category=Integration"</code></td><td>Passed: 194 integration tests.</td></tr>
+      <tr><td><code>dotnet test backend/WoongBlog.sln</code></td><td>Passed: Contract 1 skipped, Unit 14 passed, Component 76 passed, Architecture 31 passed, Integration 194 passed.</td></tr>
+      <tr><td><code>dotnet test backend/WoongBlog.sln --filter "Category=Contract"</code></td><td>Passed with 1 skipped Pact provider test because pact inputs are not configured.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Risks</h2>
+  <ul>
+    <li>GitHub Actions were parsed locally but need real GitHub runner validation.</li>
+    <li>Integration tests require Docker/Testcontainers for PostgreSQL contracts.</li>
+    <li>Contract tests skip unless <code>PACT_PROVIDER_BASE_URL</code> and pact files are configured.</li>
+    <li>Existing <code>AWSSDK.Core</code> NU1901 advisory warning remains.</li>
+  </ul>
+
+  <h2>Final Recommendation</h2>
+  <p>Keep these changes and let GitHub Actions validate the split jobs on the next push or PR. Configure Pact inputs separately when real provider verification is required.</p>
+</body>
+</html>

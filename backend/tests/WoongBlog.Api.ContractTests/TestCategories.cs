@@ -1,4 +1,4 @@
-namespace WoongBlog.Api.Tests;
+namespace WoongBlog.Api.ContractTests;
 
 public static class TestCategories
 {

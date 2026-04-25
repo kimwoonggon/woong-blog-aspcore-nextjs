@@ -479,22 +479,12 @@ npm run build
 ### Backend tests
 
 ```bash
-./scripts/run-unit-tests.sh
-./scripts/run-component-tests.sh
-./scripts/run-architecture-tests.sh
-./scripts/run-integration-tests.sh
-./scripts/run-backend-tests.sh
-```
-
-Equivalent direct command:
-
-```bash
 dotnet test backend/WoongBlog.sln
 ```
 
 For a Dockerized SDK run, mount `backend` and run the same solution from `/src`. If Docker is not available inside the SDK container, exclude the Testcontainers-backed Postgres persistence contract test.
 
-Backend test taxonomy, category filters, CI commands, and external-service requirements are documented in `backend/TESTING.md`.
+Current backend test taxonomy note: `WoongBlog.Api.UnitTests` is kept to focused Application/support helper and validator tests. Infrastructure-backed, EF InMemory, ASP.NET `HttpContext`, filesystem/process, and `HttpClient` tests live in `WoongBlog.Api.ComponentTests`. Endpoint and hosted-stack tests remain in `WoongBlog.Api.IntegrationTests`.
 
 ### Database smoke/load
 

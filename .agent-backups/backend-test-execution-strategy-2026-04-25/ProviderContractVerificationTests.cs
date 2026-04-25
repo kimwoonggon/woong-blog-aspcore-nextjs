@@ -5,7 +5,7 @@ using Xunit.Abstractions;
 
 namespace WoongBlog.Api.ContractTests;
 
-[Trait(TestCategories.Key, TestCategories.Contract)]
+[Trait("Category", "Contract")]
 public sealed class ProviderContractVerificationTests
 {
     private readonly ITestOutputHelper _output;

@@ -1,0 +1,95 @@
+{
+  "generated_at": "2026-04-25T18:16:12+09:00",
+  "branch": "feat/backend-architecture-test-code",
+  "commit_sha_at_start": "a3c8a9afc117159c260e72c9f075082548d76ee4",
+  "overall_status": "PASS",
+  "scope": "backend only",
+  "changes": [
+    "Added Contract taxonomy constants to backend test TestCategories helpers",
+    "Added WoongBlog.Api.ContractTests/TestCategories.cs",
+    "Updated ProviderContractVerificationTests to use TestCategories.Key and TestCategories.Contract",
+    "Added backend test runner scripts for unit, component, architecture, integration, and full backend runs",
+    "Added backend/TESTING.md",
+    "Updated README.md backend test section",
+    "Split backend CI jobs in ci-dev.yml and ci-main-runtime.yml into unit, component, architecture, and integration jobs",
+    "Updated todolist-2026-04-25.md"
+  ],
+  "intentionally_not_changed": [
+    "Production source code",
+    "Feature tests",
+    "Endpoint routes or DTO contracts",
+    "Runtime behavior",
+    "Package versions",
+    "Docker compose files",
+    "Pact provider verification setup semantics"
+  ],
+  "validations": [
+    {
+      "command": "npx skills find dotnet testing ci",
+      "result": "completed; no skill installed"
+    },
+    {
+      "command": "dotnet sln backend/WoongBlog.sln list",
+      "result": "confirmed five backend test projects in solution"
+    },
+    {
+      "command": "comm trait inventory check",
+      "result": "no executable backend test files without a trait"
+    },
+    {
+      "command": "bash -n scripts/run-unit-tests.sh scripts/run-component-tests.sh scripts/run-architecture-tests.sh scripts/run-integration-tests.sh scripts/run-backend-tests.sh",
+      "result": "passed"
+    },
+    {
+      "command": "python3 YAML parse for ci-dev.yml and ci-main-runtime.yml",
+      "result": "passed"
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln --filter \"Category=Unit\"",
+      "result": "passed: 14 unit tests"
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln --filter \"Category=Component\"",
+      "result": "passed: 76 component tests"
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln --filter \"Category=Architecture\"",
+      "result": "passed: 31 architecture tests"
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln --filter \"Category=Integration\"",
+      "result": "passed: 194 integration tests"
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln",
+      "result": "passed: Contract 1 skipped, Unit 14 passed, Component 76 passed, Architecture 31 passed, Integration 194 passed"
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln --filter \"Category=Contract\"",
+      "result": "passed with 1 skipped Pact provider test because pact inputs are not configured"
+    }
+  ],
+  "risks": [
+    {
+      "risk": "GitHub Actions were not executed locally",
+      "disposition": "YAML parsed locally; next push or PR should validate runner behavior"
+    },
+    {
+      "risk": "Integration tests require Docker/Testcontainers",
+      "disposition": "documented; CI integration job checks Docker availability"
+    },
+    {
+      "risk": "Contract tests skip without pact inputs",
+      "disposition": "explicit skip preserved and documented"
+    },
+    {
+      "risk": "Runner scripts are project-specific for speed",
+      "disposition": "solution-level filter commands remain documented and were used for validation"
+    },
+    {
+      "risk": "Existing AWSSDK.Core NU1901 warning remains",
+      "disposition": "deferred as unrelated"
+    }
+  ],
+  "final_recommendation": "Keep the execution strategy changes and let GitHub Actions validate the split jobs on the next push or PR. Configure Pact provider inputs separately when real contract verification is required."
+}
