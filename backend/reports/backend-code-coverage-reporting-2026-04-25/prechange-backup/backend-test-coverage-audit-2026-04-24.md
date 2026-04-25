@@ -6,65 +6,6 @@ Scope was backend production code and backend test projects only. The original a
 
 This is a strict, pessimistic coverage audit. A feature is not classified as `Covered` unless an existing test file can be named and the asserted behavior is described. Classifications are based on source/test inspection, not line coverage tooling.
 
-## Code Coverage Reporting Update - 2026-04-25
-
-Backend coverage reporting was added without changing production code and without enforcing a strict high threshold. Coverage remains a diagnostic signal: the current full-backend percentage is useful for finding gaps, but it does not replace behavior-focused tests for auth, persistence side effects, startup composition, storage, AI providers, and failure paths.
-
-### Coverage Commands And Output
-
-| Suite | Command | Report output |
-|---|---|---|
-| UnitTests | `./scripts/run-backend-coverage.sh unit -v minimal` | `coverage/backend/unit/report/index.html` |
-| ComponentTests | `./scripts/run-backend-coverage.sh component -v minimal` | `coverage/backend/component/report/index.html` |
-| IntegrationTests | `./scripts/run-backend-coverage.sh integration -v minimal` | `coverage/backend/integration/report/index.html` |
-| Full backend solution | `./scripts/run-backend-coverage.sh full -v minimal` | `coverage/backend/full/report/index.html` |
-
-### Current Coverage Baseline
-
-| Suite | Line coverage | Branch coverage | Notes |
-|---|---:|---:|---|
-| UnitTests | 11.0% (141 / 1,276) | 4.0% (8 / 200) | Expected to remain narrow because unit tests intentionally cover pure validators/helpers/planning logic only. |
-| ComponentTests | 40.3% (1,125 / 2,785) | 30.0% (193 / 642) | Covers Application + Infrastructure seams without the ASP.NET host. |
-| IntegrationTests | 85.0% (3,329 / 3,912) | 51.5% (343 / 665) | Covers the full ASP.NET host, auth, endpoints, startup, and Testcontainers-backed persistence contracts. |
-| Full backend solution | 90.1% (3,527 / 3,912) | 60.9% (405 / 665) | Includes Unit, Component, Architecture, Integration, and the skipped Contract project. |
-
-Full-backend assembly coverage:
-
-| Assembly | Line coverage | Branch coverage |
-|---|---:|---:|
-| `WoongBlog.Api` | 99.3% | 69.5% |
-| `WoongBlog.Application` | 93.7% | 60.2% |
-| `WoongBlog.Domain` | 85.7% | 50.0% |
-| `WoongBlog.Infrastructure` | 80.3% | 60.8% |
-
-### Low Coverage Production Areas
-
-| Area | Full-suite line / branch coverage | Risk note |
-|---|---:|---|
-| `R2VideoStorageService` | 9.0% / 0.0% | Object-storage video path is mostly uncovered by fake-backed component/integration tests. |
-| `ValidationExceptionFilter` | 0.0% / 0.0% | Error payload formatting for validation exceptions is uncovered. |
-| `WoongBlogDbContextDesignTimeFactory` | 0.0% / n/a | Design-time-only factory is low operational risk but currently uncovered. |
-| `AppOpenIdConnectEvents` | 0.0% / n/a | Production OIDC event behavior is not exercised through callback/provider failure paths. |
-| `AppCookieAuthenticationEvents` | 11.1% / 0.0% | Cookie auth edge paths remain thin outside component-level session recorder tests. |
-| `BlogAiFixService` | 62.8% / 38.2% | AI provider, Codex runtime, timeout, and malformed-response branches are only partially covered. |
-| `WorkVideoPolicy` | 52.7% / 31.6% | Media validation boundaries and version/limit branches need more direct coverage. |
-| `AuthOptionsValidator` | 59.7% / 66.6% | Production auth configuration validation has uncovered edge combinations. |
-| `SecurityOptionsValidator` | 50.0% / 64.2% | Security option validation is partially sampled. |
-| `ForwardedHeadersOptionsFactory` | 55.1% / 43.7% | Trusted proxy/header behavior needs more production-like configuration coverage. |
-| `FfmpegVideoTranscoder` | 61.7% / 50.0% | HLS failure, timeout, unsupported media, and rollback behavior remain only partially covered. |
-| `ContentSearchText` | 60.0% / 60.0% | Search text extraction edge cases remain thin. |
-
-High-risk low-coverage areas are `R2VideoStorageService`, auth/OIDC/cookie event handling, AI provider execution in `BlogAiFixService`, WorkVideo policy/transcoding paths, validation error formatting, and proxy/security configuration. These areas combine low branch coverage with production-facing behavior, external dependencies, or security-sensitive decisions.
-
-Recommended next coverage targets:
-
-1. Add fake-backed R2/object-storage component tests and endpoint tests for WorkVideo issue/confirm/delete paths using the R2 selector branch.
-2. Add auth/OIDC event and cookie-auth edge tests for callback failure, missing claims, disabled auth, stale cookies, and role drift through the host where possible.
-3. Add fake `HttpClient` AI provider tests for OpenAI/Azure success, provider errors, timeouts, empty responses, and malformed responses; add Codex timeout/invalid-command coverage.
-4. Add validation exception filter tests that assert stable error payload shape for thrown validation exceptions and malformed request bodies.
-5. Add WorkVideo policy/transcoder tests for unsupported MIME, empty or invalid video bytes, ffmpeg/ffprobe failures, stale versions, max-count limits, and HLS cleanup/rollback.
-6. Add component tests for `ContentSearchText`, admin content JSON extraction, and search update edge cases.
-
 Production inventory scanned:
 
 - `backend/src/WoongBlog.Api`
@@ -87,10 +28,10 @@ Test inventory scanned:
 | `WoongBlog.Api.UnitTests` | Pure Application/helper/validator tests only | 5 test files, 14 expanded test cases | Command/query validators, `AdminContentText.GenerateExcerpt`, `WorkVideoHlsJobPlan` | Taxonomy is preserved by `ArchitectureBoundaryTests.UnitTestProject_DoesNotReference_Infrastructure_AspNetCore_Or_EfInMemory`. Unit coverage is narrow. |
 | `WoongBlog.Api.ComponentTests` | Application + Infrastructure + EF InMemory/fakes/filesystem/HttpClient style tests, no full HTTP host | 8 files, 76 facts | Auth recorder/session persistence including malformed/expired/missing-profile sessions, public query handlers/stores, WorkVideo storage/cleanup/ordering behavior, AI batch scheduler/store/runtime/options behavior, Codex fake-process runtime behavior, DbContext model metadata contracts | Public read/query, WorkVideo storage/service, AI batch/runtime/Codex, and EF model metadata coverage are stronger after the 2026-04-25 updates. Most non-WorkVideo admin command handlers and stores are not component-tested. |
 | `WoongBlog.Api.IntegrationTests` | Full ASP.NET test host and endpoint behavior | 17 test files, 159 facts/theories; 194 expanded test cases | Auth/session/login/logout/CSRF/admin authorization slices, admin content mutation endpoints, public endpoint read/query behavior, media upload/delete, work videos, AI endpoints, startup/options/DI/middleware behavior, persistence bootstrapping, Postgres relational constraints | All integration test classes are now tagged `Category=Integration`, so the integration category filter selects the full integration suite. Auth, state-changing admin command coverage, public read endpoint coverage, WorkVideo endpoint coverage, representative AI endpoint coverage, persistence contracts, and startup composition coverage are stronger after the 2026-04-25 updates, but media/AI mutation matrices and several WorkVideo edge cases remain representative rather than exhaustive. |
-| `WoongBlog.Api.ArchitectureTests` | Project/layer/dependency boundary tests | 2 files, 35 facts | Layer references, HTTP-agnostic Application, removed legacy controllers/services, module boundary checks, unit-test project dependency guard, Program composition order, backend coverage tooling contract | Strong architecture regression net, but not behavior coverage. |
+| `WoongBlog.Api.ArchitectureTests` | Project/layer/dependency boundary tests | 1 file, 31 facts | Layer references, HTTP-agnostic Application, removed legacy controllers/services, module boundary checks, unit-test project dependency guard, Program composition order | Strong architecture regression net, but not behavior coverage. |
 | `WoongBlog.Api.ContractTests` | Provider/contract verification tests | 1 file, 1 contract test | Pact provider verification from pact files if `PACT_PROVIDER_BASE_URL` and pact files exist | Test is now tagged `Category=Contract` and explicitly skipped at discovery when `PACT_PROVIDER_BASE_URL` or pact files are missing, instead of passing through an early return. |
 
-Observed source totals after the P1 auth, admin mutation, public read/query, WorkVideo, AI batch/runtime, persistence/startup, final cleanup, and coverage-reporting updates: 32 backend test files containing 275 fact/theory methods plus the conditional Pact provider fact, expanding to 320 test cases when environment-dependent suites are runnable. Production C# inventory remains unchanged for these updates.
+Observed source totals after the P1 auth, admin mutation, public read/query, WorkVideo, AI batch/runtime, persistence/startup, and final cleanup updates: 31 backend test files containing 271 fact/theory methods plus the conditional Pact provider fact, expanding to 316 test cases when environment-dependent suites are runnable. Production C# inventory remains unchanged for these updates.
 
 ## Coverage Classification Legend
 

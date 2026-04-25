@@ -14,23 +14,7 @@
 </head>
 <body>
   <h1>Backend Test Coverage Updates - 2026-04-25</h1>
-  <p>Scope: backend only. This report now includes the Priority 1 auth/session/CSRF update, the Priority 1 destructive admin mutation update, the public read/query update, the WorkVideo behavior update, the AI/Codex/batch/runtime config update, the persistence/startup composition update, the final cleanup/taxonomy update, and the backend code coverage reporting update. No production code was changed.</p>
-
-  <h2>Code Coverage Reporting Update</h2>
-  <p>Coverage reporting now uses <code>dotnet test</code>, <code>coverlet.collector</code>, and the backend-local ReportGenerator tool manifest. No strict high coverage threshold is enforced; the baseline is used to find risk areas, not to chase a percentage.</p>
-  <table>
-    <thead>
-      <tr><th>Suite</th><th>Line coverage</th><th>Branch coverage</th><th>Report output</th></tr>
-    </thead>
-    <tbody>
-      <tr><td>UnitTests</td><td>11.0% (141 / 1,276)</td><td>4.0% (8 / 200)</td><td><code>coverage/backend/unit/report/index.html</code></td></tr>
-      <tr><td>ComponentTests</td><td>40.3% (1,125 / 2,785)</td><td>30.0% (193 / 642)</td><td><code>coverage/backend/component/report/index.html</code></td></tr>
-      <tr><td>IntegrationTests</td><td>85.0% (3,329 / 3,912)</td><td>51.5% (343 / 665)</td><td><code>coverage/backend/integration/report/index.html</code></td></tr>
-      <tr><td>Full backend solution</td><td>90.1% (3,527 / 3,912)</td><td>60.9% (405 / 665)</td><td><code>coverage/backend/full/report/index.html</code></td></tr>
-    </tbody>
-  </table>
-  <p>Full-suite low-coverage production areas include <code>R2VideoStorageService</code>, <code>ValidationExceptionFilter</code>, <code>AppOpenIdConnectEvents</code>, <code>AppCookieAuthenticationEvents</code>, <code>BlogAiFixService</code>, <code>WorkVideoPolicy</code>, <code>AuthOptionsValidator</code>, <code>SecurityOptionsValidator</code>, <code>ForwardedHeadersOptionsFactory</code>, <code>FfmpegVideoTranscoder</code>, and <code>ContentSearchText</code>.</p>
-  <p>Highest-risk next targets are fake-backed R2/object-storage coverage, auth/OIDC/cookie event edges, AI provider success/failure/timeouts, validation exception payload shape, WorkVideo policy/transcoder failure paths, and content search extraction edges.</p>
+  <p>Scope: backend only. This report now includes the Priority 1 auth/session/CSRF update, the Priority 1 destructive admin mutation update, the public read/query update, the WorkVideo behavior update, the AI/Codex/batch/runtime config update, the persistence/startup composition update, and the final cleanup/taxonomy update. No production code was changed.</p>
 
   <h2>Tests Added</h2>
   <ul>
@@ -49,7 +33,6 @@
     <li><code>StartupCompositionTests.cs</code>: broad DI resolution, Application handler/validator resolution, hosted service registration, options binding, health/OpenAPI/runtime-config startup, and CSRF-before-authorization behavior.</li>
     <li><code>StartupOptionsValidationTests.cs</code>: invalid AI batch concurrency, missing auth media root, and missing antiforgery header validation.</li>
     <li><code>ArchitectureBoundaryTests.cs</code>: centralized Program service, middleware, and endpoint composition order.</li>
-    <li><code>BackendCoverageToolingTests.cs</code>: coverage runner, runsettings, ReportGenerator manifest, and documentation contract.</li>
     <li>Final cleanup: added missing <code>Category=Integration</code> traits to <code>AdminContentEndpointsTests.cs</code>, <code>AuthEndpointsTests.cs</code>, <code>AuthSecurityTests.cs</code>, and <code>UploadsControllerTests.cs</code>; converted <code>ProviderContractVerificationTests.cs</code> to an explicit setup skip when Pact provider setup is absent.</li>
   </ul>
 
@@ -75,11 +58,6 @@
     <li><code>backend/tests/WoongBlog.Api.IntegrationTests/StartupCompositionTests.cs</code></li>
     <li><code>backend/tests/WoongBlog.Api.IntegrationTests/StartupOptionsValidationTests.cs</code></li>
     <li><code>backend/tests/WoongBlog.Api.ArchitectureTests/ArchitectureBoundaryTests.cs</code></li>
-    <li><code>backend/tests/WoongBlog.Api.ArchitectureTests/BackendCoverageToolingTests.cs</code></li>
-    <li><code>backend/.config/dotnet-tools.json</code></li>
-    <li><code>backend/coverage.runsettings</code></li>
-    <li><code>backend/TESTING.md</code></li>
-    <li><code>scripts/run-backend-coverage.sh</code></li>
     <li><code>todolist-2026-04-25.md</code></li>
     <li><code>backend/reports/backend-test-coverage-audit-2026-04-24/backend-test-coverage-audit-2026-04-24.md</code></li>
     <li><code>backend/reports/backend-test-coverage-audit-2026-04-24/backend-test-coverage-audit-2026-04-24.html</code></li>
@@ -164,13 +142,6 @@
       <tr><td><code>dotnet test backend/WoongBlog.sln --filter "Category=Architecture"</code></td><td>Passed: Architecture 31.</td></tr>
       <tr><td><code>node -e "JSON.parse(...)"</code></td><td>Passed after final cleanup report update.</td></tr>
       <tr><td><code>git diff --check</code></td><td>Passed after final cleanup report update.</td></tr>
-      <tr><td><code>dotnet test backend/tests/WoongBlog.Api.ArchitectureTests/WoongBlog.Api.ArchitectureTests.csproj --filter FullyQualifiedName~BackendCoverageToolingTests</code></td><td>Red first: failed for missing coverage script/runsettings/tool manifest/docs; green after implementation: passed 4 architecture tests.</td></tr>
-      <tr><td><code>bash -n scripts/run-backend-coverage.sh</code></td><td>Passed.</td></tr>
-      <tr><td><code>./scripts/run-backend-coverage.sh unit -v minimal</code></td><td>Passed: Unit 14; generated <code>coverage/backend/unit/report/index.html</code>.</td></tr>
-      <tr><td><code>./scripts/run-backend-coverage.sh component -v minimal</code></td><td>Passed: Component 76; generated <code>coverage/backend/component/report/index.html</code>.</td></tr>
-      <tr><td><code>./scripts/run-backend-coverage.sh integration -v minimal</code></td><td>Passed: Integration 194; generated <code>coverage/backend/integration/report/index.html</code>.</td></tr>
-      <tr><td><code>./scripts/run-backend-coverage.sh full -v minimal</code></td><td>Passed: Contract 1 skipped, Unit 14, Component 76, Architecture 35, Integration 194; generated <code>coverage/backend/full/report/index.html</code>.</td></tr>
-      <tr><td><code>dotnet test backend/WoongBlog.sln</code></td><td>Passed: Contract 1 skipped, Unit 14, Component 76, Architecture 35, Integration 194.</td></tr>
     </tbody>
   </table>
 
@@ -182,6 +153,6 @@
   <p>Remaining risk includes Docker/Testcontainers unavailability in this local WSL environment, missing Pact provider setup, invalid/missing/stale CSRF sampling for every mutation family, blog/work duplicate slug update behavior, invalid JSON semantics, asset update semantics, endpoint-level missing-site/home/resume public read paths, PostgreSQL-backed public query/search semantics, media upload/delete, remaining AI batch endpoint matrices, AI cancel/clear/not-found/cancellation paths, runtime prompt-file fallback, Codex timeout/auth/invalid-command paths, OpenAI/Azure fake-HTTP provider paths, WorkVideo R2/object-storage behavior, confirm-upload failure paths, HLS failure/rollback behavior, hosted worker lifecycle/cancellation behavior, optional startup provider/config matrices, and missing metrics/OpenTelemetry endpoint coverage.</p>
 
   <h2>Recommendation</h2>
-  <p>Keep the P1 auth, admin mutation, public read/query, WorkVideo, AI batch/runtime, persistence/startup, final taxonomy cleanup, and backend coverage-reporting changes. Next, use the coverage baseline to prioritize R2/object-storage tests, auth/OIDC/cookie event edges, AI provider failure paths, validation payload shape, WorkVideo transcoder/policy failure paths, and content search extraction edges.</p>
+  <p>Keep the P1 auth, admin mutation, public read/query, WorkVideo, AI batch/runtime, persistence/startup, and final taxonomy cleanup changes. Next, enable Docker/Testcontainers and Pact provider setup, then re-run the full backend suite before continuing with media tests, remaining AI endpoint matrices, hosted worker lifecycle coverage, optional startup provider/config matrices, PostgreSQL-backed query/search semantics, and deeper WorkVideo R2/HLS failure coverage.</p>
 </body>
 </html>

@@ -36,47 +36,6 @@ dotnet test backend/WoongBlog.sln
 
 For a fast local backend loop, run `Unit`, then `Component`, then `Architecture`. Run `Integration` before pushing backend changes that affect HTTP, startup, auth, persistence, uploads, or database behavior. Run the full backend suite before release checks or broad refactors.
 
-## Coverage Reports
-
-Backend coverage uses the existing `dotnet test` flow with `coverlet.collector` and `XPlat Code Coverage`; readable reports are generated with the backend-local ReportGenerator tool manifest in `backend/.config/dotnet-tools.json`.
-
-Run coverage from the repository root:
-
-```bash
-./scripts/run-backend-coverage.sh unit
-./scripts/run-backend-coverage.sh component
-./scripts/run-backend-coverage.sh integration
-./scripts/run-backend-coverage.sh full
-```
-
-The same script accepts extra `dotnet test` arguments after the suite name:
-
-```bash
-./scripts/run-backend-coverage.sh component --blame-hang --blame-hang-timeout 5m -v minimal
-```
-
-Coverage output is local build/test output and is not intended for commits:
-
-| Suite | Raw collector output | Readable report |
-| --- | --- | --- |
-| UnitTests | `coverage/backend/unit/raw/` | `coverage/backend/unit/report/index.html` |
-| ComponentTests | `coverage/backend/component/raw/` | `coverage/backend/component/report/index.html` |
-| IntegrationTests | `coverage/backend/integration/raw/` | `coverage/backend/integration/report/index.html` |
-| Full backend solution | `coverage/backend/full/raw/` | `coverage/backend/full/report/index.html` |
-
-Each readable report also includes `SummaryGithub.md`, `Summary.txt`, `Summary.json`, and a merged `Cobertura.xml` file in the suite's `report` directory.
-
-Coverage percentage is useful as a gap-finding signal, not a quality target by itself. A high line percentage can still miss authorization failures, persistence side effects, concurrency paths, invalid input, startup composition, and real database behavior. Prefer coverage that proves important behavior through the right test level. No strict high coverage threshold is enforced yet; if a threshold is added later, it should start from the current backend baseline or a conservative lower baseline and be ratcheted only after meaningful tests are added.
-
-Some backend areas are intentionally covered outside `UnitTests`:
-
-| Area | Primary coverage level | Reason |
-| --- | --- | --- |
-| HTTP endpoints, auth/session/CSRF/authorization, middleware, routing, startup, options validation, health/OpenAPI wiring | Integration | Behavior depends on the ASP.NET host, middleware order, DI, filters, and auth schemes. |
-| PostgreSQL constraints, schema bootstrap, relational cascade behavior, and Testcontainers-backed persistence contracts | Integration | EF InMemory cannot prove relational database semantics. |
-| Application handlers with Infrastructure stores, EF InMemory, filesystem/process fakes, cleanup services, public query stores, WorkVideo storage/order behavior, AI batch runtime, and Codex process seams | Component | These tests need real composition of Application plus Infrastructure seams but not the full HTTP host. |
-| Validators, pure helper logic, small DTO algorithms, and deterministic planning logic | Unit | These behaviors are isolated and do not need ASP.NET, EF, filesystem, process, or network dependencies. |
-
 ## CI Commands
 
 CI should keep the category jobs separate so quick failures are visible and independent jobs can run in parallel:
