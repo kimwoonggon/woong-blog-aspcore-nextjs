@@ -8,7 +8,6 @@ using WoongBlog.Infrastructure.Persistence;
 
 namespace WoongBlog.Api.Tests;
 
-[Trait(TestCategories.Key, TestCategories.Integration)]
 public class UploadsControllerTests : IClassFixture<CustomWebApplicationFactory>
 {
     private readonly CustomWebApplicationFactory _factory;

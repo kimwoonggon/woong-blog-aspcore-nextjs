@@ -4,7 +4,6 @@ using WoongBlog.Infrastructure.Persistence;
 
 namespace WoongBlog.Api.Tests;
 
-[Trait(TestCategories.Key, TestCategories.Integration)]
 public class DatabaseBootstrapperTests
 {
     private static WoongBlogDbContext CreateDbContext()

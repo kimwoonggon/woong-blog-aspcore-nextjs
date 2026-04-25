@@ -25,13 +25,13 @@ Test inventory scanned:
 
 | Test project | Intended taxonomy | Current files / tests observed | What is actually covered | Strict notes |
 |---|---|---:|---|---|
-| `WoongBlog.Api.UnitTests` | Pure Application/helper/validator tests only | 5 test files, 14 expanded test cases | Command/query validators, `AdminContentText.GenerateExcerpt`, `WorkVideoHlsJobPlan` | Taxonomy is preserved by `ArchitectureBoundaryTests.UnitTestProject_DoesNotReference_Infrastructure_AspNetCore_Or_EfInMemory`. Unit coverage is narrow. |
-| `WoongBlog.Api.ComponentTests` | Application + Infrastructure + EF InMemory/fakes/filesystem/HttpClient style tests, no full HTTP host | 8 files, 76 facts | Auth recorder/session persistence including malformed/expired/missing-profile sessions, public query handlers/stores, WorkVideo storage/cleanup/ordering behavior, AI batch scheduler/store/runtime/options behavior, Codex fake-process runtime behavior, DbContext model metadata contracts | Public read/query, WorkVideo storage/service, AI batch/runtime/Codex, and EF model metadata coverage are stronger after the 2026-04-25 updates. Most non-WorkVideo admin command handlers and stores are not component-tested. |
-| `WoongBlog.Api.IntegrationTests` | Full ASP.NET test host and endpoint behavior | 17 test files, 159 facts/theories; 194 expanded test cases | Auth/session/login/logout/CSRF/admin authorization slices, admin content mutation endpoints, public endpoint read/query behavior, media upload/delete, work videos, AI endpoints, startup/options/DI/middleware behavior, persistence bootstrapping, Postgres relational constraints | All integration test classes are now tagged `Category=Integration`, so the integration category filter selects the full integration suite. Auth, state-changing admin command coverage, public read endpoint coverage, WorkVideo endpoint coverage, representative AI endpoint coverage, persistence contracts, and startup composition coverage are stronger after the 2026-04-25 updates, but media/AI mutation matrices and several WorkVideo edge cases remain representative rather than exhaustive. |
-| `WoongBlog.Api.ArchitectureTests` | Project/layer/dependency boundary tests | 1 file, 31 facts | Layer references, HTTP-agnostic Application, removed legacy controllers/services, module boundary checks, unit-test project dependency guard, Program composition order | Strong architecture regression net, but not behavior coverage. |
-| `WoongBlog.Api.ContractTests` | Provider/contract verification tests | 1 file, 1 contract test | Pact provider verification from pact files if `PACT_PROVIDER_BASE_URL` and pact files exist | Test is now tagged `Category=Contract` and explicitly skipped at discovery when `PACT_PROVIDER_BASE_URL` or pact files are missing, instead of passing through an early return. |
+| `WoongBlog.Api.UnitTests` | Pure Application/helper/validator tests only | 4 files, 12 facts/theories | Command/query validators, `AdminContentText.GenerateExcerpt`, `WorkVideoHlsJobPlan` | Taxonomy is preserved by `ArchitectureBoundaryTests.UnitTestProject_DoesNotReference_Infrastructure_AspNetCore_Or_EfInMemory`. Unit coverage is narrow. |
+| `WoongBlog.Api.ComponentTests` | Application + Infrastructure + EF InMemory/fakes/filesystem/HttpClient style tests, no full HTTP host | 7 files, 72 facts | Auth recorder/session persistence including malformed/expired/missing-profile sessions, public query handlers/stores, WorkVideo storage/cleanup/ordering behavior, AI batch scheduler/store/runtime/options behavior, Codex fake-process runtime behavior | Public read/query, WorkVideo storage/service, and AI batch/runtime/Codex coverage are stronger after the 2026-04-25 updates. Most non-WorkVideo admin command handlers and stores are not component-tested. |
+| `WoongBlog.Api.IntegrationTests` | Full ASP.NET test host and endpoint behavior | 17 test files, 150 facts/theories; 185 expanded test cases | Auth/session/login/logout/CSRF/admin authorization slices, admin content mutation endpoints, public endpoint read/query behavior, media upload/delete, work videos, AI endpoints, startup/options, persistence bootstrapping | Auth, state-changing admin command coverage, public read endpoint coverage, WorkVideo endpoint coverage, and representative AI endpoint coverage are stronger after the 2026-04-25 updates, but media/AI mutation matrices and several WorkVideo edge cases remain representative rather than exhaustive. |
+| `WoongBlog.Api.ArchitectureTests` | Project/layer/dependency boundary tests | 1 file, 30 facts | Layer references, HTTP-agnostic Application, removed legacy controllers/services, module boundary checks, unit-test project dependency guard | Strong architecture regression net, but not behavior coverage. |
+| `WoongBlog.Api.ContractTests` | Provider/contract verification tests | 1 file, 1 fact | Pact provider verification from pact files if `PACT_PROVIDER_BASE_URL` and pact files exist | Test self-skips when env or pact files are missing, so normal `dotnet test` can pass without contract verification. |
 
-Observed source totals after the P1 auth, admin mutation, public read/query, WorkVideo, AI batch/runtime, persistence/startup, and final cleanup updates: 31 backend test files containing 271 fact/theory methods plus the conditional Pact provider fact, expanding to 316 test cases when environment-dependent suites are runnable. Production C# inventory remains unchanged for these updates.
+Observed source totals after the P1 auth, admin mutation, public read/query, WorkVideo, and AI batch/runtime test updates: 30 backend test files containing facts/theories and 265 facts/theories. `dotnet test` executed 302 test cases because xUnit theories expand inline data. Production C# inventory remains unchanged for these updates.
 
 ## Coverage Classification Legend
 
@@ -124,32 +124,32 @@ Observed source totals after the P1 auth, admin mutation, public read/query, Wor
 | Persistent AI batch jobs | `BatchJobEndpoints.cs`; `Create/List/Get/Apply/Cancel/CancelQueued/ClearCompleted/Remove*CommandHandler.cs`; `AiBatchJobRunner.cs`; `AiBatchJobScheduler.cs`; `AiBatchJobItemProcessor.cs`; `AiBlogFixBatchStore.cs`; `AiBatchJobProcessor.cs`; `AiBatchJobSignal.cs`; `AiBatchJobItemDispatcher.cs`; `AiBatchJob`, `AiBatchJobItem` | `AdminAiEndpointsTests.cs` asserts create/list/detail, no-target validation, repeated active selection returns existing job, custom prompt persistence and item fixed HTML, cancel single job response, apply completed results, remove completed job, auto-apply success; `AiBatchRuntimeComponentTests.cs` asserts selected/all target selection, queued job/item persistence, worker-count clamping, running reset, queued-to-running-to-completed success, full failure, partial failure, item error/fixed HTML persistence, and unrelated data preservation | Integration, Component | Partially covered | `cancel-queued` and `clear-completed` endpoints, endpoint-level `all=true`, list counts | Job not found for get/apply/cancel/delete, queued/running apply rejection, cancellation during execution, duplicate blog IDs edge beyond active-selection reuse | Anonymous/non-admin/CSRF not tested for batch endpoints | Store status transitions and failed/partial item persistence are now component-tested; cancellation persistence remains incomplete | Component + Integration | P1 |
 | Runtime config | `RuntimeConfigEndpoint.cs`; `GetAiRuntimeConfigQueryHandler.cs`; `AiRuntimePolicy.cs`; `AiRuntimeCapabilities.cs`; `AiOptionsValidator.cs`; `AiOptionsPostConfigure.cs` | `AdminAiEndpointsTests.cs` asserts runtime config anonymous rejection and payload contains provider, available providers, codex model, batch concurrency, default prompt; `StartupOptionsValidationTests.cs` asserts invalid provider fails startup; `AiBatchRuntimeComponentTests.cs` asserts full runtime DTO defaults, provider fallback when configured provider is unavailable, env-style post-configure overrides/defaults, and invalid options validation failures | Integration, Component | Partially covered | Additional OpenAI vs Azure DTO variants | Prompt file missing/invalid JSON fallback, full env override precedence matrix, invalid model fallback details through endpoint | Non-admin runtime config access not tested | No persistence side effects expected | Component + Integration | P2 |
 | Codex runtime integration | `BlogAiFixService.cs`; `CodexRuntimeEnvironmentComponentTests.cs` target behavior; `AiOptions` | `BlogAiFixServiceCodexRuntimeComponentTests.cs` asserts available providers include OpenAI/Codex, Codex home file fails clearly, configured OpenAI key exported, `CODEX_HOME` exported, fake process receives model/reasoning/workdir arguments, and non-zero fake process exit surfaces stderr; `CodexRuntimeEnvironmentComponentTests.cs` asserts Codex home exists and failure when file | Component | Component-only | Basic successful Codex invocation with env, args, and workdir is now covered | Timeout, output too large, auth file missing, invalid command path, remote image artifact handling | Endpoint auth is only covered for blog-fix/runtime-config, not Codex-specific provider selection | No persistence side effects expected | Component | P1 |
-| Provider contract verification | Pact provider verification | `ProviderContractVerificationTests.cs` verifies pact files only when `PACT_PROVIDER_BASE_URL` and pact files exist; otherwise the test is explicitly skipped at discovery with a setup reason | Contract | Unknown, needs manual review | Provider running against current pact set in CI | Missing pact directory, stale pacts, provider state setup | Authenticated provider states not visible in test | No persistence setup visible | Contract | P2 |
+| Provider contract verification | Pact provider verification | `ProviderContractVerificationTests.cs` verifies pact files only when `PACT_PROVIDER_BASE_URL` and pact files exist; otherwise logs skip and returns | Contract | Unknown, needs manual review | Provider running against current pact set in CI | Missing pact directory, stale pacts, provider state setup | Authenticated provider states not visible in test | No persistence setup visible | Contract | P2 |
 
 ## 10. Persistence/EF model/seeding
 
 | Feature | Production files involved | Existing test files | Existing test level | Current coverage classification | Missing happy-path tests | Missing failure/edge-case tests | Missing auth/authorization tests | Missing persistence/side-effect tests | Recommended test project | Priority |
 |---|---|---|---|---|---|---|---|---|---|---|
-| EF model contracts | `WoongBlogDbContext.cs`; Domain entities; persistence configuration | `DbContextModelContractComponentTests.cs` asserts aggregate entity keys, required properties, JSON column types, indexes, uniqueness metadata, and WorkVideo cascade metadata; `PersistenceContractTests.cs` asserts existing JSON/search/index contracts; `PostgresPersistenceContractTests.cs` asserts relational NOT NULL, duplicate blog slug/session key unique violations, and DB-side WorkVideo/upload-session cascade | Component, Integration | Partially covered | Remaining asset/profile/session/job relationship/delete behavior and max lengths if configured | Provider differences beyond selected Postgres relational constraints and search schema | Not applicable | Cascade/delete behavior is covered for WorkVideo/upload sessions only; assets/sessions/jobs remain incomplete | Component + Integration | P1 |
-| Content search fields | `ContentSearchFieldSynchronizer.cs`; `ContentSearchText.cs`; `WoongBlogDbContext.SaveChanges` | `PersistenceContractTests.cs` asserts save populates normalized blog/work `SearchTitle` and `SearchText`; `DbContextModelContractComponentTests.cs` asserts updates refresh search fields; public endpoint/component tests assert title/content/unified search | Integration, Component | Partially covered | Insert and update refresh behavior is now covered | Null/malformed JSON, tag/category inclusion expectations, delete behavior | Not applicable | Postgres trigram query behavior is schema-tested but search semantics run on test host/InMemory | Component + Integration | P1 |
-| Seed data and bootstrapper | `SeedData.cs`; `DatabaseBootstrapper.cs`; `DatabaseInitializationExtensions.cs`; `SchemaPatch` | `PersistenceContractTests.cs` asserts seed data only once and core data; `DatabaseBootstrapperTests.cs` asserts initialization idempotence, rehydrates public detail seeds, reuses seeded work video slots; `PostgresPersistenceContractTests.cs` asserts Postgres extension/schema patch/indexes plus Postgres bootstrap idempotence and runtime blog preservation | Integration | Partially covered | Production provider bootstrap idempotence and runtime-row preservation are now sampled with Postgres | Partial existing data for every table, corrupt seed JSON, failed bootstrap rollback | Not applicable | Existing runtime-data preservation is sampled, not exhaustive | Integration | P1 |
+| EF model contracts | `WoongBlogDbContext.cs`; Domain entities; persistence configuration | `PersistenceContractTests.cs` asserts JSON column types, search fields, selected indexes, unique slugs/profile/session key, site settings primary key | Integration | Partially covered | Full entity relationship/delete behavior, all entity indexes, max lengths if configured | Provider differences beyond selected Postgres search schema | Not applicable | Cascade/delete behavior for assets/videos/sessions/jobs not fully asserted | Integration | P1 |
+| Content search fields | `ContentSearchFieldSynchronizer.cs`; `ContentSearchText.cs`; `WoongBlogDbContext.SaveChanges` | `PersistenceContractTests.cs` asserts save populates normalized blog/work `SearchTitle` and `SearchText`; public endpoint/component tests assert title/content/unified search | Integration, Component | Partially covered | Updates to existing blog/work refresh search fields | Null/malformed JSON, tag/category inclusion expectations, delete behavior | Not applicable | Postgres trigram query behavior is schema-tested but search semantics run on test host/InMemory | Component + Integration | P1 |
+| Seed data and bootstrapper | `SeedData.cs`; `DatabaseBootstrapper.cs`; `DatabaseInitializationExtensions.cs`; `SchemaPatch` | `PersistenceContractTests.cs` asserts seed data only once and core data; `DatabaseBootstrapperTests.cs` asserts initialization idempotence, rehydrates public detail seeds, reuses seeded work video slots; `PostgresPersistenceContractTests.cs` asserts Postgres extension/schema patch/indexes | Integration | Partially covered | Production provider bootstrap without destructive changes to runtime data | Partial existing data for each table, corrupt seed JSON, failed bootstrap rollback | Not applicable | Existing runtime-data preservation is sampled, not exhaustive | Integration | P1 |
 | Page views/analytics persistence | `PageView.cs`; dashboard query store | Only dashboard count asserts `ViewsCount >= 0`; no direct page-view insertion/query tests found | Integration indirect | Untested | Insert and aggregate page views | Duplicate/session/date/entity boundaries | Not applicable | Page view retention, uniqueness, and aggregation side effects untested | Component + Integration | P2 |
 
 ## 11. Startup/DI/options/middleware
 
 | Feature | Production files involved | Existing test files | Existing test level | Current coverage classification | Missing happy-path tests | Missing failure/edge-case tests | Missing auth/authorization tests | Missing persistence/side-effect tests | Recommended test project | Priority |
 |---|---|---|---|---|---|---|---|---|---|---|
-| Startup composition and DI | `Program.cs`; module `*ServiceCollectionExtensions.cs`; `InfrastructureServiceCollectionExtensions.cs`; `ApplicationServiceCollectionExtensions.cs` | `StartupCompositionTests.cs` asserts root redirects to `/api/health`, broad Application handler/validator resolution, Infrastructure store/service resolution, hosted service registration, health-check service registration, options binding, runtime config startup without external services, and auth expiration defaults; `ArchitectureBoundaryTests.cs` asserts module registration extension types, forbids concrete infra in API module registrations, and pins Program composition order | Integration, Architecture | Partially covered | Important handlers/stores/hosted services are now sampled broadly | Missing optional provider/config combinations, duplicate registrations, and hosted worker lifecycle execution | Not directly auth-related | Hosted background service registration is covered, but lifecycle behavior remains untested | Integration + Architecture | P1 |
-| Options validation | `StartupOptionsValidationExtensions.cs`; `AuthOptionsValidator.cs`; `ProxyOptionsValidator.cs`; `SecurityOptionsValidator.cs`; `AiOptionsValidator.cs`; `AiOptionsPostConfigure.cs` | `StartupOptionsValidationTests.cs` asserts testing config valid, invalid proxy CIDR, invalid auth public origin, invalid AI provider, invalid AI batch concurrency, missing auth media root, missing antiforgery header, and production auth missing credentials fail; `StartupCompositionTests.cs` asserts key options bind in the test host | Integration | Partially covered | Testing-host binding is now sampled for auth/security/proxy/AI/R2/HLS options | Invalid data-protection path, HTTPS/HSTS combos, Codex invalid model/effort, and R2/work-video option bounds remain incomplete | Not applicable | No side effects except startup fail/pass | Integration + Unit | P1 |
-| Middleware pipeline | `Program.cs`; `SecurityHeadersMiddleware.cs`; `AntiforgeryValidationMiddleware.cs`; forwarded headers/security/static files | `AuthSecurityTests.cs` samples security headers and CSRF for site settings; `StartupCompositionTests.cs` root redirect, OpenAPI registration in Testing, runtime config startup, and anonymous unsafe admin mutation rejected by CSRF before authorization; uploads/HLS tests indirectly exercise static files; `ArchitectureBoundaryTests.cs` pins Program middleware order | Integration, Architecture | Partially covered | OpenAPI/testing registration and CSRF-before-authorization behavior are now asserted | Forwarded headers, HTTPS redirection/HSTS, static file edge cases, and request body multipart ordering edge cases remain incomplete | Admin endpoint auth coverage is representative but not exhaustive | Rejected mutation no-side-effect not broadly asserted | Integration | P1 |
+| Startup composition and DI | `Program.cs`; module `*ServiceCollectionExtensions.cs`; `InfrastructureServiceCollectionExtensions.cs`; `ApplicationServiceCollectionExtensions.cs` | `StartupCompositionTests.cs` asserts root redirects to `/api/health`, selected services resolve, auth expiration defaults; `ArchitectureBoundaryTests.cs` asserts module registration extension types and forbids concrete infra in API module registrations | Integration, Architecture | Partially covered | Resolve every module endpoint handler/store and hosted service registrations | Missing optional providers/config combinations, duplicate registrations | Not directly auth-related | Hosted background services not exercised for lifecycle | Integration + Architecture | P1 |
+| Options validation | `StartupOptionsValidationExtensions.cs`; `AuthOptionsValidator.cs`; `ProxyOptionsValidator.cs`; `SecurityOptionsValidator.cs`; `AiOptionsValidator.cs`; `AiOptionsPostConfigure.cs` | `StartupOptionsValidationTests.cs` asserts testing config valid, invalid proxy CIDR, invalid auth public origin, invalid AI provider, production auth missing credentials fail | Integration | Partially covered | Valid production-like config with credentials, R2/work-video options, security options | Invalid media/data-protection paths, HTTPS/HSTS combos, Codex invalid model/effort, batch concurrency bounds | Not applicable | No side effects except startup fail/pass | Integration + Unit | P1 |
+| Middleware pipeline | `Program.cs`; `SecurityHeadersMiddleware.cs`; `AntiforgeryValidationMiddleware.cs`; forwarded headers/security/static files | `AuthSecurityTests.cs` samples security headers and CSRF for site settings; `StartupCompositionTests.cs` root redirect; uploads/HLS tests indirectly exercise static files | Integration | Partially covered | Full middleware order behavior for auth, antiforgery, static files, OpenAPI in Testing | Forwarded headers, HTTPS redirection/HSTS, unauthorized + CSRF ordering, request body multipart edge cases | Admin endpoints mostly lack anonymous/non-admin assertions | Rejected mutation no-side-effect not asserted | Integration | P1 |
 | Request validation endpoint filter and exception filter | `RequestValidationEndpointFilter.cs`; `EndpointBuilderExtensions.cs`; `ValidationExceptionFilter.cs`; API request validators | Endpoint tests assert selected 400s for content/site/uploads/AI | Integration | Partially covered | Direct API request validator unit tests or representative endpoint 400s for every request type | Error payload schema, multiple errors, malformed JSON body | Not applicable | No side effects on validation failure not broadly asserted | Unit + Integration | P2 |
 
 ## 12. Observability/health/metrics
 
 | Feature | Production files involved | Existing test files | Existing test level | Current coverage classification | Missing happy-path tests | Missing failure/edge-case tests | Missing auth/authorization tests | Missing persistence/side-effect tests | Recommended test project | Priority |
 |---|---|---|---|---|---|---|---|---|---|---|
-| Health endpoint | `Controllers/HealthController.cs`; `Program.cs`; `ApiServiceCollectionExtensions.cs` | `PublicEndpointsTests.cs` asserts `GET /api/health` returns OK; `StartupCompositionTests.cs` asserts `/` redirects to `/api/health`, `HealthCheckService` resolves, and `/api/health` payload includes `status`, `service`, and timestamp | Integration | Partially covered | Health payload shape now covered | Failure/degraded health if health checks become meaningful | Endpoint should remain anonymous; no explicit auth regression beyond unauthenticated client success | No persistence side effects expected | Integration | P3 |
-| Metrics/observability | `AddHealthChecks()` appears in API core, but no mapped health-check endpoint or metrics/OpenTelemetry source was found | `StartupCompositionTests.cs` asserts `HealthCheckService` registration; no metrics endpoint exists | Integration | Partially covered | Health-check service registration is covered; no metrics endpoint was found to test | Misconfiguration/no-op detection; metrics exposure if intended | Auth policy for metrics endpoint if added | No persistence side effects expected | Integration + Architecture | P3 |
+| Health endpoint | `Controllers/HealthController.cs`; `Program.cs`; `ApiServiceCollectionExtensions.cs` | `PublicEndpointsTests.cs` asserts `GET /api/health` returns OK; `StartupCompositionTests.cs` asserts `/` redirects to `/api/health` | Integration | Happy-path only | Assert payload fields `status`, `service`, timestamp format | Failure/degraded health if health checks become meaningful | Endpoint should remain anonymous; no explicit auth regression beyond unauthenticated client success | No persistence side effects expected | Integration | P3 |
+| Metrics/observability | `AddHealthChecks()` appears in API core, but no mapped health-check endpoint or metrics/OpenTelemetry source was found | No test files found | None | Untested | If metrics are intended, expose and test metrics endpoint or collector wiring | Misconfiguration/no-op detection | Auth policy for metrics endpoint if added | No persistence side effects expected | Integration + Architecture | P3 |
 
 ## Cross-Cutting Gaps
 
@@ -158,7 +158,7 @@ Observed source totals after the P1 auth, admin mutation, public read/query, Wor
 | Admin authorization is not consistently asserted | `AuthFlowIntegrationTests.cs` samples representative admin GET endpoints; `AdminMutationEndpointsTests.cs` now samples anonymous 401 and non-admin 403 with valid CSRF across page update, blog create/update/delete, work create/update/delete, and site-settings update; `AdminAiEndpointsTests.cs` samples anonymous AI blog-fix/runtime-config rejection. Media, AI batch, work-video, and upload/delete mutation families still lack endpoint-specific matrices. | Integration | P1 |
 | CSRF is only sampled against site settings | `AuthFlowIntegrationTests.cs` adds invalid-token/no-persist, valid-token, logout missing-token, and valid-token auth-failure samples; `AdminMutationEndpointsTests.cs` uses valid CSRF for admin mutation auth checks; `AdminAiEndpointsTests.cs` uses valid CSRF for anonymous AI blog-fix rejection. Invalid/missing/stale CSRF behavior for blog/work/page/media/AI/work-video mutations still relies on middleware inference. | Integration | P1 |
 | Component coverage is thin for admin command handlers/stores | Most admin content behavior is endpoint-only; no component tests for `BlogCommandStore`, `WorkCommandStore`, `PageCommandStore`, AI batch store failure paths, media store | Component | P1 |
-| Contract verification requires external setup | `ProviderContractVerificationTests.cs` now reports an explicit skip when `PACT_PROVIDER_BASE_URL` or pact files are missing; local runs without provider setup do not verify contracts. | Contract | P2 |
+| Contract tests can silently skip | `ProviderContractVerificationTests.cs` returns when env or pact files are missing | Contract | P2 |
 | Postgres behavior is only partly covered | Postgres test checks schema/search indexes, but most query/store behavior runs on EF InMemory/test host | Integration | P1 |
 | Failure side-effect guarantees are weak | Validation/failure tests rarely assert no DB/file/object-storage changes | Integration + Component | P1 |
 
@@ -465,82 +465,6 @@ This update implemented only the requested backend AI/Codex/batch/runtime config
 
 Backups were prepared before test/report edits under `.agent-backups/ai-batch-runtime-tests-2026-04-25/`.
 
-## Persistence And Startup Test Implementation Update - 2026-04-25
-
-This update implemented only the requested backend persistence, EF model, startup composition, DI, options, middleware, and health/observability tests. No production code was changed.
-
-### Tests Added
-
-- `DbContextModelContractComponentTests.cs`
-  - DbContext model includes all expected aggregate entity types and primary keys.
-  - Required EF model properties are non-nullable for important page/blog/work fields.
-  - JSON column contracts remain `jsonb` for page/blog/work content fields.
-  - Unique/index metadata remains present for page/blog/work slugs, published-date indexes, search-title indexes, profile provider subject, auth session key, AI batch job item entity identity, and WorkVideo sort order.
-  - WorkVideo and upload-session relationships remain required cascade foreign keys to `Work`.
-  - Blog/work search fields refresh when content changes on update, not only insert.
-- `PostgresPersistenceContractTests.cs`
-  - Added `Category=Integration` trait.
-  - Existing Postgres schema/search extension test now runs from a reset Testcontainers database.
-  - Postgres bootstrap is idempotent and preserves runtime blog data across repeated initialization.
-  - Relational NOT NULL enforcement rejects a blog with a missing title.
-  - Relational unique constraints reject duplicate blog slugs and duplicate auth session keys.
-  - Database-side cascade deletes WorkVideos and WorkVideoUploadSessions when a Work is deleted with dependents not tracked by EF.
-- `PersistenceContractTests.cs` and `DatabaseBootstrapperTests.cs`
-  - Added `Category=Integration` traits so these existing persistence/bootstrap tests participate in the requested integration filter.
-- `StartupCompositionTests.cs`
-  - Added `Category=Integration` trait.
-  - Resolves representative Application handlers/validators across content, site, composition, identity, media, AI batch, AI runtime, and WorkVideo flows.
-  - Resolves important Infrastructure stores/services, `WoongBlogDbContext`, `HealthCheckService`, `IBlogAiFixService`, WorkVideo services, both local/R2 video storage implementations, and hosted service registrations.
-  - Verifies test-host options binding for auth, security, proxy, AI, R2, and HLS options.
-  - Verifies health, Testing OpenAPI, and admin AI runtime-config endpoints start without unavailable external services.
-  - Verifies unsafe admin mutation without CSRF returns the CSRF failure before authorization.
-- `StartupOptionsValidationTests.cs`
-  - Added `Category=Integration` trait.
-  - Invalid AI batch concurrency fails startup validation.
-  - Missing required auth media root fails startup validation.
-  - Missing antiforgery header name fails startup validation.
-- `ArchitectureBoundaryTests.cs`
-  - Program service composition, middleware, and endpoint mapping order is pinned as an Architecture test.
-
-### Files Changed
-
-- `backend/tests/WoongBlog.Api.ComponentTests/DbContextModelContractComponentTests.cs` added.
-- `backend/tests/WoongBlog.Api.IntegrationTests/PostgresPersistenceContractTests.cs` updated.
-- `backend/tests/WoongBlog.Api.IntegrationTests/PersistenceContractTests.cs` updated.
-- `backend/tests/WoongBlog.Api.IntegrationTests/DatabaseBootstrapperTests.cs` updated.
-- `backend/tests/WoongBlog.Api.IntegrationTests/StartupCompositionTests.cs` updated.
-- `backend/tests/WoongBlog.Api.IntegrationTests/StartupOptionsValidationTests.cs` updated.
-- `backend/tests/WoongBlog.Api.ArchitectureTests/ArchitectureBoundaryTests.cs` updated.
-- `todolist-2026-04-25.md` updated with this persistence/startup TODO, backups, and verification results.
-- `backend/reports/backend-test-coverage-audit-2026-04-24/backend-test-coverage-audit-2026-04-24.md` updated with this implementation report and validation results.
-- `backend/reports/backend-test-coverage-audit-2026-04-24/backend-test-coverage-audit-2026-04-24.html` updated.
-- `backend/reports/backend-test-coverage-audit-2026-04-24/backend-test-coverage-audit-2026-04-24.json` updated.
-
-### Persistence And Startup Coverage Improved
-
-- EF model metadata now has component coverage for aggregate keys, required fields, JSON column contracts, index/unique metadata, and WorkVideo cascade relationship metadata without a full host.
-- Relational persistence contracts now use Postgres/Testcontainers for NOT NULL, unique slug/key, and database-side cascade behavior instead of EF InMemory.
-- Bootstrap coverage now includes Postgres idempotence and runtime data preservation, not only EF InMemory seeding.
-- Content search synchronization now covers updates to existing blog/work rows.
-- Startup composition now resolves a broad set of important Application handlers, Infrastructure stores/services, hosted services, health checks, and options through the full ASP.NET test host.
-- Options validation now covers additional missing/invalid required options for AI, auth storage, and antiforgery configuration.
-- Middleware/endpoint registration now has observable coverage for Testing OpenAPI, health payload shape, runtime config startup without external services, and CSRF-before-authorization behavior.
-- Architecture coverage now pins the centralized Program composition order.
-
-### Remaining Persistence And Startup Gaps
-
-- PostgreSQL-backed public search/query semantics remain incomplete; current public query behavior is still mostly covered through EF InMemory/test-host storage.
-- Asset/profile/session/job relationship delete behavior remains incomplete beyond WorkVideo and upload-session cascade.
-- EF max length contracts are not covered because the current model does not configure explicit max lengths for the tested entities.
-- Partial existing-data bootstrap is still sampled, not exhaustive, across every seeded table and every corrupt seed JSON variant.
-- Hosted service lifecycle behavior is still not exercised; the new tests assert registration and startup compatibility, not long-running worker loops.
-- Optional provider/config combinations remain incomplete, especially R2 configuration, HLS tool path bounds, HTTPS/HSTS behavior, forwarded headers, and Codex model/effort invalid values at startup.
-- No metrics endpoint or OpenTelemetry source was found; only health-check service registration and `/api/health` payload shape are tested.
-
-### Backup
-
-Backups were prepared before test/report edits under `.agent-backups/persistence-startup-tests-2026-04-25/`.
-
 ## 8-Step Direct Origin Push Plan
 
 This is a direct origin push plan, not a PR plan.
@@ -550,7 +474,7 @@ This is a direct origin push plan, not a PR plan.
 3. Rebase or merge the local branch on top of the matching `origin/<branch>` and resolve conflicts without changing production or test code.
 4. Run `dotnet test backend/WoongBlog.sln` and record the exact result in this report.
 5. Review `git diff -- backend/tests backend/reports/backend-test-coverage-audit-2026-04-24 todolist-2026-04-25.md` to verify only backend test, audit, and TODO artifacts changed.
-6. Commit with a targeted subject such as `Cover persistence startup backend tests`.
+6. Commit with a targeted subject such as `Cover AI batch runtime backend tests`.
 7. Push directly with `git push origin HEAD:<branch>`.
 8. Verify the pushed commit on origin and inspect CI results for the direct push.
 
@@ -586,84 +510,9 @@ This is a direct origin push plan, not a PR plan.
 | `dotnet test backend/WoongBlog.sln` | Passed, exit code 0 | All five backend test projects passed after the AI batch/runtime update: Contract 1, Unit 14, Component 72, Architecture 30, Integration 185. Restore/build emitted NU1901 warnings for `AWSSDK.Core` 4.0.0.17 low-severity advisory `GHSA-9cvc-h2w8-phrp`. |
 | `dotnet test backend/WoongBlog.sln --filter "Category=Component"` | Passed, exit code 0 | Component filter passed: 72 tests. Other projects reported no tests matching the filter. |
 | `dotnet test backend/WoongBlog.sln --filter "Category=Integration"` | Passed, exit code 0 | Integration category filter passed: 136 tests. The full integration project has 185 test cases because pre-existing integration classes without `Category=Integration` traits are not selected by this filter. |
-| `dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj --filter FullyQualifiedName~DbContextModelContractComponentTests` | Passed, exit code 0 | 4 component tests passed for DbContext model metadata and search-field update behavior. |
-| `dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~PostgresPersistenceContractTests` | Passed, exit code 0 | 3 Postgres/Testcontainers integration tests passed for schema/search patching, bootstrap idempotence/runtime preservation, relational NOT NULL/unique violations, and database-side WorkVideo cascade. |
-| `dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~StartupCompositionTests` | Passed, exit code 0 | 7 startup composition integration tests passed for DI, handlers, stores/services, hosted services, options binding, health/OpenAPI/runtime-config registration, and CSRF-before-authorization behavior. |
-| `dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~StartupOptionsValidationTests` | Passed, exit code 0 | 8 startup options validation tests passed, including invalid AI batch concurrency, missing auth media root, and missing antiforgery header name. |
-| `dotnet test backend/tests/WoongBlog.Api.ArchitectureTests/WoongBlog.Api.ArchitectureTests.csproj --filter FullyQualifiedName~Program_ComposesServicesMiddlewareAndEndpoints_InExpectedBoundaryOrder` | Passed, exit code 0 | 1 architecture test passed for centralized Program service, middleware, and endpoint composition order. |
-| `dotnet test backend/WoongBlog.sln` | Passed, exit code 0 | All five backend test projects passed after the persistence/startup update: Contract 1, Unit 14, Component 76, Architecture 31, Integration 194. Restore/build emitted NU1901 warnings for `AWSSDK.Core` 4.0.0.17 low-severity advisory `GHSA-9cvc-h2w8-phrp`. |
-| `dotnet test backend/WoongBlog.sln --filter "Category=Architecture"` | Passed, exit code 0 | Architecture filter passed: 31 tests. Other projects reported no tests matching the filter. |
-| `dotnet test backend/WoongBlog.sln --filter "Category=Component"` | Passed, exit code 0 | Component filter passed: 76 tests. Other projects reported no tests matching the filter. |
-| `dotnet test backend/WoongBlog.sln --filter "Category=Integration"` | Passed, exit code 0 | Integration category filter passed: 160 tests. The full integration project has 194 test cases because some pre-existing integration classes without `Category=Integration` traits are still not selected by this filter. |
-| `node -e "JSON.parse(...)"` | Passed, exit code 0 | Machine-readable audit JSON parsed successfully after the persistence/startup update. |
-| `git diff --check` | Passed, exit code 0 | No whitespace errors after the persistence/startup update. |
-| `dotnet test backend/tests/WoongBlog.Api.ContractTests/WoongBlog.Api.ContractTests.csproj` | Passed, exit code 0 | Contract test reported 1 skipped test because `PACT_PROVIDER_BASE_URL` and local pact files are not configured. This is an explicit skip, not a passing no-op. |
-| `docker ps` | Failed, exit code 1 | Docker is not available in this WSL distro: Docker Desktop WSL integration is not enabled or not installed. |
-| `docker compose -f docker-compose.dev.yml ps -a` | Failed, exit code 1 | Same Docker availability failure as `docker ps`; Testcontainers cannot start Postgres locally in this environment. |
-| `dotnet test backend/WoongBlog.sln` | Failed, exit code 1 | Contract 1 skipped, Unit 14 passed, Component 76 passed, Architecture 31 passed, Integration 191 passed and 3 failed. The 3 failures are `PostgresPersistenceContractTests` fixture failures because Docker/Testcontainers cannot reach Docker. NU1901 `AWSSDK.Core` warning also emitted. |
-| `dotnet test backend/WoongBlog.sln --filter "Category=Unit"` | Passed, exit code 0 | Unit filter passed: 14 tests. Other projects reported no matching tests. |
-| `dotnet test backend/WoongBlog.sln --filter "Category=Component"` | Passed, exit code 0 | Component filter passed: 76 tests. Other projects reported no matching tests. |
-| `dotnet test backend/WoongBlog.sln --filter "Category=Integration"` | Failed, exit code 1 | Integration filter now selects the full integration suite: 191 passed, 3 failed. The failures are the same Docker/Testcontainers Postgres setup failures. |
-| `dotnet test backend/WoongBlog.sln --filter "Category=Architecture"` | Passed, exit code 0 | Architecture filter passed: 31 tests. Other projects reported no matching tests. |
-| `node -e "JSON.parse(...)"` | Passed, exit code 0 | Machine-readable audit JSON parsed successfully after the final cleanup update. |
-| `git diff --check` | Passed, exit code 0 | No whitespace errors after the final cleanup update. |
-
-## Final Cleanup Audit Update - 2026-04-25
-
-### Current Backend Test Suite Summary
-
-- `WoongBlog.Api.UnitTests`: 5 test files; 14 expanded test cases; validator/helper/HLS plan coverage only.
-- `WoongBlog.Api.ComponentTests`: 8 test files; 76 expanded test cases; Application/Infrastructure behavior with EF InMemory, fakes, temp filesystem, and fake process seams.
-- `WoongBlog.Api.IntegrationTests`: 17 test files; 194 expanded test cases; full ASP.NET host behavior. All integration test classes are now tagged `Category=Integration`.
-- `WoongBlog.Api.ArchitectureTests`: 1 test file; 31 architecture tests.
-- `WoongBlog.Api.ContractTests`: 1 Pact provider verification test, tagged `Category=Contract`, explicitly skipped unless provider URL and pact files are configured.
-
-### Tests Added Across The 8 Work Packets
-
-| Work packet | Test additions or cleanup result |
-|---|---|
-| 1. Original strict audit | No test code added; established the baseline audit report and 8-step push plan. |
-| 2. Priority 1 auth/session/CSRF | Added `AuthFlowIntegrationTests`, fake OIDC challenge infrastructure, and additional `AuthRecorderComponentTests` invalid-session coverage. |
-| 3. Priority 1 admin mutations | Added `AdminMutationEndpointsTests` for page/blog/work/site-settings mutation auth, validation, persistence, and no-write behavior. |
-| 4. Public read/query | Added component and endpoint coverage in `PublicQueryHandlerComponentTests` and `PublicEndpointsTests` for public home/site/page/blog/work DTOs, draft filtering, ordering, paging, assets, and empty states. |
-| 5. WorkVideo | Added `WorkVideoEndpointsTests` coverage and `WorkVideoComponentTests` for upload, metadata, ordering, delete, cleanup scheduling, local storage, HLS cleanup, and public projection behavior. |
-| 6. AI/Codex/batch/runtime | Added endpoint and component coverage for representative AI auth/validation, persistent batch jobs, scheduler transitions, runtime config, options validation, and fake Codex process behavior. |
-| 7. Persistence/startup | Added `DbContextModelContractComponentTests`, expanded Postgres persistence contracts, startup composition/options validation coverage, and Program composition architecture coverage. |
-| 8. Final cleanup/audit update | Added missing `Category=Integration` traits to `AdminContentEndpointsTests`, `AuthEndpointsTests`, `AuthSecurityTests`, and `UploadsControllerTests`; converted ContractTests from a passing early return to an explicit setup skip. No feature tests were added. |
-
-### Remaining Known Gaps
-
-- Docker/Testcontainers is unavailable in this local WSL environment, so `PostgresPersistenceContractTests` cannot be validated here until Docker Desktop WSL integration or another Docker endpoint is available.
-- Pact provider verification requires `PACT_PROVIDER_BASE_URL` and pact files under `tests/contracts/pacts` or `PACT_FILE_DIRECTORY`; the local run correctly skipped it instead of faking success.
-- Media upload/delete coverage is still representative and needs a deeper dedicated pass.
-- AI batch endpoint matrices remain incomplete for non-admin, invalid/missing CSRF, cancel-queued, clear-completed, not-found, queued/running apply rejection, and cancellation-during-execution paths.
-- WorkVideo R2/object-storage, confirm-upload failures, HLS failure/rollback, hosted cleanup worker lifecycle, and cleanup cancellation remain known gaps.
-- PostgreSQL-backed public search/query semantics and broader relationship delete behavior beyond WorkVideo/upload-session remain incomplete.
-- Optional startup/provider matrices remain incomplete for R2, HLS tool paths, HTTPS/HSTS, forwarded headers, and Codex model/effort invalid values.
-
-### Recommended Future Work
-
-- Re-run the full backend suite in an environment where Docker/Testcontainers works, then update this report with the true Postgres results.
-- Configure a local or CI provider for Pact verification and at least one pact file, then run `WoongBlog.Api.ContractTests` without skip.
-- Prioritize the next backend test slice around media storage, remaining AI endpoint matrices, WorkVideo R2/HLS failure paths, and hosted worker lifecycle behavior.
-
-### Commands Run In This Final Cleanup
-
-- `npx skills find dotnet testing`
-- `rg --files-without-match "\[Trait\(TestCategories\.Key" backend/tests/WoongBlog.Api.IntegrationTests -g '*Tests.cs'`
-- `dotnet test backend/tests/WoongBlog.Api.ContractTests/WoongBlog.Api.ContractTests.csproj`
-- `docker ps`
-- `docker compose -f docker-compose.dev.yml ps -a`
-- `dotnet test backend/WoongBlog.sln`
-- `dotnet test backend/WoongBlog.sln --filter "Category=Unit"`
-- `dotnet test backend/WoongBlog.sln --filter "Category=Component"`
-- `dotnet test backend/WoongBlog.sln --filter "Category=Integration"`
-- `dotnet test backend/WoongBlog.sln --filter "Category=Architecture"`
-
-### Final Result
-
-The backend test taxonomy cleanup is complete and production code was not changed. Unit, Component, and Architecture category runs pass. The ContractTests project no longer passes without verifying anything; it reports an explicit skip when external Pact setup is absent. The full suite and Integration category run are not green in this local environment because three Postgres/Testcontainers tests require Docker, and Docker is not available from this WSL distro.
+| `node -e "JSON.parse(...)"` | Passed, exit code 0 | Machine-readable audit JSON parsed successfully after the AI batch/runtime update. |
+| `git diff --check` | Passed, exit code 0 | No whitespace errors after the AI batch/runtime update. |
 
 ## Final Audit Recommendation
 
-Keep the Priority 1 auth/session/login/logout/CSRF, admin mutation, public read/query, WorkVideo, AI batch/runtime, persistence/startup, and final taxonomy cleanup changes. The next required validation step is environmental rather than code-related: enable Docker/Testcontainers and Pact provider setup, then re-run the full backend suite. After that, continue with dedicated media tests, remaining AI endpoint matrices, hosted worker lifecycle coverage, optional startup provider/config matrices, PostgreSQL-backed query/search semantics, and deeper WorkVideo R2/HLS failure coverage when a fake object-storage seam is available.
+The Priority 1 auth/session/login/logout/CSRF, admin mutation, public read/query, WorkVideo, and AI batch/runtime slices are materially stronger after these updates and should be kept. Do not treat backend coverage as strict feature-complete yet: remaining risk is concentrated in media upload/delete, exhaustive AI batch endpoint matrices, endpoint-level cookie-session side effects, WorkVideo R2/HLS failure paths, confirm-upload edge cases, remaining Codex timeout/auth/invalid-command paths, OpenAI/Azure fake-HTTP provider behavior, and Postgres-backed query semantics. The next backend test work should continue with dedicated media tests, remaining AI endpoint matrices, and deeper WorkVideo R2/HLS failure coverage when a fake object-storage seam is available.

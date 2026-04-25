@@ -14,7 +14,7 @@
 </head>
 <body>
   <h1>Backend Test Coverage Updates - 2026-04-25</h1>
-  <p>Scope: backend only. This report now includes the Priority 1 auth/session/CSRF update, the Priority 1 destructive admin mutation update, the public read/query update, the WorkVideo behavior update, the AI/Codex/batch/runtime config update, the persistence/startup composition update, and the final cleanup/taxonomy update. No production code was changed.</p>
+  <p>Scope: backend only. This report now includes the Priority 1 auth/session/CSRF update, the Priority 1 destructive admin mutation update, the public read/query update, the WorkVideo behavior update, the AI/Codex/batch/runtime config update, and the persistence/startup composition update. No production code was changed.</p>
 
   <h2>Tests Added</h2>
   <ul>
@@ -33,7 +33,6 @@
     <li><code>StartupCompositionTests.cs</code>: broad DI resolution, Application handler/validator resolution, hosted service registration, options binding, health/OpenAPI/runtime-config startup, and CSRF-before-authorization behavior.</li>
     <li><code>StartupOptionsValidationTests.cs</code>: invalid AI batch concurrency, missing auth media root, and missing antiforgery header validation.</li>
     <li><code>ArchitectureBoundaryTests.cs</code>: centralized Program service, middleware, and endpoint composition order.</li>
-    <li>Final cleanup: added missing <code>Category=Integration</code> traits to <code>AdminContentEndpointsTests.cs</code>, <code>AuthEndpointsTests.cs</code>, <code>AuthSecurityTests.cs</code>, and <code>UploadsControllerTests.cs</code>; converted <code>ProviderContractVerificationTests.cs</code> to an explicit setup skip when Pact provider setup is absent.</li>
   </ul>
 
   <h2>Files Changed</h2>
@@ -133,26 +132,13 @@
       <tr><td><code>dotnet test backend/WoongBlog.sln --filter "Category=Architecture"</code></td><td>Passed: Architecture 31.</td></tr>
       <tr><td><code>dotnet test backend/WoongBlog.sln --filter "Category=Component"</code></td><td>Passed: Component 76.</td></tr>
       <tr><td><code>dotnet test backend/WoongBlog.sln --filter "Category=Integration"</code></td><td>Passed: Integration 160.</td></tr>
-      <tr><td><code>dotnet test backend/tests/WoongBlog.Api.ContractTests/WoongBlog.Api.ContractTests.csproj</code></td><td>Passed with 1 skipped contract test because <code>PACT_PROVIDER_BASE_URL</code> and local pact files are not configured.</td></tr>
-      <tr><td><code>docker ps</code></td><td>Failed: Docker is not available in this WSL distro, so Testcontainers cannot start Postgres.</td></tr>
-      <tr><td><code>dotnet test backend/WoongBlog.sln</code></td><td>Failed locally: Contract 1 skipped, Unit 14 passed, Component 76 passed, Architecture 31 passed, Integration 191 passed and 3 failed due Docker/Testcontainers setup.</td></tr>
-      <tr><td><code>dotnet test backend/WoongBlog.sln --filter "Category=Unit"</code></td><td>Passed: Unit 14.</td></tr>
-      <tr><td><code>dotnet test backend/WoongBlog.sln --filter "Category=Component"</code></td><td>Passed: Component 76.</td></tr>
-      <tr><td><code>dotnet test backend/WoongBlog.sln --filter "Category=Integration"</code></td><td>Failed locally: Integration filter now selects all 194 integration cases; 191 passed and 3 Postgres/Testcontainers cases failed because Docker is unavailable.</td></tr>
-      <tr><td><code>dotnet test backend/WoongBlog.sln --filter "Category=Architecture"</code></td><td>Passed: Architecture 31.</td></tr>
-      <tr><td><code>node -e "JSON.parse(...)"</code></td><td>Passed after final cleanup report update.</td></tr>
-      <tr><td><code>git diff --check</code></td><td>Passed after final cleanup report update.</td></tr>
     </tbody>
   </table>
 
-  <h2>Final Cleanup Result</h2>
-  <p>Current suite shape: Unit 14, Component 76, Integration 194, Architecture 31, and one Contract test that explicitly skips without external Pact setup. The final cleanup preserved production behavior and only adjusted test taxonomy/contract reporting.</p>
-  <p>Across the eight work packets, the original audit added no tests, six implementation packets added the auth, admin mutation, public read/query, WorkVideo, AI/runtime, and persistence/startup tests listed above, and this final packet added no feature tests beyond safe taxonomy cleanup.</p>
-
   <h2>Remaining Gaps</h2>
-  <p>Remaining risk includes Docker/Testcontainers unavailability in this local WSL environment, missing Pact provider setup, invalid/missing/stale CSRF sampling for every mutation family, blog/work duplicate slug update behavior, invalid JSON semantics, asset update semantics, endpoint-level missing-site/home/resume public read paths, PostgreSQL-backed public query/search semantics, media upload/delete, remaining AI batch endpoint matrices, AI cancel/clear/not-found/cancellation paths, runtime prompt-file fallback, Codex timeout/auth/invalid-command paths, OpenAI/Azure fake-HTTP provider paths, WorkVideo R2/object-storage behavior, confirm-upload failure paths, HLS failure/rollback behavior, hosted worker lifecycle/cancellation behavior, optional startup provider/config matrices, and missing metrics/OpenTelemetry endpoint coverage.</p>
+  <p>Remaining risk includes nonexistent page/member mutation endpoints being out of scope, invalid/missing/stale CSRF sampling for every mutation family, blog/work duplicate slug update behavior, invalid JSON semantics, asset update semantics, endpoint-level missing-site/home/resume public read paths, PostgreSQL-backed public query/search semantics, media upload/delete, remaining AI batch endpoint matrices, AI cancel/clear/not-found/cancellation paths, runtime prompt-file fallback, Codex timeout/auth/invalid-command paths, OpenAI/Azure fake-HTTP provider paths, WorkVideo R2/object-storage behavior, confirm-upload failure paths, HLS failure/rollback behavior, hosted worker lifecycle/cancellation behavior, optional startup provider/config matrices, and missing metrics/OpenTelemetry endpoint coverage.</p>
 
   <h2>Recommendation</h2>
-  <p>Keep the P1 auth, admin mutation, public read/query, WorkVideo, AI batch/runtime, persistence/startup, and final taxonomy cleanup changes. Next, enable Docker/Testcontainers and Pact provider setup, then re-run the full backend suite before continuing with media tests, remaining AI endpoint matrices, hosted worker lifecycle coverage, optional startup provider/config matrices, PostgreSQL-backed query/search semantics, and deeper WorkVideo R2/HLS failure coverage.</p>
+  <p>Keep the P1 auth, admin mutation, public read/query, WorkVideo, AI batch/runtime, and persistence/startup test updates. Continue next with dedicated media tests, remaining AI endpoint matrices, hosted worker lifecycle coverage, optional startup provider/config matrices, PostgreSQL-backed query/search semantics, and deeper WorkVideo R2/HLS failure coverage when a fake object-storage seam is available.</p>
 </body>
 </html>
