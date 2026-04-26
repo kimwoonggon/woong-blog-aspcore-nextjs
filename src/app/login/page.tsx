@@ -1,14 +1,43 @@
 import { Button } from '@/components/ui/button'
+import { getLocalAdminLoginUrl, getLoginUrl } from '@/lib/api/auth'
+import { fetchServerSession } from '@/lib/api/server'
 import { ShieldCheck } from 'lucide-react'
+import { redirect } from 'next/navigation'
 
 interface LoginPageProps {
-    searchParams?: Promise<{ error?: string }>
+    searchParams?: Promise<{ error?: string; returnUrl?: string }>
+}
+
+function resolveSafeReturnUrl(returnUrl: string | undefined) {
+    if (!returnUrl || !returnUrl.startsWith('/') || returnUrl.startsWith('//')) {
+        return '/admin'
+    }
+
+    return returnUrl
+}
+
+function getLoginErrorMessage(error: string | undefined) {
+    if (error === 'admin_only') {
+        return 'This admin area is restricted to accounts explicitly allowed as administrators.'
+    }
+
+    if (error) {
+        return 'Sign-in could not be completed. Please try again.'
+    }
+
+    return null
 }
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
     const showLocalAdminShortcut = process.env.ENABLE_LOCAL_ADMIN_SHORTCUT === 'true'
     const resolvedSearchParams = await searchParams
-    const adminOnlyLogin = resolvedSearchParams?.error === 'admin_only'
+    const returnUrl = resolveSafeReturnUrl(resolvedSearchParams?.returnUrl)
+    const errorMessage = getLoginErrorMessage(resolvedSearchParams?.error)
+    const session = await fetchServerSession().catch(() => null)
+
+    if (session?.authenticated && session.role === 'admin') {
+        redirect(returnUrl)
+    }
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-950">
@@ -19,14 +48,14 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                         Sign in to manage your portfolio content.
                     </p>
                 </div>
-                {adminOnlyLogin ? (
+                {errorMessage ? (
                     <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100">
-                        This admin area is restricted to accounts explicitly allowed as administrators.
+                        {errorMessage}
                     </div>
                 ) : null}
                 <div className="mt-8">
                     <Button asChild className="w-full" size="lg">
-                        <a href="/api/auth/login?returnUrl=%2Fadmin">Sign in with Google</a>
+                        <a href={getLoginUrl(returnUrl)}>Sign in with Google</a>
                     </Button>
                 </div>
                 {showLocalAdminShortcut ? (
@@ -41,7 +70,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                                     If Google login does not resolve to an admin role locally, use the seeded local admin session shortcut.
                                 </p>
                                 <Button asChild variant="outline" className="w-full border-emerald-300 bg-white hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950 dark:hover:bg-emerald-900/50">
-                                    <a href="/api/auth/test-login?email=admin%40example.com&returnUrl=%2Fadmin">Continue as Local Admin</a>
+                                    <a href={getLocalAdminLoginUrl(returnUrl)}>Continue as Local Admin</a>
                                 </Button>
                             </div>
                         </div>

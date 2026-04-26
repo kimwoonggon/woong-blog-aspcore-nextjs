@@ -272,6 +272,7 @@ test('DM-11: contact page email link uses the semantic primary color in dark mod
 
 test.describe('login and admin dark mode', () => {
   test('DM-13: login page renders with dark surfaces', async ({ page }) => {
+    await page.context().clearCookies()
     await gotoWithTheme(page, '/login')
     const card = page.locator('.max-w-md').first()
     await expect(card).toBeVisible()

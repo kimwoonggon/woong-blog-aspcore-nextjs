@@ -304,3 +304,77 @@ None in the final frontend validation baseline.
 ### Batch 1 readiness
 
 It is now safe to start Batch 1 auth/admin protection tests on top of this branch, provided the stale Docker server on port `3000` is not reused by Playwright. For repeatable local E2E runs, ensure the app under test is the current branch's Next dev server or change the Playwright setup so it cannot silently reuse an unrelated server.
+
+## Batch 1 - Login/Auth/Admin Protection Reinforcement
+
+Date: 2026-04-26.
+
+Scope: frontend login process, auth/session behavior, admin layout protection, representative admin mutation authorization handling, logout failure behavior, and public admin affordance visibility. No real Google OAuth or external identity provider was used.
+
+### Tests added or reinforced
+
+- Added `src/test/login-page.test.tsx` for anonymous login rendering, OAuth launcher URL generation, safe `returnUrl` preservation, unsafe `returnUrl` fallback, safe login error rendering, local admin shortcut visibility, and authenticated admin redirect from `/login`.
+- Added `src/test/admin-layout-auth.test.tsx` for admin layout redirects: anonymous sessions redirect to `/login`, authenticated non-admin sessions redirect to `/`, and admin sessions render admin chrome/content.
+- Extended `tests/auth-login.spec.ts` with route-mocked backend auth launcher coverage, `returnUrl` preservation, and safe login error rendering without real OAuth.
+- Extended `tests/test-server-runtime.spec.ts` to prove an authenticated admin visiting `/login?returnUrl=...` is redirected to the safe target instead of remaining on the login page.
+- Extended `src/test/blog-editor.test.tsx` with representative admin mutation 401/403 save failure coverage: no success toast, no navigation, inline error shown, and user input preserved.
+- Extended `src/test/admin-logout-button.test.tsx` with successful redirect coverage and failed logout behavior: no false success, no redirect, and signed-in button UI restored.
+- Extended `src/test/public-admin-client-gate.test.tsx` for authenticated non-admin and failed session-check cases.
+- Converted the skipped admin public affordance Playwright path in `tests/public-admin-affordances.spec.ts` into deterministic coverage and added non-admin signed-in public affordance hiding.
+- Updated `tests/dark-mode.spec.ts` so the login dark-mode test clears authenticated cookies before asserting anonymous login page rendering.
+
+### Production and config files changed
+
+- `src/app/login/page.tsx`
+  - Preserves safe relative `returnUrl` values in both the normal OAuth launcher link and local admin test shortcut.
+  - Falls back to `/admin` for missing or unsafe return targets such as protocol-relative URLs.
+  - Renders safe generic copy for unknown login errors instead of echoing query text.
+  - Redirects already-authenticated admins away from `/login` to the safe return target.
+  - Keeps local admin shortcut behavior environment-gated.
+- `playwright.config.ts`
+  - Set `reuseExistingServer: false` so normal Playwright runs start the current branch's Next dev server and fail on a stale occupied port instead of silently reusing an unrelated app.
+
+### Behavior bugs found
+
+- Login `returnUrl` was ignored by the login page; both login actions always targeted `/admin`. This could strand users away from the protected page they originally requested. The fix is safe because only same-origin relative paths are accepted, with unsafe values falling back to `/admin`.
+- Authenticated admins could render the login page instead of being sent to the already-authorized admin destination. The fix redirects only confirmed admin sessions; anonymous users and non-admin/failed session checks still see the login UI.
+- Playwright could silently reuse an unrelated stale server on port `3000`. The config now requires a fresh managed Next dev server unless `PLAYWRIGHT_EXTERNAL_SERVER=1` is explicitly used.
+- Existing test drift: the public admin affordance test expected public detail delete buttons outside the inline editor shell, while current product behavior exposes public detail edit triggers and keeps delete inside the editor shell. The converted test now asserts the actual non-destructive public affordance surface.
+- Existing test drift: the login dark-mode test ran in the authenticated project with admin cookies, which conflicts with the new correct `/login` redirect for admins. The test now clears cookies before validating anonymous login styling.
+
+### Commands run
+
+Focused validation:
+
+| Command | Result | Notes |
+| --- | --- | --- |
+| `npm test -- --run src/test/login-page.test.tsx src/test/admin-layout-auth.test.tsx src/test/admin-logout-button.test.tsx src/test/public-admin-client-gate.test.tsx src/test/blog-editor.test.tsx` | Passed | `5 passed` files, `28 passed` tests. |
+| `npm test -- --run src/test/login-page.test.tsx src/test/admin-layout-auth.test.tsx` | Passed | `2 passed` files, `9 passed` tests after adding per-test timeouts for slow Next server-component imports. |
+| `npm run test:e2e -- tests/public-admin-affordances.spec.ts` | Passed after test conversion | Final result: `7 passed`. Earlier conversion attempts failed on `networkidle`/outdated delete-button expectations; the final test uses deterministic DOM affordance checks. |
+| `npm run test:e2e -- tests/auth-login.spec.ts tests/test-server-runtime.spec.ts tests/auth-security-browser.spec.ts tests/admin-redirect.spec.ts tests/admin-auth-authorization.spec.ts tests/admin-auth-session-expiry.spec.ts tests/public-admin-affordances.spec.ts` | Passed | `16 passed`. |
+| `npm run test:e2e -- tests/dark-mode.spec.ts --grep "DM-13"` | Passed | `1 passed` after clearing authenticated cookies for the anonymous login styling test. |
+
+Full validation:
+
+| Command | Result | Notes |
+| --- | --- | --- |
+| `npm test -- --run` | Passed | Vitest: `65 passed (65)` files, `351 passed (351)` tests, duration `363.12s`. Pact older-spec warnings and jsdom navigation warning did not fail the run. |
+| `npm run test:e2e` | Passed | Playwright: `415 passed`, `4 skipped`, duration `20.6m`. Latency artifacts: `419`, budget failures: `0`, warnings: `82`. A prior full run had `414 passed`, `4 skipped`, `1 failed` because the login dark-mode test used authenticated cookies; that test was fixed and the full suite was rerun cleanly. |
+| `npm run lint` | Passed | `0` errors, `5` existing warnings in scripts/tests. |
+| `npm run typecheck` | Passed | `tsc --noEmit` completed successfully. |
+| `npm run build` | Passed | Next.js 16.1.6 production build completed successfully with Turbopack. |
+| `git diff --check` | Passed | No whitespace errors. |
+
+Validation environment note: local backend was available on `127.0.0.1:18080`, while Playwright dev server config points to `localhost:8080`, so a temporary local TCP proxy was used during E2E validation: `127.0.0.1:8080 -> 127.0.0.1:18080`. The proxy was stopped after validation.
+
+### Remaining login/auth/admin protection gaps
+
+- Real Google OAuth remains manual/out of scope; all new coverage avoids external identity providers.
+- Client mutation 401/403 handling is covered through `BlogEditor` as the representative path, but other editors/delete flows should still be expanded in later batches.
+- Logout failure coverage verifies the current safe behavior of preserving signed-in UI and not redirecting; there is still no explicit user-facing error toast for logout failure.
+- Admin route protection now covers anonymous, non-admin, expired-session, and authenticated-admin login redirect behavior, but server session endpoint 500 behavior remains a separate error-state gap.
+- Public admin affordance coverage now includes anonymous, non-admin, and admin representative paths, but not every public detail/page variation is exhaustively enumerated.
+
+### Next recommended batch
+
+Batch 2 should target destructive admin action failures: blog/work single delete and bulk delete cancel/failure states, plus unauthorized or expired delete behavior where the frontend renders a recoverable UI.

@@ -24,3 +24,12 @@ test('managed test server exposes proxied auth session and local admin bootstrap
   expect(authenticatedSession.authenticated).toBe(true)
   expect(authenticatedSession.role).toBe('admin')
 })
+
+test('authenticated admin visiting login is redirected to the safe returnUrl target', async ({ page }) => {
+  await loginAsLocalAdmin(page, '/admin/dashboard')
+
+  await page.goto('/login?returnUrl=%2Fadmin%2Fpages', { waitUntil: 'domcontentloaded' })
+
+  await expect(page).toHaveURL(/\/admin\/pages$/)
+  await expect(page.getByRole('heading', { name: 'Admin Login' })).toHaveCount(0)
+})

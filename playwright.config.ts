@@ -114,7 +114,7 @@ export default defineConfig({
           NODE_TLS_REJECT_UNAUTHORIZED: '0',
         },
         url: 'http://localhost:3000',
-        reuseExistingServer: true,
+        reuseExistingServer: false,
         timeout: 120_000,
       },
   projects: [

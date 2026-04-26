@@ -46,6 +46,42 @@ describe('PublicAdminClientGate', () => {
     expect(screen.queryByRole('button', { name: 'Admin edit' })).not.toBeInTheDocument()
   })
 
+  it('keeps admin affordances hidden for authenticated non-admin visitors', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () =>
+      new Response(JSON.stringify({ authenticated: true, role: 'author' }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    ) as typeof fetch)
+
+    render(
+      <PublicAdminClientGate>
+        <button type="button">Admin edit</button>
+      </PublicAdminClientGate>,
+    )
+
+    await waitFor(() => expect(fetch).toHaveBeenCalledWith('/api/auth/session', {
+      credentials: 'include',
+      cache: 'no-store',
+    }))
+    expect(screen.queryByRole('button', { name: 'Admin edit' })).not.toBeInTheDocument()
+  })
+
+  it('keeps admin affordances hidden when the browser session check fails', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () =>
+      new Response('unauthorized', { status: 401 }),
+    ) as typeof fetch)
+
+    render(
+      <PublicAdminClientGate>
+        <button type="button">Admin edit</button>
+      </PublicAdminClientGate>,
+    )
+
+    await waitFor(() => expect(fetch).toHaveBeenCalled())
+    expect(screen.queryByRole('button', { name: 'Admin edit' })).not.toBeInTheDocument()
+  })
+
   it('deduplicates browser session checks when a public page has multiple admin gates', async () => {
     const fetchMock = vi.fn(async () =>
       new Response(JSON.stringify({ authenticated: true, role: 'admin' }), {

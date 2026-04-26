@@ -230,6 +230,35 @@ describe('BlogEditor', () => {
     })
   })
 
+  it.each([
+    [401, 'Unauthorized'],
+    [403, 'Forbidden'],
+  ])('shows a safe save failure for %i responses without clearing user input', async (status, message) => {
+    mocks.fetchWithCsrf.mockResolvedValueOnce({
+      ok: false,
+      status,
+      json: async () => ({}),
+      text: async () => message,
+    })
+
+    render(<BlogEditor />)
+
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Draft that should stay' } })
+    fireEvent.change(screen.getByLabelText('Excerpt'), { target: { value: 'Excerpt should stay' } })
+    fireEvent.change(screen.getByLabelText('Mock blog content'), {
+      target: { value: '<p>Body should stay</p>' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: /Create Post/i }))
+
+    expect(await screen.findByTestId('admin-blog-form-error')).toHaveTextContent(message)
+    expect(mocks.toast.error).toHaveBeenCalledWith(message)
+    expect(mocks.toast.success).not.toHaveBeenCalled()
+    expect(mocks.push).not.toHaveBeenCalled()
+    expect(screen.getByLabelText('Title')).toHaveValue('Draft that should stay')
+    expect(screen.getByLabelText('Excerpt')).toHaveValue('Excerpt should stay')
+    expect(screen.getByLabelText('Mock blog content')).toHaveValue('<p>Body should stay</p>')
+  })
+
   it('keeps inline update saves excerpt-aware while returning to the public detail route', async () => {
     mocks.pathname = '/blog/existing-post'
     mocks.searchParams = 'relatedPage=2'
