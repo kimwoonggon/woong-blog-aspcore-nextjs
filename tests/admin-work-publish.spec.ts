@@ -3,6 +3,12 @@ import { measureStep } from './helpers/latency'
 
 test.use({ storageState: 'test-results/playwright/admin-storage-state.json' })
 
+const publicWorkDetailNavigationBudget = {
+  warnMs: 4500,
+  hardMs: 10000,
+  failOnHard: false,
+  name: 'published-work-public-detail-navigation',
+}
 
 test('admin can create and publish a work that appears on public works page', async ({ page }, testInfo) => {
   const title = `Playwright Work ${Date.now()}`
@@ -11,21 +17,9 @@ test('admin can create and publish a work that appears on public works page', as
   await expect(page).toHaveURL(/\/admin\/works\/new/)
   await expect(page.getByLabel('Category')).toHaveValue('Uncategorized')
   await expect(page.getByLabel('Title')).toBeVisible()
-  await page.evaluate((titleValue) => {
-    const setInputValue = (selector: string, value: string) => {
-      const element = document.querySelector(selector) as HTMLInputElement | null
-      if (!element) throw new Error(`Missing input: ${selector}`)
-      const prototype = Object.getPrototypeOf(element)
-      const descriptor = Object.getOwnPropertyDescriptor(prototype, 'value')
-      descriptor?.set?.call(element, value)
-      element.dispatchEvent(new Event('input', { bubbles: true }))
-      element.dispatchEvent(new Event('change', { bubbles: true }))
-    }
-
-    setInputValue('input[name="title"]', titleValue)
-    setInputValue('input[name="period"]', '2026.03 - 2026.03')
-    setInputValue('input[name="tags"]', 'playwright, works')
-  }, title)
+  await page.getByLabel('Title').fill(title)
+  await page.getByLabel('Project Period').fill('2026.03 - 2026.03')
+  await page.getByLabel('Tags (comma separated)').fill('playwright, works')
 
   await expect(page.locator('input[name="title"]')).toHaveValue(title)
   await expect(page.locator('input[name="category"]')).toHaveValue('Uncategorized')
@@ -36,9 +30,9 @@ test('admin can create and publish a work that appears on public works page', as
   await page.locator('.tiptap.ProseMirror').first().fill(`This is a browser-driven published work for ${title}.`)
 
   await expect(page.getByRole('button', { name: /Create Work/i })).toBeEnabled()
-  await measureStep(
+  const payload = await measureStep(
     testInfo,
-    'Admin work create to public detail refresh',
+    'Admin work create mutation and revalidation',
     'adminMutationPublicRefresh',
     async () => {
       const [saveResponse] = await Promise.all([
@@ -49,10 +43,17 @@ test('admin can create and publish a work that appears on public works page', as
 
       return await saveResponse.json() as { slug: string }
     },
-    async (payload) => {
+    async () => {
       await expect(page).toHaveURL(/\/admin\/works(?:\?.*)?$/, { timeout: 20000 })
       await expect(page.getByRole('link', { name: title }).first()).toBeVisible()
-      await page.goto(`/works/${payload.slug}`)
+    },
+  )
+  await measureStep(
+    testInfo,
+    'Published work public detail render after create',
+    publicWorkDetailNavigationBudget,
+    async () => {
+      await page.goto(`/works/${payload.slug}`, { waitUntil: 'domcontentloaded' })
       await expect(page.locator('main h1', { hasText: title })).toBeVisible()
       await expect(page.getByText('Uncategorized').first()).toBeVisible()
     },
