@@ -13,6 +13,17 @@ export function normalizeTextInput(value: string | null | undefined) {
   return typeof value === 'string' ? value.trim() : ''
 }
 
+export function createClientId() {
+  const cryptoApi = globalThis.crypto
+  const randomUuid = cryptoApi?.randomUUID
+
+  if (typeof randomUuid === 'function') {
+    return randomUuid.call(cryptoApi)
+  }
+
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}`
+}
+
 export function normalizeJsonInput(value: string) {
   if (!value.trim()) {
     return '{}'

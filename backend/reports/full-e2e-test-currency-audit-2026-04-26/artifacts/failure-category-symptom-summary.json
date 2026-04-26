@@ -1,0 +1,24 @@
+{
+  "failuresByCategory": {
+    "other": 3,
+    "recording/batch fixtures": 10,
+    "public content/layout expectation": 7,
+    "admin/editor/authenticated UI": 144,
+    "admin notion view": 21,
+    "works video/admin media": 24
+  },
+  "failuresBySymptom": {
+    "ambiguous main h1 selector after h1 body headings": 2,
+    "recording editor API not reachable": 6,
+    "other assertion/error": 9,
+    "6s timeout": 47,
+    "TOC/layout expectation mismatch": 4,
+    "admin row not reachable": 18,
+    "editor title field not reachable": 69,
+    "admin API 401 fixture/setup": 11,
+    "redirected to login": 18,
+    "32s timeout": 23,
+    "33s timeout": 2
+  },
+  "source": "backend/reports/production-like-full-e2e-2026-04-26/artifacts/full-e2e-summary.json"
+}

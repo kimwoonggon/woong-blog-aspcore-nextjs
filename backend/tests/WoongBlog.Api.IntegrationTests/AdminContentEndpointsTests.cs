@@ -197,26 +197,30 @@ public class AdminContentEndpointsTests : IClassFixture<CustomWebApplicationFact
     }
 
     [Fact]
-    public async Task CreateBlog_CreatesSlugAndExcerpt()
+    public async Task CreateBlog_CreatesSlug_AndLeavesExcerptBlank_WhenNoManualExcerptIsProvided()
     {
         var client = _factory.CreateAuthenticatedClient();
+        var title = "Hello Integration Blog!!!";
+        var bodyHtml = "<p>This is a long enough body to remain in the content payload.</p>";
 
         var response = await client.PostAsJsonAsync("/api/admin/blogs", new
         {
-            title = "Hello Integration Blog!!!",
+            title,
             tags = new[] { "qa", "backend" },
             published = true,
-            contentJson = "{\"html\":\"<p>This is a long enough body to become the excerpt.</p>\"}"
+            contentJson = JsonSerializer.Serialize(new { html = bodyHtml })
         });
 
         response.EnsureSuccessStatusCode();
-        var body = await response.Content.ReadAsStringAsync();
-        Assert.Contains("hello-integration-blog", body, StringComparison.OrdinalIgnoreCase);
+        var payload = JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement;
+        var slug = payload.GetProperty("slug").GetString();
+        Assert.Equal("hello-integration-blog", slug);
 
-        var publicResponse = await client.GetAsync("/api/public/blogs/hello-integration-blog");
+        var publicResponse = await client.GetAsync($"/api/public/blogs/{slug}");
         publicResponse.EnsureSuccessStatusCode();
-        var publicBody = await publicResponse.Content.ReadAsStringAsync();
-        Assert.Contains("This is a long enough body", publicBody, StringComparison.OrdinalIgnoreCase);
+        using var publicDocument = JsonDocument.Parse(await publicResponse.Content.ReadAsStringAsync());
+        Assert.Equal(string.Empty, publicDocument.RootElement.GetProperty("excerpt").GetString());
+        Assert.Contains("This is a long enough body", publicDocument.RootElement.GetProperty("contentJson").GetString(), StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -246,7 +250,7 @@ public class AdminContentEndpointsTests : IClassFixture<CustomWebApplicationFact
     }
 
     [Fact]
-    public async Task CreateBlog_FallsBackToGeneratedExcerpt_WhenManualExcerptIsBlank()
+    public async Task CreateBlog_LeavesExcerptBlank_WhenManualExcerptIsBlank()
     {
         var client = _factory.CreateAuthenticatedClient();
         var contentToken = $"generated excerpt token {Guid.NewGuid():N}";
@@ -267,12 +271,50 @@ public class AdminContentEndpointsTests : IClassFixture<CustomWebApplicationFact
 
         var publicResponse = await client.GetAsync($"/api/public/blogs/{slug}");
         publicResponse.EnsureSuccessStatusCode();
-        var publicBody = await publicResponse.Content.ReadAsStringAsync();
-        Assert.Contains(contentToken, publicBody, StringComparison.OrdinalIgnoreCase);
+        using var publicDocument = JsonDocument.Parse(await publicResponse.Content.ReadAsStringAsync());
+        Assert.Equal(string.Empty, publicDocument.RootElement.GetProperty("excerpt").GetString());
+        Assert.Contains(contentToken, publicDocument.RootElement.GetProperty("contentJson").GetString(), StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
-    public async Task CreateBlog_WithMarkdownOnlyContent_GeneratesExcerpt()
+    public async Task UpdateBlog_LeavesExcerptBlank_WhenManualExcerptIsBlank()
+    {
+        var client = _factory.CreateAuthenticatedClient();
+        var createResponse = await client.PostAsJsonAsync("/api/admin/blogs", new
+        {
+            title = $"Blank Update Blog {Guid.NewGuid():N}",
+            excerpt = "Initial excerpt",
+            tags = new[] { "qa", "excerpt" },
+            published = true,
+            contentJson = "{\"html\":\"<p>Initial body</p>\"}"
+        });
+        createResponse.EnsureSuccessStatusCode();
+        var created = await createResponse.Content.ReadFromJsonAsync<CreatedResource>();
+        Assert.NotNull(created);
+
+        var updateToken = $"updated excerpt token {Guid.NewGuid():N}";
+        var updateResponse = await client.PutAsJsonAsync($"/api/admin/blogs/{created!.Id}", new
+        {
+            title = $"Blank Update Blog {Guid.NewGuid():N}",
+            excerpt = "   ",
+            tags = new[] { "qa", "excerpt" },
+            published = true,
+            contentJson = JsonSerializer.Serialize(new { html = $"<p>{updateToken}</p>" })
+        });
+
+        updateResponse.EnsureSuccessStatusCode();
+        var updated = await updateResponse.Content.ReadFromJsonAsync<CreatedResource>();
+        Assert.NotNull(updated);
+
+        var publicResponse = await client.GetAsync($"/api/public/blogs/{updated!.Slug}");
+        publicResponse.EnsureSuccessStatusCode();
+        using var publicDocument = JsonDocument.Parse(await publicResponse.Content.ReadAsStringAsync());
+        Assert.Equal(string.Empty, publicDocument.RootElement.GetProperty("excerpt").GetString());
+        Assert.Contains(updateToken, publicDocument.RootElement.GetProperty("contentJson").GetString(), StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task CreateBlog_WithMarkdownOnlyContent_LeavesExcerptBlank()
     {
         var client = _factory.CreateAuthenticatedClient();
 
@@ -288,12 +330,12 @@ public class AdminContentEndpointsTests : IClassFixture<CustomWebApplicationFact
 
         var publicResponse = await client.GetAsync("/api/public/blogs/markdown-integration-blog");
         publicResponse.EnsureSuccessStatusCode();
-        var publicBody = await publicResponse.Content.ReadAsStringAsync();
-        Assert.Contains("Markdown Heading Body copied from markdown with hero", publicBody, StringComparison.OrdinalIgnoreCase);
+        using var publicDocument = JsonDocument.Parse(await publicResponse.Content.ReadAsStringAsync());
+        Assert.Equal(string.Empty, publicDocument.RootElement.GetProperty("excerpt").GetString());
     }
 
     [Fact]
-    public async Task CreateBlog_WithWrappedMarkdownHtml_GeneratesExcerpt()
+    public async Task CreateBlog_WithWrappedMarkdownHtml_LeavesExcerptBlank()
     {
         var client = _factory.CreateAuthenticatedClient();
 
@@ -309,8 +351,8 @@ public class AdminContentEndpointsTests : IClassFixture<CustomWebApplicationFact
 
         var publicResponse = await client.GetAsync("/api/public/blogs/wrapped-markdown-blog");
         publicResponse.EnsureSuccessStatusCode();
-        var publicBody = await publicResponse.Content.ReadAsStringAsync();
-        Assert.Contains("Wrapped Heading Body copied from wrapped markdown", publicBody, StringComparison.OrdinalIgnoreCase);
+        using var publicDocument = JsonDocument.Parse(await publicResponse.Content.ReadAsStringAsync());
+        Assert.Equal(string.Empty, publicDocument.RootElement.GetProperty("excerpt").GetString());
     }
 
     [Fact]

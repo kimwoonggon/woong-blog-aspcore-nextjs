@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Production-Like Latency Audit</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 32px; color: #1f2937; line-height: 1.5; }
+    code { background: #f3f4f6; padding: 2px 4px; border-radius: 4px; }
+    table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+    th, td { border: 1px solid #d1d5db; padding: 8px; text-align: left; }
+    th { background: #f9fafb; }
+  </style>
+</head>
+<body>
+  <h1>Production-Like Latency Audit (production-like-latency-2026-04-26)</h1>
+  <h2>Scope</h2>
+  <p>Measured the updated Playwright response-time slice against Docker production frontend, backend/db compose services, and nginx routing. This excludes <code>next dev</code> route compilation noise.</p>
+  <h2>Results</h2>
+  <ul>
+    <li>Pass 2: 9/9 passed, budget failures 0, warnings 1.</li>
+    <li>Pass 3: 9/9 passed, budget failures 0, warnings 0.</li>
+  </ul>
+  <h2>Pass 3 Slowest Steps</h2>
+  <table><thead><tr><th>Duration ms</th><th>Status</th><th>Step</th></tr></thead><tbody>
+    <tr><td>842</td><td>passed</td><td>Public nav click to Works</td></tr>
+    <tr><td>582</td><td>passed</td><td>Study unified search submit response-time path</td></tr>
+    <tr><td>565</td><td>passed</td><td>Public Study card opens detail</td></tr>
+    <tr><td>565</td><td>passed</td><td>Study list direct load to primary content visible</td></tr>
+    <tr><td>522</td><td>passed</td><td>Public nav click to Introduction</td></tr>
+    <tr><td>521</td><td>passed</td><td>Admin site settings save response-time path</td></tr>
+    <tr><td>503</td><td>passed</td><td>Public Work card opens detail</td></tr>
+    <tr><td>477</td><td>passed</td><td>Public nav click to Contact</td></tr>
+    <tr><td>460</td><td>passed</td><td>Public nav click to Study</td></tr>
+    <tr><td>394</td><td>passed</td><td>Works list direct load to primary content visible</td></tr>
+    <tr><td>219</td><td>passed</td><td>AI Fix provider dropdown response-time path</td></tr>
+    <tr><td>180</td><td>passed</td><td>Study mobile auto-append</td></tr>
+  </tbody></table>
+  <h2>Validation</h2>
+  <ul><li>Docker frontend production build succeeded with Next.js 16.1.6; production server logged ready in 79ms.</li><li>Internal nginx health probe returned HTTP 200 with time_total about 0.03s.</li><li>Production-like latency pass-2: 9/9 passed, budget failures 0, warnings 1.</li><li>Production-like latency pass-3: 9/9 passed, budget failures 0, warnings 0.</li><li>Latest preserved latency artifacts are under backend/reports/production-like-latency-2026-04-26/artifacts/.</li></ul>
+  <h2>Risks</h2>
+  <ul><li>Host port publishing for a temporary nginx container failed in Docker Desktop/WSL with a 500 from /forwards/expose, so measurement used Docker internal networking instead of a Windows browser hitting localhost.</li><li>This measured the targeted response-time Playwright slice, not the entire 589-test Playwright inventory.</li><li>One preserved pass had a soft warning for Study nav at 1137.2ms over a 1000ms warning budget; the next pass had zero warnings and the hard budget never failed.</li><li>The official Playwright image was pulled for this run; image pull time is not part of the measured app latency.</li></ul>
+  <h2>Recommendation</h2>
+  <p>Treat the reported local click slowness as next dev cold compilation noise unless it reproduces in the production-like Docker runtime. The production-like targeted latency slice is currently acceptable: repeated runs passed with zero hard budget failures; watch Study nav because it showed one soft warning sample.</p>
+</body>
+</html>

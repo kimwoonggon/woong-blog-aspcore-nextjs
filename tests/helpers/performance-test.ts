@@ -12,6 +12,7 @@ import {
   type DocumentNavigationMetric,
   type InteractionMetric,
 } from './latency'
+import { ensureAdminSession } from './auth'
 
 type PerformanceFixtures = {
   e2eLatencyMetrics: void
@@ -25,6 +26,10 @@ export const test = base.extend<PerformanceFixtures>({
   }, { auto: true }],
 
   page: async ({ page }, runPage, testInfo) => {
+    if (shouldRefreshAdminSession(testInfo)) {
+      await ensureAdminSession(page)
+    }
+
     await installBrowserLatencyObserver(page)
     instrumentPageGoto(page, testInfo)
     instrumentPageApiResponses(page, testInfo)
@@ -60,6 +65,14 @@ export {
   type Response,
   type TestInfo,
 } from '@playwright/test'
+
+function shouldRefreshAdminSession(testInfo: TestInfo) {
+  if (testInfo.project.name !== 'chromium-authenticated') {
+    return false
+  }
+
+  return !/tests\/admin-auth-authorization\.spec\.ts$/.test(testInfo.file.replace(/\\/g, '/'))
+}
 
 function instrumentPageGoto(page: Page, testInfo: TestInfo) {
   const originalGoto = page.goto.bind(page)

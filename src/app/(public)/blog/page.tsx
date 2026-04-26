@@ -10,6 +10,7 @@ import { PublicPagination } from '@/components/layout/PublicPagination'
 import { ResponsivePageSizeSync } from '@/components/layout/ResponsivePageSizeSync'
 import { fetchPublicBlogs } from '@/lib/api/blogs'
 import { createPublicMetadata } from '@/lib/seo'
+import { headers } from 'next/headers'
 
 export const revalidate = 60
 export const metadata = createPublicMetadata({
@@ -35,6 +36,26 @@ const TABLET_PAGE_SIZE = 8
 const MOBILE_PAGE_SIZE = 4
 const INFINITE_PAGE_SIZE = 10
 const ENABLE_LOCAL_QA_FLAGS = process.env.ENABLE_LOCAL_ADMIN_SHORTCUT === 'true' || process.env.NODE_ENV !== 'production'
+
+function isLocalQaHost(hostHeader: string | null) {
+    if (!hostHeader) {
+        return false
+    }
+
+    return hostHeader
+        .split(',')
+        .map((value) => value.trim().split(':')[0]?.toLowerCase())
+        .some((hostname) => hostname === 'localhost' || hostname === '127.0.0.1')
+}
+
+async function canUseLocalQaFlags() {
+    if (!ENABLE_LOCAL_QA_FLAGS) {
+        return false
+    }
+
+    const requestHeaders = await headers()
+    return isLocalQaHost(requestHeaders.get('host')) || isLocalQaHost(requestHeaders.get('x-forwarded-host'))
+}
 
 function buildBlogListHref({
     page,
@@ -71,8 +92,10 @@ function resolveRequestedPageSize(pageSizeParam?: string) {
 
 export default async function BlogPage({ searchParams }: PageProps) {
     const resolvedSearchParams = await searchParams
-    const qaEmptyBlogs = resolvedSearchParams?.__qaEmpty === '1' && ENABLE_LOCAL_QA_FLAGS
-    const qaTaggedBlogs = resolvedSearchParams?.__qaTagged === '1' && ENABLE_LOCAL_QA_FLAGS
+    const requestedLocalQaFlag = resolvedSearchParams?.__qaEmpty === '1' || resolvedSearchParams?.__qaTagged === '1'
+    const localQaFlagsEnabled = requestedLocalQaFlag ? await canUseLocalQaFlags() : false
+    const qaEmptyBlogs = resolvedSearchParams?.__qaEmpty === '1' && localQaFlagsEnabled
+    const qaTaggedBlogs = resolvedSearchParams?.__qaTagged === '1' && localQaFlagsEnabled
     const currentPage = Math.max(1, Number.parseInt(resolvedSearchParams?.page ?? '1', 10) || 1)
     const currentPageSize = resolveRequestedPageSize(resolvedSearchParams?.pageSize)
     const searchQuery = resolvedSearchParams?.query?.trim() ?? ''
@@ -136,6 +159,7 @@ export default async function BlogPage({ searchParams }: PageProps) {
                 mobilePageSize={MOBILE_PAGE_SIZE}
                 infiniteBelowDesktop
                 infinitePageSize={INFINITE_PAGE_SIZE}
+                skipWhenStudyRestorePending
             />
             <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <h1 className="text-3xl font-heading font-bold text-foreground md:text-4xl">Study</h1>

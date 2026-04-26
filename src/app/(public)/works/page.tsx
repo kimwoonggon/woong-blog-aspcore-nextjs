@@ -9,6 +9,7 @@ import { PublicPagination } from '@/components/layout/PublicPagination'
 import { ResponsivePageSizeSync } from '@/components/layout/ResponsivePageSizeSync'
 import { fetchPublicWorks, type PublicWorkSearchParams } from '@/lib/api/works'
 import { createPublicMetadata } from '@/lib/seo'
+import { headers } from 'next/headers'
 
 export const revalidate = 60
 export const metadata = createPublicMetadata({
@@ -35,6 +36,26 @@ const MOBILE_PAGE_SIZE = 4
 const INFINITE_PAGE_SIZE = 10
 const ENABLE_LOCAL_QA_FLAGS = process.env.ENABLE_LOCAL_ADMIN_SHORTCUT === 'true' || process.env.NODE_ENV !== 'production'
 
+function isLocalQaHost(hostHeader: string | null) {
+    if (!hostHeader) {
+        return false
+    }
+
+    return hostHeader
+        .split(',')
+        .map((value) => value.trim().split(':')[0]?.toLowerCase())
+        .some((hostname) => hostname === 'localhost' || hostname === '127.0.0.1')
+}
+
+async function canUseLocalQaFlags() {
+    if (!ENABLE_LOCAL_QA_FLAGS) {
+        return false
+    }
+
+    const requestHeaders = await headers()
+    return isLocalQaHost(requestHeaders.get('host')) || isLocalQaHost(requestHeaders.get('x-forwarded-host'))
+}
+
 function resolveRequestedPageSize(pageSizeParam?: string) {
     const parsedPageSize = Number.parseInt(pageSizeParam ?? String(DESKTOP_PAGE_SIZE), 10) || DESKTOP_PAGE_SIZE
     const safePageSize = Math.max(1, parsedPageSize)
@@ -49,8 +70,10 @@ function resolveRequestedPageSize(pageSizeParam?: string) {
 
 export default async function WorksPage({ searchParams }: PageProps) {
     const resolvedSearchParams = await searchParams
-    const qaEmptyWorks = resolvedSearchParams?.__qaEmpty === '1' && ENABLE_LOCAL_QA_FLAGS
-    const qaNoImageWorks = resolvedSearchParams?.__qaNoImage === '1' && ENABLE_LOCAL_QA_FLAGS
+    const requestedLocalQaFlag = resolvedSearchParams?.__qaEmpty === '1' || resolvedSearchParams?.__qaNoImage === '1'
+    const localQaFlagsEnabled = requestedLocalQaFlag ? await canUseLocalQaFlags() : false
+    const qaEmptyWorks = resolvedSearchParams?.__qaEmpty === '1' && localQaFlagsEnabled
+    const qaNoImageWorks = resolvedSearchParams?.__qaNoImage === '1' && localQaFlagsEnabled
     const currentPage = Math.max(1, Number.parseInt(resolvedSearchParams?.page ?? '1', 10) || 1)
     const currentPageSize = resolveRequestedPageSize(resolvedSearchParams?.pageSize)
     const searchQuery = resolvedSearchParams?.query?.trim() ?? ''

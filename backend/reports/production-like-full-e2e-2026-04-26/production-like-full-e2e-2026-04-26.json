@@ -1,0 +1,1127 @@
+{
+  "slug": "production-like-full-e2e-2026-04-26",
+  "generatedAt": "2026-04-25T17:41:33.270Z",
+  "environment": {
+    "mode": "production-like Docker frontend + backend/db compose + internal nginx + official Playwright container",
+    "baseUrl": "http://woong-prod-full-e2e-nginx-1777130558",
+    "workers": 1,
+    "reporter": "list,json",
+    "externalServer": true,
+    "postRunAdminSmoke": {
+      "url": "http://woong-prod-full-e2e-nginx-1777130558/admin/dashboard",
+      "heading": "Dashboard",
+      "hasDashboard": true,
+      "hasAdminWorkspaceError": false
+    }
+  },
+  "run": {
+    "startedAt": "2026-04-26T00:22:39+09:00",
+    "endedAt": "2026-04-26T02:37:44+09:00",
+    "durationSeconds": 8105,
+    "durationHuman": "2h 15m 5s",
+    "exitCode": 1
+  },
+  "counts": {
+    "total": 589,
+    "passed": 248,
+    "failed": 209,
+    "skippedOrDidNotRun": 132,
+    "terminalSkipped": 14,
+    "terminalDidNotRun": 118,
+    "playwrightStats": {
+      "startTime": "2026-04-25T15:22:52.283Z",
+      "duration": 8087283.573,
+      "expected": 248,
+      "skipped": 132,
+      "unexpected": 209,
+      "flaky": 0
+    },
+    "byProject": {
+      "chromium-public": 301,
+      "chromium-authenticated": 278,
+      "chromium-runtime-auth": 10
+    },
+    "failuresByProject": {
+      "chromium-public": 15,
+      "chromium-authenticated": 194
+    },
+    "failureStatusCounts": {
+      "failed": 98,
+      "timedOut": 111
+    },
+    "failuresByCategory": {
+      "other": 3,
+      "recording/batch fixtures": 10,
+      "public content/layout expectation": 7,
+      "admin/editor/authenticated UI": 144,
+      "admin notion view": 21,
+      "works video/admin media": 24
+    },
+    "failuresBySymptom": {
+      "ambiguous main h1 selector after h1 body headings": 2,
+      "recording editor API not reachable": 6,
+      "other assertion/error": 9,
+      "6s timeout": 47,
+      "TOC/layout expectation mismatch": 4,
+      "admin row not reachable": 18,
+      "editor title field not reachable": 69,
+      "admin API 401 fixture/setup": 11,
+      "redirected to login": 18,
+      "32s timeout": 23,
+      "33s timeout": 2
+    }
+  },
+  "topFailureFiles": [
+    {
+      "file": "tests/manual-qa-gap-coverage.spec.ts",
+      "count": 17
+    },
+    {
+      "file": "tests/admin-search-pagination.spec.ts",
+      "count": 8
+    },
+    {
+      "file": "tests/feature-recording-0418.spec.ts",
+      "count": 6
+    },
+    {
+      "file": "tests/admin-dashboard.spec.ts",
+      "count": 5
+    },
+    {
+      "file": "tests/admin-work-auto-thumbnail.spec.ts",
+      "count": 5
+    },
+    {
+      "file": "tests/public-work-videos.spec.ts",
+      "count": 5
+    },
+    {
+      "file": "tests/ui-admin-notion-autosave-info.spec.ts",
+      "count": 5
+    },
+    {
+      "file": "tests/ui-admin-table-polish.spec.ts",
+      "count": 5
+    },
+    {
+      "file": "tests/admin-blog-validation.spec.ts",
+      "count": 4
+    },
+    {
+      "file": "tests/dark-mode.spec.ts",
+      "count": 4
+    },
+    {
+      "file": "tests/ui-admin-notion-library-sheet.spec.ts",
+      "count": 4
+    },
+    {
+      "file": "tests/ui-admin-unsaved-warning.spec.ts",
+      "count": 4
+    },
+    {
+      "file": "tests/admin-blog-publish.spec.ts",
+      "count": 3
+    },
+    {
+      "file": "tests/admin-input-exceptions.spec.ts",
+      "count": 3
+    },
+    {
+      "file": "tests/admin-pages-settings.spec.ts",
+      "count": 3
+    },
+    {
+      "file": "tests/admin-work-publish.spec.ts",
+      "count": 3
+    },
+    {
+      "file": "tests/public-inline-editors.spec.ts",
+      "count": 3
+    },
+    {
+      "file": "tests/renovation-0416-regression.spec.ts",
+      "count": 3
+    },
+    {
+      "file": "tests/ui-admin-sidebar-active.spec.ts",
+      "count": 3
+    },
+    {
+      "file": "tests/ui-admin-work-create-cta.spec.ts",
+      "count": 3
+    },
+    {
+      "file": "tests/ui-quality-visual-metrics.spec.ts",
+      "count": 3
+    },
+    {
+      "file": "tests/work-inline-create-flow.spec.ts",
+      "count": 3
+    },
+    {
+      "file": "tests/work-inline-redirects.spec.ts",
+      "count": 3
+    },
+    {
+      "file": "tests/admin-ai-batch-cancel.spec.ts",
+      "count": 2
+    },
+    {
+      "file": "tests/admin-blog-edit.spec.ts",
+      "count": 2
+    },
+    {
+      "file": "tests/admin-dashboard-error-state.spec.ts",
+      "count": 2
+    },
+    {
+      "file": "tests/admin-resume-upload.spec.ts",
+      "count": 2
+    },
+    {
+      "file": "tests/admin-work-validation.spec.ts",
+      "count": 2
+    },
+    {
+      "file": "tests/admin-work-video-edit-flow.spec.ts",
+      "count": 2
+    },
+    {
+      "file": "tests/public-inline-editors-unsaved-warning.spec.ts",
+      "count": 2
+    }
+  ],
+  "slowestFailures": [
+    {
+      "project": "chromium-authenticated",
+      "file": "tests/e2e-admin-batch-management-journey.spec.ts",
+      "line": 23,
+      "column": 5,
+      "title": "e2e-admin-batch-management-journey.spec.ts › E2E-009 admin can run a batch AI workflow and then bulk delete the processed items",
+      "status": "unexpected",
+      "resultStatus": "timedOut",
+      "durationMs": 318921,
+      "error": "Test timeout of 300000ms exceeded. Error: locator.fill: Test timeout of 300000ms exceeded. Call log: - waiting for getByLabel('Title') 5 | async function createTemporaryBlog(page: Page, title: string) { 6 | await page.goto('/admin/blog/new') > 7 | await page.getByLabel('Title').fill(title) | ^ 8 | await page.getByLabel('Tags (comma separated)').fill('playwright, e2e, batch') 9 | await page.getByRole('checkbox', { name: 'Published' }).uncheck() 10 | at createTemporaryBlog (/work/tests/e2e-admin-batch-management-journey.spec.ts:7:34) at /work/tests/e2e-admin-batch-management-journey.spec.ts:134:17",
+      "attachments": [
+        {
+          "name": "screenshot",
+          "contentType": "image/png",
+          "path": "test-results/playwright/e2e-admin-batch-management-51340--delete-the-processed-items-chromium-authenticated/test-failed-1.png"
+        },
+        {
+          "name": "e2e-latency.json",
+          "contentType": "application/json",
+          "path": "test-results/playwright/e2e-admin-batch-management-51340--delete-the-processed-items-chromium-authenticated/attachments/e2e-latency-json-66c6a27ff8a6bb0085de78165b2545b19c77959d.json"
+        },
+        {
+          "name": "video",
+          "contentType": "video/webm",
+          "path": "test-results/playwright/e2e-admin-batch-management-51340--delete-the-processed-items-chromium-authenticated/video.webm"
+        },
+        {
+          "name": "error-context",
+          "contentType": "text/markdown",
+          "path": "test-results/playwright/e2e-admin-batch-management-51340--delete-the-processed-items-chromium-authenticated/error-context.md"
+        },
+        {
+          "name": "trace",
+          "contentType": "application/zip",
+          "path": "test-results/playwright/e2e-admin-batch-management-51340--delete-the-processed-items-chromium-authenticated/trace.zip"
+        }
+      ]
+    },
+    {
+      "project": "chromium-authenticated",
+      "file": "tests/live-blog-ai-regressions.spec.ts",
+      "line": 54,
+      "column": 7,
+      "title": "live-blog-ai-regressions.spec.ts › live AI and inline blog regressions › public blog detail save returns to the originating list page",
+      "status": "unexpected",
+      "resultStatus": "timedOut",
+      "durationMs": 191533,
+      "error": "Test timeout of 180000ms exceeded. Error: locator.fill: Test timeout of 180000ms exceeded. Call log: - waiting for getByLabel('Title') 38 | async function createBlogPost(page: Page, title: string, html: string) { 39 | await page.goto('/admin/blog/new') > 40 | await page.getByLabel('Title').fill(title) | ^ 41 | await setEditorHtml(page, html) 42 | 43 | const [response] = await Promise.all([ at createBlogPost (/work/tests/live-blog-ai-regressions.spec.ts:40:34) at /work/tests/live-blog-ai-regressions.spec.ts:56:21",
+      "attachments": [
+        {
+          "name": "screenshot",
+          "contentType": "image/png",
+          "path": "test-results/playwright/live-blog-ai-regressions-l-55325-o-the-originating-list-page-chromium-authenticated/test-failed-1.png"
+        },
+        {
+          "name": "e2e-latency.json",
+          "contentType": "application/json",
+          "path": "test-results/playwright/live-blog-ai-regressions-l-55325-o-the-originating-list-page-chromium-authenticated/attachments/e2e-latency-json-59ddca50b0232b89f685edefe831910bd861b2ce.json"
+        },
+        {
+          "name": "video",
+          "contentType": "video/webm",
+          "path": "test-results/playwright/live-blog-ai-regressions-l-55325-o-the-originating-list-page-chromium-authenticated/video.webm"
+        },
+        {
+          "name": "error-context",
+          "contentType": "text/markdown",
+          "path": "test-results/playwright/live-blog-ai-regressions-l-55325-o-the-originating-list-page-chromium-authenticated/error-context.md"
+        },
+        {
+          "name": "trace",
+          "contentType": "application/zip",
+          "path": "test-results/playwright/live-blog-ai-regressions-l-55325-o-the-originating-list-page-chromium-authenticated/trace.zip"
+        }
+      ]
+    },
+    {
+      "project": "chromium-public",
+      "file": "tests/feature-recording-0418.spec.ts",
+      "line": 354,
+      "column": 5,
+      "title": "feature-recording-0418.spec.ts › recording image resize drag",
+      "status": "unexpected",
+      "resultStatus": "timedOut",
+      "durationMs": 121841,
+      "error": "Test timeout of 120000ms exceeded. Error: page.waitForFunction: Target page, context or browser has been closed 129 | 130 | async function waitForEditorApi(page: Page) { > 131 | await page.waitForFunction(() => Boolean((window as typeof window & { __WOONG_TIPTAP_EDITOR__?: unknown }).__WOONG_TIPTAP_EDITOR__)) | ^ 132 | } 133 | 134 | async function setEditorHtml(page: Page, html: string) { at waitForEditorApi (/work/tests/feature-recording-0418.spec.ts:131:14) at setEditorHtml (/work/tests/feature-recording-0418.spec.ts:135:9) at insertRecordingImage (/work/tests/feature-recording-0418.spec.ts:188:9) at /work/tests/feature-recording-0418.spec.ts:356:3",
+      "attachments": [
+        {
+          "name": "screenshot",
+          "contentType": "image/png",
+          "path": "test-results/playwright/feature-recording-0418-recording-image-resize-drag-chromium-public/test-failed-1.png"
+        },
+        {
+          "name": "e2e-latency.json",
+          "contentType": "application/json",
+          "path": "test-results/playwright/feature-recording-0418-recording-image-resize-drag-chromium-public/attachments/e2e-latency-json-3fc2271e877caa6eb7b7e7e5bf75b8aaa07ab29e.json"
+        },
+        {
+          "name": "video",
+          "contentType": "video/webm",
+          "path": "test-results/playwright/feature-recording-0418-recording-image-resize-drag-chromium-public/video.webm"
+        },
+        {
+          "name": "trace",
+          "contentType": "application/zip",
+          "path": "test-results/playwright/feature-recording-0418-recording-image-resize-drag-chromium-public/trace.zip"
+        }
+      ]
+    },
+    {
+      "project": "chromium-public",
+      "file": "tests/feature-recording-0418.spec.ts",
+      "line": 327,
+      "column": 5,
+      "title": "feature-recording-0418.spec.ts › recording mermaid editor preview",
+      "status": "unexpected",
+      "resultStatus": "timedOut",
+      "durationMs": 121439,
+      "error": "Test timeout of 120000ms exceeded. Error: page.waitForFunction: Target page, context or browser has been closed 129 | 130 | async function waitForEditorApi(page: Page) { > 131 | await page.waitForFunction(() => Boolean((window as typeof window & { __WOONG_TIPTAP_EDITOR__?: unknown }).__WOONG_TIPTAP_EDITOR__)) | ^ 132 | } 133 | 134 | async function setEditorHtml(page: Page, html: string) { at waitForEditorApi (/work/tests/feature-recording-0418.spec.ts:131:14) at setEditorHtml (/work/tests/feature-recording-0418.spec.ts:135:9) at /work/tests/feature-recording-0418.spec.ts:334:9",
+      "attachments": [
+        {
+          "name": "screenshot",
+          "contentType": "image/png",
+          "path": "test-results/playwright/feature-recording-0418-recording-mermaid-editor-preview-chromium-public/test-failed-1.png"
+        },
+        {
+          "name": "e2e-latency.json",
+          "contentType": "application/json",
+          "path": "test-results/playwright/feature-recording-0418-recording-mermaid-editor-preview-chromium-public/attachments/e2e-latency-json-574a43f50d688c5c65b2ad83dbc831ae044898da.json"
+        },
+        {
+          "name": "video",
+          "contentType": "video/webm",
+          "path": "test-results/playwright/feature-recording-0418-recording-mermaid-editor-preview-chromium-public/video.webm"
+        },
+        {
+          "name": "trace",
+          "contentType": "application/zip",
+          "path": "test-results/playwright/feature-recording-0418-recording-mermaid-editor-preview-chromium-public/trace.zip"
+        }
+      ]
+    },
+    {
+      "project": "chromium-public",
+      "file": "tests/feature-recording-0418.spec.ts",
+      "line": 340,
+      "column": 5,
+      "title": "feature-recording-0418.spec.ts › recording mermaid work rendering",
+      "status": "unexpected",
+      "resultStatus": "timedOut",
+      "durationMs": 121343,
+      "error": "Test timeout of 120000ms exceeded. Error: page.waitForFunction: Target page, context or browser has been closed 129 | 130 | async function waitForEditorApi(page: Page) { > 131 | await page.waitForFunction(() => Boolean((window as typeof window & { __WOONG_TIPTAP_EDITOR__?: unknown }).__WOONG_TIPTAP_EDITOR__)) | ^ 132 | } 133 | 134 | async function setEditorHtml(page: Page, html: string) { at waitForEditorApi (/work/tests/feature-recording-0418.spec.ts:131:14) at setEditorHtml (/work/tests/feature-recording-0418.spec.ts:135:9) at /work/tests/feature-recording-0418.spec.ts:348:9",
+      "attachments": [
+        {
+          "name": "screenshot",
+          "contentType": "image/png",
+          "path": "test-results/playwright/feature-recording-0418-recording-mermaid-work-rendering-chromium-public/test-failed-1.png"
+        },
+        {
+          "name": "e2e-latency.json",
+          "contentType": "application/json",
+          "path": "test-results/playwright/feature-recording-0418-recording-mermaid-work-rendering-chromium-public/attachments/e2e-latency-json-0c537f1db535f20144f6328c153077827d3cba36.json"
+        },
+        {
+          "name": "video",
+          "contentType": "video/webm",
+          "path": "test-results/playwright/feature-recording-0418-recording-mermaid-work-rendering-chromium-public/video.webm"
+        },
+        {
+          "name": "trace",
+          "contentType": "application/zip",
+          "path": "test-results/playwright/feature-recording-0418-recording-mermaid-work-rendering-chromium-public/trace.zip"
+        }
+      ]
+    },
+    {
+      "project": "chromium-public",
+      "file": "tests/feature-recording-0418.spec.ts",
+      "line": 366,
+      "column": 5,
+      "title": "feature-recording-0418.spec.ts › recording image drag move",
+      "status": "unexpected",
+      "resultStatus": "timedOut",
+      "durationMs": 121336,
+      "error": "Test timeout of 120000ms exceeded. Error: page.waitForFunction: Target page, context or browser has been closed 129 | 130 | async function waitForEditorApi(page: Page) { > 131 | await page.waitForFunction(() => Boolean((window as typeof window & { __WOONG_TIPTAP_EDITOR__?: unknown }).__WOONG_TIPTAP_EDITOR__)) | ^ 132 | } 133 | 134 | async function setEditorHtml(page: Page, html: string) { at waitForEditorApi (/work/tests/feature-recording-0418.spec.ts:131:14) at setEditorHtml (/work/tests/feature-recording-0418.spec.ts:135:9) at insertRecordingImage (/work/tests/feature-recording-0418.spec.ts:188:9) at /work/tests/feature-recording-0418.spec.ts:368:3",
+      "attachments": [
+        {
+          "name": "screenshot",
+          "contentType": "image/png",
+          "path": "test-results/playwright/feature-recording-0418-recording-image-drag-move-chromium-public/test-failed-1.png"
+        },
+        {
+          "name": "e2e-latency.json",
+          "contentType": "application/json",
+          "path": "test-results/playwright/feature-recording-0418-recording-image-drag-move-chromium-public/attachments/e2e-latency-json-db4f7f7610b146a59a2cc070f3f00b782d666bfa.json"
+        },
+        {
+          "name": "video",
+          "contentType": "video/webm",
+          "path": "test-results/playwright/feature-recording-0418-recording-image-drag-move-chromium-public/video.webm"
+        },
+        {
+          "name": "trace",
+          "contentType": "application/zip",
+          "path": "test-results/playwright/feature-recording-0418-recording-image-drag-move-chromium-public/trace.zip"
+        }
+      ]
+    },
+    {
+      "project": "chromium-public",
+      "file": "tests/feature-recording-0418.spec.ts",
+      "line": 360,
+      "column": 5,
+      "title": "feature-recording-0418.spec.ts › recording image work resize",
+      "status": "unexpected",
+      "resultStatus": "timedOut",
+      "durationMs": 121274,
+      "error": "Test timeout of 120000ms exceeded. Error: page.waitForFunction: Target page, context or browser has been closed 129 | 130 | async function waitForEditorApi(page: Page) { > 131 | await page.waitForFunction(() => Boolean((window as typeof window & { __WOONG_TIPTAP_EDITOR__?: unknown }).__WOONG_TIPTAP_EDITOR__)) | ^ 132 | } 133 | 134 | async function setEditorHtml(page: Page, html: string) { at waitForEditorApi (/work/tests/feature-recording-0418.spec.ts:131:14) at setEditorHtml (/work/tests/feature-recording-0418.spec.ts:135:9) at insertRecordingImage (/work/tests/feature-recording-0418.spec.ts:188:9) at /work/tests/feature-recording-0418.spec.ts:362:3",
+      "attachments": [
+        {
+          "name": "screenshot",
+          "contentType": "image/png",
+          "path": "test-results/playwright/feature-recording-0418-recording-image-work-resize-chromium-public/test-failed-1.png"
+        },
+        {
+          "name": "e2e-latency.json",
+          "contentType": "application/json",
+          "path": "test-results/playwright/feature-recording-0418-recording-image-work-resize-chromium-public/attachments/e2e-latency-json-5cb43c5ddd782542cc53d2f3e194c725969f1e23.json"
+        },
+        {
+          "name": "video",
+          "contentType": "video/webm",
+          "path": "test-results/playwright/feature-recording-0418-recording-image-work-resize-chromium-public/video.webm"
+        },
+        {
+          "name": "trace",
+          "contentType": "application/zip",
+          "path": "test-results/playwright/feature-recording-0418-recording-image-work-resize-chromium-public/trace.zip"
+        }
+      ]
+    },
+    {
+      "project": "chromium-public",
+      "file": "tests/feature-recording-0418.spec.ts",
+      "line": 303,
+      "column": 5,
+      "title": "feature-recording-0418.spec.ts › recording mermaid rendering",
+      "status": "unexpected",
+      "resultStatus": "timedOut",
+      "durationMs": 121210,
+      "error": "Test timeout of 120000ms exceeded. Error: page.waitForFunction: Target page, context or browser has been closed 129 | 130 | async function waitForEditorApi(page: Page) { > 131 | await page.waitForFunction(() => Boolean((window as typeof window & { __WOONG_TIPTAP_EDITOR__?: unknown }).__WOONG_TIPTAP_EDITOR__)) | ^ 132 | } 133 | 134 | async function setEditorHtml(page: Page, html: string) { at waitForEditorApi (/work/tests/feature-recording-0418.spec.ts:131:14) at setEditorHtml (/work/tests/feature-recording-0418.spec.ts:135:9) at /work/tests/feature-recording-0418.spec.ts:310:9",
+      "attachments": [
+        {
+          "name": "screenshot",
+          "contentType": "image/png",
+          "path": "test-results/playwright/feature-recording-0418-recording-mermaid-rendering-chromium-public/test-failed-1.png"
+        },
+        {
+          "name": "e2e-latency.json",
+          "contentType": "application/json",
+          "path": "test-results/playwright/feature-recording-0418-recording-mermaid-rendering-chromium-public/attachments/e2e-latency-json-22248752a6fa2f94f597be6268f1a2c57cb5371d.json"
+        },
+        {
+          "name": "video",
+          "contentType": "video/webm",
+          "path": "test-results/playwright/feature-recording-0418-recording-mermaid-rendering-chromium-public/video.webm"
+        },
+        {
+          "name": "trace",
+          "contentType": "application/zip",
+          "path": "test-results/playwright/feature-recording-0418-recording-mermaid-rendering-chromium-public/trace.zip"
+        }
+      ]
+    },
+    {
+      "project": "chromium-authenticated",
+      "file": "tests/public-inline-editors-unsaved-warning.spec.ts",
+      "line": 27,
+      "column": 5,
+      "title": "public-inline-editors-unsaved-warning.spec.ts › public blog inline editor clears beforeunload after save",
+      "status": "unexpected",
+      "resultStatus": "timedOut",
+      "durationMs": 98822,
+      "error": "Test timeout of 90000ms exceeded. Error: locator.fill: Test timeout of 90000ms exceeded. Call log: - waiting for getByLabel('Title') 12 | async function createBlogForInlineFlow(page: import('./helpers/performance-test').Page, title: string, body: string) { 13 | await page.goto('/admin/blog/new') > 14 | await page.getByLabel('Title').fill(title) | ^ 15 | await page.locator('.tiptap.ProseMirror').first().fill(body) 16 | 17 | const [response] = await Promise.all([ at createBlogForInlineFlow (/work/tests/public-inline-editors-unsaved-warning.spec.ts:14:34) at /work/tests/public-inline-editors-unsaved-warning.spec.ts:28:19",
+      "attachments": [
+        {
+          "name": "screenshot",
+          "contentType": "image/png",
+          "path": "test-results/playwright/public-inline-editors-unsa-09d13-ars-beforeunload-after-save-chromium-authenticated/test-failed-1.png"
+        },
+        {
+          "name": "e2e-latency.json",
+          "contentType": "application/json",
+          "path": "test-results/playwright/public-inline-editors-unsa-09d13-ars-beforeunload-after-save-chromium-authenticated/attachments/e2e-latency-json-596c9340fde7ed734c9e6ecb92d1261ee70c95af.json"
+        },
+        {
+          "name": "video",
+          "contentType": "video/webm",
+          "path": "test-results/playwright/public-inline-editors-unsa-09d13-ars-beforeunload-after-save-chromium-authenticated/video.webm"
+        },
+        {
+          "name": "error-context",
+          "contentType": "text/markdown",
+          "path": "test-results/playwright/public-inline-editors-unsa-09d13-ars-beforeunload-after-save-chromium-authenticated/error-context.md"
+        },
+        {
+          "name": "trace",
+          "contentType": "application/zip",
+          "path": "test-results/playwright/public-inline-editors-unsa-09d13-ars-beforeunload-after-save-chromium-authenticated/trace.zip"
+        }
+      ]
+    },
+    {
+      "project": "chromium-authenticated",
+      "file": "tests/public-inline-editors-unsaved-warning.spec.ts",
+      "line": 62,
+      "column": 5,
+      "title": "public-inline-editors-unsaved-warning.spec.ts › public work inline editor clears beforeunload after save",
+      "status": "unexpected",
+      "resultStatus": "timedOut",
+      "durationMs": 96831,
+      "error": "Test timeout of 90000ms exceeded. Error: locator.click: Test timeout of 90000ms exceeded. Call log: - waiting for getByRole('button', { name: '작업 수정' }) 72 | await page.getByTestId('work-card').first().click() 73 | await expect(page).toHaveURL(/\\/works\\/[^/?#]+\\?returnTo=/) > 74 | await page.getByRole('button', { name: '작업 수정' }).click() | ^ 75 | 76 | await page.getByLabel('Title').fill(updatedTitle) 77 | await expect.poll(async () => page.evaluate(() => typeof window.onbeforeunload)).toBe('function') at /work/tests/public-inline-editors-unsaved-warning.spec.ts:74:53",
+      "attachments": [
+        {
+          "name": "screenshot",
+          "contentType": "image/png",
+          "path": "test-results/playwright/public-inline-editors-unsa-fd270-ars-beforeunload-after-save-chromium-authenticated/test-failed-1.png"
+        },
+        {
+          "name": "e2e-latency.json",
+          "contentType": "application/json",
+          "path": "test-results/playwright/public-inline-editors-unsa-fd270-ars-beforeunload-after-save-chromium-authenticated/attachments/e2e-latency-json-23f6e5e26f89038a0e016ac320d7a8cde3479b36.json"
+        },
+        {
+          "name": "video",
+          "contentType": "video/webm",
+          "path": "test-results/playwright/public-inline-editors-unsa-fd270-ars-beforeunload-after-save-chromium-authenticated/video.webm"
+        },
+        {
+          "name": "error-context",
+          "contentType": "text/markdown",
+          "path": "test-results/playwright/public-inline-editors-unsa-fd270-ars-beforeunload-after-save-chromium-authenticated/error-context.md"
+        },
+        {
+          "name": "trace",
+          "contentType": "application/zip",
+          "path": "test-results/playwright/public-inline-editors-unsa-fd270-ars-beforeunload-after-save-chromium-authenticated/trace.zip"
+        }
+      ]
+    },
+    {
+      "project": "chromium-authenticated",
+      "file": "tests/ui-admin-semantic-colors.spec.ts",
+      "line": 7,
+      "column": 5,
+      "title": "ui-admin-semantic-colors.spec.ts › VA-005 success, warning, and error states keep distinct semantic color treatments",
+      "status": "unexpected",
+      "resultStatus": "timedOut",
+      "durationMs": 63741,
+      "error": "Test timeout of 60000ms exceeded. Error: locator.fill: Test timeout of 60000ms exceeded. Call log: - waiting for getByLabel('Title') 9 | 10 | await page.goto('/admin/blog/new') > 11 | await page.getByLabel('Title').fill(draftTitle) | ^ 12 | await page.getByRole('checkbox', { name: 'Published' }).uncheck() 13 | await page.locator('form .tiptap.ProseMirror').first().click() 14 | await page.keyboard.type('Draft body for semantic color verification.') at /work/tests/ui-admin-semantic-colors.spec.ts:11:34",
+      "attachments": [
+        {
+          "name": "screenshot",
+          "contentType": "image/png",
+          "path": "test-results/playwright/ui-admin-semantic-colors-V-7dd8c-t-semantic-color-treatments-chromium-authenticated/test-failed-1.png"
+        },
+        {
+          "name": "e2e-latency.json",
+          "contentType": "application/json",
+          "path": "test-results/playwright/ui-admin-semantic-colors-V-7dd8c-t-semantic-color-treatments-chromium-authenticated/attachments/e2e-latency-json-ee69445a38e0ee3404f3f2e1691f9c8aba12e6ae.json"
+        },
+        {
+          "name": "video",
+          "contentType": "video/webm",
+          "path": "test-results/playwright/ui-admin-semantic-colors-V-7dd8c-t-semantic-color-treatments-chromium-authenticated/video.webm"
+        },
+        {
+          "name": "error-context",
+          "contentType": "text/markdown",
+          "path": "test-results/playwright/ui-admin-semantic-colors-V-7dd8c-t-semantic-color-treatments-chromium-authenticated/error-context.md"
+        },
+        {
+          "name": "trace",
+          "contentType": "application/zip",
+          "path": "test-results/playwright/ui-admin-semantic-colors-V-7dd8c-t-semantic-color-treatments-chromium-authenticated/trace.zip"
+        }
+      ]
+    },
+    {
+      "project": "chromium-authenticated",
+      "file": "tests/admin-blog-publish.spec.ts",
+      "line": 91,
+      "column": 5,
+      "title": "admin-blog-publish.spec.ts › admin can toggle a published blog post back to draft and publish it again",
+      "status": "unexpected",
+      "resultStatus": "timedOut",
+      "durationMs": 33523,
+      "error": "Test timeout of 30000ms exceeded. Error: locator.fill: Test timeout of 30000ms exceeded. Call log: - waiting for getByLabel('Title') 93 | 94 | await page.goto('/admin/blog/new') > 95 | await page.getByLabel('Title').fill(title) | ^ 96 | await page.getByLabel('Tags (comma separated)').fill('playwright, toggle') 97 | 98 | const editor = page.locator('.tiptap.ProseMirror').first() at /work/tests/admin-blog-publish.spec.ts:95:34",
+      "attachments": [
+        {
+          "name": "screenshot",
+          "contentType": "image/png",
+          "path": "test-results/playwright/admin-blog-publish-admin-c-7ea9d--draft-and-publish-it-again-chromium-authenticated/test-failed-1.png"
+        },
+        {
+          "name": "e2e-latency.json",
+          "contentType": "application/json",
+          "path": "test-results/playwright/admin-blog-publish-admin-c-7ea9d--draft-and-publish-it-again-chromium-authenticated/attachments/e2e-latency-json-5be3df0e36258999d963995f37dab9974c3fe794.json"
+        },
+        {
+          "name": "video",
+          "contentType": "video/webm",
+          "path": "test-results/playwright/admin-blog-publish-admin-c-7ea9d--draft-and-publish-it-again-chromium-authenticated/video.webm"
+        },
+        {
+          "name": "error-context",
+          "contentType": "text/markdown",
+          "path": "test-results/playwright/admin-blog-publish-admin-c-7ea9d--draft-and-publish-it-again-chromium-authenticated/error-context.md"
+        },
+        {
+          "name": "trace",
+          "contentType": "application/zip",
+          "path": "test-results/playwright/admin-blog-publish-admin-c-7ea9d--draft-and-publish-it-again-chromium-authenticated/trace.zip"
+        }
+      ]
+    },
+    {
+      "project": "chromium-authenticated",
+      "file": "tests/public-footer-social.spec.ts",
+      "line": 13,
+      "column": 5,
+      "title": "public-footer-social.spec.ts › PF-084 footer renders only the configured social icons",
+      "status": "unexpected",
+      "resultStatus": "timedOut",
+      "durationMs": 33458,
+      "error": "Test timeout of 30000ms exceeded. Error: locator.inputValue: Test timeout of 30000ms exceeded. Call log: - waiting for locator('#instagramUrl') 19 | await page.goto('/admin/pages') 20 | > 21 | const originalInstagram = await instagramInput.inputValue() | ^ 22 | const originalTwitter = await twitterInput.inputValue() 23 | const originalLinkedIn = await linkedinInput.inputValue() 24 | const originalGitHub = await githubInput.inputValue() at /work/tests/public-footer-social.spec.ts:21:50",
+      "attachments": [
+        {
+          "name": "screenshot",
+          "contentType": "image/png",
+          "path": "test-results/playwright/public-footer-social-PF-08-e3c98-the-configured-social-icons-chromium-authenticated/test-failed-1.png"
+        },
+        {
+          "name": "e2e-latency.json",
+          "contentType": "application/json",
+          "path": "test-results/playwright/public-footer-social-PF-08-e3c98-the-configured-social-icons-chromium-authenticated/attachments/e2e-latency-json-0c7ef48fa7323513c4eb87f5b46ac0667f2803bc.json"
+        },
+        {
+          "name": "video",
+          "contentType": "video/webm",
+          "path": "test-results/playwright/public-footer-social-PF-08-e3c98-the-configured-social-icons-chromium-authenticated/video.webm"
+        },
+        {
+          "name": "error-context",
+          "contentType": "text/markdown",
+          "path": "test-results/playwright/public-footer-social-PF-08-e3c98-the-configured-social-icons-chromium-authenticated/error-context.md"
+        },
+        {
+          "name": "trace",
+          "contentType": "application/zip",
+          "path": "test-results/playwright/public-footer-social-PF-08-e3c98-the-configured-social-icons-chromium-authenticated/trace.zip"
+        }
+      ]
+    },
+    {
+      "project": "chromium-authenticated",
+      "file": "tests/admin-blog-ai-dialog.spec.ts",
+      "line": 6,
+      "column": 5,
+      "title": "admin-blog-ai-dialog.spec.ts › blog AI fix dialog loads runtime config, applies a fixed draft, and keeps editing local",
+      "status": "unexpected",
+      "resultStatus": "timedOut",
+      "durationMs": 33107,
+      "error": "Test timeout of 30000ms exceeded. Error: locator.fill: Test timeout of 30000ms exceeded. Call log: - waiting for getByLabel('Title') 39 | 40 | await page.goto('/admin/blog/new') > 41 | await page.getByLabel('Title').fill(`AI Fix Coverage ${Date.now()}`) | ^ 42 | await page.locator('form .tiptap.ProseMirror').first().click() 43 | await page.keyboard.type('rough draft before ai fix') 44 | at /work/tests/admin-blog-ai-dialog.spec.ts:41:34",
+      "attachments": [
+        {
+          "name": "screenshot",
+          "contentType": "image/png",
+          "path": "test-results/playwright/admin-blog-ai-dialog-blog--659ce-aft-and-keeps-editing-local-chromium-authenticated/test-failed-1.png"
+        },
+        {
+          "name": "e2e-latency.json",
+          "contentType": "application/json",
+          "path": "test-results/playwright/admin-blog-ai-dialog-blog--659ce-aft-and-keeps-editing-local-chromium-authenticated/attachments/e2e-latency-json-bf65e40b1be251459b12db38008c520ddc9c7865.json"
+        },
+        {
+          "name": "video",
+          "contentType": "video/webm",
+          "path": "test-results/playwright/admin-blog-ai-dialog-blog--659ce-aft-and-keeps-editing-local-chromium-authenticated/video.webm"
+        },
+        {
+          "name": "error-context",
+          "contentType": "text/markdown",
+          "path": "test-results/playwright/admin-blog-ai-dialog-blog--659ce-aft-and-keeps-editing-local-chromium-authenticated/error-context.md"
+        },
+        {
+          "name": "trace",
+          "contentType": "application/zip",
+          "path": "test-results/playwright/admin-blog-ai-dialog-blog--659ce-aft-and-keeps-editing-local-chromium-authenticated/trace.zip"
+        }
+      ]
+    },
+    {
+      "project": "chromium-authenticated",
+      "file": "tests/admin-blog-publish.spec.ts",
+      "line": 42,
+      "column": 5,
+      "title": "admin-blog-publish.spec.ts › admin can keep a blog post as draft and publish it later",
+      "status": "unexpected",
+      "resultStatus": "timedOut",
+      "durationMs": 32703,
+      "error": "Test timeout of 30000ms exceeded. Error: locator.fill: Test timeout of 30000ms exceeded. Call log: - waiting for getByLabel('Title') 44 | 45 | await page.goto('/admin/blog/new') > 46 | await page.getByLabel('Title').fill(title) | ^ 47 | await page.getByLabel('Tags (comma separated)').fill('playwright, draft') 48 | await page.getByRole('checkbox', { name: 'Published' }).uncheck() 49 | at /work/tests/admin-blog-publish.spec.ts:46:34",
+      "attachments": [
+        {
+          "name": "screenshot",
+          "contentType": "image/png",
+          "path": "test-results/playwright/admin-blog-publish-admin-c-64cc9--draft-and-publish-it-later-chromium-authenticated/test-failed-1.png"
+        },
+        {
+          "name": "e2e-latency.json",
+          "contentType": "application/json",
+          "path": "test-results/playwright/admin-blog-publish-admin-c-64cc9--draft-and-publish-it-later-chromium-authenticated/attachments/e2e-latency-json-95bb8e589a52669f179b65aaf5d6a0f850d8ae6e.json"
+        },
+        {
+          "name": "video",
+          "contentType": "video/webm",
+          "path": "test-results/playwright/admin-blog-publish-admin-c-64cc9--draft-and-publish-it-later-chromium-authenticated/video.webm"
+        },
+        {
+          "name": "error-context",
+          "contentType": "text/markdown",
+          "path": "test-results/playwright/admin-blog-publish-admin-c-64cc9--draft-and-publish-it-later-chromium-authenticated/error-context.md"
+        },
+        {
+          "name": "trace",
+          "contentType": "application/zip",
+          "path": "test-results/playwright/admin-blog-publish-admin-c-64cc9--draft-and-publish-it-later-chromium-authenticated/trace.zip"
+        }
+      ]
+    },
+    {
+      "project": "chromium-authenticated",
+      "file": "tests/manual-qa-gap-coverage.spec.ts",
+      "line": 432,
+      "column": 5,
+      "title": "manual-qa-gap-coverage.spec.ts › C-9 Three.js block renders a canvas publicly",
+      "status": "unexpected",
+      "resultStatus": "timedOut",
+      "durationMs": 32524,
+      "error": "Test timeout of 30000ms exceeded. Error: locator.fill: Test timeout of 30000ms exceeded. Call log: - waiting for getByLabel('Title') 433 | const title = uniqueLabel('QA Three Block') 434 | await page.goto('/admin/works/new') > 435 | await page.getByLabel('Title').fill(title) | ^ 436 | await page.getByLabel('Category').fill('3d') 437 | await fillEditor(page, 'Three block body') 438 | await page.locator('[title=\"Insert 3D Model\"]').click() at /work/tests/manual-qa-gap-coverage.spec.ts:435:34",
+      "attachments": [
+        {
+          "name": "screenshot",
+          "contentType": "image/png",
+          "path": "test-results/playwright/manual-qa-gap-coverage-C-9-ee066-k-renders-a-canvas-publicly-chromium-authenticated/test-failed-1.png"
+        },
+        {
+          "name": "e2e-latency.json",
+          "contentType": "application/json",
+          "path": "test-results/playwright/manual-qa-gap-coverage-C-9-ee066-k-renders-a-canvas-publicly-chromium-authenticated/attachments/e2e-latency-json-f25b18629ae12fa3538d39f078fcd960e3f72e1f.json"
+        },
+        {
+          "name": "video",
+          "contentType": "video/webm",
+          "path": "test-results/playwright/manual-qa-gap-coverage-C-9-ee066-k-renders-a-canvas-publicly-chromium-authenticated/video.webm"
+        },
+        {
+          "name": "error-context",
+          "contentType": "text/markdown",
+          "path": "test-results/playwright/manual-qa-gap-coverage-C-9-ee066-k-renders-a-canvas-publicly-chromium-authenticated/error-context.md"
+        },
+        {
+          "name": "trace",
+          "contentType": "application/zip",
+          "path": "test-results/playwright/manual-qa-gap-coverage-C-9-ee066-k-renders-a-canvas-publicly-chromium-authenticated/trace.zip"
+        }
+      ]
+    },
+    {
+      "project": "chromium-authenticated",
+      "file": "tests/ui-loading-states.spec.ts",
+      "line": 20,
+      "column": 5,
+      "title": "ui-loading-states.spec.ts › WQ-024 admin dashboard transitions expose loading chrome before the dashboard resolves",
+      "status": "unexpected",
+      "resultStatus": "timedOut",
+      "durationMs": 32522,
+      "error": "Test timeout of 30000ms exceeded. Error: locator.evaluate: Test timeout of 30000ms exceeded. Call log: - waiting for locator('aside nav').getByRole('link', { name: 'Dashboard' }) 22 | 23 | const dashboardLink = page.locator('aside nav').getByRole('link', { name: 'Dashboard' }) > 24 | await dashboardLink.evaluate((element) => { | ^ 25 | ;(element as HTMLAnchorElement).href = '/admin/dashboard?__qaSlow=1' 26 | }) 27 | await dashboardLink.click() at /work/tests/ui-loading-states.spec.ts:24:23",
+      "attachments": [
+        {
+          "name": "screenshot",
+          "contentType": "image/png",
+          "path": "test-results/playwright/ui-loading-states-WQ-024-a-753ac-fore-the-dashboard-resolves-chromium-authenticated/test-failed-1.png"
+        },
+        {
+          "name": "e2e-latency.json",
+          "contentType": "application/json",
+          "path": "test-results/playwright/ui-loading-states-WQ-024-a-753ac-fore-the-dashboard-resolves-chromium-authenticated/attachments/e2e-latency-json-fd0d612dd3b586437da160d417b8753b1bb37a8d.json"
+        },
+        {
+          "name": "video",
+          "contentType": "video/webm",
+          "path": "test-results/playwright/ui-loading-states-WQ-024-a-753ac-fore-the-dashboard-resolves-chromium-authenticated/video.webm"
+        },
+        {
+          "name": "error-context",
+          "contentType": "text/markdown",
+          "path": "test-results/playwright/ui-loading-states-WQ-024-a-753ac-fore-the-dashboard-resolves-chromium-authenticated/error-context.md"
+        },
+        {
+          "name": "trace",
+          "contentType": "application/zip",
+          "path": "test-results/playwright/ui-loading-states-WQ-024-a-753ac-fore-the-dashboard-resolves-chromium-authenticated/trace.zip"
+        }
+      ]
+    },
+    {
+      "project": "chromium-authenticated",
+      "file": "tests/admin-work-video-s3-compatible.spec.ts",
+      "line": 6,
+      "column": 5,
+      "title": "admin-work-video-s3-compatible.spec.ts › s3-compatible lane processes an uploaded MP4 as HLS and renders it publicly",
+      "status": "unexpected",
+      "resultStatus": "timedOut",
+      "durationMs": 32510,
+      "error": "Test timeout of 30000ms exceeded. Error: locator.fill: Test timeout of 30000ms exceeded. Call log: - waiting for getByLabel('Title') 8 | 9 | await page.goto('/admin/works/new') > 10 | await page.getByLabel('Title').fill(title) | ^ 11 | await page.getByLabel('Category').fill('video') 12 | await page.locator('.tiptap.ProseMirror').first().fill('S3-backed video work') 13 | await page.locator('#work-video-upload').setInputFiles(path.resolve('tests/fixtures/sample-video.mp4')) at /work/tests/admin-work-video-s3-compatible.spec.ts:10:34",
+      "attachments": [
+        {
+          "name": "screenshot",
+          "contentType": "image/png",
+          "path": "test-results/playwright/admin-work-video-s3-compat-e73f8-HLS-and-renders-it-publicly-chromium-authenticated/test-failed-1.png"
+        },
+        {
+          "name": "e2e-latency.json",
+          "contentType": "application/json",
+          "path": "test-results/playwright/admin-work-video-s3-compat-e73f8-HLS-and-renders-it-publicly-chromium-authenticated/attachments/e2e-latency-json-aabee1db27a61a34a7d9de9936c1eede2e93439f.json"
+        },
+        {
+          "name": "video",
+          "contentType": "video/webm",
+          "path": "test-results/playwright/admin-work-video-s3-compat-e73f8-HLS-and-renders-it-publicly-chromium-authenticated/video.webm"
+        },
+        {
+          "name": "error-context",
+          "contentType": "text/markdown",
+          "path": "test-results/playwright/admin-work-video-s3-compat-e73f8-HLS-and-renders-it-publicly-chromium-authenticated/error-context.md"
+        },
+        {
+          "name": "trace",
+          "contentType": "application/zip",
+          "path": "test-results/playwright/admin-work-video-s3-compat-e73f8-HLS-and-renders-it-publicly-chromium-authenticated/trace.zip"
+        }
+      ]
+    },
+    {
+      "project": "chromium-authenticated",
+      "file": "tests/manual-qa-gap-coverage.spec.ts",
+      "line": 530,
+      "column": 5,
+      "title": "manual-qa-gap-coverage.spec.ts › H-5 very long body content saves and renders correctly",
+      "status": "unexpected",
+      "resultStatus": "timedOut",
+      "durationMs": 32497,
+      "error": "Test timeout of 30000ms exceeded. Error: locator.fill: Test timeout of 30000ms exceeded. Call log: - waiting for getByLabel('Title') 53 | async function createBlog(page: Page, title: string, body: string, tags = 'playwright, qa') { 54 | await page.goto('/admin/blog/new') > 55 | await page.getByLabel('Title').fill(title) | ^ 56 | await page.getByLabel('Tags (comma separated)').fill(tags) 57 | const editor = await fillEditor(page, body) 58 | at createBlog (/work/tests/manual-qa-gap-coverage.spec.ts:55:34) at /work/tests/manual-qa-gap-coverage.spec.ts:533:19",
+      "attachments": [
+        {
+          "name": "screenshot",
+          "contentType": "image/png",
+          "path": "test-results/playwright/manual-qa-gap-coverage-H-5-005fa-saves-and-renders-correctly-chromium-authenticated/test-failed-1.png"
+        },
+        {
+          "name": "e2e-latency.json",
+          "contentType": "application/json",
+          "path": "test-results/playwright/manual-qa-gap-coverage-H-5-005fa-saves-and-renders-correctly-chromium-authenticated/attachments/e2e-latency-json-4272f4b178a4c356c466bc15211846ed438cfe3b.json"
+        },
+        {
+          "name": "video",
+          "contentType": "video/webm",
+          "path": "test-results/playwright/manual-qa-gap-coverage-H-5-005fa-saves-and-renders-correctly-chromium-authenticated/video.webm"
+        },
+        {
+          "name": "error-context",
+          "contentType": "text/markdown",
+          "path": "test-results/playwright/manual-qa-gap-coverage-H-5-005fa-saves-and-renders-correctly-chromium-authenticated/error-context.md"
+        },
+        {
+          "name": "trace",
+          "contentType": "application/zip",
+          "path": "test-results/playwright/manual-qa-gap-coverage-H-5-005fa-saves-and-renders-correctly-chromium-authenticated/trace.zip"
+        }
+      ]
+    },
+    {
+      "project": "chromium-authenticated",
+      "file": "tests/admin-ai-batch-cancel.spec.ts",
+      "line": 151,
+      "column": 5,
+      "title": "admin-ai-batch-cancel.spec.ts › admin can cancel queued blog AI batch jobs in bulk from the batch panel",
+      "status": "unexpected",
+      "resultStatus": "timedOut",
+      "durationMs": 32428,
+      "error": "Test timeout of 30000ms exceeded. Error: locator.click: Test timeout of 30000ms exceeded. Call log: - waiting for getByTestId('admin-blog-row').first().getByRole('checkbox') 287 | await page.goto('/admin/blog') 288 | const rows = page.getByTestId('admin-blog-row') > 289 | await rows.nth(0).getByRole('checkbox').click() | ^ 290 | await rows.nth(1).getByRole('checkbox').click() 291 | await page.getByRole('button', { name: 'Batch AI Fix' }).click() 292 | at /work/tests/admin-ai-batch-cancel.spec.ts:289:43",
+      "attachments": [
+        {
+          "name": "screenshot",
+          "contentType": "image/png",
+          "path": "test-results/playwright/admin-ai-batch-cancel-admi-b602e-n-bulk-from-the-batch-panel-chromium-authenticated/test-failed-1.png"
+        },
+        {
+          "name": "e2e-latency.json",
+          "contentType": "application/json",
+          "path": "test-results/playwright/admin-ai-batch-cancel-admi-b602e-n-bulk-from-the-batch-panel-chromium-authenticated/attachments/e2e-latency-json-d9788b4695b902cc2155d6b6e8ac2b8a52f8cb65.json"
+        },
+        {
+          "name": "video",
+          "contentType": "video/webm",
+          "path": "test-results/playwright/admin-ai-batch-cancel-admi-b602e-n-bulk-from-the-batch-panel-chromium-authenticated/video.webm"
+        },
+        {
+          "name": "error-context",
+          "contentType": "text/markdown",
+          "path": "test-results/playwright/admin-ai-batch-cancel-admi-b602e-n-bulk-from-the-batch-panel-chromium-authenticated/error-context.md"
+        },
+        {
+          "name": "trace",
+          "contentType": "application/zip",
+          "path": "test-results/playwright/admin-ai-batch-cancel-admi-b602e-n-bulk-from-the-batch-panel-chromium-authenticated/trace.zip"
+        }
+      ]
+    },
+    {
+      "project": "chromium-authenticated",
+      "file": "tests/admin-pages-settings.spec.ts",
+      "line": 84,
+      "column": 5,
+      "title": "admin-pages-settings.spec.ts › admin can update the contact page from admin pages",
+      "status": "unexpected",
+      "resultStatus": "timedOut",
+      "durationMs": 32403,
+      "error": "Test timeout of 30000ms exceeded. Error: locator.fill: Test timeout of 30000ms exceeded. Call log: - waiting for locator('#contact-page-editor').getByLabel('Content (HTML/Text)') 91 | await page.goto('/admin/pages') 92 | const contactSection = page.locator('#contact-page-editor') > 93 | await contactSection.getByLabel('Content (HTML/Text)').fill(`<p>${contactText}</p>`) | ^ 94 | await measureStep( 95 | testInfo, 96 | 'Admin contact page save to public refresh', at /work/tests/admin-pages-settings.spec.ts:93:58",
+      "attachments": [
+        {
+          "name": "screenshot",
+          "contentType": "image/png",
+          "path": "test-results/playwright/admin-pages-settings-admin-b4613-ntact-page-from-admin-pages-chromium-authenticated/test-failed-1.png"
+        },
+        {
+          "name": "e2e-latency.json",
+          "contentType": "application/json",
+          "path": "test-results/playwright/admin-pages-settings-admin-b4613-ntact-page-from-admin-pages-chromium-authenticated/attachments/e2e-latency-json-1dd840b06108a1e1d7dec6655b878124c1172900.json"
+        },
+        {
+          "name": "video",
+          "contentType": "video/webm",
+          "path": "test-results/playwright/admin-pages-settings-admin-b4613-ntact-page-from-admin-pages-chromium-authenticated/video.webm"
+        },
+        {
+          "name": "error-context",
+          "contentType": "text/markdown",
+          "path": "test-results/playwright/admin-pages-settings-admin-b4613-ntact-page-from-admin-pages-chromium-authenticated/error-context.md"
+        },
+        {
+          "name": "trace",
+          "contentType": "application/zip",
+          "path": "test-results/playwright/admin-pages-settings-admin-b4613-ntact-page-from-admin-pages-chromium-authenticated/trace.zip"
+        }
+      ]
+    },
+    {
+      "project": "chromium-authenticated",
+      "file": "tests/dark-mode.spec.ts",
+      "line": 294,
+      "column": 7,
+      "title": "dark-mode.spec.ts › login and admin dark mode › DM-15: blog editor uses the dark primary button token",
+      "status": "unexpected",
+      "resultStatus": "timedOut",
+      "durationMs": 32387,
+      "error": "Test timeout of 30000ms exceeded. Error: locator.click: Test timeout of 30000ms exceeded. Call log: - waiting for getByTestId('admin-blog-row').first().getByTitle('Edit') 294 | test('DM-15: blog editor uses the dark primary button token', async ({ page }) => { 295 | await gotoWithTheme(page, '/admin/blog') > 296 | await page.getByTestId('admin-blog-row').first().getByTitle('Edit').click() | ^ 297 | const saveButton = page.getByRole('button', { name: /Update Post|Create Post/i }) 298 | await expect(saveButton).toBeVisible() 299 | at /work/tests/dark-mode.spec.ts:296:73",
+      "attachments": [
+        {
+          "name": "screenshot",
+          "contentType": "image/png",
+          "path": "test-results/playwright/dark-mode-login-and-admin--aa541-e-dark-primary-button-token-chromium-authenticated/test-failed-1.png"
+        },
+        {
+          "name": "e2e-latency.json",
+          "contentType": "application/json",
+          "path": "test-results/playwright/dark-mode-login-and-admin--aa541-e-dark-primary-button-token-chromium-authenticated/attachments/e2e-latency-json-a0bd19a8ba89c8d62ae8932b96ad68701c117240.json"
+        },
+        {
+          "name": "video",
+          "contentType": "video/webm",
+          "path": "test-results/playwright/dark-mode-login-and-admin--aa541-e-dark-primary-button-token-chromium-authenticated/video.webm"
+        },
+        {
+          "name": "error-context",
+          "contentType": "text/markdown",
+          "path": "test-results/playwright/dark-mode-login-and-admin--aa541-e-dark-primary-button-token-chromium-authenticated/error-context.md"
+        },
+        {
+          "name": "trace",
+          "contentType": "application/zip",
+          "path": "test-results/playwright/dark-mode-login-and-admin--aa541-e-dark-primary-button-token-chromium-authenticated/trace.zip"
+        }
+      ]
+    },
+    {
+      "project": "chromium-authenticated",
+      "file": "tests/work-single-delete-ux.spec.ts",
+      "line": 5,
+      "column": 5,
+      "title": "work-single-delete-ux.spec.ts › single work delete uses the in-app dialog and removes the row",
+      "status": "unexpected",
+      "resultStatus": "timedOut",
+      "durationMs": 32340,
+      "error": "Test timeout of 30000ms exceeded. Error: locator.fill: Test timeout of 30000ms exceeded. Call log: - waiting for getByLabel('Title') 7 | 8 | await page.goto('/admin/works/new') > 9 | await page.getByLabel('Title').fill(title) | ^ 10 | await page.getByLabel('Category').fill('qa') 11 | await page.locator('.tiptap.ProseMirror').first().fill('delete me') 12 | at /work/tests/work-single-delete-ux.spec.ts:9:34",
+      "attachments": [
+        {
+          "name": "screenshot",
+          "contentType": "image/png",
+          "path": "test-results/playwright/work-single-delete-ux-sing-47401--dialog-and-removes-the-row-chromium-authenticated/test-failed-1.png"
+        },
+        {
+          "name": "e2e-latency.json",
+          "contentType": "application/json",
+          "path": "test-results/playwright/work-single-delete-ux-sing-47401--dialog-and-removes-the-row-chromium-authenticated/attachments/e2e-latency-json-c0f776eb48a3ac48ebd3be9e8d34cffc44fe1c1c.json"
+        },
+        {
+          "name": "video",
+          "contentType": "video/webm",
+          "path": "test-results/playwright/work-single-delete-ux-sing-47401--dialog-and-removes-the-row-chromium-authenticated/video.webm"
+        },
+        {
+          "name": "error-context",
+          "contentType": "text/markdown",
+          "path": "test-results/playwright/work-single-delete-ux-sing-47401--dialog-and-removes-the-row-chromium-authenticated/error-context.md"
+        },
+        {
+          "name": "trace",
+          "contentType": "application/zip",
+          "path": "test-results/playwright/work-single-delete-ux-sing-47401--dialog-and-removes-the-row-chromium-authenticated/trace.zip"
+        }
+      ]
+    },
+    {
+      "project": "chromium-authenticated",
+      "file": "tests/admin-work-publish.spec.ts",
+      "line": 109,
+      "column": 5,
+      "title": "admin-work-publish.spec.ts › admin can toggle a published work back to draft and publish it again",
+      "status": "unexpected",
+      "resultStatus": "timedOut",
+      "durationMs": 32334,
+      "error": "Test timeout of 30000ms exceeded. Error: locator.fill: Test timeout of 30000ms exceeded. Call log: - waiting for getByLabel('Title') 111 | 112 | await page.goto('/admin/works/new') > 113 | await page.getByLabel('Title').fill(title) | ^ 114 | await page.getByLabel('Category').fill('toggle') 115 | await page.locator('.tiptap.ProseMirror').first().fill(`This work exercises publish toggles for ${title}.`) 116 | at /work/tests/admin-work-publish.spec.ts:113:34",
+      "attachments": [
+        {
+          "name": "screenshot",
+          "contentType": "image/png",
+          "path": "test-results/playwright/admin-work-publish-admin-c-f22df--draft-and-publish-it-again-chromium-authenticated/test-failed-1.png"
+        },
+        {
+          "name": "e2e-latency.json",
+          "contentType": "application/json",
+          "path": "test-results/playwright/admin-work-publish-admin-c-f22df--draft-and-publish-it-again-chromium-authenticated/attachments/e2e-latency-json-4c1f64866f6b2862fef51c26110c877077879c5d.json"
+        },
+        {
+          "name": "video",
+          "contentType": "video/webm",
+          "path": "test-results/playwright/admin-work-publish-admin-c-f22df--draft-and-publish-it-again-chromium-authenticated/video.webm"
+        },
+        {
+          "name": "error-context",
+          "contentType": "text/markdown",
+          "path": "test-results/playwright/admin-work-publish-admin-c-f22df--draft-and-publish-it-again-chromium-authenticated/error-context.md"
+        },
+        {
+          "name": "trace",
+          "contentType": "application/zip",
+          "path": "test-results/playwright/admin-work-publish-admin-c-f22df--draft-and-publish-it-again-chromium-authenticated/trace.zip"
+        }
+      ]
+    },
+    {
+      "project": "chromium-authenticated",
+      "file": "tests/manual-qa-gap-coverage.spec.ts",
+      "line": 450,
+      "column": 5,
+      "title": "manual-qa-gap-coverage.spec.ts › C-11 editor content persists and reloads into the edit surface",
+      "status": "unexpected",
+      "resultStatus": "timedOut",
+      "durationMs": 32326,
+      "error": "Test timeout of 30000ms exceeded. Error: locator.fill: Test timeout of 30000ms exceeded. Call log: - waiting for getByLabel('Title') 53 | async function createBlog(page: Page, title: string, body: string, tags = 'playwright, qa') { 54 | await page.goto('/admin/blog/new') > 55 | await page.getByLabel('Title').fill(title) | ^ 56 | await page.getByLabel('Tags (comma separated)').fill(tags) 57 | const editor = await fillEditor(page, body) 58 | at createBlog (/work/tests/manual-qa-gap-coverage.spec.ts:55:34) at /work/tests/manual-qa-gap-coverage.spec.ts:452:19",
+      "attachments": [
+        {
+          "name": "screenshot",
+          "contentType": "image/png",
+          "path": "test-results/playwright/manual-qa-gap-coverage-C-1-2c6e6-loads-into-the-edit-surface-chromium-authenticated/test-failed-1.png"
+        },
+        {
+          "name": "e2e-latency.json",
+          "contentType": "application/json",
+          "path": "test-results/playwright/manual-qa-gap-coverage-C-1-2c6e6-loads-into-the-edit-surface-chromium-authenticated/attachments/e2e-latency-json-71984c1e41b8f751121fc1d2c7155b60ab9d9df1.json"
+        },
+        {
+          "name": "video",
+          "contentType": "video/webm",
+          "path": "test-results/playwright/manual-qa-gap-coverage-C-1-2c6e6-loads-into-the-edit-surface-chromium-authenticated/video.webm"
+        },
+        {
+          "name": "error-context",
+          "contentType": "text/markdown",
+          "path": "test-results/playwright/manual-qa-gap-coverage-C-1-2c6e6-loads-into-the-edit-surface-chromium-authenticated/error-context.md"
+        },
+        {
+          "name": "trace",
+          "contentType": "application/zip",
+          "path": "test-results/playwright/manual-qa-gap-coverage-C-1-2c6e6-loads-into-the-edit-surface-chromium-authenticated/trace.zip"
+        }
+      ]
+    }
+  ],
+  "artifacts": {
+    "playwrightJson": "backend/reports/production-like-full-e2e-2026-04-26/artifacts/full-e2e-report.json",
+    "fullLog": "backend/reports/production-like-full-e2e-2026-04-26/artifacts/full-e2e-run.log",
+    "runMeta": "backend/reports/production-like-full-e2e-2026-04-26/artifacts/full-e2e-run-meta.json",
+    "latencySummaryJson": "backend/reports/production-like-full-e2e-2026-04-26/artifacts/e2e-latency-summary.json",
+    "latencySummaryMd": "backend/reports/production-like-full-e2e-2026-04-26/artifacts/e2e-latency-summary.md",
+    "postRunAdminSmoke": "backend/reports/production-like-full-e2e-2026-04-26/artifacts/post-run-admin-smoke.json"
+  },
+  "fullFailureList": "backend/reports/production-like-full-e2e-2026-04-26/artifacts/full-e2e-failures.json"
+}

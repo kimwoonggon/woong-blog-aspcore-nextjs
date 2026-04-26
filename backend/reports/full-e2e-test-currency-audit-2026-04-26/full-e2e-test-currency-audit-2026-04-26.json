@@ -1,0 +1,254 @@
+{
+  "slug": "full-e2e-test-currency-audit-2026-04-26",
+  "generatedAt": "2026-04-26T00:00:00+09:00",
+  "scope": "Audit only: determine whether current full Playwright e2e tests reflect the current application before changing tests.",
+  "sourceRun": {
+    "reportPath": "backend/reports/production-like-full-e2e-2026-04-26/artifacts/full-e2e-report.json",
+    "summaryPath": "backend/reports/production-like-full-e2e-2026-04-26/artifacts/full-e2e-summary.json",
+    "durationHuman": "2h 15m 5s",
+    "total": 589,
+    "passed": 248,
+    "failed": 209,
+    "skippedOrDidNotRun": 132,
+    "failuresByProject": {
+      "chromium-public": 15,
+      "chromium-authenticated": 194
+    },
+    "failureStatusCounts": {
+      "failed": 98,
+      "timedOut": 111
+    },
+    "failuresByCategory": {
+      "other": 3,
+      "recording/batch fixtures": 10,
+      "public content/layout expectation": 7,
+      "admin/editor/authenticated UI": 144,
+      "admin notion view": 21,
+      "works video/admin media": 24
+    },
+    "failuresBySymptom": {
+      "ambiguous main h1 selector after h1 body headings": 2,
+      "recording editor API not reachable": 6,
+      "other assertion/error": 9,
+      "6s timeout": 47,
+      "TOC/layout expectation mismatch": 4,
+      "admin row not reachable": 18,
+      "editor title field not reachable": 69,
+      "admin API 401 fixture/setup": 11,
+      "redirected to login": 18,
+      "32s timeout": 23,
+      "33s timeout": 2
+    }
+  },
+  "authFinding": {
+    "testLoginExists": true,
+    "globalSetupPath": "tests/helpers/global-setup.ts:84",
+    "sharedStorageStatePath": "test-results/playwright/admin-storage-state.json",
+    "issue": "The suite bootstraps one admin storage state with /api/auth/test-login, but many admin tests and API fixture helpers rely on that shared state for long production-like runs. API fixture calls through the request fixture still produced 401s.",
+    "recommendation": "Use test-login in production-like test stacks, but make admin auth fresh and explicit per test/fixture: add an authenticated API request context helper, and call ensureAdminSession before admin UI flows that mutate or depend on session state."
+  },
+  "currencyFindings": [
+    {
+      "type": "outdated-test",
+      "finding": "Detail-page tests still use main h1 as a unique title selector. Current detail pages intentionally allow h1 headings inside rendered body content after the TOC h1 restoration.",
+      "examples": [
+        "tests/e2e-visitor-content-exploration.spec.ts:16",
+        "tests/e2e-visitor-content-exploration.spec.ts:37",
+        "tests/public-detail-pages.spec.ts:18",
+        "tests/public-detail-pages.spec.ts:43"
+      ],
+      "currentCode": [
+        "src/app/(public)/works/[slug]/page.tsx:104",
+        "src/app/(public)/works/[slug]/page.tsx:135",
+        "src/app/(public)/blog/[slug]/page.tsx:73",
+        "src/app/(public)/blog/[slug]/page.tsx:96"
+      ]
+    },
+    {
+      "type": "environment-mismatch",
+      "finding": "Local QA query flags are host-gated to localhost/127.0.0.1, but the production-like run used an internal Docker nginx hostname. Tests expecting __qaBroken or __qaEmpty behavior are not valid in that environment as written.",
+      "examples": [
+        "tests/public-api-error.spec.ts",
+        "tests/public-resume-empty-state.spec.ts"
+      ],
+      "currentCode": [
+        "src/components/content/LocalQaQueryBoundary.tsx:5",
+        "src/components/content/LocalQaQueryBoundary.tsx:34",
+        "src/components/content/LocalQaQueryBoundary.tsx:50"
+      ]
+    },
+    {
+      "type": "data-state-assumption",
+      "finding": "Some public tests assert exact mutable CMS content such as Introduction. The production-like database currently contains modified content, so these tests are checking seed state instead of behavior.",
+      "examples": [
+        "tests/ui-improvement-static-public-pages.spec.ts"
+      ]
+    },
+    {
+      "type": "mostly-current-but-blocked",
+      "finding": "Work video hover/resize tests mostly reflect the current WorkVideoPlayer test IDs and expected no-custom-bar behavior, but full-run failures occur before those assertions because admin creation/auth fails.",
+      "examples": [
+        "tests/public-work-videos.spec.ts"
+      ],
+      "currentCode": [
+        "src/components/content/WorkVideoPlayer.tsx",
+        "src/app/(public)/works/[slug]/page.tsx:138"
+      ]
+    },
+    {
+      "type": "mostly-current-but-blocked",
+      "finding": "Notion view tests still target existing Notion workspace test IDs, but the failing autosave cases are fixture/API auth failures rather than direct Notion UI mismatches.",
+      "examples": [
+        "tests/ui-admin-notion-autosave-info.spec.ts",
+        "tests/ui-admin-notion-library-sheet.spec.ts"
+      ],
+      "currentCode": [
+        "src/components/admin/BlogNotionWorkspace.tsx"
+      ]
+    },
+    {
+      "type": "stale-or-optional-harness",
+      "finding": "Recording/batch visual specs depend on editor globals and large recording fixture flows. They should be separated from the release-blocking full e2e lane or updated after auth is stable.",
+      "examples": [
+        "tests/feature-recording-0418.spec.ts",
+        "tests/mermaid-batch-prompt-0419.spec.ts",
+        "tests/mermaid-worstcase-0419.spec.ts",
+        "tests/plain-baseline-0419.spec.ts"
+      ]
+    }
+  ],
+  "classificationCounts": {
+    "stale-detail-heading-selector": 2,
+    "editor-recording-harness": 6,
+    "recording-batch-seed-harness": 3,
+    "local-qa-host-mismatch": 2,
+    "public-toc-layout-current-regression-candidate": 1,
+    "mutable-seed-content-assumption": 1,
+    "needs-manual-triage": 156,
+    "admin-api-fixture-auth-gap": 9,
+    "admin-session-or-login-harness": 22,
+    "admin-table-or-row-state": 7
+  },
+  "topFiles": [
+    {
+      "file": "manual-qa-gap-coverage.spec.ts",
+      "count": 17
+    },
+    {
+      "file": "admin-search-pagination.spec.ts",
+      "count": 8
+    },
+    {
+      "file": "feature-recording-0418.spec.ts",
+      "count": 6
+    },
+    {
+      "file": "admin-dashboard.spec.ts",
+      "count": 5
+    },
+    {
+      "file": "admin-work-auto-thumbnail.spec.ts",
+      "count": 5
+    },
+    {
+      "file": "public-work-videos.spec.ts",
+      "count": 5
+    },
+    {
+      "file": "ui-admin-notion-autosave-info.spec.ts",
+      "count": 5
+    },
+    {
+      "file": "ui-admin-table-polish.spec.ts",
+      "count": 5
+    },
+    {
+      "file": "admin-blog-validation.spec.ts",
+      "count": 4
+    },
+    {
+      "file": "dark-mode.spec.ts",
+      "count": 4
+    },
+    {
+      "file": "ui-admin-notion-library-sheet.spec.ts",
+      "count": 4
+    },
+    {
+      "file": "ui-admin-unsaved-warning.spec.ts",
+      "count": 4
+    },
+    {
+      "file": "admin-blog-publish.spec.ts",
+      "count": 3
+    },
+    {
+      "file": "admin-input-exceptions.spec.ts",
+      "count": 3
+    },
+    {
+      "file": "admin-pages-settings.spec.ts",
+      "count": 3
+    },
+    {
+      "file": "admin-work-publish.spec.ts",
+      "count": 3
+    },
+    {
+      "file": "public-inline-editors.spec.ts",
+      "count": 3
+    },
+    {
+      "file": "renovation-0416-regression.spec.ts",
+      "count": 3
+    },
+    {
+      "file": "ui-admin-sidebar-active.spec.ts",
+      "count": 3
+    },
+    {
+      "file": "ui-admin-work-create-cta.spec.ts",
+      "count": 3
+    },
+    {
+      "file": "ui-quality-visual-metrics.spec.ts",
+      "count": 3
+    },
+    {
+      "file": "work-inline-create-flow.spec.ts",
+      "count": 3
+    },
+    {
+      "file": "work-inline-redirects.spec.ts",
+      "count": 3
+    },
+    {
+      "file": "admin-ai-batch-cancel.spec.ts",
+      "count": 2
+    },
+    {
+      "file": "admin-blog-edit.spec.ts",
+      "count": 2
+    }
+  ],
+  "validation": [
+    "Read Playwright project config and auth bootstrap.",
+    "Read content fixture helpers that create admin data through /api/admin/*.",
+    "Compared representative failing specs against current work/blog detail pages, LocalQaQueryBoundary, WorkVideoPlayer, AdminDashboardCollections, and Notion workspace selectors.",
+    "Parsed the prior production-like full e2e JSON report and generated classified failure artifacts."
+  ],
+  "intentionallyNotChanged": [
+    "No production code changed during this audit.",
+    "No Playwright spec or helper changed during this audit.",
+    "No Docker stack restarted during this audit."
+  ],
+  "recommendationOrder": [
+    "Fix the e2e auth harness first: keep test-login enabled for production-like test stacks, add an authenticated API context for fixtures, and refresh admin UI session per test or per admin fixture group.",
+    "Update stale public selectors and environment assumptions: replace main h1 unique-title assertions with scoped title test IDs/locators, and either run QA flag specs on localhost/127.0.0.1 or gate them through an explicit test env flag.",
+    "Remove mutable seeded-content assumptions from production-like tests; assert structure/behavior or create isolated fixture data instead.",
+    "Only then rerun targeted groups: public detail/TOC, admin smoke, Notion autosave, works video upload/preview.",
+    "Keep recording/live/batch visual suites in an optional lane until their editor instrumentation and seed setup are updated."
+  ],
+  "finalRecommendation": "Do not treat the current 209 failures as 209 app regressions. The full e2e suite is partially out of sync with the current code and partially blocked by auth/session fixture design. Stabilize auth and stale selectors before using full-suite timing as a reliable production-like signal.",
+  "noteOnClassification": "The per-result classified-failures.json is a raw JSON-pass helper. The authoritative failure category/symptom totals come from the prior full-run failure CSV/summary because that parser preserved Playwright call-log symptoms for timeouts."
+}

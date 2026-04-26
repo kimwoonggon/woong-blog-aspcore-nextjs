@@ -397,6 +397,71 @@ describe('WorkEditor', () => {
     expect(mocks.push).toHaveBeenCalledWith('/admin/works/work-1?videoInline=1')
   })
 
+  it('stages create-time videos when crypto.randomUUID is unavailable', async () => {
+    const originalCrypto = globalThis.crypto
+    Object.defineProperty(globalThis, 'crypto', {
+      configurable: true,
+      value: {},
+    })
+
+    try {
+      render(<WorkEditor />)
+
+      fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Fallback ID Work' } })
+      changeContent('<p>Fallback ID body</p>')
+      fireEvent.change(screen.getByLabelText('YouTube URL or ID'), { target: { value: 'dQw4w9WgXcQ' } })
+      fireEvent.click(screen.getByRole('button', { name: /Add YouTube Video/i }))
+
+      expect(screen.getByText('dQw4w9WgXcQ')).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /Create with Videos/i })).toBeEnabled()
+    } finally {
+      Object.defineProperty(globalThis, 'crypto', {
+        configurable: true,
+        value: originalCrypto,
+      })
+    }
+  })
+
+  it('loads an existing work editor with metadata and video controls when crypto.randomUUID is unavailable', () => {
+    const originalCrypto = globalThis.crypto
+    Object.defineProperty(globalThis, 'crypto', {
+      configurable: true,
+      value: { randomUUID: undefined },
+    })
+
+    try {
+      render(
+        <WorkEditor
+          initialWork={{
+            id: 'work-1',
+            title: 'Existing work',
+            slug: 'existing-work',
+            category: 'platform',
+            tags: ['video'],
+            published: true,
+            content: { html: '<p>Existing body</p>' },
+            all_properties: {
+              role: 'Lead',
+              socialShareMessage: 'Share this work',
+            },
+            videos_version: 0,
+            videos: [],
+          }}
+        />,
+      )
+
+      expect(screen.getByDisplayValue('Existing work')).toBeInTheDocument()
+      expect(screen.getByDisplayValue('Lead')).toBeInTheDocument()
+      expect(screen.getByDisplayValue('Share this work')).toBeInTheDocument()
+      expect(screen.getByLabelText('Upload MP4 Video as HLS')).toBeInTheDocument()
+    } finally {
+      Object.defineProperty(globalThis, 'crypto', {
+        configurable: true,
+        value: originalCrypto,
+      })
+    }
+  })
+
   it('uses onSaved instead of redirecting for public inline text-only create', async () => {
     const onSaved = vi.fn()
 
