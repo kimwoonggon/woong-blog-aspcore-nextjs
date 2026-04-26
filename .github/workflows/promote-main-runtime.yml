@@ -41,4 +41,4 @@ jobs:
           PROMOTION_BRANCH: ${{ inputs.promotion_branch }}
           AUTO_COMMIT: "true"
           AUTO_PUSH: "true"
-        run: ./scripts/promote-main-runtime.sh
+        run: bash ./scripts/promote-main-runtime.sh
