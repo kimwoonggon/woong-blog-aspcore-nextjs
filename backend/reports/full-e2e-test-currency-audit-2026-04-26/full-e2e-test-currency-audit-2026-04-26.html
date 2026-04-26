@@ -1,0 +1,107 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>full-e2e-test-currency-audit-2026-04-26</title><style>body{font-family:Arial,sans-serif;max-width:960px;margin:40px auto;padding:0 20px;line-height:1.55;color:#172033}code{background:#f3f5f7;padding:2px 4px;border-radius:4px}table{border-collapse:collapse;width:100%;margin:16px 0}td,th{border:1px solid #d8dee4;padding:8px;text-align:left}th{background:#f6f8fa}h1,h2{line-height:1.2}</style></head><body><pre style="white-space:pre-wrap"># Full E2E Test Currency Audit (2026-04-26)
+
+## Scope
+Audit only. The goal was to determine whether the current full Playwright e2e tests reflect the current application before modifying tests or production code.
+
+## Source Run
+- Environment: production-like Docker frontend + backend/db compose + internal nginx + official Playwright container.
+- Base URL: http://woong-prod-full-e2e-nginx-1777130558
+- Duration: 2h 15m 5s
+- Result: 248 passed, 209 failed, 132 skipped/did-not-run out of 589.
+- Failure split: {"chromium-public":15,"chromium-authenticated":194}.
+- Post-run admin smoke: admin dashboard reachable after the full run.
+
+## Main Finding
+The current full e2e suite is not a clean signal for the current app. It mixes real app coverage with stale selectors, local-only QA flags, mutable CMS seed assumptions, and a fragile authenticated harness. The authenticated failures should not be interpreted as independent app regressions until auth/session setup is fixed.
+
+## Authentication Finding
+Production-like tests already use test-login in global setup: `tests/helpers/global-setup.ts:84`. The problem is reliability and scope, not absence. A single shared `test-results/playwright/admin-storage-state.json` is reused by the authenticated project, while fixture helpers call admin APIs through the Playwright `request` fixture. The prior full run still produced admin redirects to `/login` and 401 fixture creation errors.
+
+Required direction: keep test-login for production-like tests, but make it explicit and fresh in the e2e harness. Add an authenticated API request context for fixture creation and refresh admin UI sessions before mutation-heavy admin flows.
+
+## Full Run Category Counts
+| Category | Count |
+| --- | ---: |
+| admin/editor/authenticated UI | 144 |
+| works video/admin media | 24 |
+| admin notion view | 21 |
+| recording/batch fixtures | 10 |
+| public content/layout expectation | 7 |
+| other | 3 |
+
+## Full Run Symptom Counts
+| Symptom | Count |
+| --- | ---: |
+| editor title field not reachable | 69 |
+| 6s timeout | 47 |
+| 32s timeout | 23 |
+| admin row not reachable | 18 |
+| redirected to login | 18 |
+| admin API 401 fixture/setup | 11 |
+| other assertion/error | 9 |
+| recording editor API not reachable | 6 |
+| TOC/layout expectation mismatch | 4 |
+| ambiguous main h1 selector after h1 body headings | 2 |
+| 33s timeout | 2 |
+
+## Raw JSON-Pass Classification Counts
+| Classification | Count |
+| --- | ---: |
+| needs-manual-triage | 156 |
+| admin-session-or-login-harness | 22 |
+| admin-api-fixture-auth-gap | 9 |
+| admin-table-or-row-state | 7 |
+| editor-recording-harness | 6 |
+| recording-batch-seed-harness | 3 |
+| stale-detail-heading-selector | 2 |
+| local-qa-host-mismatch | 2 |
+| public-toc-layout-current-regression-candidate | 1 |
+| mutable-seed-content-assumption | 1 |
+
+Note: the raw JSON-pass classification below is secondary. The category/symptom counts above are more useful because they come from the prior full-run failure CSV/summary and preserve timeout call-log symptoms.
+
+## Top Failure Files
+| File | Failure count |
+| --- | ---: |
+| manual-qa-gap-coverage.spec.ts | 17 |
+| admin-search-pagination.spec.ts | 8 |
+| feature-recording-0418.spec.ts | 6 |
+| admin-dashboard.spec.ts | 5 |
+| admin-work-auto-thumbnail.spec.ts | 5 |
+| public-work-videos.spec.ts | 5 |
+| ui-admin-notion-autosave-info.spec.ts | 5 |
+| ui-admin-table-polish.spec.ts | 5 |
+| admin-blog-validation.spec.ts | 4 |
+| dark-mode.spec.ts | 4 |
+| ui-admin-notion-library-sheet.spec.ts | 4 |
+| ui-admin-unsaved-warning.spec.ts | 4 |
+
+## Test Currency Findings
+- Outdated detail title selectors: `tests/e2e-visitor-content-exploration.spec.ts:16`, `tests/e2e-visitor-content-exploration.spec.ts:37`, `tests/public-detail-pages.spec.ts:18`, and `tests/public-detail-pages.spec.ts:43` use `main h1` as if it were unique. Current work/blog detail pages intentionally render body h1 headings inside `#work-detail-content` and `#blog-detail-content`, so these tests should scope to the article title.
+- Local QA flag mismatch: `src/components/content/LocalQaQueryBoundary.tsx:5` only accepts `localhost` and `127.0.0.1`. Production-like internal Docker hostnames do not trigger `__qaBroken` or `__qaEmpty`, so `tests/public-api-error.spec.ts` and `tests/public-resume-empty-state.spec.ts` are environment-invalid as written.
+- Mutable seed assumption: tests asserting exact CMS content like `Introduction` are vulnerable to real admin edits in the production-like database. They should create fixture data or assert stable structure.
+- Work video tests are mostly aligned with current implementation: `WorkVideoPlayer` still exposes the resize and preview test IDs, and the detail page renders it for uploaded videos. The full run failed before meaningful video assertions because admin creation/auth failed.
+- Notion tests are also mostly blocked rather than clearly stale: current Notion workspace still exposes the tested triggers, but autosave specs failed during fixture/admin setup.
+- Recording/batch suites are a separate lane concern. Specs depending on `window.__WOONG_TIPTAP_EDITOR__` and large recording fixtures should not block the core production-like lane until they are updated.
+
+## Validation Performed
+- Read `playwright.config.ts`, `tests/helpers/global-setup.ts`, and `tests/helpers/auth.ts` to verify test-login behavior.
+- Read `tests/helpers/content-fixtures.ts` to verify admin API fixture creation behavior.
+- Compared representative failing specs with current implementation files.
+- Parsed `backend/reports/production-like-full-e2e-2026-04-26/artifacts/full-e2e-report.json` and wrote `artifacts/classified-failures.json`.
+
+## Intentionally Not Changed
+- No production code was changed.
+- No Playwright test or helper code was changed.
+- No Docker stack was restarted for this audit.
+
+## Recommended Stabilization Order
+1. Fix e2e auth harness first: authenticated API fixture context, fresh admin session for admin UI flows, and isolation for logout/session mutation tests.
+2. Update stale public selectors and QA flag environment assumptions.
+3. Replace mutable CMS seed assertions with fixture-backed or structural assertions.
+4. Rerun targeted groups: public detail/TOC, admin smoke, Notion autosave, works video upload/preview.
+5. Keep recording/live/batch visual suites optional until their instrumentation and setup are current.
+
+## Final Recommendation
+Do not treat the current 209 failures as 209 app regressions. The suite is partially out of sync with the current code and partially blocked by auth/session fixture design. Stabilize auth and stale selectors before using full-suite timing as a reliable production-like signal.
+</pre></body></html>

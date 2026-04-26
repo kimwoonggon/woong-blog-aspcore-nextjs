@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -391,6 +392,62 @@ public class WorkVideoEndpointsTests : IClassFixture<CustomWebApplicationFactory
     }
 
     [Fact]
+    public async Task HlsJob_DeleteThenReupload_ReturnsPreviewCapablePayloadWhenPreviewAssetsExist()
+    {
+        var fakeFfTools = CreateFakeFfTools();
+        try
+        {
+            using var factory = _factory.WithWebHostBuilder(builder =>
+            {
+                builder.ConfigureAppConfiguration((_, configBuilder) =>
+                {
+                    configBuilder.AddInMemoryCollection(new Dictionary<string, string?>
+                    {
+                        ["WorkVideos:Hls:FfmpegPath"] = fakeFfTools.FfmpegPath,
+                        ["WorkVideos:Hls:FfprobePath"] = fakeFfTools.FfprobePath,
+                        ["WorkVideos:Hls:SegmentDurationSeconds"] = "4",
+                        ["WorkVideos:Hls:TimelinePreviewIntervalSeconds"] = "5",
+                        ["WorkVideos:Hls:TimelinePreviewTileColumns"] = "4"
+                    });
+                });
+            });
+
+            var client = await CreateAuthenticatedClientAsync(factory);
+            var created = await CreateWorkAsync(client, $"HLS Reupload Work {Guid.NewGuid():N}");
+
+            var firstUpload = await UploadHlsVideoAsync(client, created.Id, expectedVersion: 0);
+            var firstVideo = Assert.Single(firstUpload.Videos);
+            Assert.NotNull(firstVideo.TimelinePreviewVttUrl);
+            Assert.NotNull(firstVideo.TimelinePreviewSpriteUrl);
+
+            var deleteResponse = await client.DeleteAsync($"/api/admin/works/{created.Id}/videos/{firstVideo.Id}?expectedVideosVersion={firstUpload.VideosVersion}");
+            deleteResponse.EnsureSuccessStatusCode();
+            var deletePayload = await deleteResponse.Content.ReadFromJsonAsync<MutationPayload>();
+            Assert.NotNull(deletePayload);
+            Assert.Empty(deletePayload!.Videos);
+
+            var secondUpload = await UploadHlsVideoAsync(client, created.Id, expectedVersion: deletePayload.VideosVersion);
+            var secondVideo = Assert.Single(secondUpload.Videos);
+            Assert.NotNull(secondVideo.TimelinePreviewVttUrl);
+            Assert.NotNull(secondVideo.TimelinePreviewSpriteUrl);
+
+            var publicResponse = await client.GetAsync($"/api/public/works/{created.Slug}");
+            publicResponse.EnsureSuccessStatusCode();
+            using var publicDocument = JsonDocument.Parse(await publicResponse.Content.ReadAsStringAsync());
+            var publicVideo = publicDocument.RootElement.GetProperty("videos").EnumerateArray().Single();
+            Assert.False(string.IsNullOrWhiteSpace(publicVideo.GetProperty("timeline_preview_vtt_url").GetString()));
+            Assert.False(string.IsNullOrWhiteSpace(publicVideo.GetProperty("timeline_preview_sprite_url").GetString()));
+        }
+        finally
+        {
+            if (Directory.Exists(fakeFfTools.DirectoryPath))
+            {
+                Directory.Delete(fakeFfTools.DirectoryPath, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
     public async Task ReorderWorkVideos_ReturnsConflictWhenVideosVersionIsStale()
     {
         var client = _factory.CreateAuthenticatedClient();
@@ -712,6 +769,20 @@ public class WorkVideoEndpointsTests : IClassFixture<CustomWebApplicationFactory
         Assert.NotNull(csrfPayload?.RequestToken);
         client.DefaultRequestHeaders.Add(csrfPayload!.HeaderName, csrfPayload.RequestToken);
         return client;
+    }
+
+    private static async Task<MutationPayload> UploadHlsVideoAsync(HttpClient client, Guid workId, int expectedVersion)
+    {
+        using var form = new MultipartFormDataContent();
+        var fileContent = new ByteArrayContent(SampleMp4Bytes);
+        fileContent.Headers.ContentType = new MediaTypeHeaderValue("video/mp4");
+        form.Add(fileContent, "file", "demo.mp4");
+        form.Add(new StringContent(expectedVersion.ToString()), "expectedVideosVersion");
+
+        var response = await client.PostAsync($"/api/admin/works/{workId}/videos/hls-job", form);
+        response.EnsureSuccessStatusCode();
+        var payload = await response.Content.ReadFromJsonAsync<MutationPayload>();
+        return payload!;
     }
 
     private static async Task<HttpClient> CreateAuthenticatedClientAsync(WebApplicationFactory<Program> factory)

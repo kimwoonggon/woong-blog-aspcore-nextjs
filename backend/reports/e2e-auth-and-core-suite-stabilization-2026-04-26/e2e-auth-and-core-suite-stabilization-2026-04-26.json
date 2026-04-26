@@ -1,0 +1,75 @@
+{
+  "taskSlug": "e2e-auth-and-core-suite-stabilization-2026-04-26",
+  "date": "2026-04-26",
+  "status": "implemented",
+  "summary": "Core E2E lane, authenticated test-login refresh, optional profile split, and stale public/detail/TOC test assumptions were stabilized.",
+  "changed": [
+    "Added ensureAdminSession(page, returnPath?) and ensureAdminApiContext(request, returnPath?).",
+    "Refreshed admin sessions for chromium-authenticated Playwright tests.",
+    "Moved admin-auth-authorization to runtime-auth coverage.",
+    "Changed content fixtures to use an authenticated admin API context and public visibility polling.",
+    "Added PLAYWRIGHT_E2E_PROFILE core, optional, and exhaustive behavior.",
+    "Updated package scripts for test:e2e, test:e2e:optional, and test:e2e:exhaustive.",
+    "Updated public detail title and TOC test IDs.",
+    "Added localhost-only QA flag guards.",
+    "Updated stale Playwright selectors and mutable content assumptions."
+  ],
+  "intentionallyNotChanged": [
+    "No production API contract changes.",
+    "No broadening of test-login for real public production use.",
+    "No deletion of optional recording/live/batch/manual-heavy specs.",
+    "No reverting unrelated dirty worktree changes."
+  ],
+  "validation": {
+    "typecheck": {
+      "command": "npm run typecheck",
+      "status": "passed"
+    },
+    "unit": {
+      "command": "npm test -- src/test/table-of-contents.test.tsx src/test/local-qa-query-boundary.test.tsx",
+      "status": "passed",
+      "files": 2,
+      "tests": 12
+    },
+    "profileListing": {
+      "core": {
+        "tests": 415,
+        "files": 172
+      },
+      "optional": {
+        "tests": 174,
+        "files": 17
+      },
+      "exhaustive": {
+        "tests": 589,
+        "files": 189
+      }
+    },
+    "targeted": [
+      "Public detail/TOC passed on fresh port 3001 after cold-route rerun.",
+      "Admin smoke passed 8/8.",
+      "Notion targeted group passed 11/11.",
+      "Works video targeted group passed after one transient direct rerun.",
+      "admin-auth-authorization passed under chromium-runtime-auth.",
+      "Earlier-failure regression set passed 12/12."
+    ],
+    "fullCore": {
+      "command": "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3001 npm run test:e2e -- --reporter=list",
+      "status": "passed",
+      "passed": 410,
+      "skipped": 5,
+      "failed": 0,
+      "duration": "22.1m",
+      "latencyArtifacts": 414,
+      "latencyBudgetFailures": 0,
+      "latencyWarnings": 90
+    }
+  },
+  "risks": [
+    "The final full core run used a fresh local dev endpoint rather than a rebuilt Docker production-like endpoint.",
+    "Existing Docker production-like containers predated the final edits and were not used as the final validation source.",
+    "Five existing Playwright tests remain intentionally skipped in core.",
+    "Post-audit correction: an existing nginx container exposed host ports 80 and 443, which does not match the requested Docker test boundary. It was stopped after review."
+  ],
+  "recommendation": "Use npm run test:e2e as the release-blocking core signal, then rebuild the Docker test stack bound only to http://127.0.0.1:3000 and rerun the core lane before production promotion."
+}

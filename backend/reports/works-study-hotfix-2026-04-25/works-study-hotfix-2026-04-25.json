@@ -1,0 +1,123 @@
+{
+  "taskSlug": "works-study-hotfix-2026-04-25",
+  "generatedAt": "2026-04-25",
+  "summary": [
+    "Works On This Work rail dynamically avoids overlapping uploaded-video frames in wide/theater modes.",
+    "Uploaded/HLS videos keep native controls, desktop resize, desktop-only preview, and mobile preview disabled.",
+    "Works mobile list auto-appends and stops at the final page without Load more.",
+    "Study mobile browser-back restore is mobile-only; desktop width keeps desktop pagination/layout.",
+    "Blog excerpt persistence is manual-only while content text remains available for search indexing.",
+    "Study list cards show all saved tags.",
+    "WorkEditor client-side IDs fall back when crypto.randomUUID is unavailable, including existing Work edit screens with metadata and video controls.",
+    "E2E latency coverage explicitly measures desktop public nav clicks and Work/Study detail-card opens."
+  ],
+  "intentionallyNotChanged": [
+    "YouTube embeds do not receive uploaded-video resize controls.",
+    "Historical videos without preview assets were not reprocessed.",
+    "Home recent-post cards and More Studies keep their existing tag-display policy.",
+    "Public API wire shapes were not changed.",
+    "Tablet compact lists keep manual Load more."
+  ],
+  "goalCheck": {
+    "worksRailAvoidsVideos": "satisfied",
+    "worksMobileInfiniteScroll": "satisfied",
+    "studyViewportSwitchStability": "satisfied",
+    "videoNativeControlsAndPreview": "satisfied",
+    "workEditorCryptoFallback": "satisfied",
+    "stalePublicDetailAfterEdit": "not_reproduced_existing_revalidation_paths_retained",
+    "publicClickLatencyCoverage": "satisfied",
+    "publicClickSlownessDiagnosis": "current_local_next_dev_cold_compile_dominates_first_click",
+    "manualExcerptOnly": "satisfied",
+    "studyMultiTags": "satisfied"
+  },
+  "validations": [
+    {
+      "command": "npm test -- --run src/test/table-of-contents.test.tsx src/test/public-responsive-feed.test.tsx src/test/responsive-page-size-sync.test.tsx src/test/work-video-player.test.tsx src/test/interactive-renderer.test.tsx",
+      "result": "passed",
+      "details": "44/44 tests passed"
+    },
+    {
+      "command": "npm test -- --run src/test/work-editor.test.tsx",
+      "result": "passed",
+      "details": "20/20 tests passed, including existing Work edit screen with crypto.randomUUID unavailable"
+    },
+    {
+      "command": "node -e \"... playwright chromium ... /api/auth/test-login?...returnUrl=/admin/works/new ...\"",
+      "result": "passed",
+      "details": "Browser loaded /admin/works/new and rendered Upload MP4 Video as HLS with window.crypto.randomUUID removed"
+    },
+    {
+      "command": "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 PLAYWRIGHT_EXPECT_LOCAL_ADMIN_SHORTCUT=visible node scripts/run-e2e-latency.mjs -- tests/e2e-response-time.spec.ts --workers=1",
+      "result": "passed",
+      "details": "9/9 tests passed; latency budget failures 0; warm-state key steps: Work detail 1241.78ms, Study detail 1055.98ms, Works nav 787.78ms, Introduction nav 620.27ms, Study nav 570.05ms, Contact nav 504.86ms"
+    },
+    {
+      "command": "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 npx playwright test --list",
+      "result": "passed",
+      "details": "Suite inventory only: 589 tests in 189 files"
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter \"FullyQualifiedName~AdminContentEndpointsTests|FullyQualifiedName~WorkVideoEndpointsTests\"",
+      "result": "passed_with_warnings",
+      "details": "30/30 tests passed; existing AWSSDK.Core NU1901 low-severity advisory warning emitted"
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj --filter FullyQualifiedName~PublicQueryHandlerComponentTests",
+      "result": "passed_with_warnings",
+      "details": "18/18 tests passed; existing AWSSDK.Core NU1901 low-severity advisory warning emitted"
+    },
+    {
+      "command": "BACKEND_PUBLISH_PORT=18080 docker compose -f docker-compose.dev.yml up -d --build frontend",
+      "result": "passed",
+      "details": "Rebuilt backend/frontend containers for browser validation"
+    },
+    {
+      "command": "docker run --rm --network woong-blog-aspcore-nextjs_default ... npx playwright test tests/public-work-videos.spec.ts --workers=1",
+      "result": "passed",
+      "details": "5/5 tests passed"
+    },
+    {
+      "command": "docker run --rm --network woong-blog-aspcore-nextjs_default ... npx playwright test tests/public-work-toc.spec.ts tests/public-works-pagination.spec.ts tests/public-blog-pagination.spec.ts --workers=1",
+      "result": "passed",
+      "details": "8/8 tests passed"
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "passed",
+      "details": "TypeScript emitted no errors"
+    },
+    {
+      "command": "npm run lint",
+      "result": "passed_with_warnings",
+      "details": "0 errors, 6 non-blocking warnings in existing tests/backups/scripts"
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed",
+      "details": "No whitespace or patch-format issues reported"
+    }
+  ],
+  "risks": [
+    "Docker Desktop port publishing for nginx failed in this WSL session; Playwright used a no-port nginx container on the compose network.",
+    "npm run lint reports existing non-blocking warnings unrelated to this production path.",
+    "Backend restore/build emits an existing low-severity AWSSDK.Core advisory warning.",
+    "Desktop back after mobile reading prioritizes desktop layout stability over raw mobile scroll restoration.",
+    "npm run build was attempted during the crypto addendum but stopped after more than 4 minutes with no output on the /mnt/d workspace; local browser verification uses next dev on 0.0.0.0:3002 behind the 0.0.0.0:3000 proxy.",
+    "Intermittent stale public detail after edit was not reproduced in this addendum; save paths still await public revalidation before routing or refresh.",
+    "Current local click slowness is primarily next dev cold route compilation and generateStaticParams overhead; observed first compiles included /blog/[slug] around 6.8s and /works/[slug] around 8.7s.",
+    "The full Playwright suite was not run in this latency addendum because it lists 589 tests and the active server is next dev; this would measure dev compilation, video recording, and test-data setup overhead more than production app latency."
+  ],
+  "backupPaths": [
+    "/tmp/woong-blog-backup-2026-04-25-works-study-hotfix",
+    "/tmp/woong-blog-backup-2026-04-25-followup",
+    "/tmp/woong-blog-backup-2026-04-25-followup-2",
+    "/tmp/woong-blog-backup-2026-04-25-crypto-hotfix",
+    "/tmp/woong-blog-backup-2026-04-25-latency-hotfix"
+  ],
+  "artifacts": [
+    "backend/reports/works-study-hotfix-2026-04-25/works-study-hotfix-2026-04-25.md",
+    "backend/reports/works-study-hotfix-2026-04-25/works-study-hotfix-2026-04-25.html",
+    "backend/reports/works-study-hotfix-2026-04-25/works-study-hotfix-2026-04-25.json"
+  ],
+  "recommendation": "Ship this hotfix."
+}

@@ -1,5 +1,6 @@
 import { expect, test } from './helpers/performance-test'
 import { getStyle } from './helpers/ui-improvement'
+import { isLocalQaBaseUrl, LOCAL_QA_FLAG_SKIP_REASON } from './helpers/local-qa'
 
 test('Featured works renders as a grid card layout', async ({ page }) => {
   await page.goto('/')
@@ -49,6 +50,8 @@ test('featured work cards advertise hover interactions', async ({ page }) => {
 })
 
 test('featured work cards use the richer no-image placeholder treatment', async ({ page }) => {
+  test.skip(!isLocalQaBaseUrl(), LOCAL_QA_FLAG_SKIP_REASON)
+
   await page.goto('/works?__qaNoImage=1')
 
   const placeholder = page.getByTestId('work-card-no-image-placeholder').first()
@@ -57,6 +60,8 @@ test('featured work cards use the richer no-image placeholder treatment', async 
 })
 
 test('home featured works no-image placeholder matches icon plus label pattern', async ({ page }) => {
+  test.skip(!isLocalQaBaseUrl(), LOCAL_QA_FLAG_SKIP_REASON)
+
   await page.goto('/?__qaNoImage=1')
 
   const placeholder = page.getByTestId('featured-work-no-image-placeholder').first()

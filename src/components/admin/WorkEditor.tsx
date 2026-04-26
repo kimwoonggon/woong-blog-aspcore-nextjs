@@ -44,6 +44,7 @@ import type {
 } from '@/components/admin/work-editor/types'
 import {
     buildWorkSnapshot,
+    createClientId,
     getNextVideosVersion,
     getResponseError,
     inferThumbnailSourceKind,
@@ -69,9 +70,7 @@ const SOCIAL_SHARE_MESSAGE_KEY = 'socialShareMessage'
 
 function createMetadataField(key = '', value = ''): MetadataField {
     return {
-        id: typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
-            ? crypto.randomUUID()
-            : `${Date.now()}-${Math.random()}`,
+        id: createClientId(),
         key,
         value,
     }
@@ -580,7 +579,7 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
         }
 
         setStagedVideos((current) => [...current, {
-            tempId: crypto.randomUUID(),
+            tempId: createClientId(),
             kind: 'youtube',
             label: trimmed,
             youtubeUrl: trimmed,
@@ -599,7 +598,7 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
         }
 
         setStagedVideos((current) => [...current, {
-            tempId: crypto.randomUUID(),
+            tempId: createClientId(),
             kind: 'file',
             label: file.name,
             uploadMode: 'hls',

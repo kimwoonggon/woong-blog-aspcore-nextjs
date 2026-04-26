@@ -4,7 +4,7 @@ import { PublicWorkDetailAdminActions } from '@/components/admin/PublicWorkDetai
 import { PublicDetailAdjacentLink } from '@/components/content/PublicDetailAdjacentLink'
 import { RelatedContentList } from '@/components/content/RelatedContentList'
 import { InteractiveRenderer } from '@/components/content/InteractiveRenderer'
-import { TableOfContents } from '@/components/content/TableOfContents'
+import { WorkTableOfContentsRail } from '@/components/content/WorkTableOfContentsRail'
 import { WorkVideoPlayer } from '@/components/content/WorkVideoPlayer'
 import { Metadata } from 'next'
 import { Suspense } from 'react'
@@ -99,10 +99,11 @@ export default async function WorkDetailPage({ params }: PageProps) {
     const olderWork = currentIndex >= 0 && currentIndex < sortedWorks.length - 1 ? sortedWorks[currentIndex + 1] : null
     return (
         <article className="mx-auto w-full px-4 py-8 md:px-6 md:py-12">
+            <div id="work-detail-toc-start" aria-hidden="true" className="h-0" />
             <div data-testid="work-article-content-layout" className="mx-auto xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,48rem)_minmax(0,1fr)] xl:items-start xl:gap-12">
                 <div data-testid="work-detail-body" className="mx-auto min-w-0 w-full max-w-3xl xl:col-start-2">
                     <header className="mb-8">
-                        <h1 className="mb-4 text-3xl font-heading font-bold leading-tight text-foreground text-balance md:text-4xl">
+                        <h1 data-testid="work-detail-title" className="mb-4 text-3xl font-heading font-bold leading-tight text-foreground text-balance md:text-4xl">
                             {work.title}
                         </h1>
                         <div className="mb-6 flex flex-wrap items-center gap-4 text-muted-foreground">
@@ -152,17 +153,27 @@ export default async function WorkDetailPage({ params }: PageProps) {
                             </div>
                         )}
                         {contentHtml && (
-                            <InteractiveRenderer html={contentHtml} workVideos={orderedVideos} />
+                            <InteractiveRenderer
+                                html={contentHtml}
+                                workVideos={orderedVideos}
+                                enableWorksDetailUploadedVideoPresentation
+                            />
                         )}
                     </div>
 
                 </div>
 
-                <aside className="hidden xl:col-start-3 xl:block xl:w-full xl:max-w-80 xl:justify-self-start xl:self-start xl:pl-10">
-                    <TableOfContents contentRootId="work-detail-content" />
+                <aside className="hidden xl:sticky xl:top-28 xl:col-start-3 xl:block xl:w-full xl:max-w-80 xl:justify-self-start xl:self-start xl:pl-10">
+                    <WorkTableOfContentsRail
+                        contentRootId="work-detail-content"
+                        title="On This Work"
+                        rangeStartId="work-detail-toc-start"
+                        rangeEndId="work-detail-toc-end"
+                    />
                 </aside>
             </div>
 
+            <div id="work-detail-toc-end" aria-hidden="true" className="h-0" />
             <div className="mx-auto max-w-3xl">
                 {(olderWork || newerWork) && (
                     <Suspense fallback={null}>

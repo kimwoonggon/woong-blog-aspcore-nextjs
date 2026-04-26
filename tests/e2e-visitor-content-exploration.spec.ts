@@ -13,14 +13,14 @@ test('E2E-003 visitor can move from home to works, through related content, and 
   const firstWorkTitle = (await firstWorkCard.locator('h2').innerText()).trim()
   await firstWorkCard.click()
 
-  await expect(page.locator('main h1')).toHaveText(firstWorkTitle)
+  await expect(page.getByTestId('work-detail-title')).toHaveText(firstWorkTitle)
   await expect(page.getByTestId('work-related-shell')).toBeVisible()
 
   const relatedWorkCard = page.getByTestId('related-work-card').first()
   await expect(relatedWorkCard).toBeVisible()
   await relatedWorkCard.click()
 
-  await expect(page.locator('main h1')).toBeVisible()
+  await expect(page.getByTestId('work-detail-title')).toBeVisible()
   await expect(page).toHaveURL(/\/works\/.+/)
 
   await clickHeaderNavLink(page, 'Study')
@@ -34,7 +34,7 @@ test('E2E-003 visitor can move from home to works, through related content, and 
   await firstBlogCard.click()
 
   await expect(page).toHaveURL(new RegExp(`/blog/.+`))
-  await expect(page.locator('main h1')).toHaveText(firstBlogTitle)
+  await expect(page.getByTestId('blog-detail-title')).toHaveText(firstBlogTitle)
   await expect(page.getByTestId('blog-related-shell')).toBeVisible()
   await expect(page.getByTestId('blog-prev-next')).toBeVisible()
 })

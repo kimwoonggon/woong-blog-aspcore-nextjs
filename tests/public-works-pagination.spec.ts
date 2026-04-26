@@ -1,13 +1,37 @@
 import { expect, test } from './helpers/performance-test'
 import { measureStep } from './helpers/latency'
 
-test('works list uses infinite feed on mobile (390px)', async ({ page }) => {
+test('works list auto-appends on mobile and stops without a Load more button', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/works')
 
+  const firstPagePayload = await (await page.request.get('/api/public/works?page=1&pageSize=10')).json() as {
+    items: unknown[]
+  }
+  const secondPagePayload = await (await page.request.get('/api/public/works?page=2&pageSize=10')).json() as {
+    items: unknown[]
+  }
+
   await expect(page.getByLabel('Works pagination')).toBeHidden()
-  await expect(page.getByTestId('work-card')).toHaveCount(10)
-  await expect(page.getByTestId('works-load-more')).toBeVisible()
+  await expect(page.getByTestId('works-load-more')).toHaveCount(0)
+  await expect(page.getByTestId('work-card')).toHaveCount(firstPagePayload.items.length)
+
+  test.skip(secondPagePayload.items.length === 0, 'Current seed has no second works page to append in mobile infinite mode.')
+
+  await measureStep(
+    testInfo,
+    'Works mobile auto append next page',
+    'publicPagination',
+    async () => {
+      await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
+    },
+    async () => {
+      await expect.poll(async () => page.getByTestId('work-card').count()).toBeGreaterThan(firstPagePayload.items.length)
+
+      const countAfterAppend = await page.getByTestId('work-card').count()
+      expect(countAfterAppend).toBeLessThanOrEqual(firstPagePayload.items.length + secondPagePayload.items.length)
+    },
+  )
 })
 
 test('works list uses infinite feed on tablet (820px) and appends next page', async ({ page }, testInfo) => {

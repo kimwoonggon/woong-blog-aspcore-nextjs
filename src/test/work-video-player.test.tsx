@@ -27,6 +27,32 @@ vi.mock('hls.js', () => {
 })
 
 describe('WorkVideoPlayer', () => {
+  function stubDesktopPreviewEnvironment() {
+    vi.stubGlobal('matchMedia', vi.fn().mockImplementation((query: string) => ({
+      matches: query.includes('hover: hover') || query.includes('pointer: fine'),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+      media: query,
+      onchange: null,
+    })))
+  }
+
+  function stubTouchPreviewEnvironment() {
+    vi.stubGlobal('matchMedia', vi.fn().mockImplementation((query: string) => ({
+      matches: false,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+      media: query,
+      onchange: null,
+    })))
+  }
+
   beforeEach(() => {
     hlsMocks.attachMedia.mockClear()
     hlsMocks.constructor.mockClear()
@@ -34,6 +60,7 @@ describe('WorkVideoPlayer', () => {
     hlsMocks.isSupported.mockClear()
     hlsMocks.isSupported.mockReturnValue(true)
     hlsMocks.loadSource.mockClear()
+    stubDesktopPreviewEnvironment()
   })
 
   afterEach(() => {
@@ -73,7 +100,7 @@ describe('WorkVideoPlayer', () => {
     expect(container.querySelector('video')).toBeTruthy()
   })
 
-  it('reduces direct download affordances on native video controls', () => {
+  it('restores native controls while reducing direct download affordances', () => {
     const { container } = render(
       <WorkVideoPlayer
         video={{
@@ -88,6 +115,7 @@ describe('WorkVideoPlayer', () => {
     )
 
     const video = container.querySelector('video')
+    expect(video).toHaveAttribute('controls')
     expect(video).toHaveAttribute('controlsList', 'nodownload noremoteplayback')
     expect(video).toHaveAttribute('disablePictureInPicture')
   })
@@ -185,7 +213,7 @@ timeline-sprite.jpg#xywh=0,0,320,180
     expect(screen.getByTestId('work-video-center-play')).toBeInTheDocument()
   })
 
-  it('shows a hover preview when the lower video frame is hovered and preview assets are available', async () => {
+  it('shows a smaller desktop-only hover preview when preview assets are available', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(`WEBVTT
 
 00:00:00.000 --> 00:00:05.000
@@ -214,7 +242,6 @@ timeline-sprite.jpg#xywh=0,0,320,180
     fireEvent.durationChange(video)
 
     const frame = screen.getByTestId('work-video-frame')
-    const overlay = screen.getByTestId('work-video-progress-overlay')
     Object.defineProperty(frame, 'getBoundingClientRect', {
       configurable: true,
       value: () => ({
@@ -222,19 +249,20 @@ timeline-sprite.jpg#xywh=0,0,320,180
         left: 0,
         height: 120,
         bottom: 120,
+        top: 0,
+        right: 200,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
       }),
     })
-    Object.defineProperty(overlay, 'getBoundingClientRect', {
-      configurable: true,
-      value: () => ({
-        width: 168,
-        left: 16,
-      }),
-    })
+    expect(screen.queryByTestId('work-video-preview-region')).not.toBeInTheDocument()
+    expect(frame.className).not.toContain('cursor-ew-resize')
+
     await waitFor(() => {
-      fireEvent.mouseMove(overlay, {
+      fireEvent.mouseMove(frame, {
         clientX: 40,
-        clientY: 110,
+        clientY: 100,
       })
       expect(screen.getByTestId('work-video-timeline-preview')).toBeInTheDocument()
     })
@@ -254,6 +282,125 @@ timeline-sprite.jpg#xywh=0,0,320,180
     expect(height).toBeCloseTo(180 * timelinePreviewDisplayScale, 4)
     expect(backgroundWidth).toBeCloseTo(width, 4)
     expect(backgroundHeight).toBeCloseTo(height, 4)
+  })
+
+  it('clears the preview bubble on pointer leave, playback start, seeking, and source changes', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(`WEBVTT
+
+00:00:00.000 --> 00:00:05.000
+timeline-sprite.jpg#xywh=0,0,320,180
+`, { status: 200 })))
+
+    const initialVideo = {
+      id: 'video-preview-clear',
+      sourceType: 'hls' as const,
+      sourceKey: 'local:videos/work-1/hls/master.m3u8',
+      playbackUrl: '/media/videos/work-1/hls/master.m3u8',
+      mimeType: 'application/vnd.apple.mpegurl',
+      durationSeconds: 20,
+      timelinePreviewSpriteUrl: '/media/videos/work-1/hls/timeline-sprite.jpg',
+      timelinePreviewVttUrl: '/media/videos/work-1/hls/timeline.vtt',
+      sortOrder: 0,
+    }
+
+    const { container, rerender } = render(<WorkVideoPlayer video={initialVideo} />)
+
+    const video = container.querySelector('video') as HTMLVideoElement
+    Object.defineProperty(video, 'duration', { configurable: true, value: 20 })
+    fireEvent.durationChange(video)
+
+    const frame = screen.getByTestId('work-video-frame')
+    Object.defineProperty(frame, 'getBoundingClientRect', {
+      configurable: true,
+      value: () => ({
+        width: 200,
+        left: 0,
+        height: 120,
+        bottom: 120,
+        top: 0,
+        right: 200,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+      }),
+    })
+    expect(screen.queryByTestId('work-video-preview-region')).not.toBeInTheDocument()
+
+    await waitFor(() => {
+      fireEvent.mouseMove(frame, { clientX: 40, clientY: 96 })
+      expect(screen.getByTestId('work-video-timeline-preview')).toBeInTheDocument()
+    })
+
+    fireEvent.mouseLeave(frame)
+    await waitFor(() => {
+      expect(screen.queryByTestId('work-video-timeline-preview')).not.toBeInTheDocument()
+    })
+
+    fireEvent.mouseMove(frame, { clientX: 40, clientY: 96 })
+    await waitFor(() => {
+      expect(screen.getByTestId('work-video-timeline-preview')).toBeInTheDocument()
+    })
+
+    fireEvent.play(video)
+    await waitFor(() => {
+      expect(screen.queryByTestId('work-video-timeline-preview')).not.toBeInTheDocument()
+    })
+
+    fireEvent.mouseMove(frame, { clientX: 40, clientY: 96 })
+    await waitFor(() => {
+      expect(screen.getByTestId('work-video-timeline-preview')).toBeInTheDocument()
+    })
+
+    fireEvent.seeking(video)
+    await waitFor(() => {
+      expect(screen.queryByTestId('work-video-timeline-preview')).not.toBeInTheDocument()
+    })
+
+    rerender(
+      <WorkVideoPlayer
+        video={{
+          ...initialVideo,
+          id: 'video-preview-cleared-next',
+          playbackUrl: '/media/videos/work-2/hls/master.m3u8',
+          timelinePreviewSpriteUrl: null,
+          timelinePreviewVttUrl: null,
+        }}
+      />,
+    )
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('work-video-timeline-preview')).not.toBeInTheDocument()
+    })
+  })
+
+  it('disables timeline preview on touch/mobile environments', async () => {
+    stubTouchPreviewEnvironment()
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(`WEBVTT
+
+00:00:00.000 --> 00:00:05.000
+timeline-sprite.jpg#xywh=0,0,320,180
+`, { status: 200 })))
+
+    render(
+      <WorkVideoPlayer
+        video={{
+          id: 'video-touch-preview',
+          sourceType: 'hls',
+          sourceKey: 'local:videos/work-1/hls/master.m3u8',
+          playbackUrl: '/media/videos/work-1/hls/master.m3u8',
+          mimeType: 'application/vnd.apple.mpegurl',
+          durationSeconds: 20,
+          timelinePreviewSpriteUrl: '/media/videos/work-1/hls/timeline-sprite.jpg',
+          timelinePreviewVttUrl: '/media/videos/work-1/hls/timeline.vtt',
+          sortOrder: 0,
+        }}
+      />,
+    )
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('work-video-preview-region')).not.toBeInTheDocument()
+    })
+    expect(screen.queryByTestId('work-video-timeline-preview')).not.toBeInTheDocument()
   })
 
   it('supports desktop resize modes when enabled', () => {

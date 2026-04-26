@@ -37,6 +37,16 @@
       "hardMs": 1500,
       "failOnHard": true
     },
+    "publicNavClick": {
+      "warnMs": 1000,
+      "hardMs": 1500,
+      "failOnHard": true
+    },
+    "publicDetailOpen": {
+      "warnMs": 1500,
+      "hardMs": 2500,
+      "failOnHard": true
+    },
     "publicClickInteraction": {
       "warnMs": 150,
       "hardMs": 250,

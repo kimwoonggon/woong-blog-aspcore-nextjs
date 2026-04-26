@@ -4,4 +4,5 @@ public interface IWorkVideoPlaybackUrlBuilder
 {
     string? BuildPlaybackUrl(string sourceType, string sourceKey);
     string? BuildStorageObjectUrl(string storageType, string storageKey);
+    Task<bool> StorageObjectExistsAsync(string storageType, string storageKey, CancellationToken cancellationToken);
 }

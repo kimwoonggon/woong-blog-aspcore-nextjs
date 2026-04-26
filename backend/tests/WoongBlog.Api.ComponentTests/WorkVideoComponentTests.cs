@@ -722,6 +722,11 @@ public sealed class WorkVideoComponentTests
         {
             return $"/media/{storageKey}";
         }
+
+        public Task<bool> StorageObjectExistsAsync(string storageType, string storageKey, CancellationToken cancellationToken)
+        {
+            return Task.FromResult(true);
+        }
     }
 
     private sealed class TestHostEnvironment(string environmentName) : IHostEnvironment

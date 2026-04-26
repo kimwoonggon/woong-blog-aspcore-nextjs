@@ -16,5 +16,5 @@ test('WQ-025 root layout loads Next fonts with swap display behavior', async ({ 
   )
 
   const cssText = (await Promise.all(cssResponses.map((response) => response.text()))).join('\n')
-  expect(cssText).toContain('font-display:swap')
+  expect(cssText).toMatch(/font-display:\s*swap/)
 })

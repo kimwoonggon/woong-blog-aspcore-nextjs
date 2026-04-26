@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>E2E Auth and Core Suite Stabilization Audit</title>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.55; margin: 2rem auto; max-width: 920px; padding: 0 1rem; color: #111827; }
+    h1, h2 { line-height: 1.2; }
+    code { background: #f3f4f6; padding: 0.1rem 0.25rem; border-radius: 4px; }
+    ul { padding-left: 1.4rem; }
+    .status { border-left: 4px solid #16a34a; background: #f0fdf4; padding: 0.8rem 1rem; }
+    .risk { border-left: 4px solid #d97706; background: #fffbeb; padding: 0.8rem 1rem; }
+  </style>
+</head>
+<body>
+  <h1>E2E Auth and Core Suite Stabilization Audit</h1>
+  <p><strong>Date:</strong> 2026-04-26</p>
+  <section class="status">
+    <h2>Summary</h2>
+    <p>Implemented the E2E stabilization plan. <code>npm run test:e2e</code> now runs the release-blocking core lane, optional recording/live/batch/manual-heavy specs are split behind explicit profiles, and authenticated admin tests refresh <code>test-login</code> sessions per test.</p>
+    <p>Final local core validation passed: 410 passed, 5 skipped, 0 failed, 0 latency budget failures, 22.1 minutes.</p>
+  </section>
+  <h2>Changed</h2>
+  <ul>
+    <li>Added <code>ensureAdminSession</code> and <code>ensureAdminApiContext</code>.</li>
+    <li>Refreshed admin sessions for <code>chromium-authenticated</code> tests while preserving runtime auth coverage.</li>
+    <li>Moved optional E2E specs into optional/exhaustive profiles.</li>
+    <li>Updated package scripts for core, optional, and exhaustive lanes.</li>
+    <li>Updated public detail title test IDs, TOC test IDs, QA flag guards, and stale content assertions.</li>
+  </ul>
+  <h2>Validation</h2>
+  <ul>
+    <li><code>npm run typecheck</code>: passed.</li>
+    <li><code>npm test -- src/test/table-of-contents.test.tsx src/test/local-qa-query-boundary.test.tsx</code>: passed, 12 tests.</li>
+    <li>Profile listing: core 415 tests, optional 174 tests, exhaustive 589 tests.</li>
+    <li>Targeted public detail/TOC, admin smoke, Notion, works video, runtime-auth, and earlier-failure reruns passed.</li>
+    <li>Full local core lane passed: 410 passed, 5 skipped, 0 failed.</li>
+  </ul>
+  <section class="risk">
+    <h2>Risks and Follow-Up</h2>
+    <p>The final full core run used the fresh local dev endpoint. Docker production-like containers were present but predated the final edits, so release promotion should include a rebuilt Docker core rerun.</p>
+    <p>Post-audit correction: an existing nginx container was exposing host ports 80 and 443, which does not match the requested Docker test boundary. It was stopped after review; future Docker validation must use HTTP on <code>127.0.0.1:3000</code> only.</p>
+  </section>
+  <h2>Recommendation</h2>
+  <p>Use the new core lane as the release-blocking E2E signal, then rebuild the Docker test stack bound only to <code>http://127.0.0.1:3000</code> and rerun <code>npm run test:e2e</code> once before production promotion.</p>
+</body>
+</html>

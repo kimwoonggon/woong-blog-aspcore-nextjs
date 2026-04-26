@@ -105,4 +105,3 @@ High-risk low-coverage areas are R2/object storage video paths, auth/OIDC/cookie
 ## Recommendation
 
 Keep the coverage tooling and documentation. Use the 90.1% line / 60.9% branch full-backend baseline as a starting point for prioritization, not as a gate. The next coverage work should focus on the high-risk low-coverage areas listed above before considering any threshold.
-

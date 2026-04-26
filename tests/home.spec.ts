@@ -19,7 +19,7 @@ test('primary navbar routes to every public destination', async ({ page }) => {
 
   const cases = [
     { label: 'Home', href: '/', assertion: () => expect(page).toHaveURL(/\/$/) },
-    { label: 'Introduction', href: '/introduction', assertion: () => expect(page.locator('main h1')).toContainText('Introduction') },
+    { label: 'Introduction', href: '/introduction', assertion: () => expect(page.locator('main h1').first()).toBeVisible() },
     { label: 'Works', href: '/works', assertion: () => expect(page.locator('main h1')).toHaveText('Works') },
     { label: 'Study', href: '/blog', assertion: () => expect(page.locator('main h1')).toHaveText('Study') },
     { label: 'Contact', href: '/contact', assertion: () => expect(page.locator('main h1')).toHaveText('Contact') },

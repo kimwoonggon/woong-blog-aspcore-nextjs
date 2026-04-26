@@ -4,7 +4,10 @@ import { getStyle } from './helpers/ui-improvement'
 test('VA-010 blog card excerpt keeps a readable line-height ratio and preserves the excerpt clamp', async ({ page }) => {
   await page.goto('/')
 
-  const card = page.getByTestId('recent-post-card').first()
+  const card = page
+    .getByTestId('recent-post-card')
+    .filter({ has: page.locator('[data-slot="card-content"] p').filter({ hasText: /\S/ }) })
+    .first()
   await expect(card).toBeVisible()
 
   const title = card.locator('[data-slot="card-title"]').first()
@@ -52,19 +55,24 @@ test('VA-120 blog detail table of contents keeps its own surfaced container styl
   await page.goto('/blog/seeded-blog')
 
   const toc = page.getByTestId('blog-toc')
+  const body = page.getByTestId('blog-detail-body')
   await expect(toc).toBeVisible()
+  await expect(body).toBeVisible()
 
-  const [borderWidth, backgroundColor, boxShadow, position] = await Promise.all([
+  const [borderWidth, backgroundColor, boxShadow, bodyBox, tocBox] = await Promise.all([
     getStyle(toc, 'border-top-width'),
     getStyle(toc, 'background-color'),
     getStyle(toc, 'box-shadow'),
-    getStyle(toc, 'position'),
+    body.boundingBox(),
+    toc.boundingBox(),
   ])
 
   expect(Number.parseFloat(borderWidth)).toBeGreaterThan(0)
   expect(backgroundColor).not.toBe('rgba(0, 0, 0, 0)')
   expect(boxShadow).not.toBe('none')
-  expect(position).toBe('sticky')
+  expect(bodyBox).toBeTruthy()
+  expect(tocBox).toBeTruthy()
+  expect(bodyBox!.x + bodyBox!.width).toBeLessThanOrEqual(tocBox!.x - 24)
 })
 
 test('VA-142 work detail metadata stays visually subordinate to the page title', async ({ page }) => {

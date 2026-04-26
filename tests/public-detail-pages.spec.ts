@@ -15,7 +15,7 @@ test('work detail page renders seeded detail content and stable related cards', 
   expect(work).toBeTruthy()
 
   await page.goto(`/works/${work.slug}`)
-  await expect(page.locator('main h1')).toHaveText(work.title)
+  await expect(page.getByTestId('work-detail-title')).toHaveText(work.title)
 
   const relatedWorkCards = page.getByTestId('related-work-card')
   if ((await relatedWorkCards.count()) === 0) {
@@ -40,7 +40,7 @@ test('blog detail page renders seeded blog content and stable related cards', as
   expect(blog).toBeTruthy()
 
   await page.goto(`/blog/${blog.slug}`)
-  await expect(page.locator('main h1')).toHaveText(blog.title)
+  await expect(page.getByTestId('blog-detail-title')).toHaveText(blog.title)
 
   const relatedBlogCards = page.getByTestId('related-blog-card')
   if ((await relatedBlogCards.count()) === 0) {

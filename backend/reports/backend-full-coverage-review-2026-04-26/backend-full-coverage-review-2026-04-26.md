@@ -225,4 +225,3 @@ Treat the current suite as a solid baseline, not a finish line. Implement covera
 5. Media upload failure mapping and content/search helper edge cases.
 
 Do not add a high coverage threshold until the P1 and most P2 targets are covered. Use branch coverage and named behavior gaps as the planning metric.
-

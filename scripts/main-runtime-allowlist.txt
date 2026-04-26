@@ -1,6 +1,8 @@
 # Runtime tree for main promotion
 .dockerignore
 .github/workflows/ci-main-runtime.yml
+.github/workflows/promote-main-runtime.yml
+.github/workflows/publish-ghcr-dev.yml
 .github/workflows/publish-ghcr-main.yml
 LICENSE
 README.md
@@ -21,6 +23,8 @@ package.json
 package-lock.json
 playwright.config.ts
 scripts/ci-compose-smoke.sh
+scripts/main-runtime-allowlist.txt
+scripts/promote-main-runtime.sh
 scripts/azure-backup-lib.mjs
 scripts/azure-backup.mjs
 scripts/azure-restore.mjs
@@ -35,6 +39,7 @@ tsconfig.json
 next.config.ts
 tests/ci-compose-public.spec.ts
 tests/helpers/global-setup.ts
+tests/helpers/auth.ts
 tests/helpers/latency.ts
 tests/helpers/performance-test.ts
 tests/performance-budgets.json

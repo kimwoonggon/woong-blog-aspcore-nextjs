@@ -16,7 +16,7 @@ test('introduction page renders backend-managed content', async ({ page, request
   const shell = page.getByTestId('static-public-shell')
   const prose = shell.locator('.prose').first()
 
-  await expect(page.getByRole('heading', { name: 'Introduction' })).toBeVisible()
+  await expect(page.locator('main h1').first()).toHaveText(payload.title as string)
   await expect(shell.getByText('About the work')).toHaveCount(0)
   await expect(shell.getByText(/A short framing of who I am, what kind of problems I like to solve/i)).toHaveCount(0)
   await expect(prose).toBeVisible()

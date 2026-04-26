@@ -12,6 +12,7 @@ import { sanitizeHtml } from '@/lib/content/html-sanitizer'
 interface InteractiveRendererProps {
     html: string
     workVideos?: WorkVideo[]
+    enableWorksDetailUploadedVideoPresentation?: boolean
 }
 
 // Consistent HTML entity decoding for both SSR and client (no hydration mismatch)
@@ -72,13 +73,25 @@ function renderProseHtml(html: string) {
     return <div className="prose prose-lg max-w-[72ch] dark:prose-invert" dangerouslySetInnerHTML={{ __html: sanitizeHtml(html) }} />
 }
 
-function renderVideoSegments(segments: ReturnType<typeof splitWorkVideoEmbedContent>, workVideos: WorkVideo[]) {
+function renderVideoSegments(
+    segments: ReturnType<typeof splitWorkVideoEmbedContent>,
+    workVideos: WorkVideo[],
+    enableWorksDetailUploadedVideoPresentation: boolean,
+) {
     return (
         <div className="prose prose-lg max-w-none space-y-6 dark:prose-invert">
             {segments.map((segment, index) => {
                 if (segment.type === 'video' && segment.videoId) {
                     const video = workVideos.find((item) => item.id === segment.videoId)
-                    return video ? <WorkVideoPlayer key={`${segment.videoId}-${index}`} video={video} /> : null
+                    return video
+                        ? (
+                            <WorkVideoPlayer
+                                key={`${segment.videoId}-${index}`}
+                                video={video}
+                                allowDesktopResize={enableWorksDetailUploadedVideoPresentation && video.sourceType !== 'youtube'}
+                            />
+                        )
+                        : null
                 }
 
                 if (!segment.html?.trim()) {
@@ -90,6 +103,7 @@ function renderVideoSegments(segments: ReturnType<typeof splitWorkVideoEmbedCont
                         key={`html-${index}`}
                         html={segment.html}
                         workVideos={workVideos}
+                        enableWorksDetailUploadedVideoPresentation={enableWorksDetailUploadedVideoPresentation}
                     />
                 )
             })}
@@ -97,7 +111,11 @@ function renderVideoSegments(segments: ReturnType<typeof splitWorkVideoEmbedCont
     )
 }
 
-export function InteractiveRenderer({ html, workVideos = [] }: InteractiveRendererProps) {
+export function InteractiveRenderer({
+    html,
+    workVideos = [],
+    enableWorksDetailUploadedVideoPresentation = false,
+}: InteractiveRendererProps) {
     const processedHtml = useMemo(() => {
         const sanitized = stripHtmlWrappers(html)
         return sanitized
@@ -110,7 +128,11 @@ export function InteractiveRenderer({ html, workVideos = [] }: InteractiveRender
     const hasMermaidBlock = containsMermaidSyntax(processedHtml)
 
     if (hasWorkVideoEmbed) {
-        return renderVideoSegments(splitWorkVideoEmbedContent(processedHtml), workVideos)
+        return renderVideoSegments(
+            splitWorkVideoEmbedContent(processedHtml),
+            workVideos,
+            enableWorksDetailUploadedVideoPresentation,
+        )
     }
 
     if (hasMermaidBlock) {
@@ -130,6 +152,7 @@ export function InteractiveRenderer({ html, workVideos = [] }: InteractiveRender
                             key={`html-${index}`}
                             html={segment.html}
                             workVideos={workVideos}
+                            enableWorksDetailUploadedVideoPresentation={enableWorksDetailUploadedVideoPresentation}
                         />
                     )
                 })}
