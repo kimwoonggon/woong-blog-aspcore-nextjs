@@ -46,7 +46,7 @@ describe('azure backup helpers', () => {
   })
 
   it('formats backup ids and cron entries', () => {
-    expect(buildBackupId(new Date('2026-04-18T00:00:00Z'))).toBe('20260418T000000Z')
+    expect(buildBackupId(new Date('2026-04-18T00:00:00Z'))).toBe('20260418T090000KST')
     const cronEntry = buildCronEntry({
       backupScriptPath: '/repo/scripts/azure-backup.mjs',
       envFile: '.env.prod',
@@ -55,8 +55,8 @@ describe('azure backup helpers', () => {
       repoRoot: '/repo',
     })
 
-    expect(cronEntry).toContain('CRON_TZ=Asia/Seoul')
-    expect(cronEntry).toContain("0 7 * * *")
+    expect(cronEntry).toContain('Runs at 07:00 Asia/Seoul using the server UTC cron clock.')
+    expect(cronEntry).toContain("0 22 * * *")
     expect(cronEntry).toContain("APP_ENV_FILE='.env.prod'")
     expect(cronEntry).toContain("'/usr/bin/node' '/repo/scripts/azure-backup.mjs'")
   })
