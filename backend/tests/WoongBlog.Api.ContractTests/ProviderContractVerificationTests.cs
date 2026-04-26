@@ -5,6 +5,7 @@ using Xunit.Abstractions;
 
 namespace WoongBlog.Api.ContractTests;
 
+[Trait(TestCategories.Key, TestCategories.Contract)]
 public sealed class ProviderContractVerificationTests
 {
     private readonly ITestOutputHelper _output;
@@ -14,22 +15,13 @@ public sealed class ProviderContractVerificationTests
         _output = output;
     }
 
-    [Fact]
+    [PactProviderFact]
     public void VerifyProviderContractsFromPactFiles()
     {
-        var providerBaseUrl = Environment.GetEnvironmentVariable("PACT_PROVIDER_BASE_URL");
-        var pactDirectory = ResolvePactDirectory();
-        var pactFiles = Directory.Exists(pactDirectory)
-            ? Directory.EnumerateFiles(pactDirectory, "*.json", SearchOption.TopDirectoryOnly).ToArray()
-            : [];
-
-        if (string.IsNullOrWhiteSpace(providerBaseUrl) || pactFiles.Length == 0)
-        {
-            _output.WriteLine(
-                "Skipping Pact provider verification because PACT_PROVIDER_BASE_URL is unset or no pact files exist in " +
-                $"{pactDirectory}. Start the ASP.NET provider on a real local TCP socket and set PACT_PROVIDER_BASE_URL to enable verification.");
-            return;
-        }
+        var providerBaseUrl = Environment.GetEnvironmentVariable("PACT_PROVIDER_BASE_URL") ??
+            throw new InvalidOperationException(
+                PactProviderContractSetup.SkipReasonIfUnavailable() ?? "PACT_PROVIDER_BASE_URL is required.");
+        var pactFiles = PactProviderContractSetup.GetPactFiles();
 
         foreach (var pactFile in pactFiles)
         {
@@ -46,16 +38,46 @@ public sealed class ProviderContractVerificationTests
                 .Verify();
         }
     }
+}
+
+[AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
+internal sealed class PactProviderFactAttribute : FactAttribute
+{
+    public PactProviderFactAttribute()
+    {
+        Skip = PactProviderContractSetup.SkipReasonIfUnavailable();
+    }
+}
+
+internal static class PactProviderContractSetup
+{
+    public static string[] GetPactFiles()
+    {
+        var pactDirectory = ResolvePactDirectory();
+        return Directory.Exists(pactDirectory)
+            ? Directory.EnumerateFiles(pactDirectory, "*.json", SearchOption.TopDirectoryOnly).ToArray()
+            : [];
+    }
+
+    public static string? SkipReasonIfUnavailable()
+    {
+        var pactDirectory = ResolvePactDirectory();
+        var providerBaseUrl = Environment.GetEnvironmentVariable("PACT_PROVIDER_BASE_URL");
+        var pactFilesExist = Directory.Exists(pactDirectory) &&
+            Directory.EnumerateFiles(pactDirectory, "*.json", SearchOption.TopDirectoryOnly).Any();
+
+        return string.IsNullOrWhiteSpace(providerBaseUrl) || !pactFilesExist
+            ? "Pact provider verification requires PACT_PROVIDER_BASE_URL and at least one pact file in " +
+              $"{pactDirectory}. Start the ASP.NET provider on a real local TCP socket and set PACT_PROVIDER_BASE_URL to enable verification."
+            : null;
+    }
 
     private static string ResolvePactDirectory()
     {
         var configuredDirectory = Environment.GetEnvironmentVariable("PACT_FILE_DIRECTORY");
-        if (!string.IsNullOrWhiteSpace(configuredDirectory))
-        {
-            return Path.GetFullPath(configuredDirectory);
-        }
-
-        return Path.Combine(FindRepositoryRoot(), "tests", "contracts", "pacts");
+        return !string.IsNullOrWhiteSpace(configuredDirectory)
+            ? Path.GetFullPath(configuredDirectory)
+            : Path.Combine(FindRepositoryRoot(), "tests", "contracts", "pacts");
     }
 
     private static string FindRepositoryRoot()

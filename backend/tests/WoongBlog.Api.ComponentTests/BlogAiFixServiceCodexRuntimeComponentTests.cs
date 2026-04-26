@@ -127,12 +127,113 @@ public class BlogAiFixServiceCodexRuntimeComponentTests
         }
     }
 
+    [Fact]
+    public async Task FixHtmlAsync_WithCodexProvider_PassesModelReasoningAndWorkdirToFakeProcess()
+    {
+        var tempRoot = CreateTempDirectory();
+        try
+        {
+            var codexHome = Path.Combine(tempRoot, "codex-home");
+            Directory.CreateDirectory(codexHome);
+            await File.WriteAllTextAsync(Path.Combine(codexHome, "auth.json"), "{}");
+            var scriptPath = Path.Combine(tempRoot, "fake-codex-arguments.sh");
+            await File.WriteAllTextAsync(scriptPath, $$"""
+                if [ "$(pwd)" != "{{tempRoot}}" ]; then
+                  echo "unexpected workdir: $(pwd)" >&2
+                  exit 44
+                fi
+
+                case " $* " in
+                  *" -m gpt-5.3-codex "*) ;;
+                  *) echo "missing model argument: $*" >&2; exit 45 ;;
+                esac
+
+                case " $* " in
+                  *'model_reasoning_effort="xhigh"'*) ;;
+                  *) echo "missing reasoning argument: $*" >&2; exit 46 ;;
+                esac
+
+                case " $* " in
+                  *" -C {{tempRoot}} "*) ;;
+                  *) echo "missing workdir argument: $*" >&2; exit 47 ;;
+                esac
+
+                cat >/dev/null
+                printf '<p>codex arguments ok</p>'
+                """);
+
+            var service = CreateService(new AiOptions
+            {
+                Provider = "Codex",
+                CodexCommand = "/bin/sh",
+                CodexArguments = [scriptPath],
+                CodexHome = codexHome,
+                CodexWorkdir = tempRoot,
+                CodexModel = "gpt-5.3-codex",
+                CodexReasoningEffort = "xhigh",
+                CodexAllowedModels = ["gpt-5.4", "gpt-5.3-codex"],
+                CodexAllowedReasoningEfforts = ["medium", "xhigh"]
+            });
+
+            var result = await service.FixHtmlAsync("<p>Hello</p>", CancellationToken.None);
+
+            Assert.Equal("codex", result.Provider);
+            Assert.Equal("gpt-5.3-codex", result.Model);
+            Assert.Equal("xhigh", result.ReasoningEffort);
+            Assert.Equal("<p>codex arguments ok</p>", result.FixedHtml);
+        }
+        finally
+        {
+            Directory.Delete(tempRoot, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task FixHtmlAsync_WithCodexProvider_ThrowsWhenFakeProcessReturnsNonZeroExit()
+    {
+        var tempRoot = CreateTempDirectory();
+        try
+        {
+            var codexHome = Path.Combine(tempRoot, "codex-home");
+            Directory.CreateDirectory(codexHome);
+            await File.WriteAllTextAsync(Path.Combine(codexHome, "auth.json"), "{}");
+            var scriptPath = Path.Combine(tempRoot, "fake-codex-failure.sh");
+            await File.WriteAllTextAsync(scriptPath, """
+                cat >/dev/null
+                echo "codex exploded" >&2
+                exit 17
+                """);
+
+            var service = CreateService(new AiOptions
+            {
+                Provider = "Codex",
+                CodexCommand = "/bin/sh",
+                CodexArguments = [scriptPath],
+                CodexHome = codexHome,
+                CodexWorkdir = tempRoot
+            });
+
+            var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                service.FixHtmlAsync("<p>Hello</p>", CancellationToken.None));
+
+            Assert.Contains("Codex request failed: codex exploded", exception.Message, StringComparison.OrdinalIgnoreCase);
+        }
+        finally
+        {
+            Directory.Delete(tempRoot, recursive: true);
+        }
+    }
+
     private static BlogAiFixService CreateService(AiOptions options)
     {
-        options.CodexAllowedModels = ["gpt-5.4"];
-        options.CodexAllowedReasoningEfforts = ["medium"];
-        options.CodexModel = "gpt-5.4";
-        options.CodexReasoningEffort = "medium";
+        options.CodexAllowedModels = options.CodexAllowedModels.Length == 0
+            ? ["gpt-5.4"]
+            : options.CodexAllowedModels;
+        options.CodexAllowedReasoningEfforts = options.CodexAllowedReasoningEfforts.Length == 0
+            ? ["medium"]
+            : options.CodexAllowedReasoningEfforts;
+        options.CodexModel = string.IsNullOrWhiteSpace(options.CodexModel) ? "gpt-5.4" : options.CodexModel;
+        options.CodexReasoningEffort = string.IsNullOrWhiteSpace(options.CodexReasoningEffort) ? "medium" : options.CodexReasoningEffort;
         options.CodexTimeoutMs = 5000;
 
         return new BlogAiFixService(

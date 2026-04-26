@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 
 namespace WoongBlog.Api.Tests;
 
+[Trait(TestCategories.Key, TestCategories.Integration)]
 public class AuthSecurityTests : IClassFixture<CustomWebApplicationFactory>
 {
     private readonly CustomWebApplicationFactory _factory;

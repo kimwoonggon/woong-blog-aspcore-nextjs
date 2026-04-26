@@ -246,6 +246,59 @@ public class ArchitectureBoundaryTests
     }
 
     [Fact]
+    public void Program_ComposesServicesMiddlewareAndEndpoints_InExpectedBoundaryOrder()
+    {
+        var programPath = Path.Combine(
+            FindRepositoryRoot(),
+            "backend",
+            "src",
+            "WoongBlog.Api",
+            "Program.cs");
+        var source = File.ReadAllText(programPath);
+
+        AssertSourceOrder(
+            source,
+            "builder.Services.AddApiCore();",
+            "builder.Services.AddApplication();",
+            "builder.Services.AddInfrastructure(builder.Configuration, builder.Environment);",
+            "builder.Services.AddPagesModule();",
+            "builder.Services.AddBlogsModule();",
+            "builder.Services.AddWorksModule(builder.Configuration);",
+            "builder.Services.AddSiteModule();",
+            "builder.Services.AddCompositionModule();",
+            "builder.Services.AddIdentityModule(builder.Configuration, builder.Environment);",
+            "builder.Services.AddMediaModule();",
+            "builder.Services.AddAiModule(builder.Configuration);",
+            "var app = builder.Build();");
+
+        AssertSourceOrder(
+            source,
+            "app.ValidateStartupOptions();",
+            "app.UseForwardedHeaders();",
+            "app.UseConfiguredTransportSecurity();",
+            "app.UseMiddleware<SecurityHeadersMiddleware>();",
+            "app.EnsureAuthStorageDirectories();",
+            "await app.InitializeDatabaseAsync();",
+            "app.UseAuthentication();",
+            "app.UseMiddleware<AntiforgeryValidationMiddleware>();",
+            "app.UseAuthorization();",
+            "app.UseMediaStaticFiles();");
+
+        AssertSourceOrder(
+            source,
+            "app.MapControllers();",
+            "app.MapPagesModule();",
+            "app.MapBlogsModule();",
+            "app.MapWorksModule();",
+            "app.MapSiteModule();",
+            "app.MapCompositionModule();",
+            "app.MapIdentityModule();",
+            "app.MapMediaModule();",
+            "app.MapAiModule();",
+            "app.MapGet(\"/\", () => Results.Redirect(\"/api/health\"));");
+    }
+
+    [Fact]
     public void Legacy_Actor_Zones_Are_Removed()
     {
         var violatingTypes = ApiAssembly.GetTypes()
@@ -768,6 +821,20 @@ public class ArchitectureBoundaryTests
             .Select(path => Path.GetRelativePath(repositoryRoot, path))
             .OrderBy(path => path)
             .ToArray();
+    }
+
+    private static void AssertSourceOrder(string source, params string[] markers)
+    {
+        var previousIndex = -1;
+        foreach (var marker in markers)
+        {
+            var markerIndex = source.IndexOf(marker, StringComparison.Ordinal);
+            Assert.True(markerIndex >= 0, $"Expected source to contain marker: {marker}");
+            Assert.True(
+                markerIndex > previousIndex,
+                $"Expected marker '{marker}' to appear after the previous composition marker.");
+            previousIndex = markerIndex;
+        }
     }
 
     private static bool IsTypeFromNamespaces(Type type, IReadOnlyCollection<string> namespaces)

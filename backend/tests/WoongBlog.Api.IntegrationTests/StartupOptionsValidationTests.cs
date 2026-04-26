@@ -6,6 +6,7 @@ using Xunit.Sdk;
 
 namespace WoongBlog.Api.Tests;
 
+[Trait(TestCategories.Key, TestCategories.Integration)]
 public class StartupOptionsValidationTests
 {
     [Fact]
@@ -59,6 +60,48 @@ public class StartupOptionsValidationTests
         var validationException = FindOptionsValidationException(exception);
 
         Assert.Contains("Ai:Provider", string.Join('\n', validationException.Failures));
+    }
+
+    [Fact]
+    public void InvalidAiBatchConcurrency_FailsAtStartup()
+    {
+        using var factory = CreateInvalidFactory(new Dictionary<string, string?>
+        {
+            ["Ai:BatchConcurrency"] = "0"
+        });
+
+        var exception = Assert.ThrowsAny<Exception>(() => factory.CreateClient());
+        var validationException = FindOptionsValidationException(exception);
+
+        Assert.Contains("Ai:BatchConcurrency", string.Join('\n', validationException.Failures));
+    }
+
+    [Fact]
+    public void MissingRequiredAuthStoragePath_FailsAtStartup()
+    {
+        using var factory = CreateInvalidFactory(new Dictionary<string, string?>
+        {
+            ["Auth:MediaRoot"] = ""
+        });
+
+        var exception = Assert.ThrowsAny<Exception>(() => factory.CreateClient());
+        var validationException = FindOptionsValidationException(exception);
+
+        Assert.Contains("Auth:MediaRoot", string.Join('\n', validationException.Failures));
+    }
+
+    [Fact]
+    public void MissingSecurityAntiforgeryHeaderName_FailsAtStartup()
+    {
+        using var factory = CreateInvalidFactory(new Dictionary<string, string?>
+        {
+            ["Security:AntiforgeryHeaderName"] = ""
+        });
+
+        var exception = Assert.ThrowsAny<Exception>(() => factory.CreateClient());
+        var validationException = FindOptionsValidationException(exception);
+
+        Assert.Contains("Security:AntiforgeryHeaderName", string.Join('\n', validationException.Failures));
     }
 
     [Fact]

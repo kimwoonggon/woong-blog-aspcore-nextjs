@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Backend P1 Auth Test Coverage Update - 2026-04-25</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 2rem; line-height: 1.5; color: #1f2937; }
+    h1, h2 { line-height: 1.2; }
+    code { background: #f3f4f6; padding: 0.1rem 0.25rem; border-radius: 0.25rem; }
+    table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+    th, td { border: 1px solid #d1d5db; padding: 0.5rem; text-align: left; vertical-align: top; }
+    th { background: #f9fafb; }
+  </style>
+</head>
+<body>
+  <h1>Backend P1 Auth Test Coverage Update - 2026-04-25</h1>
+  <p>Scope: backend only. This update implemented Priority 1 tests for auth, session, login, logout, CSRF, auth redirect behavior, admin endpoint rejection, and unauthorized/forbidden behavior.</p>
+
+  <h2>Tests Added</h2>
+  <ul>
+    <li><code>AuthFlowIntegrationTests.cs</code>: session payloads, admin 401/403/200 matrix, fake OIDC login challenge, external return URL non-exposure, logout CSRF/success, CSRF invalid/valid site-settings behavior, and valid-CSRF auth failures.</li>
+    <li><code>AuthRecorderComponentTests.cs</code>: malformed session-id claim, absolute-expired session revocation, and missing-profile session revocation.</li>
+  </ul>
+
+  <h2>Files Changed</h2>
+  <ul>
+    <li><code>backend/tests/WoongBlog.Api.IntegrationTests/AuthFlowIntegrationTests.cs</code></li>
+    <li><code>backend/tests/WoongBlog.Api.IntegrationTests/TestOidcChallengeHandler.cs</code></li>
+    <li><code>backend/tests/WoongBlog.Api.IntegrationTests/TestAuthHandler.cs</code></li>
+    <li><code>backend/tests/WoongBlog.Api.IntegrationTests/CustomWebApplicationFactory.cs</code></li>
+    <li><code>backend/tests/WoongBlog.Api.ComponentTests/AuthRecorderComponentTests.cs</code></li>
+    <li><code>todolist-2026-04-25.md</code></li>
+    <li><code>backend/reports/backend-test-coverage-audit-2026-04-24/backend-test-coverage-audit-2026-04-24.md</code></li>
+    <li><code>backend/reports/backend-test-coverage-audit-2026-04-24/backend-test-coverage-audit-2026-04-24.html</code></li>
+    <li><code>backend/reports/backend-test-coverage-audit-2026-04-24/backend-test-coverage-audit-2026-04-24.json</code></li>
+  </ul>
+
+  <h2>Validation</h2>
+  <table>
+    <thead>
+      <tr><th>Command</th><th>Result</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>dotnet test backend/WoongBlog.sln</code></td><td>Passed: Contract 1, Unit 14, Component 37, Architecture 30, Integration 129.</td></tr>
+      <tr><td><code>dotnet test backend/WoongBlog.sln --filter "Category=Unit"</code></td><td>Passed: Unit 14.</td></tr>
+      <tr><td><code>dotnet test backend/WoongBlog.sln --filter "Category=Component"</code></td><td>Passed: Component 37.</td></tr>
+      <tr><td><code>dotnet test backend/WoongBlog.sln --filter "Category=Integration"</code></td><td>Passed: Integration 73.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Remaining Gaps</h2>
+  <p>Remaining risk includes OIDC callback host behavior, endpoint-level cookie-session logout side effects, exhaustive admin mutation/media/AI/work-video auth and CSRF matrices, stale/missing-cookie CSRF cases, and broader session recorder edge cases.</p>
+
+  <h2>Recommendation</h2>
+  <p>Keep this P1 auth test update. Continue next with auth/CSRF coverage for media, AI batch, and work-video mutations, including side-effect assertions for rejected requests.</p>
+</body>
+</html>

@@ -1,0 +1,96 @@
+{
+  "report": "backend-test-coverage-audit-2026-04-24",
+  "updateDate": "2026-04-25",
+  "scope": "backend only",
+  "task": "Priority 1 auth/session/login/logout/CSRF/admin authorization tests",
+  "productionCodeChanged": false,
+  "testsAdded": [
+    {
+      "file": "backend/tests/WoongBlog.Api.IntegrationTests/AuthFlowIntegrationTests.cs",
+      "category": "Integration",
+      "behaviors": [
+        "authenticated admin session returns full payload",
+        "authenticated non-admin session returns user role payload",
+        "representative admin GET endpoints return 401 for anonymous requests",
+        "representative admin GET endpoints return 403 for authenticated non-admin requests",
+        "representative admin GET endpoints succeed for authenticated admin requests",
+        "login endpoint challenges fake OIDC provider without real Google OAuth",
+        "external login return URL is not exposed in auth redirect",
+        "logout POST rejects missing CSRF",
+        "logout POST with valid CSRF returns redirect payload and clears auth cookie",
+        "invalid CSRF token rejects admin mutation without persisting",
+        "valid CSRF token accepts admin mutation",
+        "valid-CSRF admin mutation returns auth failure for anonymous and non-admin principals"
+      ]
+    },
+    {
+      "file": "backend/tests/WoongBlog.Api.ComponentTests/AuthRecorderComponentTests.cs",
+      "category": "Component",
+      "behaviors": [
+        "malformed session-id claim does not authenticate",
+        "absolute-expired session does not authenticate and is revoked",
+        "session with missing profile does not authenticate and is revoked"
+      ]
+    }
+  ],
+  "filesChanged": [
+    "backend/tests/WoongBlog.Api.IntegrationTests/AuthFlowIntegrationTests.cs",
+    "backend/tests/WoongBlog.Api.IntegrationTests/TestOidcChallengeHandler.cs",
+    "backend/tests/WoongBlog.Api.IntegrationTests/TestAuthHandler.cs",
+    "backend/tests/WoongBlog.Api.IntegrationTests/CustomWebApplicationFactory.cs",
+    "backend/tests/WoongBlog.Api.ComponentTests/AuthRecorderComponentTests.cs",
+    "todolist-2026-04-25.md",
+    "backend/reports/backend-test-coverage-audit-2026-04-24/backend-test-coverage-audit-2026-04-24.md",
+    "backend/reports/backend-test-coverage-audit-2026-04-24/backend-test-coverage-audit-2026-04-24.html",
+    "backend/reports/backend-test-coverage-audit-2026-04-24/backend-test-coverage-audit-2026-04-24.json"
+  ],
+  "validations": [
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~AuthFlowIntegrationTests",
+      "exitCode": 0,
+      "result": "passed",
+      "summary": "31 integration test cases passed"
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj --filter FullyQualifiedName~AuthRecorderComponentTests",
+      "exitCode": 0,
+      "result": "passed",
+      "summary": "12 component tests passed"
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln",
+      "exitCode": 0,
+      "result": "passed",
+      "summary": "Contract 1, Unit 14, Component 37, Architecture 30, Integration 129"
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln --filter \"Category=Unit\"",
+      "exitCode": 0,
+      "result": "passed",
+      "summary": "Unit 14"
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln --filter \"Category=Component\"",
+      "exitCode": 0,
+      "result": "passed",
+      "summary": "Component 37"
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln --filter \"Category=Integration\"",
+      "exitCode": 0,
+      "result": "passed",
+      "summary": "Integration 73"
+    }
+  ],
+  "warnings": [
+    "All dotnet test runs emitted existing NU1901 low-severity advisory warning for AWSSDK.Core 4.0.0.17 / GHSA-9cvc-h2w8-phrp"
+  ],
+  "remainingGaps": [
+    "OIDC callback success/failure, provider failure, disabled-auth login, and callback missing-claims behavior remain untested through the full host",
+    "Endpoint-level logout revocation and audit side effects with a real cookie-authenticated session remain untested",
+    "Admin mutation, media upload/delete, AI batch, and work-video auth/CSRF matrices remain representative rather than exhaustive",
+    "CSRF stale token, missing cookie, duplicate header, multipart upload token behavior, and rejected-mutation side effects outside site settings remain untested",
+    "Existing-profile login update, multiple concurrent auth sessions, admin override changes, role downgrade semantics, IP capture, user-agent truncation, and session-key collision behavior remain component-test gaps"
+  ],
+  "recommendation": "Keep this P1 auth test update and continue next with auth/CSRF coverage for media, AI batch, and work-video mutations, including side-effect assertions for rejected requests."
+}

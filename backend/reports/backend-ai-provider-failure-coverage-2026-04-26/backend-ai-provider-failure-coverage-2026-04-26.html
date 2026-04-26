@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Backend AI Provider Failure Coverage - 2026-04-26</title>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.5; margin: 2rem; color: #1f2933; }
+    h1, h2 { color: #102a43; }
+    table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+    th, td { border: 1px solid #bcccdc; padding: 0.5rem; text-align: left; vertical-align: top; }
+    th { background: #f0f4f8; }
+    code { background: #f0f4f8; padding: 0.1rem 0.25rem; }
+    .ok { color: #0b6b3a; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <h1>Backend AI Provider Failure Coverage - 2026-04-26</h1>
+  <p class="ok">Status: validated and recommended.</p>
+  <p>Backend-only OpenAI/Azure provider failure coverage and AI HTTP result mapper coverage were added without production-code changes or real external calls.</p>
+
+  <h2>Coverage Movement</h2>
+  <table>
+    <tr><th>Scope</th><th>Previous</th><th>Current</th><th>Change</th></tr>
+    <tr><td>Full backend line</td><td>90.1%</td><td>91.3%</td><td>+1.2 pp</td></tr>
+    <tr><td>Full backend branch</td><td>60.9%</td><td>64.8%</td><td>+3.9 pp</td></tr>
+    <tr><td><code>BlogAiFixService</code> line</td><td>62.8%</td><td>84.1%</td><td>+21.3 pp</td></tr>
+    <tr><td><code>BlogAiFixService</code> branch</td><td>38.2%</td><td>62.7%</td><td>+24.5 pp</td></tr>
+    <tr><td><code>AiHttpResultMapper</code> line</td><td>70.0%</td><td>100.0%</td><td>+30.0 pp</td></tr>
+    <tr><td><code>AiHttpResultMapper</code> branch</td><td>40.0%</td><td>100.0%</td><td>+60.0 pp</td></tr>
+  </table>
+
+  <h2>Tests Added</h2>
+  <ul>
+    <li><code>BlogAiFixServiceProviderComponentTests</code>: 20 OpenAI/Azure success, failure, malformed JSON, empty content, config, URL/header, and environment override cases.</li>
+    <li><code>AiHttpResultMapperTests</code>: 5 HTTP status mapping cases for Ok, BadRequest, NotFound, Conflict, and unknown status.</li>
+  </ul>
+
+  <h2>Validation</h2>
+  <table>
+    <tr><th>Command</th><th>Result</th></tr>
+    <tr><td><code>dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj --filter BlogAiFixServiceProviderComponentTests</code></td><td>Passed; 20 tests.</td></tr>
+    <tr><td><code>dotnet test backend/tests/WoongBlog.Api.UnitTests/WoongBlog.Api.UnitTests.csproj --filter AiHttpResultMapperTests</code></td><td>Passed; 5 tests.</td></tr>
+    <tr><td><code>./scripts/run-backend-coverage.sh component -v minimal</code></td><td>Passed; 96 component tests.</td></tr>
+    <tr><td><code>./scripts/run-backend-coverage.sh full -v minimal</code></td><td>Passed after removing a direct UnitTests framework reference that violated architecture rules.</td></tr>
+    <tr><td><code>dotnet test backend/WoongBlog.sln</code></td><td>Passed.</td></tr>
+    <tr><td><code>git diff --check</code></td><td>Passed.</td></tr>
+  </table>
+
+  <h2>Remaining Gaps</h2>
+  <p>Codex process edge behavior, image artifact resolution, prompt catalog fallback, runtime config matrix branches, and broader AI batch/runtime policy edges remain future AI coverage work. WorkVideo/R2/HLS was intentionally left untouched.</p>
+
+  <h2>Recommendation</h2>
+  <p>Treat the AI provider failure matrix as substantially reinforced. Next AI-focused coverage should target Codex process and image artifact resolution edge cases.</p>
+</body>
+</html>
