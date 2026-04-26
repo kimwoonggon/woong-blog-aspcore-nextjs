@@ -68,7 +68,7 @@ public class PublicEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
-    public async Task GetPublicHome_ReturnsFeaturedSeedData()
+    public async Task GetPublicHome_ReturnsFeaturedCollections()
     {
         var client = _factory.CreateClient();
 
@@ -77,8 +77,9 @@ public class PublicEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         response.EnsureSuccessStatusCode();
 
         var body = await response.Content.ReadAsStringAsync();
-        Assert.Contains("Portfolio Platform Rebuild", body, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("homePage", body, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("featuredWorks", body, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("recentPosts", body, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
