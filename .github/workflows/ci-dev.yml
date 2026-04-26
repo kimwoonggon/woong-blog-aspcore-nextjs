@@ -53,7 +53,7 @@ jobs:
           dotnet-version: 10.0.x
 
       - name: Run backend unit tests
-        run: ./scripts/run-unit-tests.sh --blame-hang --blame-hang-timeout 5m -v minimal
+        run: bash ./scripts/run-unit-tests.sh --blame-hang --blame-hang-timeout 5m -v minimal
 
   backend-component-tests:
     name: Backend component tests
@@ -69,7 +69,7 @@ jobs:
           dotnet-version: 10.0.x
 
       - name: Run backend component tests
-        run: ./scripts/run-component-tests.sh --blame-hang --blame-hang-timeout 5m -v minimal
+        run: bash ./scripts/run-component-tests.sh --blame-hang --blame-hang-timeout 5m -v minimal
 
   backend-architecture-tests:
     name: Backend architecture tests
@@ -85,7 +85,7 @@ jobs:
           dotnet-version: 10.0.x
 
       - name: Run backend architecture tests
-        run: ./scripts/run-architecture-tests.sh --blame-hang --blame-hang-timeout 5m -v minimal
+        run: bash ./scripts/run-architecture-tests.sh --blame-hang --blame-hang-timeout 5m -v minimal
 
   backend-integration-tests:
     name: Backend integration tests
@@ -104,7 +104,7 @@ jobs:
         run: docker version
 
       - name: Run backend integration tests
-        run: ./scripts/run-integration-tests.sh --blame-hang --blame-hang-timeout 5m -v minimal
+        run: bash ./scripts/run-integration-tests.sh --blame-hang --blame-hang-timeout 5m -v minimal
 
   contract-tests:
     name: Pact provider verification
