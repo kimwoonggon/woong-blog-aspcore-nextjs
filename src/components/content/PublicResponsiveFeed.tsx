@@ -12,6 +12,7 @@ import type { PagedWorksPayload, WorkListItem } from '@/lib/api/works'
 type FeedKind = 'blog' | 'works'
 type FeedItem = BlogListItem | WorkListItem
 type FeedPayload = PagedBlogsPayload | PagedWorksPayload
+type ViewportMode = 'mobile' | 'tablet' | 'desktop'
 
 interface PublicResponsiveFeedProps {
   kind: FeedKind
@@ -21,7 +22,17 @@ interface PublicResponsiveFeedProps {
   desktopReturnTo: string
 }
 
+interface StudyMobileRestoreState {
+  query: string
+  loadedPageCount: number
+  pageSize: number
+  scrollY: number
+  restoreOnHistoryReturn?: boolean
+}
+
 const MOBILE_PAGE_SIZE = 10
+const studyRestoreStorageKey = 'woong-study-mobile-feed-state'
+const studyRestoreHistoryKey = '__studyFeedRestore'
 
 function formatBlogDate(publishedAt?: string | null) {
   return publishedAt
@@ -88,6 +99,84 @@ function dedupeItems(existing: FeedItem[], incoming: FeedItem[]) {
   return next
 }
 
+function resolveViewportMode() {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+    return 'desktop' as ViewportMode
+  }
+
+  if (window.matchMedia('(max-width: 767px)').matches) {
+    return 'mobile' as ViewportMode
+  }
+
+  if (window.matchMedia('(max-width: 1023px)').matches) {
+    return 'tablet' as ViewportMode
+  }
+
+  return 'desktop' as ViewportMode
+}
+
+function isStudyMobileRestoreState(value: unknown): value is StudyMobileRestoreState {
+  if (!value || typeof value !== 'object') {
+    return false
+  }
+
+  const record = value as Record<string, unknown>
+  return typeof record.query === 'string'
+    && typeof record.loadedPageCount === 'number'
+    && typeof record.pageSize === 'number'
+    && typeof record.scrollY === 'number'
+    && (typeof record.restoreOnHistoryReturn === 'undefined' || typeof record.restoreOnHistoryReturn === 'boolean')
+}
+
+function readStudyHistoryRestoreState(query: string) {
+  const historyState = typeof window !== 'undefined'
+    ? (window.history.state as Record<string, unknown> | null)?.[studyRestoreHistoryKey]
+    : null
+
+  if (isStudyMobileRestoreState(historyState) && historyState.query === query) {
+    return historyState
+  }
+
+  return null
+}
+
+function readStudySessionRestoreState(query: string) {
+  if (typeof window === 'undefined') {
+    return null
+  }
+
+  const rawSessionState = window.sessionStorage.getItem(studyRestoreStorageKey)
+  if (!rawSessionState) {
+    return null
+  }
+
+  try {
+    const parsed = JSON.parse(rawSessionState) as unknown
+    return isStudyMobileRestoreState(parsed) && parsed.query === query ? parsed : null
+  } catch {
+    return null
+  }
+}
+
+function persistStudyRestoreState(state: StudyMobileRestoreState) {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  window.sessionStorage.setItem(studyRestoreStorageKey, JSON.stringify(state))
+  const currentState = window.history.state && typeof window.history.state === 'object'
+    ? window.history.state as Record<string, unknown>
+    : {}
+  window.history.replaceState(
+    {
+      ...currentState,
+      [studyRestoreHistoryKey]: state,
+    },
+    '',
+    window.location.href,
+  )
+}
+
 export function PublicResponsiveFeed({
   kind,
   query,
@@ -95,34 +184,96 @@ export function PublicResponsiveFeed({
   mobileInitialPayload,
   desktopReturnTo,
 }: PublicResponsiveFeedProps) {
-  const [isCompact, setIsCompact] = useState(false)
+  const [viewportMode, setViewportMode] = useState<ViewportMode>('desktop')
+  const [hasResolvedViewport, setHasResolvedViewport] = useState(false)
   const [items, setItems] = useState<FeedItem[]>(mobileInitialPayload.items)
   const [page, setPage] = useState(mobileInitialPayload.page)
   const [totalPages, setTotalPages] = useState(Math.max(1, mobileInitialPayload.totalPages))
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isRestoring, setIsRestoring] = useState(false)
+  const [isReadingRestoreActive, setIsReadingRestoreActive] = useState(false)
   const loadingRef = useRef(false)
+  const sentinelRef = useRef<HTMLDivElement | null>(null)
+  const restoredSignatureRef = useRef<string | null>(null)
+  const previousQueryRef = useRef(query)
+  const readingRestoreActiveRef = useRef(false)
 
   useEffect(() => {
-    const queryList = window.matchMedia('(max-width: 1023px)')
-    const syncMode = () => setIsCompact(queryList.matches)
+    const syncMode = () => {
+      setViewportMode(resolveViewportMode())
+      setHasResolvedViewport(true)
+    }
 
     syncMode()
-    queryList.addEventListener('change', syncMode)
+    window.addEventListener('resize', syncMode)
+    window.addEventListener('pageshow', syncMode)
 
     return () => {
-      queryList.removeEventListener('change', syncMode)
+      window.removeEventListener('resize', syncMode)
+      window.removeEventListener('pageshow', syncMode)
     }
   }, [])
 
   useEffect(() => {
+    const queryChanged = previousQueryRef.current !== query
+    previousQueryRef.current = query
+
+    const pendingHistoryRestore = kind === 'blog'
+      ? readStudySessionRestoreState(query)?.restoreOnHistoryReturn === true
+      : false
+
+    if (!queryChanged && (readingRestoreActiveRef.current || isReadingRestoreActive || pendingHistoryRestore)) {
+      return
+    }
+
+    readingRestoreActiveRef.current = false
     setItems(mobileInitialPayload.items)
     setPage(mobileInitialPayload.page)
     setTotalPages(Math.max(1, mobileInitialPayload.totalPages))
     setError(null)
-  }, [mobileInitialPayload, query])
+    setIsReadingRestoreActive(false)
+    restoredSignatureRef.current = null
+  }, [isReadingRestoreActive, kind, mobileInitialPayload, query])
 
+  const isCompact = viewportMode !== 'desktop'
+  const isStudyMobileAuto = kind === 'blog' && viewportMode === 'mobile'
+  const isMobileAutoInfinite = viewportMode === 'mobile'
+  const canRestoreStudyReadingState = hasResolvedViewport && kind === 'blog' && viewportMode === 'mobile'
   const hasMore = page < totalPages
+
+  const fetchPage = useCallback(async (targetPage: number) => {
+    const response = await fetch(buildApiUrl(kind, targetPage, query), {
+      credentials: 'same-origin',
+      cache: 'no-store',
+    })
+
+    if (!response.ok) {
+      throw new Error('Failed to load more items.')
+    }
+
+    return await response.json() as FeedPayload
+  }, [kind, query])
+
+  const appendPayload = useCallback((payload: FeedPayload) => {
+    setItems((currentItems) => dedupeItems(currentItems, payload.items))
+    setPage(payload.page)
+    setTotalPages(Math.max(1, payload.totalPages))
+  }, [])
+
+  const markStudyHistoryReturnRestore = useCallback(() => {
+    if (kind !== 'blog' || viewportMode !== 'mobile') {
+      return
+    }
+
+    persistStudyRestoreState({
+      query,
+      loadedPageCount: page,
+      pageSize: MOBILE_PAGE_SIZE,
+      scrollY: window.scrollY,
+      restoreOnHistoryReturn: true,
+    })
+  }, [kind, page, query, viewportMode])
 
   const loadNextPage = useCallback(async () => {
     if (!isCompact || !hasMore || loadingRef.current) {
@@ -135,55 +286,206 @@ export function PublicResponsiveFeed({
     setError(null)
 
     try {
-      const response = await fetch(buildApiUrl(kind, nextPage, query), {
-        credentials: 'same-origin',
-        cache: 'no-store',
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to load more items.')
-      }
-
-      const payload = await response.json() as FeedPayload
-      setItems((currentItems) => dedupeItems(currentItems, payload.items))
-      setPage(payload.page)
-      setTotalPages(Math.max(1, payload.totalPages))
+      appendPayload(await fetchPage(nextPage))
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Failed to load more items.')
     } finally {
       loadingRef.current = false
       setLoading(false)
     }
-  }, [hasMore, isCompact, kind, page, query])
+  }, [appendPayload, fetchPage, hasMore, isCompact, page])
 
-  const renderedItems = isCompact ? items : desktopPayload.items
-  const returnTo = isCompact ? buildMobileReturnTo(kind, query) : desktopReturnTo
+  useEffect(() => {
+    if (!isMobileAutoInfinite || isRestoring || !hasMore || !sentinelRef.current) {
+      return
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) {
+        void loadNextPage()
+      }
+    }, {
+      rootMargin: '240px 0px',
+      threshold: 0,
+    })
+
+    observer.observe(sentinelRef.current)
+
+    return () => {
+      observer.disconnect()
+    }
+  }, [hasMore, isMobileAutoInfinite, isRestoring, loadNextPage])
+
+  useEffect(() => {
+    if (!canRestoreStudyReadingState) {
+      return
+    }
+
+    const sessionState = readStudySessionRestoreState(query)
+    const historyState = readStudyHistoryRestoreState(query)
+    const storedState = historyState ?? sessionState
+    if (!storedState || storedState.pageSize !== MOBILE_PAGE_SIZE) {
+      return
+    }
+
+    const signature = `${storedState.query}:${storedState.loadedPageCount}:${storedState.scrollY}`
+    if (restoredSignatureRef.current === signature) {
+      return
+    }
+
+    restoredSignatureRef.current = signature
+
+    if (storedState.loadedPageCount <= 1 && storedState.scrollY <= 0) {
+      return
+    }
+
+    let cancelled = false
+    let restoreCompleted = false
+
+    const restore = async () => {
+      loadingRef.current = true
+      setLoading(true)
+      setIsRestoring(true)
+      readingRestoreActiveRef.current = true
+      setIsReadingRestoreActive(true)
+      setError(null)
+
+      try {
+        let nextItems = mobileInitialPayload.items
+        let nextPage = mobileInitialPayload.page
+        let nextTotalPages = Math.max(1, mobileInitialPayload.totalPages)
+
+        for (let targetPage = mobileInitialPayload.page + 1; targetPage <= storedState.loadedPageCount; targetPage += 1) {
+          const payload = await fetchPage(targetPage)
+          if (cancelled) {
+            return
+          }
+
+          nextItems = dedupeItems(nextItems, payload.items)
+          nextPage = payload.page
+          nextTotalPages = Math.max(1, payload.totalPages)
+        }
+
+        setItems(nextItems)
+        setPage(nextPage)
+        setTotalPages(nextTotalPages)
+        if (!cancelled) {
+          window.scrollTo(0, storedState.scrollY)
+          window.requestAnimationFrame(() => window.scrollTo(0, storedState.scrollY))
+          restoreCompleted = true
+
+          window.sessionStorage.setItem(studyRestoreStorageKey, JSON.stringify({
+            ...storedState,
+            restoreOnHistoryReturn: false,
+          }))
+        }
+      } catch (caught) {
+        if (!cancelled) {
+          setError(caught instanceof Error ? caught.message : 'Failed to restore the Study feed.')
+        }
+      } finally {
+        if (!cancelled) {
+          loadingRef.current = false
+          setLoading(false)
+          setIsRestoring(false)
+        }
+      }
+    }
+
+    void restore()
+
+    return () => {
+      cancelled = true
+      if (!restoreCompleted) {
+        loadingRef.current = false
+        if (restoredSignatureRef.current === signature) {
+          restoredSignatureRef.current = null
+        }
+      }
+    }
+  }, [canRestoreStudyReadingState, fetchPage, mobileInitialPayload.items, mobileInitialPayload.page, mobileInitialPayload.totalPages, query, viewportMode])
+
+  useEffect(() => {
+    if (viewportMode === 'mobile' || !isReadingRestoreActive) {
+      return
+    }
+
+    readingRestoreActiveRef.current = false
+    setIsReadingRestoreActive(false)
+    restoredSignatureRef.current = null
+  }, [isReadingRestoreActive, viewportMode])
+
+  useEffect(() => {
+    if (!isStudyMobileAuto || resolveViewportMode() !== 'mobile') {
+      return
+    }
+
+    const saveState = () => {
+      if (resolveViewportMode() !== 'mobile') {
+        return
+      }
+
+      if (readStudySessionRestoreState(query)?.restoreOnHistoryReturn) {
+        return
+      }
+
+      persistStudyRestoreState({
+        query,
+        loadedPageCount: page,
+        pageSize: MOBILE_PAGE_SIZE,
+        scrollY: window.scrollY,
+        restoreOnHistoryReturn: false,
+      })
+    }
+
+    const scheduleSave = () => {
+      window.requestAnimationFrame(saveState)
+    }
+
+    saveState()
+    window.addEventListener('scroll', scheduleSave, { passive: true })
+
+    return () => {
+      window.removeEventListener('scroll', scheduleSave)
+    }
+  }, [isStudyMobileAuto, page, query])
+
+  const shouldUseRestoredReadingState = kind === 'blog' && isReadingRestoreActive
+  const renderedItems = isCompact || shouldUseRestoredReadingState ? items : desktopPayload.items
+  const returnTo = isCompact || shouldUseRestoredReadingState ? buildMobileReturnTo(kind, query) : desktopReturnTo
+  const relatedPage = isCompact || shouldUseRestoredReadingState ? 1 : desktopPayload.page
+  const feedMode = shouldUseRestoredReadingState ? 'restored-reading' : isMobileAutoInfinite ? 'auto-infinite' : isCompact ? 'load-more' : 'pagination'
   const emptyText = kind === 'blog'
     ? query ? 'No studies found.' : 'No blog posts found.'
     : 'No works found.'
-  const gridClassName = kind === 'blog'
-    ? 'grid gap-5 md:grid-cols-2 xl:grid-cols-3'
+  const gridClassName = shouldUseRestoredReadingState
+    ? 'mx-auto grid max-w-2xl gap-5'
+    : kind === 'blog'
+      ? 'grid gap-5 md:grid-cols-2 xl:grid-cols-3'
     : 'grid gap-5 md:grid-cols-2 xl:grid-cols-4'
 
   return (
     <>
-      <div
-        data-testid={kind === 'blog' ? 'blog-grid' : 'works-grid'}
-        data-feed-testid={`${kind}-responsive-feed`}
-        data-feed-mode={isCompact ? 'load-more' : 'pagination'}
-        className={gridClassName}
-      >
-        {renderedItems.length > 0 ? (
-          renderedItems.map((item) => (
-            kind === 'blog'
-              ? <BlogCard key={item.id} item={item as BlogListItem} returnTo={returnTo} relatedPage={isCompact ? 1 : desktopPayload.page} />
-              : <WorkCard key={item.id} item={item as WorkListItem} returnTo={returnTo} relatedPage={isCompact ? 1 : desktopPayload.page} />
-          ))
-        ) : (
-          <div className={kind === 'blog' ? 'py-20 text-center text-muted-foreground' : 'col-span-full rounded-2xl border border-dashed border-border/80 bg-muted/30 px-6 py-20 text-center text-muted-foreground'}>
-            {emptyText}
-          </div>
-        )}
+      <div data-testid={`${kind}-responsive-feed`} data-feed-mode={feedMode}>
+        <div
+          data-testid={kind === 'blog' ? 'blog-grid' : 'works-grid'}
+          data-feed-testid={`${kind}-responsive-feed`}
+          data-feed-mode={feedMode}
+          data-feed-layout={shouldUseRestoredReadingState ? 'reading-restore' : undefined}
+          className={gridClassName}
+        >
+          {renderedItems.length > 0 ? (
+            renderedItems.map((item) => (
+              kind === 'blog'
+                ? <BlogCard key={item.id} item={item as BlogListItem} returnTo={returnTo} relatedPage={relatedPage} onNavigate={markStudyHistoryReturnRestore} />
+                : <WorkCard key={item.id} item={item as WorkListItem} returnTo={returnTo} relatedPage={relatedPage} />
+            ))
+          ) : (
+            <div className={kind === 'blog' ? 'py-20 text-center text-muted-foreground' : 'col-span-full rounded-2xl border border-dashed border-border/80 bg-muted/30 px-6 py-20 text-center text-muted-foreground'}>
+              {emptyText}
+            </div>
+          )}
+        </div>
       </div>
 
       {isCompact ? (
@@ -191,7 +493,14 @@ export function PublicResponsiveFeed({
           {error ? (
             <p role="status" className="text-sm text-destructive">{error}</p>
           ) : null}
-          {hasMore ? (
+          {isMobileAutoInfinite ? (
+            <>
+              {hasMore ? (
+                <div ref={sentinelRef} data-testid={`${kind}-load-sentinel`} className="h-1 w-full" aria-hidden="true" />
+              ) : null}
+              {loading ? <p className="text-sm text-muted-foreground" role="status">Loading...</p> : null}
+            </>
+          ) : hasMore ? (
             <button
               type="button"
               data-testid={`${kind}-load-more`}
@@ -201,20 +510,32 @@ export function PublicResponsiveFeed({
             >
               {loading ? 'Loading...' : 'Load more'}
             </button>
-          ) : (
+          ) : null}
+          {!hasMore ? (
             <p className="text-sm text-muted-foreground" role="status">End of list</p>
-          )}
+          ) : null}
         </div>
       ) : null}
     </>
   )
 }
 
-function BlogCard({ item, returnTo, relatedPage }: { item: BlogListItem; returnTo: string; relatedPage: number }) {
+function BlogCard({
+  item,
+  returnTo,
+  relatedPage,
+  onNavigate,
+}: {
+  item: BlogListItem
+  returnTo: string
+  relatedPage: number
+  onNavigate?: () => void
+}) {
   return (
     <Link
       href={`/blog/${item.slug}?returnTo=${returnTo}&relatedPage=${relatedPage}`}
       prefetch={false}
+      onClick={onNavigate}
       className="group/card block h-full min-w-0"
       data-testid="blog-card"
     >
@@ -225,7 +546,7 @@ function BlogCard({ item, returnTo, relatedPage }: { item: BlogListItem; returnT
             <Badge variant="secondary" className="rounded-full bg-brand-navy px-2.5 py-0.5 text-xs text-white hover:bg-brand-navy/90">
               {formatBlogDate(item.publishedAt)}
             </Badge>
-            {item.tags?.slice(0, 1).map((tag) => (
+            {item.tags?.map((tag) => (
               <span key={tag} className="max-w-full rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground [overflow-wrap:anywhere]">
                 {tag}
               </span>

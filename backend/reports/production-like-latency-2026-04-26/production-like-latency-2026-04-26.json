@@ -1,0 +1,578 @@
+{
+  "slug": "production-like-latency-2026-04-26",
+  "generatedAt": "2026-04-25T15:16:49.891Z",
+  "scope": "Production-like latency measurement for public/admin response-time paths.",
+  "environment": {
+    "frontend": "Docker production build, Next.js 16.1.6 standalone runtime",
+    "backend": "docker-compose.dev.yml backend service on internal Docker network",
+    "proxy": "temporary nginx container using nginx/local-https.conf",
+    "runner": "mcr.microsoft.com/playwright:v1.58.2-noble"
+  },
+  "commands": [
+    "BACKEND_PUBLISH_PORT=18080 docker compose -f docker-compose.dev.yml build frontend",
+    "BACKEND_PUBLISH_PORT=18080 docker compose -f docker-compose.dev.yml up -d frontend",
+    "docker run -d --name <nginx> --network woong-blog-aspcore-nextjs_default -v $PWD/nginx/local-https.conf:/etc/nginx/conf.d/default.conf:ro -v $PWD/.local-certs:/etc/nginx/certs:ro nginx:1.27-alpine",
+    "docker run --rm --network woong-blog-aspcore-nextjs_default -v $PWD:/work -w /work -e PLAYWRIGHT_EXTERNAL_SERVER=1 -e PLAYWRIGHT_BASE_URL=http://<nginx> -e PLAYWRIGHT_EXPECT_LOCAL_ADMIN_SHORTCUT=visible mcr.microsoft.com/playwright:v1.58.2-noble bash -lc \"node scripts/run-e2e-latency.mjs -- tests/e2e-response-time.spec.ts --workers=1\""
+  ],
+  "validation": [
+    "Docker frontend production build succeeded with Next.js 16.1.6; production server logged ready in 79ms.",
+    "Internal nginx health probe returned HTTP 200 with time_total about 0.03s.",
+    "Production-like latency pass-2: 9/9 passed, budget failures 0, warnings 1.",
+    "Production-like latency pass-3: 9/9 passed, budget failures 0, warnings 0.",
+    "Latest preserved latency artifacts are under backend/reports/production-like-latency-2026-04-26/artifacts/."
+  ],
+  "intentionallyNotChanged": [
+    "No production application code was changed for this measurement pass.",
+    "No performance budgets were changed.",
+    "No full e2e suite run was started because the requested goal was production-like latency measurement and the targeted latency spec already covers the reported public nav/detail paths."
+  ],
+  "risks": [
+    "Host port publishing for a temporary nginx container failed in Docker Desktop/WSL with a 500 from /forwards/expose, so measurement used Docker internal networking instead of a Windows browser hitting localhost.",
+    "This measured the targeted response-time Playwright slice, not the entire 589-test Playwright inventory.",
+    "One preserved pass had a soft warning for Study nav at 1137.2ms over a 1000ms warning budget; the next pass had zero warnings and the hard budget never failed.",
+    "The official Playwright image was pulled for this run; image pull time is not part of the measured app latency."
+  ],
+  "recommendation": "Treat the reported local click slowness as next dev cold compilation noise unless it reproduces in the production-like Docker runtime. The production-like targeted latency slice is currently acceptable: repeated runs passed with zero hard budget failures; watch Study nav because it showed one soft warning sample.",
+  "passes": [
+    {
+      "name": "pass-2",
+      "testCount": 9,
+      "budgetFailureCount": 0,
+      "warningCount": 1,
+      "warnings": [
+        {
+          "severity": "warn",
+          "kind": "step",
+          "name": "Public nav click to Study",
+          "durationMs": 1137.2,
+          "warnMs": 1000,
+          "hardMs": 1500,
+          "failOnHard": false,
+          "message": "step \"Public nav click to Study\" took 1137.2ms, exceeding warn budget 1000ms",
+          "testTitle": "response time: desktop public nav clicks meet budget",
+          "file": "/work/tests/e2e-response-time.spec.ts",
+          "artifactPath": "/work/test-results/playwright/e2e-response-time-response-028f3-blic-nav-clicks-meet-budget-chromium-public/attachments/e2e-latency-json-8a760b4e31c4e8642127dee24269bba53aa2b5ce.json"
+        }
+      ],
+      "slowestMeasuredSteps": [
+        {
+          "name": "Public nav click to Study",
+          "durationMs": 1137.2,
+          "startedAt": "2026-04-25T15:14:03.603Z",
+          "status": "passed",
+          "budget": {
+            "warnMs": 1000,
+            "hardMs": 1500,
+            "failOnHard": true,
+            "name": "publicNavClick"
+          },
+          "testTitle": "response time: desktop public nav clicks meet budget",
+          "file": "/work/tests/e2e-response-time.spec.ts"
+        },
+        {
+          "name": "Public nav click to Works",
+          "durationMs": 948.71,
+          "startedAt": "2026-04-25T15:14:02.655Z",
+          "status": "passed",
+          "budget": {
+            "warnMs": 1000,
+            "hardMs": 1500,
+            "failOnHard": true,
+            "name": "publicNavClick"
+          },
+          "testTitle": "response time: desktop public nav clicks meet budget",
+          "file": "/work/tests/e2e-response-time.spec.ts"
+        },
+        {
+          "name": "Public Work card opens detail",
+          "durationMs": 674.5,
+          "startedAt": "2026-04-25T15:14:06.239Z",
+          "status": "passed",
+          "budget": {
+            "warnMs": 1500,
+            "hardMs": 2500,
+            "failOnHard": true,
+            "name": "publicDetailOpen"
+          },
+          "testTitle": "response time: public detail card opens meet budget",
+          "file": "/work/tests/e2e-response-time.spec.ts"
+        },
+        {
+          "name": "Public Study card opens detail",
+          "durationMs": 654.12,
+          "startedAt": "2026-04-25T15:14:07.139Z",
+          "status": "passed",
+          "budget": {
+            "warnMs": 1500,
+            "hardMs": 2500,
+            "failOnHard": true,
+            "name": "publicDetailOpen"
+          },
+          "testTitle": "response time: public detail card opens meet budget",
+          "file": "/work/tests/e2e-response-time.spec.ts"
+        },
+        {
+          "name": "Study list direct load to primary content visible",
+          "durationMs": 585.39,
+          "startedAt": "2026-04-25T15:14:00.535Z",
+          "status": "passed",
+          "budget": {
+            "warnMs": 1000,
+            "hardMs": 1500,
+            "failOnHard": true,
+            "name": "publicRouteLoad"
+          },
+          "testTitle": "response time: Study list direct load meets budget",
+          "file": "/work/tests/e2e-response-time.spec.ts"
+        },
+        {
+          "name": "Public nav click to Introduction",
+          "durationMs": 524.08,
+          "startedAt": "2026-04-25T15:14:04.741Z",
+          "status": "passed",
+          "budget": {
+            "warnMs": 1000,
+            "hardMs": 1500,
+            "failOnHard": true,
+            "name": "publicNavClick"
+          },
+          "testTitle": "response time: desktop public nav clicks meet budget",
+          "file": "/work/tests/e2e-response-time.spec.ts"
+        },
+        {
+          "name": "Public nav click to Contact",
+          "durationMs": 438.91,
+          "startedAt": "2026-04-25T15:14:05.265Z",
+          "status": "passed",
+          "budget": {
+            "warnMs": 1000,
+            "hardMs": 1500,
+            "failOnHard": true,
+            "name": "publicNavClick"
+          },
+          "testTitle": "response time: desktop public nav clicks meet budget",
+          "file": "/work/tests/e2e-response-time.spec.ts"
+        },
+        {
+          "name": "Admin site settings save response-time path",
+          "durationMs": 431.95,
+          "startedAt": "2026-04-25T15:14:13.470Z",
+          "status": "passed",
+          "budget": {
+            "warnMs": 3000,
+            "hardMs": 4500,
+            "failOnHard": true,
+            "name": "adminMutationPublicRefresh"
+          },
+          "testTitle": "response time: admin site settings save refreshes public home within budget",
+          "file": "/work/tests/e2e-response-time.spec.ts"
+        },
+        {
+          "name": "Works list direct load to primary content visible",
+          "durationMs": 402.11,
+          "startedAt": "2026-04-25T15:14:01.562Z",
+          "status": "passed",
+          "budget": {
+            "warnMs": 1000,
+            "hardMs": 1500,
+            "failOnHard": true,
+            "name": "publicRouteLoad"
+          },
+          "testTitle": "response time: Works list direct load meets budget",
+          "file": "/work/tests/e2e-response-time.spec.ts"
+        },
+        {
+          "name": "Study unified search submit response-time path",
+          "durationMs": 323.37,
+          "startedAt": "2026-04-25T15:14:10.591Z",
+          "status": "passed",
+          "budget": {
+            "warnMs": 1000,
+            "hardMs": 1500,
+            "failOnHard": true,
+            "name": "publicSearch"
+          },
+          "testTitle": "response time: unified public search submit meets budget",
+          "file": "/work/tests/e2e-response-time.spec.ts"
+        },
+        {
+          "name": "Works mobile auto-append",
+          "durationMs": 169.75,
+          "startedAt": "2026-04-25T15:14:09.441Z",
+          "status": "passed",
+          "budget": {
+            "warnMs": 800,
+            "hardMs": 1200,
+            "failOnHard": true,
+            "name": "publicPagination"
+          },
+          "testTitle": "response time: Works mobile append next page meets budget",
+          "file": "/work/tests/e2e-response-time.spec.ts"
+        },
+        {
+          "name": "Study mobile auto-append",
+          "durationMs": 166.03,
+          "startedAt": "2026-04-25T15:14:08.378Z",
+          "status": "passed",
+          "budget": {
+            "warnMs": 800,
+            "hardMs": 1200,
+            "failOnHard": true,
+            "name": "publicPagination"
+          },
+          "testTitle": "response time: Study mobile append next page meets budget",
+          "file": "/work/tests/e2e-response-time.spec.ts"
+        }
+      ],
+      "slowestApiResponses": [
+        {
+          "url": "http://woong-prod-latency-nginx-internal-1777129545/api/auth/session",
+          "method": "GET",
+          "status": 200,
+          "durationMs": 54.18,
+          "startedAt": "2026-04-25T15:14:03.431Z",
+          "source": "page",
+          "testTitle": "response time: desktop public nav clicks meet budget",
+          "file": "/work/tests/e2e-response-time.spec.ts"
+        },
+        {
+          "url": "http://woong-prod-latency-nginx-internal-1777129545/revalidate-public",
+          "method": "POST",
+          "status": 200,
+          "durationMs": 32.23,
+          "startedAt": "2026-04-25T15:14:13.624Z",
+          "source": "page",
+          "testTitle": "response time: admin site settings save refreshes public home within budget",
+          "file": "/work/tests/e2e-response-time.spec.ts"
+        },
+        {
+          "url": "http://woong-prod-latency-nginx-internal-1777129545/api/public/works?page=2&pageSize=10",
+          "method": "GET",
+          "status": 200,
+          "durationMs": 21.84,
+          "startedAt": "2026-04-25T15:14:09.458Z",
+          "source": "page",
+          "testTitle": "response time: Works mobile append next page meets budget",
+          "file": "/work/tests/e2e-response-time.spec.ts"
+        },
+        {
+          "url": "http://woong-prod-latency-nginx-internal-1777129545/api/admin/site-settings",
+          "method": "PUT",
+          "status": 200,
+          "durationMs": 21.51,
+          "startedAt": "2026-04-25T15:14:13.602Z",
+          "source": "page",
+          "testTitle": "response time: admin site settings save refreshes public home within budget",
+          "file": "/work/tests/e2e-response-time.spec.ts"
+        },
+        {
+          "url": "http://woong-prod-latency-nginx-internal-1777129545/api/admin/ai/runtime-config",
+          "method": "GET",
+          "status": 200,
+          "durationMs": 19.24,
+          "startedAt": "2026-04-25T15:14:12.634Z",
+          "source": "page",
+          "testTitle": "response time: AI Fix provider dropdown is ready within budget",
+          "file": "/work/tests/e2e-response-time.spec.ts"
+        },
+        {
+          "url": "http://woong-prod-latency-nginx-internal-1777129545/api/auth/csrf",
+          "method": "GET",
+          "status": 200,
+          "durationMs": 19.15,
+          "startedAt": "2026-04-25T15:14:13.582Z",
+          "source": "page",
+          "testTitle": "response time: admin site settings save refreshes public home within budget",
+          "file": "/work/tests/e2e-response-time.spec.ts"
+        },
+        {
+          "url": "http://woong-prod-latency-nginx-internal-1777129545/api/auth/session",
+          "method": "GET",
+          "status": 200,
+          "durationMs": 11.69,
+          "startedAt": "2026-04-25T15:14:13.569Z",
+          "source": "page",
+          "testTitle": "response time: admin site settings save refreshes public home within budget",
+          "file": "/work/tests/e2e-response-time.spec.ts"
+        },
+        {
+          "url": "http://woong-prod-latency-nginx-internal-1777129545/api/auth/session",
+          "method": "GET",
+          "status": 200,
+          "durationMs": 11.14,
+          "startedAt": "2026-04-25T15:14:10.911Z",
+          "source": "page",
+          "testTitle": "response time: unified public search submit meets budget",
+          "file": "/work/tests/e2e-response-time.spec.ts"
+        }
+      ],
+      "generatedAt": "2026-04-25T15:14:15.186Z"
+    },
+    {
+      "name": "pass-3",
+      "testCount": 9,
+      "budgetFailureCount": 0,
+      "warningCount": 0,
+      "warnings": [],
+      "slowestMeasuredSteps": [
+        {
+          "name": "Public nav click to Works",
+          "durationMs": 841.62,
+          "startedAt": "2026-04-25T15:15:17.303Z",
+          "status": "passed",
+          "budget": {
+            "warnMs": 1000,
+            "hardMs": 1500,
+            "failOnHard": true,
+            "name": "publicNavClick"
+          },
+          "testTitle": "response time: desktop public nav clicks meet budget",
+          "file": "/work/tests/e2e-response-time.spec.ts"
+        },
+        {
+          "name": "Study unified search submit response-time path",
+          "durationMs": 581.88,
+          "startedAt": "2026-04-25T15:15:23.926Z",
+          "status": "passed",
+          "budget": {
+            "warnMs": 1000,
+            "hardMs": 1500,
+            "failOnHard": true,
+            "name": "publicSearch"
+          },
+          "testTitle": "response time: unified public search submit meets budget",
+          "file": "/work/tests/e2e-response-time.spec.ts"
+        },
+        {
+          "name": "Public Study card opens detail",
+          "durationMs": 565.21,
+          "startedAt": "2026-04-25T15:15:20.864Z",
+          "status": "passed",
+          "budget": {
+            "warnMs": 1500,
+            "hardMs": 2500,
+            "failOnHard": true,
+            "name": "publicDetailOpen"
+          },
+          "testTitle": "response time: public detail card opens meet budget",
+          "file": "/work/tests/e2e-response-time.spec.ts"
+        },
+        {
+          "name": "Study list direct load to primary content visible",
+          "durationMs": 564.97,
+          "startedAt": "2026-04-25T15:15:14.944Z",
+          "status": "passed",
+          "budget": {
+            "warnMs": 1000,
+            "hardMs": 1500,
+            "failOnHard": true,
+            "name": "publicRouteLoad"
+          },
+          "testTitle": "response time: Study list direct load meets budget",
+          "file": "/work/tests/e2e-response-time.spec.ts"
+        },
+        {
+          "name": "Public nav click to Introduction",
+          "durationMs": 522.39,
+          "startedAt": "2026-04-25T15:15:18.605Z",
+          "status": "passed",
+          "budget": {
+            "warnMs": 1000,
+            "hardMs": 1500,
+            "failOnHard": true,
+            "name": "publicNavClick"
+          },
+          "testTitle": "response time: desktop public nav clicks meet budget",
+          "file": "/work/tests/e2e-response-time.spec.ts"
+        },
+        {
+          "name": "Admin site settings save response-time path",
+          "durationMs": 520.84,
+          "startedAt": "2026-04-25T15:15:26.999Z",
+          "status": "passed",
+          "budget": {
+            "warnMs": 3000,
+            "hardMs": 4500,
+            "failOnHard": true,
+            "name": "adminMutationPublicRefresh"
+          },
+          "testTitle": "response time: admin site settings save refreshes public home within budget",
+          "file": "/work/tests/e2e-response-time.spec.ts"
+        },
+        {
+          "name": "Public Work card opens detail",
+          "durationMs": 502.52,
+          "startedAt": "2026-04-25T15:15:20.155Z",
+          "status": "passed",
+          "budget": {
+            "warnMs": 1500,
+            "hardMs": 2500,
+            "failOnHard": true,
+            "name": "publicDetailOpen"
+          },
+          "testTitle": "response time: public detail card opens meet budget",
+          "file": "/work/tests/e2e-response-time.spec.ts"
+        },
+        {
+          "name": "Public nav click to Contact",
+          "durationMs": 476.86,
+          "startedAt": "2026-04-25T15:15:19.128Z",
+          "status": "passed",
+          "budget": {
+            "warnMs": 1000,
+            "hardMs": 1500,
+            "failOnHard": true,
+            "name": "publicNavClick"
+          },
+          "testTitle": "response time: desktop public nav clicks meet budget",
+          "file": "/work/tests/e2e-response-time.spec.ts"
+        },
+        {
+          "name": "Public nav click to Study",
+          "durationMs": 460.37,
+          "startedAt": "2026-04-25T15:15:18.145Z",
+          "status": "passed",
+          "budget": {
+            "warnMs": 1000,
+            "hardMs": 1500,
+            "failOnHard": true,
+            "name": "publicNavClick"
+          },
+          "testTitle": "response time: desktop public nav clicks meet budget",
+          "file": "/work/tests/e2e-response-time.spec.ts"
+        },
+        {
+          "name": "Works list direct load to primary content visible",
+          "durationMs": 394.46,
+          "startedAt": "2026-04-25T15:15:16.015Z",
+          "status": "passed",
+          "budget": {
+            "warnMs": 1000,
+            "hardMs": 1500,
+            "failOnHard": true,
+            "name": "publicRouteLoad"
+          },
+          "testTitle": "response time: Works list direct load meets budget",
+          "file": "/work/tests/e2e-response-time.spec.ts"
+        },
+        {
+          "name": "AI Fix provider dropdown response-time path",
+          "durationMs": 219,
+          "startedAt": "2026-04-25T15:15:26.080Z",
+          "status": "passed",
+          "budget": {
+            "warnMs": 1000,
+            "hardMs": 1500,
+            "failOnHard": true,
+            "name": "aiDialogOpen"
+          },
+          "testTitle": "response time: AI Fix provider dropdown is ready within budget",
+          "file": "/work/tests/e2e-response-time.spec.ts"
+        },
+        {
+          "name": "Study mobile auto-append",
+          "durationMs": 179.71,
+          "startedAt": "2026-04-25T15:15:22.038Z",
+          "status": "passed",
+          "budget": {
+            "warnMs": 800,
+            "hardMs": 1200,
+            "failOnHard": true,
+            "name": "publicPagination"
+          },
+          "testTitle": "response time: Study mobile append next page meets budget",
+          "file": "/work/tests/e2e-response-time.spec.ts"
+        }
+      ],
+      "slowestApiResponses": [
+        {
+          "url": "http://woong-prod-latency-nginx-internal-1777129545/revalidate-public",
+          "method": "POST",
+          "status": 200,
+          "durationMs": 43.06,
+          "startedAt": "2026-04-25T15:15:27.149Z",
+          "source": "page",
+          "testTitle": "response time: admin site settings save refreshes public home within budget",
+          "file": "/work/tests/e2e-response-time.spec.ts"
+        },
+        {
+          "url": "http://woong-prod-latency-nginx-internal-1777129545/api/admin/ai/runtime-config",
+          "method": "GET",
+          "status": 200,
+          "durationMs": 32.71,
+          "startedAt": "2026-04-25T15:15:26.164Z",
+          "source": "page",
+          "testTitle": "response time: AI Fix provider dropdown is ready within budget",
+          "file": "/work/tests/e2e-response-time.spec.ts"
+        },
+        {
+          "url": "http://woong-prod-latency-nginx-internal-1777129545/api/public/works?page=2&pageSize=10",
+          "method": "GET",
+          "status": 200,
+          "durationMs": 21.08,
+          "startedAt": "2026-04-25T15:15:22.912Z",
+          "source": "page",
+          "testTitle": "response time: Works mobile append next page meets budget",
+          "file": "/work/tests/e2e-response-time.spec.ts"
+        },
+        {
+          "url": "http://woong-prod-latency-nginx-internal-1777129545/api/admin/site-settings",
+          "method": "PUT",
+          "status": 200,
+          "durationMs": 15.49,
+          "startedAt": "2026-04-25T15:15:27.133Z",
+          "source": "page",
+          "testTitle": "response time: admin site settings save refreshes public home within budget",
+          "file": "/work/tests/e2e-response-time.spec.ts"
+        },
+        {
+          "url": "http://woong-prod-latency-nginx-internal-1777129545/api/auth/session",
+          "method": "GET",
+          "status": 200,
+          "durationMs": 14.59,
+          "startedAt": "2026-04-25T15:15:20.857Z",
+          "source": "page",
+          "testTitle": "response time: public detail card opens meet budget",
+          "file": "/work/tests/e2e-response-time.spec.ts"
+        },
+        {
+          "url": "http://woong-prod-latency-nginx-internal-1777129545/api/auth/csrf",
+          "method": "GET",
+          "status": 200,
+          "durationMs": 14.31,
+          "startedAt": "2026-04-25T15:15:27.119Z",
+          "source": "page",
+          "testTitle": "response time: admin site settings save refreshes public home within budget",
+          "file": "/work/tests/e2e-response-time.spec.ts"
+        },
+        {
+          "url": "http://woong-prod-latency-nginx-internal-1777129545/api/public/blogs?page=2&pageSize=10",
+          "method": "GET",
+          "status": 200,
+          "durationMs": 13.59,
+          "startedAt": "2026-04-25T15:15:22.077Z",
+          "source": "page",
+          "testTitle": "response time: Study mobile append next page meets budget",
+          "file": "/work/tests/e2e-response-time.spec.ts"
+        },
+        {
+          "url": "http://woong-prod-latency-nginx-internal-1777129545/api/auth/session",
+          "method": "GET",
+          "status": 200,
+          "durationMs": 13.32,
+          "startedAt": "2026-04-25T15:15:17.962Z",
+          "source": "page",
+          "testTitle": "response time: desktop public nav clicks meet budget",
+          "file": "/work/tests/e2e-response-time.spec.ts"
+        }
+      ],
+      "generatedAt": "2026-04-25T15:15:29.146Z"
+    }
+  ],
+  "artifacts": [
+    "backend/reports/production-like-latency-2026-04-26/artifacts/pass-2-summary.json",
+    "backend/reports/production-like-latency-2026-04-26/artifacts/pass-2-summary.md",
+    "backend/reports/production-like-latency-2026-04-26/artifacts/pass-3-summary.json",
+    "backend/reports/production-like-latency-2026-04-26/artifacts/pass-3-summary.md"
+  ]
+}

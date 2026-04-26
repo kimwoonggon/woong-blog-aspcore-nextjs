@@ -9,20 +9,25 @@ test('VA-120 blog TOC stays visually separated from the article body', async ({ 
   await page.goto('/blog/seeded-blog')
 
   const toc = page.getByTestId('blog-toc')
+  const body = page.getByTestId('blog-detail-body')
   await expect(toc).toBeVisible()
+  await expect(body).toBeVisible()
 
   const styles = await toc.evaluate((element) => {
     const style = getComputedStyle(element)
     return {
       borderTopWidth: style.borderTopWidth,
       backgroundColor: style.backgroundColor,
-      position: style.position,
     }
   })
 
   expect(px(styles.borderTopWidth)).toBeGreaterThan(0)
   expect(styles.backgroundColor).not.toBe('rgba(0, 0, 0, 0)')
-  expect(styles.position).toBe('sticky')
+
+  const [bodyBox, tocBox] = await Promise.all([body.boundingBox(), toc.boundingBox()])
+  expect(bodyBox).toBeTruthy()
+  expect(tocBox).toBeTruthy()
+  expect(bodyBox!.x + bodyBox!.width).toBeLessThanOrEqual(tocBox!.x - 24)
 })
 
 test('VA-121 blog body keeps readable paragraph line-height and spacing', async ({ page }) => {

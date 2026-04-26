@@ -35,4 +35,14 @@ public sealed class WorkVideoPlaybackUrlBuilder(
             ? storage.BuildPlaybackUrl(storageKey)
             : null;
     }
+
+    public async Task<bool> StorageObjectExistsAsync(string storageType, string storageKey, CancellationToken cancellationToken)
+    {
+        if (!_storages.TryGetValue(storageType, out var storage))
+        {
+            return false;
+        }
+
+        return await storage.GetObjectAsync(storageKey, cancellationToken) is not null;
+    }
 }

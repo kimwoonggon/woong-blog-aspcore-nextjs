@@ -1,0 +1,9 @@
+{
+  "startedAt": "2026-04-26T00:22:39+09:00",
+  "endedAt": "2026-04-26T02:37:44+09:00",
+  "durationSeconds": 8105,
+  "exitCode": 1,
+  "baseUrl": "http://woong-prod-full-e2e-nginx-1777130558",
+  "workers": 1,
+  "reporter": "list,json"
+}

@@ -106,25 +106,24 @@ test('records a long uploaded work video hover preview after processing', async 
   await page.goto(`/works/${existingSlug}`)
 
   const player = page.getByTestId('work-video-player').first()
-  const overlay = page.getByTestId('work-video-progress-overlay').first()
   const video = page.locator('video').first()
   await expect(player).toBeVisible()
   await expect(player).toHaveAttribute('data-preview-ready', 'true')
-  await expect(overlay).toBeVisible()
-  await overlay.scrollIntoViewIfNeeded()
+  await expect(page.getByTestId('work-video-preview-region')).toHaveCount(0)
+  await video.scrollIntoViewIfNeeded()
   await expect.poll(async () => video.evaluate((node) => Number.isFinite((node as HTMLVideoElement).duration) && (node as HTMLVideoElement).duration > 0)).toBe(true)
   await page.waitForTimeout(1000)
 
-  const overlayBox = await overlay.boundingBox()
-  if (!overlayBox) {
-    throw new Error('Expected progress overlay bounding box for recording')
+  const videoBox = await video.boundingBox()
+  if (!videoBox) {
+    throw new Error('Expected video bounding box for recording')
   }
 
   const hoverPoints = [0.18, 0.42, 0.74]
   for (const point of hoverPoints) {
     await page.mouse.move(
-      overlayBox.x + (overlayBox.width * point),
-      overlayBox.y + (overlayBox.height * 0.5),
+      videoBox.x + (videoBox.width * point),
+      videoBox.y + videoBox.height - 40,
     )
     await expect(page.getByTestId('work-video-timeline-preview')).toBeVisible()
     await page.waitForTimeout(1200)

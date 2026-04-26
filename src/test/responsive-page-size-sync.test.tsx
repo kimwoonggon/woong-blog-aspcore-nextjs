@@ -19,6 +19,8 @@ describe('ResponsivePageSizeSync', () => {
     navigationMocks.replace.mockClear()
     navigationMocks.pathname = '/blog'
     navigationMocks.search = ''
+    window.history.replaceState(null, '', '/blog')
+    window.sessionStorage.clear()
     Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1280 })
     Object.defineProperty(window, 'innerHeight', { configurable: true, value: 960 })
   })
@@ -87,5 +89,67 @@ describe('ResponsivePageSizeSync', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 0))
     expect(navigationMocks.replace).not.toHaveBeenCalled()
+  })
+
+  it('does not rewrite Study infinite-list params on mobile while a browser-back reading restore is pending', async () => {
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 390 })
+    navigationMocks.search = 'page=1&pageSize=10'
+    window.history.replaceState({
+      __studyFeedRestore: {
+        query: '',
+        loadedPageCount: 2,
+        pageSize: 10,
+        scrollY: 960,
+        restoreOnHistoryReturn: true,
+      },
+    }, '', '/blog?page=1&pageSize=10')
+    window.sessionStorage.setItem('woong-study-mobile-feed-state', JSON.stringify({
+      query: '',
+      loadedPageCount: 2,
+      pageSize: 10,
+      scrollY: 960,
+      restoreOnHistoryReturn: true,
+    }))
+
+    render(
+      <ResponsivePageSizeSync
+        desktopPageSize={12}
+        tabletPageSize={8}
+        mobilePageSize={4}
+        infiniteBelowDesktop
+        infinitePageSize={10}
+        skipWhenStudyRestorePending
+      />,
+    )
+
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(navigationMocks.replace).not.toHaveBeenCalled()
+  })
+
+  it('lets desktop pagination win when a stale mobile Study restore is pending at desktop width', async () => {
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1280 })
+    navigationMocks.search = 'page=1&pageSize=10'
+    window.sessionStorage.setItem('woong-study-mobile-feed-state', JSON.stringify({
+      query: '',
+      loadedPageCount: 2,
+      pageSize: 10,
+      scrollY: 960,
+      restoreOnHistoryReturn: true,
+    }))
+
+    render(
+      <ResponsivePageSizeSync
+        desktopPageSize={12}
+        tabletPageSize={8}
+        mobilePageSize={4}
+        infiniteBelowDesktop
+        infinitePageSize={10}
+        skipWhenStudyRestorePending
+      />,
+    )
+
+    await waitFor(() => {
+      expect(navigationMocks.replace).toHaveBeenCalledWith('/blog?page=1&pageSize=12', { scroll: false })
+    })
   })
 })

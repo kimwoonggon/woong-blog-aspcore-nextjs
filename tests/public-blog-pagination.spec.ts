@@ -1,20 +1,70 @@
 import { expect, test } from './helpers/performance-test'
 import { measureStep } from './helpers/latency'
+import { createBlogFixture } from './helpers/content-fixtures'
 
-test('study list uses infinite feed on mobile (390px)', async ({ page }) => {
+test.use({ storageState: 'test-results/playwright/admin-storage-state.json' })
+
+test('study list auto-appends the next page on mobile without a Load more button', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/blog')
 
   await expect(page.getByLabel('Study pagination')).toBeHidden()
+  await expect(page.getByTestId('blog-load-more')).toHaveCount(0)
   await expect(page.getByTestId('blog-card')).toHaveCount(10)
-  await expect(page.getByTestId('blog-load-more')).toBeVisible()
+
+  await measureStep(
+    testInfo,
+    'Study mobile auto append next page',
+    'publicPagination',
+    async () => {
+      await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
+    },
+    async () => {
+      await expect.poll(() => page.getByTestId('blog-card').count()).toBeGreaterThan(10)
+    },
+  )
 })
 
-test('study list uses infinite feed on tablet (820px) and appends next page', async ({ page }, testInfo) => {
+test('study list keeps desktop pagination layout after mobile reading then desktop browser back', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/blog')
+
+  await expect(page.getByTestId('blog-card')).toHaveCount(10)
+
+  await measureStep(
+    testInfo,
+    'Study mobile auto append before detail navigation',
+    'publicPagination',
+    async () => {
+      await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
+    },
+    async () => {
+      await expect.poll(() => page.getByTestId('blog-card').count()).toBeGreaterThan(10)
+    },
+  )
+
+  const targetCard = page.getByTestId('blog-card').nth(11)
+  await expect(targetCard).toBeVisible()
+  await targetCard.scrollIntoViewIfNeeded()
+  await targetCard.click()
+
+  await expect(page).toHaveURL(/\/blog\/.+/)
+  await page.setViewportSize({ width: 1280, height: 960 })
+  await page.goBack()
+
+  await expect(page).toHaveURL(/\/blog/)
+  await expect(page.getByTestId('blog-responsive-feed')).toHaveAttribute('data-feed-mode', 'pagination')
+  await expect(page.getByLabel('Study pagination')).toBeVisible()
+  await expect(page.getByTestId('blog-load-more')).toHaveCount(0)
+  await expect(page.getByTestId('blog-card')).toHaveCount(12)
+})
+
+test('study list keeps manual Load more on tablet and desktop pagination at >=1024px', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 820, height: 1180 })
   await page.goto('/blog')
 
   await expect(page.getByLabel('Study pagination')).toBeHidden()
+  await expect(page.getByTestId('blog-load-more')).toBeVisible()
   await expect.poll(() => page.getByTestId('blog-card').count()).toBeGreaterThanOrEqual(10)
   const initialCount = await page.getByTestId('blog-card').count()
 
@@ -29,9 +79,7 @@ test('study list uses infinite feed on tablet (820px) and appends next page', as
       await expect.poll(() => page.getByTestId('blog-card').count()).toBeGreaterThan(initialCount)
     },
   )
-})
 
-test('study list keeps desktop pagination and hides infinite controls at >=1024px', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 1280, height: 960 })
   await page.goto('/blog')
 
@@ -41,17 +89,23 @@ test('study list keeps desktop pagination and hides infinite controls at >=1024p
   const payload = await (await page.request.get('/api/public/blogs?page=1&pageSize=12')).json() as { totalPages: number }
   test.skip(payload.totalPages < 2, 'Clean seed does not have a second study page.')
   await expect(pagination.getByRole('link', { name: 'Next' })).toBeVisible()
+})
 
-  await measureStep(
-    testInfo,
-    'Study desktop pagination next navigation',
-    'publicPagination',
-    async () => {
-      await pagination.getByRole('link', { name: 'Next' }).click()
-      await expect.poll(() => new URL(page.url()).searchParams.get('page')).toBe('2')
-    },
-    async () => {
-      await expect(page.getByLabel('Study pagination').getByRole('link', { name: '2', exact: true })).toHaveClass(/bg-sky-500/)
-    },
-  )
+test('study cards show multiple saved tags and never substitute body text for a blank excerpt', async ({ page, request }, testInfo) => {
+  const fixture = await createBlogFixture(request, testInfo, {
+    titlePrefix: 'Blank Excerpt Study',
+    excerpt: '',
+    html: '<p>Body text that must not appear as the summary fallback.</p>',
+    tags: ['playwright', 'hotfix', 'excerpt-blank'],
+  })
+
+  await page.goto(`/blog?query=${encodeURIComponent(fixture.tag)}`)
+
+  const card = page.getByTestId('blog-card').first()
+  await expect(card).toBeVisible()
+  await expect(card).toContainText(fixture.title)
+  await expect(card).toContainText('playwright')
+  await expect(card).toContainText('hotfix')
+  await expect(card).toContainText('excerpt-blank')
+  await expect(card).not.toContainText('Body text that must not appear as the summary fallback.')
 })

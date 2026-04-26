@@ -1,0 +1,2194 @@
+{
+  "generatedAt": "2026-04-25T17:37:43.710Z",
+  "testCount": 466,
+  "budgetFailureCount": 0,
+  "warningCount": 113,
+  "slowestTests": [
+    {
+      "title": "E2E-009 admin can run a batch AI workflow and then bulk delete the processed items",
+      "file": "/work/tests/e2e-admin-batch-management-journey.spec.ts",
+      "projectName": "chromium-authenticated",
+      "durationMs": 300139.45,
+      "status": "timedOut"
+    },
+    {
+      "title": "public blog detail save returns to the originating list page",
+      "file": "/work/tests/live-blog-ai-regressions.spec.ts",
+      "projectName": "chromium-authenticated",
+      "durationMs": 180175.74,
+      "status": "timedOut"
+    },
+    {
+      "title": "recording mermaid editor preview",
+      "file": "/work/tests/feature-recording-0418.spec.ts",
+      "projectName": "chromium-public",
+      "durationMs": 120241.32,
+      "status": "timedOut"
+    },
+    {
+      "title": "recording mermaid work rendering",
+      "file": "/work/tests/feature-recording-0418.spec.ts",
+      "projectName": "chromium-public",
+      "durationMs": 120225.58,
+      "status": "timedOut"
+    },
+    {
+      "title": "recording image resize drag",
+      "file": "/work/tests/feature-recording-0418.spec.ts",
+      "projectName": "chromium-public",
+      "durationMs": 120219.73,
+      "status": "timedOut"
+    },
+    {
+      "title": "recording image work resize",
+      "file": "/work/tests/feature-recording-0418.spec.ts",
+      "projectName": "chromium-public",
+      "durationMs": 120211.49,
+      "status": "timedOut"
+    },
+    {
+      "title": "recording image drag move",
+      "file": "/work/tests/feature-recording-0418.spec.ts",
+      "projectName": "chromium-public",
+      "durationMs": 120205.12,
+      "status": "timedOut"
+    },
+    {
+      "title": "recording mermaid rendering",
+      "file": "/work/tests/feature-recording-0418.spec.ts",
+      "projectName": "chromium-public",
+      "durationMs": 120110.01,
+      "status": "timedOut"
+    },
+    {
+      "title": "public blog inline editor clears beforeunload after save",
+      "file": "/work/tests/public-inline-editors-unsaved-warning.spec.ts",
+      "projectName": "chromium-authenticated",
+      "durationMs": 90366.94,
+      "status": "timedOut"
+    },
+    {
+      "title": "public work inline editor clears beforeunload after save",
+      "file": "/work/tests/public-inline-editors-unsaved-warning.spec.ts",
+      "projectName": "chromium-authenticated",
+      "durationMs": 90239.37,
+      "status": "timedOut"
+    },
+    {
+      "title": "VA-005 success, warning, and error states keep distinct semantic color treatments",
+      "file": "/work/tests/ui-admin-semantic-colors.spec.ts",
+      "projectName": "chromium-authenticated",
+      "durationMs": 60188.8,
+      "status": "timedOut"
+    },
+    {
+      "title": "capture homepage across a full width sweep and record layout metrics",
+      "file": "/work/tests/responsive-width-sweep.spec.ts",
+      "projectName": "chromium-public",
+      "durationMs": 57334.22,
+      "status": "passed"
+    },
+    {
+      "title": "admin can keep a blog post as draft and publish it later",
+      "file": "/work/tests/admin-blog-publish.spec.ts",
+      "projectName": "chromium-authenticated",
+      "durationMs": 30326.1,
+      "status": "timedOut"
+    },
+    {
+      "title": "admin can update the introduction page from admin pages",
+      "file": "/work/tests/admin-pages-settings.spec.ts",
+      "projectName": "chromium-authenticated",
+      "durationMs": 30251.73,
+      "status": "timedOut"
+    },
+    {
+      "title": "uploaded green-only mp4 generates and persists an automatic thumbnail",
+      "file": "/work/tests/work-green-video-thumbnail.spec.ts",
+      "projectName": "chromium-authenticated",
+      "durationMs": 30227.98,
+      "status": "timedOut"
+    },
+    {
+      "title": "admin can toggle a published work back to draft and publish it again",
+      "file": "/work/tests/admin-work-publish.spec.ts",
+      "projectName": "chromium-authenticated",
+      "durationMs": 30200.92,
+      "status": "timedOut"
+    },
+    {
+      "title": "work create CTA stays consolidated when multiple videos are staged",
+      "file": "/work/tests/ui-admin-work-create-cta.spec.ts",
+      "projectName": "chromium-authenticated",
+      "durationMs": 30197.76,
+      "status": "timedOut"
+    },
+    {
+      "title": "F-5 and F-6 inline create flows can create works and blog posts from public pages",
+      "file": "/work/tests/manual-qa-gap-coverage.spec.ts",
+      "projectName": "chromium-authenticated",
+      "durationMs": 30180.51,
+      "status": "timedOut"
+    },
+    {
+      "title": "resume page exposes inline PDF upload shell for admins",
+      "file": "/work/tests/public-inline-editors.spec.ts",
+      "projectName": "chromium-authenticated",
+      "durationMs": 30179.45,
+      "status": "timedOut"
+    },
+    {
+      "title": "F-3 and F-4 inline page editors can save introduction and contact content in place",
+      "file": "/work/tests/manual-qa-gap-coverage.spec.ts",
+      "projectName": "chromium-authenticated",
+      "durationMs": 30179.28,
+      "status": "timedOut"
+    }
+  ],
+  "slowestApiResponses": [
+    {
+      "url": "http://woong-prod-full-e2e-nginx-1777130558/api/admin/blogs",
+      "method": "POST",
+      "status": 200,
+      "durationMs": 2434.27,
+      "startedAt": "2026-04-25T15:29:16.752Z",
+      "source": "request",
+      "testTitle": "recording search url stability",
+      "file": "/work/tests/feature-recording-0418.spec.ts"
+    },
+    {
+      "url": "http://woong-prod-full-e2e-nginx-1777130558/api/auth/csrf",
+      "method": "GET",
+      "status": 200,
+      "durationMs": 1297.71,
+      "startedAt": "2026-04-25T15:29:15.442Z",
+      "source": "request",
+      "testTitle": "recording search url stability",
+      "file": "/work/tests/feature-recording-0418.spec.ts"
+    },
+    {
+      "url": "http://woong-prod-full-e2e-nginx-1777130558/api/admin/works",
+      "method": "POST",
+      "status": 200,
+      "durationMs": 737.97,
+      "startedAt": "2026-04-25T15:29:19.197Z",
+      "source": "request",
+      "testTitle": "recording search url stability",
+      "file": "/work/tests/feature-recording-0418.spec.ts"
+    },
+    {
+      "url": "http://woong-prod-full-e2e-nginx-1777130558/api/auth/session",
+      "method": "GET",
+      "status": 200,
+      "durationMs": 571.28,
+      "startedAt": "2026-04-25T15:24:28.895Z",
+      "source": "page",
+      "testTitle": "public study inline create returns to the first blog page after save",
+      "file": "/work/tests/public-blog-inline-redirects.spec.ts"
+    },
+    {
+      "url": "http://woong-prod-full-e2e-nginx-1777130558/api/auth/test-login?email=admin%40example.com&returnUrl=%2Fadmin%2Fdashboard",
+      "method": "GET",
+      "status": 302,
+      "durationMs": 273.81,
+      "startedAt": "2026-04-25T17:37:34.737Z",
+      "source": "page",
+      "testTitle": "managed test server exposes proxied auth session and local admin bootstrap",
+      "file": "/work/tests/test-server-runtime.spec.ts"
+    },
+    {
+      "url": "http://woong-prod-full-e2e-nginx-1777130558/api/public/blogs?page=2&pageSize=10",
+      "method": "GET",
+      "status": 200,
+      "durationMs": 252.85,
+      "startedAt": "2026-04-25T15:24:35.336Z",
+      "source": "page",
+      "testTitle": "study list auto-appends the next page on mobile without a Load more button",
+      "file": "/work/tests/public-blog-pagination.spec.ts"
+    },
+    {
+      "url": "http://woong-prod-full-e2e-nginx-1777130558/api/auth/logout?returnUrl=%2F",
+      "method": "POST",
+      "durationMs": 131.04,
+      "startedAt": "2026-04-25T15:24:02.272Z",
+      "source": "page",
+      "testTitle": "D-6 stale editor sessions fail to save cleanly after logout",
+      "file": "/work/tests/manual-qa-auth-gap.spec.ts"
+    },
+    {
+      "url": "http://woong-prod-full-e2e-nginx-1777130558/api/auth/session",
+      "method": "GET",
+      "status": 200,
+      "durationMs": 126.84,
+      "startedAt": "2026-04-25T15:23:17.296Z",
+      "source": "page",
+      "testTitle": "E2E-007 dark mode stays coherent across the main public journey",
+      "file": "/work/tests/e2e-dark-mode-journey.spec.ts"
+    },
+    {
+      "url": "http://woong-prod-full-e2e-nginx-1777130558/api/auth/logout?returnUrl=%2Flogin",
+      "method": "POST",
+      "durationMs": 124.21,
+      "startedAt": "2026-04-25T15:45:53.198Z",
+      "source": "page",
+      "testTitle": "expired admin sessions redirect protected routes back to login",
+      "file": "/work/tests/admin-auth-session-expiry.spec.ts"
+    },
+    {
+      "url": "http://woong-prod-full-e2e-nginx-1777130558/api/auth/session",
+      "method": "GET",
+      "status": 200,
+      "durationMs": 116.2,
+      "startedAt": "2026-04-25T15:25:55.056Z",
+      "source": "page",
+      "testTitle": "work detail exposes a desktop table of contents that anchors into the article body",
+      "file": "/work/tests/public-work-toc.spec.ts"
+    },
+    {
+      "url": "http://woong-prod-full-e2e-nginx-1777130558/api/auth/session",
+      "method": "GET",
+      "status": 200,
+      "durationMs": 109.69,
+      "startedAt": "2026-04-25T15:28:14.473Z",
+      "source": "page",
+      "testTitle": "work detail prev-next keeps relatedPage in the url",
+      "file": "/work/tests/ui-improvement-related-page-retention.spec.ts"
+    },
+    {
+      "url": "http://woong-prod-full-e2e-nginx-1777130558/api/auth/csrf",
+      "method": "GET",
+      "status": 200,
+      "durationMs": 76,
+      "startedAt": "2026-04-25T15:45:53.100Z",
+      "source": "page",
+      "testTitle": "expired admin sessions redirect protected routes back to login",
+      "file": "/work/tests/admin-auth-session-expiry.spec.ts"
+    },
+    {
+      "url": "http://woong-prod-full-e2e-nginx-1777130558/api/admin/blogs",
+      "method": "POST",
+      "status": 200,
+      "durationMs": 74.94,
+      "startedAt": "2026-04-25T15:29:21.878Z",
+      "source": "request",
+      "testTitle": "recording search blog normalized",
+      "file": "/work/tests/feature-recording-0418.spec.ts"
+    },
+    {
+      "url": "http://woong-prod-full-e2e-nginx-1777130558/api/auth/session",
+      "method": "GET",
+      "status": 200,
+      "durationMs": 73.44,
+      "startedAt": "2026-04-25T15:27:10.167Z",
+      "source": "page",
+      "testTitle": "work detail date badge uses brand navy",
+      "file": "/work/tests/ui-improvement-badge-color.spec.ts"
+    },
+    {
+      "url": "http://woong-prod-full-e2e-nginx-1777130558/api/auth/session",
+      "method": "GET",
+      "status": 200,
+      "durationMs": 64.11,
+      "startedAt": "2026-04-25T15:27:12.338Z",
+      "source": "page",
+      "testTitle": "dark mode date badges keep accessible white-on-navy contrast",
+      "file": "/work/tests/ui-improvement-badge-color.spec.ts"
+    },
+    {
+      "url": "http://woong-prod-full-e2e-nginx-1777130558/api/public/blogs?page=2&pageSize=10",
+      "method": "GET",
+      "status": 200,
+      "durationMs": 54.04,
+      "startedAt": "2026-04-25T15:24:36.349Z",
+      "source": "page",
+      "testTitle": "study list keeps desktop pagination layout after mobile reading then desktop browser back",
+      "file": "/work/tests/public-blog-pagination.spec.ts"
+    },
+    {
+      "url": "http://woong-prod-full-e2e-nginx-1777130558/api/public/works?page=1&pageSize=100",
+      "method": "GET",
+      "status": 200,
+      "durationMs": 53.26,
+      "startedAt": "2026-04-25T15:43:39.731Z",
+      "source": "request",
+      "testTitle": "records a long uploaded work video hover preview after processing",
+      "file": "/work/tests/video-preview-recording-0424.spec.ts"
+    },
+    {
+      "url": "http://woong-prod-full-e2e-nginx-1777130558/api/auth/session",
+      "method": "GET",
+      "status": 200,
+      "durationMs": 49.52,
+      "startedAt": "2026-04-25T15:25:23.515Z",
+      "source": "page",
+      "testTitle": "related content cards keep stable desktop rows on detail pages",
+      "file": "/work/tests/public-layout-stability.spec.ts"
+    },
+    {
+      "url": "http://woong-prod-full-e2e-nginx-1777130558/api/admin/site-settings",
+      "method": "PUT",
+      "status": 200,
+      "durationMs": 48.48,
+      "startedAt": "2026-04-25T17:37:20.153Z",
+      "source": "page",
+      "testTitle": "browser mutation flow requires csrf token and succeeds with one",
+      "file": "/work/tests/auth-security-browser.spec.ts"
+    },
+    {
+      "url": "http://woong-prod-full-e2e-nginx-1777130558/api/admin/pages",
+      "method": "PUT",
+      "status": 200,
+      "durationMs": 47.36,
+      "startedAt": "2026-04-25T15:25:28.822Z",
+      "source": "page",
+      "testTitle": "/introduction inline page save closes the editor and refreshes content",
+      "file": "/work/tests/public-page-inline-save.spec.ts"
+    }
+  ],
+  "slowestInteractions": [
+    {
+      "name": "keydown",
+      "durationMs": 144,
+      "startTimeMs": 657.7,
+      "interactionId": 4245,
+      "source": "performance-observer",
+      "target": "a",
+      "testTitle": "keyboard users can traverse the primary navigation in visual order",
+      "file": "/work/tests/ui-improvement-focus-visible.spec.ts"
+    },
+    {
+      "name": "pointerover",
+      "durationMs": 128,
+      "startTimeMs": 543,
+      "interactionId": 0,
+      "source": "performance-observer",
+      "target": "span",
+      "testTitle": "0416 public copy, light default, and Study navigation are visible",
+      "file": "/work/tests/renovation-0416-regression.spec.ts"
+    },
+    {
+      "name": "pointerenter",
+      "durationMs": 128,
+      "startTimeMs": 543,
+      "interactionId": 0,
+      "source": "performance-observer",
+      "testTitle": "0416 public copy, light default, and Study navigation are visible",
+      "file": "/work/tests/renovation-0416-regression.spec.ts"
+    },
+    {
+      "name": "pointerenter",
+      "durationMs": 128,
+      "startTimeMs": 543,
+      "interactionId": 0,
+      "source": "performance-observer",
+      "target": "html",
+      "testTitle": "0416 public copy, light default, and Study navigation are visible",
+      "file": "/work/tests/renovation-0416-regression.spec.ts"
+    },
+    {
+      "name": "pointerenter",
+      "durationMs": 128,
+      "startTimeMs": 543,
+      "interactionId": 0,
+      "source": "performance-observer",
+      "target": "body",
+      "testTitle": "0416 public copy, light default, and Study navigation are visible",
+      "file": "/work/tests/renovation-0416-regression.spec.ts"
+    },
+    {
+      "name": "pointerenter",
+      "durationMs": 128,
+      "startTimeMs": 543,
+      "interactionId": 0,
+      "source": "performance-observer",
+      "target": "div",
+      "testTitle": "0416 public copy, light default, and Study navigation are visible",
+      "file": "/work/tests/renovation-0416-regression.spec.ts"
+    },
+    {
+      "name": "pointerenter",
+      "durationMs": 128,
+      "startTimeMs": 543,
+      "interactionId": 0,
+      "source": "performance-observer",
+      "target": "header",
+      "testTitle": "0416 public copy, light default, and Study navigation are visible",
+      "file": "/work/tests/renovation-0416-regression.spec.ts"
+    },
+    {
+      "name": "pointerenter",
+      "durationMs": 128,
+      "startTimeMs": 543,
+      "interactionId": 0,
+      "source": "performance-observer",
+      "target": "div",
+      "testTitle": "0416 public copy, light default, and Study navigation are visible",
+      "file": "/work/tests/renovation-0416-regression.spec.ts"
+    },
+    {
+      "name": "pointerenter",
+      "durationMs": 128,
+      "startTimeMs": 543,
+      "interactionId": 0,
+      "source": "performance-observer",
+      "target": "div",
+      "testTitle": "0416 public copy, light default, and Study navigation are visible",
+      "file": "/work/tests/renovation-0416-regression.spec.ts"
+    },
+    {
+      "name": "pointerenter",
+      "durationMs": 128,
+      "startTimeMs": 543,
+      "interactionId": 0,
+      "source": "performance-observer",
+      "target": "[data-testid=\"theme-toggle\"]",
+      "testTitle": "0416 public copy, light default, and Study navigation are visible",
+      "file": "/work/tests/renovation-0416-regression.spec.ts"
+    },
+    {
+      "name": "pointerenter",
+      "durationMs": 128,
+      "startTimeMs": 543,
+      "interactionId": 0,
+      "source": "performance-observer",
+      "target": "span",
+      "testTitle": "0416 public copy, light default, and Study navigation are visible",
+      "file": "/work/tests/renovation-0416-regression.spec.ts"
+    },
+    {
+      "name": "mouseover",
+      "durationMs": 128,
+      "startTimeMs": 543,
+      "interactionId": 0,
+      "source": "performance-observer",
+      "target": "span",
+      "testTitle": "0416 public copy, light default, and Study navigation are visible",
+      "file": "/work/tests/renovation-0416-regression.spec.ts"
+    },
+    {
+      "name": "pointerdown",
+      "durationMs": 128,
+      "startTimeMs": 543.6,
+      "interactionId": 4902,
+      "source": "performance-observer",
+      "target": "span",
+      "testTitle": "0416 public copy, light default, and Study navigation are visible",
+      "file": "/work/tests/renovation-0416-regression.spec.ts"
+    },
+    {
+      "name": "mousedown",
+      "durationMs": 128,
+      "startTimeMs": 543.6,
+      "interactionId": 0,
+      "source": "performance-observer",
+      "target": "span",
+      "testTitle": "0416 public copy, light default, and Study navigation are visible",
+      "file": "/work/tests/renovation-0416-regression.spec.ts"
+    },
+    {
+      "name": "pointerup",
+      "durationMs": 128,
+      "startTimeMs": 545.8,
+      "interactionId": 4902,
+      "source": "performance-observer",
+      "target": "span",
+      "testTitle": "0416 public copy, light default, and Study navigation are visible",
+      "file": "/work/tests/renovation-0416-regression.spec.ts"
+    },
+    {
+      "name": "mouseup",
+      "durationMs": 128,
+      "startTimeMs": 545.8,
+      "interactionId": 0,
+      "source": "performance-observer",
+      "target": "span",
+      "testTitle": "0416 public copy, light default, and Study navigation are visible",
+      "file": "/work/tests/renovation-0416-regression.spec.ts"
+    },
+    {
+      "name": "click",
+      "durationMs": 128,
+      "startTimeMs": 545.8,
+      "interactionId": 4902,
+      "source": "performance-observer",
+      "target": "span",
+      "testTitle": "0416 public copy, light default, and Study navigation are visible",
+      "file": "/work/tests/renovation-0416-regression.spec.ts"
+    },
+    {
+      "name": "keyup",
+      "durationMs": 120,
+      "startTimeMs": 682.2,
+      "interactionId": 4245,
+      "source": "performance-observer",
+      "target": "a",
+      "testTitle": "keyboard users can traverse the primary navigation in visual order",
+      "file": "/work/tests/ui-improvement-focus-visible.spec.ts"
+    },
+    {
+      "name": "pointerout",
+      "durationMs": 112,
+      "startTimeMs": 598.4,
+      "interactionId": 0,
+      "source": "performance-observer",
+      "target": "a",
+      "testTitle": "primary navbar routes to every public destination",
+      "file": "/work/tests/home.spec.ts"
+    },
+    {
+      "name": "pointerleave",
+      "durationMs": 112,
+      "startTimeMs": 598.4,
+      "interactionId": 0,
+      "source": "performance-observer",
+      "target": "a",
+      "testTitle": "primary navbar routes to every public destination",
+      "file": "/work/tests/home.spec.ts"
+    }
+  ],
+  "slowestMeasuredSteps": [
+    {
+      "name": "Public nav click to Works",
+      "durationMs": 707.72,
+      "startedAt": "2026-04-25T15:23:23.366Z",
+      "status": "passed",
+      "budget": {
+        "warnMs": 1000,
+        "hardMs": 1500,
+        "failOnHard": true,
+        "name": "publicNavClick"
+      },
+      "testTitle": "response time: desktop public nav clicks meet budget",
+      "file": "/work/tests/e2e-response-time.spec.ts"
+    },
+    {
+      "name": "Works unified search submit",
+      "durationMs": 621.6,
+      "startedAt": "2026-04-25T15:26:03.361Z",
+      "status": "passed",
+      "budget": {
+        "warnMs": 1000,
+        "hardMs": 1500,
+        "failOnHard": true,
+        "name": "publicSearch"
+      },
+      "testTitle": "public works search submits query without searchMode",
+      "file": "/work/tests/public-works-search.spec.ts"
+    },
+    {
+      "name": "Admin site settings save response-time path",
+      "durationMs": 595.05,
+      "startedAt": "2026-04-25T15:23:31.761Z",
+      "status": "passed",
+      "budget": {
+        "warnMs": 3000,
+        "hardMs": 4500,
+        "failOnHard": true,
+        "name": "adminMutationPublicRefresh"
+      },
+      "testTitle": "response time: admin site settings save refreshes public home within budget",
+      "file": "/work/tests/e2e-response-time.spec.ts"
+    },
+    {
+      "name": "Study unified search submit",
+      "durationMs": 586.99,
+      "startedAt": "2026-04-25T15:26:01.882Z",
+      "status": "passed",
+      "budget": {
+        "warnMs": 1000,
+        "hardMs": 1500,
+        "failOnHard": true,
+        "name": "publicSearch"
+      },
+      "testTitle": "public study search submits query without searchMode",
+      "file": "/work/tests/public-works-search.spec.ts"
+    },
+    {
+      "name": "Study unified search submit response-time path",
+      "durationMs": 570.46,
+      "startedAt": "2026-04-25T15:23:28.916Z",
+      "status": "passed",
+      "budget": {
+        "warnMs": 1000,
+        "hardMs": 1500,
+        "failOnHard": true,
+        "name": "publicSearch"
+      },
+      "testTitle": "response time: unified public search submit meets budget",
+      "file": "/work/tests/e2e-response-time.spec.ts"
+    },
+    {
+      "name": "Public nav click to Contact",
+      "durationMs": 536.95,
+      "startedAt": "2026-04-25T15:23:24.508Z",
+      "status": "passed",
+      "budget": {
+        "warnMs": 1000,
+        "hardMs": 1500,
+        "failOnHard": true,
+        "name": "publicNavClick"
+      },
+      "testTitle": "response time: desktop public nav clicks meet budget",
+      "file": "/work/tests/e2e-response-time.spec.ts"
+    },
+    {
+      "name": "Public Study card opens detail",
+      "durationMs": 519.71,
+      "startedAt": "2026-04-25T15:23:26.286Z",
+      "status": "passed",
+      "budget": {
+        "warnMs": 1500,
+        "hardMs": 2500,
+        "failOnHard": true,
+        "name": "publicDetailOpen"
+      },
+      "testTitle": "response time: public detail card opens meet budget",
+      "file": "/work/tests/e2e-response-time.spec.ts"
+    },
+    {
+      "name": "Public Work card opens detail",
+      "durationMs": 496.86,
+      "startedAt": "2026-04-25T15:23:25.578Z",
+      "status": "passed",
+      "budget": {
+        "warnMs": 1500,
+        "hardMs": 2500,
+        "failOnHard": true,
+        "name": "publicDetailOpen"
+      },
+      "testTitle": "response time: public detail card opens meet budget",
+      "file": "/work/tests/e2e-response-time.spec.ts"
+    },
+    {
+      "name": "Study mobile auto append next page",
+      "durationMs": 415.39,
+      "startedAt": "2026-04-25T15:24:35.312Z",
+      "status": "passed",
+      "budget": {
+        "warnMs": 800,
+        "hardMs": 1200,
+        "failOnHard": true,
+        "name": "publicPagination"
+      },
+      "testTitle": "study list auto-appends the next page on mobile without a Load more button",
+      "file": "/work/tests/public-blog-pagination.spec.ts"
+    },
+    {
+      "name": "Works desktop pagination next navigation",
+      "durationMs": 358.58,
+      "startedAt": "2026-04-25T15:26:00.516Z",
+      "status": "passed",
+      "budget": {
+        "warnMs": 800,
+        "hardMs": 1200,
+        "failOnHard": true,
+        "name": "publicPagination"
+      },
+      "testTitle": "works list keeps desktop pagination and hides infinite controls at >=1024px",
+      "file": "/work/tests/public-works-pagination.spec.ts"
+    },
+    {
+      "name": "Study mobile auto append before detail navigation",
+      "durationMs": 302.83,
+      "startedAt": "2026-04-25T15:24:36.303Z",
+      "status": "passed",
+      "budget": {
+        "warnMs": 800,
+        "hardMs": 1200,
+        "failOnHard": true,
+        "name": "publicPagination"
+      },
+      "testTitle": "study list keeps desktop pagination layout after mobile reading then desktop browser back",
+      "file": "/work/tests/public-blog-pagination.spec.ts"
+    },
+    {
+      "name": "Works list direct load to primary content visible",
+      "durationMs": 297.11,
+      "startedAt": "2026-04-25T15:23:22.314Z",
+      "status": "passed",
+      "budget": {
+        "warnMs": 1000,
+        "hardMs": 1500,
+        "failOnHard": true,
+        "name": "publicRouteLoad"
+      },
+      "testTitle": "response time: Works list direct load meets budget",
+      "file": "/work/tests/e2e-response-time.spec.ts"
+    },
+    {
+      "name": "Study list direct load to primary content visible",
+      "durationMs": 259.44,
+      "startedAt": "2026-04-25T15:23:21.617Z",
+      "status": "passed",
+      "budget": {
+        "warnMs": 1000,
+        "hardMs": 1500,
+        "failOnHard": true,
+        "name": "publicRouteLoad"
+      },
+      "testTitle": "response time: Study list direct load meets budget",
+      "file": "/work/tests/e2e-response-time.spec.ts"
+    },
+    {
+      "name": "Public nav click to Introduction",
+      "durationMs": 258.72,
+      "startedAt": "2026-04-25T15:23:24.249Z",
+      "status": "passed",
+      "budget": {
+        "warnMs": 1000,
+        "hardMs": 1500,
+        "failOnHard": true,
+        "name": "publicNavClick"
+      },
+      "testTitle": "response time: desktop public nav clicks meet budget",
+      "file": "/work/tests/e2e-response-time.spec.ts"
+    },
+    {
+      "name": "Public nav click to Study",
+      "durationMs": 175.69,
+      "startedAt": "2026-04-25T15:23:24.074Z",
+      "status": "passed",
+      "budget": {
+        "warnMs": 1000,
+        "hardMs": 1500,
+        "failOnHard": true,
+        "name": "publicNavClick"
+      },
+      "testTitle": "response time: desktop public nav clicks meet budget",
+      "file": "/work/tests/e2e-response-time.spec.ts"
+    },
+    {
+      "name": "Works mobile auto append next page",
+      "durationMs": 170.71,
+      "startedAt": "2026-04-25T15:25:58.939Z",
+      "status": "passed",
+      "budget": {
+        "warnMs": 800,
+        "hardMs": 1200,
+        "failOnHard": true,
+        "name": "publicPagination"
+      },
+      "testTitle": "works list auto-appends on mobile and stops without a Load more button",
+      "file": "/work/tests/public-works-pagination.spec.ts"
+    },
+    {
+      "name": "AI Fix provider dropdown response-time path",
+      "durationMs": 169.84,
+      "startedAt": "2026-04-25T15:23:30.898Z",
+      "status": "passed",
+      "budget": {
+        "warnMs": 1000,
+        "hardMs": 1500,
+        "failOnHard": true,
+        "name": "aiDialogOpen"
+      },
+      "testTitle": "response time: AI Fix provider dropdown is ready within budget",
+      "file": "/work/tests/e2e-response-time.spec.ts"
+    },
+    {
+      "name": "Study mobile auto-append",
+      "durationMs": 131.01,
+      "startedAt": "2026-04-25T15:23:27.452Z",
+      "status": "passed",
+      "budget": {
+        "warnMs": 800,
+        "hardMs": 1200,
+        "failOnHard": true,
+        "name": "publicPagination"
+      },
+      "testTitle": "response time: Study mobile append next page meets budget",
+      "file": "/work/tests/e2e-response-time.spec.ts"
+    },
+    {
+      "name": "Works tablet load more appends next page",
+      "durationMs": 85.13,
+      "startedAt": "2026-04-25T15:25:59.761Z",
+      "status": "passed",
+      "budget": {
+        "warnMs": 800,
+        "hardMs": 1200,
+        "failOnHard": true,
+        "name": "publicPagination"
+      },
+      "testTitle": "works list uses infinite feed on tablet (820px) and appends next page",
+      "file": "/work/tests/public-works-pagination.spec.ts"
+    },
+    {
+      "name": "Study tablet load more appends next page",
+      "durationMs": 71.91,
+      "startedAt": "2026-04-25T15:24:38.837Z",
+      "status": "passed",
+      "budget": {
+        "warnMs": 800,
+        "hardMs": 1200,
+        "failOnHard": true,
+        "name": "publicPagination"
+      },
+      "testTitle": "study list keeps manual Load more on tablet and desktop pagination at >=1024px",
+      "file": "/work/tests/public-blog-pagination.spec.ts"
+    }
+  ],
+  "budgetFailures": [],
+  "warnings": [
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "admin can cancel queued blog AI batch jobs in bulk from the batch panel",
+      "durationMs": 30154.01,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"admin can cancel queued blog AI batch jobs in bulk from the batch panel\" took 30154.01ms, exceeding warn budget 30000ms",
+      "testTitle": "admin can cancel queued blog AI batch jobs in bulk from the batch panel",
+      "file": "/work/tests/admin-ai-batch-cancel.spec.ts",
+      "artifactPath": "/work/test-results/playwright/admin-ai-batch-cancel-admi-b602e-n-bulk-from-the-batch-panel-chromium-authenticated/attachments/e2e-latency-json-d9788b4695b902cc2155d6b6e8ac2b8a52f8cb65.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "admin can cancel a running blog AI batch job from the batch panel",
+      "durationMs": 30146.79,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"admin can cancel a running blog AI batch job from the batch panel\" took 30146.79ms, exceeding warn budget 30000ms",
+      "testTitle": "admin can cancel a running blog AI batch job from the batch panel",
+      "file": "/work/tests/admin-ai-batch-cancel.spec.ts",
+      "artifactPath": "/work/test-results/playwright/admin-ai-batch-cancel-admi-c1c89-ch-job-from-the-batch-panel-chromium-authenticated/attachments/e2e-latency-json-bdd718ec85e6ac149c6158f7a9b8ed5041de11c9.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "blog AI fix dialog loads runtime config, applies a fixed draft, and keeps editing local",
+      "durationMs": 30117.95,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"blog AI fix dialog loads runtime config, applies a fixed draft, and keeps editing local\" took 30117.95ms, exceeding warn budget 30000ms",
+      "testTitle": "blog AI fix dialog loads runtime config, applies a fixed draft, and keeps editing local",
+      "file": "/work/tests/admin-blog-ai-dialog.spec.ts",
+      "artifactPath": "/work/test-results/playwright/admin-blog-ai-dialog-blog--659ce-aft-and-keeps-editing-local-chromium-authenticated/attachments/e2e-latency-json-bf65e40b1be251459b12db38008c520ddc9c7865.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "admin can keep a blog post as draft and publish it later",
+      "durationMs": 30326.1,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"admin can keep a blog post as draft and publish it later\" took 30326.1ms, exceeding warn budget 30000ms",
+      "testTitle": "admin can keep a blog post as draft and publish it later",
+      "file": "/work/tests/admin-blog-publish.spec.ts",
+      "artifactPath": "/work/test-results/playwright/admin-blog-publish-admin-c-64cc9--draft-and-publish-it-later-chromium-authenticated/attachments/e2e-latency-json-95bb8e589a52669f179b65aaf5d6a0f850d8ae6e.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "admin can toggle a published blog post back to draft and publish it again",
+      "durationMs": 30174.6,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"admin can toggle a published blog post back to draft and publish it again\" took 30174.6ms, exceeding warn budget 30000ms",
+      "testTitle": "admin can toggle a published blog post back to draft and publish it again",
+      "file": "/work/tests/admin-blog-publish.spec.ts",
+      "artifactPath": "/work/test-results/playwright/admin-blog-publish-admin-c-7ea9d--draft-and-publish-it-again-chromium-authenticated/attachments/e2e-latency-json-5be3df0e36258999d963995f37dab9974c3fe794.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "home page editor persists mixed Korean, English, and punctuation input",
+      "durationMs": 30148.43,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"home page editor persists mixed Korean, English, and punctuation input\" took 30148.43ms, exceeding warn budget 30000ms",
+      "testTitle": "home page editor persists mixed Korean, English, and punctuation input",
+      "file": "/work/tests/admin-home-extreme-input.spec.ts",
+      "artifactPath": "/work/test-results/playwright/admin-home-extreme-input-h-b749a-glish-and-punctuation-input-chromium-authenticated/attachments/e2e-latency-json-d97c23664217298e3400fd6810f58d747caaf102.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "admin work editor no longer exposes raw json metadata editing",
+      "durationMs": 30158.67,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"admin work editor no longer exposes raw json metadata editing\" took 30158.67ms, exceeding warn budget 30000ms",
+      "testTitle": "admin work editor no longer exposes raw json metadata editing",
+      "file": "/work/tests/admin-input-exceptions.spec.ts",
+      "artifactPath": "/work/test-results/playwright/admin-input-exceptions-adm-90960-s-raw-json-metadata-editing-chromium-authenticated/attachments/e2e-latency-json-c271813e0e31883b607289587c8cc2f943714991.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "admin blog editor surfaces save failure when backend rejects input",
+      "durationMs": 30149.94,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"admin blog editor surfaces save failure when backend rejects input\" took 30149.94ms, exceeding warn budget 30000ms",
+      "testTitle": "admin blog editor surfaces save failure when backend rejects input",
+      "file": "/work/tests/admin-input-exceptions.spec.ts",
+      "artifactPath": "/work/test-results/playwright/admin-input-exceptions-adm-a68af--when-backend-rejects-input-chromium-authenticated/attachments/e2e-latency-json-9cec064cc1d7123356a35adc3d3c1503334dd62e.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "admin can update the introduction page from admin pages",
+      "durationMs": 30251.73,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"admin can update the introduction page from admin pages\" took 30251.73ms, exceeding warn budget 30000ms",
+      "testTitle": "admin can update the introduction page from admin pages",
+      "file": "/work/tests/admin-pages-settings.spec.ts",
+      "artifactPath": "/work/test-results/playwright/admin-pages-settings-admin-75dfc-ction-page-from-admin-pages-chromium-authenticated/attachments/e2e-latency-json-b68bd10e80372cc3ee00ea647ac62e172b6e441e.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "admin can update the contact page from admin pages",
+      "durationMs": 30163.74,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"admin can update the contact page from admin pages\" took 30163.74ms, exceeding warn budget 30000ms",
+      "testTitle": "admin can update the contact page from admin pages",
+      "file": "/work/tests/admin-pages-settings.spec.ts",
+      "artifactPath": "/work/test-results/playwright/admin-pages-settings-admin-b4613-ntact-page-from-admin-pages-chromium-authenticated/attachments/e2e-latency-json-1dd840b06108a1e1d7dec6655b878124c1172900.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "site settings persist mixed special-character owner and tagline values",
+      "durationMs": 30153.08,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"site settings persist mixed special-character owner and tagline values\" took 30153.08ms, exceeding warn budget 30000ms",
+      "testTitle": "site settings persist mixed special-character owner and tagline values",
+      "file": "/work/tests/admin-site-settings-extreme-input.spec.ts",
+      "artifactPath": "/work/test-results/playwright/admin-site-settings-extrem-dcb1b-er-owner-and-tagline-values-chromium-authenticated/attachments/e2e-latency-json-e6ee543b1498257ec47c33706a61f1ed788ed06b.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "auto-fills a thumbnail when an existing work without one gets an uploaded video",
+      "durationMs": 30142.52,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"auto-fills a thumbnail when an existing work without one gets an uploaded video\" took 30142.52ms, exceeding warn budget 30000ms",
+      "testTitle": "auto-fills a thumbnail when an existing work without one gets an uploaded video",
+      "file": "/work/tests/admin-work-auto-thumbnail.spec.ts",
+      "artifactPath": "/work/test-results/playwright/admin-work-auto-thumbnail--0040d--one-gets-an-uploaded-video-chromium-authenticated/attachments/e2e-latency-json-8630f2360426785219fc5fb8b3bdeeb53c14c3b0.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "auto-fills a thumbnail when the work only has a YouTube video",
+      "durationMs": 30151.17,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"auto-fills a thumbnail when the work only has a YouTube video\" took 30151.17ms, exceeding warn budget 30000ms",
+      "testTitle": "auto-fills a thumbnail when the work only has a YouTube video",
+      "file": "/work/tests/admin-work-auto-thumbnail.spec.ts",
+      "artifactPath": "/work/test-results/playwright/admin-work-auto-thumbnail--3a261-rk-only-has-a-YouTube-video-chromium-authenticated/attachments/e2e-latency-json-55abbb105aabb9169303a50371b63fde164049ec.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "prefers uploaded-video auto thumbnails over youtube thumbnails",
+      "durationMs": 30144.55,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"prefers uploaded-video auto thumbnails over youtube thumbnails\" took 30144.55ms, exceeding warn budget 30000ms",
+      "testTitle": "prefers uploaded-video auto thumbnails over youtube thumbnails",
+      "file": "/work/tests/admin-work-auto-thumbnail.spec.ts",
+      "artifactPath": "/work/test-results/playwright/admin-work-auto-thumbnail--4422d-ils-over-youtube-thumbnails-chromium-authenticated/attachments/e2e-latency-json-94729a86ee5bb019a4ac8af2739591027de1b30c.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "falls back to the first content image when there are no videos and no explicit thumbnail",
+      "durationMs": 30148.8,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"falls back to the first content image when there are no videos and no explicit thumbnail\" took 30148.8ms, exceeding warn budget 30000ms",
+      "testTitle": "falls back to the first content image when there are no videos and no explicit thumbnail",
+      "file": "/work/tests/admin-work-auto-thumbnail.spec.ts",
+      "artifactPath": "/work/test-results/playwright/admin-work-auto-thumbnail--64958-s-and-no-explicit-thumbnail-chromium-authenticated/attachments/e2e-latency-json-eda619cacd2e404e6b75e7f39fd7dcda0dd665d4.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "auto-fills thumbnail from an uploaded video when no manual thumbnail exists",
+      "durationMs": 30147.45,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"auto-fills thumbnail from an uploaded video when no manual thumbnail exists\" took 30147.45ms, exceeding warn budget 30000ms",
+      "testTitle": "auto-fills thumbnail from an uploaded video when no manual thumbnail exists",
+      "file": "/work/tests/admin-work-auto-thumbnail.spec.ts",
+      "artifactPath": "/work/test-results/playwright/admin-work-auto-thumbnail--9e4bb--no-manual-thumbnail-exists-chromium-authenticated/attachments/e2e-latency-json-324974ebde02b4c81c7b31e99299a730886a9112.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "admin can edit an existing work entry with mixed special input",
+      "durationMs": 30160.89,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"admin can edit an existing work entry with mixed special input\" took 30160.89ms, exceeding warn budget 30000ms",
+      "testTitle": "admin can edit an existing work entry with mixed special input",
+      "file": "/work/tests/admin-work-edit.spec.ts",
+      "artifactPath": "/work/test-results/playwright/admin-work-edit-admin-can--8ef13-ry-with-mixed-special-input-chromium-authenticated/attachments/e2e-latency-json-81235866aedd7ebd1fe35eb698919a0df9d6071e.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "admin can keep a work as draft and publish it later",
+      "durationMs": 30158.31,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"admin can keep a work as draft and publish it later\" took 30158.31ms, exceeding warn budget 30000ms",
+      "testTitle": "admin can keep a work as draft and publish it later",
+      "file": "/work/tests/admin-work-publish.spec.ts",
+      "artifactPath": "/work/test-results/playwright/admin-work-publish-admin-c-406bf--draft-and-publish-it-later-chromium-authenticated/attachments/e2e-latency-json-9217b1a05374608f5e8d48bb25fde64bfde5127e.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "admin can toggle a published work back to draft and publish it again",
+      "durationMs": 30200.92,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"admin can toggle a published work back to draft and publish it again\" took 30200.92ms, exceeding warn budget 30000ms",
+      "testTitle": "admin can toggle a published work back to draft and publish it again",
+      "file": "/work/tests/admin-work-publish.spec.ts",
+      "artifactPath": "/work/test-results/playwright/admin-work-publish-admin-c-f22df--draft-and-publish-it-again-chromium-authenticated/attachments/e2e-latency-json-4c1f64866f6b2862fef51c26110c877077879c5d.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "work editor accepts Korean and punctuation-heavy input and publishes publicly",
+      "durationMs": 30152.24,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"work editor accepts Korean and punctuation-heavy input and publishes publicly\" took 30152.24ms, exceeding warn budget 30000ms",
+      "testTitle": "work editor accepts Korean and punctuation-heavy input and publishes publicly",
+      "file": "/work/tests/admin-work-special-input.spec.ts",
+      "artifactPath": "/work/test-results/playwright/admin-work-special-input-w-a160e-nput-and-publishes-publicly-chromium-authenticated/attachments/e2e-latency-json-769ee2327fb1892bf3f10c8a1d59b85225ee75f3.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "admin can create a work with staged YouTube and uploaded videos",
+      "durationMs": 30145.02,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"admin can create a work with staged YouTube and uploaded videos\" took 30145.02ms, exceeding warn budget 30000ms",
+      "testTitle": "admin can create a work with staged YouTube and uploaded videos",
+      "file": "/work/tests/admin-work-video-create-flow.spec.ts",
+      "artifactPath": "/work/test-results/playwright/admin-work-video-create-fl-cbe4c-YouTube-and-uploaded-videos-chromium-authenticated/attachments/e2e-latency-json-02a6b71871d1fc9c8389709de0c699869eafe258.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "AF-062 saved work videos can be reordered by drag and drop and the public order updates",
+      "durationMs": 30145.88,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"AF-062 saved work videos can be reordered by drag and drop and the public order updates\" took 30145.88ms, exceeding warn budget 30000ms",
+      "testTitle": "AF-062 saved work videos can be reordered by drag and drop and the public order updates",
+      "file": "/work/tests/admin-work-video-drag-order.spec.ts",
+      "artifactPath": "/work/test-results/playwright/admin-work-video-drag-orde-679bf-nd-the-public-order-updates-chromium-authenticated/attachments/e2e-latency-json-182c4defe739cd957571d508778c655c0a47930c.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "admin can reorder saved videos and delete a removed video while editing an existing work",
+      "durationMs": 30151.34,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"admin can reorder saved videos and delete a removed video while editing an existing work\" took 30151.34ms, exceeding warn budget 30000ms",
+      "testTitle": "admin can reorder saved videos and delete a removed video while editing an existing work",
+      "file": "/work/tests/admin-work-video-edit-flow.spec.ts",
+      "artifactPath": "/work/test-results/playwright/admin-work-video-edit-flow-2165a-le-editing-an-existing-work-chromium-authenticated/attachments/e2e-latency-json-7273c5f5216feebfbf831a6ba8ec4287c043adfe.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "admin can add videos inline while editing an existing work",
+      "durationMs": 30149.13,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"admin can add videos inline while editing an existing work\" took 30149.13ms, exceeding warn budget 30000ms",
+      "testTitle": "admin can add videos inline while editing an existing work",
+      "file": "/work/tests/admin-work-video-edit-flow.spec.ts",
+      "artifactPath": "/work/test-results/playwright/admin-work-video-edit-flow-260cb-le-editing-an-existing-work-chromium-authenticated/attachments/e2e-latency-json-d01c9f7d254c5027b6f9244a7f93d548244c101c.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "admin can create a mixed work with two youtube links, two mp4 uploads, and rich body copy",
+      "durationMs": 30147.64,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"admin can create a mixed work with two youtube links, two mp4 uploads, and rich body copy\" took 30147.64ms, exceeding warn budget 30000ms",
+      "testTitle": "admin can create a mixed work with two youtube links, two mp4 uploads, and rich body copy",
+      "file": "/work/tests/admin-work-video-mixed-flow.spec.ts",
+      "artifactPath": "/work/test-results/playwright/admin-work-video-mixed-flo-b4925--uploads-and-rich-body-copy-chromium-authenticated/attachments/e2e-latency-json-9068ddbab154123f0973a19222f0b76969548a0e.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "s3-compatible lane processes an uploaded MP4 as HLS and renders it publicly",
+      "durationMs": 30150.91,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"s3-compatible lane processes an uploaded MP4 as HLS and renders it publicly\" took 30150.91ms, exceeding warn budget 30000ms",
+      "testTitle": "s3-compatible lane processes an uploaded MP4 as HLS and renders it publicly",
+      "file": "/work/tests/admin-work-video-s3-compatible.spec.ts",
+      "artifactPath": "/work/test-results/playwright/admin-work-video-s3-compat-e73f8-HLS-and-renders-it-publicly-chromium-authenticated/attachments/e2e-latency-json-aabee1db27a61a34a7d9de9936c1eede2e93439f.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "DM-16: work editor uses the dark primary button token",
+      "durationMs": 30147.45,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"DM-16: work editor uses the dark primary button token\" took 30147.45ms, exceeding warn budget 30000ms",
+      "testTitle": "DM-16: work editor uses the dark primary button token",
+      "file": "/work/tests/dark-mode.spec.ts",
+      "artifactPath": "/work/test-results/playwright/dark-mode-login-and-admin--28a07-e-dark-primary-button-token-chromium-authenticated/attachments/e2e-latency-json-7be145bc1daa8ea7857795be9c1cac29fb4ba954.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "DM-15: blog editor uses the dark primary button token",
+      "durationMs": 30136.84,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"DM-15: blog editor uses the dark primary button token\" took 30136.84ms, exceeding warn budget 30000ms",
+      "testTitle": "DM-15: blog editor uses the dark primary button token",
+      "file": "/work/tests/dark-mode.spec.ts",
+      "artifactPath": "/work/test-results/playwright/dark-mode-login-and-admin--aa541-e-dark-primary-button-token-chromium-authenticated/attachments/e2e-latency-json-a0bd19a8ba89c8d62ae8932b96ad68701c117240.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "E2E-009 admin can run a batch AI workflow and then bulk delete the processed items",
+      "durationMs": 300139.45,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"E2E-009 admin can run a batch AI workflow and then bulk delete the processed items\" took 300139.45ms, exceeding warn budget 30000ms",
+      "testTitle": "E2E-009 admin can run a batch AI workflow and then bulk delete the processed items",
+      "file": "/work/tests/e2e-admin-batch-management-journey.spec.ts",
+      "artifactPath": "/work/test-results/playwright/e2e-admin-batch-management-51340--delete-the-processed-items-chromium-authenticated/attachments/e2e-latency-json-66c6a27ff8a6bb0085de78165b2545b19c77959d.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "recording image drag move",
+      "durationMs": 120205.12,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"recording image drag move\" took 120205.12ms, exceeding warn budget 30000ms",
+      "testTitle": "recording image drag move",
+      "file": "/work/tests/feature-recording-0418.spec.ts",
+      "artifactPath": "/work/test-results/playwright/feature-recording-0418-recording-image-drag-move-chromium-public/attachments/e2e-latency-json-db4f7f7610b146a59a2cc070f3f00b782d666bfa.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "recording image resize drag",
+      "durationMs": 120219.73,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"recording image resize drag\" took 120219.73ms, exceeding warn budget 30000ms",
+      "testTitle": "recording image resize drag",
+      "file": "/work/tests/feature-recording-0418.spec.ts",
+      "artifactPath": "/work/test-results/playwright/feature-recording-0418-recording-image-resize-drag-chromium-public/attachments/e2e-latency-json-3fc2271e877caa6eb7b7e7e5bf75b8aaa07ab29e.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "recording image work resize",
+      "durationMs": 120211.49,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"recording image work resize\" took 120211.49ms, exceeding warn budget 30000ms",
+      "testTitle": "recording image work resize",
+      "file": "/work/tests/feature-recording-0418.spec.ts",
+      "artifactPath": "/work/test-results/playwright/feature-recording-0418-recording-image-work-resize-chromium-public/attachments/e2e-latency-json-5cb43c5ddd782542cc53d2f3e194c725969f1e23.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "recording mermaid editor preview",
+      "durationMs": 120241.32,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"recording mermaid editor preview\" took 120241.32ms, exceeding warn budget 30000ms",
+      "testTitle": "recording mermaid editor preview",
+      "file": "/work/tests/feature-recording-0418.spec.ts",
+      "artifactPath": "/work/test-results/playwright/feature-recording-0418-recording-mermaid-editor-preview-chromium-public/attachments/e2e-latency-json-574a43f50d688c5c65b2ad83dbc831ae044898da.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "recording mermaid rendering",
+      "durationMs": 120110.01,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"recording mermaid rendering\" took 120110.01ms, exceeding warn budget 30000ms",
+      "testTitle": "recording mermaid rendering",
+      "file": "/work/tests/feature-recording-0418.spec.ts",
+      "artifactPath": "/work/test-results/playwright/feature-recording-0418-recording-mermaid-rendering-chromium-public/attachments/e2e-latency-json-22248752a6fa2f94f597be6268f1a2c57cb5371d.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "recording mermaid work rendering",
+      "durationMs": 120225.58,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"recording mermaid work rendering\" took 120225.58ms, exceeding warn budget 30000ms",
+      "testTitle": "recording mermaid work rendering",
+      "file": "/work/tests/feature-recording-0418.spec.ts",
+      "artifactPath": "/work/test-results/playwright/feature-recording-0418-recording-mermaid-work-rendering-chromium-public/attachments/e2e-latency-json-0c537f1db535f20144f6328c153077827d3cba36.json"
+    },
+    {
+      "severity": "hard",
+      "kind": "api",
+      "name": "GET http://woong-prod-full-e2e-nginx-1777130558/api/auth/csrf",
+      "durationMs": 1297.71,
+      "warnMs": 350,
+      "hardMs": 600,
+      "failOnHard": false,
+      "message": "api \"GET http://woong-prod-full-e2e-nginx-1777130558/api/auth/csrf\" took 1297.71ms, exceeding hard budget 600ms",
+      "testTitle": "recording search url stability",
+      "file": "/work/tests/feature-recording-0418.spec.ts",
+      "artifactPath": "/work/test-results/playwright/feature-recording-0418-recording-search-url-stability-chromium-public/attachments/e2e-latency-json-f41ccd1a70f9ffc95c06e0b169ba75d219362a38.json"
+    },
+    {
+      "severity": "hard",
+      "kind": "api",
+      "name": "POST http://woong-prod-full-e2e-nginx-1777130558/api/admin/blogs",
+      "durationMs": 2434.27,
+      "warnMs": 350,
+      "hardMs": 600,
+      "failOnHard": false,
+      "message": "api \"POST http://woong-prod-full-e2e-nginx-1777130558/api/admin/blogs\" took 2434.27ms, exceeding hard budget 600ms",
+      "testTitle": "recording search url stability",
+      "file": "/work/tests/feature-recording-0418.spec.ts",
+      "artifactPath": "/work/test-results/playwright/feature-recording-0418-recording-search-url-stability-chromium-public/attachments/e2e-latency-json-f41ccd1a70f9ffc95c06e0b169ba75d219362a38.json"
+    },
+    {
+      "severity": "hard",
+      "kind": "api",
+      "name": "POST http://woong-prod-full-e2e-nginx-1777130558/api/admin/works",
+      "durationMs": 737.97,
+      "warnMs": 350,
+      "hardMs": 600,
+      "failOnHard": false,
+      "message": "api \"POST http://woong-prod-full-e2e-nginx-1777130558/api/admin/works\" took 737.97ms, exceeding hard budget 600ms",
+      "testTitle": "recording search url stability",
+      "file": "/work/tests/feature-recording-0418.spec.ts",
+      "artifactPath": "/work/test-results/playwright/feature-recording-0418-recording-search-url-stability-chromium-public/attachments/e2e-latency-json-f41ccd1a70f9ffc95c06e0b169ba75d219362a38.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "public blog detail save returns to the originating list page",
+      "durationMs": 180175.74,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"public blog detail save returns to the originating list page\" took 180175.74ms, exceeding warn budget 30000ms",
+      "testTitle": "public blog detail save returns to the originating list page",
+      "file": "/work/tests/live-blog-ai-regressions.spec.ts",
+      "artifactPath": "/work/test-results/playwright/live-blog-ai-regressions-l-55325-o-the-originating-list-page-chromium-authenticated/attachments/e2e-latency-json-59ddca50b0232b89f685edefe831910bd861b2ce.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "A-12 single work delete removes the work from admin and public lists",
+      "durationMs": 30154.09,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"A-12 single work delete removes the work from admin and public lists\" took 30154.09ms, exceeding warn budget 30000ms",
+      "testTitle": "A-12 single work delete removes the work from admin and public lists",
+      "file": "/work/tests/manual-qa-gap-coverage.spec.ts",
+      "artifactPath": "/work/test-results/playwright/manual-qa-gap-coverage-A-1-12c29-from-admin-and-public-lists-chromium-authenticated/attachments/e2e-latency-json-9fbab44a4df5616cf5b15b8d11d786ea94492f6b.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "A-6 reorder saved work videos changes public playback order",
+      "durationMs": 30053.74,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"A-6 reorder saved work videos changes public playback order\" took 30053.74ms, exceeding warn budget 30000ms",
+      "testTitle": "A-6 reorder saved work videos changes public playback order",
+      "file": "/work/tests/manual-qa-gap-coverage.spec.ts",
+      "artifactPath": "/work/test-results/playwright/manual-qa-gap-coverage-A-6-351af-anges-public-playback-order-chromium-authenticated/attachments/e2e-latency-json-294a6ab3b33b64a975572d0f5a4e4f1d03af2231.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "B-5 single blog delete removes the post from admin and public lists",
+      "durationMs": 30142.74,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"B-5 single blog delete removes the post from admin and public lists\" took 30142.74ms, exceeding warn budget 30000ms",
+      "testTitle": "B-5 single blog delete removes the post from admin and public lists",
+      "file": "/work/tests/manual-qa-gap-coverage.spec.ts",
+      "artifactPath": "/work/test-results/playwright/manual-qa-gap-coverage-B-5-2fb9e-from-admin-and-public-lists-chromium-authenticated/attachments/e2e-latency-json-32973ab2a737ddb3c3fc6f16e5dc70e1f6959f66.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "C-11 editor content persists and reloads into the edit surface",
+      "durationMs": 30160.16,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"C-11 editor content persists and reloads into the edit surface\" took 30160.16ms, exceeding warn budget 30000ms",
+      "testTitle": "C-11 editor content persists and reloads into the edit surface",
+      "file": "/work/tests/manual-qa-gap-coverage.spec.ts",
+      "artifactPath": "/work/test-results/playwright/manual-qa-gap-coverage-C-1-2c6e6-loads-into-the-edit-surface-chromium-authenticated/attachments/e2e-latency-json-71984c1e41b8f751121fc1d2c7155b60ab9d9df1.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "C-10 selecting editor text reveals the bubble menu",
+      "durationMs": 30146.52,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"C-10 selecting editor text reveals the bubble menu\" took 30146.52ms, exceeding warn budget 30000ms",
+      "testTitle": "C-10 selecting editor text reveals the bubble menu",
+      "file": "/work/tests/manual-qa-gap-coverage.spec.ts",
+      "artifactPath": "/work/test-results/playwright/manual-qa-gap-coverage-C-1-31e0c-ext-reveals-the-bubble-menu-chromium-authenticated/attachments/e2e-latency-json-6448f90931de86e10e2bafb16b8d30dcd6aab6ae.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "C-1 basic formatting renders publicly after save",
+      "durationMs": 30136.27,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"C-1 basic formatting renders publicly after save\" took 30136.27ms, exceeding warn budget 30000ms",
+      "testTitle": "C-1 basic formatting renders publicly after save",
+      "file": "/work/tests/manual-qa-gap-coverage.spec.ts",
+      "artifactPath": "/work/test-results/playwright/manual-qa-gap-coverage-C-1-e26bc-renders-publicly-after-save-chromium-authenticated/attachments/e2e-latency-json-ab18d291908a7a5e02ff2d17c0d8ba6fc981109f.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "C-2 link insertion renders publicly after save",
+      "durationMs": 30146.48,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"C-2 link insertion renders publicly after save\" took 30146.48ms, exceeding warn budget 30000ms",
+      "testTitle": "C-2 link insertion renders publicly after save",
+      "file": "/work/tests/manual-qa-gap-coverage.spec.ts",
+      "artifactPath": "/work/test-results/playwright/manual-qa-gap-coverage-C-2-925cc-renders-publicly-after-save-chromium-authenticated/attachments/e2e-latency-json-1686b8fcaa8ef640dd2953d27a05153b5ef3340b.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "C-3 drag-drop image upload inserts an image into blog content",
+      "durationMs": 30159.44,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"C-3 drag-drop image upload inserts an image into blog content\" took 30159.44ms, exceeding warn budget 30000ms",
+      "testTitle": "C-3 drag-drop image upload inserts an image into blog content",
+      "file": "/work/tests/manual-qa-gap-coverage.spec.ts",
+      "artifactPath": "/work/test-results/playwright/manual-qa-gap-coverage-C-3-6f8e3--an-image-into-blog-content-chromium-authenticated/attachments/e2e-latency-json-d8944a2d7f02b9a77eed95d63e1fd335ad0ee00f.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "C-4 paste image upload inserts an image into blog content",
+      "durationMs": 30145.37,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"C-4 paste image upload inserts an image into blog content\" took 30145.37ms, exceeding warn budget 30000ms",
+      "testTitle": "C-4 paste image upload inserts an image into blog content",
+      "file": "/work/tests/manual-qa-gap-coverage.spec.ts",
+      "artifactPath": "/work/test-results/playwright/manual-qa-gap-coverage-C-4-e7f9c--an-image-into-blog-content-chromium-authenticated/attachments/e2e-latency-json-ed5c065870206a5873b574567dbe920145cc2852.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "C-5 duplicate work video embed insertion is prevented",
+      "durationMs": 30156.45,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"C-5 duplicate work video embed insertion is prevented\" took 30156.45ms, exceeding warn budget 30000ms",
+      "testTitle": "C-5 duplicate work video embed insertion is prevented",
+      "file": "/work/tests/manual-qa-gap-coverage.spec.ts",
+      "artifactPath": "/work/test-results/playwright/manual-qa-gap-coverage-C-5-47560-mbed-insertion-is-prevented-chromium-authenticated/attachments/e2e-latency-json-f698024579a89ea6529bf7b21596066123b2832b.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "C-6 slash command inserts a heading block that renders publicly",
+      "durationMs": 30155.34,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"C-6 slash command inserts a heading block that renders publicly\" took 30155.34ms, exceeding warn budget 30000ms",
+      "testTitle": "C-6 slash command inserts a heading block that renders publicly",
+      "file": "/work/tests/manual-qa-gap-coverage.spec.ts",
+      "artifactPath": "/work/test-results/playwright/manual-qa-gap-coverage-C-6-b72e9-block-that-renders-publicly-chromium-authenticated/attachments/e2e-latency-json-9e031edfbae5e48a8a50adb9360d170e525887a4.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "C-7 code block renders publicly after save",
+      "durationMs": 30150.22,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"C-7 code block renders publicly after save\" took 30150.22ms, exceeding warn budget 30000ms",
+      "testTitle": "C-7 code block renders publicly after save",
+      "file": "/work/tests/manual-qa-gap-coverage.spec.ts",
+      "artifactPath": "/work/test-results/playwright/manual-qa-gap-coverage-C-7-04dc7-renders-publicly-after-save-chromium-authenticated/attachments/e2e-latency-json-ef3b0eb1d5bd96fc49bcbeaa9b16bebb5ea4682f.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "C-9 Three.js block renders a canvas publicly",
+      "durationMs": 30166.39,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"C-9 Three.js block renders a canvas publicly\" took 30166.39ms, exceeding warn budget 30000ms",
+      "testTitle": "C-9 Three.js block renders a canvas publicly",
+      "file": "/work/tests/manual-qa-gap-coverage.spec.ts",
+      "artifactPath": "/work/test-results/playwright/manual-qa-gap-coverage-C-9-ee066-k-renders-a-canvas-publicly-chromium-authenticated/attachments/e2e-latency-json-f25b18629ae12fa3538d39f078fcd960e3f72e1f.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "F-3 and F-4 inline page editors can save introduction and contact content in place",
+      "durationMs": 30179.28,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"F-3 and F-4 inline page editors can save introduction and contact content in place\" took 30179.28ms, exceeding warn budget 30000ms",
+      "testTitle": "F-3 and F-4 inline page editors can save introduction and contact content in place",
+      "file": "/work/tests/manual-qa-gap-coverage.spec.ts",
+      "artifactPath": "/work/test-results/playwright/manual-qa-gap-coverage-F-3-8a5ee-nd-contact-content-in-place-chromium-authenticated/attachments/e2e-latency-json-fb6cb8d9886693fb631aa139772ac2bb0232cde7.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "F-5 and F-6 inline create flows can create works and blog posts from public pages",
+      "durationMs": 30180.51,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"F-5 and F-6 inline create flows can create works and blog posts from public pages\" took 30180.51ms, exceeding warn budget 30000ms",
+      "testTitle": "F-5 and F-6 inline create flows can create works and blog posts from public pages",
+      "file": "/work/tests/manual-qa-gap-coverage.spec.ts",
+      "artifactPath": "/work/test-results/playwright/manual-qa-gap-coverage-F-5-48020-log-posts-from-public-pages-chromium-authenticated/attachments/e2e-latency-json-e99fa6f9638e6dd15699093280f1c80d07718b9b.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "H-5 very long body content saves and renders correctly",
+      "durationMs": 30057.07,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"H-5 very long body content saves and renders correctly\" took 30057.07ms, exceeding warn budget 30000ms",
+      "testTitle": "H-5 very long body content saves and renders correctly",
+      "file": "/work/tests/manual-qa-gap-coverage.spec.ts",
+      "artifactPath": "/work/test-results/playwright/manual-qa-gap-coverage-H-5-005fa-saves-and-renders-correctly-chromium-authenticated/attachments/e2e-latency-json-4272f4b178a4c356c466bc15211846ed438cfe3b.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "api",
+      "name": "GET http://woong-prod-full-e2e-nginx-1777130558/api/auth/session",
+      "durationMs": 571.28,
+      "warnMs": 350,
+      "hardMs": 600,
+      "failOnHard": false,
+      "message": "api \"GET http://woong-prod-full-e2e-nginx-1777130558/api/auth/session\" took 571.28ms, exceeding warn budget 350ms",
+      "testTitle": "public study inline create returns to the first blog page after save",
+      "file": "/work/tests/public-blog-inline-redirects.spec.ts",
+      "artifactPath": "/work/test-results/playwright/public-blog-inline-redirec-25cae--first-blog-page-after-save-chromium-public/attachments/e2e-latency-json-c33ff6228ea96eebc9c9406a81b4941f20c88e4c.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "PF-084 footer renders only the configured social icons",
+      "durationMs": 30059.14,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"PF-084 footer renders only the configured social icons\" took 30059.14ms, exceeding warn budget 30000ms",
+      "testTitle": "PF-084 footer renders only the configured social icons",
+      "file": "/work/tests/public-footer-social.spec.ts",
+      "artifactPath": "/work/test-results/playwright/public-footer-social-PF-08-e3c98-the-configured-social-icons-chromium-authenticated/attachments/e2e-latency-json-0c7ef48fa7323513c4eb87f5b46ac0667f2803bc.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "introduction and contact inline editors open in place and can be closed with back buttons",
+      "durationMs": 30153.06,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"introduction and contact inline editors open in place and can be closed with back buttons\" took 30153.06ms, exceeding warn budget 30000ms",
+      "testTitle": "introduction and contact inline editors open in place and can be closed with back buttons",
+      "file": "/work/tests/public-inline-editors.spec.ts",
+      "artifactPath": "/work/test-results/playwright/public-inline-editors-intr-21f75-be-closed-with-back-buttons-chromium-authenticated/attachments/e2e-latency-json-2259439e760cd8460569fe899881eaceea006833.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "resume page exposes inline PDF upload shell for admins",
+      "durationMs": 30179.45,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"resume page exposes inline PDF upload shell for admins\" took 30179.45ms, exceeding warn budget 30000ms",
+      "testTitle": "resume page exposes inline PDF upload shell for admins",
+      "file": "/work/tests/public-inline-editors.spec.ts",
+      "artifactPath": "/work/test-results/playwright/public-inline-editors-resu-a73c3-PDF-upload-shell-for-admins-chromium-authenticated/attachments/e2e-latency-json-e8c35b602a0157dc25af5353c706c675064975a8.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "public blog inline editor clears beforeunload after save",
+      "durationMs": 90366.94,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"public blog inline editor clears beforeunload after save\" took 90366.94ms, exceeding warn budget 30000ms",
+      "testTitle": "public blog inline editor clears beforeunload after save",
+      "file": "/work/tests/public-inline-editors-unsaved-warning.spec.ts",
+      "artifactPath": "/work/test-results/playwright/public-inline-editors-unsa-09d13-ars-beforeunload-after-save-chromium-authenticated/attachments/e2e-latency-json-596c9340fde7ed734c9e6ecb92d1261ee70c95af.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "public work inline editor clears beforeunload after save",
+      "durationMs": 90239.37,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"public work inline editor clears beforeunload after save\" took 90239.37ms, exceeding warn budget 30000ms",
+      "testTitle": "public work inline editor clears beforeunload after save",
+      "file": "/work/tests/public-inline-editors-unsaved-warning.spec.ts",
+      "artifactPath": "/work/test-results/playwright/public-inline-editors-unsa-fd270-ars-beforeunload-after-save-chromium-authenticated/attachments/e2e-latency-json-23f6e5e26f89038a0e016ac320d7a8cde3479b36.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "PF-041 public work detail lets visitors play and pause an uploaded video",
+      "durationMs": 30139.44,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"PF-041 public work detail lets visitors play and pause an uploaded video\" took 30139.44ms, exceeding warn budget 30000ms",
+      "testTitle": "PF-041 public work detail lets visitors play and pause an uploaded video",
+      "file": "/work/tests/public-work-videos.spec.ts",
+      "artifactPath": "/work/test-results/playwright/public-work-videos-PF-041--c7b49-and-pause-an-uploaded-video-chromium-authenticated/attachments/e2e-latency-json-c56b3a0c49b5692159ea7778f4f1d5032b648706.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "PF-043 public work detail keeps public video render order aligned with saved sort order",
+      "durationMs": 30148.42,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"PF-043 public work detail keeps public video render order aligned with saved sort order\" took 30148.42ms, exceeding warn budget 30000ms",
+      "testTitle": "PF-043 public work detail keeps public video render order aligned with saved sort order",
+      "file": "/work/tests/public-work-videos.spec.ts",
+      "artifactPath": "/work/test-results/playwright/public-work-videos-PF-043--7f5fd-igned-with-saved-sort-order-chromium-authenticated/attachments/e2e-latency-json-99a23059f6d4547a05bf9d764e80810e682a4531.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "PF-044 public work detail exposes hover preview near the native progress region and desktop resize modes for uploaded videos",
+      "durationMs": 30131.69,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"PF-044 public work detail exposes hover preview near the native progress region and desktop resize modes for uploaded videos\" took 30131.69ms, exceeding warn budget 30000ms",
+      "testTitle": "PF-044 public work detail exposes hover preview near the native progress region and desktop resize modes for uploaded videos",
+      "file": "/work/tests/public-work-videos.spec.ts",
+      "artifactPath": "/work/test-results/playwright/public-work-videos-PF-044--90601-e-modes-for-uploaded-videos-chromium-authenticated/attachments/e2e-latency-json-8351741117eb70925f3e7bf1a83134df13f012ac.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "PF-045 mobile public work detail disables timeline preview on touch devices",
+      "durationMs": 30131.38,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"PF-045 mobile public work detail disables timeline preview on touch devices\" took 30131.38ms, exceeding warn budget 30000ms",
+      "testTitle": "PF-045 mobile public work detail disables timeline preview on touch devices",
+      "file": "/work/tests/public-work-videos.spec.ts",
+      "artifactPath": "/work/test-results/playwright/public-work-videos-PF-045--1b2fb-ne-preview-on-touch-devices-chromium-authenticated/attachments/e2e-latency-json-0a15fe27183207aeb14875abd3679aa518cb3e47.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "public work detail renders uploaded and youtube videos when present",
+      "durationMs": 30053.84,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"public work detail renders uploaded and youtube videos when present\" took 30053.84ms, exceeding warn budget 30000ms",
+      "testTitle": "public work detail renders uploaded and youtube videos when present",
+      "file": "/work/tests/public-work-videos.spec.ts",
+      "artifactPath": "/work/test-results/playwright/public-work-videos-public--1fb9c-youtube-videos-when-present-chromium-authenticated/attachments/e2e-latency-json-0ed3dbfee45c07622bfe6d9d4108615284de0053.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "0416 admin home edits read back in admin and public home",
+      "durationMs": 30135.76,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"0416 admin home edits read back in admin and public home\" took 30135.76ms, exceeding warn budget 30000ms",
+      "testTitle": "0416 admin home edits read back in admin and public home",
+      "file": "/work/tests/renovation-0416-regression.spec.ts",
+      "artifactPath": "/work/test-results/playwright/renovation-0416-regression-665d7-ck-in-admin-and-public-home-chromium-authenticated/attachments/e2e-latency-json-182f2e5697b6b5c39406f60a9fa4ded0792c04bc.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "0416 batch AI jobs refresh only on explicit user action",
+      "durationMs": 30136.57,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"0416 batch AI jobs refresh only on explicit user action\" took 30136.57ms, exceeding warn budget 30000ms",
+      "testTitle": "0416 batch AI jobs refresh only on explicit user action",
+      "file": "/work/tests/renovation-0416-regression.spec.ts",
+      "artifactPath": "/work/test-results/playwright/renovation-0416-regression-a22f5-nly-on-explicit-user-action-chromium-authenticated/attachments/e2e-latency-json-08d6aec8dbacd41831a245052d96f5a88b1d90d1.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "capture homepage across a full width sweep and record layout metrics",
+      "durationMs": 57334.22,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"capture homepage across a full width sweep and record layout metrics\" took 57334.22ms, exceeding warn budget 30000ms",
+      "testTitle": "capture homepage across a full width sweep and record layout metrics",
+      "file": "/work/tests/responsive-width-sweep.spec.ts",
+      "artifactPath": "/work/test-results/playwright/responsive-width-sweep-cap-91479-p-and-record-layout-metrics-chromium-public/attachments/e2e-latency-json-05f6527efa70ff47877721230aa4a9d5a3c1c541.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "blog editor saves from the keyboard shortcut",
+      "durationMs": 30055.78,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"blog editor saves from the keyboard shortcut\" took 30055.78ms, exceeding warn budget 30000ms",
+      "testTitle": "blog editor saves from the keyboard shortcut",
+      "file": "/work/tests/ui-admin-editor-keyboard-save.spec.ts",
+      "artifactPath": "/work/test-results/playwright/ui-admin-editor-keyboard-s-3d53f--from-the-keyboard-shortcut-chromium-authenticated/attachments/e2e-latency-json-5b787b8525c4b7f03e14104bf6ba49aaa21c5738.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "work editor saves from the keyboard shortcut",
+      "durationMs": 30134.2,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"work editor saves from the keyboard shortcut\" took 30134.2ms, exceeding warn budget 30000ms",
+      "testTitle": "work editor saves from the keyboard shortcut",
+      "file": "/work/tests/ui-admin-editor-keyboard-save.spec.ts",
+      "artifactPath": "/work/test-results/playwright/ui-admin-editor-keyboard-s-6dc30--from-the-keyboard-shortcut-chromium-authenticated/attachments/e2e-latency-json-54b1b6d0cd7813b206bf26a5590937b5270bf218.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "WQ-009 work editor exposes save errors through an inline live region",
+      "durationMs": 30164.37,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"WQ-009 work editor exposes save errors through an inline live region\" took 30164.37ms, exceeding warn budget 30000ms",
+      "testTitle": "WQ-009 work editor exposes save errors through an inline live region",
+      "file": "/work/tests/ui-admin-form-errors.spec.ts",
+      "artifactPath": "/work/test-results/playwright/ui-admin-form-errors-WQ-00-0d23d-rough-an-inline-live-region-chromium-authenticated/attachments/e2e-latency-json-a36ab18105654612123d930dba38888adb178130.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "WQ-009 blog editor exposes save errors through an inline live region",
+      "durationMs": 30139.07,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"WQ-009 blog editor exposes save errors through an inline live region\" took 30139.07ms, exceeding warn budget 30000ms",
+      "testTitle": "WQ-009 blog editor exposes save errors through an inline live region",
+      "file": "/work/tests/ui-admin-form-errors.spec.ts",
+      "artifactPath": "/work/test-results/playwright/ui-admin-form-errors-WQ-00-2719b-rough-an-inline-live-region-chromium-authenticated/attachments/e2e-latency-json-9a0803920ed0c0833f10edaf32cec1f758f15981.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "selected notion document persists after reload via url state",
+      "durationMs": 30142.88,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"selected notion document persists after reload via url state\" took 30142.88ms, exceeding warn budget 30000ms",
+      "testTitle": "selected notion document persists after reload via url state",
+      "file": "/work/tests/ui-admin-notion-client-switch.spec.ts",
+      "artifactPath": "/work/test-results/playwright/ui-admin-notion-client-swi-3f9d7--after-reload-via-url-state-chromium-authenticated/attachments/e2e-latency-json-c3375c9c37e671b92d09a9faab1dc7c62f0604d9.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "switching documents in notion view keeps the editor visible while changing the active document",
+      "durationMs": 30143.47,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"switching documents in notion view keeps the editor visible while changing the active document\" took 30143.47ms, exceeding warn budget 30000ms",
+      "testTitle": "switching documents in notion view keeps the editor visible while changing the active document",
+      "file": "/work/tests/ui-admin-notion-client-switch.spec.ts",
+      "artifactPath": "/work/test-results/playwright/ui-admin-notion-client-swi-78e28-hanging-the-active-document-chromium-authenticated/attachments/e2e-latency-json-0bfc5f0c2e412666ad93f52362f6cf09b8504970.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "doc info toggle on restores the side panel",
+      "durationMs": 30136.12,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"doc info toggle on restores the side panel\" took 30136.12ms, exceeding warn budget 30000ms",
+      "testTitle": "doc info toggle on restores the side panel",
+      "file": "/work/tests/ui-admin-notion-doc-info-toggle.spec.ts",
+      "artifactPath": "/work/test-results/playwright/ui-admin-notion-doc-info-t-d9fe0--on-restores-the-side-panel-chromium-authenticated/attachments/e2e-latency-json-b7f558156f1c5156a4f78c8f875f7804d774626e.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "clearing localStorage restores the capability hint",
+      "durationMs": 30139.43,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"clearing localStorage restores the capability hint\" took 30139.43ms, exceeding warn budget 30000ms",
+      "testTitle": "clearing localStorage restores the capability hint",
+      "file": "/work/tests/ui-admin-notion-hint-dismiss.spec.ts",
+      "artifactPath": "/work/test-results/playwright/ui-admin-notion-hint-dismi-177bc-estores-the-capability-hint-chromium-authenticated/attachments/e2e-latency-json-6df068bed0899dd75c73d8a14aedd9e7d43f306c.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "library search filters visible notion documents",
+      "durationMs": 30163.35,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"library search filters visible notion documents\" took 30163.35ms, exceeding warn budget 30000ms",
+      "testTitle": "library search filters visible notion documents",
+      "file": "/work/tests/ui-admin-notion-library-search.spec.ts",
+      "artifactPath": "/work/test-results/playwright/ui-admin-notion-library-se-1023a-rs-visible-notion-documents-chromium-authenticated/attachments/e2e-latency-json-fb440be26e082c4eed87db219b585e795cd1a995.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "clearing search restores the full notion document list",
+      "durationMs": 30141.12,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"clearing search restores the full notion document list\" took 30141.12ms, exceeding warn budget 30000ms",
+      "testTitle": "clearing search restores the full notion document list",
+      "file": "/work/tests/ui-admin-notion-library-search.spec.ts",
+      "artifactPath": "/work/test-results/playwright/ui-admin-notion-library-se-9f1c4-e-full-notion-document-list-chromium-authenticated/attachments/e2e-latency-json-8a07800300ec8a75f5e484e60b195bc9b15bf9ae.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "selecting a document closes the sheet and keeps editor visible",
+      "durationMs": 30134.26,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"selecting a document closes the sheet and keeps editor visible\" took 30134.26ms, exceeding warn budget 30000ms",
+      "testTitle": "selecting a document closes the sheet and keeps editor visible",
+      "file": "/work/tests/ui-admin-notion-library-sheet.spec.ts",
+      "artifactPath": "/work/test-results/playwright/ui-admin-notion-library-sh-03417-et-and-keeps-editor-visible-chromium-authenticated/attachments/e2e-latency-json-ddee4e09a339db076109a2027841313ef272244c.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "library button opens sheet and exposes blog list",
+      "durationMs": 30144.34,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"library button opens sheet and exposes blog list\" took 30144.34ms, exceeding warn budget 30000ms",
+      "testTitle": "library button opens sheet and exposes blog list",
+      "file": "/work/tests/ui-admin-notion-library-sheet.spec.ts",
+      "artifactPath": "/work/test-results/playwright/ui-admin-notion-library-sh-b0c5a-sheet-and-exposes-blog-list-chromium-authenticated/attachments/e2e-latency-json-e163728b73f52eef01c9f40c156b8c39c0d5e739.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "VA-005 success, warning, and error states keep distinct semantic color treatments",
+      "durationMs": 60188.8,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"VA-005 success, warning, and error states keep distinct semantic color treatments\" took 60188.8ms, exceeding warn budget 30000ms",
+      "testTitle": "VA-005 success, warning, and error states keep distinct semantic color treatments",
+      "file": "/work/tests/ui-admin-semantic-colors.spec.ts",
+      "artifactPath": "/work/test-results/playwright/ui-admin-semantic-colors-V-7dd8c-t-semantic-color-treatments-chromium-authenticated/attachments/e2e-latency-json-ee69445a38e0ee3404f3f2e1691f9c8aba12e6ae.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "admin works list includes a thumbnail column",
+      "durationMs": 30142.17,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"admin works list includes a thumbnail column\" took 30142.17ms, exceeding warn budget 30000ms",
+      "testTitle": "admin works list includes a thumbnail column",
+      "file": "/work/tests/ui-admin-table-polish.spec.ts",
+      "artifactPath": "/work/test-results/playwright/ui-admin-table-polish-admi-17306-includes-a-thumbnail-column-chromium-authenticated/attachments/e2e-latency-json-01e70a7bd5f89f4ff55b0a6b3a3f7b51e28e98af.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "admin blog list renders short tag lists as separate badges",
+      "durationMs": 30157.36,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"admin blog list renders short tag lists as separate badges\" took 30157.36ms, exceeding warn budget 30000ms",
+      "testTitle": "admin blog list renders short tag lists as separate badges",
+      "file": "/work/tests/ui-admin-table-polish.spec.ts",
+      "artifactPath": "/work/test-results/playwright/ui-admin-table-polish-admi-e3615-ag-lists-as-separate-badges-chromium-authenticated/attachments/e2e-latency-json-8f32fac509bdd9576589fe741e700887c12ac5ac.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "admin blog list collapses extra tags into an overflow badge",
+      "durationMs": 30151.94,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"admin blog list collapses extra tags into an overflow badge\" took 30151.94ms, exceeding warn budget 30000ms",
+      "testTitle": "admin blog list collapses extra tags into an overflow badge",
+      "file": "/work/tests/ui-admin-table-polish.spec.ts",
+      "artifactPath": "/work/test-results/playwright/ui-admin-table-polish-admi-e6dee-tags-into-an-overflow-badge-chromium-authenticated/attachments/e2e-latency-json-b8e5cd1f97a6708b08d922321c90e47c514ca2f6.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "link toolbar opens a popover and applies links without browser dialogs",
+      "durationMs": 30142.69,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"link toolbar opens a popover and applies links without browser dialogs\" took 30142.69ms, exceeding warn budget 30000ms",
+      "testTitle": "link toolbar opens a popover and applies links without browser dialogs",
+      "file": "/work/tests/ui-admin-tiptap-link-popover.spec.ts",
+      "artifactPath": "/work/test-results/playwright/ui-admin-tiptap-link-popov-198d3-nks-without-browser-dialogs-chromium-authenticated/attachments/e2e-latency-json-df043dc07c84a121abbfda1a38f52c8f9e9a7ecf.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "link toolbar removes existing links from the current selection",
+      "durationMs": 30163.95,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"link toolbar removes existing links from the current selection\" took 30163.95ms, exceeding warn budget 30000ms",
+      "testTitle": "link toolbar removes existing links from the current selection",
+      "file": "/work/tests/ui-admin-tiptap-link-popover.spec.ts",
+      "artifactPath": "/work/test-results/playwright/ui-admin-tiptap-link-popov-3e738--from-the-current-selection-chromium-authenticated/attachments/e2e-latency-json-e854c85942f5dbbae39f8fba88cda79eb351a1ca.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "dark mode tiptap surfaces resolve to semantic background tokens",
+      "durationMs": 30146.57,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"dark mode tiptap surfaces resolve to semantic background tokens\" took 30146.57ms, exceeding warn budget 30000ms",
+      "testTitle": "dark mode tiptap surfaces resolve to semantic background tokens",
+      "file": "/work/tests/ui-admin-tiptap-semantic.spec.ts",
+      "artifactPath": "/work/test-results/playwright/ui-admin-tiptap-semantic-d-94733--semantic-background-tokens-chromium-authenticated/attachments/e2e-latency-json-c8c49aa7b5a17f557e91ba27251242164fe5de5a.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "VA-233 blog editor shows a warning dialog with keep and discard actions when cancelling dirty changes",
+      "durationMs": 30138.96,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"VA-233 blog editor shows a warning dialog with keep and discard actions when cancelling dirty changes\" took 30138.96ms, exceeding warn budget 30000ms",
+      "testTitle": "VA-233 blog editor shows a warning dialog with keep and discard actions when cancelling dirty changes",
+      "file": "/work/tests/ui-admin-unsaved-dialog.spec.ts",
+      "artifactPath": "/work/test-results/playwright/ui-admin-unsaved-dialog-VA-59380-en-cancelling-dirty-changes-chromium-authenticated/attachments/e2e-latency-json-157ebe15bce9ab8b32994cb9a305628819288ac0.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "VA-233 work editor shows a warning dialog with keep and discard actions when cancelling dirty changes",
+      "durationMs": 30169.6,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"VA-233 work editor shows a warning dialog with keep and discard actions when cancelling dirty changes\" took 30169.6ms, exceeding warn budget 30000ms",
+      "testTitle": "VA-233 work editor shows a warning dialog with keep and discard actions when cancelling dirty changes",
+      "file": "/work/tests/ui-admin-unsaved-dialog.spec.ts",
+      "artifactPath": "/work/test-results/playwright/ui-admin-unsaved-dialog-VA-5c266-en-cancelling-dirty-changes-chromium-authenticated/attachments/e2e-latency-json-059a2f746b39f46a8185ee2fbe3bf96e21f63dda.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "blog editor registers beforeunload only after a real change",
+      "durationMs": 30137.27,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"blog editor registers beforeunload only after a real change\" took 30137.27ms, exceeding warn budget 30000ms",
+      "testTitle": "blog editor registers beforeunload only after a real change",
+      "file": "/work/tests/ui-admin-unsaved-warning.spec.ts",
+      "artifactPath": "/work/test-results/playwright/ui-admin-unsaved-warning-b-be349-ad-only-after-a-real-change-chromium-authenticated/attachments/e2e-latency-json-a687fe95912919a1b1f846a0c7b8153401e4e0ff.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "blog editor clears beforeunload after a successful save",
+      "durationMs": 30166.57,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"blog editor clears beforeunload after a successful save\" took 30166.57ms, exceeding warn budget 30000ms",
+      "testTitle": "blog editor clears beforeunload after a successful save",
+      "file": "/work/tests/ui-admin-unsaved-warning.spec.ts",
+      "artifactPath": "/work/test-results/playwright/ui-admin-unsaved-warning-b-fb4e6-oad-after-a-successful-save-chromium-authenticated/attachments/e2e-latency-json-e986075565fd77636cb37b9d29399aa6e73b6635.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "work editor registers beforeunload only after a real change",
+      "durationMs": 30168,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"work editor registers beforeunload only after a real change\" took 30168ms, exceeding warn budget 30000ms",
+      "testTitle": "work editor registers beforeunload only after a real change",
+      "file": "/work/tests/ui-admin-unsaved-warning.spec.ts",
+      "artifactPath": "/work/test-results/playwright/ui-admin-unsaved-warning-w-28a88-ad-only-after-a-real-change-chromium-authenticated/attachments/e2e-latency-json-07c7bd77007464de303f91b15c4247838c68036e.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "work editor clears beforeunload after a successful save",
+      "durationMs": 30155.32,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"work editor clears beforeunload after a successful save\" took 30155.32ms, exceeding warn budget 30000ms",
+      "testTitle": "work editor clears beforeunload after a successful save",
+      "file": "/work/tests/ui-admin-unsaved-warning.spec.ts",
+      "artifactPath": "/work/test-results/playwright/ui-admin-unsaved-warning-w-5a687-oad-after-a-successful-save-chromium-authenticated/attachments/e2e-latency-json-97fb9ee776b228ddba9bd662025a171395444eee.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "work create CTA stays consolidated when multiple videos are staged",
+      "durationMs": 30197.76,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"work create CTA stays consolidated when multiple videos are staged\" took 30197.76ms, exceeding warn budget 30000ms",
+      "testTitle": "work create CTA stays consolidated when multiple videos are staged",
+      "file": "/work/tests/ui-admin-work-create-cta.spec.ts",
+      "artifactPath": "/work/test-results/playwright/ui-admin-work-create-cta-w-49ac6--multiple-videos-are-staged-chromium-authenticated/attachments/e2e-latency-json-8a7bec87771e3343e0d5e08db6b6e682629a56b2.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "work create CTA switches to the staged-video create label",
+      "durationMs": 30174.63,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"work create CTA switches to the staged-video create label\" took 30174.63ms, exceeding warn budget 30000ms",
+      "testTitle": "work create CTA switches to the staged-video create label",
+      "file": "/work/tests/ui-admin-work-create-cta.spec.ts",
+      "artifactPath": "/work/test-results/playwright/ui-admin-work-create-cta-w-87f0b-e-staged-video-create-label-chromium-authenticated/attachments/e2e-latency-json-374c226111272641a7e73ee6dbf5768a9d90bb00.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "tab navigation reveals the expected work editor sections and preserves entered data",
+      "durationMs": 30137.38,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"tab navigation reveals the expected work editor sections and preserves entered data\" took 30137.38ms, exceeding warn budget 30000ms",
+      "testTitle": "tab navigation reveals the expected work editor sections and preserves entered data",
+      "file": "/work/tests/ui-admin-work-editor-tabs.spec.ts",
+      "artifactPath": "/work/test-results/playwright/ui-admin-work-editor-tabs--c827c--and-preserves-entered-data-chromium-authenticated/attachments/e2e-latency-json-fb985966329a58c681b65374b85499836cf2376e.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "structured metadata fields can be added and removed without raw JSON editing",
+      "durationMs": 30150.06,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"structured metadata fields can be added and removed without raw JSON editing\" took 30150.06ms, exceeding warn budget 30000ms",
+      "testTitle": "structured metadata fields can be added and removed without raw JSON editing",
+      "file": "/work/tests/ui-admin-work-metadata-ui.spec.ts",
+      "artifactPath": "/work/test-results/playwright/ui-admin-work-metadata-ui--c81ea-ed-without-raw-JSON-editing-chromium-authenticated/attachments/e2e-latency-json-59b142b063efd1934cc8bc50c546320120aec526.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "Media tab no longer renders a raw JSON textarea for flexible metadata",
+      "durationMs": 30149.44,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"Media tab no longer renders a raw JSON textarea for flexible metadata\" took 30149.44ms, exceeding warn budget 30000ms",
+      "testTitle": "Media tab no longer renders a raw JSON textarea for flexible metadata",
+      "file": "/work/tests/ui-admin-work-metadata-ui.spec.ts",
+      "artifactPath": "/work/test-results/playwright/ui-admin-work-metadata-ui--d7952-tarea-for-flexible-metadata-chromium-authenticated/attachments/e2e-latency-json-7a732035470d4e8d6828d462ce3bc2ace0f22928.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "WQ-024 admin dashboard transitions expose loading chrome before the dashboard resolves",
+      "durationMs": 30059.64,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"WQ-024 admin dashboard transitions expose loading chrome before the dashboard resolves\" took 30059.64ms, exceeding warn budget 30000ms",
+      "testTitle": "WQ-024 admin dashboard transitions expose loading chrome before the dashboard resolves",
+      "file": "/work/tests/ui-loading-states.spec.ts",
+      "artifactPath": "/work/test-results/playwright/ui-loading-states-WQ-024-a-753ac-fore-the-dashboard-resolves-chromium-authenticated/attachments/e2e-latency-json-fd0d612dd3b586437da160d417b8753b1bb37a8d.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "WQ-023 admin slow dashboard transition keeps cumulative layout shift below 0.1",
+      "durationMs": 30056.13,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"WQ-023 admin slow dashboard transition keeps cumulative layout shift below 0.1\" took 30056.13ms, exceeding warn budget 30000ms",
+      "testTitle": "WQ-023 admin slow dashboard transition keeps cumulative layout shift below 0.1",
+      "file": "/work/tests/ui-quality-layout-shift.spec.ts",
+      "artifactPath": "/work/test-results/playwright/ui-quality-layout-shift-WQ-88f9f-tive-layout-shift-below-0-1-chromium-authenticated/attachments/e2e-latency-json-439df9d88237fb3b0393ff8a2702f41b0fd6eb4f.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "VA-020 key layout paddings and gaps follow the 4px spacing rhythm",
+      "durationMs": 30140.95,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"VA-020 key layout paddings and gaps follow the 4px spacing rhythm\" took 30140.95ms, exceeding warn budget 30000ms",
+      "testTitle": "VA-020 key layout paddings and gaps follow the 4px spacing rhythm",
+      "file": "/work/tests/ui-quality-spacing-system.spec.ts",
+      "artifactPath": "/work/test-results/playwright/ui-quality-spacing-system--c35bb-llow-the-4px-spacing-rhythm-chromium-authenticated/attachments/e2e-latency-json-b3e12e44b430a2e19db9e2a0ed4e2ba2a5614986.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "WQ-012 admin toasts announce politely without stealing focus",
+      "durationMs": 30150.75,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"WQ-012 admin toasts announce politely without stealing focus\" took 30150.75ms, exceeding warn budget 30000ms",
+      "testTitle": "WQ-012 admin toasts announce politely without stealing focus",
+      "file": "/work/tests/ui-quality-toast-accessibility.spec.ts",
+      "artifactPath": "/work/test-results/playwright/ui-quality-toast-accessibi-4b59f-tely-without-stealing-focus-chromium-authenticated/attachments/e2e-latency-json-3baf8eb89f50713e240612e078e782a527cef22e.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "VA-231, VA-232, and VA-404 admin delete dialog uses overlay, elevation, and entry animation tokens",
+      "durationMs": 30139.48,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"VA-231, VA-232, and VA-404 admin delete dialog uses overlay, elevation, and entry animation tokens\" took 30139.48ms, exceeding warn budget 30000ms",
+      "testTitle": "VA-231, VA-232, and VA-404 admin delete dialog uses overlay, elevation, and entry animation tokens",
+      "file": "/work/tests/ui-quality-visual-metrics.spec.ts",
+      "artifactPath": "/work/test-results/playwright/ui-quality-visual-metrics--5e8e1--and-entry-animation-tokens-chromium-authenticated/attachments/e2e-latency-json-c473d947209d6cff65c9cbd0ba727774d2a3457b.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "uploaded green-only mp4 generates and persists an automatic thumbnail",
+      "durationMs": 30227.98,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"uploaded green-only mp4 generates and persists an automatic thumbnail\" took 30227.98ms, exceeding warn budget 30000ms",
+      "testTitle": "uploaded green-only mp4 generates and persists an automatic thumbnail",
+      "file": "/work/tests/work-green-video-thumbnail.spec.ts",
+      "artifactPath": "/work/test-results/playwright/work-green-video-thumbnail-9e2fe-ists-an-automatic-thumbnail-chromium-authenticated/attachments/e2e-latency-json-7d29a01933406260e5e506947ea4538bbf3b17f4.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "uploaded green-only mp4 thumbnail is green at the pixel level",
+      "durationMs": 30150.87,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"uploaded green-only mp4 thumbnail is green at the pixel level\" took 30150.87ms, exceeding warn budget 30000ms",
+      "testTitle": "uploaded green-only mp4 thumbnail is green at the pixel level",
+      "file": "/work/tests/work-green-video-thumbnail.spec.ts",
+      "artifactPath": "/work/test-results/playwright/work-green-video-thumbnail-bf7d6-is-green-at-the-pixel-level-chromium-authenticated/attachments/e2e-latency-json-e6e7164861a56e22625339236d717ec9e62dce9b.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "existing work video uploads persist thumbnails immediately without requiring Update Work",
+      "durationMs": 30141.21,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"existing work video uploads persist thumbnails immediately without requiring Update Work\" took 30141.21ms, exceeding warn budget 30000ms",
+      "testTitle": "existing work video uploads persist thumbnails immediately without requiring Update Work",
+      "file": "/work/tests/work-inline-create-flow.spec.ts",
+      "artifactPath": "/work/test-results/playwright/work-inline-create-flow-ex-b9844-thout-requiring-Update-Work-chromium-authenticated/attachments/e2e-latency-json-2c9261f023528c3cd5573fdd06988596cbe79709.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "public works inline create with staged videos stays on /works and refreshes the list",
+      "durationMs": 30151.39,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"public works inline create with staged videos stays on /works and refreshes the list\" took 30151.39ms, exceeding warn budget 30000ms",
+      "testTitle": "public works inline create with staged videos stays on /works and refreshes the list",
+      "file": "/work/tests/work-inline-create-flow.spec.ts",
+      "artifactPath": "/work/test-results/playwright/work-inline-create-flow-pu-711fe-orks-and-refreshes-the-list-chromium-authenticated/attachments/e2e-latency-json-2e0b9a447bedb91bdce40b57b5cd712393505264.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "public works inline create saves in place and closes after a text-only create",
+      "durationMs": 30155.74,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"public works inline create saves in place and closes after a text-only create\" took 30155.74ms, exceeding warn budget 30000ms",
+      "testTitle": "public works inline create saves in place and closes after a text-only create",
+      "file": "/work/tests/work-inline-create-flow.spec.ts",
+      "artifactPath": "/work/test-results/playwright/work-inline-create-flow-pu-7fc2b-es-after-a-text-only-create-chromium-authenticated/attachments/e2e-latency-json-e8c7f0afe4d151cde8dd63219ac6dab462716fce.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "public work detail inline edit returns the user to the originating works page after save",
+      "durationMs": 30165.19,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"public work detail inline edit returns the user to the originating works page after save\" took 30165.19ms, exceeding warn budget 30000ms",
+      "testTitle": "public work detail inline edit returns the user to the originating works page after save",
+      "file": "/work/tests/work-inline-redirects.spec.ts",
+      "artifactPath": "/work/test-results/playwright/work-inline-redirects-publ-223d2-ating-works-page-after-save-chromium-authenticated/attachments/e2e-latency-json-625054c1ad2b5aa15c2193802ad62106e77ad531.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "public works inline create returns to the first works page after save",
+      "durationMs": 30155.65,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"public works inline create returns to the first works page after save\" took 30155.65ms, exceeding warn budget 30000ms",
+      "testTitle": "public works inline create returns to the first works page after save",
+      "file": "/work/tests/work-inline-redirects.spec.ts",
+      "artifactPath": "/work/test-results/playwright/work-inline-redirects-publ-dc14d-first-works-page-after-save-chromium-authenticated/attachments/e2e-latency-json-e5fef5265eeaad5820a2d60ba901bbce7e244699.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "public work detail video-only edits enable Update Work without requiring body changes",
+      "durationMs": 30145.62,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"public work detail video-only edits enable Update Work without requiring body changes\" took 30145.62ms, exceeding warn budget 30000ms",
+      "testTitle": "public work detail video-only edits enable Update Work without requiring body changes",
+      "file": "/work/tests/work-inline-redirects.spec.ts",
+      "artifactPath": "/work/test-results/playwright/work-inline-redirects-publ-dc3ce-hout-requiring-body-changes-chromium-authenticated/attachments/e2e-latency-json-f48f16dd7a9581edf86188a6287f3d66ab7d29c1.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "test",
+      "name": "single work delete uses the in-app dialog and removes the row",
+      "durationMs": 30179.09,
+      "warnMs": 30000,
+      "failOnHard": false,
+      "message": "test \"single work delete uses the in-app dialog and removes the row\" took 30179.09ms, exceeding warn budget 30000ms",
+      "testTitle": "single work delete uses the in-app dialog and removes the row",
+      "file": "/work/tests/work-single-delete-ux.spec.ts",
+      "artifactPath": "/work/test-results/playwright/work-single-delete-ux-sing-47401--dialog-and-removes-the-row-chromium-authenticated/attachments/e2e-latency-json-c0f776eb48a3ac48ebd3be9e8d34cffc44fe1c1c.json"
+    }
+  ]
+}

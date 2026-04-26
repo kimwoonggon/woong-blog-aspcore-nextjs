@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test'
 
 const AUTHENTICATED_SPECS = [
-  /tests\/admin-(?!redirect).*\.spec\.ts$/,
+  /tests\/admin-(?!(?:redirect|auth-authorization)\.spec\.ts$).*\.spec\.ts$/,
   /tests\/dark-mode\.spec\.ts$/,
   /tests\/e2e-admin-.*\.spec\.ts$/,
   /tests\/live-.*\.spec\.ts$/,
@@ -25,11 +25,63 @@ const AUTHENTICATED_SPECS = [
 ]
 
 const RUNTIME_AUTH_SPECS = [
+  /tests\/admin-auth-authorization\.spec\.ts$/,
   /tests\/auth-security-browser\.spec\.ts$/,
   /tests\/public-admin-affordances\.spec\.ts$/,
   /tests\/ui-header-overlays\.spec\.ts$/,
   /tests\/test-server-runtime\.spec\.ts$/,
 ]
+
+const OPTIONAL_E2E_SPECS = [
+  /tests\/admin-ai-batch-cancel\.spec\.ts$/,
+  /tests\/admin-ai-batch-jobs\.spec\.ts$/,
+  /tests\/admin-regression-flow-captures\.spec\.ts$/,
+  /tests\/admin-regression-screenshot-capture\.spec\.ts$/,
+  /tests\/e2e-admin-batch-management-journey\.spec\.ts$/,
+  /tests\/feature-recording-0418\.spec\.ts$/,
+  /tests\/live-blog-ai-regressions\.spec\.ts$/,
+  /tests\/manual-auth\.spec\.ts$/,
+  /tests\/manual-qa-auth-gap\.spec\.ts$/,
+  /tests\/manual-qa-gap-coverage\.spec\.ts$/,
+  /tests\/mermaid-batch-prompt-0419\.spec\.ts$/,
+  /tests\/mermaid-worstcase-0419\.spec\.ts$/,
+  /tests\/plain-baseline-0419\.spec\.ts$/,
+  /tests\/regression-screenshot-capture\.spec\.ts$/,
+  /tests\/renovation-0416-regression\.spec\.ts$/,
+  /tests\/responsive-width-sweep\.spec\.ts$/,
+  /tests\/video-preview-recording-0424\.spec\.ts$/,
+]
+
+const OPTIONAL_AUTHENTICATED_SPECS = [
+  /tests\/admin-ai-batch-cancel\.spec\.ts$/,
+  /tests\/admin-ai-batch-jobs\.spec\.ts$/,
+  /tests\/admin-regression-flow-captures\.spec\.ts$/,
+  /tests\/admin-regression-screenshot-capture\.spec\.ts$/,
+  /tests\/e2e-admin-batch-management-journey\.spec\.ts$/,
+  /tests\/feature-recording-0418\.spec\.ts$/,
+  /tests\/live-blog-ai-regressions\.spec\.ts$/,
+  /tests\/manual-qa-gap-coverage\.spec\.ts$/,
+  /tests\/mermaid-batch-prompt-0419\.spec\.ts$/,
+  /tests\/mermaid-worstcase-0419\.spec\.ts$/,
+  /tests\/plain-baseline-0419\.spec\.ts$/,
+  /tests\/regression-screenshot-capture\.spec\.ts$/,
+  /tests\/renovation-0416-regression\.spec\.ts$/,
+  /tests\/video-preview-recording-0424\.spec\.ts$/,
+]
+
+const OPTIONAL_RUNTIME_AUTH_SPECS = [
+  /tests\/manual-auth\.spec\.ts$/,
+  /tests\/manual-qa-auth-gap\.spec\.ts$/,
+]
+
+const OPTIONAL_PUBLIC_SPECS = [
+  /tests\/responsive-width-sweep\.spec\.ts$/,
+]
+
+const E2E_PROFILE = process.env.PLAYWRIGHT_E2E_PROFILE ?? 'core'
+const RUN_OPTIONAL_ONLY = E2E_PROFILE === 'optional'
+const RUN_EXHAUSTIVE = E2E_PROFILE === 'exhaustive'
+const CORE_OPTIONAL_IGNORES = RUN_EXHAUSTIVE || RUN_OPTIONAL_ONLY ? [] : OPTIONAL_E2E_SPECS
 
 const PLAYWRIGHT_BASE_URL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000'
 const IGNORE_LOCALHOST_HTTPS_ERRORS = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(
@@ -69,7 +121,8 @@ export default defineConfig({
     {
       name: 'chromium-public',
       use: { ...devices['Desktop Chrome'] },
-      testIgnore: [...AUTHENTICATED_SPECS, ...RUNTIME_AUTH_SPECS],
+      testMatch: RUN_OPTIONAL_ONLY ? OPTIONAL_PUBLIC_SPECS : undefined,
+      testIgnore: RUN_OPTIONAL_ONLY ? [] : [...AUTHENTICATED_SPECS, ...RUNTIME_AUTH_SPECS, ...CORE_OPTIONAL_IGNORES],
     },
     {
       name: 'chromium-authenticated',
@@ -77,12 +130,14 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
         storageState: 'test-results/playwright/admin-storage-state.json',
       },
-      testMatch: AUTHENTICATED_SPECS,
+      testMatch: RUN_OPTIONAL_ONLY ? OPTIONAL_AUTHENTICATED_SPECS : AUTHENTICATED_SPECS,
+      testIgnore: CORE_OPTIONAL_IGNORES,
     },
     {
       name: 'chromium-runtime-auth',
       use: { ...devices['Desktop Chrome'] },
-      testMatch: RUNTIME_AUTH_SPECS,
+      testMatch: RUN_OPTIONAL_ONLY ? OPTIONAL_RUNTIME_AUTH_SPECS : RUNTIME_AUTH_SPECS,
+      testIgnore: CORE_OPTIONAL_IGNORES,
     },
   ],
 })

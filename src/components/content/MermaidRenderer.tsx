@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useId, useState } from 'react'
+import { cn } from '@/lib/utils'
 
 interface MermaidModule {
   initialize: (config: {
@@ -16,6 +17,8 @@ interface MermaidRendererProps {
   code: string
   className?: string
 }
+
+const centeredMermaidClassName = 'my-6 overflow-x-auto rounded-lg border border-border bg-card p-4 text-center [&_svg]:mx-auto [&_svg]:block [&_svg]:h-auto [&_svg]:max-w-full'
 
 function getTheme() {
   if (typeof document === 'undefined') {
@@ -78,7 +81,7 @@ export function MermaidRenderer({ code, className }: MermaidRendererProps) {
 
   if (error) {
     return (
-      <pre className={className ?? 'my-6 overflow-auto rounded-lg border border-border bg-card p-4'}>
+      <pre data-testid="mermaid-renderer" className={cn(centeredMermaidClassName, className)}>
         <code>{code}</code>
       </pre>
     )
@@ -86,7 +89,7 @@ export function MermaidRenderer({ code, className }: MermaidRendererProps) {
 
   if (!svg) {
     return (
-      <div className={className ?? 'my-6 overflow-auto rounded-lg border border-border bg-card p-4'}>
+      <div data-testid="mermaid-renderer" className={cn(centeredMermaidClassName, className)}>
         <span className="text-sm text-muted-foreground">Rendering Mermaid diagram…</span>
       </div>
     )
@@ -94,7 +97,8 @@ export function MermaidRenderer({ code, className }: MermaidRendererProps) {
 
   return (
     <div
-      className={className ?? 'my-6 overflow-auto rounded-lg border border-border bg-card p-4'}
+      data-testid="mermaid-renderer"
+      className={cn(centeredMermaidClassName, className)}
       dangerouslySetInnerHTML={{ __html: svg }}
     />
   )

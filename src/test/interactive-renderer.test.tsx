@@ -11,10 +11,16 @@ vi.mock('@/components/content/ThreeJsScene', () => ({
 }))
 
 vi.mock('@/components/content/WorkVideoPlayer', () => ({
-  WorkVideoPlayer: ({ video }: { video: { sourceType: string; sourceKey: string } }) => (
+  WorkVideoPlayer: ({
+    video,
+    allowDesktopResize,
+  }: {
+    video: { sourceType: string; sourceKey: string }
+    allowDesktopResize?: boolean
+  }) => (
     video.sourceType === 'youtube'
       ? <iframe title="YouTube video" src={`https://www.youtube-nocookie.com/embed/${video.sourceKey}`} />
-      : <video title="Work video" />
+      : <video title="Work video" data-allow-desktop-resize={allowDesktopResize ? 'true' : 'false'} />
   ),
 }))
 
@@ -60,6 +66,37 @@ describe('InteractiveRenderer', () => {
     expect(screen.getByText('Before')).toBeInTheDocument()
     expect(container.querySelector('iframe')).toBeNull()
     expect(container.querySelector('video')).toBeNull()
+  })
+
+  it('forwards works-detail uploaded video presentation to inline uploaded videos only', () => {
+    render(
+      <InteractiveRenderer
+        html={[
+          '<p>Before</p>',
+          buildWorkVideoEmbedMarkup('local-video'),
+          buildWorkVideoEmbedMarkup('youtube-video'),
+          '<p>After</p>',
+        ].join('')}
+        enableWorksDetailUploadedVideoPresentation
+        workVideos={[
+          {
+            id: 'local-video',
+            sourceType: 'hls',
+            sourceKey: 'local:videos/work-1/hls/master.m3u8',
+            sortOrder: 0,
+          },
+          {
+            id: 'youtube-video',
+            sourceType: 'youtube',
+            sourceKey: 'dQw4w9WgXcQ',
+            sortOrder: 1,
+          },
+        ]}
+      />,
+    )
+
+    expect(screen.getByTitle('Work video')).toHaveAttribute('data-allow-desktop-resize', 'true')
+    expect(screen.getByTitle(/YouTube video/i)).toBeInTheDocument()
   })
 
   it('removes script tags, event handlers, and javascript urls from raw html', () => {

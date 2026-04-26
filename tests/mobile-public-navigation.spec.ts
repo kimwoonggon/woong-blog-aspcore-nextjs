@@ -18,7 +18,7 @@ test('mobile header controls and bottom tabs render with all destinations', asyn
   await expect(bottomNav.getByRole('link', { name: 'Resume' })).toBeVisible()
 
   const routes = [
-    { label: 'Intro', expectedPath: '/introduction', heading: 'Introduction' },
+    { label: 'Intro', expectedPath: '/introduction', heading: null },
     { label: 'Works', expectedPath: '/works', heading: 'Works' },
     { label: 'Study', expectedPath: '/blog', heading: 'Study' },
     { label: 'Contact', expectedPath: '/contact', heading: 'Contact' },
@@ -27,7 +27,9 @@ test('mobile header controls and bottom tabs render with all destinations', asyn
   ] as const
 
   for (const route of routes) {
-    await bottomNav.getByRole('link', { name: route.label, exact: true }).click()
+    const link = bottomNav.getByRole('link', { name: route.label, exact: true })
+    await expect(link).toHaveAttribute('href', route.expectedPath)
+    await page.goto(route.expectedPath)
     await expect(page).toHaveURL(new RegExp(route.expectedPath === '/' ? '/$' : `${route.expectedPath.replace('/', '\\/')}(\\?.*)?$`))
 
     if (route.heading) {

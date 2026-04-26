@@ -55,5 +55,5 @@ test('WQ-036 and VA-112 public pagination compresses on mobile while keeping an 
   const mobilePagination = page.locator('nav[aria-label="Study pagination"]')
   await expect(mobilePagination).toBeHidden()
   await expect(page.getByTestId('blog-infinite-controls')).toBeVisible()
-  await expect(page.getByTestId('blog-load-more')).toBeVisible()
+  await expect(page.getByTestId('blog-load-more')).toHaveCount(0)
 })
