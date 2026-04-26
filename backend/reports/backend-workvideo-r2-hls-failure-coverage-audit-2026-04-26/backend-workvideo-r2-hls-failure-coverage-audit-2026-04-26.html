@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Backend WorkVideo R2/HLS Failure Coverage Audit - Batch 1</title>
+  <style>
+    body {
+      color: #1f2933;
+      font-family: Arial, sans-serif;
+      line-height: 1.5;
+      margin: 2rem auto;
+      max-width: 980px;
+      padding: 0 1rem;
+    }
+
+    h1,
+    h2 {
+      color: #102a43;
+    }
+
+    table {
+      border-collapse: collapse;
+      margin: 1rem 0;
+      width: 100%;
+    }
+
+    th,
+    td {
+      border: 1px solid #bcccdc;
+      padding: 0.45rem 0.6rem;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #f0f4f8;
+    }
+
+    code {
+      background: #f0f4f8;
+      padding: 0.1rem 0.25rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Backend WorkVideo R2/HLS Failure Coverage Audit - Batch 1</h1>
+  <p><strong>Date:</strong> 2026-04-26</p>
+  <p><strong>Scope:</strong> Backend tests only. No production code changed. No real R2, S3, Cloudflare, credentials, ffmpeg, or external network services were used.</p>
+
+  <h2>Tests Added</h2>
+  <ul>
+    <li>Storage selector local/R2/fallback/case-insensitive behavior.</li>
+    <li>Playback URL builder direct, HLS, timeline preview, missing storage, YouTube, and malformed HLS behavior.</li>
+    <li>Local storage overwrite, missing object, and idempotent delete behavior with temp directories.</li>
+    <li>HLS workspace path separation, publisher content type/key behavior, and partial-publish failure visibility.</li>
+    <li>Cleanup store YouTube no-op, malformed HLS no-op, HLS key parsing, and persisted duplicate suppression.</li>
+    <li>HLS job planning with R2 embedded as the underlying storage type.</li>
+  </ul>
+
+  <h2>Validation</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Command</th>
+        <th>Result</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td><code>dotnet test backend/tests/WoongBlog.Api.UnitTests/WoongBlog.Api.UnitTests.csproj</code></td><td>Passed, 56 tests</td></tr>
+      <tr><td><code>dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj</code></td><td>Passed, 113 tests</td></tr>
+      <tr><td><code>./scripts/run-backend-coverage.sh component -v minimal</code></td><td>Passed, 113 component tests</td></tr>
+      <tr><td><code>./scripts/run-backend-coverage.sh full -v minimal</code></td><td>Passed; contract skipped, 113 component, 56 unit, 35 architecture, 194 integration tests</td></tr>
+      <tr><td><code>dotnet test backend/WoongBlog.sln</code></td><td>Passed; contract skipped, 113 component, 56 unit, 35 architecture, 194 integration tests</td></tr>
+      <tr><td><code>git diff --check</code></td><td>Passed</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Coverage</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Target</th>
+        <th>Full line</th>
+        <th>Full branch</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Full backend</td><td>92.5%</td><td>72.6%</td></tr>
+      <tr><td><code>WorkVideoStorageSelector</code></td><td>100.0%</td><td>90.0%</td></tr>
+      <tr><td><code>WorkVideoPlaybackUrlBuilder</code></td><td>100.0%</td><td>100.0%</td></tr>
+      <tr><td><code>LocalVideoStorageService</code></td><td>100.0%</td><td>90.0%</td></tr>
+      <tr><td><code>FfmpegVideoTranscoder</code></td><td>61.7%</td><td>50.0%</td></tr>
+      <tr><td><code>WorkVideoHlsJobPlan</code></td><td>100.0%</td><td>100.0%</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Remaining Seam Work</h2>
+  <p>Direct <code>R2VideoStorageService</code> object operations remain blocked until a narrow S3/R2 client factory seam exists. Batch 2 should cover save, metadata read, prefix read, single delete, HLS-prefix delete with pagination, non-404 exception behavior, and deterministic presign request capture without real network calls.</p>
+
+  <h2>Recommendation</h2>
+  <p>Batch 1 is complete for the no-production-code-change storage/path/url/cleanup scope. Proceed to Batch 2 only after adding the smallest S3/R2 seam needed for deterministic fake-client tests.</p>
+</body>
+</html>
