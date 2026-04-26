@@ -1,7 +1,6 @@
 import process from 'node:process'
 
-export const AZURE_BACKUP_CRON_TZ = 'Asia/Seoul'
-export const AZURE_BACKUP_CRON_SCHEDULE = '0 7 * * *'
+export const AZURE_BACKUP_CRON_SCHEDULE = '0 22 * * *'
 export const AZURE_BACKUP_CRON_MARKER_START = '# Woong Blog Azure backup cron start'
 export const AZURE_BACKUP_CRON_MARKER_END = '# Woong Blog Azure backup cron end'
 
@@ -14,7 +13,15 @@ export function normalizeBlobPrefix(prefix) {
 }
 
 export function buildBackupId(date = new Date()) {
-  return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z')
+  const kstDate = new Date(date.getTime() + 9 * 60 * 60 * 1000)
+  const year = kstDate.getUTCFullYear()
+  const month = String(kstDate.getUTCMonth() + 1).padStart(2, '0')
+  const day = String(kstDate.getUTCDate()).padStart(2, '0')
+  const hour = String(kstDate.getUTCHours()).padStart(2, '0')
+  const minute = String(kstDate.getUTCMinutes()).padStart(2, '0')
+  const second = String(kstDate.getUTCSeconds()).padStart(2, '0')
+
+  return `${year}${month}${day}T${hour}${minute}${second}KST`
 }
 
 export function buildBackupBlobName({ prefix, backupId, kind }) {
@@ -46,7 +53,7 @@ export function buildCronEntry({
 }) {
   return [
     AZURE_BACKUP_CRON_MARKER_START,
-    `CRON_TZ=${AZURE_BACKUP_CRON_TZ}`,
+    '# Runs at 07:00 Asia/Seoul using the server UTC cron clock.',
     `${AZURE_BACKUP_CRON_SCHEDULE} cd ${shellQuote(repoRoot)} && APP_ENV_FILE=${shellQuote(envFile)} ${shellQuote(nodeBinary)} ${shellQuote(backupScriptPath)} >> ${shellQuote(logFile)} 2>&1`,
     AZURE_BACKUP_CRON_MARKER_END,
   ].join('\n')

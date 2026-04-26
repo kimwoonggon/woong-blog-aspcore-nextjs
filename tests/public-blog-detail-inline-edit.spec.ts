@@ -1,5 +1,6 @@
 import { expect, test } from './helpers/performance-test'
 import { expectedPublicBlogPageSize } from './helpers/responsive-policy'
+import { createBlogFixture } from './helpers/content-fixtures'
 
 test.use({ storageState: 'test-results/playwright/admin-storage-state.json' })
 
@@ -32,14 +33,20 @@ test('admin can edit a public blog detail inline and return to the originating b
   await expect(page.getByRole('button', { name: '새 글 쓰기' })).toBeVisible()
 })
 
-test('public blog detail shows paginated related posts', async ({ page }) => {
+test('public blog detail shows paginated related posts', async ({ page, request }, testInfo) => {
+  const blog = await createBlogFixture(request, testInfo, {
+    titlePrefix: 'Related Blog Detail',
+    html: '<h2>Related blog body</h2><p>Related blog fixture body.</p>',
+    tags: ['related-detail', 'blog'],
+  })
+
   await page.setViewportSize({ width: 1440, height: 1800 })
-  await page.goto('/blog?pageSize=1')
-  await page.locator('a[href^="/blog/"]').first().click()
+  await page.goto(`/blog/${blog.slug}`)
 
   await expect(page.getByRole('heading', { name: 'More Studies' })).toBeVisible()
   await expect(page.getByTestId('related-blog-card').first()).toBeVisible()
-  await expect(page.locator('section').filter({ has: page.getByRole('heading', { name: 'More Studies' }) }).getByText(/^Page 1 of \d+$/)).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Next' })).toBeVisible()
-  await expect(page.getByRole('button', { name: '2' })).toBeVisible()
+  const relatedSection = page.locator('section').filter({ has: page.getByRole('heading', { name: 'More Studies' }) })
+  await expect(relatedSection.getByText(/^Page 1 of \d+$/)).toBeVisible()
+  await expect(relatedSection.getByRole('button', { name: 'Go to next related page' })).toBeVisible()
+  await expect(relatedSection.getByRole('button', { name: '2' })).toBeVisible()
 })

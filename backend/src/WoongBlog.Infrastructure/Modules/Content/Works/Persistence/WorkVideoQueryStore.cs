@@ -26,7 +26,25 @@ public sealed class WorkVideoQueryStore(
 
         return new WorkVideosMutationResult(
             work.VideosVersion,
-            videos.Select(video => new WorkVideoDto(
+            await BuildVideoDtosAsync(videos, cancellationToken));
+    }
+
+    private async Task<List<WorkVideoDto>> BuildVideoDtosAsync(
+        IEnumerable<WorkVideo> videos,
+        CancellationToken cancellationToken)
+    {
+        var results = new List<WorkVideoDto>();
+
+        foreach (var video in videos)
+        {
+            var (previewStorageType, hasPreviewStorageType) = ResolvePreviewStorageType(video);
+            var hasPreviewAssets = hasPreviewStorageType
+                && !string.IsNullOrWhiteSpace(video.TimelinePreviewVttStorageKey)
+                && !string.IsNullOrWhiteSpace(video.TimelinePreviewSpriteStorageKey)
+                && await playbackUrlBuilder.StorageObjectExistsAsync(previewStorageType, video.TimelinePreviewVttStorageKey!, cancellationToken)
+                && await playbackUrlBuilder.StorageObjectExistsAsync(previewStorageType, video.TimelinePreviewSpriteStorageKey!, cancellationToken);
+
+            results.Add(new WorkVideoDto(
                 video.Id,
                 video.SourceType,
                 video.SourceKey,
@@ -37,25 +55,25 @@ public sealed class WorkVideoQueryStore(
                 video.Width,
                 video.Height,
                 video.DurationSeconds,
-                ResolveTimelinePreviewUrl(video, video.TimelinePreviewVttStorageKey),
-                ResolveTimelinePreviewUrl(video, video.TimelinePreviewSpriteStorageKey),
+                hasPreviewAssets ? playbackUrlBuilder.BuildStorageObjectUrl(previewStorageType, video.TimelinePreviewVttStorageKey!) : null,
+                hasPreviewAssets ? playbackUrlBuilder.BuildStorageObjectUrl(previewStorageType, video.TimelinePreviewSpriteStorageKey!) : null,
                 video.SortOrder,
-                video.CreatedAt)).ToList());
-    }
-
-    private string? ResolveTimelinePreviewUrl(WorkVideo video, string? storageKey)
-    {
-        if (string.IsNullOrWhiteSpace(storageKey))
-        {
-            return null;
+                video.CreatedAt));
         }
 
+        return results;
+    }
+
+    private static (string StorageType, bool IsResolved) ResolvePreviewStorageType(WorkVideo video)
+    {
         if (string.Equals(video.SourceType, WorkVideoSourceTypes.Hls, StringComparison.OrdinalIgnoreCase)
             && WorkVideoHlsSourceKey.TryParse(video.SourceKey, out var storageType, out _))
         {
-            return playbackUrlBuilder.BuildStorageObjectUrl(storageType, storageKey);
+            return (storageType, true);
         }
 
-        return playbackUrlBuilder.BuildStorageObjectUrl(video.SourceType, storageKey);
+        return string.IsNullOrWhiteSpace(video.SourceType)
+            ? (string.Empty, false)
+            : (video.SourceType, true);
     }
 }

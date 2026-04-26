@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Works / Study Hotfix Audit 2026-04-25</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 2rem; line-height: 1.5; color: #172033; }
+    main { max-width: 920px; }
+    h1, h2 { line-height: 1.2; }
+    code { background: #eef2f7; padding: 0.1rem 0.25rem; border-radius: 4px; }
+    li { margin: 0.25rem 0; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Works / Study Hotfix Audit (2026-04-25)</h1>
+    <h2>Summary</h2>
+    <ul>
+      <li><code>On This Work</code> dynamically avoids overlapping uploaded-video frames in wide/theater modes.</li>
+      <li>Works mobile list auto-appends and stops at the final page without <code>Load more</code>.</li>
+      <li>Study mobile restore is mobile-only; desktop width keeps desktop pagination/layout.</li>
+      <li>Uploaded/HLS videos keep native controls, desktop resize, desktop-only preview, and mobile preview disabled.</li>
+      <li>Blank Study excerpts stay blank, and Study list cards show all saved tags.</li>
+      <li>WorkEditor client-side IDs now fall back when <code>crypto.randomUUID</code> is unavailable, including existing Work edit screens.</li>
+      <li>E2E latency coverage now measures desktop public nav clicks and Work/Study detail-card opens.</li>
+    </ul>
+    <h2>Validation</h2>
+    <ul>
+      <li>Vitest TOC/feed/page-size/player/renderer slice: passed, 44/44.</li>
+      <li>Vitest WorkEditor slice: passed, 20/20.</li>
+      <li>Playwright smoke: loaded <code>/admin/works/new</code> with <code>window.crypto.randomUUID</code> removed and verified the HLS upload field rendered.</li>
+      <li>Backend integration slice: passed, 30/30, with existing NU1901 warning.</li>
+      <li>Backend component slice: passed, 18/18, with existing NU1901 warning.</li>
+      <li>Playwright public Works/Study/TOC slice: passed, 8/8.</li>
+      <li>Playwright public work-video slice: passed, 5/5.</li>
+      <li>Updated Playwright latency slice: passed, 9/9, budget failures 0. Warm-state measured steps: Work detail 1241.78ms, Study detail 1055.98ms, Works nav 787.78ms, Introduction nav 620.27ms, Study nav 570.05ms, Contact nav 504.86ms.</li>
+      <li><code>npm run typecheck</code>: passed.</li>
+      <li><code>npm run lint</code>: passed with 6 existing warnings.</li>
+      <li><code>git diff --check</code>: passed.</li>
+    </ul>
+    <h2>Risks</h2>
+    <ul>
+      <li>Docker Desktop port publishing for nginx failed in this WSL session, so Playwright used an internal no-port nginx container on the compose network.</li>
+      <li>Lint warnings and AWSSDK advisory warnings are existing non-blocking issues.</li>
+      <li>Desktop back after mobile reading intentionally prioritizes desktop layout stability over raw mobile scroll restoration.</li>
+      <li><code>npm run build</code> was attempted during the crypto addendum but stopped after more than 4 minutes with no output on the <code>/mnt/d</code> workspace; local browser verification now uses <code>next dev</code> behind the <code>3000</code> proxy.</li>
+      <li>Current local click slowness is caused by cold <code>next dev</code> route compilation and <code>generateStaticParams</code>; observed first compiles included blog detail around 6.8s and work detail around 8.7s. The full Playwright suite lists 589 tests and was not run in this dev-server addendum.</li>
+    </ul>
+    <h2>Recommendation</h2>
+    <p>Ship this hotfix.</p>
+  </main>
+</body>
+</html>

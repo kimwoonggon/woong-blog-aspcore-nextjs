@@ -26,7 +26,7 @@ test('resume page keeps a tall viewer shell without clipping the document area',
 
 test('static public pages keep a clean unframed header pattern', async ({ page }) => {
   const cases = [
-    { path: '/introduction', heading: 'Introduction' },
+    { path: '/introduction', heading: null },
     { path: '/contact', heading: 'Contact' },
     { path: '/resume', heading: 'Resume' },
   ]
@@ -36,7 +36,11 @@ test('static public pages keep a clean unframed header pattern', async ({ page }
 
     const header = page.locator('main header').first()
     await expect(header).toBeVisible()
-    await expect(header.locator('h1').first()).toHaveText(item.heading)
+    if (item.heading) {
+      await expect(header.locator('h1').first()).toHaveText(item.heading)
+    } else {
+      await expect(header.locator('h1').first()).toBeVisible()
+    }
     await expect(header.locator('p').first()).toHaveCount(0)
 
     const metrics = await header.evaluate((element) => {

@@ -4,7 +4,10 @@ import { getStyle } from './helpers/ui-improvement'
 test('VA-015 feed cards clamp titles to 2 lines and excerpts to 3 lines', async ({ page }) => {
   await page.goto('/blog')
 
-  const blogCard = page.getByTestId('blog-card').first()
+  const blogCard = page
+    .getByTestId('blog-card')
+    .filter({ has: page.locator('p').filter({ hasText: /\S/ }) })
+    .first()
   await expect(blogCard).toBeVisible()
   await expect(blogCard.locator('[data-slot="card-title"]').first()).toHaveClass(/line-clamp-2/)
   await expect(blogCard.locator('p').filter({ hasText: /\S/ }).first()).toHaveClass(/line-clamp-3/)

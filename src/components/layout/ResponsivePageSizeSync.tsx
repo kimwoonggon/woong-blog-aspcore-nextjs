@@ -10,6 +10,42 @@ interface ResponsivePageSizeSyncProps {
   mobilePageSize: number
   infiniteBelowDesktop?: boolean
   infinitePageSize?: number
+  skipWhenStudyRestorePending?: boolean
+}
+
+const studyRestoreStorageKey = 'woong-study-mobile-feed-state'
+const studyRestoreHistoryKey = '__studyFeedRestore'
+
+function isPendingStudyRestore(value: unknown) {
+  if (!value || typeof value !== 'object') {
+    return false
+  }
+
+  return (value as Record<string, unknown>).restoreOnHistoryReturn === true
+}
+
+function hasPendingStudyRestore(pathname: string) {
+  if (pathname !== '/blog') {
+    return false
+  }
+
+  const historyRestore = window.history.state && typeof window.history.state === 'object'
+    ? (window.history.state as Record<string, unknown>)[studyRestoreHistoryKey]
+    : null
+  if (isPendingStudyRestore(historyRestore)) {
+    return true
+  }
+
+  const rawSessionRestore = window.sessionStorage.getItem(studyRestoreStorageKey)
+  if (!rawSessionRestore) {
+    return false
+  }
+
+  try {
+    return isPendingStudyRestore(JSON.parse(rawSessionRestore) as unknown)
+  } catch {
+    return false
+  }
 }
 
 export function ResponsivePageSizeSync({
@@ -18,6 +54,7 @@ export function ResponsivePageSizeSync({
   mobilePageSize,
   infiniteBelowDesktop = false,
   infinitePageSize = 10,
+  skipWhenStudyRestorePending = false,
 }: ResponsivePageSizeSyncProps) {
   const router = useRouter()
   const pathname = usePathname()
@@ -26,6 +63,10 @@ export function ResponsivePageSizeSync({
   useEffect(() => {
     const sync = () => {
       const isBelowDesktop = window.innerWidth < 1024
+      if (skipWhenStudyRestorePending && isBelowDesktop && hasPendingStudyRestore(pathname)) {
+        return
+      }
+
       if (infiniteBelowDesktop && isBelowDesktop) {
         const currentPage = searchParams.get('page')
         const currentPageSize = searchParams.get('pageSize')
@@ -78,7 +119,7 @@ export function ResponsivePageSizeSync({
     return () => {
       window.removeEventListener('resize', sync)
     }
-  }, [desktopPageSize, infiniteBelowDesktop, infinitePageSize, mobilePageSize, pathname, router, searchParams, tabletPageSize])
+  }, [desktopPageSize, infiniteBelowDesktop, infinitePageSize, mobilePageSize, pathname, router, searchParams, skipWhenStudyRestorePending, tabletPageSize])
 
   return null
 }

@@ -39,7 +39,7 @@ test('work detail keeps TOC card visible with fallback copy when headings are mi
   await page.setViewportSize({ width: 1366, height: 900 })
   await page.goto(`/works/${work.slug}`)
 
-  const toc = page.getByTestId('blog-toc')
+  const toc = page.getByTestId('work-toc')
   await expect(toc).toBeVisible()
   await expect(toc.getByTestId('blog-toc-empty')).toBeVisible()
   await expect(toc.getByRole('link')).toHaveCount(0)

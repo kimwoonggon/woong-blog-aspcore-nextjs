@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from 'react'
 
 interface TableOfContentsProps {
   contentRootId: string
+  title?: string
+  testId?: string
 }
 
 interface HeadingItem {
@@ -53,7 +55,11 @@ function collectHeadings(root: HTMLElement) {
     .filter((item): item is HeadingItem => item !== null)
 }
 
-export function TableOfContents({ contentRootId }: TableOfContentsProps) {
+export function TableOfContents({
+  contentRootId,
+  title = 'On This Page',
+  testId = 'blog-toc',
+}: TableOfContentsProps) {
   const [items, setItems] = useState<HeadingItem[]>([])
   const [activeId, setActiveId] = useState<string>('')
   const [collapsed, setCollapsed] = useState(false)
@@ -109,12 +115,12 @@ export function TableOfContents({ contentRootId }: TableOfContentsProps) {
   return (
     <nav
       aria-label="Table of contents"
-      data-testid="blog-toc"
-      className="sticky top-28 max-h-[calc(100vh-8rem)] overflow-y-auto rounded-2xl border border-border/80 bg-background/95 p-4 shadow-sm"
+      data-testid={testId}
+      className="rounded-2xl border border-border/80 bg-background/95 p-4 shadow-sm transition-all"
     >
       <div className="mb-3 flex items-center justify-between gap-3">
         <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
-          On This Page
+          {title}
         </p>
         <button
           type="button"

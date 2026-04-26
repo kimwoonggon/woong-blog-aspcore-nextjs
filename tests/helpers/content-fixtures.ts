@@ -1,4 +1,5 @@
 import { expect, type APIRequestContext, type TestInfo } from '@playwright/test'
+import { ensureAdminApiContext } from './auth'
 
 interface BlogFixtureOptions {
   titlePrefix?: string
@@ -43,16 +44,38 @@ function buildFixtureTag(testInfo: TestInfo) {
   return `pw-w${testInfo.parallelIndex}-r${testInfo.retry}-${Date.now().toString(36)}-${random}`
 }
 
+async function waitForPublicFixture(request: APIRequestContext, path: string) {
+  let lastStatus = 0
+
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    const response = await request.get(path, {
+      failOnStatusCode: false,
+      headers: {
+        'Cache-Control': 'no-store',
+      },
+    })
+    lastStatus = response.status()
+    if (response.ok()) {
+      return
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 250))
+  }
+
+  throw new Error(`Created fixture did not become publicly readable at ${path}; last status ${lastStatus}.`)
+}
+
 export async function createBlogFixture(
   request: APIRequestContext,
   testInfo: TestInfo,
   options: BlogFixtureOptions = {},
 ): Promise<BlogFixture> {
+  const adminRequest = await ensureAdminApiContext(request)
   const tag = buildFixtureTag(testInfo)
   const title = `${options.titlePrefix ?? 'Playwright Blog Fixture'} ${tag}`
   const html = options.html ?? `<p>${title} body</p>`
-  const csrf = await getCsrf(request)
-  const response = await request.post('/api/admin/blogs', {
+  const csrf = await getCsrf(adminRequest)
+  const response = await adminRequest.post('/api/admin/blogs', {
     headers: {
       'Content-Type': 'application/json',
       [csrf.headerName]: csrf.requestToken,
@@ -71,6 +94,9 @@ export async function createBlogFixture(
   }
 
   const payload = await response.json() as { id: string; slug: string }
+  if (options.published ?? true) {
+    await waitForPublicFixture(adminRequest, `/api/public/blogs/${payload.slug}`)
+  }
   return { ...payload, title, tag }
 }
 
@@ -79,12 +105,13 @@ export async function createWorkFixture(
   testInfo: TestInfo,
   options: WorkFixtureOptions = {},
 ): Promise<WorkFixture> {
+  const adminRequest = await ensureAdminApiContext(request)
   const tag = buildFixtureTag(testInfo)
   const title = `${options.titlePrefix ?? 'Playwright Work Fixture'} ${tag}`
   const html = options.html ?? `<p>${title} body</p>`
   const excerpt = options.excerpt ?? `Excerpt for ${title}`
-  const csrf = await getCsrf(request)
-  const response = await request.post('/api/admin/works', {
+  const csrf = await getCsrf(adminRequest)
+  const response = await adminRequest.post('/api/admin/works', {
     headers: {
       'Content-Type': 'application/json',
       [csrf.headerName]: csrf.requestToken,
@@ -108,5 +135,8 @@ export async function createWorkFixture(
   }
 
   const payload = await response.json() as { id: string; slug: string }
+  if (options.published ?? true) {
+    await waitForPublicFixture(adminRequest, `/api/public/works/${payload.slug}`)
+  }
   return { ...payload, title, tag }
 }

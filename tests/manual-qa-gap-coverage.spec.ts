@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { expect, test, type Page } from './helpers/performance-test'
+import { isLocalQaBaseUrl, LOCAL_QA_FLAG_SKIP_REASON } from './helpers/local-qa'
 
 test.use({ storageState: 'test-results/playwright/admin-storage-state.json' })
 
@@ -537,6 +538,8 @@ test('H-5 very long body content saves and renders correctly', async ({ page }) 
 })
 
 test('H-4 public works empty state renders without an error', async ({ page }) => {
+  test.skip(!isLocalQaBaseUrl(), LOCAL_QA_FLAG_SKIP_REASON)
+
   await page.goto('/works?__qaEmpty=1')
   await expect(page.getByText('No works found.')).toBeVisible()
   await expect(page.getByText('404')).toHaveCount(0)

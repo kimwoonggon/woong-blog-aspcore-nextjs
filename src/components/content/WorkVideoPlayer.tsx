@@ -1,6 +1,6 @@
 "use client"
 
-import { Pause, Play } from 'lucide-react'
+import { Play } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { WorkVideo } from '@/lib/api/works'
 
@@ -11,8 +11,9 @@ interface WorkVideoPlayerProps {
 
 const hlsMimeType = 'application/vnd.apple.mpegurl'
 const defaultAspectRatio = 16 / 9
-const progressBarHeightPx = 10
-export const timelinePreviewDisplayScale = 0.55
+export const timelinePreviewDisplayScale = 0.42
+const previewBottomOffsetPx = 52
+const previewHorizontalInsetPx = 16
 
 interface TimelinePreviewCue {
   start: number
@@ -24,7 +25,6 @@ interface TimelinePreviewCue {
 }
 
 type DesktopSizeMode = 'fit' | 'wide' | 'theater'
-const previewBottomOffsetPx = 56
 
 function parseTimestampToSeconds(value: string) {
   const [clock, millisecondsRaw] = value.trim().split('.')
@@ -125,13 +125,13 @@ export function WorkVideoPlayer({ video, allowDesktopResize = false }: WorkVideo
     return defaultAspectRatio
   })
   const [duration, setDuration] = useState(video.durationSeconds ?? 0)
-  const [currentTime, setCurrentTime] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [previewCues, setPreviewCues] = useState<TimelinePreviewCue[]>([])
   const [previewTime, setPreviewTime] = useState<number | null>(null)
   const [previewLeft, setPreviewLeft] = useState(0)
   const [previewCue, setPreviewCue] = useState<TimelinePreviewCue | null>(null)
   const [desktopSizeMode, setDesktopSizeMode] = useState<DesktopSizeMode>(allowDesktopResize ? 'wide' : 'fit')
+  const [canUseDesktopPreview, setCanUseDesktopPreview] = useState(false)
   const isHlsVideo = useMemo(() => {
     return video.sourceType === 'hls'
       || video.mimeType === hlsMimeType
@@ -152,7 +152,36 @@ export function WorkVideoPlayer({ video, allowDesktopResize = false }: WorkVideo
       height: Math.max(accumulator.height, cue.y + cue.height),
     }), { width: 0, height: 0 })
   }, [previewCues])
-  const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0
+
+  function clearPreview() {
+    setPreviewCue(null)
+    setPreviewTime(null)
+  }
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+      setCanUseDesktopPreview(false)
+      return
+    }
+
+    const hoverQuery = window.matchMedia('(hover: hover)')
+    const pointerQuery = window.matchMedia('(pointer: fine)')
+    const syncPreference = () => {
+      setCanUseDesktopPreview(window.innerWidth >= 1024 && hoverQuery.matches && pointerQuery.matches)
+    }
+
+    syncPreference()
+    hoverQuery.addEventListener?.('change', syncPreference)
+    pointerQuery.addEventListener?.('change', syncPreference)
+    window.addEventListener('resize', syncPreference)
+
+    return () => {
+      hoverQuery.removeEventListener?.('change', syncPreference)
+      pointerQuery.removeEventListener?.('change', syncPreference)
+      window.removeEventListener('resize', syncPreference)
+    }
+  }, [])
+
   useEffect(() => {
     if (!isHlsVideo || !video.playbackUrl) {
       return
@@ -201,7 +230,18 @@ export function WorkVideoPlayer({ video, allowDesktopResize = false }: WorkVideo
   }, [video.durationSeconds, video.height, video.width])
 
   useEffect(() => {
-    if (!supportsTimelinePreview || !video.timelinePreviewVttUrl) {
+    clearPreview()
+  }, [
+    canUseDesktopPreview,
+    desktopSizeMode,
+    video.id,
+    video.playbackUrl,
+    video.timelinePreviewSpriteUrl,
+    video.timelinePreviewVttUrl,
+  ])
+
+  useEffect(() => {
+    if (!supportsTimelinePreview || !video.timelinePreviewVttUrl || !canUseDesktopPreview) {
       setPreviewCues([])
       return
     }
@@ -234,7 +274,7 @@ export function WorkVideoPlayer({ video, allowDesktopResize = false }: WorkVideo
     return () => {
       cancelled = true
     }
-  }, [duration, supportsTimelinePreview, video.timelinePreviewVttUrl])
+  }, [canUseDesktopPreview, duration, supportsTimelinePreview, video.timelinePreviewVttUrl])
 
   function syncMetadata(element: HTMLVideoElement) {
     if (element.videoWidth > 0 && element.videoHeight > 0) {
@@ -246,43 +286,47 @@ export function WorkVideoPlayer({ video, allowDesktopResize = false }: WorkVideo
     }
   }
 
-  function updatePreview(clientX: number, barElement: HTMLDivElement) {
-    if (!supportsTimelinePreview || previewCues.length === 0 || duration <= 0 || !video.timelinePreviewSpriteUrl) {
-      setPreviewCue(null)
-      setPreviewTime(null)
-      return
-    }
-
-    const barRect = barElement.getBoundingClientRect()
-    if (barRect.width <= 0) {
-      return
-    }
-
-    const offsetX = Math.max(0, Math.min(clientX - barRect.left, barRect.width))
-    const percent = offsetX / barRect.width
-    const targetTime = percent * duration
-    const cue = resolvePreviewCue(previewCues, targetTime)
-
-    if (!cue) {
-      setPreviewCue(null)
-      setPreviewTime(null)
+  function updatePreview(clientX: number, clientY: number) {
+    if (!supportsTimelinePreview || !canUseDesktopPreview || previewCues.length === 0 || duration <= 0 || !video.timelinePreviewSpriteUrl) {
+      clearPreview()
       return
     }
 
     const frameRect = frameRef.current?.getBoundingClientRect()
-    const rawPreviewLeft = frameRect
-      ? (barRect.left - frameRect.left) + offsetX
-      : offsetX
+    if (!frameRect || frameRect.width <= 0 || frameRect.height <= 0) {
+      clearPreview()
+      return
+    }
+
+    const lowerBandHeight = Math.min(96, Math.max(56, frameRect.height * 0.22))
+    const lowerBandTop = frameRect.bottom - lowerBandHeight
+    if (clientY < lowerBandTop || clientY > frameRect.bottom) {
+      clearPreview()
+      return
+    }
+
+    const inset = Math.min(previewHorizontalInsetPx, frameRect.width / 4)
+    const controlLeft = frameRect.left + inset
+    const controlWidth = Math.max(1, frameRect.width - (inset * 2))
+    const offsetX = Math.max(0, Math.min(clientX - controlLeft, controlWidth))
+    const percent = offsetX / controlWidth
+    const targetTime = percent * duration
+    const cue = resolvePreviewCue(previewCues, targetTime)
+
+    if (!cue) {
+      clearPreview()
+      return
+    }
+
+    const rawPreviewLeft = inset + offsetX
     const previewHalfWidth = (cue.width * timelinePreviewDisplayScale) / 2
-    const previewLeft = frameRect
-      ? frameRect.width > (previewHalfWidth * 2)
-        ? Math.max(previewHalfWidth, Math.min(rawPreviewLeft, frameRect.width - previewHalfWidth))
-        : frameRect.width / 2
-      : rawPreviewLeft
+    const nextPreviewLeft = frameRect.width > (previewHalfWidth * 2)
+      ? Math.max(previewHalfWidth, Math.min(rawPreviewLeft, frameRect.width - previewHalfWidth))
+      : frameRect.width / 2
 
     setPreviewCue(cue)
     setPreviewTime(targetTime)
-    setPreviewLeft(previewLeft)
+    setPreviewLeft(nextPreviewLeft)
   }
 
   async function togglePlayback() {
@@ -296,22 +340,6 @@ export function WorkVideoPlayer({ video, allowDesktopResize = false }: WorkVideo
     }
 
     videoRef.current.pause()
-  }
-
-  function seekToClientX(clientX: number, barElement: HTMLDivElement) {
-    if (!videoRef.current || duration <= 0) {
-      return
-    }
-
-    const rect = barElement.getBoundingClientRect()
-    if (rect.width <= 0) {
-      return
-    }
-
-    const offsetX = Math.max(0, Math.min(clientX - rect.left, rect.width))
-    const nextTime = (offsetX / rect.width) * duration
-    videoRef.current.currentTime = nextTime
-    setCurrentTime(nextTime)
   }
 
   if (video.sourceType === 'youtube') {
@@ -340,11 +368,14 @@ export function WorkVideoPlayer({ video, allowDesktopResize = false }: WorkVideo
     )
   }
 
+  const canHandleFramePreview = canUseDesktopPreview && supportsTimelinePreview
+  const isPreviewReady = canHandleFramePreview && previewCues.length > 0
+
   return (
     <div
       data-testid="work-video-player"
       data-size-mode={desktopSizeMode}
-      data-preview-ready={supportsTimelinePreview && previewCues.length > 0 ? 'true' : 'false'}
+      data-preview-ready={isPreviewReady ? 'true' : 'false'}
       className={`mx-auto w-full ${desktopSizeClass(desktopSizeMode, allowDesktopResize)}`}
     >
       {allowDesktopResize ? (
@@ -379,7 +410,10 @@ export function WorkVideoPlayer({ video, allowDesktopResize = false }: WorkVideo
       <div
         ref={frameRef}
         data-testid="work-video-frame"
+        data-work-video-frame="true"
         className="relative w-full overflow-hidden rounded-xl border border-border/70 bg-black"
+        onMouseMove={(event) => updatePreview(event.clientX, event.clientY)}
+        onMouseLeave={() => clearPreview()}
         style={{
           aspectRatio: String(aspectRatio),
           maxHeight: allowDesktopResize
@@ -393,15 +427,19 @@ export function WorkVideoPlayer({ video, allowDesktopResize = false }: WorkVideo
       >
         <video
           ref={videoRef}
+          controls
           preload="metadata"
           playsInline
           controlsList="nodownload noremoteplayback"
           disablePictureInPicture
           onLoadedMetadata={(event) => syncMetadata(event.currentTarget)}
           onDurationChange={(event) => syncMetadata(event.currentTarget)}
-          onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)}
-          onPlay={() => setIsPlaying(true)}
+          onPlay={() => {
+            clearPreview()
+            setIsPlaying(true)
+          }}
           onPause={() => setIsPlaying(false)}
+          onSeeking={() => clearPreview()}
           onContextMenu={(event) => event.preventDefault()}
           className="h-full w-full bg-black"
         >
@@ -421,62 +459,6 @@ export function WorkVideoPlayer({ video, allowDesktopResize = false }: WorkVideo
             </button>
           </div>
         ) : null}
-
-        <div
-          className="absolute inset-x-0 z-10 bg-gradient-to-t from-black/70 via-black/30 to-transparent px-4 pb-3 pt-10"
-          style={{
-            bottom: 0,
-          }}
-        >
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              data-testid="work-video-play-toggle"
-              aria-label={isPlaying ? 'Pause video' : 'Play video'}
-              onClick={() => void togglePlayback()}
-              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/20 bg-black/50 text-white backdrop-blur transition-colors hover:bg-black/70"
-            >
-              {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 translate-x-[1px]" />}
-            </button>
-
-            <div className="min-w-0 flex-1 space-y-1">
-              <div className="flex items-center justify-between text-[11px] font-medium tabular-nums text-white/90">
-                <span data-testid="work-video-current-time">{formatTimeLabel(currentTime)}</span>
-                <span data-testid="work-video-duration">{formatTimeLabel(duration)}</span>
-              </div>
-
-              <div
-                data-testid="work-video-progress-overlay"
-                className="relative cursor-pointer"
-                style={{ height: `${progressBarHeightPx}px` }}
-                onMouseMove={(event) => {
-                  if (event.currentTarget instanceof HTMLDivElement) {
-                    updatePreview(event.clientX, event.currentTarget)
-                  }
-                }}
-                onMouseLeave={() => {
-                  setPreviewCue(null)
-                  setPreviewTime(null)
-                }}
-                onClick={(event) => {
-                  if (event.currentTarget instanceof HTMLDivElement) {
-                    seekToClientX(event.clientX, event.currentTarget)
-                  }
-                }}
-              >
-                <div className="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-white/20" />
-                <div
-                  className="absolute left-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-brand-cyan"
-                  style={{ width: `${Math.max(0, Math.min(progressPercent, 100))}%` }}
-                />
-                <div
-                  className="absolute top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full border border-white/30 bg-white shadow-sm"
-                  style={{ left: `calc(${Math.max(0, Math.min(progressPercent, 100))}% - 0.4375rem)` }}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
 
         {previewCue && previewTime !== null ? (
           <div

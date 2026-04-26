@@ -1,10 +1,18 @@
 import { expect, test } from './helpers/performance-test'
 import { measureStep } from './helpers/latency'
+import type { Page } from '@playwright/test'
 
 function isPublicRevalidationResponse(response: { url(): string; request(): { method(): string }; ok(): boolean }) {
   return response.url().includes('/revalidate-public')
     && response.request().method() === 'POST'
     && response.ok()
+}
+
+async function clickHeaderLink(page: Page, name: string) {
+  const header = page.locator('header')
+  const link = header.getByRole('link', { name, exact: true }).first()
+  await expect(link).toBeVisible()
+  await link.click()
 }
 
 test('response time: Study list direct load meets budget', async ({ page }, testInfo) => {
@@ -43,6 +51,101 @@ test('response time: Works list direct load meets budget', async ({ page }, test
   )
 })
 
+test('response time: desktop public nav clicks meet budget', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 1440, height: 960 })
+  await page.goto('/')
+  await expect(page.getByTestId('navbar-brand')).toBeVisible()
+
+  await measureStep(
+    testInfo,
+    'Public nav click to Works',
+    'publicNavClick',
+    async () => {
+      await clickHeaderLink(page, 'Works')
+    },
+    async () => {
+      await expect(page).toHaveURL(/\/works(?:\?|$)/)
+      await expect(page.getByRole('heading', { name: 'Works', exact: true })).toBeVisible()
+      await expect(page.getByTestId('work-card').first()).toBeVisible()
+    },
+  )
+
+  await measureStep(
+    testInfo,
+    'Public nav click to Study',
+    'publicNavClick',
+    async () => {
+      await clickHeaderLink(page, 'Study')
+    },
+    async () => {
+      await expect(page).toHaveURL(/\/blog(?:\?|$)/)
+      await expect(page.getByRole('heading', { name: 'Study', exact: true })).toBeVisible()
+      await expect(page.getByTestId('blog-card').first()).toBeVisible()
+    },
+  )
+
+  await measureStep(
+    testInfo,
+    'Public nav click to Introduction',
+    'publicNavClick',
+    async () => {
+      await clickHeaderLink(page, 'Introduction')
+    },
+    async () => {
+      await expect(page).toHaveURL(/\/introduction(?:\?|$)/)
+      await expect(page.locator('main h1').first()).toBeVisible()
+    },
+  )
+
+  await measureStep(
+    testInfo,
+    'Public nav click to Contact',
+    'publicNavClick',
+    async () => {
+      await clickHeaderLink(page, 'Contact')
+    },
+    async () => {
+      await expect(page).toHaveURL(/\/contact(?:\?|$)/)
+      await expect(page.getByRole('heading', { name: 'Contact', exact: true })).toBeVisible()
+    },
+  )
+})
+
+test('response time: public detail card opens meet budget', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 1280, height: 960 })
+  await page.goto('/works?page=1&pageSize=8')
+  await expect(page.getByTestId('work-card').first()).toBeVisible()
+
+  await measureStep(
+    testInfo,
+    'Public Work card opens detail',
+    'publicDetailOpen',
+    async () => {
+      await page.getByTestId('work-card').first().click()
+    },
+    async () => {
+      await expect(page).toHaveURL(/\/works\/.+/)
+      await expect(page.locator('main article, main').first()).toBeVisible()
+    },
+  )
+
+  await page.goto('/blog?page=1&pageSize=12')
+  await expect(page.getByTestId('blog-card').first()).toBeVisible()
+
+  await measureStep(
+    testInfo,
+    'Public Study card opens detail',
+    'publicDetailOpen',
+    async () => {
+      await page.getByTestId('blog-card').first().click()
+    },
+    async () => {
+      await expect(page).toHaveURL(/\/blog\/.+/)
+      await expect(page.locator('main article, main').first()).toBeVisible()
+    },
+  )
+})
+
 test('response time: Study mobile append next page meets budget', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/blog')
@@ -50,13 +153,13 @@ test('response time: Study mobile append next page meets budget', async ({ page 
 
   await measureStep(
     testInfo,
-    'Study mobile load-more append',
+    'Study mobile auto-append',
     'publicPagination',
     async () => {
-      await page.getByTestId('blog-load-more').click()
+      await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
     },
     async () => {
-      await expect(page.getByTestId('blog-card')).toHaveCount(20)
+      await expect.poll(() => page.getByTestId('blog-card').count()).toBeGreaterThan(10)
     },
   )
 })
@@ -68,13 +171,13 @@ test('response time: Works mobile append next page meets budget', async ({ page 
 
   await measureStep(
     testInfo,
-    'Works mobile load-more append',
+    'Works mobile auto-append',
     'publicPagination',
     async () => {
-      await page.getByTestId('works-load-more').click()
+      await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
     },
     async () => {
-      await expect(page.getByTestId('work-card')).toHaveCount(20)
+      await expect.poll(() => page.getByTestId('work-card').count()).toBeGreaterThan(10)
     },
   )
 })

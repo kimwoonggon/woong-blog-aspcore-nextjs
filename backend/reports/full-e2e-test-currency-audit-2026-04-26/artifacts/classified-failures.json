@@ -1,0 +1,1674 @@
+[
+  {
+    "file": "e2e-visitor-content-exploration.spec.ts",
+    "project": "chromium-public",
+    "status": "failed",
+    "durationMs": 2852,
+    "error": "Error: expect(locator).toHaveText(expected) failed Locator: locator('main h1') Expected: \"affadfad\" Error: strict mode violation: locator('main h1') resolved to 17 elements: 1) <h1 class=\"mb-4 text-3xl font-heading font-bold leading-tight text-foreground text-balance md:text-4xl\">affadfad</h1> aka getByTestId('work-detail-body').getByRole('heading', { name: 'affadfad' }) 2) <h1 id=\"1\">1</h1> aka getByRole('heading', { name: '1', exact: true }) 3) <h1 id=\"2\">2</h1> aka getByRole('heading', { name: '2', exact: true }) 4) <h1 id=\"3\">3</h1> aka getByRole('heading', { name: '3', exact: true }) 5) <h1 id=\"4\">4</h1> aka getByRole('heading', { name: '4', exact: true }) 6) <h1 id=\"5\">5</h1> aka getByRole('heading', { name: '5', exact: true }) 7) <h1 id=\"6\">6</h1> aka getByRole('heading', { name: '6', exact: true }) 8) <h1 id=\"7\">7</h1> aka getByTestId('work-detail-body').getByRole('heading', { name: '7' }) 9) <h1 id=\"8\">8</h1> aka getByTestId('work-detail-body').getByRole('heading', { name: '8' }) 10) <h1 id=\"9\">9</h1> aka getByTestId('work-detail-body').getByRole('heading', { name: '9' }) ... Call log: - Expect \"toHaveText\" with timeout 5000ms - waiting for locator('main h1') 2 × locator resolved to <h1 class=\"text-3xl font-heading font-bold text-foreground md:text-4xl\">Works</h1> - unexpected value \"Works\"",
+    "classification": "stale-detail-heading-selector"
+  },
+  {
+    "file": "feature-recording-0418.spec.ts",
+    "project": "chromium-public",
+    "status": "timedOut",
+    "durationMs": 121210,
+    "error": "Test timeout of 120000ms exceeded.",
+    "classification": "editor-recording-harness"
+  },
+  {
+    "file": "feature-recording-0418.spec.ts",
+    "project": "chromium-public",
+    "status": "timedOut",
+    "durationMs": 121439,
+    "error": "Test timeout of 120000ms exceeded.",
+    "classification": "editor-recording-harness"
+  },
+  {
+    "file": "feature-recording-0418.spec.ts",
+    "project": "chromium-public",
+    "status": "timedOut",
+    "durationMs": 121343,
+    "error": "Test timeout of 120000ms exceeded.",
+    "classification": "editor-recording-harness"
+  },
+  {
+    "file": "feature-recording-0418.spec.ts",
+    "project": "chromium-public",
+    "status": "timedOut",
+    "durationMs": 121841,
+    "error": "Test timeout of 120000ms exceeded.",
+    "classification": "editor-recording-harness"
+  },
+  {
+    "file": "feature-recording-0418.spec.ts",
+    "project": "chromium-public",
+    "status": "timedOut",
+    "durationMs": 121274,
+    "error": "Test timeout of 120000ms exceeded.",
+    "classification": "editor-recording-harness"
+  },
+  {
+    "file": "feature-recording-0418.spec.ts",
+    "project": "chromium-public",
+    "status": "timedOut",
+    "durationMs": 121336,
+    "error": "Test timeout of 120000ms exceeded.",
+    "classification": "editor-recording-harness"
+  },
+  {
+    "file": "mermaid-batch-prompt-0419.spec.ts",
+    "project": "chromium-public",
+    "status": "failed",
+    "durationMs": 0,
+    "error": "Error: expect(received).toBeTruthy() Received: false",
+    "classification": "recording-batch-seed-harness"
+  },
+  {
+    "file": "mermaid-worstcase-0419.spec.ts",
+    "project": "chromium-public",
+    "status": "failed",
+    "durationMs": 0,
+    "error": "Error: expect(received).toBeTruthy() Received: false",
+    "classification": "recording-batch-seed-harness"
+  },
+  {
+    "file": "plain-baseline-0419.spec.ts",
+    "project": "chromium-public",
+    "status": "failed",
+    "durationMs": 0,
+    "error": "Error: expect(received).toBeTruthy() Received: false",
+    "classification": "recording-batch-seed-harness"
+  },
+  {
+    "file": "public-api-error.spec.ts",
+    "project": "chromium-public",
+    "status": "failed",
+    "durationMs": 5778,
+    "error": "Error: expect(locator).toBeVisible() failed Locator: getByText('Public pages') Expected: visible Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toBeVisible\" with timeout 5000ms - waiting for getByText('Public pages')",
+    "classification": "local-qa-host-mismatch"
+  },
+  {
+    "file": "public-blog-toc-active.spec.ts",
+    "project": "chromium-public",
+    "status": "failed",
+    "durationMs": 1188,
+    "error": "Error: expect(received).toBeGreaterThan(expected) Expected: > 1 Received: 0",
+    "classification": "public-toc-layout-current-regression-candidate"
+  },
+  {
+    "file": "public-detail-pages.spec.ts",
+    "project": "chromium-public",
+    "status": "failed",
+    "durationMs": 1220,
+    "error": "Error: expect(locator).toHaveText(expected) failed Locator: locator('main h1') Expected: \"affadfad\" Error: strict mode violation: locator('main h1') resolved to 17 elements: 1) <h1 class=\"mb-4 text-3xl font-heading font-bold leading-tight text-foreground text-balance md:text-4xl\">affadfad</h1> aka getByRole('heading', { name: 'affadfad' }) 2) <h1>1</h1> aka getByRole('heading', { name: '1', exact: true }) 3) <h1>2</h1> aka getByRole('heading', { name: '2', exact: true }) 4) <h1>3</h1> aka getByRole('heading', { name: '3', exact: true }) 5) <h1>4</h1> aka getByRole('heading', { name: '4', exact: true }) 6) <h1>5</h1> aka getByRole('heading', { name: '5', exact: true }) 7) <h1>6</h1> aka getByRole('heading', { name: '6', exact: true }) 8) <h1>7</h1> aka getByRole('heading', { name: '7' }) 9) <h1>8</h1> aka getByRole('heading', { name: '8' }) 10) <h1>9</h1> aka getByRole('heading', { name: '9' }) ... Call log: - Expect \"toHaveText\" with timeout 5000ms - waiting for locator('main h1')",
+    "classification": "stale-detail-heading-selector"
+  },
+  {
+    "file": "public-resume-empty-state.spec.ts",
+    "project": "chromium-public",
+    "status": "failed",
+    "durationMs": 5705,
+    "error": "Error: expect(locator).toHaveCount(expected) failed Locator: getByRole('link', { name: /Download PDF/i }) Expected: 0 Received: 1 Timeout: 5000ms Call log: - Expect \"toHaveCount\" with timeout 5000ms - waiting for getByRole('link', { name: /Download PDF/i }) 9 × locator resolved to 1 element - unexpected value \"1\"",
+    "classification": "local-qa-host-mismatch"
+  },
+  {
+    "file": "ui-improvement-static-public-pages.spec.ts",
+    "project": "chromium-public",
+    "status": "failed",
+    "durationMs": 6008,
+    "error": "Error: expect(locator).toHaveText(expected) failed Locator: locator('main header').first().locator('h1').first() Expected: \"Introduction\" Received: \"Introductiondsffds\" Timeout: 5000ms Call log: - Expect \"toHaveText\" with timeout 5000ms - waiting for locator('main header').first().locator('h1').first() 9 × locator resolved to <h1 class=\"text-3xl font-heading font-bold text-foreground md:text-4xl\">Introductiondsffds</h1> - unexpected value \"Introductiondsffds\"",
+    "classification": "mutable-seed-content-assumption"
+  },
+  {
+    "file": "admin-ai-batch-cancel.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32289,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "admin-ai-batch-cancel.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32428,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "admin-ai-batch-jobs.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 6705,
+    "error": "Error: expect(locator).toBeVisible() failed Locator: getByRole('heading', { name: 'Blog Posts' }) Expected: visible Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toBeVisible\" with timeout 5000ms - waiting for getByRole('heading', { name: 'Blog Posts' })",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "admin-blog-ai-dialog.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 33107,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "admin-blog-edit.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 636,
+    "error": "Error: Failed to create blog fixture: 401",
+    "classification": "admin-api-fixture-auth-gap"
+  },
+  {
+    "file": "admin-blog-edit.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 548,
+    "error": "Error: Failed to create blog fixture: 401",
+    "classification": "admin-api-fixture-auth-gap"
+  },
+  {
+    "file": "admin-blog-image-upload.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5903,
+    "error": "Error: expect(page).toHaveURL(expected) failed Expected pattern: /\\/admin\\/blog\\/new/ Received string: \"http://woong-prod-full-e2e-nginx-1777130558/login\" Timeout: 5000ms Call log: - Expect \"toHaveURL\" with timeout 5000ms 9 × unexpected value \"http://woong-prod-full-e2e-nginx-1777130558/login\"",
+    "classification": "admin-session-or-login-harness"
+  },
+  {
+    "file": "admin-blog-image-validation.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 6053,
+    "error": "Error: expect(page).toHaveURL(expected) failed Expected pattern: /\\/admin\\/blog\\/new/ Received string: \"http://woong-prod-full-e2e-nginx-1777130558/login\" Timeout: 5000ms Call log: - Expect \"toHaveURL\" with timeout 5000ms 9 × unexpected value \"http://woong-prod-full-e2e-nginx-1777130558/login\"",
+    "classification": "admin-session-or-login-harness"
+  },
+  {
+    "file": "admin-blog-publish.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 6239,
+    "error": "Error: expect(page).toHaveURL(expected) failed Expected pattern: /\\/admin\\/blog\\/new/ Received string: \"http://woong-prod-full-e2e-nginx-1777130558/login\" Timeout: 5000ms Call log: - Expect \"toHaveURL\" with timeout 5000ms 9 × unexpected value \"http://woong-prod-full-e2e-nginx-1777130558/login\"",
+    "classification": "admin-session-or-login-harness"
+  },
+  {
+    "file": "admin-blog-publish.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32703,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "admin-blog-publish.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 33523,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "admin-blog-validation.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 6111,
+    "error": "Error: expect(page).toHaveURL(expected) failed Expected pattern: /\\/admin\\/blog\\/new/ Received string: \"http://woong-prod-full-e2e-nginx-1777130558/login\" Timeout: 5000ms Call log: - Expect \"toHaveURL\" with timeout 5000ms 9 × unexpected value \"http://woong-prod-full-e2e-nginx-1777130558/login\"",
+    "classification": "admin-session-or-login-harness"
+  },
+  {
+    "file": "admin-blog-validation.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5993,
+    "error": "Error: expect(page).toHaveURL(expected) failed Expected pattern: /\\/admin\\/blog\\/new/ Received string: \"http://woong-prod-full-e2e-nginx-1777130558/login\" Timeout: 5000ms Call log: - Expect \"toHaveURL\" with timeout 5000ms 9 × unexpected value \"http://woong-prod-full-e2e-nginx-1777130558/login\"",
+    "classification": "admin-session-or-login-harness"
+  },
+  {
+    "file": "admin-blog-validation.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5910,
+    "error": "Error: expect(page).toHaveURL(expected) failed Expected pattern: /\\/admin\\/blog\\/new/ Received string: \"http://woong-prod-full-e2e-nginx-1777130558/login\" Timeout: 5000ms Call log: - Expect \"toHaveURL\" with timeout 5000ms 9 × unexpected value \"http://woong-prod-full-e2e-nginx-1777130558/login\"",
+    "classification": "admin-session-or-login-harness"
+  },
+  {
+    "file": "admin-blog-validation.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5942,
+    "error": "Error: expect(page).toHaveURL(expected) failed Expected pattern: /\\/admin\\/blog\\/new/ Received string: \"http://woong-prod-full-e2e-nginx-1777130558/login\" Timeout: 5000ms Call log: - Expect \"toHaveURL\" with timeout 5000ms 9 × unexpected value \"http://woong-prod-full-e2e-nginx-1777130558/login\"",
+    "classification": "admin-session-or-login-harness"
+  },
+  {
+    "file": "admin-dashboard-error-state.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5801,
+    "error": "Error: expect(locator).toBeVisible() failed Locator: getByRole('heading', { name: 'Dashboard', exact: true }) Expected: visible Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toBeVisible\" with timeout 5000ms - waiting for getByRole('heading', { name: 'Dashboard', exact: true })",
+    "classification": "admin-session-or-login-harness"
+  },
+  {
+    "file": "admin-dashboard-error-state.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5867,
+    "error": "Error: expect(locator).toBeVisible() failed Locator: getByRole('heading', { name: 'Dashboard', exact: true }) Expected: visible Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toBeVisible\" with timeout 5000ms - waiting for getByRole('heading', { name: 'Dashboard', exact: true })",
+    "classification": "admin-session-or-login-harness"
+  },
+  {
+    "file": "admin-dashboard.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5853,
+    "error": "Error: expect(locator).toBeVisible() failed Locator: getByRole('heading', { name: 'Dashboard' }) Expected: visible Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toBeVisible\" with timeout 5000ms - waiting for getByRole('heading', { name: 'Dashboard' })",
+    "classification": "admin-session-or-login-harness"
+  },
+  {
+    "file": "admin-dashboard.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5923,
+    "error": "Error: expect(locator).toBeVisible() failed Locator: getByRole('heading', { name: 'Works' }) Expected: visible Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toBeVisible\" with timeout 5000ms - waiting for getByRole('heading', { name: 'Works' })",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "admin-dashboard.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5915,
+    "error": "Error: expect(locator).toBeVisible() failed Locator: getByRole('link', { name: 'View Site' }) Expected: visible Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toBeVisible\" with timeout 5000ms - waiting for getByRole('link', { name: 'View Site' })",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "admin-dashboard.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5892,
+    "error": "Error: expect(locator).toHaveAttribute(expected) failed Locator: locator('main').getByRole('link', { name: 'Open Site' }) Expected: \"/\" Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toHaveAttribute\" with timeout 5000ms - waiting for locator('main').getByRole('link', { name: 'Open Site' })",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "admin-dashboard.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5971,
+    "error": "Error: expect(locator).toBeVisible() failed Locator: getByTestId('works-card-link').first() Expected: visible Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toBeVisible\" with timeout 5000ms - waiting for getByTestId('works-card-link').first()",
+    "classification": "admin-table-or-row-state"
+  },
+  {
+    "file": "admin-home-extreme-input.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32200,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "admin-home-image-upload.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5872,
+    "error": "Error: expect(page).toHaveURL(expected) failed Expected pattern: /\\/admin\\/pages/ Received string: \"http://woong-prod-full-e2e-nginx-1777130558/login\" Timeout: 5000ms Call log: - Expect \"toHaveURL\" with timeout 5000ms 9 × unexpected value \"http://woong-prod-full-e2e-nginx-1777130558/login\"",
+    "classification": "admin-session-or-login-harness"
+  },
+  {
+    "file": "admin-home-image-validation.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5895,
+    "error": "Error: expect(page).toHaveURL(expected) failed Expected pattern: /\\/admin\\/pages/ Received string: \"http://woong-prod-full-e2e-nginx-1777130558/login\" Timeout: 5000ms Call log: - Expect \"toHaveURL\" with timeout 5000ms 9 × unexpected value \"http://woong-prod-full-e2e-nginx-1777130558/login\"",
+    "classification": "admin-session-or-login-harness"
+  },
+  {
+    "file": "admin-input-exceptions.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32106,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "admin-input-exceptions.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32091,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "admin-input-exceptions.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5824,
+    "error": "Error: expect(locator).toBeVisible() failed Locator: locator('#resume-editor').getByText('Resume Management') Expected: visible Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toBeVisible\" with timeout 5000ms - waiting for locator('#resume-editor').getByText('Resume Management')",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "admin-members.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5914,
+    "error": "Error: expect(locator).toBeVisible() failed Locator: getByRole('heading', { name: 'Members' }) Expected: visible Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toBeVisible\" with timeout 5000ms - waiting for getByRole('heading', { name: 'Members' })",
+    "classification": "admin-session-or-login-harness"
+  },
+  {
+    "file": "admin-menus.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5754,
+    "error": "Error: expect(page).toHaveURL(expected) failed Expected pattern: /\\/admin/ Received string: \"http://woong-prod-full-e2e-nginx-1777130558/login\" Timeout: 5000ms Call log: - Expect \"toHaveURL\" with timeout 5000ms 9 × unexpected value \"http://woong-prod-full-e2e-nginx-1777130558/login\"",
+    "classification": "admin-session-or-login-harness"
+  },
+  {
+    "file": "admin-mermaid-public-independence.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 489,
+    "error": "Error: expect(received).toBeTruthy() Received: false",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "admin-pages-settings.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5889,
+    "error": "Error: expect(page).toHaveURL(expected) failed Expected pattern: /\\/admin\\/pages/ Received string: \"http://woong-prod-full-e2e-nginx-1777130558/login\" Timeout: 5000ms Call log: - Expect \"toHaveURL\" with timeout 5000ms 9 × unexpected value \"http://woong-prod-full-e2e-nginx-1777130558/login\"",
+    "classification": "admin-session-or-login-harness"
+  },
+  {
+    "file": "admin-pages-settings.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32258,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "admin-pages-settings.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32403,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "admin-pages-validation.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5877,
+    "error": "Error: expect(page).toHaveURL(expected) failed Expected pattern: /\\/admin\\/pages/ Received string: \"http://woong-prod-full-e2e-nginx-1777130558/login\" Timeout: 5000ms Call log: - Expect \"toHaveURL\" with timeout 5000ms 9 × unexpected value \"http://woong-prod-full-e2e-nginx-1777130558/login\"",
+    "classification": "admin-session-or-login-harness"
+  },
+  {
+    "file": "admin-regression-flow-captures.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32099,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "admin-regression-screenshot-capture.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32076,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "admin-resume-upload.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5875,
+    "error": "Error: expect(locator).toBeVisible() failed Locator: locator('#resume-editor').getByText('Resume Management') Expected: visible Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toBeVisible\" with timeout 5000ms - waiting for locator('#resume-editor').getByText('Resume Management')",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "admin-resume-upload.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5850,
+    "error": "Error: expect(locator).toBeVisible() failed Locator: locator('#resume-editor').getByText('Resume Management') Expected: visible Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toBeVisible\" with timeout 5000ms - waiting for locator('#resume-editor').getByText('Resume Management')",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "admin-resume-validation.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5859,
+    "error": "Error: expect(page).toHaveURL(expected) failed Expected pattern: /\\/admin\\/pages/ Received string: \"http://woong-prod-full-e2e-nginx-1777130558/login\" Timeout: 5000ms Call log: - Expect \"toHaveURL\" with timeout 5000ms 9 × unexpected value \"http://woong-prod-full-e2e-nginx-1777130558/login\"",
+    "classification": "admin-session-or-login-harness"
+  },
+  {
+    "file": "admin-search-pagination.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5821,
+    "error": "Error: expect(locator).toBeVisible() failed Locator: getByTestId('admin-blog-row').first() Expected: visible Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toBeVisible\" with timeout 5000ms - waiting for getByTestId('admin-blog-row').first()",
+    "classification": "admin-table-or-row-state"
+  },
+  {
+    "file": "admin-search-pagination.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 610,
+    "error": "Error: expect(received).toBeTruthy() Received: false",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "admin-search-pagination.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 675,
+    "error": "Error: page.evaluate: Error: Failed to seed blog \"Playwright ReturnTo 1777132914006 01\": 401 at eval (eval at evaluate (:290:30), <anonymous>:32:15) at async <anonymous>:316:30",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "admin-search-pagination.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5822,
+    "error": "Error: expect(locator).toBeVisible() failed Locator: getByTestId('admin-work-row').first() Expected: visible Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toBeVisible\" with timeout 5000ms - waiting for getByTestId('admin-work-row').first()",
+    "classification": "admin-table-or-row-state"
+  },
+  {
+    "file": "admin-search-pagination.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 440,
+    "error": "Error: expect(received).toBeTruthy() Received: false",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "admin-search-pagination.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 710,
+    "error": "Error: expect(received).toBeTruthy() Received: false",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "admin-search-pagination.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 652,
+    "error": "Error: expect(received).toBeTruthy() Received: false",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "admin-search-pagination.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5877,
+    "error": "Error: expect(locator).toBeVisible() failed Locator: locator('section').filter({ has: getByRole('heading', { name: 'Works' }) }).first().locator('[data-testid=\"works-card-link\"] h3').first() Expected: visible Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toBeVisible\" with timeout 5000ms - waiting for locator('section').filter({ has: getByRole('heading', { name: 'Works' }) }).first().locator('[data-testid=\"works-card-link\"] h3').first()",
+    "classification": "admin-table-or-row-state"
+  },
+  {
+    "file": "admin-site-settings-extreme-input.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32102,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "admin-work-auto-thumbnail.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32052,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "admin-work-auto-thumbnail.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32084,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "admin-work-auto-thumbnail.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32093,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "admin-work-auto-thumbnail.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32057,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "admin-work-auto-thumbnail.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32131,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "admin-work-edit.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32090,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "admin-work-image-upload.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5913,
+    "error": "Error: expect(page).toHaveURL(expected) failed Expected pattern: /\\/admin\\/works\\/new/ Received string: \"http://woong-prod-full-e2e-nginx-1777130558/login\" Timeout: 5000ms Call log: - Expect \"toHaveURL\" with timeout 5000ms 9 × unexpected value \"http://woong-prod-full-e2e-nginx-1777130558/login\"",
+    "classification": "admin-session-or-login-harness"
+  },
+  {
+    "file": "admin-work-publish.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5885,
+    "error": "Error: expect(page).toHaveURL(expected) failed Expected pattern: /\\/admin\\/works\\/new/ Received string: \"http://woong-prod-full-e2e-nginx-1777130558/login\" Timeout: 5000ms Call log: - Expect \"toHaveURL\" with timeout 5000ms 9 × unexpected value \"http://woong-prod-full-e2e-nginx-1777130558/login\"",
+    "classification": "admin-session-or-login-harness"
+  },
+  {
+    "file": "admin-work-publish.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32139,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "admin-work-publish.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32334,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "admin-work-special-input.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32232,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "admin-work-validation.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5910,
+    "error": "Error: expect(page).toHaveURL(expected) failed Expected pattern: /\\/admin\\/works\\/new/ Received string: \"http://woong-prod-full-e2e-nginx-1777130558/login\" Timeout: 5000ms Call log: - Expect \"toHaveURL\" with timeout 5000ms 9 × unexpected value \"http://woong-prod-full-e2e-nginx-1777130558/login\"",
+    "classification": "admin-session-or-login-harness"
+  },
+  {
+    "file": "admin-work-validation.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 6049,
+    "error": "Error: expect(page).toHaveURL(expected) failed Expected pattern: /\\/admin\\/works\\/new/ Received string: \"http://woong-prod-full-e2e-nginx-1777130558/login\" Timeout: 5000ms Call log: - Expect \"toHaveURL\" with timeout 5000ms 9 × unexpected value \"http://woong-prod-full-e2e-nginx-1777130558/login\"",
+    "classification": "admin-session-or-login-harness"
+  },
+  {
+    "file": "admin-work-video-create-flow.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32225,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "admin-work-video-drag-order.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32232,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "admin-work-video-edit-flow.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32218,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "admin-work-video-edit-flow.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32152,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "admin-work-video-mixed-flow.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32143,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "admin-work-video-s3-compatible.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32510,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "dark-mode.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5846,
+    "error": "Error: expect(locator).toBeVisible() failed Locator: getByRole('heading', { name: 'Dashboard' }) Expected: visible Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toBeVisible\" with timeout 5000ms - waiting for getByRole('heading', { name: 'Dashboard' })",
+    "classification": "admin-session-or-login-harness"
+  },
+  {
+    "file": "dark-mode.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32387,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "dark-mode.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32058,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "dark-mode.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 6012,
+    "error": "Error: expect(locator).toBeVisible() failed Locator: getByRole('button', { name: 'Delete' }).first() Expected: visible Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toBeVisible\" with timeout 5000ms - waiting for getByRole('button', { name: 'Delete' }).first()",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "e2e-admin-batch-management-journey.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 318921,
+    "error": "Test timeout of 300000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "live-blog-ai-regressions.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 191533,
+    "error": "Test timeout of 180000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "manual-qa-gap-coverage.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32145,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "manual-qa-gap-coverage.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32114,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "manual-qa-gap-coverage.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32129,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "manual-qa-gap-coverage.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32115,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "manual-qa-gap-coverage.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32122,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "manual-qa-gap-coverage.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32066,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "manual-qa-gap-coverage.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32149,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "manual-qa-gap-coverage.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32127,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "manual-qa-gap-coverage.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32299,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "manual-qa-gap-coverage.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32222,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "manual-qa-gap-coverage.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32179,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "manual-qa-gap-coverage.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 799,
+    "error": "Error: page.evaluate: Error at eval (eval at evaluate (:290:30), <anonymous>:31:13) at async <anonymous>:316:30",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "manual-qa-gap-coverage.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32524,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "manual-qa-gap-coverage.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32326,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "manual-qa-gap-coverage.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 31841,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "manual-qa-gap-coverage.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 31961,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "manual-qa-gap-coverage.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32497,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "public-blog-detail-inline-edit.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 6175,
+    "error": "Error: expect(locator).toBeVisible() failed Locator: getByRole('button', { name: '글 수정' }) Expected: visible Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toBeVisible\" with timeout 5000ms - waiting for getByRole('button', { name: '글 수정' })",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "public-footer-social.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 33458,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "public-inline-editors-unsaved-warning.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 98822,
+    "error": "Test timeout of 90000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "public-inline-editors-unsaved-warning.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 96831,
+    "error": "Test timeout of 90000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "public-inline-editors.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 31486,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "public-inline-editors.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5766,
+    "error": "Error: expect(locator).toBeVisible() failed Locator: getByRole('button', { name: '새 작업 쓰기' }) Expected: visible Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toBeVisible\" with timeout 5000ms - waiting for getByRole('button', { name: '새 작업 쓰기' })",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "public-inline-editors.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 31536,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "public-work-detail-inline-edit.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 6210,
+    "error": "Error: expect(locator).toBeVisible() failed Locator: getByRole('button', { name: '작업 수정' }) Expected: visible Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toBeVisible\" with timeout 5000ms - waiting for getByRole('button', { name: '작업 수정' })",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "public-work-videos.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 31880,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "public-work-videos.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32061,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "public-work-videos.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 31911,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "public-work-videos.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 31816,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "public-work-videos.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 31813,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "regression-screenshot-capture.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 31965,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "renovation-0416-regression.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 453,
+    "error": "Error: page.evaluate: Error: Failed to create searchable post: 401 at eval (eval at evaluate (:290:30), <anonymous>:30:13) at async <anonymous>:316:30",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "renovation-0416-regression.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 31810,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "renovation-0416-regression.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 31844,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-blog-excerpt.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5666,
+    "error": "Error: expect(locator).toBeVisible() failed Locator: getByLabel('Excerpt') Expected: visible Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toBeVisible\" with timeout 5000ms - waiting for getByLabel('Excerpt')",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-blog-published-position.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5753,
+    "error": "Error: expect(locator).toBeVisible() failed Locator: getByRole('checkbox', { name: 'Published' }) Expected: visible Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toBeVisible\" with timeout 5000ms - waiting for getByRole('checkbox', { name: 'Published' })",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-copy-cleanup.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5782,
+    "error": "Error: expect(locator).toBeVisible() failed Locator: getByRole('heading', { name: 'Blog Posts' }) Expected: visible Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toBeVisible\" with timeout 5000ms - waiting for getByRole('heading', { name: 'Blog Posts' })",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-copy-cleanup.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5749,
+    "error": "Error: expect(locator).toBeVisible() failed Locator: getByRole('heading', { name: 'Works' }) Expected: visible Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toBeVisible\" with timeout 5000ms - waiting for getByRole('heading', { name: 'Works' })",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-editor-keyboard-save.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 31802,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-editor-keyboard-save.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 31929,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-footer-social-size.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5722,
+    "error": "Error: expect(locator).toBeVisible() failed Locator: getByLabel('Twitter URL') Expected: visible Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toBeVisible\" with timeout 5000ms - waiting for getByLabel('Twitter URL')",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-form-errors.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 31801,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-form-errors.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 31931,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-notion-autosave-info.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 449,
+    "error": "Error: Failed to create blog fixture: 401",
+    "classification": "admin-api-fixture-auth-gap"
+  },
+  {
+    "file": "ui-admin-notion-autosave-info.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 445,
+    "error": "Error: Failed to create blog fixture: 401",
+    "classification": "admin-api-fixture-auth-gap"
+  },
+  {
+    "file": "ui-admin-notion-autosave-info.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 458,
+    "error": "Error: Failed to create blog fixture: 401",
+    "classification": "admin-api-fixture-auth-gap"
+  },
+  {
+    "file": "ui-admin-notion-autosave-info.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 450,
+    "error": "Error: Failed to create blog fixture: 401",
+    "classification": "admin-api-fixture-auth-gap"
+  },
+  {
+    "file": "ui-admin-notion-autosave-info.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 457,
+    "error": "Error: Failed to create blog fixture: 401",
+    "classification": "admin-api-fixture-auth-gap"
+  },
+  {
+    "file": "ui-admin-notion-client-switch.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 31868,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-notion-client-switch.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 31903,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-notion-doc-info-toggle.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5841,
+    "error": "Error: expect(locator).toBeVisible() failed Locator: getByTestId('notion-editor-area') Expected: visible Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toBeVisible\" with timeout 5000ms - waiting for getByTestId('notion-editor-area')",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-notion-doc-info-toggle.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 31909,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-notion-hint-dismiss.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5757,
+    "error": "Error: expect(locator).toBeVisible() failed Locator: getByTestId('tiptap-capability-hint').first() Expected: visible Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toBeVisible\" with timeout 5000ms - waiting for getByTestId('tiptap-capability-hint').first()",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-notion-hint-dismiss.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 31915,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-notion-library-search.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 31909,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-notion-library-search.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 31948,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-notion-library-sheet.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5814,
+    "error": "Error: expect(locator).toBeVisible() failed Locator: getByRole('heading', { name: 'Blog Notion View' }).first() Expected: visible Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toBeVisible\" with timeout 5000ms - waiting for getByRole('heading', { name: 'Blog Notion View' }).first()",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-notion-library-sheet.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32024,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-notion-library-sheet.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 31879,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-notion-library-sheet.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5812,
+    "error": "Error: expect(locator).toBeVisible() failed Locator: getByTestId('notion-editor-shell') Expected: visible Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toBeVisible\" with timeout 5000ms - waiting for getByTestId('notion-editor-shell')",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-notion-visual-state.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 456,
+    "error": "Error: Failed to create blog fixture: 401",
+    "classification": "admin-api-fixture-auth-gap"
+  },
+  {
+    "file": "ui-admin-notion-visual-state.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 449,
+    "error": "Error: Failed to create blog fixture: 401",
+    "classification": "admin-api-fixture-auth-gap"
+  },
+  {
+    "file": "ui-admin-save-btn.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5790,
+    "error": "Error: expect(locator).toBeVisible() failed Locator: getByRole('button', { name: 'Create Post' }) Expected: visible Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toBeVisible\" with timeout 5000ms - waiting for getByRole('button', { name: 'Create Post' })",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-semantic-colors.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 63741,
+    "error": "Test timeout of 60000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-sidebar-active.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5838,
+    "error": "Error: expect(locator).toBeVisible() failed Locator: getByRole('link', { name: /dashboard/i }) Expected: visible Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toBeVisible\" with timeout 5000ms - waiting for getByRole('link', { name: /dashboard/i })",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-sidebar-active.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5831,
+    "error": "Error: expect(locator).toBeVisible() failed Locator: getByRole('link', { name: /^blog$/i }) Expected: visible Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toBeVisible\" with timeout 5000ms - waiting for getByRole('link', { name: /^blog$/i })",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-sidebar-active.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5866,
+    "error": "Error: expect(locator).toBeVisible() failed Locator: getByRole('link', { name: /works/i }) Expected: visible Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toBeVisible\" with timeout 5000ms - waiting for getByRole('link', { name: /works/i })",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-sidebar-links.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5902,
+    "error": "Error: expect(locator).toHaveCount(expected) failed Locator: locator('aside a').filter({ hasText: /View Site|Public Home|Open Site/i }) Expected: 1 Received: 0 Timeout: 5000ms Call log: - Expect \"toHaveCount\" with timeout 5000ms - waiting for locator('aside a').filter({ hasText: /View Site|Public Home|Open Site/i }) 9 × locator resolved to 0 elements - unexpected value \"0\"",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-sidebar-links.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5831,
+    "error": "Error: expect(locator).toHaveAttribute(expected) failed Locator: getByRole('link', { name: /view site/i }) Expected: \"_blank\" Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toHaveAttribute\" with timeout 5000ms - waiting for getByRole('link', { name: /view site/i })",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-sidebar-text.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5817,
+    "error": "Error: expect(locator).toBeVisible() failed Locator: getByRole('heading', { name: /admin panel/i }) Expected: visible Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toBeVisible\" with timeout 5000ms - waiting for getByRole('heading', { name: /admin panel/i })",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-sidebar-width.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5858,
+    "error": "Error: expect(locator).toBeVisible() failed Locator: locator('aside').first() Expected: visible Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toBeVisible\" with timeout 5000ms - waiting for locator('aside').first()",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-sidebar-width.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5955,
+    "error": "Error: expect(locator).toBeVisible() failed Locator: locator('main').first() Expected: visible Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toBeVisible\" with timeout 5000ms - waiting for locator('main').first()",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-table-lang.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5833,
+    "error": "Error: expect(locator).toHaveAttribute(expected) failed Locator: getByLabel('Search blog titles') Expected pattern: /Search by/i Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toHaveAttribute\" with timeout 5000ms - waiting for getByLabel('Search blog titles')",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-table-lang.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5976,
+    "error": "Error: expect(locator).toHaveAttribute(expected) failed Locator: getByLabel('Search work titles') Expected pattern: /Search by/i Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toHaveAttribute\" with timeout 5000ms - waiting for getByLabel('Search work titles')",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-table-polish.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32227,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-table-polish.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32085,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-table-polish.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32022,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-table-polish.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5846,
+    "error": "Error: expect(locator).toBeDisabled() failed Locator: getByRole('button', { name: 'Previous page' }) Expected: disabled Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toBeDisabled\" with timeout 5000ms - waiting for getByRole('button', { name: 'Previous page' })",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-table-polish.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5829,
+    "error": "Error: expect(locator).toBeDisabled() failed Locator: getByRole('button', { name: 'Previous page' }) Expected: disabled Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toBeDisabled\" with timeout 5000ms - waiting for getByRole('button', { name: 'Previous page' })",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-table-selection-visual.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5709,
+    "error": "Error: expect(locator).toBeVisible() failed Locator: getByTestId('admin-blog-row').first() Expected: visible Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toBeVisible\" with timeout 5000ms - waiting for getByTestId('admin-blog-row').first()",
+    "classification": "admin-table-or-row-state"
+  },
+  {
+    "file": "ui-admin-tiptap-link-popover.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 31998,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-tiptap-link-popover.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32010,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-tiptap-semantic.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 31950,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-tiptap-sticky-toolbar.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5883,
+    "error": "Error: expect(locator).toHaveAttribute(expected) failed Locator: getByTestId('admin-blog-row').first().getByRole('link').first() Expected pattern: /\\/admin\\/blog\\/[^?]+/ Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toHaveAttribute\" with timeout 5000ms - waiting for getByTestId('admin-blog-row').first().getByRole('link').first()",
+    "classification": "admin-table-or-row-state"
+  },
+  {
+    "file": "ui-admin-unsaved-dialog.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 31976,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-unsaved-dialog.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32014,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-unsaved-warning.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32166,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-unsaved-warning.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32190,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-unsaved-warning.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32198,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-unsaved-warning.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32036,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-work-create-cta.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5921,
+    "error": "Error: expect(locator).toBeVisible() failed Locator: getByRole('button', { name: 'Create Work' }) Expected: visible Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toBeVisible\" with timeout 5000ms - waiting for getByRole('button', { name: 'Create Work' })",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-work-create-cta.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32138,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-work-create-cta.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32111,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-work-editor-tabs.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5875,
+    "error": "Error: expect(locator).toBeVisible() failed Locator: getByRole('tab', { name: 'General' }) Expected: visible Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toBeVisible\" with timeout 5000ms - waiting for getByRole('tab', { name: 'General' })",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-work-editor-tabs.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32272,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-work-metadata-ui.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32120,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-admin-work-metadata-ui.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32141,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-loading-states.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32522,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-quality-blog-detail-visuals.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 1223,
+    "error": "Error: expect(received).toBe(expected) // Object.is equality Expected: \"sticky\" Received: \"static\"",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-quality-layout-shift.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32150,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-quality-responsive-admin.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5707,
+    "error": "Error: expect(locator).toBeVisible() failed Locator: locator('aside').first() Expected: visible Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toBeVisible\" with timeout 5000ms - waiting for locator('aside').first()",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-quality-spacing-system.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 31977,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-quality-toast-accessibility.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32075,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-quality-token-consistency.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5828,
+    "error": "Error: expect(locator).toBeVisible() failed Locator: getByRole('button', { name: 'Create Post' }) Expected: visible Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toBeVisible\" with timeout 5000ms - waiting for getByRole('button', { name: 'Create Post' })",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-quality-visual-advanced.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 915,
+    "error": "Error: expect(received).toBe(expected) // Object.is equality Expected: \"sticky\" Received: \"static\"",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-quality-visual-contracts.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5686,
+    "error": "Error: expect(locator).toBeVisible() failed Locator: getByRole('heading', { name: 'Admin Panel' }) Expected: visible Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toBeVisible\" with timeout 5000ms - waiting for getByRole('heading', { name: 'Admin Panel' })",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-quality-visual-contracts.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5822,
+    "error": "Error: expect(locator).toBeVisible() failed Locator: getByRole('textbox', { name: 'Search blog titles' }) Expected: visible Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toBeVisible\" with timeout 5000ms - waiting for getByRole('textbox', { name: 'Search blog titles' })",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-quality-visual-metrics.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5796,
+    "error": "Error: expect(locator).toBeVisible() failed Locator: locator('aside nav').first().getByRole('link', { name: 'Dashboard' }) Expected: visible Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toBeVisible\" with timeout 5000ms - waiting for locator('aside nav').first().getByRole('link', { name: 'Dashboard' })",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-quality-visual-metrics.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5811,
+    "error": "Error: expect(locator).toBeVisible() failed Locator: locator('.space-y-4.rounded-2xl.border').first() Expected: visible Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toBeVisible\" with timeout 5000ms - waiting for locator('.space-y-4.rounded-2xl.border').first()",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-quality-visual-metrics.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32042,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "ui-quality-z-index.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "failed",
+    "durationMs": 5814,
+    "error": "Error: expect(locator).toBeEnabled() failed Locator: getByTestId('admin-blog-row').first().getByRole('button', { name: /^Delete post:/ }) Expected: enabled Timeout: 5000ms Error: element(s) not found Call log: - Expect \"toBeEnabled\" with timeout 5000ms - waiting for getByTestId('admin-blog-row').first().getByRole('button', { name: /^Delete post:/ })",
+    "classification": "admin-table-or-row-state"
+  },
+  {
+    "file": "work-green-video-thumbnail.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32116,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "work-green-video-thumbnail.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32069,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "work-inline-create-flow.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 31789,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "work-inline-create-flow.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 31654,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "work-inline-create-flow.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32063,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "work-inline-redirects.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 31690,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "work-inline-redirects.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 31552,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "work-inline-redirects.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32164,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  },
+  {
+    "file": "work-single-delete-ux.spec.ts",
+    "project": "chromium-authenticated",
+    "status": "timedOut",
+    "durationMs": 32340,
+    "error": "Test timeout of 30000ms exceeded.",
+    "classification": "needs-manual-triage"
+  }
+]
