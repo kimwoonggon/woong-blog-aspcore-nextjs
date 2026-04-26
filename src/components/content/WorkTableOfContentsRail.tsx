@@ -109,7 +109,9 @@ export function WorkTableOfContentsRail({
         transform: videoAvoidanceOffset > 0 ? `translateY(${videoAvoidanceOffset}px)` : undefined,
       }}
     >
-      <TableOfContents contentRootId={contentRootId} title={title} testId="work-toc" />
+      <div data-testid="work-toc">
+        <TableOfContents contentRootId={contentRootId} title={title} testId="work-toc-nav" />
+      </div>
     </div>
   )
 }

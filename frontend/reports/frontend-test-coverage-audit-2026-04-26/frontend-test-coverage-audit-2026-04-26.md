@@ -245,3 +245,62 @@ Run a validation-only E2E stabilization pass after restarting/rebuilding the app
 - For detail failures, confirm whether the served DOM contains the expected title test IDs. If it does, fix fixture/cache/revalidation or stale-server setup. If it does not, update the test strategy or restore stable behavior-neutral selectors.
 - For the Works `View all` case, either accept `/works` with default responsive pagination query params or intentionally change the routing behavior in a separate production task.
 - For the Notion library sheet, use the trace/video to decide whether the button click is ignored, the Radix sheet opens outside the expected query, or the selector/timing needs adjustment.
+
+## Frontend E2E baseline stabilization notes
+
+Date: 2026-04-26.
+
+Scope: frontend E2E stabilization only. No new feature tests were added. User-facing production behavior was not intentionally changed; production edits were limited to stable test-hook markup on existing public detail/TOC UI.
+
+### Fresh app under test
+
+Stopped stale server on port `3000` before the fresh Playwright run.
+
+Finding: Playwright was configured with `reuseExistingServer: true`, and port `3000` was occupied by Docker container `woong-blog-http3000`. The first focused rerun reused that stale app instead of starting the current Next dev server, which explained the repeated detail-title/TOC selector mismatches despite current source containing the expected selectors.
+
+The local backend was available on `127.0.0.1:18080`, while Playwright expects `INTERNAL_API_ORIGIN=http://localhost:8080`, so a temporary local TCP proxy was used for the validation run: `127.0.0.1:8080 -> 127.0.0.1:18080`.
+
+### Focused specs run
+
+| Command | Result | Notes |
+| --- | --- | --- |
+| `npm run test:e2e -- tests/public-detail-pages.spec.ts tests/public-blog-toc-active.spec.ts tests/public-blog-toc-layout.spec.ts tests/public-detail-toc-fallback.spec.ts tests/public-work-toc.spec.ts tests/e2e-dark-mode-journey.spec.ts tests/e2e-visitor-content-exploration.spec.ts tests/admin-mermaid-public-independence.spec.ts tests/ui-improvement-featured-works-grid.spec.ts tests/ui-admin-notion-library-sheet.spec.ts` | Failed before stale server stop | `18 passed`, `9 failed`. The failures were detail-title/TOC selector failures against the stale app served from Docker. Featured Works and Notion sheet passed in this run. |
+| Same focused command after stopping stale `3000` server and using fresh Next dev server | Passed | `27 passed`. Latency artifacts: `27`, budget failures: `0`, warnings: `9`. |
+| `npm run test:e2e -- tests/ui-improvement-featured-works-grid.spec.ts` | Passed after test expectation stabilization | `12 passed`. Latency artifacts: `12`, budget failures: `0`, warnings: `0`. |
+
+### Root causes and fixes
+
+| Group | Root cause | Fix |
+| --- | --- | --- |
+| Blog/work detail pages missing `blog-detail-title` / `work-detail-title` | Stale app server on port `3000` caused Playwright to reuse an old frontend build. Current source and fresh rerun showed the selectors are present. | Stopped stale Docker server before rerun. Also kept the public headings unchanged while moving the stable test IDs onto inner title spans for more explicit detail-title hooks. |
+| Work TOC selector mismatch | Same stale-server issue, plus the work TOC needed a stable wrapper distinct from the internal shared TOC nav test ID. | Added a `work-toc` wrapper and renamed the nested shared TOC nav hook to `work-toc-nav`. |
+| Featured Works `View all` URL mismatch | Test expectation drift. The product lands on `/works`, then responsive pagination may normalize default query params such as `?pageSize=8&page=1`. | Updated the assertion to require pathname `/works` instead of exact `/works$`. |
+| Featured Works detail navigation | Next dev route compilation could delay route transition long enough for the post-click URL assertion to race. | Asserted the card href and waited for the navigation event triggered by the click. |
+| Notion library sheet | Not an app regression in the fresh baseline. The focused rerun and full E2E both passed. | No production or test change needed. |
+
+### Files changed
+
+- `src/app/(public)/blog/[slug]/page.tsx`
+- `src/app/(public)/works/[slug]/page.tsx`
+- `src/components/content/WorkTableOfContentsRail.tsx`
+- `tests/ui-improvement-featured-works-grid.spec.ts`
+- `frontend/reports/frontend-test-coverage-audit-2026-04-26/frontend-test-coverage-audit-2026-04-26.md`
+
+### Final command results
+
+| Command | Result | Notes |
+| --- | --- | --- |
+| `npm run test:e2e` | Passed | `410 passed`, `5 skipped`, duration `19.8m`. Latency artifacts: `414`, budget failures: `0`, warnings: `79`. |
+| `npm run lint` | Passed | `0` errors, `5` existing warnings in scripts/tests. |
+| `npm test -- --run` | Passed | Vitest: `63 passed (63)` test files, `336 passed (336)` tests, duration `350.08s`. Pact older-spec upgrade warnings and jsdom navigation warning did not fail the run. |
+| `npm run typecheck` | Passed | `tsc --noEmit` completed successfully. |
+| `npm run build` | Passed | Next.js 16.1.6 production build completed successfully with Turbopack. |
+| `git diff --check` | Passed | No whitespace errors. |
+
+### Remaining failures
+
+None in the final frontend validation baseline.
+
+### Batch 1 readiness
+
+It is now safe to start Batch 1 auth/admin protection tests on top of this branch, provided the stale Docker server on port `3000` is not reused by Playwright. For repeatable local E2E runs, ensure the app under test is the current branch's Next dev server or change the Playwright setup so it cannot silently reuse an unrelated server.

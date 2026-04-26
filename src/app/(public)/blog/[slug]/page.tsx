@@ -72,8 +72,8 @@ export default async function BlogDetailPage({ params }: PageProps) {
             <div data-testid="blog-article-content-layout" className="mx-auto xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,48rem)_minmax(0,1fr)] xl:items-start xl:gap-12">
                 <div data-testid="blog-detail-body" className="mx-auto min-w-0 w-full max-w-3xl xl:col-start-2">
                     <header className="mb-8">
-                        <h1 data-testid="blog-detail-title" className="mb-4 text-3xl font-heading font-bold leading-tight text-foreground text-balance md:text-4xl">
-                            {blog.title}
+                        <h1 className="mb-4 text-3xl font-heading font-bold leading-tight text-foreground text-balance md:text-4xl">
+                            <span data-testid="blog-detail-title">{blog.title}</span>
                         </h1>
                         <div className="mb-6 flex flex-wrap items-center gap-4 font-medium text-muted-foreground">
                             <Badge variant="secondary" className="rounded-full bg-brand-navy px-3 text-white hover:bg-brand-navy/90">
