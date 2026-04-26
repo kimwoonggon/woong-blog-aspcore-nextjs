@@ -201,8 +201,47 @@ The core run skipped 6 tests:
 
 ## Remaining Unknowns
 
-- Whether the Playwright detail-page failures are caused by stale public cache/revalidation, seed fixture publication/read-after-write timing, or an actual route rendering regression. The repeated missing `blog-detail-title` / `work-detail-title` pattern points to detail pages rendering a fallback/404 instead of the expected detail shell.
-- Whether `npm run lint` should ignore `coverage/**` or whether generated backend coverage artifacts should be moved outside the frontend lint tree. This is a validation setup issue, not a frontend production-code failure.
+- Whether the Playwright detail-page failures are caused by stale public cache/revalidation, seed fixture publication/read-after-write timing, a stale app server/build, or an actual route rendering regression. Current source has `blog-detail-title` and `work-detail-title` on the detail headings, so the repeated locator failures need a fresh E2E rerun after rebuilding/restarting the app under test before changing production behavior.
+- Whether generated backend coverage artifacts should eventually move outside the frontend lint tree. For this baseline, `coverage/**` is ignored as generated output; this is a validation setup issue, not a frontend production-code failure.
 - Whether some optional/local-QA-gated tests should be promoted into core CI after making their fixtures deterministic.
 - Whether an asset picker is intentionally absent or planned but not implemented.
 - Whether Playwright browser code coverage should be added. Current Coverlet-like coverage is Vitest/V8 only.
+
+## Validation baseline stabilization notes
+
+Date: 2026-04-26.
+
+Scope: frontend validation setup only. No feature tests were added and no production behavior was changed.
+
+### Lint fix
+
+Added `coverage/**` to `eslint.config.mjs` `globalIgnores`.
+
+Reason: generated backend coverage report JavaScript under `coverage/backend/.../report/*.js` was being linted and produced blocking generated-artifact errors. This keeps generated coverage output out of frontend lint while leaving source files, scripts, and tests in scope.
+
+### Commands after lint fix
+
+| Command | Result | Notes |
+| --- | --- | --- |
+| `npm run lint` | Passed | ESLint completed with `0` errors and `5` existing warnings in scripts/tests. No source warnings were broadly suppressed. |
+| `npm test -- --run` | Passed | Vitest: `63 passed (63)` test files, `336 passed (336)` tests. Duration `365.89s`. Pact emitted older-spec upgrade warnings and jsdom emitted `Not implemented: navigation to another Document`; neither failed the run. |
+| `npm run typecheck` | Passed | `tsc --noEmit` completed successfully. |
+| `npm run build` | Passed | Next.js 16.1.6 production build completed successfully with Turbopack and generated all listed routes. |
+| `npm run test:e2e` | Not rerun | The task did not require E2E to pass. The prior baseline remains `398 passed`, `11 failed`, `6 skipped`. |
+
+### E2E failure grouping
+
+| Group | Failures | Evidence inspected | Root-cause candidate | Notes |
+| --- | --- | --- | --- | --- |
+| Blog/work detail pages missing `blog-detail-title` / `work-detail-title` | 9 | Playwright `error-context.md` artifacts for failed detail cases, current detail page source, and fixture helper polling behavior. | Unknown; stale app server/build or fixture/cache/revalidation issue is more likely than selector absence in current source. | Current `src/app/(public)/blog/[slug]/page.tsx` and `src/app/(public)/works/[slug]/page.tsx` include the expected `data-testid` attributes on the `<h1>` elements. Inspected artifacts show rendered detail content rather than an obvious 404 shell, but the test runtime still could not locate the IDs. Rebuild/restart the app under test before making app changes. |
+| Featured works `View all` URL mismatch | 1 | `tests/ui-improvement-featured-works-grid.spec.ts`, home page link source, and `ResponsivePageSizeSync`. | Likely test expectation drift. | The home link targets `/works`, but the Works route normalizes responsive pagination into query params such as `?page=1&pageSize=8`. The E2E expectation `/works$` is stricter than current routing behavior. |
+| Notion library sheet not opening | 1 | `tests/ui-admin-notion-library-sheet.spec.ts`, `BlogNotionWorkspace.tsx`, and failed Playwright artifact. | Unknown; possible app regression, stale runtime, portal/timing issue, or selector expectation drift. | Current source includes `notion-library-trigger` and `notion-library-sheet`. The artifact shows the trigger present, but the sheet was not visible after click. Investigate with a focused rerun/trace before changing production behavior. |
+
+### Recommended next task
+
+Run a validation-only E2E stabilization pass after restarting/rebuilding the app under test:
+
+- Re-run the 11 failed Playwright specs first, not the whole suite.
+- For detail failures, confirm whether the served DOM contains the expected title test IDs. If it does, fix fixture/cache/revalidation or stale-server setup. If it does not, update the test strategy or restore stable behavior-neutral selectors.
+- For the Works `View all` case, either accept `/works` with default responsive pagination query params or intentionally change the routing behavior in a separate production task.
+- For the Notion library sheet, use the trace/video to decide whether the button click is ignored, the Radix sheet opens outside the expected query, or the selector/timing needs adjustment.
