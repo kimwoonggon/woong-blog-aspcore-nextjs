@@ -69,6 +69,15 @@ function expectSelectionSummary(itemCount: number, selectedCount: number) {
   ).toBeInTheDocument()
 }
 
+function expectNoSelectionSummary(itemCount: number) {
+  expect(
+    screen.getByText((_, element) =>
+      element?.tagName.toLowerCase() === 'p'
+      && element.textContent === `${itemCount} shown · Select rows to enable bulk delete.`,
+    ),
+  ).toBeInTheDocument()
+}
+
 describe('admin bulk selection tables', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -138,6 +147,71 @@ describe('admin bulk selection tables', () => {
     expect(screen.getByRole('button', { name: 'Next page' })).toBeInTheDocument()
   })
 
+  it('renders a distinct admin blog empty-search row with table semantics', () => {
+    const { container } = render(
+      <AdminBlogTableClient
+        blogs={[
+          { id: 'b1', title: 'Alpha Blog', slug: 'alpha-blog', excerpt: '', tags: [], published: true, publishedAt: null },
+          { id: 'b2', title: 'Beta Blog', slug: 'beta-blog', excerpt: '', tags: [], published: false, publishedAt: null },
+        ]}
+      />,
+    )
+
+    fireEvent.change(screen.getByLabelText('Search blog titles'), { target: { value: 'no-result' } })
+
+    expect(screen.getByRole('table')).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: 'No matching blog posts found.' })).toHaveAttribute('colspan', '6')
+    expect(screen.queryByTestId('admin-blog-row')).not.toBeInTheDocument()
+    expectNoSelectionSummary(0)
+    expect(container.textContent).not.toMatch(/stack|trace|exception|status 500|sqlstate|npgsql|woongblog\.api/i)
+  })
+
+  it('clears blog bulk selection when the search query changes', () => {
+    render(
+      <AdminBlogTableClient
+        blogs={[
+          { id: 'b1', title: 'Alpha Blog', slug: 'alpha-blog', excerpt: '', tags: [], published: true, publishedAt: null },
+          { id: 'b2', title: 'Beta Blog', slug: 'beta-blog', excerpt: '', tags: [], published: false, publishedAt: null },
+        ]}
+      />,
+    )
+
+    fireEvent.click(screen.getByLabelText('Select Alpha Blog'))
+    expectSelectionSummary(2, 1)
+
+    fireEvent.change(screen.getByLabelText('Search blog titles'), { target: { value: 'alpha' } })
+
+    expect(screen.getByText('Alpha Blog')).toBeInTheDocument()
+    expect(screen.getByLabelText('Select Alpha Blog')).not.toBeChecked()
+    expect(screen.queryByText('Delete Selected')).not.toBeInTheDocument()
+    expectNoSelectionSummary(1)
+  })
+
+  it('clears blog bulk selection when moving to another page', () => {
+    render(
+      <AdminBlogTableClient
+        blogs={Array.from({ length: 13 }, (_, index) => ({
+          id: `b${index + 1}`,
+          title: `Paged Blog ${index + 1}`,
+          slug: `paged-blog-${index + 1}`,
+          excerpt: '',
+          tags: [],
+          published: true,
+          publishedAt: null,
+        }))}
+      />,
+    )
+
+    fireEvent.click(screen.getByLabelText('Select Paged Blog 1'))
+    expectSelectionSummary(13, 1)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Next page' }))
+
+    expect(screen.getByText('Paged Blog 13')).toBeInTheDocument()
+    expect(screen.queryByText('Delete Selected')).not.toBeInTheDocument()
+    expectNoSelectionSummary(13)
+  })
+
   it('shows works bulk delete button when rows are selected', async () => {
     render(
       <AdminWorksTableClient
@@ -169,6 +243,72 @@ describe('admin bulk selection tables', () => {
     expect(screen.queryByText('Alpha Work')).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Previous page' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Next page' })).toBeInTheDocument()
+  })
+
+  it('renders a distinct admin works empty-search row with table semantics', () => {
+    const { container } = render(
+      <AdminWorksTableClient
+        works={[
+          { id: 'w1', title: 'Alpha Work', slug: 'alpha-work', excerpt: '', tags: [], published: true, publishedAt: null, category: 'cat' },
+          { id: 'w2', title: 'Beta Work', slug: 'beta-work', excerpt: '', tags: [], published: false, publishedAt: null, category: 'cat' },
+        ]}
+      />,
+    )
+
+    fireEvent.change(screen.getByLabelText('Search work titles'), { target: { value: 'no-result' } })
+
+    expect(screen.getByRole('table')).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: 'No matching works found.' })).toHaveAttribute('colspan', '7')
+    expect(screen.queryByTestId('admin-work-row')).not.toBeInTheDocument()
+    expectNoSelectionSummary(0)
+    expect(container.textContent).not.toMatch(/stack|trace|exception|status 500|sqlstate|npgsql|woongblog\.api/i)
+  })
+
+  it('clears works bulk selection when the search query changes', () => {
+    render(
+      <AdminWorksTableClient
+        works={[
+          { id: 'w1', title: 'Alpha Work', slug: 'alpha-work', excerpt: '', tags: [], published: true, publishedAt: null, category: 'cat' },
+          { id: 'w2', title: 'Beta Work', slug: 'beta-work', excerpt: '', tags: [], published: false, publishedAt: null, category: 'cat' },
+        ]}
+      />,
+    )
+
+    fireEvent.click(screen.getByLabelText('Select Alpha Work'))
+    expectSelectionSummary(2, 1)
+
+    fireEvent.change(screen.getByLabelText('Search work titles'), { target: { value: 'alpha' } })
+
+    expect(screen.getByText('Alpha Work')).toBeInTheDocument()
+    expect(screen.getByLabelText('Select Alpha Work')).not.toBeChecked()
+    expect(screen.queryByText('Delete Selected')).not.toBeInTheDocument()
+    expectNoSelectionSummary(1)
+  })
+
+  it('clears works bulk selection when moving to another page', () => {
+    render(
+      <AdminWorksTableClient
+        works={Array.from({ length: 13 }, (_, index) => ({
+          id: `w${index + 1}`,
+          title: `Paged Work ${index + 1}`,
+          slug: `paged-work-${index + 1}`,
+          excerpt: '',
+          tags: [],
+          published: true,
+          publishedAt: null,
+          category: 'cat',
+        }))}
+      />,
+    )
+
+    fireEvent.click(screen.getByLabelText('Select Paged Work 1'))
+    expectSelectionSummary(13, 1)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Next page' }))
+
+    expect(screen.getByText('Paged Work 13')).toBeInTheDocument()
+    expect(screen.queryByText('Delete Selected')).not.toBeInTheDocument()
+    expectNoSelectionSummary(13)
   })
 
   it('opens and cancels a blog single delete without calling the delete API or hiding the row', async () => {

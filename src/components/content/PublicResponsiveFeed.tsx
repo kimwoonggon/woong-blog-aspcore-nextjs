@@ -33,6 +33,8 @@ interface StudyMobileRestoreState {
 const MOBILE_PAGE_SIZE = 10
 const studyRestoreStorageKey = 'woong-study-mobile-feed-state'
 const studyRestoreHistoryKey = '__studyFeedRestore'
+const loadMoreErrorMessage = 'Failed to load more items.'
+const restoreErrorMessage = 'Failed to restore the Study feed.'
 
 function formatBlogDate(publishedAt?: string | null) {
   return publishedAt
@@ -249,7 +251,7 @@ export function PublicResponsiveFeed({
     })
 
     if (!response.ok) {
-      throw new Error('Failed to load more items.')
+      throw new Error(loadMoreErrorMessage)
     }
 
     return await response.json() as FeedPayload
@@ -287,8 +289,8 @@ export function PublicResponsiveFeed({
 
     try {
       appendPayload(await fetchPage(nextPage))
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Failed to load more items.')
+    } catch {
+      setError(loadMoreErrorMessage)
     } finally {
       loadingRef.current = false
       setLoading(false)
@@ -379,9 +381,9 @@ export function PublicResponsiveFeed({
             restoreOnHistoryReturn: false,
           }))
         }
-      } catch (caught) {
+      } catch {
         if (!cancelled) {
-          setError(caught instanceof Error ? caught.message : 'Failed to restore the Study feed.')
+          setError(restoreErrorMessage)
         }
       } finally {
         if (!cancelled) {
@@ -457,7 +459,7 @@ export function PublicResponsiveFeed({
   const feedMode = shouldUseRestoredReadingState ? 'restored-reading' : isMobileAutoInfinite ? 'auto-infinite' : isCompact ? 'load-more' : 'pagination'
   const emptyText = kind === 'blog'
     ? query ? 'No studies found.' : 'No blog posts found.'
-    : 'No works found.'
+    : query ? 'No matching works found.' : 'No works found.'
   const gridClassName = shouldUseRestoredReadingState
     ? 'mx-auto grid max-w-2xl gap-5'
     : kind === 'blog'

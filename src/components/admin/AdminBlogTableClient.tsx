@@ -128,6 +128,7 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
   )
   const allSelected = visibleBlogs.length > 0 && visibleIds.every((id) => effectiveSelectedIds.includes(id))
   const selectedSet = useMemo(() => new Set(effectiveSelectedIds), [effectiveSelectedIds])
+  const emptyTableMessage = query.trim() ? 'No matching blog posts found.' : 'No blog posts found.'
 
   useEffect(() => {
     if (!hasMountedSearchSyncRef.current) {
@@ -147,6 +148,7 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
           return
         }
         setQuery(requestedQuery)
+        setSelectedIds([])
       }
     })
 
@@ -166,6 +168,7 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
     deferStateUpdate(() => {
       if (!cancelled) {
         setPage(nextRequestedPage)
+        setSelectedIds([])
       }
     })
 
@@ -180,6 +183,7 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
       deferStateUpdate(() => {
         if (!cancelled) {
           setPage(currentPage)
+          setSelectedIds([])
         }
       })
 
@@ -290,14 +294,7 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
               const nextQuery = event.target.value
               setQuery(nextQuery)
               setPage(1)
-              setSelectedIds((current) =>
-                current.filter((id) =>
-                  blogs.some((blog) =>
-                    blog.id === id
-                    && matchesBlogQuery(blog, nextQuery),
-                  ),
-                ),
-              )
+              setSelectedIds([])
             }}
             placeholder="Search by title or tags…"
             aria-label="Search blog titles"
@@ -455,7 +452,7 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
           ) : (
             <TableRow>
               <TableCell colSpan={6} className="h-24 text-center">
-                No blog posts found.
+                {emptyTableMessage}
               </TableCell>
             </TableRow>
           )}
@@ -468,7 +465,10 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
           size="sm"
           aria-label="Previous page"
           disabled={currentPage <= 1}
-          onClick={() => setPage((active) => Math.max(1, active - 1))}
+          onClick={() => {
+            setSelectedIds([])
+            setPage((active) => Math.max(1, active - 1))
+          }}
         >
           <ChevronLeft className="h-4 w-4" aria-hidden="true" />
           Previous
@@ -482,7 +482,10 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
           size="sm"
           aria-label="Next page"
           disabled={currentPage >= totalPages}
-          onClick={() => setPage((active) => Math.min(totalPages, active + 1))}
+          onClick={() => {
+            setSelectedIds([])
+            setPage((active) => Math.min(totalPages, active + 1))
+          }}
         >
           Next
           <ChevronRight className="h-4 w-4" aria-hidden="true" />

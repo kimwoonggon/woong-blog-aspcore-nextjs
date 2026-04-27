@@ -128,6 +128,7 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
   const selectedCount = effectiveSelectedIds.length
   const allSelected = visibleWorks.length > 0 && visibleIds.every((id) => effectiveSelectedIds.includes(id))
   const selectedSet = useMemo(() => new Set(effectiveSelectedIds), [effectiveSelectedIds])
+  const emptyTableMessage = query.trim() ? 'No matching works found.' : 'No works found.'
 
   useEffect(() => {
     if (!hasMountedSearchSyncRef.current) {
@@ -148,6 +149,7 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
         }
         setQuery(requestedQuery)
         setPage(requestedPage)
+        setSelectedIds([])
       }
     })
 
@@ -162,6 +164,7 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
       deferStateUpdate(() => {
         if (!cancelled) {
           setPage(currentPage)
+          setSelectedIds([])
         }
       })
 
@@ -272,14 +275,7 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
               const nextQuery = event.target.value
               setQuery(nextQuery)
               setPage(1)
-              setSelectedIds((current) =>
-                current.filter((id) =>
-                  workItems.some((work) =>
-                    work.id === id
-                    && matchesWorkQuery(work, nextQuery),
-                  ),
-                ),
-              )
+              setSelectedIds([])
             }}
             placeholder="Search by title, tags, or category…"
             aria-label="Search work titles"
@@ -419,7 +415,7 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
           ) : (
             <TableRow>
               <TableCell colSpan={7} className="h-24 text-center">
-                No works found.
+                {emptyTableMessage}
               </TableCell>
             </TableRow>
           )}
@@ -432,7 +428,10 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
           size="sm"
           aria-label="Previous page"
           disabled={currentPage <= 1}
-          onClick={() => setPage((active) => Math.max(1, active - 1))}
+          onClick={() => {
+            setSelectedIds([])
+            setPage((active) => Math.max(1, active - 1))
+          }}
         >
           <ChevronLeft className="h-4 w-4" aria-hidden="true" />
           Previous
@@ -446,7 +445,10 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
           size="sm"
           aria-label="Next page"
           disabled={currentPage >= totalPages}
-          onClick={() => setPage((active) => Math.min(totalPages, active + 1))}
+          onClick={() => {
+            setSelectedIds([])
+            setPage((active) => Math.min(totalPages, active + 1))
+          }}
         >
           Next
           <ChevronRight className="h-4 w-4" aria-hidden="true" />

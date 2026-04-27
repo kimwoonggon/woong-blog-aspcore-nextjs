@@ -277,6 +277,163 @@ describe('PublicResponsiveFeed', () => {
     expect(container.textContent).not.toMatch(/stack|trace|exception|status 500|sqlstate|npgsql|woongblog\.api/i)
   })
 
+  it('keeps existing public items and shows a safe message when tablet load-more fails', async () => {
+    setViewportMode('tablet')
+
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock as typeof fetch)
+    fetchMock.mockRejectedValueOnce(new Error('SQLSTATE 08006 stack trace from WoongBlog.Api status 500'))
+
+    const { container } = render(
+      <PublicResponsiveFeed
+        kind="blog"
+        query=""
+        desktopPayload={{ items: buildBlogItems('desktop', 3), page: 1, pageSize: 12, totalItems: 3, totalPages: 1 }}
+        mobileInitialPayload={{ items: buildBlogItems('study', 2, 1), page: 1, pageSize: 10, totalItems: 4, totalPages: 2 }}
+        desktopReturnTo={encodeURIComponent('/blog?page=1&pageSize=12')}
+      />,
+    )
+
+    fireEvent.click(screen.getByTestId('blog-load-more'))
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId('blog-card')).toHaveLength(2)
+      expect(screen.getByRole('status')).toHaveTextContent('Failed to load more items.')
+    })
+
+    expect(screen.getByText('study title 1')).toBeInTheDocument()
+    expect(screen.getByText('study title 2')).toBeInTheDocument()
+    expect(container.textContent).not.toMatch(/stack|trace|exception|status 500|sqlstate|npgsql|woongblog\.api/i)
+    expect(container.textContent).not.toMatch(/\b(undefined|null)\b/i)
+  })
+
+  it('renders public empty search results without leaking raw details', () => {
+    setViewportMode('desktop')
+
+    const blogResult = render(
+      <PublicResponsiveFeed
+        kind="blog"
+        query="missing-study"
+        desktopPayload={{ items: [], page: 1, pageSize: 12, totalItems: 0, totalPages: 1 }}
+        mobileInitialPayload={{ items: [], page: 1, pageSize: 10, totalItems: 0, totalPages: 1 }}
+        desktopReturnTo={encodeURIComponent('/blog?page=1&pageSize=12&query=missing-study')}
+      />,
+    )
+
+    expect(screen.getByText('No studies found.')).toBeInTheDocument()
+    expect(screen.queryByTestId('blog-card')).not.toBeInTheDocument()
+    expect(blogResult.container.textContent).not.toMatch(/admin|edit|manage|관리|수정/i)
+    expect(blogResult.container.textContent).not.toMatch(/stack|trace|exception|status 500|sqlstate|npgsql|woongblog\.api/i)
+    expect(blogResult.container.textContent).not.toMatch(/\b(undefined|null)\b/i)
+
+    blogResult.unmount()
+
+    const worksResult = render(
+      <PublicResponsiveFeed
+        kind="works"
+        query="missing-work"
+        desktopPayload={{ items: [], page: 1, pageSize: 8, totalItems: 0, totalPages: 1 }}
+        mobileInitialPayload={{ items: [], page: 1, pageSize: 10, totalItems: 0, totalPages: 1 }}
+        desktopReturnTo={encodeURIComponent('/works?page=1&pageSize=8&query=missing-work')}
+      />,
+    )
+
+    expect(screen.getByText('No matching works found.')).toBeInTheDocument()
+    expect(screen.queryByTestId('work-card')).not.toBeInTheDocument()
+    expect(worksResult.container.textContent).not.toMatch(/admin|edit|manage|관리|수정/i)
+    expect(worksResult.container.textContent).not.toMatch(/stack|trace|exception|status 500|sqlstate|npgsql|woongblog\.api/i)
+    expect(worksResult.container.textContent).not.toMatch(/\b(undefined|null)\b/i)
+  })
+
+  it('drops appended and failed-load state when the search query changes', async () => {
+    setViewportMode('tablet')
+
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock as typeof fetch)
+    fetchMock.mockRejectedValueOnce(new Error('backend stack trace'))
+
+    const { rerender } = render(
+      <PublicResponsiveFeed
+        kind="blog"
+        query="one"
+        desktopPayload={{ items: buildBlogItems('desktop', 3), page: 1, pageSize: 12, totalItems: 3, totalPages: 1 }}
+        mobileInitialPayload={{ items: buildBlogItems('one', 2, 1), page: 1, pageSize: 10, totalItems: 4, totalPages: 2 }}
+        desktopReturnTo={encodeURIComponent('/blog?page=1&pageSize=12&query=one')}
+      />,
+    )
+
+    fireEvent.click(screen.getByTestId('blog-load-more'))
+
+    await waitFor(() => {
+      expect(screen.getByRole('status')).toBeInTheDocument()
+    })
+
+    rerender(
+      <PublicResponsiveFeed
+        kind="blog"
+        query="two"
+        desktopPayload={{ items: [], page: 1, pageSize: 12, totalItems: 0, totalPages: 1 }}
+        mobileInitialPayload={{ items: buildBlogItems('two', 1, 1), page: 1, pageSize: 10, totalItems: 1, totalPages: 1 }}
+        desktopReturnTo={encodeURIComponent('/blog?page=1&pageSize=12&query=two')}
+      />,
+    )
+
+    await waitFor(() => {
+      expect(screen.queryByText('one title 1')).not.toBeInTheDocument()
+      expect(screen.queryByText('one title 2')).not.toBeInTheDocument()
+      expect(screen.getByText('two title 1')).toBeInTheDocument()
+      expect(screen.queryByText('Failed to load more items.')).not.toBeInTheDocument()
+      expect(screen.queryByText('backend stack trace')).not.toBeInTheDocument()
+    })
+  })
+
+  it('ignores stale mobile Study restore state from a different query', async () => {
+    setViewportMode('mobile')
+
+    window.history.replaceState({
+      __studyFeedRestore: {
+        query: 'old-query',
+        loadedPageCount: 3,
+        pageSize: 10,
+        scrollY: 960,
+        restoreOnHistoryReturn: true,
+      },
+    }, '', '/blog?page=1&pageSize=10&query=new-query')
+    sessionStorage.setItem(studyRestoreStorageKey, JSON.stringify({
+      query: 'old-query',
+      loadedPageCount: 3,
+      pageSize: 10,
+      scrollY: 960,
+      restoreOnHistoryReturn: true,
+    }))
+
+    const scrollToSpy = vi.fn()
+    Object.defineProperty(window, 'scrollTo', {
+      configurable: true,
+      value: scrollToSpy,
+      writable: true,
+    })
+
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock as typeof fetch)
+
+    render(
+      <PublicResponsiveFeed
+        kind="blog"
+        query="new-query"
+        desktopPayload={{ items: buildBlogItems('desktop', 3), page: 1, pageSize: 12, totalItems: 3, totalPages: 1 }}
+        mobileInitialPayload={{ items: buildBlogItems('new', 2, 1), page: 1, pageSize: 10, totalItems: 2, totalPages: 1 }}
+        desktopReturnTo={encodeURIComponent('/blog?page=1&pageSize=12&query=new-query')}
+      />,
+    )
+
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(screen.getAllByTestId('blog-card')).toHaveLength(2)
+    expect(screen.getByText('new title 1')).toBeInTheDocument()
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(scrollToSpy).not.toHaveBeenCalled()
+  })
+
   it('serializes mobile Study restore state into history and session storage', async () => {
     setViewportMode('mobile')
 

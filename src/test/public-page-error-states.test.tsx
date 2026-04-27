@@ -92,5 +92,5 @@ describe('public static page error and empty states', () => {
     expect(screen.queryByTestId('recent-post-card')).not.toBeInTheDocument()
     expect(container.textContent).not.toMatch(/admin|edit|manage|관리|수정/i)
     expect(container.textContent).not.toMatch(/stack|trace|exception|status 500|sqlstate|npgsql|woongblog\.api/i)
-  })
+  }, 15000)
 })

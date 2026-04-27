@@ -126,6 +126,42 @@ describe('ResponsivePageSizeSync', () => {
     expect(navigationMocks.replace).not.toHaveBeenCalled()
   })
 
+  it('ignores stale pending Study restore state from a different search query', async () => {
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 390 })
+    navigationMocks.search = 'page=3&pageSize=12&query=current'
+    window.history.replaceState({
+      __studyFeedRestore: {
+        query: 'stale',
+        loadedPageCount: 3,
+        pageSize: 10,
+        scrollY: 1280,
+        restoreOnHistoryReturn: true,
+      },
+    }, '', '/blog?page=3&pageSize=12&query=current')
+    window.sessionStorage.setItem('woong-study-mobile-feed-state', JSON.stringify({
+      query: 'stale',
+      loadedPageCount: 3,
+      pageSize: 10,
+      scrollY: 1280,
+      restoreOnHistoryReturn: true,
+    }))
+
+    render(
+      <ResponsivePageSizeSync
+        desktopPageSize={12}
+        tabletPageSize={8}
+        mobilePageSize={4}
+        infiniteBelowDesktop
+        infinitePageSize={10}
+        skipWhenStudyRestorePending
+      />,
+    )
+
+    await waitFor(() => {
+      expect(navigationMocks.replace).toHaveBeenCalledWith('/blog?page=1&pageSize=10&query=current', { scroll: false })
+    })
+  })
+
   it('lets desktop pagination win when a stale mobile Study restore is pending at desktop width', async () => {
     Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1280 })
     navigationMocks.search = 'page=1&pageSize=10'

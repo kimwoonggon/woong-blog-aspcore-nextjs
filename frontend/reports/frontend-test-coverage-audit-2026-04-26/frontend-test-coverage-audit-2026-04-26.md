@@ -1169,3 +1169,77 @@ Full E2E note: a full Playwright suite was not run because this batch added focu
 ### Next recommended batch
 
 Proceed to pagination/search failure states: failed load-more, stale restore state, admin list failure, and search empty-result tests, while keeping browser coverage route-mocked and deterministic.
+
+## Batch 10 - Pagination and Search Failure State Reinforcement
+
+Date: 2026-04-27.
+
+Scope: frontend pagination/search failure-state reinforcement for public blog/work feeds, responsive Study restore-state behavior, and admin blog/work table search/pagination behavior. Backend behavior, live external services, real storage, seeded backend data, AI, WorkVideo upload, media validation, dark mode, public API error-boundary work, and brittle visual-only tests were left out of scope.
+
+### Tests added or reinforced
+
+- `src/test/public-responsive-feed.test.tsx`
+  - Failed tablet load-more preserves existing rendered Study cards.
+  - Public incremental fetch failures render safe generic copy and do not leak stack/API details.
+  - Public empty search states do not leak admin affordances, raw details, `undefined`, or `null`.
+  - Search query changes reset failed-load and appended item state.
+  - Stale mobile Study restore state from another query does not restore pages or scroll.
+- `src/test/responsive-page-size-sync.test.tsx`
+  - Mobile Study responsive page-size sync ignores pending restore state when the stored query differs from the active query.
+- `src/test/admin-bulk-table.test.tsx`
+  - Admin blog/work empty search states render distinct matching-result messages with table/cell semantics intact.
+  - Admin blog/work bulk selections clear across search changes and page changes.
+- `src/test/admin-page-success-states.test.tsx`
+  - Admin blog/work list fetch failures render safe error panels with no table row leakage or raw backend details.
+- `src/test/public-page-error-states.test.tsx`
+  - Existing public home empty-state server-component test now has an explicit timeout after full-suite load exposed a timeout-only failure; assertions were unchanged.
+
+### Production files changed
+
+- `src/components/content/PublicResponsiveFeed.tsx`
+  - Public load-more and Study restore failures now render fixed safe messages instead of arbitrary thrown error text.
+  - Public Works search-empty copy now distinguishes matching-result emptiness from an empty archive.
+- `src/components/layout/ResponsivePageSizeSync.tsx`
+  - Pending Study restore state is honored only when its stored query matches the active query.
+- `src/components/admin/AdminBlogTableClient.tsx`
+  - Empty search results render `No matching blog posts found.`.
+  - Bulk selections clear when search/page scope changes.
+- `src/components/admin/AdminWorksTableClient.tsx`
+  - Empty search results render `No matching works found.`.
+  - Bulk selections clear when search/page scope changes.
+
+### Behavior bugs found
+
+- Public incremental load failures could display arbitrary thrown error text, including stack/API details.
+- Stale mobile Study restore state for a different query could suppress current mobile responsive query normalization.
+- Public Works search-empty state used the same copy as a truly empty Works archive.
+- Admin blog/work empty search states used the same copy as truly empty lists.
+- Admin blog/work bulk selection could remain active after search or page changes, allowing hidden prior selections to affect later bulk actions.
+
+### Commands run
+
+| Command | Result | Notes |
+| --- | --- | --- |
+| `npx skills find "nextjs pagination search failure testing"` | Passed | Results were low-install external skills; no new skill was installed. |
+| `npm test -- --run src/test/public-responsive-feed.test.tsx src/test/responsive-page-size-sync.test.tsx` | Failed before fixes, then passed | Final focused public slice passed with 2 files and 24 tests. |
+| `npm test -- --run src/test/public-responsive-feed.test.tsx src/test/responsive-page-size-sync.test.tsx src/test/admin-bulk-table.test.tsx src/test/admin-page-success-states.test.tsx` | Failed before admin fixes, then passed | Final focused Batch 10 slice passed with 4 files and 61 tests. |
+| `npm test -- --run src/test/public-page-error-states.test.tsx` | Passed | 1 file, 4 tests after confirming the full-suite failure was timeout-only. |
+| `npm test -- --run src/test/admin-bulk-table.test.tsx src/test/admin-page-success-states.test.tsx` | Passed | 2 files, 37 tests after lint-driven refactor. |
+| `npm test -- --run` | Failed once, then passed | First run timed out in one existing public home empty-state test; final run passed with 68 files and 447 tests. Known Pact V3 warnings and jsdom navigation warning appeared. |
+| `npm run lint` | Failed once, then passed | First run found a new `react-hooks/set-state-in-effect` error; final run passed with 0 errors and 6 existing warnings. |
+| `npm run typecheck` | Passed | `tsc --noEmit` completed successfully. |
+| `npm run build` | Passed | Next.js production build completed successfully. |
+| `git diff --check` | Passed | No whitespace errors. |
+
+Browser E2E note: no Playwright specs were changed or run. The changed behavior was covered deterministically through Vitest component/server-render tests, and no browser-only routing/history behavior was modified.
+
+### Remaining pagination/search gaps
+
+- Browser-level public initial server-component empty/search states still depend on deterministic API mocking infrastructure that is not available in the current Playwright setup.
+- Admin URL-driven selection clearing is covered through component behavior and deferred sync paths, not a browser history E2E.
+- Public desktop pagination link composition remains covered by existing Playwright; this batch focused on failure and state-reset behavior.
+- Normalized search helper edge cases remain sufficient for this batch; no new helper bug was found.
+
+### Next recommended batch
+
+Proceed to helper edge cases or another remaining P2 frontend gap from this audit. Keep using component-first deterministic coverage unless browser-only behavior is the actual target.

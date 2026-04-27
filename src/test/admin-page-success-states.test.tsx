@@ -181,6 +181,23 @@ describe('admin page success and not-found states', () => {
     expect(container.textContent).not.toMatch(/stack|trace|exception|status 500|sqlstate|npgsql|woongblog\.api/i)
   }, 30000)
 
+  it('renders a safe admin blog list failure panel when blog fetch fails', async () => {
+    vi.doMock('@/lib/api/blogs', () => ({
+      fetchAdminBlogs: vi.fn(async () => {
+        throw new Error('SQLSTATE 08006 stack trace from WoongBlog.Api status 500')
+      }),
+    }))
+
+    const AdminBlogPage = (await import('@/app/admin/blog/page')).default
+    const { container } = render(await AdminBlogPage())
+
+    expect(screen.getByText('Blog administration is unavailable')).toBeInTheDocument()
+    expect(screen.getByText(/Blog posts could not be loaded from the backend/i)).toBeInTheDocument()
+    expect(screen.queryByRole('table')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('admin-blog-row')).not.toBeInTheDocument()
+    expect(container.textContent).not.toMatch(/stack|trace|exception|status 500|sqlstate|npgsql|woongblog\.api/i)
+  }, 30000)
+
   it('renders a populated admin members table when members load successfully', async () => {
     vi.doMock('@/lib/api/admin-members', () => ({
       fetchAdminMembers: vi.fn(async () => [{
@@ -236,6 +253,23 @@ describe('admin page success and not-found states', () => {
     expect(screen.getByText('No works found.')).toBeInTheDocument()
     expect(screen.getByRole('table')).toBeInTheDocument()
     expect(screen.getByRole('cell', { name: 'No works found.' })).toHaveAttribute('colspan', '7')
+    expect(screen.queryByTestId('admin-work-row')).not.toBeInTheDocument()
+    expect(container.textContent).not.toMatch(/stack|trace|exception|status 500|sqlstate|npgsql|woongblog\.api/i)
+  })
+
+  it('renders a safe admin works list failure panel when works fetch fails', async () => {
+    vi.doMock('@/lib/api/works', () => ({
+      fetchAdminWorks: vi.fn(async () => {
+        throw new Error('SQLSTATE 08006 stack trace from WoongBlog.Api status 500')
+      }),
+    }))
+
+    const AdminWorksPage = (await import('@/app/admin/works/page')).default
+    const { container } = render(await AdminWorksPage())
+
+    expect(screen.getByText('Work administration is unavailable')).toBeInTheDocument()
+    expect(screen.getByText(/Works could not be loaded from the backend/i)).toBeInTheDocument()
+    expect(screen.queryByRole('table')).not.toBeInTheDocument()
     expect(screen.queryByTestId('admin-work-row')).not.toBeInTheDocument()
     expect(container.textContent).not.toMatch(/stack|trace|exception|status 500|sqlstate|npgsql|woongblog\.api/i)
   })
