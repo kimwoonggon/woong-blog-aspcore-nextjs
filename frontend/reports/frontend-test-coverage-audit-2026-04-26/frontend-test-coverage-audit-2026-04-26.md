@@ -829,3 +829,68 @@ After Batch 4A fixed code blocks, the broader dark mode still used surfaces that
 ### Next Recommended Batch
 
 Proceed to the AI failure and partial-failure batch. Batch 4B did not change backend behavior, saved content, AI behavior, or WorkVideo behavior, and the focused dark-mode suite plus full frontend validation are green.
+
+## Batch 5 - AI Failure and Partial Failure UI Reinforcement
+
+Date: 2026-04-27.
+
+Scope: frontend AI failure and partial-failure UI coverage only. No live AI was used. No real OpenAI, Azure, Codex, or external service calls were made. Backend behavior, WorkVideo tests, public API error-boundary tests, and dark-mode/code-block readability were left out of scope.
+
+### Tests added or reinforced
+
+- `src/test/admin-ai-fix-dialog.test.tsx`
+  - Runtime config load failure keeps a safe fallback UI, shows an error, preserves the original draft, and avoids apply controls.
+  - Malformed runtime config falls back to safe defaults without crashing.
+  - Empty provider lists fall back to the configured provider when available.
+  - Blog AI POST 504 shows the timeout error, preserves editor content, avoids false success, hides Apply Changes, and allows retry.
+  - Blog AI POST 500 shows backend error text without stale apply controls.
+  - Work enrich mocked failure keeps the draft safe and a retried mocked success can be applied.
+- `src/test/admin-blog-batch-ai-panel.test.tsx`
+  - Runtime config failure/malformed/empty-provider fallbacks stay safe.
+  - Mixed succeeded/failed batch items remain visible and distinguishable.
+  - Failed item error details are visible.
+  - Partial apply responses do not claim full success and failed rows remain visible.
+  - Cancel failure keeps the running job visible and retryable.
+  - Remove failure keeps the terminal job visible and removable again.
+- `tests/admin-blog-ai-dialog.spec.ts`
+  - Blog AI 504 failure is route-mocked, preserves the draft, shows the timeout error, avoids false success, and retries to a mocked successful apply.
+  - Work AI enrich uses route-mocked failure and success responses, preserves work editor content on failure, applies retried content, and asserts the request body uses the mocked work enrich endpoint.
+
+### Production and harness files changed
+
+- `src/components/admin/AdminBlogBatchAiPanel.tsx`
+  - Fixed partial apply false-success behavior. Apply responses that still contain failed items now show `AI batch results partially applied; review failed items.` instead of the full-success toast.
+- `playwright.config.ts`
+  - Fixed an E2E harness issue where explicitly named optional specs such as `tests/admin-ai-batch-jobs.spec.ts` and `tests/admin-ai-batch-cancel.spec.ts` were still ignored because `npm run test:e2e` forces the core profile. Explicit optional spec paths are now allowed without adding optional specs to normal full core runs.
+
+### Behavior bugs found
+
+- Partial batch apply could report `AI batch results applied` even when the returned job still contained failed items. Root cause: `applyJobResults` treated every successful HTTP response as a full UI success and did not inspect `failedCount`, item `failed` status, or item errors.
+- The requested focused E2E command initially did not run the two batch AI specs. Root cause: the Playwright core profile ignored optional specs even when they were explicitly passed on the command line.
+
+### Commands run
+
+| Command | Result | Notes |
+| --- | --- | --- |
+| `npm test -- --run src/test/admin-ai-fix-dialog.test.tsx` | Passed | `1 passed` file, `11 passed` tests, duration `42.18s`. |
+| `npm test -- --run src/test/admin-blog-batch-ai-panel.test.tsx` | Failed before fix | RED result: `1 failed`, `16 passed`. The failing assertion proved partial apply did not show the partial-failure toast. |
+| `npm test -- --run src/test/admin-blog-batch-ai-panel.test.tsx` | Passed after fix | `1 passed` file, `17 passed` tests, duration `43.29s`. |
+| `PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 npm run test:e2e -- tests/admin-blog-ai-dialog.spec.ts tests/admin-ai-batch-jobs.spec.ts tests/admin-ai-batch-cancel.spec.ts` | Passed after harness fix | `6 passed`, latency budget failures `0`, warnings `0`. An earlier run executed only the core AI dialog file, and a batch-only run reported `No tests found` because optional specs were ignored under the forced core profile. |
+| `PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 npm run test:e2e` | Passed | `418 passed`, `5 skipped`, duration `13.6m`. Latency artifacts `423`, budget failures `0`, warnings `46`. Optional batch AI specs remained excluded from normal full core runs. |
+| `npm test -- --run` | Passed | Vitest: `65 passed` files, `382 passed` tests, duration `408.75s`. Known Pact V3 upgrade warnings and jsdom navigation warning appeared. |
+| `npm run lint` | Passed | `0` errors, `6` existing warnings. |
+| `npm run typecheck` | Passed | `tsc --noEmit` completed successfully. |
+| `npm run build` | Passed | Next.js 16.1.6 production build completed successfully with Turbopack. |
+| `git diff --check` | Passed | No whitespace errors. |
+
+Validation environment note: the existing dev compose stack was already running with backend published at `127.0.0.1:18080` and nginx at `http://127.0.0.1:3000`, matching the documented alternate-port path for the Windows 8080 portproxy issue.
+
+### Remaining AI UI gaps
+
+- Browser-level batch partial-apply failure remains covered at component level rather than with a dedicated Playwright route-mocked partial-apply browser flow. The deterministic component coverage exercises the UI state directly, while existing browser batch specs continue to cover happy/cancel paths.
+- Work enrich browser coverage uses the new work form only; edit-form enrich behavior is covered by the same shared `AIFixDialog` component path but not separately enumerated in Playwright.
+- Real provider behavior, live Codex/OpenAI/Azure timeouts, and `PLAYWRIGHT_LIVE_AI` remain intentionally out of scope.
+
+### Next recommended batch
+
+Proceed to public API error states: public blog/work/page/resume API 500 and error-boundary assertions, with deterministic route/server-component tests and a small route-mocked E2E slice where browser integration matters.
