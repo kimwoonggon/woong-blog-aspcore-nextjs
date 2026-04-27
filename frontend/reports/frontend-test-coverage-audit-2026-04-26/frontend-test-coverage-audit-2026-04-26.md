@@ -1396,3 +1396,74 @@ Browser E2E note: no Playwright specs were changed or run. The requested sanitiz
 ### Next recommended batch
 
 Proceed to `Frontend Batch 13 - Public Metadata and Server Route Fallback Reinforcement`. Cover public blog/work `generateMetadata` fallback behavior, notFound/null-detail metadata, social image normalization, path/canonical safety, and no `undefined`/`null` user-facing metadata through Vitest server module tests. Avoid public error-boundary UI, pagination/search UI, AI, WorkVideo upload, media validation, and browser-only tests unless a true browser-only behavior appears.
+
+## Batch 13 - Public Metadata and Server Route Fallback Reinforcement
+
+Date: 2026-04-28.
+
+Scope: frontend public metadata and server route fallback reinforcement for blog/work detail metadata generation, SEO canonical path safety, social image safety, and Work YouTube social thumbnail normalization. Backend behavior, API contracts, public error-boundary UI, pagination/search UI, AI, WorkVideo upload, media validation, dark mode, live services, real storage, seeded backend data, and browser-only tests were left out of scope.
+
+### Tests added or reinforced
+
+- `src/test/public-detail-metadata-fallback.test.ts`
+  - Blog/work `generateMetadata` returns empty metadata for malformed route slug encodings.
+  - Blog/work `generateMetadata` returns empty metadata when public detail fetches fail.
+  - Blog/work metadata canonical paths encode unsafe-looking API slugs.
+  - Metadata output does not leak raw `<script>`, `undefined`, or `null` text.
+- `src/test/seo-metadata.test.ts`
+  - Canonical paths stay same-origin when given protocol-relative or duplicate-slash input.
+  - Unsafe `javascript:` and protocol-relative social images are filtered.
+  - Safe relative and HTTPS social images remain preserved.
+- `src/test/work-detail-metadata.test.ts`
+  - Work detail canonical slugs are encoded.
+  - Unsafe thumbnail URLs are filtered from social metadata.
+  - YouTube URL variants are normalized to video IDs before social thumbnails are derived.
+
+### Production files changed
+
+- `src/app/(public)/blog/[slug]/page.tsx`
+  - `generateMetadata` now returns `{}` for malformed encoded slugs and public fetch failures.
+  - Blog detail canonical metadata paths now encode API-provided slugs.
+- `src/app/(public)/works/[slug]/page.tsx`
+  - `generateMetadata` now returns `{}` for malformed encoded slugs and public fetch failures.
+- `src/app/(public)/works/[slug]/work-detail-metadata.ts`
+  - Work detail canonical metadata paths now encode API-provided slugs.
+  - YouTube metadata thumbnails now reuse the shared YouTube ID normalizer before building thumbnail URLs.
+- `src/lib/seo.ts`
+  - Canonical paths collapse duplicate slashes and avoid protocol-relative output.
+  - Unsafe social image URLs are filtered before Open Graph/Twitter metadata is emitted.
+
+### Behavior bugs found
+
+- Blog/work `generateMetadata` could throw `URIError` for malformed route slug encodings.
+- Blog/work `generateMetadata` could throw raw fetch errors during metadata generation.
+- Blog/work canonical metadata paths could include raw unsafe-looking slug text such as `<script>`.
+- `createPublicMetadata` could emit protocol-relative canonical paths.
+- `createPublicMetadata` could emit unsafe `javascript:` or protocol-relative social image URLs.
+- Work detail metadata could build YouTube thumbnail URLs from full YouTube URLs instead of normalized video IDs.
+
+### Commands run
+
+| Command | Result | Notes |
+| --- | --- | --- |
+| `npx skills find nextjs metadata testing` | Passed | Results were low-install external metadata/Next.js skills; no new skill was installed. |
+| `npm test -- --run src/test/seo-metadata.test.ts src/test/work-detail-metadata.test.ts src/test/public-detail-metadata-fallback.test.ts` | Failed before fixes, then passed | Final focused Batch 13 slice passed with 3 files and 13 tests. |
+| `npm test -- --run src/test/admin-page-success-states.test.tsx` | Passed | Isolation check after an interrupted full run; 1 file and 18 tests. |
+| `npm test -- --run` | Passed | Final run passed with 72 files and 493 tests. Known Pact V3 warnings and jsdom navigation warning appeared. |
+| `npm run lint` | Passed | 0 errors, 6 existing warnings. |
+| `npm run typecheck` | Passed | `tsc --noEmit` completed successfully. |
+| `npm run build` | Passed | Next.js production build completed successfully. |
+| `git diff --check` | Passed | No whitespace errors. |
+
+Browser E2E note: no Playwright specs were changed or run. The requested metadata behavior was covered deterministically through Vitest helper/server-module tests.
+
+### Remaining metadata and static route gaps
+
+- `robots.ts` remains simple and low-risk but is not directly unit-tested.
+- Public list/card date formatting remains component-local and still needs invalid/missing date coverage.
+- Blog/work `generateStaticParams` still trusts API slugs and is not covered for empty/nullish malformed payloads.
+- Public page/contact/introduction metadata remains less explicit than blog/work detail metadata.
+
+### Next recommended batch
+
+Proceed to `Frontend Batch 14 - Public Static Route and Date Display Reinforcement`. Cover `robots.ts`, blog/work `generateStaticParams` malformed slug filtering if frontend-owned, and public list/card date display fallbacks for invalid or missing dates through Vitest tests. Avoid public error-boundary UI, pagination/search UI, AI, WorkVideo upload, media validation, and browser-only tests unless a true browser-only behavior appears.

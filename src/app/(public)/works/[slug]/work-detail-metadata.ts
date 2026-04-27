@@ -1,9 +1,10 @@
 import type { WorkDetail } from '@/lib/api/works'
+import { buildYouTubeThumbnailUrl, normalizeYouTubeVideoId } from '@/lib/content/work-thumbnail-resolution'
 import { createPublicMetadata } from '@/lib/seo'
 
 function resolveYouTubeThumbnail(sourceKey: string) {
-    const videoId = sourceKey.trim()
-    return videoId ? `https://img.youtube.com/vi/${encodeURIComponent(videoId)}/hqdefault.jpg` : null
+    const videoId = normalizeYouTubeVideoId(sourceKey)
+    return videoId ? buildYouTubeThumbnailUrl(videoId) : null
 }
 
 function resolveWorkMetadataImage(work: WorkDetail | null) {
@@ -28,11 +29,16 @@ function resolveWorkMetadataDescription(work: WorkDetail | null) {
     return shareMessage ? shareMessage : work.excerpt
 }
 
+function buildWorkMetadataPath(slug: string) {
+    const cleanedSlug = slug.trim()
+    return cleanedSlug ? `/works/${encodeURIComponent(cleanedSlug)}` : '/works'
+}
+
 export function buildWorkDetailMetadata(work: WorkDetail) {
     return createPublicMetadata({
         title: work.title,
         description: resolveWorkMetadataDescription(work),
-        path: `/works/${work.slug}`,
+        path: buildWorkMetadataPath(work.slug),
         type: 'article',
         images: resolveWorkMetadataImage(work),
     })

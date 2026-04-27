@@ -61,6 +61,28 @@ describe('SEO metadata helpers', () => {
     expect(JSON.stringify(metadata)).not.toMatch(/\b(undefined|null)\b/i)
   })
 
+  it('keeps canonical paths same-origin and filters unsafe social images', () => {
+    const metadata = createPublicMetadata({
+      title: 'Metadata',
+      description: 'Description',
+      path: '//evil.example//works///sample',
+      images: [
+        'javascript:alert(1)',
+        '//evil.example/tracker.png',
+        '/media/thumb.jpg',
+        'https://cdn.example.com/thumb.jpg',
+      ],
+    })
+
+    expect(metadata.alternates?.canonical).toBe('/evil.example/works/sample')
+    expect(metadata.openGraph?.url).toBe('/evil.example/works/sample')
+    expect(metadata.openGraph?.images).toEqual([
+      '/media/thumb.jpg',
+      'https://cdn.example.com/thumb.jpg',
+    ])
+    expect(JSON.stringify(metadata)).not.toMatch(/javascript:|\/\/evil\.example/i)
+  })
+
   it('uses configured public site URL before falling back to localhost', () => {
     vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://example.com/')
     expect(getMetadataBaseUrl()).toBe('https://example.com')

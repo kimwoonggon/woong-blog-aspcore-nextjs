@@ -18,6 +18,19 @@ interface PageProps {
     params: Promise<{ slug: string }>
 }
 
+function safeDecodeSlug(slug: string) {
+    try {
+        return decodeURIComponent(slug)
+    } catch {
+        return null
+    }
+}
+
+function buildBlogMetadataPath(slug: string) {
+    const cleanedSlug = slug.trim()
+    return cleanedSlug ? `/blog/${encodeURIComponent(cleanedSlug)}` : '/blog'
+}
+
 export async function generateStaticParams() {
     const blogs = await fetchAllPublicBlogs().catch(() => [])
     return blogs.map((blog) => ({ slug: blog.slug }))
@@ -25,15 +38,17 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
     const { slug } = await params
-    const decodedSlug = decodeURIComponent(slug)
-    const blog = await fetchPublicBlogBySlug(decodedSlug)
+    const decodedSlug = safeDecodeSlug(slug)
+    if (!decodedSlug) return {}
+
+    const blog = await fetchPublicBlogBySlug(decodedSlug).catch(() => null)
 
     if (!blog) return {}
 
     return createPublicMetadata({
         title: blog.title,
         description: blog.excerpt,
-        path: `/blog/${blog.slug}`,
+        path: buildBlogMetadataPath(blog.slug),
         type: 'article',
     })
 }

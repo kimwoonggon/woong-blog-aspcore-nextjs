@@ -12,6 +12,33 @@ function normalizeMetadataText(value: string, fallback = '') {
   return normalized || fallback
 }
 
+function normalizeMetadataPath(value: string) {
+  const safePath = normalizeMetadataText(value, '/')
+  if (/^[a-z][a-z0-9+.-]*:/i.test(safePath)) {
+    return '/'
+  }
+
+  const prefixedPath = safePath.startsWith('/') ? safePath : `/${safePath}`
+  return prefixedPath.replace(/\/{2,}/g, '/') || '/'
+}
+
+function isSafeMetadataImage(value: string) {
+  if (value.startsWith('//')) {
+    return false
+  }
+
+  if (value.startsWith('/')) {
+    return true
+  }
+
+  try {
+    const url = new URL(value)
+    return url.protocol === 'http:' || url.protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
 export function getMetadataBaseUrl() {
   if (process.env.NEXT_PUBLIC_SITE_URL) {
     return trimTrailingSlash(process.env.NEXT_PUBLIC_SITE_URL)
@@ -39,12 +66,11 @@ export function createPublicMetadata({
 }): Metadata {
   const safeTitle = normalizeMetadataText(title, DEFAULT_AUTHOR)
   const safeDescription = normalizeMetadataText(description)
-  const safePath = normalizeMetadataText(path, '/')
-  const normalizedPath = safePath.startsWith('/') ? safePath : `/${safePath}`
+  const normalizedPath = normalizeMetadataPath(path)
   const imageList = Array.isArray(images)
-    ? images.map((image) => image?.trim()).filter((image): image is string => Boolean(image))
+    ? images.map((image) => image?.trim()).filter((image): image is string => Boolean(image) && isSafeMetadataImage(image))
     : images
-      ? [images.trim()].filter(Boolean)
+      ? [images.trim()].filter(isSafeMetadataImage)
       : undefined
 
   return {

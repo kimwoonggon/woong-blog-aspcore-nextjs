@@ -19,6 +19,14 @@ interface PageProps {
     params: Promise<{ slug: string }>
 }
 
+function safeDecodeSlug(slug: string) {
+    try {
+        return decodeURIComponent(slug)
+    } catch {
+        return null
+    }
+}
+
 export async function generateStaticParams() {
     const works = await fetchAllPublicWorks().catch(() => [])
     return works.map((work) => ({ slug: work.slug }))
@@ -26,8 +34,10 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
     const { slug } = await params
-    const decodedSlug = decodeURIComponent(slug)
-    const work = await fetchPublicWorkBySlug(decodedSlug)
+    const decodedSlug = safeDecodeSlug(slug)
+    if (!decodedSlug) return {}
+
+    const work = await fetchPublicWorkBySlug(decodedSlug).catch(() => null)
 
     if (!work) return {}
 
