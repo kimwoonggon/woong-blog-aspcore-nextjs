@@ -573,6 +573,11 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
             return
         }
 
+        if (!normalizeYouTubeVideoId(trimmed)) {
+            toast.error('Enter a valid YouTube URL or video ID.')
+            return
+        }
+
         if (isEditing) {
             void addYouTubeForExistingWork(trimmed)
             return
@@ -984,11 +989,17 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                 const processingPhaseTimer = window.setTimeout(() => {
                     setVideoUploadPhase('processing', draft.label)
                 }, 700)
-                const result = await addStagedUploadedVideo(workId, draft, currentVersion)
-                window.clearTimeout(processingPhaseTimer)
-                setVideoUploadPhase('complete', draft.label)
-                currentVersion = result.currentVersion
-                latestPayload = result.latestPayload
+                try {
+                    const result = await addStagedUploadedVideo(workId, draft, currentVersion)
+                    window.clearTimeout(processingPhaseTimer)
+                    setVideoUploadPhase('complete', draft.label)
+                    currentVersion = result.currentVersion
+                    latestPayload = result.latestPayload
+                } catch (error) {
+                    window.clearTimeout(processingPhaseTimer)
+                    setVideoUploadStatus(null)
+                    throw error
+                }
             }
         }
 

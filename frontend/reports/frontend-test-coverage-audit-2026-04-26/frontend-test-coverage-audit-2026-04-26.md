@@ -513,4 +513,140 @@ Validation environment note: local backend was available on `127.0.0.1:18080`, w
 
 ### Batch 3 readiness
 
-Full frontend validation is green again. Batch 3 can safely start from this branch and should target WorkVideo/upload and rich media failure paths only if that remains the next audit priority.
+Full frontend validation returned to green after the admin Work publish latency stabilization. Batch 3 then targeted WorkVideo/upload and rich media failure paths, and its implementation plus validation recovery are documented below.
+
+## Batch 3 - WorkVideo Upload and Rich Media Failure Reinforcement
+
+### Tests Added
+
+- `src/test/work-editor.test.tsx`
+  - invalid YouTube input is rejected without staging a video
+  - backend YouTube 400 validation errors remain visible without clearing editor state
+  - backend YouTube 409 duplicate conflicts remain visible without adding a video
+  - create-time staged HLS attach failure does not leave a false complete/processing state
+  - reorder conflict keeps original saved video order
+  - saved video delete failure keeps the video visible and retry can succeed
+  - empty and single-video saved lists keep stable reorder controls
+  - thumbnail regeneration failure shows a safe error without a false success
+- `src/test/work-video-player.test.tsx`
+  - HLS video data with no playback URL renders a safe unavailable state instead of playable controls
+
+### Production Files Changed
+
+- `src/components/admin/WorkEditor.tsx`
+  - validates YouTube URLs before staging or sending them
+  - clears transient staged HLS upload status when attach processing fails
+- `src/components/content/WorkVideoPlayer.tsx`
+  - renders a safe unavailable state when a non-YouTube video has no playback URL
+  - shows a safe playback error if HLS/native playback loading fails
+
+### Behavior Bugs Found
+
+- Invalid YouTube text could be staged for new works because only blank input was rejected client-side.
+- A staged create-time HLS failure could leave stale upload progress text after the attach request failed.
+- HLS video records without a playback URL rendered native video controls and a play overlay even though no playable source existed.
+
+### Initial Commands Run
+
+- `npm test -- --run src/test/work-editor.test.tsx src/test/work-video-player.test.tsx`
+  - Passed: 2 files / 39 tests
+- `npm run test:e2e -- tests/admin-work-video-create-flow.spec.ts tests/admin-work-video-edit-flow.spec.ts tests/admin-work-video-drag-order.spec.ts tests/admin-work-video-s3-compatible.spec.ts tests/public-work-videos.spec.ts`
+  - Failed before tests ran: Playwright web server timed out because frontend requests to backend `127.0.0.1:8080` were refused.
+- `./scripts/dev-up.sh`
+  - Failed after image build: Docker could not bind `127.0.0.1:8080` (`/forwards/expose returned unexpected status: 500`).
+- `docker compose -f docker-compose.dev.yml up -d`
+  - Failed with the same `127.0.0.1:8080` port-forward error.
+- `docker compose -f docker-compose.dev.yml down`
+  - Passed; removed the partially created dev stack.
+- `npm test -- --run`
+  - Failed in the full threaded suite: `src/test/work-detail-metadata.test.ts` timed out; this file passed in isolation.
+- `npm test -- --run src/test/work-detail-metadata.test.ts`
+  - Passed: 1 file / 2 tests
+- `npm run lint`
+  - Passed: 0 errors, 6 existing warnings
+- `npm run typecheck`
+  - Passed
+- `npm run build`
+  - Passed
+- `git diff --check`
+  - Passed
+
+### Remaining WorkVideo/Upload/Rich Media Gaps
+
+- The legacy `upload-url` / browser PUT / confirm path exists in `WorkEditor` internals but is not reachable from the current UI, which always stages HLS uploads. It was not tested through private implementation details.
+- No deterministic frontend-owned thumbnail generation retry UI exists beyond safe error surfacing; retry remains the same user action.
+
+### Next Recommended Batch
+
+Batch 4 can start after using the documented recovered validation startup path below, or after removing the stale Windows `8080` portproxy. Add one or two route-mocked browser tests around WorkVideo public playback and admin create/edit recovery flows. After the WorkVideo browser checks are covered, broaden into public media error-boundary coverage rather than adding more private component mocks.
+
+## Batch 3 Validation Baseline Recovery
+
+### Root Cause - Vitest Full-Suite Timeout
+
+`src/test/work-detail-metadata.test.ts` imported the full `/works/[slug]/page` server-component module only to exercise `generateMetadata`. The page import pulls in the public work detail UI tree and server-component dependencies, which passed in isolation but exceeded the 30 second per-test timeout under full threaded Vitest contention.
+
+The fix extracts metadata construction into `src/app/(public)/works/[slug]/work-detail-metadata.ts` and keeps `generateMetadata` delegating to that helper. The test now covers the same metadata priority behavior directly through the deterministic helper without importing the full page tree.
+
+### Root Cause - Docker Backend 8080 Failure
+
+The backend compose publish failed because Windows IP Helper (`svchost`) owns `0.0.0.0:8080` through a stale portproxy rule:
+
+- `0.0.0.0:8080 -> 172.25.159.91:8080`
+- no WSL listener was present on `:8080`
+- Docker Desktop therefore could not publish backend `127.0.0.1:8080`
+- removing the portproxy requires elevated Windows permissions
+
+`scripts/dev-up.sh` now fails fast with diagnostics when the default backend publish port is already listening on the Windows side. The recovered validation used the documented local override `BACKEND_PUBLISH_PORT=18080 ./scripts/dev-up.sh`, leaving the frontend/nginx URL at `http://127.0.0.1:3000` and avoiding backend/application behavior changes.
+
+### Files Changed
+
+- `scripts/dev-up.sh`
+- `src/app/(public)/works/[slug]/page.tsx`
+- `src/app/(public)/works/[slug]/work-detail-metadata.ts`
+- `src/test/work-detail-metadata.test.ts`
+- `frontend/reports/frontend-test-coverage-audit-2026-04-26/frontend-test-coverage-audit-2026-04-26.md`
+- `frontend/reports/frontend-batch-3-validation-baseline-recovery-2026-04-27/`
+- `frontend/reports/frontend-batch-3-workvideo-failure-reinforcement-2026-04-27/`
+- `todolist-2026-04-27.md`
+
+The earlier Batch 3 report path under `backend/reports/frontend-batch-3-workvideo-failure-reinforcement-2026-04-27/` is a misplaced frontend artifact. A canonical frontend copy now exists under `frontend/reports/frontend-batch-3-workvideo-failure-reinforcement-2026-04-27/`; the backend copy was retained as a legacy duplicate rather than deleted.
+
+### Commands Run
+
+- `npm test -- --run src/test/work-detail-metadata.test.ts`
+  - Passed: 1 file / 2 tests
+- `npm test -- --run`
+  - Passed: 63 files / 344 tests
+- `docker compose -f docker-compose.dev.yml down --remove-orphans`
+  - Passed
+- `docker compose -f docker-compose.dev.yml ps`
+  - Passed; no project services running before recovery
+- `./scripts/dev-up.sh`
+  - Failed fast by design because Windows side already listened on `127.0.0.1:8080`
+- `BACKEND_PUBLISH_PORT=18080 ./scripts/dev-up.sh`
+  - Passed; backend published as `127.0.0.1:18080->8080/tcp`
+- `npm test -- --run src/test/work-editor.test.tsx src/test/work-video-player.test.tsx`
+  - Passed: 2 files / 39 tests
+- `PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 npm run test:e2e -- tests/admin-work-video-create-flow.spec.ts tests/admin-work-video-edit-flow.spec.ts tests/admin-work-video-drag-order.spec.ts tests/admin-work-video-s3-compatible.spec.ts tests/public-work-videos.spec.ts`
+  - Passed: 10 tests
+- `PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 npm run test:e2e`
+  - Passed: 409 tests / 6 skipped
+- `npm run lint`
+  - Passed: 0 errors / 6 existing warnings
+- `npm run typecheck`
+  - Passed
+- `npm run build`
+  - Passed
+- `git diff --check`
+  - Passed
+- `docker compose -f docker-compose.dev.yml down --remove-orphans`
+  - Passed; stopped the alternate-port stack
+- `docker compose -f docker-compose.dev.yml ps`
+  - Passed; no project services remain running
+
+### Final Status
+
+Full frontend validation is green again under the documented alternate backend publish port recovery path. The default backend port `8080` remains blocked by the Windows portproxy until it is removed from an elevated PowerShell session, but this is now detected before compose spends time building images.
+
+Batch 4 can safely start using the recovered startup path, or after deleting the stale `8080` portproxy.

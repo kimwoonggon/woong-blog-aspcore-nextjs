@@ -57,6 +57,35 @@ fi
 mkdir -p "${POSTGRES_DATA_DIR}"
 export POSTGRES_DATA_DIR
 
+backend_bind_host="${BACKEND_BIND_HOST:-127.0.0.1}"
+backend_publish_port="${BACKEND_PUBLISH_PORT:-8080}"
+
+compose_backend_running="$("${DOCKER_BIN}" compose -f docker-compose.dev.yml ps --status running --services 2>/dev/null | grep -Fx 'backend' || true)"
+if [[ -z "${compose_backend_running}" && "${backend_bind_host}" == "127.0.0.1" ]]; then
+  if command -v powershell.exe >/dev/null 2>&1; then
+    if powershell.exe -NoProfile -Command "\$port = ${backend_publish_port}; if (Get-NetTCPConnection -LocalPort \$port -State Listen -ErrorAction SilentlyContinue) { exit 0 } exit 1" >/dev/null 2>&1; then
+      cat >&2 <<EOF
+Backend port ${backend_bind_host}:${backend_publish_port} is already listening on the Windows side.
+Docker Desktop cannot publish the backend until that listener is removed or a different BACKEND_PUBLISH_PORT is selected.
+
+Diagnostics:
+  powershell.exe -NoProfile -Command "Get-NetTCPConnection -LocalPort ${backend_publish_port} -State Listen"
+  powershell.exe -NoProfile -Command "netsh interface portproxy show all"
+
+If the listener is a stale Windows portproxy, remove it from an elevated PowerShell:
+  netsh interface portproxy delete v4tov4 listenaddress=0.0.0.0 listenport=${backend_publish_port}
+
+Temporary local workaround:
+  BACKEND_PUBLISH_PORT=18080 ./scripts/dev-up.sh
+EOF
+      exit 1
+    fi
+  elif ss -ltn "sport = :${backend_publish_port}" | grep -q LISTEN; then
+    echo "Backend port ${backend_bind_host}:${backend_publish_port} is already listening. Stop that process or set BACKEND_PUBLISH_PORT." >&2
+    exit 1
+  fi
+fi
+
 NGINX_DEFAULT_CONF="${NGINX_DEFAULT_CONF:-./nginx/local-https.conf}" \
 NGINX_BIND_HOST="${NGINX_BIND_HOST:-127.0.0.1}" \
 NGINX_HTTP_PORT="${NGINX_HTTP_PORT:-3000}" \

@@ -120,6 +120,25 @@ describe('WorkVideoPlayer', () => {
     expect(video).toHaveAttribute('disablePictureInPicture')
   })
 
+  it('shows a safe unavailable state for an HLS video that has no playable URL yet', () => {
+    const { container } = render(
+      <WorkVideoPlayer
+        video={{
+          id: 'video-processing',
+          sourceType: 'hls',
+          sourceKey: 'local:videos/work-1/video-processing/hls/master.m3u8',
+          playbackUrl: null,
+          mimeType: 'application/vnd.apple.mpegurl',
+          sortOrder: 0,
+        }}
+      />,
+    )
+
+    expect(container.querySelector('video')).toBeNull()
+    expect(screen.getByRole('status')).toHaveTextContent('Video is still processing or unavailable.')
+    expect(screen.queryByTestId('work-video-center-play')).not.toBeInTheDocument()
+  })
+
   it('uses native HLS playback when the browser supports it', async () => {
     vi.spyOn(HTMLMediaElement.prototype, 'canPlayType').mockReturnValue('probably')
 
