@@ -13,6 +13,7 @@ import { fetchWithCsrf } from '@/lib/api/auth'
 import { getBrowserApiBaseUrl } from '@/lib/api/browser'
 import { revalidatePublicPathsAfterMutation } from '@/lib/public-revalidation-client'
 import { getPagePublicRevalidationPaths } from '@/lib/public-revalidation-paths'
+import { isAcceptedImageFile } from '@/lib/file-validation'
 
 interface HomeContent {
     headline?: string
@@ -46,6 +47,12 @@ export function HomePageEditor({ pageId, pageTitle, initialContent }: HomePageEd
     async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
         const file = e.target.files?.[0]
         if (!file) return
+
+        if (!isAcceptedImageFile(file)) {
+            alert('Please upload an image file.')
+            e.target.value = ''
+            return
+        }
 
         setIsUploading(true)
 

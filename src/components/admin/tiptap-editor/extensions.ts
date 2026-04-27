@@ -34,7 +34,7 @@ export function createTiptapExtensions({
     CodeBlockLowlight.configure({
       lowlight,
       HTMLAttributes: {
-        class: 'rounded-md bg-gray-900 text-gray-100 p-4 font-mono my-4',
+        class: 'content-code-block',
       },
     }),
     ResizableImage.configure({

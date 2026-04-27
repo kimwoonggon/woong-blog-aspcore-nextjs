@@ -152,6 +152,25 @@ describe('InteractiveRenderer', () => {
     expect(screen.getByText(/sequenceDiagram/)).toBeInTheDocument()
   })
 
+  it('keeps block code, inline code, Korean text, and multiline whitespace in rendered prose', () => {
+    const { container } = render(
+      <InteractiveRenderer
+        html={'<p>Use <code>inlineValue</code> outside.</p><pre><code>const message = "안녕하세요";\nconsole.log(message);</code></pre>'}
+      />,
+    )
+
+    const prose = container.querySelector('.prose')
+    const pre = container.querySelector('pre')
+    const blockCode = container.querySelector('pre code')
+    const inlineCode = container.querySelector('p code')
+
+    expect(prose).toBeTruthy()
+    expect(pre).toBeTruthy()
+    expect(blockCode?.textContent).toBe('const message = "안녕하세요";\nconsole.log(message);')
+    expect(inlineCode?.textContent).toBe('inlineValue')
+    expect(inlineCode?.closest('pre')).toBeNull()
+  })
+
   it('keeps paragraph-wrapped mermaid fences as regular prose', () => {
     render(
       <InteractiveRenderer

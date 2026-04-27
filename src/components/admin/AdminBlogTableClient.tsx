@@ -83,6 +83,7 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
   const [query, setQuery] = useState(requestedQuery)
   const [pendingDelete, setPendingDelete] = useState<PendingBlogDelete | null>(null)
   const [page, setPage] = useState(requestedPage)
+  const deleteRestoreFocusRef = useRef<HTMLElement | null>(null)
   const isInteractive = useSyncExternalStore(subscribeToHydration, getHydratedSnapshot, getServerHydratedSnapshot)
   const [isPending, startTransition] = useTransition()
   const pageSize = useResponsivePageSize(12, 8, 6)
@@ -235,12 +236,25 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
     ))
   }
 
-  function requestDelete(ids: string[], title: string) {
+  function requestDelete(ids: string[], title: string, restoreFocusTarget?: HTMLElement | null) {
     if (ids.length === 0 || isPending) {
       return
     }
 
+    deleteRestoreFocusRef.current = restoreFocusTarget ?? null
     setPendingDelete({ ids, title })
+  }
+
+  function closeDeleteDialog({ restoreFocus = true } = {}) {
+    const focusTarget = deleteRestoreFocusRef.current
+    deleteRestoreFocusRef.current = null
+    setPendingDelete(null)
+
+    if (restoreFocus && focusTarget && document.contains(focusTarget)) {
+      queueMicrotask(() => {
+        focusTarget.focus()
+      })
+    }
   }
 
   function runDelete() {
@@ -257,7 +271,7 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
           await deleteManyAdminBlogs(pendingDelete.ids)
         }
         setSelectedIds((current) => current.filter((id) => !pendingDelete.ids.includes(id)))
-        setPendingDelete(null)
+        closeDeleteDialog({ restoreFocus: false })
         router.refresh()
       } catch (error) {
         toast.error(error instanceof Error ? error.message : 'Failed to delete blogs.')
@@ -308,7 +322,7 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
             <Button
               variant="destructive"
               size="sm"
-              onClick={() => requestDelete(effectiveSelectedIds, `${selectedCount} selected blog posts`)}
+              onClick={(event) => requestDelete(effectiveSelectedIds, `${selectedCount} selected blog posts`, event.currentTarget)}
               disabled={isPending}
             >
               <Trash2 className="mr-2 h-4 w-4" />
@@ -429,7 +443,7 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
                       className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
                       aria-label={`Delete post: ${blog.title}`}
                       title="Delete"
-                      onClick={() => requestDelete([blog.id], blog.title)}
+                      onClick={(event) => requestDelete([blog.id], blog.title, event.currentTarget)}
                       disabled={isPending}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -474,7 +488,7 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
           <ChevronRight className="h-4 w-4" aria-hidden="true" />
         </Button>
       </div>
-      <Dialog open={pendingDelete !== null} onOpenChange={(open) => !open && setPendingDelete(null)}>
+      <Dialog open={pendingDelete !== null} onOpenChange={(open) => !open && closeDeleteDialog()}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
@@ -485,7 +499,7 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setPendingDelete(null)} disabled={isPending}>
+            <Button variant="outline" onClick={() => closeDeleteDialog()} disabled={isPending}>
               Cancel
             </Button>
             <Button variant="destructive" onClick={runDelete} disabled={isPending}>

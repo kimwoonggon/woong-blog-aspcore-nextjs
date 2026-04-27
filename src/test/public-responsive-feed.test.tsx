@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { PublicResponsiveFeed } from '@/components/content/PublicResponsiveFeed'
 
@@ -239,6 +239,44 @@ describe('PublicResponsiveFeed', () => {
     expect(screen.queryByTestId('blog-load-sentinel')).not.toBeInTheDocument()
   })
 
+  it('renders public blog empty states without admin affordances or raw failure details', () => {
+    setViewportMode('desktop')
+
+    const { container } = render(
+      <PublicResponsiveFeed
+        kind="blog"
+        query=""
+        desktopPayload={{ items: [], page: 1, pageSize: 12, totalItems: 0, totalPages: 1 }}
+        mobileInitialPayload={{ items: [], page: 1, pageSize: 10, totalItems: 0, totalPages: 1 }}
+        desktopReturnTo={encodeURIComponent('/blog?page=1&pageSize=12')}
+      />,
+    )
+
+    expect(screen.getByText('No blog posts found.')).toBeInTheDocument()
+    expect(screen.queryByTestId('blog-card')).not.toBeInTheDocument()
+    expect(container.textContent).not.toMatch(/admin|edit|manage|관리|수정/i)
+    expect(container.textContent).not.toMatch(/stack|trace|exception|status 500|sqlstate|npgsql|woongblog\.api/i)
+  })
+
+  it('renders public works empty states without admin affordances or raw failure details', () => {
+    setViewportMode('desktop')
+
+    const { container } = render(
+      <PublicResponsiveFeed
+        kind="works"
+        query=""
+        desktopPayload={{ items: [], page: 1, pageSize: 8, totalItems: 0, totalPages: 1 }}
+        mobileInitialPayload={{ items: [], page: 1, pageSize: 10, totalItems: 0, totalPages: 1 }}
+        desktopReturnTo={encodeURIComponent('/works?page=1&pageSize=8')}
+      />,
+    )
+
+    expect(screen.getByText('No works found.')).toBeInTheDocument()
+    expect(screen.queryByTestId('work-card')).not.toBeInTheDocument()
+    expect(container.textContent).not.toMatch(/admin|edit|manage|관리|수정/i)
+    expect(container.textContent).not.toMatch(/stack|trace|exception|status 500|sqlstate|npgsql|woongblog\.api/i)
+  })
+
   it('serializes mobile Study restore state into history and session storage', async () => {
     setViewportMode('mobile')
 
@@ -269,10 +307,23 @@ describe('PublicResponsiveFeed', () => {
       />,
     )
 
-    mockIntersectionObservers.at(-1)?.trigger(true)
+    act(() => {
+      mockIntersectionObservers.at(-1)?.trigger(true)
+    })
 
     await waitFor(() => {
       expect(screen.getAllByTestId('blog-card')).toHaveLength(20)
+    })
+
+    await waitFor(() => {
+      const rawState = sessionStorage.getItem(studyRestoreStorageKey)
+      expect(rawState).toBeTruthy()
+
+      const parsedState = JSON.parse(rawState ?? '{}') as {
+        loadedPageCount: number
+      }
+
+      expect(parsedState.loadedPageCount).toBe(2)
     })
 
     fireEvent.scroll(window)

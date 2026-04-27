@@ -16,6 +16,7 @@ import { fetchWithCsrf } from '@/lib/api/auth'
 import { getBrowserApiBaseUrl } from '@/lib/api/browser'
 import { revalidatePublicPathsAfterMutation } from '@/lib/public-revalidation-client'
 import { getWorkPublicRevalidationPaths } from '@/lib/public-revalidation-paths'
+import { isAcceptedImageFile, isAcceptedMp4VideoFile } from '@/lib/file-validation'
 import type { WorkVideo } from '@/lib/api/works'
 import { extractVideoFrameThumbnailBlob, fetchRemoteImageBlob } from '@/lib/content/work-auto-thumbnail'
 import {
@@ -507,6 +508,12 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
         const file = event.target.files?.[0]
         if (!file) return
 
+        if (!isAcceptedImageFile(file)) {
+            toast.error(`Please upload an image file for ${target}.`)
+            event.target.value = ''
+            return
+        }
+
         setUploadingTarget(target)
 
         try {
@@ -595,6 +602,12 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
     function handleStageHlsVideoFile(event: React.ChangeEvent<HTMLInputElement>) {
         const file = event.target.files?.[0]
         if (!file) return
+
+        if (!isAcceptedMp4VideoFile(file)) {
+            toast.error('Please upload an MP4 video file.')
+            event.target.value = ''
+            return
+        }
 
         if (isEditing) {
             void uploadHlsVideoForExistingWork(file)

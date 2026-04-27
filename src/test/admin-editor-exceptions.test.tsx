@@ -68,6 +68,88 @@ describe('Admin editor exception handling', () => {
     })
   })
 
+  it('HomePageEditor rejects invalid image files before upload and preserves form state', async () => {
+    render(<HomePageEditor pageId="home-id" pageTitle="Home" initialContent={{}} />)
+
+    fireEvent.change(screen.getByLabelText(/Headline/i), {
+      target: { value: 'Draft headline' },
+    })
+    fireEvent.change(screen.getByLabelText(/Intro Text/i), {
+      target: { value: 'Draft intro' },
+    })
+
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement
+    const file = new File(['plain text'], 'avatar.txt', { type: 'text/plain' })
+    fireEvent.change(fileInput, { target: { files: [file] } })
+
+    await waitFor(() => {
+      expect(alert).toHaveBeenCalledWith('Please upload an image file.')
+    })
+    expect(mocks.fetchWithCsrf).not.toHaveBeenCalled()
+    expect(screen.getByLabelText(/Headline/i)).toHaveValue('Draft headline')
+    expect(screen.getByLabelText(/Intro Text/i)).toHaveValue('Draft intro')
+    expect(screen.queryByAltText('Profile')).not.toBeInTheDocument()
+  })
+
+  it('HomePageEditor preserves form state and shows no success when upload fails', async () => {
+    mocks.fetchWithCsrf.mockResolvedValue({
+      ok: false,
+      json: async () => ({ error: 'image upload failed' }),
+    } satisfies Partial<Response>)
+
+    render(<HomePageEditor pageId="home-id" pageTitle="Home" initialContent={{ profileImageUrl: '/media/original.png' }} />)
+
+    fireEvent.change(screen.getByLabelText(/Headline/i), {
+      target: { value: 'Keep headline' },
+    })
+    fireEvent.change(screen.getByLabelText(/Intro Text/i), {
+      target: { value: 'Keep intro' },
+    })
+
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement
+    const file = new File(['img'], 'avatar.png', { type: 'image/png' })
+    fireEvent.change(fileInput, { target: { files: [file] } })
+
+    await waitFor(() => {
+      expect(alert).toHaveBeenCalledWith('Failed to upload image: image upload failed')
+    })
+    expect(alert).not.toHaveBeenCalledWith('Home page saved successfully!')
+    expect(screen.getByLabelText(/Headline/i)).toHaveValue('Keep headline')
+    expect(screen.getByLabelText(/Intro Text/i)).toHaveValue('Keep intro')
+    expect(screen.getByAltText('Profile')).toBeInTheDocument()
+  })
+
+  it('HomePageEditor allows image upload retry after a failed upload', async () => {
+    mocks.fetchWithCsrf
+      .mockResolvedValueOnce({
+        ok: false,
+        json: async () => ({ error: 'image upload failed' }),
+      } satisfies Partial<Response>)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ url: '/media/public-assets/retry.png' }),
+      } satisfies Partial<Response>)
+
+    render(<HomePageEditor pageId="home-id" pageTitle="Home" initialContent={{}} />)
+
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement
+    fireEvent.change(fileInput, {
+      target: { files: [new File(['img'], 'first.png', { type: 'image/png' })] },
+    })
+
+    await waitFor(() => {
+      expect(alert).toHaveBeenCalledWith('Failed to upload image: image upload failed')
+    })
+
+    fireEvent.change(fileInput, {
+      target: { files: [new File(['img'], 'retry.png', { type: 'image/png' })] },
+    })
+
+    await waitFor(() => {
+      expect(screen.getByAltText('Profile')).toHaveAttribute('src', '/media/public-assets/retry.png')
+    })
+  })
+
   it('HomePageEditor ignores empty upload events', async () => {
     render(<HomePageEditor pageId="home-id" pageTitle="Home" initialContent={{}} />)
 

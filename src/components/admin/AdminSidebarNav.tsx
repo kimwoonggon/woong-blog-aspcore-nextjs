@@ -19,7 +19,7 @@ export function AdminSidebarNav() {
   const pathname = usePathname()
 
   return (
-    <nav className="flex flex-col gap-1">
+    <nav aria-label="Admin navigation" className="flex flex-col gap-1">
       {navItems.map(({ href, label, icon: Icon }) => {
         const isActive = pathname === href || (href !== '/admin/dashboard' && pathname.startsWith(href))
 

@@ -70,4 +70,27 @@ describe('public static page error and empty states', () => {
 
     await expect(IntroductionPage()).rejects.toThrow('Failed to load public page.')
   })
+
+  it('renders public home empty lists without anonymous admin affordances or raw failure details', async () => {
+    vi.doMock('@/lib/api/home', () => ({
+      fetchPublicHome: vi.fn(async () => ({
+        homePage: null,
+        featuredWorks: [],
+        recentPosts: [],
+      })),
+    }))
+    vi.doMock('@/components/content/LocalQaQueryBoundary', () => ({
+      LocalQaNoImageBoundary: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    }))
+
+    const HomePage = (await import('@/app/(public)/page')).default
+    const { container } = render(await HomePage())
+
+    expect(screen.getByText('No featured works found.')).toBeInTheDocument()
+    expect(screen.getByText('No recent posts found.')).toBeInTheDocument()
+    expect(screen.queryByTestId('featured-work-card')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('recent-post-card')).not.toBeInTheDocument()
+    expect(container.textContent).not.toMatch(/admin|edit|manage|관리|수정/i)
+    expect(container.textContent).not.toMatch(/stack|trace|exception|status 500|sqlstate|npgsql|woongblog\.api/i)
+  })
 })

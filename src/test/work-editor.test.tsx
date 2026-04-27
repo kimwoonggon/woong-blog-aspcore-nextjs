@@ -644,6 +644,106 @@ describe('WorkEditor', () => {
     expect(screen.queryByRole('img', { name: 'Work thumbnail preview' })).not.toBeInTheDocument()
   })
 
+  it('rejects invalid thumbnail files without clearing form state or uploading', async () => {
+    render(<WorkEditor />)
+
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Media validation work' } })
+    fireEvent.change(screen.getByLabelText('Category'), { target: { value: 'media' } })
+    addMetadataField('role', 'Lead')
+    changeContent('<p>Keep this body</p>')
+
+    const thumbnailInput = screen.getByLabelText('Thumbnail Image')
+    const file = new File(['plain text'], 'notes.txt', { type: 'text/plain' })
+    fireEvent.change(thumbnailInput, { target: { files: [file] } })
+
+    await waitFor(() => {
+      expect(mocks.toast.error).toHaveBeenCalledWith('Please upload an image file for thumbnail.')
+    })
+    expect(mocks.fetchWithCsrf).not.toHaveBeenCalled()
+    expect(mocks.toast.success).not.toHaveBeenCalled()
+    expect(screen.getByLabelText('Title')).toHaveValue('Media validation work')
+    expect(screen.getByLabelText('Category')).toHaveValue('media')
+    expect(screen.getAllByLabelText('Value')[0]).toHaveValue('Lead')
+    expect(screen.getByLabelText('Mock work content')).toHaveValue('<p>Keep this body</p>')
+    expect(screen.queryByRole('img', { name: 'Work thumbnail preview' })).not.toBeInTheDocument()
+  })
+
+  it('preserves title/body/metadata and shows no false success when thumbnail upload fails', async () => {
+    mocks.fetchWithCsrf.mockResolvedValueOnce(errorJson('storage offline', 500))
+
+    render(<WorkEditor />)
+
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Upload failure work' } })
+    addMetadataField('role', 'Owner')
+    changeContent('<p>Still here</p>')
+
+    const thumbnailInput = screen.getByLabelText('Thumbnail Image')
+    const file = new File(['thumb'], 'thumb.png', { type: 'image/png' })
+    fireEvent.change(thumbnailInput, { target: { files: [file] } })
+
+    await waitFor(() => {
+      expect(mocks.toast.error).toHaveBeenCalledWith('Failed to upload thumbnail: storage offline')
+    })
+    expect(mocks.toast.success).not.toHaveBeenCalled()
+    expect(screen.getByLabelText('Title')).toHaveValue('Upload failure work')
+    expect(screen.getAllByLabelText('Value')[0]).toHaveValue('Owner')
+    expect(screen.getByLabelText('Mock work content')).toHaveValue('<p>Still here</p>')
+    expect(screen.queryByRole('img', { name: 'Work thumbnail preview' })).not.toBeInTheDocument()
+  })
+
+  it('uploads an icon preview and lets the user remove it', async () => {
+    mocks.fetchWithCsrf.mockResolvedValueOnce(okJson({ id: 'icon-1', url: '/media/icon-1.png' }))
+
+    render(<WorkEditor />)
+
+    const iconInput = screen.getByLabelText('Icon Image')
+    const file = new File(['icon'], 'icon.png', { type: 'image/png' })
+    fireEvent.change(iconInput, { target: { files: [file] } })
+
+    await waitFor(() => {
+      expect(screen.getByRole('img', { name: 'Work icon preview' })).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /Remove Icon/i }))
+    expect(screen.queryByRole('img', { name: 'Work icon preview' })).not.toBeInTheDocument()
+  })
+
+  it('rejects invalid icon files without uploading or showing success', async () => {
+    render(<WorkEditor />)
+
+    const iconInput = screen.getByLabelText('Icon Image')
+    const file = new File(['plain text'], 'icon.txt', { type: 'text/plain' })
+    fireEvent.change(iconInput, { target: { files: [file] } })
+
+    await waitFor(() => {
+      expect(mocks.toast.error).toHaveBeenCalledWith('Please upload an image file for icon.')
+    })
+    expect(mocks.fetchWithCsrf).not.toHaveBeenCalled()
+    expect(mocks.toast.success).not.toHaveBeenCalled()
+    expect(screen.queryByRole('img', { name: 'Work icon preview' })).not.toBeInTheDocument()
+  })
+
+  it('rejects unsupported video files before staging or uploading', async () => {
+    render(<WorkEditor />)
+
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Video validation work' } })
+    changeContent('<p>Video draft body</p>')
+
+    const fileInput = screen.getByLabelText('Upload MP4 Video as HLS')
+    const file = new File(['mov'], 'demo.mov', { type: 'video/quicktime' })
+    fireEvent.change(fileInput, { target: { files: [file] } })
+
+    await waitFor(() => {
+      expect(mocks.toast.error).toHaveBeenCalledWith('Please upload an MP4 video file.')
+    })
+    expect(screen.queryByTestId('staged-video-card')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('work-video-upload-status')).not.toBeInTheDocument()
+    expect(mocks.fetchWithCsrf).not.toHaveBeenCalled()
+    expect(mocks.toast.success).not.toHaveBeenCalled()
+    expect(screen.getByLabelText('Title')).toHaveValue('Video validation work')
+    expect(screen.getByLabelText('Mock work content')).toHaveValue('<p>Video draft body</p>')
+  })
+
   it('adds a YouTube video for an existing work', async () => {
     mocks.fetchWithCsrf.mockResolvedValueOnce({
       ok: true,

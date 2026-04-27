@@ -964,3 +964,208 @@ Browser E2E note: no Playwright route-mocked browser test was added for this bat
 ### Next recommended batch
 
 Proceed to form/media validation: image/video/PDF type and size edge cases, preservation of user state on validation failures, and upload-field-specific error UI.
+
+## Batch 7 - Form and Media Validation Edge Case Reinforcement
+
+Date: 2026-04-27.
+
+Scope: frontend form/media validation edge cases, deterministic component tests, and minimal frontend validation fixes. Backend behavior, AI tests, public API error-boundary tests, external storage calls, real large uploads, and broad visual regression were left out of scope.
+
+### Tests added or reinforced
+
+- `src/test/file-validation.test.ts`
+  - New table-driven helper coverage for image, PDF, and MP4 validation.
+  - Covers type, extension, empty file, unknown MIME, and uppercase extension cases.
+- `src/test/resume-editor.test.tsx`
+  - Non-PDF and PDF-like invalid MIME/extension files are rejected before upload.
+  - Empty PDF files are rejected before upload.
+  - Binary upload failure does not show false success and preserves the empty resume state.
+  - Reselect/retry after a failed resume upload can succeed.
+- `src/test/tiptap-editor.test.tsx`
+  - Dropped non-image files are ignored without upload.
+  - Inline image upload API failure preserves editor content and inserts no broken image.
+  - Retry after a failed inline image upload can insert a valid image.
+- `src/test/work-editor.test.tsx`
+  - Invalid thumbnail and icon files are rejected before upload and do not show false success.
+  - Thumbnail upload failure preserves title/body/metadata state and does not insert a preview.
+  - Icon upload/remove behavior is covered.
+  - Unsupported video files are rejected before staging/upload, with no processing/success state.
+- `src/test/admin-editor-exceptions.test.tsx`
+  - Home image invalid file rejection preserves headline/intro state.
+  - Home image upload failure preserves form state and does not show save success.
+  - Home image upload retry can succeed after a failed upload.
+
+### Production files changed
+
+- `src/lib/file-validation.ts`
+  - Added shared deterministic validation helpers for image, PDF, and MP4 file selections.
+- `src/components/admin/ResumeEditor.tsx`
+  - Uses shared PDF validation and rejects empty PDFs with a specific message.
+- `src/components/admin/HomePageEditor.tsx`
+  - Rejects non-image files before upload and clears the file input for safe reselect.
+- `src/components/admin/WorkEditor.tsx`
+  - Rejects non-image thumbnail/icon files before upload.
+  - Rejects non-MP4 HLS video selections before staging or upload.
+
+### Behavior bugs found
+
+- Home image upload accepted invalid non-image files if the browser `accept="image/*"` hint was bypassed.
+- Work thumbnail/icon upload accepted invalid non-image files if `accept="image/*"` was bypassed.
+- Work HLS video staging accepted unsupported non-MP4 files if `accept="video/mp4,.mp4"` was bypassed.
+- Resume validation accepted PDF-like files when either MIME or extension matched; the frontend now requires a `.pdf` extension plus either `application/pdf` or unknown MIME, and rejects empty files.
+
+### Commands run
+
+| Command | Result | Notes |
+| --- | --- | --- |
+| `npx skills find react file upload validation testing` | Passed | Results were low-install external skills; no new skill was installed. |
+| `npm test -- --run src/test/file-validation.test.ts src/test/resume-editor.test.tsx src/test/tiptap-editor.test.tsx src/test/work-editor.test.tsx src/test/admin-editor-exceptions.test.tsx` | Failed before fix, passed after fix | RED failures showed missing shared helper and invalid files reaching upload paths. Final focused slice passed: 5 files, 87 tests. |
+| `npm test -- --run src/test/resume-editor.test.tsx` | Passed | 1 file, 13 tests. |
+| `npm test -- --run src/test/tiptap-editor.test.tsx` | Passed | 1 file, 11 tests. |
+| `npm test -- --run src/test/work-editor.test.tsx` | Passed | 1 file, 32 tests. |
+| `npm test -- --run src/test/file-validation.test.ts src/test/admin-editor-exceptions.test.tsx` | Passed | 2 files, 31 tests. |
+| `npm test -- --run` | Passed | Final run: 67 files, 426 tests. Known Pact V3 warnings and jsdom navigation warning appeared. |
+| `npm run lint` | Passed | 0 errors, 6 existing warnings after moving Batch 7 backups out of the repo to avoid linting copied test fixtures. |
+| `npm run typecheck` | Passed | `tsc --noEmit` completed successfully. |
+| `npm run build` | Passed | Next.js 16.1.6 production build completed successfully with Turbopack. |
+| `git diff --check` | Passed | No whitespace errors. |
+
+Browser E2E note: no Playwright upload specs were changed or run for this batch. The component tests deterministically cover frontend-owned upload validation and failure state preservation without live storage or local seeded data.
+
+### Remaining form/media validation gaps
+
+- No frontend-owned maximum file size limit was found for images, videos, or PDFs; oversized-file coverage remains deferred until a product limit is defined.
+- Browser E2E still covers representative upload happy/failure paths, but this batch did not add new browser upload validation cases because component coverage was deterministic and sufficient.
+- Upload progress/retry UX for direct video upload target flows remains a WorkVideo-specific deeper path outside this form/media validation slice.
+
+### Next recommended batch
+
+Proceed to loading and empty states: route-level loading skeleton tests and deterministic empty list/member/dashboard states.
+
+## Batch 8 - Loading and Empty State Reinforcement
+
+Date: 2026-04-27.
+
+Scope: frontend loading and empty-state reinforcement for deterministic route-level skeletons, admin dashboard/member/list empty states, and public list/home empty states. Backend behavior, live external services, real storage, AI, WorkVideo upload, media validation, and broad visual regression were left out of scope.
+
+### Tests added or reinforced
+
+- `src/test/route-loading-states.test.tsx`
+  - Added direct render coverage for public segment loading, public blog detail loading, admin segment loading, and admin dashboard loading.
+  - Loading skeletons assert a pulse marker and no stack trace, raw API detail, or backend exception text.
+  - Public loading skeletons additionally assert no anonymous admin/edit/manage affordance text.
+- `src/test/public-responsive-feed.test.tsx`
+  - Public blog empty list renders `No blog posts found.` with no cards, anonymous admin affordances, stack traces, or raw API details.
+  - Public work empty list renders `No works found.` with no cards, anonymous admin affordances, stack traces, or raw API details.
+  - Tightened Study mobile restore-state test determinism by waiting for the page-2 persisted state before asserting scroll restoration storage.
+- `src/test/public-page-error-states.test.tsx`
+  - Public home empty featured-work and recent-post lists render safe empty messages without anonymous admin affordances or raw failure details.
+- `src/test/admin-page-success-states.test.tsx`
+  - Dashboard zero stats render as valid `0` cards and do not fall into dashboard error panels.
+  - Dashboard empty works/blog collections render existing empty messages.
+  - Admin blog, work, and member empty tables render empty messages without row leakage or raw failure details.
+
+### Production files changed
+
+- None. No production loading or empty-state behavior bug was exposed by the new tests.
+
+### Behavior bugs found
+
+- No production behavior bugs were found.
+- A test harness timing issue was found in the existing `PublicResponsiveFeed` mobile Study restore-state test. Root cause: the test could read session storage after the page-1 save effect but before the page-2 save effect had replaced it during full-suite execution. The test now waits for the page-2 persisted state before asserting the scroll snapshot.
+
+### Commands run
+
+| Command | Result | Notes |
+| --- | --- | --- |
+| `npx skills find "nextjs testing loading empty states"` | Passed | Results were low-install external skills; no new skill was installed. |
+| `npm test -- --run src/test/route-loading-states.test.tsx src/test/admin-page-success-states.test.tsx src/test/public-responsive-feed.test.tsx src/test/public-page-error-states.test.tsx` | Passed after test isolation fix | Focused slice passed with 4 files and 34 tests. An earlier run failed because a previous dashboard collection mock was still active for the new zero-stat test. |
+| `npm test -- --run src/test/public-responsive-feed.test.tsx` | Passed | Rerun after restoring deterministic Study restore-state timing; 1 file, 12 tests. |
+| `npm test -- --run` | Failed once, then passed | First full run found the Study restore-state timing gap. Final run passed with 68 files and 434 tests. Known Pact V3 warnings and jsdom navigation warning appeared. |
+| `npm run lint` | Passed | 0 errors, 6 existing warnings. |
+| `npm run typecheck` | Passed | `tsc --noEmit` completed successfully. |
+| `npm run build` | Passed | Next.js 16.1.6 production build completed successfully with Turbopack. |
+
+Browser E2E note: no Playwright specs were changed or run. The requested surfaces were covered deterministically through component/server-render tests without live data, local-QA flags, or browser-only behavior.
+
+### Remaining loading and empty-state gaps
+
+- Browser-level Suspense transition timing for route loading remains covered indirectly by existing E2E/loading specs rather than new Batch 8 browser tests.
+- Public initial server-component empty states still rely on mocked component/server tests; there is no server-side API mocking harness for browser-level initial public list fetches.
+- Admin nested route loading files beyond the current admin segment/dashboard loading files do not exist, so no additional route loading tests were added.
+- Accessibility scanning of all loading/empty states remains out of scope.
+
+### Next recommended batch
+
+Proceed to focused accessibility and keyboard-state reinforcement for empty/loading/error states and critical admin/public navigation, while continuing to avoid AI, WorkVideo upload, and media validation unless explicitly requested.
+
+## Batch 9 - Accessibility and Keyboard State Reinforcement
+
+Date: 2026-04-27.
+
+Scope: frontend accessibility and keyboard-state reinforcement for public/admin navigation, delete dialogs, deterministic AI dialog focus, admin table semantics, and loading/error state accessibility. Backend behavior, live external services, live AI behavior, WorkVideo upload behavior, media validation, public API error-state logic, and broad visual regression infrastructure were left out of scope.
+
+### Tests added or reinforced
+
+- `tests/public-keyboard-accessibility.spec.ts`
+  - Public routes expose a single focusable `main#main-content` landmark for skip-link targets.
+  - Mobile public menu opens by keyboard, exposes a named dialog, keeps focus inside the sheet, closes with Escape, restores focus to the menu trigger, and supports keyboard navigation to public routes.
+- `tests/ui-admin-keyboard-accessibility.spec.ts`
+  - Mobile admin navigation exposes `Admin navigation`, marks the active page with `aria-current="page"`, and supports sequential keyboard focus through admin links.
+  - AI content dialog opens and closes by keyboard with mocked runtime config only; no live AI POST route is invoked.
+- `tests/ui-admin-delete-dialog.spec.ts`
+  - Blog delete dialog supports keyboard focus, Escape close, cancel without DELETE, confirm with DELETE, and row removal after successful confirmation.
+- `src/test/admin-page-success-states.test.tsx`
+  - Populated admin blog/work tables assert table semantics, row checkboxes, and accessible action names for view/edit/delete controls.
+  - Empty admin blog/work/member tables assert table semantics, empty cells, correct colspans, no data row leakage, and no raw error detail leakage.
+- `src/test/route-loading-states.test.tsx`
+  - Loading skeletons now additionally assert no inappropriate `status` or `alert` roles while retaining no raw error detail leakage.
+- `src/test/navbar-mobile-nav.test.tsx`
+  - Existing sheet mock now includes `SheetTitle` and `SheetDescription` so unit tests cover the updated public menu structure.
+
+### Production files changed
+
+- `src/components/layout/Navbar.tsx`
+  - Added sr-only `SheetTitle` and `SheetDescription` to give the public mobile sheet a programmatic dialog name.
+  - Restores keyboard focus to the public menu trigger when the sheet closes by Escape.
+- `src/components/admin/AdminSidebarNav.tsx`
+  - Added `aria-label="Admin navigation"` to the admin sidebar nav.
+- `src/components/admin/AdminBlogTableClient.tsx`
+  - Restores focus to the delete trigger when the blog delete dialog closes by Escape or Cancel.
+- `src/components/admin/AdminWorksTableClient.tsx`
+  - Mirrors the delete-dialog focus restoration behavior for work rows and bulk delete triggers.
+
+### Behavior bugs found
+
+- The public mobile sheet opened as an unnamed dialog, making it harder for assistive technology users to identify the navigation sheet.
+- The admin sidebar navigation was exposed as an unlabeled navigation landmark.
+- Blog/work delete dialogs were controlled manually and did not restore focus to the delete trigger after Escape or Cancel.
+- A unit-test harness mock for `@/components/ui/sheet` needed to include `SheetTitle` and `SheetDescription` after the production sheet accessibility fix.
+
+### Commands run
+
+| Command | Result | Notes |
+| --- | --- | --- |
+| `npx skills find playwright accessibility` | Passed | Results were low-install external skills; no new skill was installed. |
+| `npm test -- --run src/test/admin-page-success-states.test.tsx src/test/route-loading-states.test.tsx src/test/public-detail-boundary.test.tsx` | Passed | Focused component slice passed before and after production fixes: 3 files, 25 tests. |
+| `PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 npm run test:e2e -- tests/public-keyboard-accessibility.spec.ts tests/ui-admin-keyboard-accessibility.spec.ts tests/ui-admin-delete-dialog.spec.ts` | Failed before fixes, then passed | RED run exposed missing public sheet name, missing admin nav name, and delete-dialog focus restoration. Final run passed with 7 tests, 0 latency budget failures, and 0 warnings. |
+| `BACKEND_PUBLISH_PORT=18080 ./scripts/dev-up.sh` | Passed | Used to run the Docker dev stack bound to `127.0.0.1` and rebuild the frontend container before focused Playwright validation. |
+| `npm test -- --run src/test/navbar-mobile-nav.test.tsx` | Passed | Focused rerun after updating the sheet mock: 1 file, 5 tests. |
+| `npm test -- --run` | Failed once, then passed | First full run failed only because the sheet mock lacked `SheetTitle`/`SheetDescription`. Final run passed with 68 files and 434 tests. Known Pact V3 warnings and jsdom navigation warning appeared. |
+| `npm run lint` | Passed | 0 errors, 6 existing warnings. |
+| `npm run typecheck` | Passed | `tsc --noEmit` completed successfully. |
+| `npm run build` | Passed | Next.js 16.1.6 production build completed successfully with Turbopack. |
+| `git diff --check` | Passed | No whitespace errors. |
+
+Full E2E note: a full Playwright suite was not run because this batch added focused specs only and did not modify the E2E harness. The changed browser surfaces were covered by the focused Playwright specs against the Docker dev stack.
+
+### Remaining accessibility and keyboard gaps
+
+- Formal axe-style full-app accessibility scanning remains out of scope.
+- WorkVideo controls were not included because the user explicitly excluded broadening into WorkVideo upload behavior, and existing video-control coverage already exercises the critical public player surface.
+- Admin form-level error announcement coverage remains a candidate for a later form-focused accessibility slice.
+- Public initial server-component empty-state browser mocking remains deferred until a deterministic server-side API mocking harness exists.
+
+### Next recommended batch
+
+Proceed to pagination/search failure states: failed load-more, stale restore state, admin list failure, and search empty-result tests, while keeping browser coverage route-mocked and deterministic.

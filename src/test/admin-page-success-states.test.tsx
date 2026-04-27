@@ -46,6 +46,35 @@ describe('admin page success and not-found states', () => {
     expect(screen.getByTestId('dashboard-collections')).toHaveTextContent('1:1')
   }, 15000)
 
+  it('renders dashboard zero stats and empty collections without treating them as errors', async () => {
+    vi.doMock('@/components/admin/AdminDashboardCollections', async () => (
+      await vi.importActual<typeof import('@/components/admin/AdminDashboardCollections')>('@/components/admin/AdminDashboardCollections')
+    ))
+    vi.doMock('@/lib/api/admin-dashboard', () => ({
+      fetchAdminDashboardSummary: vi.fn(async () => ({
+        worksCount: 0,
+        blogsCount: 0,
+        viewsCount: 0,
+      })),
+    }))
+    vi.doMock('@/lib/api/works', () => ({
+      fetchAdminWorks: vi.fn(async () => []),
+    }))
+    vi.doMock('@/lib/api/blogs', () => ({
+      fetchAdminBlogs: vi.fn(async () => []),
+    }))
+
+    const DashboardPage = (await import('@/app/admin/dashboard/page')).default
+    const { container } = render(await DashboardPage({}))
+
+    expect(screen.getAllByText('0')).toHaveLength(3)
+    expect(screen.getByText('No works found.')).toBeInTheDocument()
+    expect(screen.getByText('No blog posts found.')).toBeInTheDocument()
+    expect(screen.queryByText('Dashboard data is unavailable')).not.toBeInTheDocument()
+    expect(screen.queryByText('Dashboard content lists are unavailable')).not.toBeInTheDocument()
+    expect(container.textContent).not.toMatch(/stack|trace|exception|status 500|sqlstate|npgsql|woongblog\.api/i)
+  }, 15000)
+
   it('renders the dashboard list error when content collections fail to load', async () => {
     vi.doMock('@/lib/api/admin-dashboard', () => ({
       fetchAdminDashboardSummary: vi.fn(async () => ({
@@ -95,6 +124,12 @@ describe('admin page success and not-found states', () => {
     expect(screen.getByText('Published')).toBeInTheDocument()
     expect(screen.getByText('tag-a')).toBeInTheDocument()
     expect(screen.getByText('tag-b')).toBeInTheDocument()
+    expect(screen.getByRole('table')).toBeInTheDocument()
+    expect(screen.getByRole('checkbox', { name: 'Select all blogs' })).toBeInTheDocument()
+    expect(screen.getByRole('checkbox', { name: 'Select First blog' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'View public post: First blog' })).toHaveAttribute('href', '/blog/first-blog')
+    expect(screen.getByRole('link', { name: 'Edit post: First blog' })).toHaveAttribute('href', expect.stringContaining('/admin/blog/blog-1'))
+    expect(screen.getByRole('button', { name: 'Delete post: First blog' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Batch AI Fix/i })).toBeInTheDocument()
   }, 30000)
 
@@ -125,6 +160,27 @@ describe('admin page success and not-found states', () => {
     expect(screen.getByText('—')).toBeInTheDocument()
   }, 30000)
 
+  it('renders an empty-state admin blog table when no blog posts exist', async () => {
+    vi.doMock('@/lib/api/blogs', () => ({
+      fetchAdminBlogs: vi.fn(async () => []),
+    }))
+    vi.doMock('@/components/admin/DeleteButton', () => ({
+      DeleteButton: () => <button type="button">Delete</button>,
+    }))
+    vi.doMock('@/app/admin/blog/actions', () => ({
+      deleteBlog: vi.fn(),
+    }))
+
+    const AdminBlogPage = (await import('@/app/admin/blog/page')).default
+    const { container } = render(await AdminBlogPage())
+
+    expect(screen.getByText('No blog posts found.')).toBeInTheDocument()
+    expect(screen.getByRole('table')).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: 'No blog posts found.' })).toHaveAttribute('colspan', '6')
+    expect(screen.queryByTestId('admin-blog-row')).not.toBeInTheDocument()
+    expect(container.textContent).not.toMatch(/stack|trace|exception|status 500|sqlstate|npgsql|woongblog\.api/i)
+  }, 30000)
+
   it('renders a populated admin members table when members load successfully', async () => {
     vi.doMock('@/lib/api/admin-members', () => ({
       fetchAdminMembers: vi.fn(async () => [{
@@ -148,6 +204,21 @@ describe('admin page success and not-found states', () => {
     expect(screen.getByText('1')).toBeInTheDocument()
   }, 15000)
 
+  it('renders an empty-state admin members table when no members exist', async () => {
+    vi.doMock('@/lib/api/admin-members', () => ({
+      fetchAdminMembers: vi.fn(async () => []),
+    }))
+
+    const AdminMembersPage = (await import('@/app/admin/members/page')).default
+    const { container } = render(await AdminMembersPage())
+
+    expect(screen.getByText('No members found.')).toBeInTheDocument()
+    expect(screen.getByRole('table')).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: 'No members found.' })).toHaveAttribute('colspan', '6')
+    expect(screen.queryByTestId('member-row')).not.toBeInTheDocument()
+    expect(container.textContent).not.toMatch(/stack|trace|exception|status 500|sqlstate|npgsql|woongblog\.api/i)
+  }, 15000)
+
   it('renders an empty-state admin works table when no works exist', async () => {
     vi.doMock('@/lib/api/works', () => ({
       fetchAdminWorks: vi.fn(async () => []),
@@ -160,9 +231,13 @@ describe('admin page success and not-found states', () => {
     }))
 
     const AdminWorksPage = (await import('@/app/admin/works/page')).default
-    render(await AdminWorksPage())
+    const { container } = render(await AdminWorksPage())
 
     expect(screen.getByText('No works found.')).toBeInTheDocument()
+    expect(screen.getByRole('table')).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: 'No works found.' })).toHaveAttribute('colspan', '7')
+    expect(screen.queryByTestId('admin-work-row')).not.toBeInTheDocument()
+    expect(container.textContent).not.toMatch(/stack|trace|exception|status 500|sqlstate|npgsql|woongblog\.api/i)
   })
 
   it('renders populated admin works rows for published and draft items', async () => {
@@ -205,6 +280,12 @@ describe('admin page success and not-found states', () => {
     expect(screen.getByText('Published')).toBeInTheDocument()
     expect(screen.getByText('Draft')).toBeInTheDocument()
     expect(screen.getByText('—')).toBeInTheDocument()
+    expect(screen.getByRole('table')).toBeInTheDocument()
+    expect(screen.getByRole('checkbox', { name: 'Select all works' })).toBeInTheDocument()
+    expect(screen.getByRole('checkbox', { name: 'Select Published work' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'View public work: Published work' })).toHaveAttribute('href', '/works/published-work')
+    expect(screen.getByRole('link', { name: 'Edit work: Published work' })).toHaveAttribute('href', expect.stringContaining('/admin/works/work-1'))
+    expect(screen.getByRole('button', { name: 'Delete work: Published work' })).toBeInTheDocument()
   })
 
   it('renders all admin page editors when pages and settings load', async () => {
