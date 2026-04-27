@@ -1336,3 +1336,63 @@ Browser E2E note: no Playwright specs were changed or run. The requested helper 
 ### Next recommended batch
 
 Proceed to a focused frontend security/sanitization or sitemap/metadata helper batch. Based on current audit gaps, a practical next batch is `Frontend Batch 12 - Sanitization and Public Indexing Helper Reinforcement`, covering HTML sanitizer edge cases, sitemap date fallbacks, metadata path/image normalization, and public cache/revalidation safety without touching AI, WorkVideo upload, media validation, or browser UI flows.
+
+## Batch 12 - Sanitization and Public Indexing Helper Reinforcement
+
+Date: 2026-04-28.
+
+Scope: frontend sanitizer and public indexing helper reinforcement for HTML sanitizer URL/attribute safety and public sitemap malformed date/slug behavior. Backend behavior, API contracts, AI, WorkVideo upload, media validation, dark mode, public API error-boundary UI, pagination/search UI, live services, real storage, seeded backend data, and browser-only tests were left out of scope.
+
+### Tests added or reinforced
+
+- `src/test/html-sanitizer.test.ts`
+  - DOM sanitizer removes event handlers and protocol-relative `href`/`src` values while preserving safe relative links, safe data image URLs, and `_blank` rel hardening.
+  - Server fallback strips unquoted event handlers, unquoted `javascript:` URL attributes, protocol-relative media URLs, and script blocks without leaking raw unsafe text.
+- `src/test/sitemap.test.ts`
+  - Public sitemap falls back to the generated current date when public content `publishedAt` is invalid or missing.
+  - Valid public content dates remain preserved.
+  - Empty/nullish public content slugs are omitted.
+  - Korean/Unicode and unsafe-looking slugs are percent-encoded instead of emitted raw.
+
+### Production files changed
+
+- `src/lib/content/html-sanitizer.ts`
+  - Protocol-relative URLs such as `//evil.example/path` are no longer treated as safe relative URLs.
+  - Server fallback removes unquoted event handler attributes and unsafe `href`/`src` values in addition to the existing quoted cases.
+- `src/app/sitemap.ts`
+  - Sitemap entries skip nullish or blank public content slugs instead of creating `/undefined`, `/null`, or blank detail-segment URLs.
+  - Invalid public content dates fall back to the sitemap generation timestamp instead of emitting `Invalid Date`.
+
+### Behavior bugs found
+
+- Protocol-relative `href` and `src` values were accepted by the DOM sanitizer because any string starting with `/` was treated as relative.
+- Server-side sanitizer fallback could leak unquoted event handlers and unquoted `javascript:` URL attributes.
+- Server-side sanitizer fallback could preserve protocol-relative image/link URLs.
+- Sitemap generation could emit `Invalid Date` for malformed `publishedAt` values.
+- Sitemap generation could emit public detail URLs ending in `/undefined`, `/null`, or a blank detail segment when API payloads were malformed.
+
+### Commands run
+
+| Command | Result | Notes |
+| --- | --- | --- |
+| `npx skills find nextjs security testing` | Passed | Results included external security/Next.js skills; no new skill was installed. |
+| `npm test -- --run src/test/html-sanitizer.test.ts src/test/sitemap.test.ts` | Failed before fixes, then passed | Final focused Batch 12 slice passed with 2 files and 4 tests. |
+| `npm test -- --run src/test/pact/public-api-consumer.pact.test.ts` | Passed | Rerun after one transient full-suite Pact work-list failure; focused Pact slice passed with 1 file and 6 tests. |
+| `npm test -- --run` | Passed | Final run passed with 71 files and 486 tests. Known Pact V3 warnings and jsdom navigation warning appeared. |
+| `npm run lint` | Passed | 0 errors, 6 existing warnings. |
+| `npm run typecheck` | Passed | `tsc --noEmit` completed successfully. |
+| `npm run build` | Passed | Next.js production build completed successfully. |
+| `git diff --check` | Passed | No whitespace errors. |
+
+Browser E2E note: no Playwright specs were changed or run. The requested sanitizer and sitemap behavior was covered deterministically through Vitest helper/server-module tests.
+
+### Remaining sanitization and indexing gaps
+
+- Public `generateMetadata` branches for blog/work API failure, null detail, blank social images, malformed route params, and canonical/path normalization still need focused server module coverage.
+- Robots metadata remains simple and low-risk but is not directly unit-tested.
+- The sanitizer server fallback remains a constrained regex fallback rather than a full DOM parser; future expansion should stay focused on observable unsafe output.
+- Public list/card date formatting remains component-local and is not yet covered as a shared date helper.
+
+### Next recommended batch
+
+Proceed to `Frontend Batch 13 - Public Metadata and Server Route Fallback Reinforcement`. Cover public blog/work `generateMetadata` fallback behavior, notFound/null-detail metadata, social image normalization, path/canonical safety, and no `undefined`/`null` user-facing metadata through Vitest server module tests. Avoid public error-boundary UI, pagination/search UI, AI, WorkVideo upload, media validation, and browser-only tests unless a true browser-only behavior appears.
