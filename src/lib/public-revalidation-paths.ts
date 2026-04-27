@@ -15,6 +15,17 @@ function uniquePaths(paths: Array<string | null>) {
   return [...new Set(paths.filter((path): path is string => Boolean(path)))]
 }
 
+function safeDecodeDetailSegment(value: string) {
+  try {
+    const decoded = decodeURIComponent(value)
+    return decoded && !decoded.includes('/') && !decoded.includes('?') && !decoded.includes('#')
+      ? decoded
+      : null
+  } catch {
+    return null
+  }
+}
+
 export function getBlogPublicRevalidationPaths(nextSlug?: string | null, previousSlug?: string | null) {
   return uniquePaths([
     ROOT_PATH,
@@ -60,8 +71,14 @@ export function normalizePublicRevalidationPaths(paths: string[]) {
       return path
     }
 
-    if (/^\/blog\/[^/?#]+$/.test(path) || /^\/works\/[^/?#]+$/.test(path)) {
-      return path
+    const blogMatch = /^\/blog\/([^/?#]+)$/.exec(path)
+    if (blogMatch) {
+      return safeDecodeDetailSegment(blogMatch[1]) ? path : null
+    }
+
+    const workMatch = /^\/works\/([^/?#]+)$/.exec(path)
+    if (workMatch) {
+      return safeDecodeDetailSegment(workMatch[1]) ? path : null
     }
 
     return null
@@ -88,7 +105,10 @@ export function getPublicRevalidationTagsForPaths(paths: string[]) {
 
     if (path.startsWith('/blog/')) {
       tags.add(PUBLIC_CONTENT_TAGS.blogs)
-      tags.add(PUBLIC_CONTENT_TAGS.blog(decodeURIComponent(path.slice('/blog/'.length))))
+      const slug = safeDecodeDetailSegment(path.slice('/blog/'.length))
+      if (slug) {
+        tags.add(PUBLIC_CONTENT_TAGS.blog(slug))
+      }
       continue
     }
 
@@ -100,7 +120,10 @@ export function getPublicRevalidationTagsForPaths(paths: string[]) {
 
     if (path.startsWith('/works/')) {
       tags.add(PUBLIC_CONTENT_TAGS.works)
-      tags.add(PUBLIC_CONTENT_TAGS.work(decodeURIComponent(path.slice('/works/'.length))))
+      const slug = safeDecodeDetailSegment(path.slice('/works/'.length))
+      if (slug) {
+        tags.add(PUBLIC_CONTENT_TAGS.work(slug))
+      }
       continue
     }
 

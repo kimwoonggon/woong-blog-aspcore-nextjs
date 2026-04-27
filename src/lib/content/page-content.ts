@@ -23,7 +23,16 @@ function isBlock(value: unknown): value is Block {
 }
 
 export function parsePageContentJson(raw: string | null | undefined) {
-  return raw ? JSON.parse(raw) as unknown : null
+  if (!raw) {
+    return null
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as unknown
+    return isRecord(parsed) ? parsed : null
+  } catch {
+    return null
+  }
 }
 
 export function isHtmlPageContent(value: unknown): value is HtmlPageContent {

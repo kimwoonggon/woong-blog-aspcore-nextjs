@@ -43,6 +43,24 @@ describe('SEO metadata helpers', () => {
     })
   })
 
+  it('filters blank social images and keeps metadata strings user-facing safe', () => {
+    const metadata = createPublicMetadata({
+      title: '  ',
+      description: '',
+      path: 'works/sample',
+      images: [' ', '', null as unknown as string, 'https://cdn.example.com/thumb.jpg'],
+    })
+
+    expect(metadata.title).toBe('Woonggon Kim')
+    expect(metadata.description).toBe('')
+    expect(metadata.alternates?.canonical).toBe('/works/sample')
+    expect(metadata.openGraph?.title).toBe('Woonggon Kim')
+    expect(metadata.openGraph?.description).toBe('')
+    expect(metadata.openGraph?.images).toEqual(['https://cdn.example.com/thumb.jpg'])
+    expect(metadata.twitter).toMatchObject({ card: 'summary_large_image' })
+    expect(JSON.stringify(metadata)).not.toMatch(/\b(undefined|null)\b/i)
+  })
+
   it('uses configured public site URL before falling back to localhost', () => {
     vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://example.com/')
     expect(getMetadataBaseUrl()).toBe('https://example.com')

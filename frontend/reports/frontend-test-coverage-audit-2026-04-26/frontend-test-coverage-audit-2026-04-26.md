@@ -1243,3 +1243,96 @@ Browser E2E note: no Playwright specs were changed or run. The changed behavior 
 ### Next recommended batch
 
 Proceed to helper edge cases or another remaining P2 frontend gap from this audit. Keep using component-first deterministic coverage unless browser-only behavior is the actual target.
+
+## Batch 11 - Helper Edge Case Reinforcement
+
+Date: 2026-04-27.
+
+Scope: frontend helper edge-case reinforcement for search normalization, public revalidation path/tag parsing, blog/page content parsing, SEO metadata normalization, public detail date/content helpers, WorkVideo embed helpers, and YouTube thumbnail ID parsing. Backend behavior, AI, WorkVideo upload, media validation, dark mode, public API error-boundary work, pagination/search UI, live services, real storage, seeded data, and browser-only tests were left out of scope.
+
+### Tests added or reinforced
+
+- `src/test/normalized-search.test.ts`
+  - Whitespace-only and nullish queries behave as match-all.
+  - Mixed Korean/English text, repeated spaces, case-insensitive English, symbol-heavy compact acronyms, and symbol-heavy Korean queries remain searchable.
+- `src/test/public-revalidation-paths.test.ts`
+  - Empty/nullish slugs do not create `undefined`/`null` path segments.
+  - Trimmed Korean/Unicode slugs are encoded safely.
+  - Leading/trailing slash slugs and duplicate slash paths are rejected.
+  - Unsafe-looking text without slash delimiters is encoded rather than emitted raw.
+  - Malformed encoded paths and encoded slash segments are ignored without throwing.
+- `src/test/blog-content.test.ts`
+  - Malformed JSON returns safe empty renderable output.
+  - Korean multiline code blocks and inline code are preserved without parser error leakage.
+- `src/test/page-content.test.ts`
+  - Malformed, empty, array, and nullish page content JSON returns `null`.
+  - Unknown block types are accepted by the public block-content guard when the block shape is valid.
+- `src/test/seo-metadata.test.ts`
+  - Blank titles fall back to the site author.
+  - Blank social image entries are filtered.
+  - Canonical paths are normalized and metadata strings do not contain `undefined` or `null`.
+- `src/test/public-detail-helper-edge-cases.test.ts`
+  - Missing and invalid blog/work detail dates return `Unknown Date`.
+  - Work content HTML parsing accepts only string `html` values and safely returns empty output otherwise.
+- `src/test/work-thumbnail-resolution.test.ts`
+  - YouTube IDs normalize from direct IDs, short URLs, watch URLs with any query parameter order, embed URLs, and shorts URLs.
+  - Invalid IDs and non-YouTube URLs return `null`.
+- `src/test/work-video-embeds.test.ts`
+  - Generated embed IDs are escaped.
+  - Empty embed IDs are ignored during splitting.
+  - Video display labels fall back to source keys without `null` text.
+
+### Production files changed
+
+- `src/lib/content/page-content.ts`
+  - `parsePageContentJson` now returns `null` for malformed JSON and non-object JSON instead of throwing or returning arrays.
+- `src/lib/public-revalidation-paths.ts`
+  - Detail path normalization now validates decoded path segments.
+  - Malformed encoded paths and encoded slash segments are ignored without throwing.
+- `src/lib/seo.ts`
+  - Public metadata title falls back to the site author when blank.
+  - Description falls back to an empty safe string.
+  - Blank social image entries are filtered before Open Graph/Twitter metadata is emitted.
+- `src/app/(public)/blog/[slug]/blog-detail-helpers.ts`
+  - Invalid dates now return `Unknown Date`.
+- `src/app/(public)/works/[slug]/work-detail-helpers.ts`
+  - Invalid dates now return `Unknown Date`.
+  - Non-string `html` values now return an empty safe string.
+- `src/lib/content/work-thumbnail-resolution.ts`
+  - YouTube ID normalization now handles URL query parameters regardless of order while still rejecting non-YouTube URLs.
+
+### Behavior bugs found
+
+- Malformed page content JSON could throw parser errors through `parsePageContentJson`.
+- Malformed percent-encoded public revalidation paths could throw URI errors.
+- Encoded slash detail segments such as `%2Fadmin` could reach public revalidation tag mapping.
+- Invalid blog/work detail dates rendered `Invalid Date` instead of the existing `Unknown Date` fallback.
+- Work detail content parsing could return non-string values such as `123` as renderable output.
+- Blank SEO titles and whitespace social image entries were preserved in metadata.
+- YouTube watch URLs with `v` after another query parameter were not recognized for thumbnail fallback.
+
+### Commands run
+
+| Command | Result | Notes |
+| --- | --- | --- |
+| `npx skills find "typescript helper parsing seo testing"` | Passed | Results were low-install external skills; no new skill was installed. |
+| `npm test -- --run src/test/normalized-search.test.ts src/test/public-revalidation-paths.test.ts src/test/blog-content.test.ts src/test/page-content.test.ts src/test/seo-metadata.test.ts src/test/work-detail-metadata.test.ts src/test/public-detail-helper-edge-cases.test.ts src/test/work-video-embeds.test.ts src/test/work-thumbnail-resolution.test.ts` | Failed before fixes, then passed | Final focused helper slice passed with 9 files and 68 tests. |
+| `npm test -- --run src/test/seo-metadata.test.ts` | Passed | Rerun after adjusting the test assertion for Next metadata union typing. |
+| `npm test -- --run` | Passed | Final run passed with 69 files and 482 tests. Known Pact V3 warnings and jsdom navigation warning appeared. |
+| `npm run lint` | Passed | 0 errors, 6 existing warnings. |
+| `npm run typecheck` | Passed | `tsc --noEmit` completed successfully. |
+| `npm run build` | Passed | Next.js production build completed successfully. |
+| `git diff --check` | Passed | No whitespace errors. |
+
+Browser E2E note: no Playwright specs were changed or run. The requested helper behavior was covered deterministically through Vitest unit tests.
+
+### Remaining helper gaps
+
+- Public list/card date formatting helpers are still component-local and not covered as shared date helpers.
+- Sitemap date fallback behavior remains untested at the helper level.
+- HTML sanitizer edge cases are partially covered elsewhere but were not expanded in this batch to avoid broad parser/security scope creep.
+- WorkVideo player runtime fallback remains component-level; this batch covered only helper-owned embed/thumbnail behavior.
+
+### Next recommended batch
+
+Proceed to a focused frontend security/sanitization or sitemap/metadata helper batch. Based on current audit gaps, a practical next batch is `Frontend Batch 12 - Sanitization and Public Indexing Helper Reinforcement`, covering HTML sanitizer edge cases, sitemap date fallbacks, metadata path/image normalization, and public cache/revalidation safety without touching AI, WorkVideo upload, media validation, or browser UI flows.

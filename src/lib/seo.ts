@@ -7,6 +7,11 @@ function trimTrailingSlash(value: string) {
   return value.replace(/\/+$/, '')
 }
 
+function normalizeMetadataText(value: string, fallback = '') {
+  const normalized = typeof value === 'string' ? value.trim() : ''
+  return normalized || fallback
+}
+
 export function getMetadataBaseUrl() {
   if (process.env.NEXT_PUBLIC_SITE_URL) {
     return trimTrailingSlash(process.env.NEXT_PUBLIC_SITE_URL)
@@ -32,22 +37,25 @@ export function createPublicMetadata({
   type?: 'website' | 'article'
   images?: string | string[] | null
 }): Metadata {
-  const normalizedPath = path.startsWith('/') ? path : `/${path}`
+  const safeTitle = normalizeMetadataText(title, DEFAULT_AUTHOR)
+  const safeDescription = normalizeMetadataText(description)
+  const safePath = normalizeMetadataText(path, '/')
+  const normalizedPath = safePath.startsWith('/') ? safePath : `/${safePath}`
   const imageList = Array.isArray(images)
-    ? images.filter(Boolean)
+    ? images.map((image) => image?.trim()).filter((image): image is string => Boolean(image))
     : images
-      ? [images]
+      ? [images.trim()].filter(Boolean)
       : undefined
 
   return {
-    title,
-    description,
+    title: safeTitle,
+    description: safeDescription,
     alternates: {
       canonical: normalizedPath,
     },
     openGraph: {
-      title,
-      description,
+      title: safeTitle,
+      description: safeDescription,
       url: normalizedPath,
       type,
       siteName: DEFAULT_AUTHOR,
@@ -55,8 +63,8 @@ export function createPublicMetadata({
     },
     twitter: {
       card: imageList?.length ? 'summary_large_image' : 'summary',
-      title,
-      description,
+      title: safeTitle,
+      description: safeDescription,
       ...(imageList?.length ? { images: imageList } : {}),
     },
   }
