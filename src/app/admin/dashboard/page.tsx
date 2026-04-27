@@ -56,7 +56,7 @@ export default async function AdminDashboard({ searchParams }: PageProps) {
         <div className="flex flex-col gap-8">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-50">Dashboard</h1>
+                    <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
                     <p className="mt-2 text-sm text-muted-foreground">
                         Jump to the public site, list views, or the new blog Notion workspace without leaving this screen.
                     </p>

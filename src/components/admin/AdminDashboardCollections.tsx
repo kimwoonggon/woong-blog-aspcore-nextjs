@@ -84,7 +84,7 @@ function AdminCollectionSection<T extends CollectionItem>({
     <section className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <div className="flex-1">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-50">{title}</h2>
+          <h2 className="text-2xl font-bold text-foreground">{title}</h2>
           <p className="text-sm text-muted-foreground">{filteredItems.length} shown / {items.length} total · 클릭하면 바로 편집 페이지로 이동합니다.</p>
           <Input
             value={query}
@@ -113,7 +113,7 @@ function AdminCollectionSection<T extends CollectionItem>({
             >
               <article className="responsive-feed-card h-full rounded-2xl border border-border/80 bg-background p-4 shadow-sm transition hover:border-primary/30 hover:shadow-md">
                 <div className="mb-3 flex items-start justify-between gap-3">
-                  <h3 className="responsive-feed-title text-lg font-semibold text-gray-900 transition-colors group-hover:text-primary dark:text-gray-50">
+                  <h3 className="responsive-feed-title text-lg font-semibold text-foreground transition-colors group-hover:text-primary">
                     {item.title}
                   </h3>
                   {item.published ? (

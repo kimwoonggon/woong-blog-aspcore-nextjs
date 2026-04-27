@@ -105,7 +105,7 @@ export function HomePageEditor({ pageId, pageTitle, initialContent }: HomePageEd
     }
 
     return (
-        <div className="space-y-6 rounded-lg border bg-white p-6 dark:border-gray-800 dark:bg-gray-950">
+        <div className="space-y-6 rounded-lg border border-border bg-card p-6 text-card-foreground">
             <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold">Home Page - Hero Section</h2>
                 <Button onClick={handleSave} disabled={isSaving}>

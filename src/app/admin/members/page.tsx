@@ -32,7 +32,7 @@ export default async function AdminMembersPage() {
     return (
         <div className="space-y-8">
             <div className="space-y-2">
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-50">Members</h1>
+                <h1 className="text-3xl font-bold text-foreground">Members</h1>
                 <p className="text-sm text-muted-foreground">
                     Read-only membership overview. This screen is intentionally privacy-safe and excludes raw session or network identifiers.
                 </p>
@@ -44,7 +44,7 @@ export default async function AdminMembersPage() {
                     message="Member profiles could not be loaded from the backend. Please retry after checking the API and database connection."
                 />
             ) : (
-                <div className="rounded-md border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950">
+                <div className="rounded-md border border-border bg-card">
                     <Table>
                         <TableHeader>
                             <TableRow>

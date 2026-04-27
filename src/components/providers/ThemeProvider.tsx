@@ -5,7 +5,7 @@ import { useEffect, type ReactNode } from "react"
 
 const THEME_COLORS = {
   light: "#fafafa",
-  dark: "#17151f",
+  dark: "#1f2126",
 }
 
 function ThemeColorSync() {

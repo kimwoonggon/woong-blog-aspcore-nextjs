@@ -11,6 +11,7 @@ import {
   gotoWithTheme,
 } from './helpers/ui-improvement'
 import { expectResponsiveNavMode, toggleThemeForViewport } from './helpers/responsive-policy'
+import { createBlogFixture } from './helpers/content-fixtures'
 
 async function firstPublicSlug(page: Page, collection: 'blogs' | 'works') {
   const response = await page.request.get(`/api/public/${collection}?page=1&pageSize=1`)
@@ -18,6 +19,39 @@ async function firstPublicSlug(page: Page, collection: 'blogs' | 'works') {
   const slug = payload.items?.[0]?.slug
   test.skip(!slug, `No public ${collection} available in this environment.`)
   return slug!
+}
+
+async function expectReadableCodeBoxMetrics(page: Page, codeBlockSelector: string) {
+  const codeBlock = page.locator(codeBlockSelector).first()
+  await expect(codeBlock).toBeVisible()
+
+  const paddingTop = Number.parseFloat(await getStyle(codeBlock, 'padding-top'))
+  const paddingLeft = Number.parseFloat(await getStyle(codeBlock, 'padding-left'))
+  const borderRadius = Number.parseFloat(await getStyle(codeBlock, 'border-top-left-radius'))
+
+  expect(paddingTop).toBeGreaterThanOrEqual(14)
+  expect(paddingLeft).toBeGreaterThanOrEqual(14)
+  expect(borderRadius).toBeGreaterThanOrEqual(8)
+}
+
+function rgbChannels(channels: readonly number[]) {
+  return channels.slice(0, 3)
+}
+
+function minRgbChannel(channels: readonly number[]) {
+  return Math.min(...rgbChannels(channels))
+}
+
+function maxRgbChannel(channels: readonly number[]) {
+  return Math.max(...rgbChannels(channels))
+}
+
+function channelDistance(left: readonly number[], right: readonly number[]) {
+  return Math.max(
+    Math.abs(left[0] - right[0]),
+    Math.abs(left[1] - right[1]),
+    Math.abs(left[2] - right[2]),
+  )
 }
 
 test.describe('theme toggle', () => {
@@ -174,31 +208,55 @@ test('DM-11: contact page email link uses the semantic primary color in dark mod
     }
   })
 
-  test('DM-18: prose code blocks use the darker code block background', async ({ page }) => {
-    await gotoWithTheme(page, '/blog')
-    const codePostLink = page.getByRole('link').filter({ hasText: /code block/i }).first()
-    if (await codePostLink.count()) {
-      await codePostLink.click()
-    } else {
-      await page.goto(`/blog/${await firstPublicSlug(page, 'blogs')}`)
-    }
+  test('DM-18: public prose code blocks stay readable after light and dark theme changes', async ({ page, request }, testInfo) => {
+    const fixture = await createBlogFixture(request, testInfo, {
+      titlePrefix: 'Playwright Code Readability',
+      html: '<p>Use <code>inlineValue</code> outside.</p><pre><code>const message = "안녕하세요";\nconsole.log(message);</code></pre>',
+      tags: ['playwright-fixture', 'code-readability'],
+    })
 
-    const codeBlock = page.locator('.prose pre').first()
-    if (!(await codeBlock.count())) {
-      const prose = page.locator('#blog-detail-content .prose').first()
-      test.skip(!(await prose.isVisible().catch(() => false)), 'No rendered blog prose available in this environment.')
-      await expect(prose).toBeVisible()
-      return
-    }
+    await gotoWithTheme(page, `/blog/${fixture.slug}`, 'light')
+    await expectLightHtml(page)
 
+    const codeBlock = page.locator('#blog-detail-content .prose pre').first()
+    const blockCode = page.locator('#blog-detail-content .prose pre code').first()
+    const inlineCode = page.locator('#blog-detail-content .prose p code').first()
+
+    await expectReadableCodeBoxMetrics(page, '#blog-detail-content .prose pre')
+    await expect(inlineCode).toHaveText('inlineValue')
+    await expect(blockCode).toHaveText('const message = "안녕하세요";\nconsole.log(message);')
+
+    const lightBackground = await getColorChannels(codeBlock, 'background-color')
+    const lightForeground = await getColorChannels(codeBlock, 'color')
+    const inlineBackground = await getColorChannels(inlineCode, 'background-color')
+
+    expect(lightBackground[3]).toBeGreaterThan(0)
+    expect(lightBackground[0]).toBeGreaterThan(210)
+    expect(lightBackground[1]).toBeGreaterThan(210)
+    expect(lightBackground[2]).toBeGreaterThan(210)
+    expect(lightBackground[0]).toBeLessThan(250)
+    expect(lightBackground[1]).toBeLessThan(250)
+    expect(lightBackground[2]).toBeLessThan(250)
+    expect(contrastRatio(lightForeground, lightBackground)).toBeGreaterThanOrEqual(4.5)
+    expect(inlineBackground.slice(0, 3)).not.toEqual(lightBackground.slice(0, 3))
+
+    await toggleThemeForViewport(page)
+    await expectDarkHtml(page)
+    await expectReadableCodeBoxMetrics(page, '#blog-detail-content .prose pre')
     await expect(codeBlock).toBeVisible()
 
-    const background = await getColorChannels(codeBlock, 'background-color')
-    const foreground = await getColorChannels(codeBlock, 'color')
-    const expectedBackground = await getColorChannelsFromCssValue(page, '#0f172a')
-    const expectedForeground = await getColorChannelsFromCssValue(page, '#e2e8f0')
-    expectRgbClose(background, expectedBackground)
-    expectRgbClose(foreground, expectedForeground)
+    const darkBackground = await getColorChannels(codeBlock, 'background-color')
+    const darkForeground = await getColorChannels(codeBlock, 'color')
+
+    expect(darkBackground[3]).toBeGreaterThan(0)
+    expect(darkBackground[0]).toBeGreaterThanOrEqual(32)
+    expect(darkBackground[1]).toBeGreaterThanOrEqual(32)
+    expect(darkBackground[2]).toBeGreaterThanOrEqual(32)
+    expect(Math.max(...darkBackground.slice(0, 3)) - Math.min(...darkBackground.slice(0, 3))).toBeLessThanOrEqual(18)
+    expect(darkForeground[0]).toBeLessThan(250)
+    expect(darkForeground[1]).toBeLessThan(250)
+    expect(darkForeground[2]).toBeLessThan(250)
+    expect(contrastRatio(darkForeground, darkBackground)).toBeGreaterThanOrEqual(4.5)
   })
 
   test('DM-19: prose text remains readable in dark mode', async ({ page }) => {
@@ -278,9 +336,11 @@ test.describe('login and admin dark mode', () => {
     await expect(card).toBeVisible()
 
     const background = await getColorChannels(card, 'background-color')
-    expect(background[0]).toBeLessThanOrEqual(24)
-    expect(background[1]).toBeLessThanOrEqual(28)
-    expect(background[2]).toBeLessThanOrEqual(42)
+    const foreground = await getColorChannels(card, 'color')
+    expect(minRgbChannel(background)).toBeGreaterThanOrEqual(34)
+    expect(maxRgbChannel(background)).toBeLessThanOrEqual(58)
+    expect(maxRgbChannel(foreground)).toBeLessThanOrEqual(235)
+    expect(contrastRatio(foreground, background)).toBeGreaterThanOrEqual(4.5)
   })
 
   test.use({ storageState: 'test-results/playwright/admin-storage-state.json' })
@@ -322,5 +382,44 @@ test.describe('login and admin dark mode', () => {
 
     const background = await getColorChannels(deleteButton, 'background-color')
     expect(background[3]).toBeGreaterThan(0)
+  })
+
+  test('DM-25: global dark palette uses soft readable surfaces across public and admin UI', async ({ page }) => {
+    await gotoWithTheme(page, '/admin/dashboard')
+    await expectDarkHtml(page)
+
+    const bodyBackground = await getColorChannels(page.locator('body'), 'background-color')
+    const bodyText = await getColorChannels(page.locator('body'), 'color')
+    expect(minRgbChannel(bodyBackground)).toBeGreaterThanOrEqual(24)
+    expect(maxRgbChannel(bodyBackground)).toBeLessThanOrEqual(48)
+    expect(maxRgbChannel(bodyText)).toBeLessThanOrEqual(230)
+    expect(contrastRatio(bodyText, bodyBackground)).toBeGreaterThanOrEqual(4.5)
+
+    const card = page.locator('[data-slot="card"]').first()
+    await expect(card).toBeVisible()
+    const cardBackground = await getColorChannels(card, 'background-color')
+    const cardBorder = await getColorChannels(card, 'border-top-color')
+    expect(minRgbChannel(cardBackground)).toBeGreaterThan(minRgbChannel(bodyBackground))
+    expect(channelDistance(cardBackground, bodyBackground)).toBeGreaterThanOrEqual(8)
+    expect(maxRgbChannel(cardBorder)).toBeLessThanOrEqual(90)
+
+    await gotoWithTheme(page, '/admin/blog')
+    const adminSearch = page.getByLabel('Search blog titles')
+    await expect(adminSearch).toBeVisible()
+    const inputBackground = await getColorChannels(adminSearch, 'background-color')
+    expect(inputBackground[3]).toBeGreaterThan(0)
+    expect(minRgbChannel(inputBackground)).toBeGreaterThanOrEqual(38)
+    await adminSearch.focus()
+    await expect.poll(() => getStyle(adminSearch, 'box-shadow')).not.toBe('none')
+
+    await page.setViewportSize({ width: 390, height: 844 })
+    await gotoWithTheme(page, '/')
+    await page.getByRole('button', { name: 'Toggle Menu' }).click()
+    const sheet = page.locator('[data-slot="sheet-content"]').first()
+    await expect(sheet).toBeVisible()
+    const sheetBackground = await getColorChannels(sheet, 'background-color')
+    expect(minRgbChannel(sheetBackground)).toBeGreaterThanOrEqual(34)
+    expect(maxRgbChannel(sheetBackground)).toBeLessThanOrEqual(58)
+    expect(channelDistance(sheetBackground, bodyBackground)).toBeGreaterThanOrEqual(8)
   })
 })

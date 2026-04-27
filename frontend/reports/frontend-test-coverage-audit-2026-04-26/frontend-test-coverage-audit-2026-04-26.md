@@ -650,3 +650,182 @@ The earlier Batch 3 report path under `backend/reports/frontend-batch-3-workvide
 Full frontend validation is green again under the documented alternate backend publish port recovery path. The default backend port `8080` remains blocked by the Windows portproxy until it is removed from an elevated PowerShell session, but this is now detected before compose spends time building images.
 
 Batch 4 can safely start using the recovered startup path, or after deleting the stale `8080` portproxy.
+
+## Batch 4A - Editor and Rendered Content Theme Readability
+
+### Problem Summary
+
+Rendered code blocks were visually inconsistent across themes. Light mode used the same dark code block treatment as dark mode, making public/editor content feel heavy and inconsistent with the page surface. Dark mode used a very deep navy/black background with high-contrast text, which was readable but harsher than the surrounding dark theme. Inline code also needed to remain distinct from block code.
+
+### Files Changed
+
+- `src/app/globals.css`
+- `src/components/admin/tiptap-editor/extensions.ts`
+- `src/components/content/BlockRenderer.tsx`
+- `src/test/interactive-renderer.test.tsx`
+- `src/test/tiptap-editor.test.tsx`
+- `tests/dark-mode.spec.ts`
+- `todolist-2026-04-27.md`
+- `frontend/reports/frontend-test-coverage-audit-2026-04-26/frontend-test-coverage-audit-2026-04-26.md`
+- `frontend/reports/frontend-batch-4a-editor-rendered-content-theme-readability-2026-04-27/`
+
+### Tests Added
+
+- `src/test/interactive-renderer.test.tsx`
+  - Verifies rendered `<pre><code>` content remains inside the prose renderer.
+  - Verifies inline `<code>` remains separate from block code.
+  - Verifies Korean text and multiline line breaks are preserved.
+- `src/test/tiptap-editor.test.tsx`
+  - Verifies Tiptap code blocks are configured with the shared `content-code-block` styling hook.
+- `tests/dark-mode.spec.ts`
+  - Reworks DM-18 to create a deterministic public blog fixture with inline code and a multiline Korean/English code block.
+  - Asserts computed light-mode code block background is non-transparent, soft gray, not pure white, padded, rounded, and contrast-readable.
+  - Asserts computed dark-mode code block background is non-transparent, softer gray, not pure black/navy, padded, rounded, and uses non-pure-white readable text after theme toggle.
+
+### Before/After Behavior Summary
+
+- Before:
+  - Light-mode block code inherited a dark treatment and did not read as a soft light surface.
+  - Dark-mode block code used a very dark navy background.
+  - Legacy block-rendered code used hard-coded gray/white Tailwind classes.
+  - Tiptap code block extension emitted hard-coded `bg-gray-900 text-gray-100` classes.
+- After:
+  - Light-mode block code uses `#f1f3f5` with dark readable text, border, padding, and rounded corners.
+  - Dark-mode block code uses `#2b2f36` with soft off-white text, subtle border, padding, and rounded corners.
+  - Inline code uses separate inline-code tokens in both themes and remains distinct from block code.
+  - Tiptap editor code blocks, public/admin `.prose` rendering, and legacy `BlockRenderer` code blocks share the same theme tokens and `content-code-block` hook.
+  - Saved content shape, copy/paste behavior, backend behavior, WorkVideo behavior, AI behavior, and public API error-boundary behavior were not changed.
+
+### Commands Run
+
+- `npx skills find nextjs testing ui accessibility`
+  - Passed; no new skill installed because returned alternatives were low-install external skills and existing skills covered the task.
+- `npm test -- --run src/test/*tiptap*.test.tsx src/test/*renderer*.test.tsx src/test/*content*.test.tsx`
+  - First run failed as expected on the new Tiptap shared styling hook assertion.
+- `npm test -- --run src/test/*tiptap*.test.tsx src/test/*renderer*.test.tsx src/test/*content*.test.tsx`
+  - Passed: 6 files / 32 tests.
+- `BACKEND_PUBLISH_PORT=18080 ./scripts/dev-up.sh`
+  - Passed; started the documented alternate-port frontend validation stack.
+- `PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 npm run test:e2e -- tests/dark-mode.spec.ts --grep "DM-18"`
+  - Passed: 1 test, 0 latency budget failures, 0 warnings.
+- `PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 npm run test:e2e -- tests/dark-mode.spec.ts`
+  - Passed: 25 tests, 0 latency budget failures, 0 warnings.
+- `npm test -- --run`
+  - Passed: 65 files / 369 tests. Known baseline Pact V3 upgrade and jsdom navigation warnings appeared.
+- `npm run lint`
+  - Passed: 0 errors / 6 existing warnings.
+- `npm run typecheck`
+  - Passed.
+- `npm run build`
+  - Passed.
+- `git diff --check`
+  - Passed.
+- `docker compose -f docker-compose.dev.yml down --remove-orphans`
+  - Passed; stopped the alternate-port stack.
+
+### Remaining Theme/Readability Gaps
+
+- This batch covers code block and inline-code readability only; it does not add a broad visual regression framework.
+- Admin AI preview HTML uses `.prose` and receives the shared style, but no new AI-specific test was added because AI tests were explicitly out of scope.
+- Work detail rendering receives the shared `InteractiveRenderer` style, but no WorkVideo browser recovery tests were added because WorkVideo was explicitly out of scope for Batch 4A.
+- Legacy block data receives `content-code-block`; other legacy block typography was intentionally not refactored.
+
+### Next Recommended Batch
+
+Proceed to the AI failure and partial-failure batch if the WorkVideo browser recovery flow remains green from the prior validation baseline. If there is still a separate WorkVideo Browser Recovery Flow to resume, this Batch 4A change is safe for it: no WorkVideo production behavior or WorkVideo tests were changed.
+
+## Batch 4B - Global Dark Mode Readability Pass
+
+### Problem Summary
+
+After Batch 4A fixed code blocks, the broader dark mode still used surfaces that were too close to black and text that was too close to pure white. Cards, panels, login/admin surfaces, dialogs, sheets, and focus/input states needed a softer shared dark palette without rewriting layout or changing backend/content behavior.
+
+### Files Changed
+
+- `src/app/globals.css`
+- `src/components/providers/ThemeProvider.tsx`
+- `src/components/ui/dialog.tsx`
+- `src/components/ui/sheet.tsx`
+- `src/app/login/page.tsx`
+- `src/app/admin/dashboard/page.tsx`
+- `src/app/admin/pages/page.tsx`
+- `src/app/admin/blog/notion/page.tsx`
+- `src/app/admin/members/page.tsx`
+- `src/app/admin/blog/[id]/page.tsx`
+- `src/app/admin/blog/new/page.tsx`
+- `src/app/admin/works/[id]/page.tsx`
+- `src/app/admin/works/new/page.tsx`
+- `src/components/admin/AdminDashboardCollections.tsx`
+- `src/components/admin/PageEditor.tsx`
+- `src/components/admin/SiteSettingsEditor.tsx`
+- `src/components/admin/HomePageEditor.tsx`
+- `tests/dark-mode.spec.ts`
+- `todolist-2026-04-27.md`
+- `frontend/reports/frontend-test-coverage-audit-2026-04-26/frontend-test-coverage-audit-2026-04-26.md`
+- `frontend/reports/frontend-batch-4b-global-dark-mode-readability-2026-04-27/`
+
+### Tests Added
+
+- `tests/dark-mode.spec.ts`
+  - Added DM-25, a focused computed-style test for global dark-mode readability across admin and public surfaces.
+  - Verifies dark body background is soft charcoal, not near-black.
+  - Verifies dark body text is not pure white and still has 4.5:1 contrast.
+  - Verifies card/panel surfaces separate from the page background without harsh borders.
+  - Verifies admin input background is not black and keyboard focus remains visible.
+  - Verifies public mobile sheet background uses a soft separated surface.
+  - Existing DM-18 Batch 4A code-block test still verifies code block dark styling remains non-pure-black/non-pure-white.
+  - Updated DM-13 login assertion from the old harsh-dark threshold to the new soft-surface threshold.
+
+### Before/After Behavior Summary
+
+- Before:
+  - Dark page background computed near `rgb(7, 9, 14)`, which felt close to black.
+  - Dark foreground computed near `rgb(232, 235, 242)`, which was readable but too bright for long sessions.
+  - Cards and popovers were only slightly separated from the near-black page background.
+  - Dialog/sheet surfaces used `bg-background`, making overlays feel like the same dark plane.
+  - Several admin/login surfaces hard-coded `dark:bg-gray-950`, `dark:bg-gray-900`, or `dark:text-gray-50`.
+- After:
+  - Dark page background uses `#1f2126`.
+  - Primary text uses `#d9dde5`, avoiding pure white while preserving contrast.
+  - Cards use `#292c33`; popovers/dialogs/sheets use `#2d3038`.
+  - Muted text uses `#b0b6c1`; borders use `#474d57`; inputs use `#3d424c`; ring uses a softer `#9aa7b8`.
+  - Accent/brand dark tokens are less saturated.
+  - Login and selected admin surfaces now use shared theme tokens instead of harsh hard-coded gray/black classes.
+  - Batch 4A code block tokens were left intact.
+  - Backend behavior, saved content format, WorkVideo behavior, AI behavior, and broad visual infrastructure were not changed.
+
+### Commands Run
+
+- `npx skills find dark mode accessibility ui testing`
+  - Passed; no new skill installed because results were low-install external skills and existing repo/global skills covered the work.
+- `PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 npm run test:e2e -- tests/dark-mode.spec.ts --grep "DM-25"`
+  - First run failed as expected: old dark body background minimum RGB channel was `7`, below the soft-surface threshold `24`.
+- `BACKEND_PUBLISH_PORT=18080 ./scripts/dev-up.sh`
+  - Passed; rebuilt/restarted the alternate-port validation stack.
+- `PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 npm run test:e2e -- tests/dark-mode.spec.ts --grep "DM-25"`
+  - Passed: 1 test, 0 latency budget failures, 0 warnings.
+- `PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 npm run test:e2e -- tests/dark-mode.spec.ts`
+  - Passed: 26 tests, 0 latency budget failures, 0 warnings.
+- `npm test -- --run`
+  - Passed: 65 files / 369 tests. Known baseline Pact V3 upgrade and jsdom navigation warnings appeared.
+- `npm run lint`
+  - Passed: 0 errors / 6 existing warnings.
+- `npm run typecheck`
+  - Passed.
+- `npm run build`
+  - Passed.
+- `git diff --check`
+  - Passed.
+- `docker compose -f docker-compose.dev.yml down --remove-orphans`
+  - Passed; stopped the alternate-port stack.
+
+### Remaining Dark Mode/Readability Gaps
+
+- This pass intentionally focused on shared tokens and the most visible hard-coded admin/login surfaces. A few specialized embedded/editor blocks still contain local dark gray utility classes, but they were not part of the global surface contract and were left for targeted future cleanup.
+- Toast implementation is still provided by `sonner` with `richColors`; no toast-specific visual changes were made.
+- No broad visual regression framework was added.
+- AI and WorkVideo tests were intentionally not expanded.
+
+### Next Recommended Batch
+
+Proceed to the AI failure and partial-failure batch. Batch 4B did not change backend behavior, saved content, AI behavior, or WorkVideo behavior, and the focused dark-mode suite plus full frontend validation are green.
