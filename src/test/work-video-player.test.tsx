@@ -139,6 +139,25 @@ describe('WorkVideoPlayer', () => {
     expect(screen.queryByTestId('work-video-center-play')).not.toBeInTheDocument()
   })
 
+  it('shows a safe unavailable state for incomplete uploaded video data', () => {
+    const { container } = render(
+      <WorkVideoPlayer
+        video={{
+          id: 'video-incomplete',
+          sourceType: 'local',
+          sourceKey: 'videos/work-1/incomplete.mp4',
+          playbackUrl: null,
+          mimeType: 'video/mp4',
+          sortOrder: 0,
+        }}
+      />,
+    )
+
+    expect(container.querySelector('video')).toBeNull()
+    expect(screen.getByRole('status')).toHaveTextContent('Video is still processing or unavailable.')
+    expect(screen.queryByText(/TypeError|Cannot read|stack/i)).not.toBeInTheDocument()
+  })
+
   it('uses native HLS playback when the browser supports it', async () => {
     vi.spyOn(HTMLMediaElement.prototype, 'canPlayType').mockReturnValue('probably')
 

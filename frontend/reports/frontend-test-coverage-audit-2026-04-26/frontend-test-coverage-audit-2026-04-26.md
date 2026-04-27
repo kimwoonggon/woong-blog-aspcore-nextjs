@@ -894,3 +894,73 @@ Validation environment note: the existing dev compose stack was already running 
 ### Next recommended batch
 
 Proceed to public API error states: public blog/work/page/resume API 500 and error-boundary assertions, with deterministic route/server-component tests and a small route-mocked E2E slice where browser integration matters.
+
+## Batch 6 - Public API Error States and Error Boundary Reinforcement
+
+Date: 2026-04-27.
+
+Scope: frontend public API error-state, notFound, empty-state, loading, and error-boundary reinforcement. Backend behavior, AI tests, WorkVideo admin tests, external services, broad visual regression, and unrelated dirty files were left out of scope.
+
+### Tests added or reinforced
+
+- `src/test/public-api-clients.test.ts`
+  - Public blog detail, work detail, page, and resume clients now assert explicit public errors on 500-class responses.
+- `src/test/public-api-contracts.test.ts`
+  - Public work detail contracts now assert incomplete but renderable HLS video records with no playback URL remain parseable for public rendering.
+- `src/test/public-detail-boundary.test.tsx`
+  - Blog detail and work detail missing slugs now assert `notFound()` behavior.
+  - Public segment and blog detail error components now assert safe user-facing copy, retry/reset behavior, no stack trace/API detail leak, and no admin/edit/manage affordance leak.
+  - Public segment and blog detail loading shells now assert deterministic render without stack/admin text.
+- `src/test/public-page-error-states.test.tsx`
+  - Introduction and contact missing-content fallbacks now render deterministic public fallback UI without anonymous admin affordances.
+  - Introduction API failure is asserted to route into the public segment error boundary path instead of rendering partial page/admin UI.
+- `src/test/resume-server-render.test.tsx`
+  - Resume no-PDF state now asserts no download link, no PDF viewer, and no anonymous admin upload UI.
+  - Resume fetch failure now renders the same safe no-resume fallback without exposing technical details.
+  - Existing SSR isolation coverage for `ResumePdfViewer` remains intact.
+- `src/test/work-video-player.test.tsx`
+  - Incomplete uploaded video data now renders the existing safe unavailable state without a broken player crash.
+
+### Production files changed
+
+- `src/app/(public)/error.tsx`
+  - Stopped rendering `error.message` on public segment failures. The boundary now shows generic public-safe copy and keeps the retry affordance.
+- `src/app/(public)/blog/[slug]/error.tsx`
+  - Stopped rendering `error.message` on blog detail failures. The boundary now shows generic public-safe copy and keeps the retry affordance.
+- `src/app/(public)/resume/page.tsx`
+  - Resume API failures now log server-side, preserve Next internal control-flow errors through `unstable_rethrow`, and render the existing no-resume fallback without a broken download link or PDF viewer.
+
+### Behavior bugs found
+
+- Public error boundaries exposed raw `error.message`, which could include backend status/body text or stack-like details from public API failures.
+- The public resume page threw through the route when `/public/resume` failed, instead of showing the same safe empty state used when no resume PDF exists.
+- During the first build after the resume fix, the catch block also logged Next's dynamic-render bailout. Root cause: the catch handled Next control-flow errors like normal API failures. Adding `unstable_rethrow(error)` fixed that before final validation.
+
+### Commands run
+
+| Command | Result | Notes |
+| --- | --- | --- |
+| `npx skills find nextjs testing error-boundary` | Passed | Results were low-install external skills; no new skill was installed. |
+| `npm test -- --run src/test/public-api-clients.test.ts src/test/public-api-contracts.test.ts src/test/public-detail-boundary.test.tsx src/test/public-page-error-states.test.tsx src/test/resume-server-render.test.tsx src/test/work-video-player.test.tsx` | Failed before fix, passed after fix | RED failures showed public error detail leaks and resume fetch failure throw. Final focused slice passed: 6 files, 48 tests. |
+| `npm test -- --run src/test/public-api-clients.test.ts src/test/public-api-contracts.test.ts` | Passed | 2 files, 22 tests. |
+| `npm test -- --run src/test/page-content.test.ts src/test/interactive-renderer.test.tsx` | Passed | 2 files, 12 tests. |
+| `npm test -- --run src/test/resume-server-render.test.tsx src/test/work-video-player.test.tsx` | Passed | 2 files, 16 tests. |
+| `npm test -- --run src/test/resume-server-render.test.tsx` | Passed | Rerun after adding `unstable_rethrow`; 1 file, 3 tests. |
+| `npm test -- --run` | Passed | Final run: 66 files, 395 tests. Known Pact V3 warnings and jsdom navigation warning appeared. |
+| `npm run lint` | Passed | 0 errors, 6 existing warnings in backup/script/test files. |
+| `npm run typecheck` | Passed | `tsc --noEmit` completed successfully. |
+| `npm run build` | Passed | Next.js 16.1.6 production build completed successfully with Turbopack. Final build did not log the earlier dynamic-render bailout. |
+| `git diff --check` | Passed | No whitespace errors. |
+
+Browser E2E note: no Playwright route-mocked browser test was added for this batch. The initial public route data loads are server-component fetches, so `page.route` cannot deterministically intercept the Node-side API requests. A browser test would have required live backend data or local-QA-only flags, both of which were out of scope for deterministic core coverage.
+
+### Remaining public error-state gaps
+
+- Browser-level public initial-load 500 coverage still needs a harness that can deterministically mock server-side route fetches, not just browser-side requests.
+- Work detail uses the shared public segment error boundary because no work-specific `error.tsx` or `loading.tsx` exists under `works/[slug]`.
+- Public metadata fallback coverage for detail API failure/notFound branches remains a P2 gap.
+- Formal axe-style accessibility scanning of error/loading states was not added.
+
+### Next recommended batch
+
+Proceed to form/media validation: image/video/PDF type and size edge cases, preservation of user state on validation failures, and upload-field-specific error UI.
