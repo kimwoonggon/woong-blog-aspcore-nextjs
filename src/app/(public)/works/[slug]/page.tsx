@@ -40,6 +40,15 @@ function normalizeStaticParamSlug(slug: unknown) {
     return cleanedSlug
 }
 
+function getSortablePublishedTime(value?: string | null) {
+    if (!value) {
+        return 0
+    }
+
+    const time = new Date(value).getTime()
+    return Number.isNaN(time) ? 0 : time
+}
+
 export async function generateStaticParams() {
     const works = await fetchAllPublicWorks().catch(() => [])
     return works.flatMap((work) => {
@@ -78,8 +87,8 @@ export default async function WorkDetailPage({ params }: PageProps) {
 
     const publishDate = formatDetailPublishDate(work.publishedAt)
     const sortedWorks = [...allWorks].sort((left, right) => {
-        const leftTime = left.publishedAt ? new Date(left.publishedAt).getTime() : 0
-        const rightTime = right.publishedAt ? new Date(right.publishedAt).getTime() : 0
+        const leftTime = getSortablePublishedTime(left.publishedAt)
+        const rightTime = getSortablePublishedTime(right.publishedAt)
 
         if (leftTime !== rightTime) {
             return rightTime - leftTime
