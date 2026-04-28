@@ -117,7 +117,9 @@ describe('InlineWorkEditorSection', () => {
     })
     expect(mocks.toast.error).toHaveBeenCalledWith('Work could not be deleted. Please retry after the backend is healthy.')
     expect(mocks.toast.error).not.toHaveBeenCalledWith(expect.stringMatching(/SQLSTATE|stack trace|WoongBlog\.Api|status 500/i))
-    expect(screen.getByRole('button', { name: '삭제' })).toBeEnabled()
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: '삭제' })).toBeEnabled()
+    })
     expect(mocks.push).not.toHaveBeenCalled()
     expect(mocks.refresh).not.toHaveBeenCalled()
     expect(mocks.toast.success).not.toHaveBeenCalled()

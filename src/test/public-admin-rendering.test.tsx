@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const navigationMocks = vi.hoisted(() => ({
@@ -189,6 +189,32 @@ describe('public admin rendering', () => {
     render(await AnonymousContactPage())
 
     expect(screen.queryByTestId('inline-page-editor')).not.toBeInTheDocument()
+  })
+
+  it('keeps authored page content visible when admin affordance session fetch fails', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => {
+      throw new Error('SQLSTATE 08006 stack trace from WoongBlog.Api status 500')
+    }) as typeof fetch)
+
+    vi.doMock('@/lib/api/pages', () => ({
+      fetchPublicPageBySlug: vi.fn(async () => ({
+        id: 'page-introduction',
+        title: 'Introduction',
+        slug: 'introduction',
+        contentJson: JSON.stringify({ html: '<p>Authored introduction content.</p>' }),
+      })),
+    }))
+
+    const IntroductionPage = (await import('@/app/(public)/introduction/page')).default
+    const { container } = render(await IntroductionPage())
+
+    expect(screen.getByText('Authored introduction content.')).toBeInTheDocument()
+    await waitFor(() => expect(fetch).toHaveBeenCalledWith('/api/auth/session', {
+      credentials: 'include',
+      cache: 'no-store',
+    }))
+    expect(screen.queryByTestId('inline-page-editor')).not.toBeInTheDocument()
+    expect(container.textContent).not.toMatch(/SQLSTATE|stack trace|WoongBlog\.Api|status 500|undefined|null/i)
   })
 
   it('renders Study and Works lists without server-side session checks blocking pagination', async () => {
