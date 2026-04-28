@@ -2783,3 +2783,59 @@ Scope: frontend test infrastructure only. Production UI behavior, backend behavi
 ### Next recommended batch
 
 Proceed to `Frontend Batch 39 - Pact Warning and Contract Test Stability Reinforcement`. Recommended scope: frontend test infrastructure and contract-test hygiene only. Investigate whether Pact V3 upgrade warnings can be removed by updating pact metadata/fixture generation or test setup without changing public API behavior. Also verify the Pact suite remains deterministic when run with neighboring helper tests. Do not broaden into API contract redesign, backend changes, AI behavior, media validation, dark mode, or Playwright unless a contract test requires browser-only verification.
+
+## Batch 39 - Pact Warning and Contract Test Stability Reinforcement
+
+Date: 2026-04-28.
+
+Scope: frontend test infrastructure and contract-test hygiene only. Production UI behavior, backend behavior, API contract redesign, AI behavior, dark mode, media validation, pagination/search UI, browser-only routing behavior, live services, real storage, and seeded backend data were left out of scope.
+
+### Tests added or reinforced
+
+- `src/test/pact/public-api-consumer.pact.test.ts`
+  - Writes Pact specification V4 metadata.
+  - Uses env-based `INTERNAL_API_ORIGIN` injection instead of file-parallel-sensitive `vi.doMock` server API helper overrides.
+  - Remains stable when run with neighboring API/auth/helper tests.
+
+### Test infrastructure files changed
+
+- `src/test/pact/public-api-consumer.pact.test.ts`
+- `tests/contracts/pacts/WoongBlog Frontend-WoongBlog API.json`
+- `package.json`
+- `docs/e2e-readiness.md`
+
+### Production files changed
+
+- None.
+
+### Behavior bugs found
+
+- None in production. Test-infrastructure issues were found:
+  - Pact V3 metadata caused repeated upgrade warnings.
+  - Pact test module mocks could race with neighboring test files under file parallelism and cause missing expected Pact requests.
+  - `maxWorkers=4` was still too high for repeated WSL full-suite runs, while `maxWorkers=2` completed successfully.
+
+### Commands run
+
+| Command | Result | Notes |
+| --- | --- | --- |
+| `npx skills find pact contract testing vitest warnings` | Passed | Results were general API contract testing skills; no new skill was installed. |
+| `npm test -- --run src/test/pact/public-api-consumer.pact.test.ts` | Passed | Initial diagnostic reproduced V3 warnings. Final runs passed with 1 file and 6 tests and no Pact warning. |
+| `npm test -- --run <neighboring API/auth/helper tests plus pact>` | Failed once, then passed | Failed before env-based injection due file-parallel module mock race. Final run passed with 10 files and 61 tests. |
+| `npm test -- --run --no-file-parallelism <same 10 files>` | Passed | Confirmed the prior failure was file-parallel-sensitive. |
+| `npm test -- --run src/test/pact/public-api-consumer.pact.test.ts src/test/auth-csrf.test.ts` | Passed | `maxWorkers=2` focused stability check passed with 2 files and 17 tests. |
+| `npm test -- --run` | Failed once, then passed | `maxWorkers=4` failed with worker startup timeouts. Final `maxWorkers=2` run passed with 81 files and 559 tests. |
+| `npm run lint` | Passed | 0 errors, 6 existing warnings. |
+| `npm run typecheck` | Passed | `tsc --noEmit` completed successfully. |
+| `npm run build` | Passed | Next.js production build completed successfully. |
+| `git diff --check` | Passed | No whitespace errors. |
+
+### Remaining gaps
+
+- Full Vitest is stable but slow with `maxWorkers=2`, taking roughly 24 minutes in this environment.
+- Full Playwright e2e still needs Docker Desktop WSL integration or an already running local stack.
+- Pact provider verification was not run because this batch stayed frontend/test-infrastructure scoped.
+
+### Next recommended batch
+
+Proceed to `Frontend Batch 40 - Full Vitest Runtime Partitioning Reinforcement`. Recommended scope: frontend test infrastructure only. Split unit/component, Pact, and heavy editor/jsdom suites into documented deterministic npm scripts so routine validation can remain faster while still preserving a full all-in run. Do not change production behavior, API contracts, backend code, AI behavior, media validation, dark mode, or Playwright unless a partitioned command requires browser-level validation.

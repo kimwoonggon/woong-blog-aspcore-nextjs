@@ -34,4 +34,4 @@ If Docker reports that it is unavailable in WSL, enable Docker Desktop WSL integ
 
 ## Vitest Stability
 
-The default `npm test` command uses the `threads` pool with bounded workers (`--maxWorkers=4`). This avoids intermittent full-suite worker startup timeouts seen when the full suite starts too many jsdom/editor workers under WSL load.
+The default `npm test` command uses the `threads` pool with bounded workers (`--maxWorkers=2`). This avoids intermittent full-suite worker startup timeouts seen when the full suite starts too many jsdom/editor/Pact workers under WSL load.
