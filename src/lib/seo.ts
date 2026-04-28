@@ -7,6 +7,38 @@ function trimTrailingSlash(value: string) {
   return value.replace(/\/+$/, '')
 }
 
+function normalizeMetadataText(value: string, fallback = '') {
+  const normalized = typeof value === 'string' ? value.trim() : ''
+  return normalized || fallback
+}
+
+function normalizeMetadataPath(value: string) {
+  const safePath = normalizeMetadataText(value, '/')
+  if (/^[a-z][a-z0-9+.-]*:/i.test(safePath)) {
+    return '/'
+  }
+
+  const prefixedPath = safePath.startsWith('/') ? safePath : `/${safePath}`
+  return prefixedPath.replace(/\/{2,}/g, '/') || '/'
+}
+
+function isSafeMetadataImage(value: string) {
+  if (value.startsWith('//')) {
+    return false
+  }
+
+  if (value.startsWith('/')) {
+    return true
+  }
+
+  try {
+    const url = new URL(value)
+    return url.protocol === 'http:' || url.protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
 export function getMetadataBaseUrl() {
   if (process.env.NEXT_PUBLIC_SITE_URL) {
     return trimTrailingSlash(process.env.NEXT_PUBLIC_SITE_URL)
@@ -32,22 +64,24 @@ export function createPublicMetadata({
   type?: 'website' | 'article'
   images?: string | string[] | null
 }): Metadata {
-  const normalizedPath = path.startsWith('/') ? path : `/${path}`
+  const safeTitle = normalizeMetadataText(title, DEFAULT_AUTHOR)
+  const safeDescription = normalizeMetadataText(description)
+  const normalizedPath = normalizeMetadataPath(path)
   const imageList = Array.isArray(images)
-    ? images.filter(Boolean)
+    ? images.map((image) => image?.trim()).filter((image): image is string => Boolean(image) && isSafeMetadataImage(image))
     : images
-      ? [images]
+      ? [images.trim()].filter(isSafeMetadataImage)
       : undefined
 
   return {
-    title,
-    description,
+    title: safeTitle,
+    description: safeDescription,
     alternates: {
       canonical: normalizedPath,
     },
     openGraph: {
-      title,
-      description,
+      title: safeTitle,
+      description: safeDescription,
       url: normalizedPath,
       type,
       siteName: DEFAULT_AUTHOR,
@@ -55,8 +89,8 @@ export function createPublicMetadata({
     },
     twitter: {
       card: imageList?.length ? 'summary_large_image' : 'summary',
-      title,
-      description,
+      title: safeTitle,
+      description: safeDescription,
       ...(imageList?.length ? { images: imageList } : {}),
     },
   }

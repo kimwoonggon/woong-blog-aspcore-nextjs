@@ -4,7 +4,9 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
 using WoongBlog.Application.Modules.AI;
+using WoongBlog.Infrastructure.Ai;
 using WoongBlog.Infrastructure.Persistence;
 
 namespace WoongBlog.Api.Tests;
@@ -17,6 +19,27 @@ public class AdminAiEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     public AdminAiEndpointsTests(CustomWebApplicationFactory factory)
     {
         _factory = factory;
+    }
+
+    [Fact]
+    public async Task AdminAiEndpoints_RejectAnonymousRequests()
+    {
+        using var factory = CreateFactoryWithFakeAiService();
+        var client = factory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            BaseAddress = new Uri("https://localhost"),
+            AllowAutoRedirect = false
+        });
+        await AddCsrfHeaderAsync(client);
+
+        var fixResponse = await client.PostAsJsonAsync("/api/admin/ai/blog-fix", new
+        {
+            html = "<p>Hello</p>"
+        });
+        var runtimeResponse = await client.GetAsync("/api/admin/ai/runtime-config");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, fixResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, runtimeResponse.StatusCode);
     }
 
     [Fact]
@@ -36,6 +59,22 @@ public class AdminAiEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         var response = await client.PostAsJsonAsync("/api/admin/ai/blog-fix", new { html = "" });
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task CreateBatchJob_ReturnsBadRequest_WhenNoTargetsRequested()
+    {
+        var client = CreateAuthenticatedClient(_factory);
+
+        var response = await client.PostAsJsonAsync("/api/admin/ai/blog-fix-batch-jobs", new
+        {
+            blogIds = Array.Empty<Guid>(),
+            all = false
+        });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var payload = await response.Content.ReadAsStringAsync();
+        Assert.Contains("Either blogIds or all=true is required.", payload, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -248,6 +287,58 @@ public class AdminAiEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         Assert.NotNull(detail);
         Assert.Equal(created.JobId, detail!.JobId);
         Assert.Equal(2, detail.Items.Count);
+    }
+
+    [Fact]
+    public async Task CreateBatchJob_RepeatedActiveSelectionReturnsExistingJob()
+    {
+        using var factory = CreateFactoryWithFakeAiService(disableBatchWorker: true);
+        var client = CreateAuthenticatedClient(factory);
+
+        Guid[] blogIds;
+        using (var scope = factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
+            blogIds = dbContext.Blogs.OrderBy(x => x.CreatedAt).Take(2).Select(x => x.Id).ToArray();
+        }
+
+        var firstCreate = await client.PostAsJsonAsync("/api/admin/ai/blog-fix-batch-jobs", new
+        {
+            blogIds,
+            all = false,
+            workerCount = 2,
+            codexModel = "gpt-5.4",
+            codexReasoningEffort = "medium",
+            customPrompt = "same active selection"
+        });
+        var secondCreate = await client.PostAsJsonAsync("/api/admin/ai/blog-fix-batch-jobs", new
+        {
+            blogIds = blogIds.Reverse().ToArray(),
+            all = false,
+            workerCount = 2,
+            codexModel = "gpt-5.4",
+            codexReasoningEffort = "medium",
+            customPrompt = "same active selection"
+        });
+
+        firstCreate.EnsureSuccessStatusCode();
+        secondCreate.EnsureSuccessStatusCode();
+        var first = await firstCreate.Content.ReadFromJsonAsync<BatchJobDetailPayload>();
+        var second = await secondCreate.Content.ReadFromJsonAsync<BatchJobDetailPayload>();
+
+        Assert.NotNull(first);
+        Assert.NotNull(second);
+        Assert.Equal(first!.JobId, second!.JobId);
+        Assert.Equal("queued", second.Status);
+        Assert.Equal(2, second.TotalCount);
+
+        using var verifyScope = factory.Services.CreateScope();
+        var verifyDb = verifyScope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
+        Assert.Equal(1, await verifyDb.AiBatchJobs.CountAsync(job => job.Id == first.JobId));
+        Assert.Equal(2, await verifyDb.AiBatchJobItems.CountAsync(item => item.JobId == first.JobId));
+        Assert.All(
+            await verifyDb.AiBatchJobItems.Where(item => item.JobId == first.JobId).ToListAsync(),
+            item => Assert.Equal("pending", item.Status));
     }
 
     [Fact]
@@ -539,6 +630,37 @@ public class AdminAiEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         }
     }
 
+    private WebApplicationFactory<Program> CreateFactoryWithFakeAiService(bool disableBatchWorker = false)
+    {
+        return _factory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureServices(services =>
+            {
+                services.RemoveAll<IBlogAiFixService>();
+                services.AddScoped<IBlogAiFixService, FakeBlogAiFixService>();
+
+                if (disableBatchWorker)
+                {
+                    RemoveAiBatchWorker(services);
+                }
+            });
+        });
+    }
+
+    private static void RemoveAiBatchWorker(IServiceCollection services)
+    {
+        var descriptors = services
+            .Where(descriptor =>
+                descriptor.ServiceType == typeof(IHostedService)
+                && descriptor.ImplementationType == typeof(AiBatchJobProcessor))
+            .ToArray();
+
+        foreach (var descriptor in descriptors)
+        {
+            services.Remove(descriptor);
+        }
+    }
+
     private static HttpClient CreateAuthenticatedClient(WebApplicationFactory<Program> factory)
     {
         var client = factory.CreateClient(new WebApplicationFactoryClientOptions
@@ -555,6 +677,16 @@ public class AdminAiEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         }
 
         return client;
+    }
+
+    private static async Task AddCsrfHeaderAsync(HttpClient client)
+    {
+        var csrfPayload = await client.GetFromJsonAsync<CsrfTokenResponse>("/api/auth/csrf");
+        if (!string.IsNullOrWhiteSpace(csrfPayload?.RequestToken))
+        {
+            client.DefaultRequestHeaders.Remove(csrfPayload.HeaderName);
+            client.DefaultRequestHeaders.Add(csrfPayload.HeaderName, csrfPayload.RequestToken);
+        }
     }
 
     private sealed record CsrfTokenResponse(string RequestToken, string HeaderName);

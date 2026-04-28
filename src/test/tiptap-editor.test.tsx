@@ -141,7 +141,7 @@ vi.mock('@tiptap/extension-placeholder', () => ({ default: { configure: () => ({
 vi.mock('@tiptap/extension-highlight', () => ({ default: { configure: () => ({ name: 'highlight' }) } }))
 vi.mock('@tiptap/extension-color', () => ({ default: { configure: () => ({ name: 'color' }) } }))
 vi.mock('@tiptap/extension-link', () => ({ default: { configure: () => ({ name: 'link' }) } }))
-vi.mock('@tiptap/extension-code-block-lowlight', () => ({ default: { configure: () => ({ name: 'code-block-lowlight' }) } }))
+vi.mock('@tiptap/extension-code-block-lowlight', () => ({ default: { configure: (options?: unknown) => ({ name: 'code-block-lowlight', options }) } }))
 vi.mock('@tiptap/extension-text-style', () => ({ TextStyle: { name: 'text-style' } }))
 vi.mock('lowlight', () => ({
   common: {},
@@ -231,6 +231,133 @@ describe('TiptapEditor', () => {
     expect(mocks.state.setImage).toHaveBeenCalledWith('/uploads/dropped-image.png')
   })
 
+  it('rejects dropped non-image files without starting an upload', async () => {
+    mocks.state.currentHtml = '<p>Initial</p>'
+
+    render(<TiptapEditor content="<p>Initial</p>" onChange={vi.fn()} />)
+
+    const file = new File(['plain text'], 'notes.txt', { type: 'text/plain' })
+
+    await act(async () => {
+      const handled = await mocks.state.config?.editorProps?.handleDrop?.(
+        {},
+        { dataTransfer: { files: [file] } } as unknown as DragEvent,
+        null,
+        false,
+      )
+      expect(handled).toBe(false)
+    })
+
+    expect(mocks.fetchWithCsrf).not.toHaveBeenCalled()
+    expect(mocks.state.setImage).not.toHaveBeenCalled()
+    expect(mocks.state.currentHtml).toBe('<p>Initial</p>')
+  })
+
+  it('preserves editor content and inserts no broken image when inline image upload fails', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    mocks.state.currentHtml = '<p>Draft body</p>'
+    mocks.fetchWithCsrf.mockResolvedValue({
+      ok: false,
+      json: async () => ({ error: 'upload failed' }),
+    })
+
+    render(<TiptapEditor content="<p>Draft body</p>" onChange={vi.fn()} />)
+
+    const file = new File(['image'], 'inline.png', { type: 'image/png' })
+
+    await act(async () => {
+      const handled = await mocks.state.config?.editorProps?.handleDrop?.(
+        {},
+        { dataTransfer: { files: [file] } } as unknown as DragEvent,
+        null,
+        false,
+      )
+      expect(handled).toBe(true)
+    })
+
+    await waitFor(() => {
+      expect(consoleErrorSpy).toHaveBeenCalledWith('Error uploading image:', expect.any(Error))
+    })
+    expect(mocks.state.setImage).not.toHaveBeenCalled()
+    expect(mocks.state.currentHtml).toBe('<p>Draft body</p>')
+  })
+
+  it('does not log raw storage details when inline image upload rejects', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    mocks.state.currentHtml = '<p>Draft body</p>'
+    mocks.fetchWithCsrf.mockRejectedValue(new Error('Cloudflare R2 storage stack trace status 500'))
+
+    render(<TiptapEditor content="<p>Draft body</p>" onChange={vi.fn()} />)
+
+    const file = new File(['image'], 'inline.png', { type: 'image/png' })
+
+    await act(async () => {
+      const handled = await mocks.state.config?.editorProps?.handleDrop?.(
+        {},
+        { dataTransfer: { files: [file] } } as unknown as DragEvent,
+        null,
+        false,
+      )
+      expect(handled).toBe(true)
+    })
+
+    await waitFor(() => {
+      expect(consoleErrorSpy).toHaveBeenCalledWith('Error uploading image:', expect.any(Error))
+    })
+    const loggedError = consoleErrorSpy.mock.calls.at(-1)?.[1]
+    expect(loggedError).toBeInstanceOf(Error)
+    expect((loggedError as Error).message).toBe('Image could not be uploaded. Please retry after storage is healthy.')
+    expect((loggedError as Error).message).not.toContain('Cloudflare')
+    expect((loggedError as Error).message).not.toContain('stack trace')
+    expect(mocks.state.setImage).not.toHaveBeenCalled()
+    expect(mocks.state.currentHtml).toBe('<p>Draft body</p>')
+  })
+
+  it('allows retrying inline image upload after a failure', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    mocks.state.currentHtml = '<p>Draft body</p>'
+    mocks.fetchWithCsrf
+      .mockResolvedValueOnce({
+        ok: false,
+        json: async () => ({ error: 'upload failed' }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ url: '/uploads/retry.png' }),
+      })
+
+    render(<TiptapEditor content="<p>Draft body</p>" onChange={vi.fn()} />)
+
+    const firstFile = new File(['image'], 'inline.png', { type: 'image/png' })
+    const retryFile = new File(['image'], 'retry.png', { type: 'image/png' })
+
+    await act(async () => {
+      await mocks.state.config?.editorProps?.handleDrop?.(
+        {},
+        { dataTransfer: { files: [firstFile] } } as unknown as DragEvent,
+        null,
+        false,
+      )
+    })
+
+    await waitFor(() => {
+      expect(mocks.state.setImage).not.toHaveBeenCalled()
+    })
+
+    await act(async () => {
+      await mocks.state.config?.editorProps?.handleDrop?.(
+        {},
+        { dataTransfer: { files: [retryFile] } } as unknown as DragEvent,
+        null,
+        false,
+      )
+    })
+
+    await waitFor(() => {
+      expect(mocks.state.setImage).toHaveBeenCalledWith('/uploads/retry.png')
+    })
+  })
+
   it('keeps pasted mermaid fences out of the independent mermaid block path', async () => {
     render(<TiptapEditor content="<p>Initial</p>" onChange={vi.fn()} />)
 
@@ -310,5 +437,20 @@ describe('TiptapEditor', () => {
     fireEvent.click(screen.getByTitle('Insert Mermaid Diagram'))
 
     expect(mocks.state.insertContent).toHaveBeenCalledWith({ type: 'mermaidBlock' })
+  })
+
+  it('configures code blocks with the shared readable content styling hook', () => {
+    render(<TiptapEditor content="<p>Body</p>" onChange={vi.fn()} />)
+
+    expect(mocks.state.config?.extensions).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        name: 'code-block-lowlight',
+        options: expect.objectContaining({
+          HTMLAttributes: expect.objectContaining({
+            class: expect.stringContaining('content-code-block'),
+          }),
+        }),
+      }),
+    ]))
   })
 })

@@ -43,6 +43,25 @@ describe('public/admin api clients', () => {
     await expect(fetchPublicWorks(2, 8)).rejects.toThrow('Failed to load public works.')
   })
 
+  it('public detail, page, and resume clients throw explicit public errors on 500 responses', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response('database stack trace', { status: 500 }))
+      .mockResolvedValueOnce(new Response('work upstream failed', { status: 502 }))
+      .mockResolvedValueOnce(new Response('page upstream failed', { status: 503 }))
+      .mockResolvedValueOnce(new Response('resume upstream failed', { status: 500 }))
+    vi.stubGlobal('fetch', fetchMock as typeof fetch)
+
+    const { fetchPublicBlogBySlug } = await import('@/lib/api/blogs')
+    const { fetchPublicWorkBySlug } = await import('@/lib/api/works')
+    const { fetchPublicPageBySlug } = await import('@/lib/api/pages')
+    const { fetchResume } = await import('@/lib/api/site-settings')
+
+    await expect(fetchPublicBlogBySlug('broken-blog')).rejects.toThrow('Failed to load public blog')
+    await expect(fetchPublicWorkBySlug('broken-work')).rejects.toThrow('Failed to load public work')
+    await expect(fetchPublicPageBySlug('introduction')).rejects.toThrow('Failed to load public page')
+    await expect(fetchResume()).rejects.toThrow('Failed to load public resume.')
+  })
+
   it('public server API base uses the public site URL without reading request headers', async () => {
     vi.resetModules()
     vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://woonglab.com/')

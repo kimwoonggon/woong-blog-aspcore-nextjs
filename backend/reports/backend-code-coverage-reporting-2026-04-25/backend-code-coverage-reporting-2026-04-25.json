@@ -1,0 +1,131 @@
+{
+  "report": "backend-code-coverage-reporting-2026-04-25",
+  "date": "2026-04-25",
+  "scope": "backend only",
+  "productionCodeChanged": false,
+  "thresholdEnforced": false,
+  "summary": "Added backend code coverage collection and readable ReportGenerator reports for unit, component, integration, and full backend solution test runs.",
+  "changed": [
+    "backend/coverage.runsettings",
+    "backend/.config/dotnet-tools.json",
+    "scripts/run-backend-coverage.sh",
+    "backend/TESTING.md",
+    "backend/tests/WoongBlog.Api.ArchitectureTests/BackendCoverageToolingTests.cs",
+    "backend/reports/backend-test-coverage-audit-2026-04-24/backend-test-coverage-audit-2026-04-24.md",
+    "backend/reports/backend-test-coverage-audit-2026-04-24/backend-test-coverage-audit-2026-04-24.html",
+    "backend/reports/backend-test-coverage-audit-2026-04-24/backend-test-coverage-audit-2026-04-24.json"
+  ],
+  "intentionallyNotChanged": [
+    "production source code",
+    "strict coverage thresholds",
+    "CI coverage gates",
+    "generated coverage output under coverage/backend"
+  ],
+  "coverage": {
+    "unit": {
+      "lineCoverage": 11.0,
+      "coveredLines": 141,
+      "coverableLines": 1276,
+      "branchCoverage": 4.0,
+      "coveredBranches": 8,
+      "totalBranches": 200,
+      "report": "coverage/backend/unit/report/index.html"
+    },
+    "component": {
+      "lineCoverage": 40.3,
+      "coveredLines": 1125,
+      "coverableLines": 2785,
+      "branchCoverage": 30.0,
+      "coveredBranches": 193,
+      "totalBranches": 642,
+      "report": "coverage/backend/component/report/index.html"
+    },
+    "integration": {
+      "lineCoverage": 85.0,
+      "coveredLines": 3329,
+      "coverableLines": 3912,
+      "branchCoverage": 51.5,
+      "coveredBranches": 343,
+      "totalBranches": 665,
+      "report": "coverage/backend/integration/report/index.html"
+    },
+    "full": {
+      "lineCoverage": 90.1,
+      "coveredLines": 3527,
+      "coverableLines": 3912,
+      "branchCoverage": 60.9,
+      "coveredBranches": 405,
+      "totalBranches": 665,
+      "report": "coverage/backend/full/report/index.html"
+    }
+  },
+  "lowCoverageProductionAreas": [
+    "R2VideoStorageService",
+    "ValidationExceptionFilter",
+    "AppOpenIdConnectEvents",
+    "AppCookieAuthenticationEvents",
+    "BlogAiFixService",
+    "WorkVideoPolicy",
+    "AuthOptionsValidator",
+    "SecurityOptionsValidator",
+    "ForwardedHeadersOptionsFactory",
+    "FfmpegVideoTranscoder",
+    "ContentSearchText"
+  ],
+  "highRiskLowCoverageAreas": [
+    "R2/object storage video paths",
+    "auth/OIDC/cookie event handling",
+    "AI provider execution and Codex runtime failures",
+    "WorkVideo policy/transcoding failures",
+    "validation exception payload shape",
+    "proxy/security configuration"
+  ],
+  "recommendedNextCoverageTargets": [
+    "Fake-backed R2/object-storage tests for WorkVideo issue, confirm, delete, and cleanup paths",
+    "Auth/OIDC event and cookie-auth edge tests",
+    "Fake HttpClient AI provider tests for success, provider errors, timeouts, empty responses, and malformed responses",
+    "Validation exception filter tests for stable error payload shape",
+    "WorkVideo policy/transcoder failure and rollback tests",
+    "ContentSearchText and admin content JSON extraction edge tests"
+  ],
+  "validations": [
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.ArchitectureTests/WoongBlog.Api.ArchitectureTests.csproj --filter FullyQualifiedName~BackendCoverageToolingTests",
+      "result": "Failed before tooling existed, then passed 4 tests after implementation."
+    },
+    {
+      "command": "bash -n scripts/run-backend-coverage.sh",
+      "result": "Passed."
+    },
+    {
+      "command": "node -e \"JSON.parse(...backend/.config/dotnet-tools.json...)\"",
+      "result": "Passed."
+    },
+    {
+      "command": "./scripts/run-backend-coverage.sh unit -v minimal",
+      "result": "Passed: Unit 14."
+    },
+    {
+      "command": "./scripts/run-backend-coverage.sh component -v minimal",
+      "result": "Passed: Component 76."
+    },
+    {
+      "command": "./scripts/run-backend-coverage.sh integration -v minimal",
+      "result": "Passed: Integration 194."
+    },
+    {
+      "command": "./scripts/run-backend-coverage.sh full -v minimal",
+      "result": "Passed: Contract 1 skipped, Unit 14, Component 76, Architecture 35, Integration 194."
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln",
+      "result": "Passed: Contract 1 skipped, Unit 14, Component 76, Architecture 35, Integration 194. Existing NU1901 low-severity AWSSDK.Core advisory warning remains."
+    }
+  ],
+  "risks": [
+    "Coverage report generation is slower than normal test runs.",
+    "Full coverage includes architecture tests and a skipped contract project, so it should not be interpreted as behavior-only coverage.",
+    "High full line coverage does not cover all provider failure, storage failure, auth edge, validation, rollback, or branch behavior."
+  ],
+  "recommendation": "Keep the coverage tooling and use the 90.1% line / 60.9% branch full-backend baseline for prioritization, not as a gate. Target high-risk low-coverage areas before adding thresholds."
+}

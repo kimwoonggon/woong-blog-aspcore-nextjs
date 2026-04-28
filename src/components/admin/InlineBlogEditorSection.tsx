@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Trash2 } from 'lucide-react'
 import { BlogEditor } from '@/components/admin/BlogEditor'
 import { deleteAdminBlog } from '@/lib/api/admin-mutations'
+import { sanitizeAdminMutationError } from '@/lib/admin-save-error'
 import { InlineAdminEditorShell } from '@/components/admin/InlineAdminEditorShell'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
@@ -53,7 +54,10 @@ export function InlineBlogEditorSection({
         router.push(afterDeleteHref)
         router.refresh()
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'Failed to delete study.')
+        toast.error(sanitizeAdminMutationError(
+          error instanceof Error ? error.message : '',
+          'Study could not be deleted. Please retry after the backend is healthy.',
+        ))
       }
     })
   }

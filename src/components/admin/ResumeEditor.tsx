@@ -9,8 +9,10 @@ import { fetchWithCsrf } from '@/lib/api/auth'
 import { toast } from 'sonner'
 import { getBrowserApiBaseUrl } from '@/lib/api/browser'
 import { getErrorMessage } from '@/lib/error-message'
+import { sanitizeAdminUploadError } from '@/lib/admin-save-error'
 import { revalidatePublicPathsAfterMutation } from '@/lib/public-revalidation-client'
 import { getResumePublicRevalidationPaths } from '@/lib/public-revalidation-paths'
+import { isAcceptedPdfFile } from '@/lib/file-validation'
 
 interface Asset {
     id: string
@@ -35,8 +37,13 @@ export function ResumeEditor({ resumeAsset }: ResumeEditorProps) {
         const file = e.target.files?.[0]
         if (!file) return
 
-        const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
-        if (!isPdf) {
+        if (file.size <= 0) {
+            toast.error('Please upload a non-empty PDF file.')
+            e.target.value = ''
+            return
+        }
+
+        if (!isAcceptedPdfFile(file)) {
             toast.error('Please upload a PDF file.')
             e.target.value = ''
             return
@@ -73,7 +80,13 @@ export function ResumeEditor({ resumeAsset }: ResumeEditorProps) {
             toast.success('Resume uploaded and linked!', { id: toastId })
             router.refresh()
         } catch (error: unknown) {
-            toast.error(getErrorMessage(error, 'Failed to upload'), { id: toastId })
+            toast.error(
+                sanitizeAdminUploadError(
+                    getErrorMessage(error, 'Failed to upload'),
+                    'Resume could not be uploaded. Please retry after storage is healthy.'
+                ),
+                { id: toastId }
+            )
         } finally {
             setIsUploading(false)
             e.target.value = ''

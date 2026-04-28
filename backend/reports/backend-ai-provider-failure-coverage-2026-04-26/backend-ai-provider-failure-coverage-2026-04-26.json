@@ -1,0 +1,194 @@
+{
+  "slug": "backend-ai-provider-failure-coverage-2026-04-26",
+  "date": "2026-04-26",
+  "task": "Backend AI provider failure coverage reinforcement",
+  "summary": "Added backend-only OpenAI/Azure BlogAiFixService component tests and AiHttpResultMapper unit tests without production-code changes or real external provider calls.",
+  "changed": [
+    "backend/tests/WoongBlog.Api.ComponentTests/BlogAiFixServiceProviderComponentTests.cs",
+    "backend/tests/WoongBlog.Api.UnitTests/AiHttpResultMapperTests.cs",
+    "backend/tests/WoongBlog.Api.UnitTests/WoongBlog.Api.UnitTests.csproj",
+    "todolist-2026-04-26.md",
+    "backend/reports/backend-ai-provider-failure-coverage-2026-04-26/prechange-backup/prechange-backup.patch",
+    "backend/reports/backend-ai-provider-failure-coverage-2026-04-26/prechange-backup/prechange-status.txt"
+  ],
+  "intentionallyNotChanged": [
+    "Production AI provider implementation",
+    "Production API surface",
+    "WorkVideo/R2/HLS coverage",
+    "Real OpenAI/Azure OpenAI/Codex calls"
+  ],
+  "previousHotspotSummary": {
+    "fullBackend": {
+      "lineCoverage": 90.1,
+      "branchCoverage": 60.9
+    },
+    "classes": [
+      {
+        "name": "WoongBlog.Infrastructure.Ai.BlogAiFixService",
+        "lineCoverage": 62.8,
+        "branchCoverage": 38.2,
+        "risk": "Provider failures, malformed JSON, empty choices, fallback behavior, and config failures were thin."
+      },
+      {
+        "name": "WoongBlog.Api.Modules.AI.AiHttpResultMapper",
+        "lineCoverage": 70.0,
+        "branchCoverage": 40.0,
+        "risk": "NotFound, Conflict, and default 500 mapping were not fully locked down."
+      }
+    ]
+  },
+  "testsAdded": {
+    "component": {
+      "file": "backend/tests/WoongBlog.Api.ComponentTests/BlogAiFixServiceProviderComponentTests.cs",
+      "count": 20,
+      "coverageAreas": [
+        "OpenAI success",
+        "OpenAI fenced HTML cleanup",
+        "OpenAI non-2xx payload",
+        "OpenAI malformed JSON",
+        "OpenAI empty choices and missing message content",
+        "OpenAI missing API key",
+        "Unknown provider fallback",
+        "OPENAI_MODEL override",
+        "Azure success",
+        "Azure URL/header formation",
+        "Azure non-2xx payload",
+        "Azure malformed JSON",
+        "Azure empty choices and missing message content",
+        "Azure missing API key or endpoint",
+        "Azure deployment environment overrides",
+        "Azure API version environment override"
+      ]
+    },
+    "unit": {
+      "file": "backend/tests/WoongBlog.Api.UnitTests/AiHttpResultMapperTests.cs",
+      "count": 5,
+      "coverageAreas": [
+        "Ok to 200",
+        "BadRequest to 400 with body",
+        "NotFound to 404",
+        "Conflict to 409 with body",
+        "Unknown status to 500"
+      ]
+    }
+  },
+  "coverage": {
+    "component": {
+      "lineCoverage": 41.9,
+      "branchCoverage": 33.6,
+      "coveredLines": 1168,
+      "coverableLines": 2785,
+      "coveredBranches": 216,
+      "totalBranches": 642,
+      "classes": [
+        {
+          "name": "WoongBlog.Infrastructure.Ai.BlogAiFixService",
+          "lineCoverage": 79.2,
+          "branchCoverage": 57.4,
+          "coveredLines": 160,
+          "coverableLines": 202,
+          "coveredBranches": 54,
+          "totalBranches": 94
+        }
+      ]
+    },
+    "full": {
+      "lineCoverage": 91.3,
+      "branchCoverage": 64.8,
+      "coveredLines": 3575,
+      "coverableLines": 3912,
+      "coveredBranches": 431,
+      "totalBranches": 665,
+      "classes": [
+        {
+          "name": "WoongBlog.Infrastructure.Ai.BlogAiFixService",
+          "lineCoverage": 84.1,
+          "branchCoverage": 62.7,
+          "coveredLines": 170,
+          "coverableLines": 202,
+          "coveredBranches": 59,
+          "totalBranches": 94
+        },
+        {
+          "name": "WoongBlog.Api.Modules.AI.AiHttpResultMapper",
+          "lineCoverage": 100.0,
+          "branchCoverage": 100.0,
+          "coveredLines": 10,
+          "coverableLines": 10,
+          "coveredBranches": 5,
+          "totalBranches": 5
+        }
+      ]
+    },
+    "changesFromPreviousFull": {
+      "fullBackendLineCoveragePoints": 1.2,
+      "fullBackendBranchCoveragePoints": 3.9,
+      "blogAiFixServiceLineCoveragePoints": 21.3,
+      "blogAiFixServiceBranchCoveragePoints": 24.5,
+      "aiHttpResultMapperLineCoveragePoints": 30.0,
+      "aiHttpResultMapperBranchCoveragePoints": 60.0
+    }
+  },
+  "validation": [
+    {
+      "command": "mkdir -p /home/kimwoonggon/.codex/plugins/cache /home/kimwoonggon/.codex/.tmp/plugins",
+      "result": "passed"
+    },
+    {
+      "command": "readlink -f /home/kimwoonggon/.codex/plugins/cache",
+      "result": "passed",
+      "output": "/home/kimwoonggon/.codex/plugins/cache"
+    },
+    {
+      "command": "readlink -f /home/kimwoonggon/.codex/.tmp/plugins",
+      "result": "passed",
+      "output": "/home/kimwoonggon/.codex/.tmp/plugins"
+    },
+    {
+      "command": "npx --yes skills find dotnet testing",
+      "result": "passed",
+      "notes": "No external skill installed because returned skills had low install counts."
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj --filter BlogAiFixServiceProviderComponentTests",
+      "result": "passed",
+      "passed": 20,
+      "failed": 0
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.UnitTests/WoongBlog.Api.UnitTests.csproj --filter AiHttpResultMapperTests",
+      "result": "passed",
+      "passed": 5,
+      "failed": 0
+    },
+    {
+      "command": "./scripts/run-backend-coverage.sh component -v minimal",
+      "result": "passed",
+      "passed": 96,
+      "failed": 0
+    },
+    {
+      "command": "./scripts/run-backend-coverage.sh full -v minimal",
+      "result": "passed",
+      "notes": "An intermediate run failed on the UnitTests direct Microsoft.AspNetCore.App reference; the reference was removed and the required command was rerun successfully."
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln",
+      "result": "passed",
+      "notes": "Contract verification skipped as configured; component, unit, architecture, and integration tests passed."
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    },
+    {
+      "command": "node parse of coverage/backend/component/report/Summary.json and coverage/backend/full/report/Summary.json",
+      "result": "passed"
+    }
+  ],
+  "warnings": [
+    "NU1901 for AWSSDK.Core 4.0.0.17 low-severity vulnerability appeared during restore/test commands and was pre-existing.",
+    "Codex process edge behavior, image artifact resolution, prompt catalog fallback, and broader runtime policy branches remain future AI coverage work."
+  ],
+  "finalRecommendation": "AI provider failure coverage is substantially reinforced. Next AI-focused coverage should target Codex process and image artifact resolution edge cases; keep WorkVideo/R2/HLS as a separate follow-up."
+}

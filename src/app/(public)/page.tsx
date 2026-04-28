@@ -9,13 +9,24 @@ import { parsePageContentJson, toHomeContent } from '@/lib/content/page-content'
 
 export const revalidate = 60
 
+function formatDateOrUnknown(publishedAt: string | null | undefined, options: Intl.DateTimeFormatOptions) {
+  if (!publishedAt) {
+    return 'Unknown Date'
+  }
+
+  const date = new Date(publishedAt)
+  if (Number.isNaN(date.getTime())) {
+    return 'Unknown Date'
+  }
+
+  return date.toLocaleDateString('en-US', options)
+}
+
 function formatPublishedMonth(publishedAt?: string | null) {
-  return publishedAt
-    ? new Date(publishedAt).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-      })
-    : 'Unknown Date'
+  return formatDateOrUnknown(publishedAt, {
+    year: 'numeric',
+    month: 'short',
+  })
 }
 
 function FeaturedWorkNoImagePlaceholder() {
@@ -192,13 +203,11 @@ export default async function HomePage() {
         <div className="grid grid-cols-2 gap-4 md:grid-cols-2 md:gap-6">
           {recentPosts.length > 0 ? (
             recentPosts.map((post) => {
-              const publishDate = post.publishedAt
-                ? new Date(post.publishedAt).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  })
-                : 'Unknown Date'
+              const publishDate = formatDateOrUnknown(post.publishedAt, {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              })
 
               return (
                 <Link

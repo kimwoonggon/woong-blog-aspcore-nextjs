@@ -1,0 +1,585 @@
+{
+  "report": "backend-test-coverage-audit-2026-04-24",
+  "updateDate": "2026-04-25",
+  "scope": "backend only",
+  "tasks": [
+    "Priority 1 auth/session/login/logout/CSRF/admin authorization tests",
+    "Priority 1 destructive or state-changing admin command tests",
+    "Public read/query behavior tests",
+    "WorkVideo behavior tests",
+    "AI/Codex/batch/runtime config behavior tests",
+    "Persistence, EF model, startup composition, DI, options, middleware, and health behavior tests",
+    "Final backend test cleanup, category taxonomy, and audit update"
+  ],
+  "productionCodeChanged": false,
+  "testsAdded": [
+    {
+      "file": "backend/tests/WoongBlog.Api.IntegrationTests/AuthFlowIntegrationTests.cs",
+      "category": "Integration",
+      "behaviors": [
+        "authenticated admin session returns full payload",
+        "authenticated non-admin session returns user role payload",
+        "representative admin GET endpoints return 401 for anonymous requests",
+        "representative admin GET endpoints return 403 for authenticated non-admin requests",
+        "representative admin GET endpoints succeed for authenticated admin requests",
+        "login endpoint challenges fake OIDC provider without real Google OAuth",
+        "external login return URL is not exposed in auth redirect",
+        "logout POST rejects missing CSRF",
+        "logout POST with valid CSRF returns redirect payload and clears auth cookie",
+        "invalid CSRF token rejects admin mutation without persisting",
+        "valid CSRF token accepts admin mutation",
+        "valid-CSRF admin mutation returns auth failure for anonymous and non-admin principals"
+      ]
+    },
+    {
+      "file": "backend/tests/WoongBlog.Api.ComponentTests/AuthRecorderComponentTests.cs",
+      "category": "Component",
+      "behaviors": [
+        "malformed session-id claim does not authenticate",
+        "absolute-expired session does not authenticate and is revoked",
+        "session with missing profile does not authenticate and is revoked"
+      ]
+    },
+    {
+      "file": "backend/tests/WoongBlog.Api.IntegrationTests/AdminMutationEndpointsTests.cs",
+      "category": "Integration",
+      "behaviors": [
+        "admin page/blog/work/site-settings mutations reject anonymous requests when CSRF is valid",
+        "admin page/blog/work/site-settings mutations reject non-admin requests when CSRF is valid",
+        "page update returns success payload and persists only the target page",
+        "invalid page update returns bad request and does not persist",
+        "blog create returns id/slug and persists expected fields",
+        "invalid blog create returns bad request and does not create a row",
+        "blog update returns id/slug, changes expected fields, and can unpublish",
+        "missing blog update returns not found and preserves existing blogs",
+        "blog delete hard-deletes only the target blog",
+        "missing blog delete returns not found and preserves existing blogs",
+        "work create returns id/slug and persists expected fields",
+        "invalid work create returns bad request and does not create a row",
+        "work update returns id/slug, changes expected fields, and can unpublish",
+        "missing work update returns not found and preserves existing works",
+        "work delete hard-deletes only the target work",
+        "missing work delete returns not found and preserves existing works",
+        "site settings partial update persists supplied fields and preserves omitted fields",
+        "invalid site settings update returns bad request and does not persist"
+      ]
+    },
+    {
+      "file": "backend/tests/WoongBlog.Api.ComponentTests/PublicQueryHandlerComponentTests.cs",
+      "category": "Component",
+      "behaviors": [
+        "public home maps page content, site settings, resume URL, assets, published-only summaries, and published-date ordering",
+        "public home returns null when required home or site settings data is missing",
+        "public site settings maps all public social fields",
+        "public page by slug returns content when present and null when missing",
+        "public work list returns stable empty pagination, excludes drafts, orders by published date, maps thumbnail/icon URLs, and clamps over-large pages",
+        "public work detail returns assets, social share message, videos_version, and public video DTOs",
+        "public work detail returns null for draft or missing slugs",
+        "public blog list returns stable empty pagination, excludes drafts, orders by published date, maps cover URLs, and clamps over-large pages",
+        "public blog detail returns cover asset fields and null for draft or missing slugs"
+      ]
+    },
+    {
+      "file": "backend/tests/WoongBlog.Api.IntegrationTests/PublicEndpointsTests.cs",
+      "category": "Integration",
+      "behaviors": [
+        "public site settings returns typed anonymous DTO shape and current gitHubUrl/linkedInUrl JSON contract casing",
+        "public home returns typed anonymous DTO shape",
+        "public page by slug returns typed anonymous DTO shape and missing slugs return 404",
+        "public work detail returns typed anonymous DTO shape with thumbnail, icon, videos, and videos_version",
+        "draft work detail returns 404",
+        "public works list excludes drafts, orders by published date, maps assets, and returns typed paging data",
+        "public blog detail returns typed anonymous DTO shape with cover asset field",
+        "draft blog detail returns 404",
+        "public blogs list excludes drafts, orders by published date, maps cover assets, and returns typed paging data",
+        "public work and blog lists return stable empty paged responses when content tables are empty"
+      ]
+    },
+    {
+      "file": "backend/tests/WoongBlog.Api.IntegrationTests/WorkVideoEndpointsTests.cs",
+      "category": "Integration",
+      "behaviors": [
+        "WorkVideo endpoint tests are selected by the Integration category filter",
+        "upload-url rejects anonymous and non-admin callers when CSRF is valid",
+        "upload-url to a missing work returns not found",
+        "invalid upload metadata returns bad request",
+        "multipart upload without a file part returns bad request",
+        "successful local upload and confirm persist metadata, mark the upload session confirmed, store a local file, increment videos_version, and project through public work detail",
+        "individual video delete removes the database row, increments videos_version, schedules cleanup, and removes the public projection",
+        "missing video delete returns not found",
+        "successful reorder persists deterministic database sort order",
+        "invalid reorder IDs return bad request and leave persisted order unchanged",
+        "public work detail returns published video data and hides draft work videos"
+      ]
+    },
+    {
+      "file": "backend/tests/WoongBlog.Api.ComponentTests/WorkVideoComponentTests.cs",
+      "category": "Component",
+      "behaviors": [
+        "local video storage saves, reads metadata and prefixes, returns upload target shape, and deletes a temp-root file",
+        "local HLS manifest delete removes the HLS directory",
+        "cleanup service deletes a local file and marks the job succeeded",
+        "cleanup service marks a job failed when no storage backend exists",
+        "cleanup service increments attempts and marks a job failed on the fifth delete failure",
+        "expired unconfirmed upload sessions are marked expired and enqueue cleanup while confirmed and active sessions are ignored",
+        "reorder handler rewrites sort order deterministically through EF-backed stores",
+        "delete handler removes the video, compacts remaining order, and normalizes HLS cleanup to the local manifest key"
+      ]
+    },
+    {
+      "file": "backend/tests/WoongBlog.Api.IntegrationTests/AdminAiEndpointsTests.cs",
+      "category": "Integration",
+      "behaviors": [
+        "admin AI blog-fix rejects anonymous requests when CSRF is valid",
+        "runtime config rejects anonymous requests",
+        "persistent batch job creation returns bad request when no target is requested",
+        "repeated active batch job creation returns the existing queued job and does not duplicate job or item records"
+      ]
+    },
+    {
+      "file": "backend/tests/WoongBlog.Api.ComponentTests/AiBatchRuntimeComponentTests.cs",
+      "category": "Component",
+      "behaviors": [
+        "batch job command persists queued jobs and pending items for selected targets",
+        "batch target store selects requested or all targets deterministically",
+        "scheduler resets interrupted running jobs to queued",
+        "scheduler moves queued work through running to completed and persists fixed HTML results",
+        "full runtime failure marks the job failed and stores item errors",
+        "partial runtime failure with auto-apply updates only successful blogs and preserves failed or unrelated content",
+        "runtime config handler returns stable defaults and provider fallback",
+        "AI options post-configure applies environment-style overrides and defaults",
+        "AI options validation fails safely for invalid runtime configuration"
+      ]
+    },
+    {
+      "file": "backend/tests/WoongBlog.Api.ComponentTests/BlogAiFixServiceCodexRuntimeComponentTests.cs",
+      "category": "Component",
+      "behaviors": [
+        "fake Codex process receives model, reasoning effort, and workdir arguments",
+        "non-zero fake Codex process exit surfaces stderr in the thrown exception"
+      ]
+    },
+    {
+      "file": "backend/tests/WoongBlog.Api.ComponentTests/DbContextModelContractComponentTests.cs",
+      "category": "Component",
+      "behaviors": [
+        "DbContext model includes expected aggregate entity types and primary keys",
+        "important page/blog/work fields are required in EF model metadata",
+        "JSON column contracts remain jsonb for content fields",
+        "expected indexes and unique constraints remain configured in model metadata",
+        "WorkVideo and upload-session relationships remain required cascades to Work",
+        "blog and work search fields refresh when content changes on update"
+      ]
+    },
+    {
+      "file": "backend/tests/WoongBlog.Api.IntegrationTests/PostgresPersistenceContractTests.cs",
+      "category": "Integration",
+      "behaviors": [
+        "Postgres bootstrap applies search extension, search columns, trigram indexes, and schema patch rows",
+        "Postgres bootstrap is idempotent and preserves runtime blog rows",
+        "Postgres enforces required title with NOT NULL violation",
+        "Postgres rejects duplicate blog slug and auth session key unique violations",
+        "Postgres cascades WorkVideo and WorkVideoUploadSession rows when deleting a Work"
+      ]
+    },
+    {
+      "file": "backend/tests/WoongBlog.Api.IntegrationTests/StartupCompositionTests.cs",
+      "category": "Integration",
+      "behaviors": [
+        "important Infrastructure stores and services resolve from the full startup provider",
+        "representative Application handlers and validators resolve from the full startup provider",
+        "AI and WorkVideo hosted services are registered",
+        "auth, security, proxy, AI, R2, and HLS options bind in Testing startup",
+        "health, Testing OpenAPI, and admin AI runtime config start without unavailable external services",
+        "unsafe admin mutation without CSRF is rejected before authorization"
+      ]
+    },
+    {
+      "file": "backend/tests/WoongBlog.Api.IntegrationTests/StartupOptionsValidationTests.cs",
+      "category": "Integration",
+      "behaviors": [
+        "invalid AI batch concurrency fails startup",
+        "missing auth media root fails startup",
+        "missing antiforgery header name fails startup"
+      ]
+    },
+    {
+      "file": "backend/tests/WoongBlog.Api.ArchitectureTests/ArchitectureBoundaryTests.cs",
+      "category": "Architecture",
+      "behaviors": [
+        "Program service composition, middleware, and endpoint mapping stay in expected boundary order"
+      ]
+    }
+  ],
+  "filesChanged": [
+    "backend/tests/WoongBlog.Api.IntegrationTests/AdminMutationEndpointsTests.cs",
+    "backend/tests/WoongBlog.Api.IntegrationTests/AdminAiEndpointsTests.cs",
+    "backend/tests/WoongBlog.Api.IntegrationTests/AuthFlowIntegrationTests.cs",
+    "backend/tests/WoongBlog.Api.IntegrationTests/TestOidcChallengeHandler.cs",
+    "backend/tests/WoongBlog.Api.IntegrationTests/TestAuthHandler.cs",
+    "backend/tests/WoongBlog.Api.IntegrationTests/CustomWebApplicationFactory.cs",
+    "backend/tests/WoongBlog.Api.ComponentTests/AiBatchRuntimeComponentTests.cs",
+    "backend/tests/WoongBlog.Api.ComponentTests/AuthRecorderComponentTests.cs",
+    "backend/tests/WoongBlog.Api.ComponentTests/BlogAiFixServiceCodexRuntimeComponentTests.cs",
+    "backend/tests/WoongBlog.Api.ComponentTests/PublicQueryHandlerComponentTests.cs",
+    "backend/tests/WoongBlog.Api.IntegrationTests/PublicEndpointsTests.cs",
+    "backend/tests/WoongBlog.Api.IntegrationTests/WorkVideoEndpointsTests.cs",
+    "backend/tests/WoongBlog.Api.ComponentTests/WorkVideoComponentTests.cs",
+    "backend/tests/WoongBlog.Api.ComponentTests/DbContextModelContractComponentTests.cs",
+    "backend/tests/WoongBlog.Api.IntegrationTests/PostgresPersistenceContractTests.cs",
+    "backend/tests/WoongBlog.Api.IntegrationTests/PersistenceContractTests.cs",
+    "backend/tests/WoongBlog.Api.IntegrationTests/DatabaseBootstrapperTests.cs",
+    "backend/tests/WoongBlog.Api.IntegrationTests/AdminContentEndpointsTests.cs",
+    "backend/tests/WoongBlog.Api.IntegrationTests/AuthEndpointsTests.cs",
+    "backend/tests/WoongBlog.Api.IntegrationTests/AuthSecurityTests.cs",
+    "backend/tests/WoongBlog.Api.IntegrationTests/UploadsControllerTests.cs",
+    "backend/tests/WoongBlog.Api.IntegrationTests/StartupCompositionTests.cs",
+    "backend/tests/WoongBlog.Api.IntegrationTests/StartupOptionsValidationTests.cs",
+    "backend/tests/WoongBlog.Api.ArchitectureTests/ArchitectureBoundaryTests.cs",
+    "backend/tests/WoongBlog.Api.ContractTests/ProviderContractVerificationTests.cs",
+    "todolist-2026-04-25.md",
+    "backend/reports/backend-test-coverage-audit-2026-04-24/backend-test-coverage-audit-2026-04-24.md",
+    "backend/reports/backend-test-coverage-audit-2026-04-24/backend-test-coverage-audit-2026-04-24.html",
+    "backend/reports/backend-test-coverage-audit-2026-04-24/backend-test-coverage-audit-2026-04-24.json"
+  ],
+  "validations": [
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~AuthFlowIntegrationTests",
+      "exitCode": 0,
+      "result": "passed",
+      "summary": "31 integration test cases passed"
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj --filter FullyQualifiedName~AuthRecorderComponentTests",
+      "exitCode": 0,
+      "result": "passed",
+      "summary": "12 component tests passed"
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~AdminMutationEndpointsTests",
+      "exitCode": 0,
+      "result": "passed",
+      "summary": "32 integration test cases passed"
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj --filter FullyQualifiedName~PublicQueryHandlerComponentTests",
+      "exitCode": 0,
+      "result": "passed",
+      "summary": "32 component tests passed"
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~PublicEndpointsTests",
+      "exitCode": 0,
+      "result": "passed",
+      "summary": "27 integration tests passed"
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln",
+      "exitCode": 0,
+      "result": "passed",
+      "summary": "Contract 1, Unit 14, Component 52, Architecture 30, Integration 172"
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln --filter \"Category=Component\"",
+      "exitCode": 0,
+      "result": "passed",
+      "summary": "Component 52"
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln --filter \"Category=Integration\"",
+      "exitCode": 0,
+      "result": "passed",
+      "summary": "Integration 116"
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~WorkVideoEndpointsTests",
+      "exitCode": 0,
+      "result": "passed",
+      "summary": "17 integration tests passed"
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj --filter FullyQualifiedName~WorkVideoComponentTests",
+      "exitCode": 0,
+      "result": "passed",
+      "summary": "8 component tests passed"
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln",
+      "exitCode": 0,
+      "result": "passed",
+      "summary": "Contract 1, Unit 14, Component 60, Architecture 30, Integration 182"
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln --filter \"Category=Component\"",
+      "exitCode": 0,
+      "result": "passed",
+      "summary": "Component 60"
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln --filter \"Category=Integration\"",
+      "exitCode": 0,
+      "result": "passed",
+      "summary": "Integration 133"
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~AdminAiEndpointsTests",
+      "exitCode": 0,
+      "result": "passed",
+      "summary": "17 integration tests passed"
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj --filter FullyQualifiedName~AiBatchRuntimeComponentTests",
+      "exitCode": 0,
+      "result": "passed",
+      "summary": "10 component tests passed"
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj --filter \"FullyQualifiedName~AiBatchRuntimeComponentTests|FullyQualifiedName~BlogAiFixServiceCodexRuntimeComponentTests\"",
+      "exitCode": 0,
+      "result": "passed",
+      "summary": "16 component tests passed"
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln",
+      "exitCode": 0,
+      "result": "passed",
+      "summary": "Contract 1, Unit 14, Component 72, Architecture 30, Integration 185"
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln --filter \"Category=Component\"",
+      "exitCode": 0,
+      "result": "passed",
+      "summary": "Component 72"
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln --filter \"Category=Integration\"",
+      "exitCode": 0,
+      "result": "passed",
+      "summary": "Integration 136"
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj --filter FullyQualifiedName~DbContextModelContractComponentTests",
+      "exitCode": 0,
+      "result": "passed",
+      "summary": "4 component tests passed"
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~PostgresPersistenceContractTests",
+      "exitCode": 0,
+      "result": "passed",
+      "summary": "3 Postgres/Testcontainers integration tests passed"
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~StartupCompositionTests",
+      "exitCode": 0,
+      "result": "passed",
+      "summary": "7 startup composition integration tests passed"
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~StartupOptionsValidationTests",
+      "exitCode": 0,
+      "result": "passed",
+      "summary": "8 startup options validation tests passed"
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.ArchitectureTests/WoongBlog.Api.ArchitectureTests.csproj --filter FullyQualifiedName~Program_ComposesServicesMiddlewareAndEndpoints_InExpectedBoundaryOrder",
+      "exitCode": 0,
+      "result": "passed",
+      "summary": "1 architecture test passed"
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln",
+      "exitCode": 0,
+      "result": "passed",
+      "summary": "Contract 1, Unit 14, Component 76, Architecture 31, Integration 194"
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln --filter \"Category=Architecture\"",
+      "exitCode": 0,
+      "result": "passed",
+      "summary": "Architecture 31"
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln --filter \"Category=Component\"",
+      "exitCode": 0,
+      "result": "passed",
+      "summary": "Component 76"
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln --filter \"Category=Integration\"",
+      "exitCode": 0,
+      "result": "passed",
+      "summary": "Integration 160"
+    },
+    {
+      "command": "node -e \"JSON.parse(...)\"",
+      "exitCode": 0,
+      "result": "passed",
+      "summary": "machine-readable audit JSON parsed successfully after persistence/startup update"
+    },
+    {
+      "command": "git diff --check",
+      "exitCode": 0,
+      "result": "passed",
+      "summary": "no whitespace errors after persistence/startup update"
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.ContractTests/WoongBlog.Api.ContractTests.csproj",
+      "exitCode": 0,
+      "result": "passed_with_skip",
+      "summary": "1 contract test skipped because PACT_PROVIDER_BASE_URL and local pact files are not configured"
+    },
+    {
+      "command": "docker ps",
+      "exitCode": 1,
+      "result": "failed",
+      "summary": "Docker is not available in this WSL distro; Testcontainers cannot start Postgres"
+    },
+    {
+      "command": "docker compose -f docker-compose.dev.yml ps -a",
+      "exitCode": 1,
+      "result": "failed",
+      "summary": "Docker is not available in this WSL distro"
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln",
+      "exitCode": 1,
+      "result": "failed_environment",
+      "summary": "Contract 1 skipped, Unit 14 passed, Component 76 passed, Architecture 31 passed, Integration 191 passed and 3 failed because Docker/Testcontainers is unavailable"
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln --filter \"Category=Unit\"",
+      "exitCode": 0,
+      "result": "passed",
+      "summary": "Unit 14"
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln --filter \"Category=Component\"",
+      "exitCode": 0,
+      "result": "passed",
+      "summary": "Component 76"
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln --filter \"Category=Integration\"",
+      "exitCode": 1,
+      "result": "failed_environment",
+      "summary": "Integration category filter now selects all 194 integration cases; 191 passed and 3 Postgres/Testcontainers tests failed because Docker is unavailable"
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln --filter \"Category=Architecture\"",
+      "exitCode": 0,
+      "result": "passed",
+      "summary": "Architecture 31"
+    },
+    {
+      "command": "node -e \"JSON.parse(...)\"",
+      "exitCode": 0,
+      "result": "passed",
+      "summary": "machine-readable audit JSON parsed successfully after final cleanup update"
+    },
+    {
+      "command": "git diff --check",
+      "exitCode": 0,
+      "result": "passed",
+      "summary": "no whitespace errors after final cleanup update"
+    }
+  ],
+  "warnings": [
+    "All dotnet test runs emitted existing NU1901 low-severity advisory warning for AWSSDK.Core 4.0.0.17 / GHSA-9cvc-h2w8-phrp",
+    "Docker is not available in this WSL distro, so local Postgres/Testcontainers integration tests cannot start",
+    "Pact provider verification is explicitly skipped locally unless PACT_PROVIDER_BASE_URL and pact files are configured"
+  ],
+  "adminMutationCoverageImproved": [
+    "Page update endpoint now covers auth rejection, success response shape, persistence, invalid-request no-write behavior, and unrelated-record preservation",
+    "Blog create/update/delete endpoints now cover auth rejection, validation failure, missing-entity behavior, hard delete, publish/unpublish, response shape, DB persistence, and unrelated-record preservation",
+    "Work create/update/delete endpoints now cover auth rejection, validation failure, missing-entity behavior, hard delete, publish/unpublish, response shape, DB persistence, and unrelated-record preservation without WorkVideo-specific endpoint tests",
+    "Site settings update endpoint now covers auth rejection, response shape, partial update, omitted-field preservation, and invalid-request no-write behavior"
+  ],
+  "publicQueryCoverageImproved": [
+    "Public home covers typed endpoint shape plus component-level missing prerequisites, field mapping, asset projection, draft filtering, and published-date ordering",
+    "Public site settings covers all public social fields at component level and current public JSON contract at endpoint level",
+    "Public pages cover direct slug success and missing-slug not found behavior at component and endpoint levels",
+    "Public blog/work lists cover draft exclusion, published-date ordering, asset mapping, stable empty responses, pagination boundaries, and anonymous endpoint access",
+    "Public blog/work details cover draft/missing slug exclusion and related asset/media DTO fields"
+  ],
+  "workVideoCoverageImproved": [
+    "WorkVideo upload covers endpoint auth rejection, missing work, invalid metadata, missing multipart file, response shape, DB persistence, confirmed session status, local file side effect, and public projection",
+    "WorkVideo metadata persistence verifies source type, source key, original file name, MIME type, file size, sort order, and videos_version",
+    "WorkVideo reorder and delete cover deterministic persisted order, invalid IDs, missing video, individual delete row removal, cleanup scheduling, and public projection after delete",
+    "Component tests cover local storage save/read/delete, HLS directory deletion, cleanup service success/failure/max attempts, expired-session cleanup, reorder handler/store behavior, and delete cleanup normalization",
+    "Public query coverage confirms published work videos are returned and draft work videos are hidden with the draft work"
+  ],
+  "aiBatchRuntimeCoverageImproved": [
+    "Admin AI endpoints cover representative anonymous rejection and invalid persistent batch target validation",
+    "Batch creation covers selected/all target selection, queued job and pending item persistence, custom prompt normalization, provider/model/reasoning metadata, worker-count clamping, and batch signal emission",
+    "Batch status transitions cover running reset, queued-to-running-to-completed success, all-failed final failed state, partial failure final completed state, and persisted item FixedHtml/Error results",
+    "Failure handling asserts runtime exceptions are stored on failed items without corrupting unrelated blog content",
+    "Runtime config covers stable DTO defaults, provider fallback, environment-style option loading, and invalid options validation",
+    "Codex runtime covers fake-process model/reasoning/workdir arguments and non-zero stderr failure handling"
+  ],
+  "persistenceStartupCoverageImproved": [
+    "EF model metadata covers aggregate keys, required fields, JSON column contracts, indexes, unique constraints, and WorkVideo cascade relationship metadata",
+    "Postgres/Testcontainers covers relational NOT NULL, duplicate slug/key unique constraints, and database-side WorkVideo/upload-session cascade behavior",
+    "Postgres bootstrap idempotence and runtime data preservation are covered",
+    "Content search synchronization covers updates to existing blog and work rows",
+    "Full startup composition resolves representative Application handlers, Infrastructure stores/services, hosted services, health checks, and options",
+    "Options validation covers additional missing or invalid AI, auth storage, and antiforgery values",
+    "Middleware and endpoint registration covers Testing OpenAPI, health payload shape, runtime config startup without external services, and CSRF-before-authorization behavior",
+    "Architecture coverage pins centralized Program composition order"
+  ],
+  "remainingGaps": [
+    "Docker/Testcontainers is unavailable in this local WSL environment, so PostgresPersistenceContractTests could not be validated here",
+    "Pact provider verification requires PACT_PROVIDER_BASE_URL and pact files; the local ContractTests run skipped explicitly instead of faking success",
+    "Page create/delete endpoints do not exist in the current API surface",
+    "Admin member create/update/delete/update-role endpoints do not exist in the current API surface",
+    "Invalid, missing, or stale CSRF behavior is still not sampled for every page/blog/work mutation",
+    "Blog/work duplicate slug on update, invalid JSON semantics, tag boundaries beyond existing validator samples, search-field updates, asset update semantics, and detailed UpdatedAt behavior remain incomplete",
+    "Endpoint-level missing singleton/site settings, missing home page, and missing public resume asset behavior remain public read gaps",
+    "Invalid pageSize=0 normalization and unknown searchMode fallback remain explicit endpoint public read gaps",
+    "Public query semantics still run against EF InMemory/test-host storage; direct PostgreSQL ordering/search behavior remains unverified",
+    "PostgreSQL-backed public search/query semantics remain incomplete",
+    "Asset/profile/session/job relationship delete behavior remains incomplete beyond WorkVideo and upload-session cascade",
+    "Partial existing-data bootstrap remains sampled rather than exhaustive across every seeded table and corrupt seed JSON variant",
+    "Hosted service lifecycle behavior is not exercised beyond registration and startup compatibility",
+    "Optional startup provider/config combinations remain incomplete for R2, HLS tool paths, HTTPS/HSTS, forwarded headers, and Codex model/effort invalid values",
+    "No metrics endpoint or OpenTelemetry source was found; only health-check service registration and health payload shape are tested",
+    "Media upload/delete remains outside this step",
+    "AI batch endpoint auth remains representative; anonymous/non-admin/invalid-CSRF matrices for every batch endpoint are incomplete",
+    "AI batch cancel-queued, clear-completed, not-found get/apply/cancel/delete, queued/running apply rejection, and cancellation during execution need focused tests",
+    "Runtime prompt-file missing or invalid JSON fallback and full environment override precedence remain incomplete",
+    "Codex timeout, output-size handling, missing auth file, invalid command path, and remote image artifact behavior remain untested",
+    "OpenAI/Azure HTTP provider paths need fake HttpClient success and failure coverage",
+    "WorkVideo R2/object-storage behavior remains untested without a fake S3/R2 client or adapter seam",
+    "WorkVideo confirm-upload failures still need coverage for invalid session, expired session, missing object, wrong size or MIME, invalid MP4 bytes, stale version, and repeated confirm or upload attempts",
+    "WorkVideo HLS job failures still need coverage for ffmpeg or ffprobe failure, timeout, malformed manifest, unsupported MIME, empty file, stale version, workspace cleanup, and output publish rollback",
+    "WorkVideo invalid or missing CSRF and auth matrices for upload, confirm, HLS job, YouTube add, reorder, and delete remain representative rather than exhaustive",
+    "Hosted VideoStorageCleanupWorker lifecycle and cleanup cancellation behavior remain untested",
+    "OIDC callback success/failure and endpoint-level logout revocation/audit side effects remain auth-session gaps"
+  ],
+  "finalCleanup": {
+    "currentBackendTestSuiteSummary": {
+      "unit": "5 test files, 14 expanded test cases",
+      "component": "8 test files, 76 expanded test cases",
+      "integration": "17 test files, 194 expanded test cases; all integration test classes are tagged Category=Integration",
+      "architecture": "1 test file, 31 tests",
+      "contract": "1 Pact provider verification test tagged Category=Contract and skipped unless provider URL and pact files are configured"
+    },
+    "testsAddedAcrossEightWorkPackets": [
+      "Original strict audit: no test code added",
+      "Priority 1 auth/session/CSRF: AuthFlowIntegrationTests, fake OIDC challenge infrastructure, and AuthRecorder invalid-session component cases",
+      "Priority 1 admin mutations: AdminMutationEndpointsTests for auth, validation, persistence, and no-write behavior",
+      "Public read/query: PublicQueryHandlerComponentTests and PublicEndpointsTests coverage for public DTOs, filtering, ordering, paging, assets, and empty states",
+      "WorkVideo: endpoint and component tests for upload, metadata, ordering, delete, cleanup, local storage, HLS cleanup, and public projection",
+      "AI/Codex/batch/runtime: endpoint and component tests for AI auth/validation, batch jobs, scheduler transitions, runtime config, options, and fake Codex process behavior",
+      "Persistence/startup: DbContext model contracts, Postgres persistence contracts, startup composition/options, and Program architecture coverage",
+      "Final cleanup: missing integration category traits and explicit ContractTests setup skip; no large feature tests added"
+    ],
+    "cleanupChanges": [
+      "Added Category=Integration traits to AdminContentEndpointsTests, AuthEndpointsTests, AuthSecurityTests, and UploadsControllerTests",
+      "Changed ProviderContractVerificationTests from a passing early return to a discovery-time skip when Pact provider setup is absent",
+      "Added Category=Contract trait to ProviderContractVerificationTests"
+    ],
+    "finalResult": "Backend test taxonomy cleanup is complete with no production code changes. Unit, Component, and Architecture category runs pass. Full suite and Integration category run are blocked locally by Docker/Testcontainers unavailability for three Postgres tests. ContractTests skip explicitly without Pact provider setup."
+  },
+  "recommendation": "Keep the P1 auth, admin mutation, public read/query, WorkVideo, AI batch/runtime, persistence/startup, and final taxonomy cleanup changes. Enable Docker/Testcontainers and Pact provider setup, then re-run the full backend suite. Continue next with dedicated media tests, remaining AI endpoint matrices, hosted worker lifecycle coverage, optional startup provider/config matrices, PostgreSQL-backed query/search semantics, and deeper WorkVideo R2/HLS failure coverage when a fake object-storage seam is available."
+}

@@ -1,0 +1,12 @@
+ M backend/TESTING.md
+ M backend/reports/backend-test-coverage-audit-2026-04-24/backend-test-coverage-audit-2026-04-24.html
+ M backend/reports/backend-test-coverage-audit-2026-04-24/backend-test-coverage-audit-2026-04-24.json
+ M backend/reports/backend-test-coverage-audit-2026-04-24/backend-test-coverage-audit-2026-04-24.md
+ M todolist-2026-04-25.md
+?? backend/.config/
+?? backend/coverage.runsettings
+?? backend/reports/backend-code-coverage-reporting-2026-04-25/
+?? backend/reports/backend-full-coverage-review-2026-04-26/
+?? backend/tests/WoongBlog.Api.ArchitectureTests/BackendCoverageToolingTests.cs
+?? scripts/run-backend-coverage.sh
+?? todolist-2026-04-26.md

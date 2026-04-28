@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Download } from 'lucide-react'
 import { fetchResume } from '@/lib/api/site-settings'
 import { createPublicMetadata } from '@/lib/seo'
+import { unstable_rethrow } from 'next/navigation'
 
 export const revalidate = 60
 export const metadata = createPublicMetadata({
@@ -28,8 +29,18 @@ function ResumeUnavailableMessage() {
     )
 }
 
+async function fetchPublicResumeOrNull() {
+    try {
+        return await fetchResume()
+    } catch (error) {
+        unstable_rethrow(error)
+        console.error('Failed to load public resume.', error)
+        return null
+    }
+}
+
 export default async function ResumePage() {
-    const resume = await fetchResume()
+    const resume = await fetchPublicResumeOrNull()
     const resumeUrl = resume?.publicUrl ?? null
     const resumeAsset = resume
         ? {

@@ -91,4 +91,40 @@ describe('public API helper contracts', () => {
     await expect(fetchPublicWorkBySlug('seeded-work')).resolves.toMatchObject({ videos: [] })
     await expect(fetchPublicWorkBySlug('broken-work')).rejects.toThrow('Work videos payload must be an array when present.')
   })
+
+  it('keeps incomplete but renderable work video records safe for public detail rendering', async () => {
+    const fetchMock = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        slug: 'processing-work',
+        title: 'Processing Work',
+        contentJson: '{}',
+        category: 'platform',
+        excerpt: 'excerpt',
+        tags: [],
+        videos: [
+          {
+            id: 'video-processing',
+            sourceType: 'hls',
+            sourceKey: 'local:videos/work-1/video-processing/hls/master.m3u8',
+            playbackUrl: null,
+            sortOrder: 0,
+          },
+        ],
+      }),
+    })
+
+    vi.stubGlobal('fetch', fetchMock)
+    const { fetchPublicWorkBySlug } = await import('@/lib/api/works')
+
+    await expect(fetchPublicWorkBySlug('processing-work')).resolves.toMatchObject({
+      slug: 'processing-work',
+      videos: [
+        expect.objectContaining({
+          id: 'video-processing',
+          playbackUrl: null,
+        }),
+      ],
+    })
+  })
 })

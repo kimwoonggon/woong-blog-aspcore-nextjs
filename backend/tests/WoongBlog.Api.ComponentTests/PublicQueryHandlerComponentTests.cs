@@ -5,8 +5,12 @@ using WoongBlog.Application.Modules.Composition.Abstractions;
 using WoongBlog.Application.Modules.Composition.GetHome;
 using WoongBlog.Infrastructure.Modules.Composition.Persistence;
 using WoongBlog.Application.Modules.Content.Blogs.Abstractions;
+using WoongBlog.Application.Modules.Content.Blogs.GetBlogBySlug;
 using WoongBlog.Application.Modules.Content.Blogs.GetBlogs;
 using WoongBlog.Infrastructure.Modules.Content.Blogs.Persistence;
+using WoongBlog.Application.Modules.Content.Pages.Abstractions;
+using WoongBlog.Application.Modules.Content.Pages.GetPageBySlug;
+using WoongBlog.Infrastructure.Modules.Content.Pages.Persistence;
 using WoongBlog.Application.Modules.Content.Works.Abstractions;
 using WoongBlog.Application.Modules.Content.Works.GetWorkBySlug;
 using WoongBlog.Application.Modules.Content.Works.GetWorks;
@@ -36,6 +40,7 @@ public class PublicQueryHandlerComponentTests
     private static IWorkQueryStore CreateWorkQueryStore(WoongBlogDbContext dbContext, TestPlaybackUrlBuilder? playbackUrlBuilder = null)
         => new WorkQueryStore(dbContext, playbackUrlBuilder ?? new TestPlaybackUrlBuilder());
     private static IBlogQueryStore CreateBlogQueryStore(WoongBlogDbContext dbContext) => new BlogQueryStore(dbContext);
+    private static IPageQueryStore CreatePageQueryStore(WoongBlogDbContext dbContext) => new PageQueryStore(dbContext);
 
     private sealed class TestPlaybackUrlBuilder : IWorkVideoPlaybackUrlBuilder
     {
@@ -142,6 +147,153 @@ public class PublicQueryHandlerComponentTests
     }
 
     [Fact]
+    public async Task GetHomeQueryHandler_ReturnsNull_WhenSiteSettingsMissing()
+    {
+        await using var dbContext = CreateDbContext();
+        dbContext.Pages.Add(new PageEntity
+        {
+            Id = Guid.NewGuid(),
+            Slug = "home",
+            Title = "Home",
+            ContentJson = """{"headline":"Hello"}"""
+        });
+        await dbContext.SaveChangesAsync();
+
+        var handler = new GetHomeQueryHandler(CreateHomeQueryStore(dbContext));
+
+        var result = await handler.Handle(new GetHomeQuery(), CancellationToken.None);
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task GetHomeQueryHandler_MapsHomeContentAndOrdersPublishedSummaries()
+    {
+        await using var dbContext = CreateDbContext();
+        var now = new DateTimeOffset(2026, 4, 25, 12, 0, 0, TimeSpan.Zero);
+        var resumeAssetId = Guid.NewGuid();
+        var thumbnailAssetId = Guid.NewGuid();
+        var iconAssetId = Guid.NewGuid();
+        var coverAssetId = Guid.NewGuid();
+        dbContext.Assets.AddRange(
+            new Asset { Id = resumeAssetId, Bucket = "media", Path = "resume.pdf", PublicUrl = "/media/resume.pdf" },
+            new Asset { Id = thumbnailAssetId, Bucket = "media", Path = "work-thumb.png", PublicUrl = "/media/work-thumb.png" },
+            new Asset { Id = iconAssetId, Bucket = "media", Path = "work-icon.png", PublicUrl = "/media/work-icon.png" },
+            new Asset { Id = coverAssetId, Bucket = "media", Path = "blog-cover.png", PublicUrl = "/media/blog-cover.png" });
+        dbContext.SiteSettings.Add(new SiteSetting
+        {
+            Singleton = true,
+            OwnerName = "Public Owner",
+            Tagline = "Public Tagline",
+            GitHubUrl = "https://github.example/public",
+            LinkedInUrl = "https://linkedin.example/public",
+            ResumeAssetId = resumeAssetId
+        });
+        dbContext.Pages.Add(new PageEntity
+        {
+            Id = Guid.NewGuid(),
+            Slug = "home",
+            Title = "Home",
+            ContentJson = """{"headline":"Public Headline","introText":"Public intro"}"""
+        });
+        dbContext.Works.AddRange(
+            CreateWork("Older Work", "older-work", published: true, publishedAt: now.AddDays(-3), thumbnailAssetId, iconAssetId),
+            CreateWork("Newer Work", "newer-work", published: true, publishedAt: now.AddDays(-1)),
+            CreateWork("Draft Work", "draft-work", published: false, publishedAt: now));
+        dbContext.Blogs.AddRange(
+            CreateBlog("Older Blog", "older-blog", published: true, publishedAt: now.AddDays(-4), coverAssetId),
+            CreateBlog("Newer Blog", "newer-blog", published: true, publishedAt: now.AddDays(-2)),
+            CreateBlog("Draft Blog", "draft-blog", published: false, publishedAt: now));
+        await dbContext.SaveChangesAsync();
+
+        var handler = new GetHomeQueryHandler(CreateHomeQueryStore(dbContext));
+
+        var result = await handler.Handle(new GetHomeQuery(), CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Equal("Home", result!.HomePage.Title);
+        Assert.Contains("Public Headline", result.HomePage.ContentJson, StringComparison.Ordinal);
+        Assert.Equal("Public Owner", result.SiteSettings.OwnerName);
+        Assert.Equal("Public Tagline", result.SiteSettings.Tagline);
+        Assert.Equal("https://github.example/public", result.SiteSettings.GitHubUrl);
+        Assert.Equal("https://linkedin.example/public", result.SiteSettings.LinkedInUrl);
+        Assert.Equal("/media/resume.pdf", result.SiteSettings.ResumePublicUrl);
+        Assert.Equal(new[] { "Newer Work", "Older Work" }, result.FeaturedWorks.Select(x => x.Title).ToArray());
+        Assert.Equal(new[] { "Newer Blog", "Older Blog" }, result.RecentPosts.Select(x => x.Title).ToArray());
+        Assert.Equal("/media/work-thumb.png", result.FeaturedWorks[1].ThumbnailUrl);
+        Assert.Equal("/media/work-icon.png", result.FeaturedWorks[1].IconUrl);
+        Assert.Equal("/media/blog-cover.png", result.RecentPosts[1].CoverUrl);
+    }
+
+    [Fact]
+    public async Task GetSiteSettingsQueryHandler_ReturnsAllPublicSocialFields()
+    {
+        await using var dbContext = CreateDbContext();
+        dbContext.SiteSettings.Add(new SiteSetting
+        {
+            Singleton = true,
+            OwnerName = "Owner",
+            Tagline = "Tagline",
+            FacebookUrl = "https://facebook.example/owner",
+            InstagramUrl = "https://instagram.example/owner",
+            TwitterUrl = "https://twitter.example/owner",
+            LinkedInUrl = "https://linkedin.example/owner",
+            GitHubUrl = "https://github.example/owner",
+            ResumeAssetId = Guid.NewGuid()
+        });
+        await dbContext.SaveChangesAsync();
+
+        var handler = new GetSiteSettingsQueryHandler(CreateSiteSettingsQueryStore(dbContext));
+
+        var result = await handler.Handle(new GetSiteSettingsQuery(), CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Equal("Owner", result!.OwnerName);
+        Assert.Equal("Tagline", result.Tagline);
+        Assert.Equal("https://facebook.example/owner", result.FacebookUrl);
+        Assert.Equal("https://instagram.example/owner", result.InstagramUrl);
+        Assert.Equal("https://twitter.example/owner", result.TwitterUrl);
+        Assert.Equal("https://linkedin.example/owner", result.LinkedInUrl);
+        Assert.Equal("https://github.example/owner", result.GitHubUrl);
+    }
+
+    [Fact]
+    public async Task GetPageBySlugQueryHandler_ReturnsPageContent_WhenSlugExists()
+    {
+        await using var dbContext = CreateDbContext();
+        var pageId = Guid.NewGuid();
+        dbContext.Pages.Add(new PageEntity
+        {
+            Id = pageId,
+            Slug = "introduction",
+            Title = "Introduction",
+            ContentJson = """{"html":"<p>Public introduction</p>"}"""
+        });
+        await dbContext.SaveChangesAsync();
+
+        var handler = new GetPageBySlugQueryHandler(CreatePageQueryStore(dbContext));
+
+        var result = await handler.Handle(new GetPageBySlugQuery("introduction"), CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Equal(pageId, result!.Id);
+        Assert.Equal("introduction", result.Slug);
+        Assert.Equal("Introduction", result.Title);
+        Assert.Contains("Public introduction", result.ContentJson, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task GetPageBySlugQueryHandler_ReturnsNull_WhenSlugIsMissing()
+    {
+        await using var dbContext = CreateDbContext();
+        var handler = new GetPageBySlugQueryHandler(CreatePageQueryStore(dbContext));
+
+        var result = await handler.Handle(new GetPageBySlugQuery("missing-page"), CancellationToken.None);
+
+        Assert.Null(result);
+    }
+
+    [Fact]
     public async Task GetWorksQueryHandler_SkipsDrafts_AndResolvesAssetUrls()
     {
         await using var dbContext = CreateDbContext();
@@ -179,6 +331,73 @@ public class PublicQueryHandlerComponentTests
         Assert.Equal(2, result.TotalPages);
         Assert.Equal(2, result.Page);
         Assert.Single(result.Items);
+    }
+
+    [Fact]
+    public async Task GetWorksQueryHandler_ReturnsStableEmptyPage_WhenNoWorksArePublished()
+    {
+        await using var dbContext = CreateDbContext();
+        dbContext.Works.Add(CreateWork("Draft Work", "draft-work", published: false, publishedAt: null));
+        await dbContext.SaveChangesAsync();
+
+        var handler = new GetWorksQueryHandler(CreateWorkQueryStore(dbContext));
+
+        var result = await handler.Handle(new GetWorksQuery(Page: 4, PageSize: 2), CancellationToken.None);
+
+        Assert.Empty(result.Items);
+        Assert.Equal(1, result.Page);
+        Assert.Equal(2, result.PageSize);
+        Assert.Equal(0, result.TotalItems);
+        Assert.Equal(1, result.TotalPages);
+    }
+
+    [Fact]
+    public async Task GetWorksQueryHandler_FiltersDraftsOrdersByPublishedAtAndMapsAssets()
+    {
+        await using var dbContext = CreateDbContext();
+        var now = new DateTimeOffset(2026, 4, 25, 12, 0, 0, TimeSpan.Zero);
+        var thumbnailAssetId = Guid.NewGuid();
+        var iconAssetId = Guid.NewGuid();
+        var draftThumbnailAssetId = Guid.NewGuid();
+        dbContext.Assets.AddRange(
+            new Asset { Id = thumbnailAssetId, Bucket = "media", Path = "published-thumb.png", PublicUrl = "/media/published-thumb.png" },
+            new Asset { Id = iconAssetId, Bucket = "media", Path = "published-icon.png", PublicUrl = "/media/published-icon.png" },
+            new Asset { Id = draftThumbnailAssetId, Bucket = "media", Path = "draft-thumb.png", PublicUrl = "/media/draft-thumb.png" });
+        dbContext.Works.AddRange(
+            CreateWork("Older Work", "older-work", published: true, publishedAt: now.AddDays(-3), thumbnailAssetId, iconAssetId),
+            CreateWork("Newer Work", "newer-work", published: true, publishedAt: now.AddDays(-1)),
+            CreateWork("Draft Work", "draft-work", published: false, publishedAt: now, draftThumbnailAssetId));
+        await dbContext.SaveChangesAsync();
+
+        var handler = new GetWorksQueryHandler(CreateWorkQueryStore(dbContext));
+
+        var result = await handler.Handle(new GetWorksQuery(Page: 1, PageSize: 10), CancellationToken.None);
+
+        Assert.Equal(2, result.TotalItems);
+        Assert.Equal(new[] { "Newer Work", "Older Work" }, result.Items.Select(x => x.Title).ToArray());
+        Assert.DoesNotContain(result.Items, x => x.Slug == "draft-work");
+        Assert.Equal("/media/published-thumb.png", result.Items[1].ThumbnailUrl);
+        Assert.Equal("/media/published-icon.png", result.Items[1].IconUrl);
+    }
+
+    [Fact]
+    public async Task GetWorksQueryHandler_ClampsRequestedPageBeyondLastPage()
+    {
+        await using var dbContext = CreateDbContext();
+        var now = new DateTimeOffset(2026, 4, 25, 12, 0, 0, TimeSpan.Zero);
+        dbContext.Works.AddRange(
+            CreateWork("Older Work", "older-work", published: true, publishedAt: now.AddDays(-2)),
+            CreateWork("Newer Work", "newer-work", published: true, publishedAt: now.AddDays(-1)));
+        await dbContext.SaveChangesAsync();
+
+        var handler = new GetWorksQueryHandler(CreateWorkQueryStore(dbContext));
+
+        var result = await handler.Handle(new GetWorksQuery(Page: 99, PageSize: 1), CancellationToken.None);
+
+        Assert.Equal(2, result.Page);
+        Assert.Equal(2, result.TotalPages);
+        Assert.Single(result.Items);
+        Assert.Equal("Older Work", result.Items[0].Title);
     }
 
     [Fact]
@@ -401,6 +620,99 @@ public class PublicQueryHandlerComponentTests
     }
 
     [Fact]
+    public async Task GetWorkBySlugQueryHandler_ReturnsPublishedDetailWithAssetsAndVideos()
+    {
+        await using var dbContext = CreateDbContext();
+        var workId = Guid.NewGuid();
+        var thumbnailAssetId = Guid.NewGuid();
+        var iconAssetId = Guid.NewGuid();
+        var now = new DateTimeOffset(2026, 4, 25, 12, 0, 0, TimeSpan.Zero);
+        dbContext.Assets.AddRange(
+            new Asset { Id = thumbnailAssetId, Bucket = "media", Path = "detail-thumb.png", PublicUrl = "/media/detail-thumb.png" },
+            new Asset { Id = iconAssetId, Bucket = "media", Path = "detail-icon.png", PublicUrl = "/media/detail-icon.png" });
+        dbContext.Works.Add(new Work
+        {
+            Id = workId,
+            Title = "Public Work Detail",
+            Slug = "public-work-detail",
+            Excerpt = "detail excerpt",
+            Category = "detail",
+            Period = "2026",
+            Tags = ["detail", "public"],
+            ContentJson = """{"html":"<p>Public work detail body</p>"}""",
+            AllPropertiesJson = """{"socialShareMessage":"Share detail"}""",
+            ThumbnailAssetId = thumbnailAssetId,
+            IconAssetId = iconAssetId,
+            VideosVersion = 2,
+            Published = true,
+            PublishedAt = now,
+            CreatedAt = now,
+            UpdatedAt = now
+        });
+        dbContext.WorkVideos.AddRange(
+            new WorkVideo
+            {
+                Id = Guid.NewGuid(),
+                WorkId = workId,
+                SourceType = WorkVideoSourceTypes.Local,
+                SourceKey = "videos/detail-second.mp4",
+                OriginalFileName = "Second",
+                MimeType = "video/mp4",
+                FileSize = 200,
+                SortOrder = 1,
+                CreatedAt = now
+            },
+            new WorkVideo
+            {
+                Id = Guid.NewGuid(),
+                WorkId = workId,
+                SourceType = WorkVideoSourceTypes.Local,
+                SourceKey = "videos/detail-first.mp4",
+                OriginalFileName = "First",
+                MimeType = "video/mp4",
+                FileSize = 100,
+                SortOrder = 0,
+                CreatedAt = now.AddSeconds(-1)
+            });
+        await dbContext.SaveChangesAsync();
+
+        var handler = new GetWorkBySlugQueryHandler(CreateWorkQueryStore(dbContext));
+
+        var result = await handler.Handle(new GetWorkBySlugQuery("public-work-detail"), CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Equal(workId, result!.Id);
+        Assert.Equal("Public Work Detail", result.Title);
+        Assert.Equal("detail", result.Category);
+        Assert.Equal("2026", result.Period);
+        Assert.Equal(new[] { "detail", "public" }, result.Tags);
+        Assert.Contains("Public work detail body", result.ContentJson, StringComparison.Ordinal);
+        Assert.Equal("/media/detail-thumb.png", result.ThumbnailUrl);
+        Assert.Equal("/media/detail-icon.png", result.IconUrl);
+        Assert.Equal(now, result.PublishedAt);
+        Assert.Equal("Share detail", result.SocialShareMessage);
+        Assert.Equal(2, result.VideosVersion);
+        Assert.Equal(new[] { "First", "Second" }, result.Videos.Select(x => x.OriginalFileName).ToArray());
+        Assert.Equal("/media/videos/detail-first.mp4", result.Videos[0].PlaybackUrl);
+    }
+
+    [Fact]
+    public async Task GetWorkBySlugQueryHandler_ReturnsNull_ForDraftOrMissingSlug()
+    {
+        await using var dbContext = CreateDbContext();
+        dbContext.Works.Add(CreateWork("Draft Work", "draft-work", published: false, publishedAt: null));
+        await dbContext.SaveChangesAsync();
+
+        var handler = new GetWorkBySlugQueryHandler(CreateWorkQueryStore(dbContext));
+
+        var draftResult = await handler.Handle(new GetWorkBySlugQuery("draft-work"), CancellationToken.None);
+        var missingResult = await handler.Handle(new GetWorkBySlugQuery("missing-work"), CancellationToken.None);
+
+        Assert.Null(draftResult);
+        Assert.Null(missingResult);
+    }
+
+    [Fact]
     public async Task GetWorkBySlugQueryHandler_OmitsTimelinePreviewUrls_WhenPreviewAssetsAreMissing()
     {
         await using var dbContext = CreateDbContext();
@@ -470,6 +782,70 @@ public class PublicQueryHandlerComponentTests
     }
 
     [Fact]
+    public async Task GetBlogsQueryHandler_ReturnsStableEmptyPage_WhenNoBlogsArePublished()
+    {
+        await using var dbContext = CreateDbContext();
+        dbContext.Blogs.Add(CreateBlog("Draft Blog", "draft-blog", published: false, publishedAt: null));
+        await dbContext.SaveChangesAsync();
+
+        var handler = new GetBlogsQueryHandler(CreateBlogQueryStore(dbContext));
+
+        var result = await handler.Handle(new GetBlogsQuery(Page: 3, PageSize: 2), CancellationToken.None);
+
+        Assert.Empty(result.Items);
+        Assert.Equal(1, result.Page);
+        Assert.Equal(2, result.PageSize);
+        Assert.Equal(0, result.TotalItems);
+        Assert.Equal(1, result.TotalPages);
+    }
+
+    [Fact]
+    public async Task GetBlogsQueryHandler_FiltersDraftsOrdersByPublishedAtAndMapsCoverAsset()
+    {
+        await using var dbContext = CreateDbContext();
+        var now = new DateTimeOffset(2026, 4, 25, 12, 0, 0, TimeSpan.Zero);
+        var coverAssetId = Guid.NewGuid();
+        var draftCoverAssetId = Guid.NewGuid();
+        dbContext.Assets.AddRange(
+            new Asset { Id = coverAssetId, Bucket = "media", Path = "published-cover.png", PublicUrl = "/media/published-cover.png" },
+            new Asset { Id = draftCoverAssetId, Bucket = "media", Path = "draft-cover.png", PublicUrl = "/media/draft-cover.png" });
+        dbContext.Blogs.AddRange(
+            CreateBlog("Older Blog", "older-blog", published: true, publishedAt: now.AddDays(-3), coverAssetId),
+            CreateBlog("Newer Blog", "newer-blog", published: true, publishedAt: now.AddDays(-1)),
+            CreateBlog("Draft Blog", "draft-blog", published: false, publishedAt: now, draftCoverAssetId));
+        await dbContext.SaveChangesAsync();
+
+        var handler = new GetBlogsQueryHandler(CreateBlogQueryStore(dbContext));
+
+        var result = await handler.Handle(new GetBlogsQuery(Page: 1, PageSize: 10), CancellationToken.None);
+
+        Assert.Equal(2, result.TotalItems);
+        Assert.Equal(new[] { "Newer Blog", "Older Blog" }, result.Items.Select(x => x.Title).ToArray());
+        Assert.DoesNotContain(result.Items, x => x.Slug == "draft-blog");
+        Assert.Equal("/media/published-cover.png", result.Items[1].CoverUrl);
+    }
+
+    [Fact]
+    public async Task GetBlogsQueryHandler_ClampsRequestedPageBeyondLastPage()
+    {
+        await using var dbContext = CreateDbContext();
+        var now = new DateTimeOffset(2026, 4, 25, 12, 0, 0, TimeSpan.Zero);
+        dbContext.Blogs.AddRange(
+            CreateBlog("Older Blog", "older-blog", published: true, publishedAt: now.AddDays(-2)),
+            CreateBlog("Newer Blog", "newer-blog", published: true, publishedAt: now.AddDays(-1)));
+        await dbContext.SaveChangesAsync();
+
+        var handler = new GetBlogsQueryHandler(CreateBlogQueryStore(dbContext));
+
+        var result = await handler.Handle(new GetBlogsQuery(Page: 99, PageSize: 1), CancellationToken.None);
+
+        Assert.Equal(2, result.Page);
+        Assert.Equal(2, result.TotalPages);
+        Assert.Single(result.Items);
+        Assert.Equal("Older Blog", result.Items[0].Title);
+    }
+
+    [Fact]
     public async Task GetBlogsQueryHandler_FiltersByNormalizedTitleSearch()
     {
         await using var dbContext = CreateDbContext();
@@ -507,5 +883,100 @@ public class PublicQueryHandlerComponentTests
         Assert.Equal("Unified Blog Match", titleResult.Items[0].Title);
         Assert.Single(contentResult.Items);
         Assert.Equal("No title token", contentResult.Items[0].Title);
+    }
+
+    [Fact]
+    public async Task GetBlogBySlugQueryHandler_ReturnsPublishedDetailWithCoverAsset()
+    {
+        await using var dbContext = CreateDbContext();
+        var coverAssetId = Guid.NewGuid();
+        var publishedAt = new DateTimeOffset(2026, 4, 25, 12, 0, 0, TimeSpan.Zero);
+        dbContext.Assets.Add(new Asset { Id = coverAssetId, Bucket = "media", Path = "detail-cover.png", PublicUrl = "/media/detail-cover.png" });
+        dbContext.Blogs.Add(CreateBlog("Public Blog Detail", "public-blog-detail", published: true, publishedAt, coverAssetId));
+        await dbContext.SaveChangesAsync();
+
+        var handler = new GetBlogBySlugQueryHandler(CreateBlogQueryStore(dbContext));
+
+        var result = await handler.Handle(new GetBlogBySlugQuery("public-blog-detail"), CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Equal("public-blog-detail", result!.Slug);
+        Assert.Equal("Public Blog Detail", result.Title);
+        Assert.Equal("Excerpt for Public Blog Detail", result.Excerpt);
+        Assert.Contains("Public Blog Detail body", result.ContentJson, StringComparison.Ordinal);
+        Assert.Equal(new[] { "public", "test" }, result.Tags);
+        Assert.Equal("/media/detail-cover.png", result.CoverUrl);
+        Assert.Equal(publishedAt, result.PublishedAt);
+    }
+
+    [Fact]
+    public async Task GetBlogBySlugQueryHandler_ReturnsNull_ForDraftOrMissingSlug()
+    {
+        await using var dbContext = CreateDbContext();
+        dbContext.Blogs.Add(CreateBlog("Draft Blog", "draft-blog", published: false, publishedAt: null));
+        await dbContext.SaveChangesAsync();
+
+        var handler = new GetBlogBySlugQueryHandler(CreateBlogQueryStore(dbContext));
+
+        var draftResult = await handler.Handle(new GetBlogBySlugQuery("draft-blog"), CancellationToken.None);
+        var missingResult = await handler.Handle(new GetBlogBySlugQuery("missing-blog"), CancellationToken.None);
+
+        Assert.Null(draftResult);
+        Assert.Null(missingResult);
+    }
+
+    private static Blog CreateBlog(
+        string title,
+        string slug,
+        bool published,
+        DateTimeOffset? publishedAt,
+        Guid? coverAssetId = null)
+    {
+        var timestamp = publishedAt ?? new DateTimeOffset(2026, 4, 25, 0, 0, 0, TimeSpan.Zero);
+
+        return new Blog
+        {
+            Id = Guid.NewGuid(),
+            Title = title,
+            Slug = slug,
+            Excerpt = $"Excerpt for {title}",
+            Tags = ["public", "test"],
+            CoverAssetId = coverAssetId,
+            ContentJson = $$"""{"html":"<p>{{title}} body</p>"}""",
+            Published = published,
+            PublishedAt = publishedAt,
+            CreatedAt = timestamp,
+            UpdatedAt = timestamp
+        };
+    }
+
+    private static Work CreateWork(
+        string title,
+        string slug,
+        bool published,
+        DateTimeOffset? publishedAt,
+        Guid? thumbnailAssetId = null,
+        Guid? iconAssetId = null)
+    {
+        var timestamp = publishedAt ?? new DateTimeOffset(2026, 4, 25, 0, 0, 0, TimeSpan.Zero);
+
+        return new Work
+        {
+            Id = Guid.NewGuid(),
+            Title = title,
+            Slug = slug,
+            Excerpt = $"Excerpt for {title}",
+            Category = "public",
+            Period = "2026",
+            Tags = ["public", "test"],
+            ThumbnailAssetId = thumbnailAssetId,
+            IconAssetId = iconAssetId,
+            ContentJson = $$"""{"html":"<p>{{title}} body</p>"}""",
+            AllPropertiesJson = "{}",
+            Published = published,
+            PublishedAt = publishedAt,
+            CreatedAt = timestamp,
+            UpdatedAt = timestamp
+        };
     }
 }

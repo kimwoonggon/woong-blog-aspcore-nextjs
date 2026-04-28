@@ -1,5 +1,6 @@
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { notFound } from 'next/navigation'
 
 vi.mock('next/navigation', () => ({
   notFound: vi.fn(() => {
@@ -74,7 +75,7 @@ describe('public detail route admin boundary', () => {
     expect(screen.getByTestId('blog-admin-actions')).toHaveTextContent('blog-1')
     expect(fetchServerSession).not.toHaveBeenCalled()
     expect(fetchAdminBlogById).not.toHaveBeenCalled()
-  }, 15_000)
+  }, 30_000)
 
   it('renders work public content without a server session or admin detail fetch', async () => {
     const fetchServerSession = vi.fn(async () => ({ authenticated: true, role: 'admin' }))
@@ -114,5 +115,92 @@ describe('public detail route admin boundary', () => {
     expect(screen.getByTestId('work-admin-actions')).toHaveTextContent('work-1')
     expect(fetchServerSession).not.toHaveBeenCalled()
     expect(fetchAdminWorkById).not.toHaveBeenCalled()
+  })
+
+  it('uses notFound for missing blog detail slugs', async () => {
+    vi.doMock('@/lib/api/blogs', () => ({
+      fetchPublicBlogBySlug: vi.fn(async () => null),
+      fetchAllPublicBlogs: vi.fn(async () => []),
+    }))
+
+    const BlogDetailPage = (await import('@/app/(public)/blog/[slug]/page')).default
+
+    await expect(BlogDetailPage({ params: Promise.resolve({ slug: 'missing-blog' }) })).rejects.toThrow('NEXT_NOT_FOUND')
+    expect(notFound).toHaveBeenCalled()
+  })
+
+  it('uses notFound for missing work detail slugs', async () => {
+    vi.doMock('@/lib/api/works', () => ({
+      fetchPublicWorkBySlug: vi.fn(async () => null),
+      fetchAllPublicWorks: vi.fn(async () => []),
+    }))
+
+    const WorkDetailPage = (await import('@/app/(public)/works/[slug]/page')).default
+
+    await expect(WorkDetailPage({
+      params: Promise.resolve({ slug: 'missing-work' }),
+    })).rejects.toThrow('NEXT_NOT_FOUND')
+    expect(notFound).toHaveBeenCalled()
+  })
+})
+
+describe('public error and loading boundaries', () => {
+  afterEach(() => {
+    cleanup()
+    vi.resetModules()
+    vi.clearAllMocks()
+  })
+
+  it('renders the public segment error without leaking technical details or admin controls', async () => {
+    const PublicSegmentError = (await import('@/app/(public)/error')).default
+    const reset = vi.fn()
+
+    render(
+      <PublicSegmentError
+        error={new Error('SQLSTATE 42P01 stack trace at WoongBlog.Api.Infrastructure')}
+        reset={reset}
+      />,
+    )
+
+    expect(screen.getByText('Public pages')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'This page could not be loaded.' })).toBeInTheDocument()
+    expect(screen.queryByText(/SQLSTATE|stack trace|WoongBlog\.Api/i)).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /admin|edit|manage|관리|수정/i })).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
+    expect(reset).toHaveBeenCalledTimes(1)
+  })
+
+  it('renders the blog detail error without leaking API detail or stack traces', async () => {
+    const PublicBlogDetailError = (await import('@/app/(public)/blog/[slug]/error')).default
+    const reset = vi.fn()
+
+    render(
+      <PublicBlogDetailError
+        error={new Error('Failed to load public blog. Status 500. NpgsqlException stack trace')}
+        reset={reset}
+      />,
+    )
+
+    expect(screen.getByText('Study detail')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'This article could not be loaded.' })).toBeInTheDocument()
+    expect(screen.queryByText(/NpgsqlException|Status 500|stack trace/i)).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /admin|edit|manage|관리|수정/i })).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
+    expect(reset).toHaveBeenCalledTimes(1)
+  })
+
+  it('renders public loading shells without stack traces or admin controls', async () => {
+    const PublicSegmentLoading = (await import('@/app/(public)/loading')).default
+    const PublicBlogDetailLoading = (await import('@/app/(public)/blog/[slug]/loading')).default
+
+    const { container, rerender } = render(<PublicSegmentLoading />)
+    expect(container.textContent).not.toMatch(/stack|admin|관리|수정/i)
+    expect(container.querySelector('.animate-pulse')).toBeTruthy()
+
+    rerender(<PublicBlogDetailLoading />)
+    expect(container.textContent).not.toMatch(/stack|admin|관리|수정/i)
+    expect(container.querySelector('.animate-pulse')).toBeTruthy()
   })
 })

@@ -30,6 +30,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\WoongBlog.Api\WoongBlog.Api.csproj" />
     <ProjectReference Include="..\..\src\WoongBlog.Application\WoongBlog.Application.csproj" />
   </ItemGroup>
 

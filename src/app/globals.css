@@ -98,49 +98,57 @@
   --brand-cyan: oklch(0.65 0.14 220);
   --brand-orange: oklch(0.72 0.17 45);
   --brand-section-bg: oklch(0.97 0.01 220);
-  --code-block-bg: #111827;
-  --code-block-fg: #f9fafb;
+  --code-block-bg: #f1f3f5;
+  --code-block-fg: #1f2937;
+  --code-block-border: #d9dee7;
+  --inline-code-bg: #eef1f5;
+  --inline-code-fg: #243041;
+  --inline-code-border: #d8dee8;
 }
 
 .dark {
-  --background: oklch(0.14 0.012 270);
-  --foreground: oklch(0.94 0.010 270);
-  --card: oklch(0.18 0.012 270);
-  --card-foreground: oklch(0.94 0.010 270);
-  --popover: oklch(0.21 0.012 270);
-  --popover-foreground: oklch(0.94 0.010 270);
-  --primary: oklch(0.70 0.150 28);
-  --primary-foreground: oklch(0.98 0.01 25);
-  --secondary: oklch(0.22 0.010 270);
-  --secondary-foreground: oklch(0.90 0.012 270);
-  --muted: oklch(0.22 0.010 270);
-  --muted-foreground: oklch(0.70 0.012 270);
-  --accent: oklch(0.25 0.012 255);
-  --accent-foreground: oklch(0.94 0.010 270);
-  --destructive: oklch(0.67 0.17 25);
-  --border: oklch(0.34 0.010 270);
-  --input: oklch(0.34 0.010 270);
-  --ring: oklch(0.78 0.090 220);
+  --background: #1f2126;
+  --foreground: #d9dde5;
+  --card: #292c33;
+  --card-foreground: #dfe3ea;
+  --popover: #2d3038;
+  --popover-foreground: #e1e5eb;
+  --primary: #d7776d;
+  --primary-foreground: #211615;
+  --secondary: #343842;
+  --secondary-foreground: #d6dbe3;
+  --muted: #333740;
+  --muted-foreground: #b0b6c1;
+  --accent: #3a404a;
+  --accent-foreground: #e4e8ef;
+  --destructive: #d06a64;
+  --border: #474d57;
+  --input: #3d424c;
+  --ring: #9aa7b8;
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.17 0.012 270);
-  --sidebar-foreground: oklch(0.94 0.010 270);
-  --sidebar-primary: oklch(0.62 0.12 250);
-  --sidebar-primary-foreground: oklch(0.96 0.01 250);
-  --sidebar-accent: oklch(0.22 0.010 270);
-  --sidebar-accent-foreground: oklch(0.94 0.010 270);
-  --sidebar-border: oklch(0.34 0.010 270);
-  --sidebar-ring: oklch(0.78 0.090 220);
-  --brand-accent: oklch(0.70 0.150 28);
-  --brand-navy: oklch(0.33 0.060 255);
-  --brand-cyan: oklch(0.74 0.090 220);
-  --brand-orange: oklch(0.76 0.13 45);
-  --brand-section-bg: oklch(0.17 0.012 255);
-  --code-block-bg: #0f172a;
-  --code-block-fg: #e2e8f0;
+  --sidebar: #272a31;
+  --sidebar-foreground: #dfe3ea;
+  --sidebar-primary: #69758a;
+  --sidebar-primary-foreground: #f0f3f7;
+  --sidebar-accent: #343842;
+  --sidebar-accent-foreground: #e4e8ef;
+  --sidebar-border: #474d57;
+  --sidebar-ring: #9aa7b8;
+  --brand-accent: #d7776d;
+  --brand-navy: #4d5668;
+  --brand-cyan: #79aebb;
+  --brand-orange: #d6a05f;
+  --brand-section-bg: #272c34;
+  --code-block-bg: #2b2f36;
+  --code-block-fg: #d9dee7;
+  --code-block-border: #454b55;
+  --inline-code-bg: #30343c;
+  --inline-code-fg: #e1e5eb;
+  --inline-code-border: #4a505a;
 }
 
 @layer base {
@@ -193,7 +201,7 @@
 
   .dark ::selection {
     background: oklch(0.60 0.22 25 / 40%);
-    color: white;
+    color: var(--foreground);
   }
 }
 
@@ -285,28 +293,38 @@
   }
 
   .prose code {
-    background: color-mix(in oklab, var(--muted) 86%, white 14%);
+    background: var(--inline-code-bg);
+    border: 1px solid var(--inline-code-border);
     border-radius: 0.35rem;
+    color: var(--inline-code-fg);
     font-size: 0.92em;
     padding: 0.12rem 0.38rem;
   }
 
-  .dark .prose code {
-    background: color-mix(in oklab, var(--muted) 82%, black 18%);
-  }
-
-  .prose pre {
-    background: var(--code-block-bg, #111827);
-    border-radius: 1rem;
-    color: var(--code-block-fg, #f9fafb);
+  .prose pre,
+  .prose pre[class],
+  .content-code-block {
+    background: var(--code-block-bg);
+    border: 1px solid var(--code-block-border);
+    border-radius: 0.875rem;
+    color: var(--code-block-fg);
+    font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 0.94rem;
+    line-height: 1.75;
     margin: 1.25rem 0;
     overflow-x: auto;
-    padding: 1rem 1.1rem;
+    padding: 1rem 1.125rem;
+    white-space: pre;
   }
 
-  .prose pre code {
+  .prose pre code,
+  .prose pre code[class],
+  .content-code-block code {
     background: transparent;
+    border: 0;
     color: inherit;
+    font-size: inherit;
+    line-height: inherit;
     padding: 0;
   }
 

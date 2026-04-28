@@ -1,0 +1,138 @@
+{
+  "slug": "backend-workvideo-policy-coverage-reinforcement-2026-04-26",
+  "date": "2026-04-26",
+  "scope": "backend",
+  "production_code_changed": false,
+  "test_code_changed": true,
+  "summary": "Added pure unit tests for WorkVideoPolicy and raised WorkVideoPolicy coverage from the previous hotspot level to 100.0% line and 95.0% branch in both unit and full backend reports.",
+  "changed_files": [
+    "backend/tests/WoongBlog.Api.UnitTests/WorkVideoPolicyTests.cs",
+    "todolist-2026-04-26.md",
+    "backend/reports/backend-workvideo-policy-coverage-reinforcement-2026-04-26/backend-workvideo-policy-coverage-reinforcement-2026-04-26.md",
+    "backend/reports/backend-workvideo-policy-coverage-reinforcement-2026-04-26/backend-workvideo-policy-coverage-reinforcement-2026-04-26.json",
+    "backend/reports/backend-workvideo-policy-coverage-reinforcement-2026-04-26/backend-workvideo-policy-coverage-reinforcement-2026-04-26.html"
+  ],
+  "intentionally_not_changed": [
+    "Production WorkVideoPolicy implementation",
+    "R2 implementation",
+    "HLS implementation",
+    "Storage implementation",
+    "Integration tests"
+  ],
+  "tests_added": {
+    "file": "backend/tests/WoongBlog.Api.UnitTests/WorkVideoPolicyTests.cs",
+    "total_cases": 36,
+    "categories": [
+      {
+        "name": "NormalizeYouTubeVideoId valid inputs",
+        "cases": 9
+      },
+      {
+        "name": "NormalizeYouTubeVideoId invalid inputs",
+        "cases": 13
+      },
+      {
+        "name": "ValidateVideoFile",
+        "cases": 6
+      },
+      {
+        "name": "LooksLikeMp4",
+        "cases": 4
+      },
+      {
+        "name": "SanitizeOriginalFileName",
+        "cases": 4
+      }
+    ]
+  },
+  "coverage": {
+    "previous_hotspot": {
+      "class": "WoongBlog.Application.Modules.Content.Works.WorkVideos.WorkVideoPolicy",
+      "line_coverage": 52.7,
+      "branch_coverage": 31.6,
+      "source": "previous coverage/backend/full/report/Summary.json before this task"
+    },
+    "current_unit": {
+      "class": "WoongBlog.Application.Modules.Content.Works.WorkVideos.WorkVideoPolicy",
+      "line_coverage": 100.0,
+      "branch_coverage": 95.0,
+      "covered_lines": 74,
+      "coverable_lines": 74,
+      "covered_branches": 57,
+      "total_branches": 60,
+      "source": "coverage/backend/unit/report/Summary.json"
+    },
+    "current_full": {
+      "class": "WoongBlog.Application.Modules.Content.Works.WorkVideos.WorkVideoPolicy",
+      "line_coverage": 100.0,
+      "branch_coverage": 95.0,
+      "covered_lines": 74,
+      "coverable_lines": 74,
+      "covered_branches": 57,
+      "total_branches": 60,
+      "source": "coverage/backend/full/report/Summary.json"
+    },
+    "current_full_backend": {
+      "line_coverage": 92.2,
+      "branch_coverage": 70.5,
+      "source": "coverage/backend/full/report/Summary.json"
+    }
+  },
+  "commands": [
+    {
+      "command": "npx skills find dotnet testing",
+      "result": "passed; no external skill installed"
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.UnitTests/WoongBlog.Api.UnitTests.csproj --filter WorkVideoPolicy",
+      "result": "passed; 36 passed, 0 failed"
+    },
+    {
+      "command": "./scripts/run-backend-coverage.sh unit -v minimal",
+      "result": "passed; 55 unit tests passed"
+    },
+    {
+      "command": "./scripts/run-backend-coverage.sh full -v minimal",
+      "result": "passed; contract verification skipped as configured, 96 component, 55 unit, 35 architecture, and 194 integration tests passed"
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln",
+      "result": "passed; contract verification skipped as configured, 96 component, 55 unit, 35 architecture, and 194 integration tests passed"
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    }
+  ],
+  "remaining_workvideo_r2_hls_gaps": [
+    {
+      "class": "WoongBlog.Infrastructure.Storage.R2VideoStorageService",
+      "line_coverage": 9.0,
+      "branch_coverage": 0.0,
+      "gap": "Presigned upload, metadata/object reads, object deletion, HLS prefix deletion, and failure mapping without real Cloudflare calls."
+    },
+    {
+      "class": "WoongBlog.Infrastructure.Modules.Content.Works.WorkVideos.WorkVideoStorageSelector",
+      "line_coverage": 78.2,
+      "branch_coverage": 30.0,
+      "gap": "Configured/unconfigured R2 selection, forced mode behavior, and local fallback decisions."
+    },
+    {
+      "class": "WoongBlog.Infrastructure.Modules.Content.Works.WorkVideos.FfmpegVideoTranscoder",
+      "line_coverage": 61.7,
+      "branch_coverage": 50.0,
+      "gap": "ffprobe failures, ffmpeg non-zero exits, timeout paths, missing manifest handling, and preview generation edge cases."
+    },
+    {
+      "class": "WoongBlog.Infrastructure.Storage.LocalVideoStorageService",
+      "line_coverage": 91.4,
+      "branch_coverage": 70.0,
+      "gap": "Filesystem edge and failure paths."
+    }
+  ],
+  "risks": [
+    "WorkVideoPolicy has three uncovered branch slots in coverage tooling, though the requested public behavior matrix is covered.",
+    "Existing NU1901 warning for AWSSDK.Core 4.0.0.17 remains outside this task."
+  ],
+  "final_recommendation": "Treat WorkVideoPolicy as addressed and proceed next to WorkVideo R2/storage/HLS failure coverage."
+}

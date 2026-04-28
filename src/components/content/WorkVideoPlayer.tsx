@@ -132,6 +132,7 @@ export function WorkVideoPlayer({ video, allowDesktopResize = false }: WorkVideo
   const [previewCue, setPreviewCue] = useState<TimelinePreviewCue | null>(null)
   const [desktopSizeMode, setDesktopSizeMode] = useState<DesktopSizeMode>(allowDesktopResize ? 'wide' : 'fit')
   const [canUseDesktopPreview, setCanUseDesktopPreview] = useState(false)
+  const [playbackError, setPlaybackError] = useState(false)
   const isHlsVideo = useMemo(() => {
     return video.sourceType === 'hls'
       || video.mimeType === hlsMimeType
@@ -204,12 +205,19 @@ export function WorkVideoPlayer({ video, allowDesktopResize = false }: WorkVideo
 
     void import('hls.js').then(({ default: Hls }) => {
       if (disposed || !Hls.isSupported()) {
+        if (!disposed) {
+          setPlaybackError(true)
+        }
         return
       }
 
       hls = new Hls()
       hls.loadSource(video.playbackUrl!)
       hls.attachMedia(element)
+    }).catch(() => {
+      if (!disposed) {
+        setPlaybackError(true)
+      }
     })
 
     return () => {
@@ -217,6 +225,10 @@ export function WorkVideoPlayer({ video, allowDesktopResize = false }: WorkVideo
       hls?.destroy()
     }
   }, [isHlsVideo, video.playbackUrl])
+
+  useEffect(() => {
+    setPlaybackError(false)
+  }, [video.id, video.playbackUrl])
 
   useEffect(() => {
     setAspectRatio(() => {
@@ -370,6 +382,31 @@ export function WorkVideoPlayer({ video, allowDesktopResize = false }: WorkVideo
 
   const canHandleFramePreview = canUseDesktopPreview && supportsTimelinePreview
   const isPreviewReady = canHandleFramePreview && previewCues.length > 0
+  const unavailableMessage = 'Video is still processing or unavailable.'
+
+  if (!video.playbackUrl) {
+    return (
+      <div
+        data-testid="work-video-player"
+        data-size-mode={desktopSizeMode}
+        data-preview-ready="false"
+        className={`mx-auto w-full ${desktopSizeClass(desktopSizeMode, allowDesktopResize)}`}
+      >
+        <div
+          data-testid="work-video-frame"
+          data-work-video-frame="true"
+          role="status"
+          className="flex w-full items-center justify-center rounded-xl border border-border/70 bg-muted px-4 py-12 text-center text-sm text-muted-foreground"
+          style={{
+            aspectRatio: String(aspectRatio),
+            maxHeight: 'clamp(16rem, 72vh, 42rem)',
+          }}
+        >
+          {unavailableMessage}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div
@@ -440,6 +477,7 @@ export function WorkVideoPlayer({ video, allowDesktopResize = false }: WorkVideo
           }}
           onPause={() => setIsPlaying(false)}
           onSeeking={() => clearPreview()}
+          onError={() => setPlaybackError(true)}
           onContextMenu={(event) => event.preventDefault()}
           className="h-full w-full bg-black"
         >
@@ -484,6 +522,11 @@ export function WorkVideoPlayer({ video, allowDesktopResize = false }: WorkVideo
             <p className="mt-1 text-center text-[11px] tabular-nums text-white/90">
               {formatTimeLabel(previewTime)}
             </p>
+          </div>
+        ) : null}
+        {playbackError ? (
+          <div className="absolute inset-x-3 bottom-3 z-30 rounded-md border border-red-200 bg-background/95 px-3 py-2 text-sm text-red-700 shadow-sm dark:border-red-900/60 dark:text-red-300" role="alert">
+            Video playback is unavailable.
           </div>
         ) : null}
       </div>

@@ -19,6 +19,21 @@ describe('public revalidation path helpers', () => {
     ])
   })
 
+  it('normalizes detail slugs without unsafe or nullish path segments', () => {
+    expect(getBlogPublicRevalidationPaths('  한글 slug  ', null)).toEqual([
+      '/',
+      '/blog',
+      '/blog/%ED%95%9C%EA%B8%80%20slug',
+    ])
+    expect(getWorkPublicRevalidationPaths('post<script>alert(1)', undefined)).toEqual([
+      '/',
+      '/works',
+      '/works/post%3Cscript%3Ealert(1)',
+    ])
+    expect(getBlogPublicRevalidationPaths('', undefined).join(' ')).not.toMatch(/undefined|null/)
+    expect(getWorkPublicRevalidationPaths('/leading-slash', 'trailing/slash')).toEqual(['/', '/works'])
+  })
+
   it('returns public work paths including home, list, next slug, and previous slug', () => {
     expect(getWorkPublicRevalidationPaths('next-work', 'old-work')).toEqual([
       '/',
@@ -45,8 +60,10 @@ describe('public revalidation path helpers', () => {
       '/blog/post?draft=1',
       '/admin',
       '//evil',
+      '/blog//double',
+      '/works/%ED%95%9C%EA%B8%80',
       '/works/work',
-    ])).toEqual(['/', '/blog', '/blog/post', '/works/work'])
+    ])).toEqual(['/', '/blog', '/blog/post', '/works/%ED%95%9C%EA%B8%80', '/works/work'])
   })
 
   it('maps public paths to data cache tags for immediate fetch invalidation', () => {
@@ -68,6 +85,17 @@ describe('public revalidation path helpers', () => {
       'public-page:contact',
       'public-page:introduction',
       'public-resume',
+    ])
+  })
+
+  it('ignores malformed encoded detail paths while preserving valid unicode tags', () => {
+    expect(getPublicRevalidationTagsForPaths([
+      '/blog/%ED%95%9C%EA%B8%80',
+      '/works/%E0%A4%A',
+      '/works/%2Fadmin',
+    ])).toEqual([
+      'public-blogs',
+      'public-blog:한글',
     ])
   })
 })

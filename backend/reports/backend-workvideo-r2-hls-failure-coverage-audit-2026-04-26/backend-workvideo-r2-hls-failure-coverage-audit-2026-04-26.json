@@ -1,0 +1,127 @@
+{
+  "slug": "backend-workvideo-r2-hls-failure-coverage-audit-2026-04-26",
+  "batch": "Batch 1 - No Production Code Change Tests",
+  "date": "2026-04-26",
+  "scope": "backend",
+  "productionCodeChanged": false,
+  "externalServicesUsed": false,
+  "s3R2SeamAdded": false,
+  "filesChanged": [
+    "backend/tests/WoongBlog.Api.ComponentTests/WorkVideoComponentTests.cs",
+    "backend/tests/WoongBlog.Api.UnitTests/WorkVideoHlsJobPlanTests.cs",
+    "todolist-2026-04-26.md",
+    "backend/reports/backend-workvideo-r2-hls-failure-coverage-audit-2026-04-26/backend-workvideo-r2-hls-failure-coverage-audit-2026-04-26.md",
+    "backend/reports/backend-workvideo-r2-hls-failure-coverage-audit-2026-04-26/backend-workvideo-r2-hls-failure-coverage-audit-2026-04-26.json",
+    "backend/reports/backend-workvideo-r2-hls-failure-coverage-audit-2026-04-26/backend-workvideo-r2-hls-failure-coverage-audit-2026-04-26.html",
+    "backend/reports/backend-workvideo-r2-hls-failure-coverage-audit-2026-04-26/batch1-prechange-backup/*"
+  ],
+  "testsAdded": {
+    "component": [
+      "WorkVideoStorageSelector_UsesLocalInTestingUnlessR2IsForced",
+      "WorkVideoStorageSelector_UsesR2WhenForcedInTestingAndPlaybackIsAvailable",
+      "WorkVideoStorageSelector_FallsBackToLocalWhenR2IsMissingOrUnavailable",
+      "WorkVideoStorageSelector_TryGetStorage_IsCaseInsensitive",
+      "WorkVideoPlaybackUrlBuilder_ResolvesDirectAndHlsStorageUrls",
+      "WorkVideoPlaybackUrlBuilder_ReturnsNullForUnsupportedSources",
+      "WorkVideoPlaybackUrlBuilder_BuildStorageObjectUrl_UsesRequestedStorage",
+      "LocalVideoStorageService_SaveOverwritesExistingFileAndDeleteIsIdempotent",
+      "LocalVideoStorageService_MissingObjectOperationsAreSafe",
+      "WorkVideoHlsWorkspace_CreatesSeparatedSourceAndOutputPathsAndCleansUpLease",
+      "WorkVideoHlsOutputPublisher_StoresArtifactsWithExpectedContentTypesAndKeys",
+      "WorkVideoHlsOutputPublisher_StopsOnStorageFailureAndLeavesPreviouslySavedArtifactsVisible",
+      "WorkVideoCleanupStore_EnqueuesHlsManifestCleanupOnceForUnderlyingStorage",
+      "WorkVideoCleanupStore_SkipsYouTubeAndMalformedHlsSourceKeys"
+    ],
+    "unit": [
+      "Create_WithR2Storage_EmbedsUnderlyingStorageInHlsSourceKey"
+    ]
+  },
+  "behaviorCovered": [
+    "Storage selector local default, forced R2, unavailable R2 fallback, and case-insensitive lookup",
+    "Playback URL builder direct local/R2 URLs, HLS source keys, timeline preview object URLs, YouTube null, missing storage, and malformed HLS",
+    "Local storage overwrite, missing object reads, missing deletes, idempotent delete, and HLS directory delete behavior",
+    "HLS workspace source/output path separation and temp lease cleanup",
+    "HLS publisher content type mapping, deterministic key publication, and partial-publish failure visibility",
+    "Cleanup store YouTube no-op, malformed HLS no-op, HLS source-key parsing, and persisted pending duplicate suppression",
+    "R2 HLS planning source-key embedding without real R2"
+  ],
+  "commands": [
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.UnitTests/WoongBlog.Api.UnitTests.csproj --filter WorkVideoHlsJobPlan",
+      "result": "passed",
+      "tests": { "passed": 3, "failed": 0, "skipped": 0 }
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj --filter WorkVideoComponentTests",
+      "result": "passed",
+      "tests": { "passed": 25, "failed": 0, "skipped": 0 }
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.UnitTests/WoongBlog.Api.UnitTests.csproj",
+      "result": "passed",
+      "tests": { "passed": 56, "failed": 0, "skipped": 0 }
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj",
+      "result": "passed",
+      "tests": { "passed": 113, "failed": 0, "skipped": 0 }
+    },
+    {
+      "command": "./scripts/run-backend-coverage.sh component -v minimal",
+      "result": "passed",
+      "tests": { "passed": 113, "failed": 0, "skipped": 0 }
+    },
+    {
+      "command": "./scripts/run-backend-coverage.sh full -v minimal",
+      "result": "passed",
+      "tests": { "componentPassed": 113, "unitPassed": 56, "architecturePassed": 35, "integrationPassed": 194, "contractSkipped": 1 }
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln",
+      "result": "passed",
+      "tests": { "componentPassed": 113, "unitPassed": 56, "architecturePassed": 35, "integrationPassed": 194, "contractSkipped": 1 }
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    }
+  ],
+  "coverage": {
+    "full": {
+      "summary": { "line": 92.5, "branch": 72.6 },
+      "targets": {
+        "WorkVideoStorageSelector": { "line": 100.0, "branch": 90.0 },
+        "WorkVideoPlaybackUrlBuilder": { "line": 100.0, "branch": 100.0 },
+        "LocalVideoStorageService": { "line": 100.0, "branch": 90.0 },
+        "FfmpegVideoTranscoder": { "line": 61.7, "branch": 50.0 },
+        "WorkVideoHlsJobPlan": { "line": 100.0, "branch": 100.0 },
+        "WorkVideoCleanupStore": { "line": 100.0, "branch": null }
+      }
+    },
+    "component": {
+      "summary": { "line": 44.1, "branch": 37.8 },
+      "targets": {
+        "WorkVideoStorageSelector": { "line": 100.0, "branch": 90.0 },
+        "WorkVideoPlaybackUrlBuilder": { "line": 100.0, "branch": 100.0 },
+        "LocalVideoStorageService": { "line": 91.4, "branch": 90.0 },
+        "FfmpegVideoTranscoder": { "line": 0.0, "branch": 0.0 }
+      }
+    }
+  },
+  "risks": [
+    "HLS publish failure leaves previously saved artifacts visible under current behavior",
+    "Cleanup duplicate suppression is verified after first pending job persistence, not before save",
+    "LocalVideoStorageService does not enforce a root-boundary check for arbitrary storage keys",
+    "R2 object operations remain untested until an S3/R2 seam exists"
+  ],
+  "remainingBatch2ItemsRequiringSeam": [
+    "R2VideoStorageService.SaveDirectUploadAsync request shape and failure propagation",
+    "R2VideoStorageService.GetObjectAsync success and 404-to-null mapping",
+    "R2VideoStorageService.ReadPrefixAsync byte-range behavior",
+    "R2VideoStorageService.DeleteAsync single-object delete behavior",
+    "R2VideoStorageService.DeleteAsync HLS manifest-prefix deletion with pagination",
+    "AWS exceptions other than 404 are not swallowed",
+    "Deterministic presigned upload target request capture including browser endpoint signing"
+  ],
+  "finalRecommendation": "Batch 1 is complete for the no-production-code-change storage/path/url/cleanup scope. Proceed to Batch 2 by adding the smallest S3/R2 client factory seam, then test R2VideoStorageService object operations with deterministic fakes and no real network."
+}

@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <title>Backend Full Coverage Review - 2026-04-26</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 2rem; line-height: 1.55; color: #1f2937; }
+    h1, h2 { line-height: 1.2; }
+    code { background: #f3f4f6; padding: 0.1rem 0.25rem; border-radius: 0.25rem; }
+    table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+    th, td { border: 1px solid #d1d5db; padding: 0.5rem; text-align: left; vertical-align: top; }
+    th { background: #f9fafb; }
+  </style>
+</head>
+<body>
+  <h1>Backend Full Coverage Review - 2026-04-26</h1>
+  <p>Audit-only review of <code>coverage/backend/full</code>. No production or test code was modified.</p>
+
+  <h2>Current Situation</h2>
+  <table>
+    <thead><tr><th>Scope</th><th>Line</th><th>Branch</th><th>Method</th></tr></thead>
+    <tbody>
+      <tr><td>Full backend</td><td>90.1% (3,527 / 3,912)</td><td>60.9% (405 / 665)</td><td>93.9%</td></tr>
+      <tr><td>WoongBlog.Api</td><td>99.3%</td><td>69.5%</td><td>100.0%</td></tr>
+      <tr><td>WoongBlog.Application</td><td>93.7%</td><td>60.2%</td><td>93.5%</td></tr>
+      <tr><td>WoongBlog.Domain</td><td>85.7%</td><td>50.0%</td><td>100.0%</td></tr>
+      <tr><td>WoongBlog.Infrastructure</td><td>80.3%</td><td>60.8%</td><td>91.6%</td></tr>
+    </tbody>
+  </table>
+  <p>The suite is strong on endpoint wiring and happy paths. The main weakness is branch/failure-path coverage, especially around external services and production infrastructure.</p>
+
+  <h2>Top Reinforcement Targets</h2>
+  <table>
+    <thead><tr><th>Priority</th><th>Area</th><th>Evidence</th><th>Recommended level</th></tr></thead>
+    <tbody>
+      <tr><td>P1</td><td>AI provider execution</td><td><code>BlogAiFixService</code> 62.8% line / 38.2% branch; <code>AiHttpResultMapper</code> 70.0% / 40.0%</td><td>Component + Integration</td></tr>
+      <tr><td>P1</td><td>WorkVideo R2/storage/HLS</td><td><code>R2VideoStorageService</code> 9.0% / 0.0%; <code>WorkVideoPolicy</code> 52.7% / 31.6%; <code>FfmpegVideoTranscoder</code> 61.7% / 50.0%</td><td>Unit + Component + Integration</td></tr>
+      <tr><td>P1</td><td>Production auth events</td><td><code>AppOpenIdConnectEvents</code> 0.0%; <code>AppCookieAuthenticationEvents</code> 11.1% / 0.0%</td><td>Component + Integration</td></tr>
+      <tr><td>P1</td><td>Validation exception payload</td><td><code>ValidationExceptionFilter</code> 0.0% / 0.0%</td><td>Unit or Component</td></tr>
+      <tr><td>P2</td><td>Proxy/security config</td><td><code>ForwardedHeadersOptionsFactory</code> 55.1% / 43.7%; <code>SecurityOptionsValidator</code> 50.0% / 64.2%</td><td>Unit + Integration</td></tr>
+      <tr><td>P2</td><td>Media upload and search helpers</td><td><code>UploadAssetEndpoint</code> 94.1% / 25.0%; <code>ContentSearchText</code> 60.0% / 60.0%</td><td>Unit + Integration</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Recommendation</h2>
+  <p>Do not chase a higher global percentage yet. Use the current 90.1% line / 60.9% branch baseline to prioritize named behavior gaps: AI failures, R2/storage/HLS failure paths, production auth events, validation/proxy/security contracts, media failure mapping, and content/search helper edge cases.</p>
+</body>
+</html>

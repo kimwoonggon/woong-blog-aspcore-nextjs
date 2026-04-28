@@ -112,4 +112,36 @@ describe('InlineBlogEditorSection', () => {
     expect(mocks.refresh).toHaveBeenCalled()
     expect(mocks.toast.success).toHaveBeenCalledWith('Study deleted')
   })
+
+  it('sanitizes technical delete failures and keeps the public inline blog action retryable', async () => {
+    mocks.deleteAdminBlog.mockRejectedValueOnce(
+      new Error('SQLSTATE 23503 stack trace at WoongBlog.Api.Modules.Blogs status 500'),
+    )
+
+    render(
+      <InlineBlogEditorSection
+        initialBlog={{
+          id: 'blog-1',
+          title: 'Technical delete blog',
+          slug: 'technical-delete-blog',
+        }}
+        afterDeleteHref="/blog?page=2&pageSize=12"
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: '삭제' }))
+
+    expect(window.confirm).toHaveBeenCalled()
+    await waitFor(() => {
+      expect(mocks.deleteAdminBlog).toHaveBeenCalledWith('blog-1', 'technical-delete-blog')
+    })
+    expect(mocks.toast.error).toHaveBeenCalledWith('Study could not be deleted. Please retry after the backend is healthy.')
+    expect(mocks.toast.error).not.toHaveBeenCalledWith(expect.stringMatching(/SQLSTATE|stack trace|WoongBlog\.Api|status 500/i))
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: '삭제' })).toBeEnabled()
+    })
+    expect(mocks.push).not.toHaveBeenCalled()
+    expect(mocks.refresh).not.toHaveBeenCalled()
+    expect(mocks.toast.success).not.toHaveBeenCalled()
+  })
 })
