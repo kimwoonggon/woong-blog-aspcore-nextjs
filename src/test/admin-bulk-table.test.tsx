@@ -498,6 +498,33 @@ describe('admin bulk selection tables', () => {
     expect(mocks.refresh).toHaveBeenCalled()
   })
 
+  it('sanitizes technical blog delete failures without losing the row or retry dialog', async () => {
+    vi.mocked(deleteAdminBlog).mockRejectedValueOnce(
+      new Error('SQLSTATE 23503 stack trace at WoongBlog.Api.Modules.Blogs status 500'),
+    )
+
+    const { container } = render(
+      <AdminBlogTableClient
+        blogs={[
+          { id: 'b1', title: 'Technical Blog Failure', slug: 'technical-blog-failure', excerpt: '', tags: [], published: true, publishedAt: null },
+        ]}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete post: Technical Blog Failure' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }))
+
+    await waitFor(() => {
+      expect(mocks.toastError).toHaveBeenCalledWith('Blog posts could not be deleted. Please retry after the backend is healthy.')
+    })
+    expect(mocks.toastError).not.toHaveBeenCalledWith(expect.stringMatching(/SQLSTATE|stack trace|WoongBlog\.Api|status 500/i))
+    expect(screen.getByText('Technical Blog Failure')).toBeInTheDocument()
+    expect(screen.getByRole('dialog')).toBeVisible()
+    expect(container.textContent).not.toMatch(/SQLSTATE|stack trace|WoongBlog\.Api|undefined|null/i)
+    expect(mocks.toastSuccess).not.toHaveBeenCalled()
+    expect(mocks.refresh).not.toHaveBeenCalled()
+  })
+
   it.each([
     ['401', new Error('Session expired')],
     ['403', new Error('Forbidden')],
@@ -518,6 +545,33 @@ describe('admin bulk selection tables', () => {
     await waitFor(() => expect(mocks.toastError).toHaveBeenCalledWith(error.message))
     expect(screen.getByText('Protected Work')).toBeInTheDocument()
     expect(screen.getByRole('dialog')).toBeVisible()
+    expect(mocks.toastSuccess).not.toHaveBeenCalled()
+    expect(mocks.refresh).not.toHaveBeenCalled()
+  })
+
+  it('sanitizes technical work delete failures without losing the row or retry dialog', async () => {
+    vi.mocked(deleteAdminWork).mockRejectedValueOnce(
+      new Error('Npgsql.PostgresException stack trace at WoongBlog.Api.Modules.Works status 500'),
+    )
+
+    const { container } = render(
+      <AdminWorksTableClient
+        works={[
+          { id: 'w1', title: 'Technical Work Failure', slug: 'technical-work-failure', excerpt: '', tags: [], published: true, publishedAt: null, category: 'ops' },
+        ]}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete work: Technical Work Failure' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }))
+
+    await waitFor(() => {
+      expect(mocks.toastError).toHaveBeenCalledWith('Works could not be deleted. Please retry after the backend is healthy.')
+    })
+    expect(mocks.toastError).not.toHaveBeenCalledWith(expect.stringMatching(/Npgsql|stack trace|WoongBlog\.Api|status 500/i))
+    expect(screen.getByText('Technical Work Failure')).toBeInTheDocument()
+    expect(screen.getByRole('dialog')).toBeVisible()
+    expect(container.textContent).not.toMatch(/Npgsql|stack trace|WoongBlog\.Api|undefined|null/i)
     expect(mocks.toastSuccess).not.toHaveBeenCalled()
     expect(mocks.refresh).not.toHaveBeenCalled()
   })
@@ -577,6 +631,37 @@ describe('admin bulk selection tables', () => {
     expect(mocks.refresh).not.toHaveBeenCalled()
   })
 
+  it('sanitizes technical blog bulk delete failures while preserving selected rows', async () => {
+    vi.mocked(deleteManyAdminBlogs).mockRejectedValueOnce(
+      new Error('System.InvalidOperationException stack trace SQLSTATE 40001 status 500'),
+    )
+
+    render(
+      <AdminBlogTableClient
+        blogs={[
+          { id: 'b1', title: 'Bulk Technical Blog 1', slug: 'bulk-technical-blog-1', excerpt: '', tags: [], published: true, publishedAt: null },
+          { id: 'b2', title: 'Bulk Technical Blog 2', slug: 'bulk-technical-blog-2', excerpt: '', tags: [], published: false, publishedAt: null },
+        ]}
+      />,
+    )
+
+    fireEvent.click(screen.getByLabelText('Select Bulk Technical Blog 1'))
+    fireEvent.click(screen.getByLabelText('Select Bulk Technical Blog 2'))
+    fireEvent.click(screen.getByRole('button', { name: 'Delete Selected' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }))
+
+    await waitFor(() => {
+      expect(mocks.toastError).toHaveBeenCalledWith('Blog posts could not be deleted. Please retry after the backend is healthy.')
+    })
+    expect(mocks.toastError).not.toHaveBeenCalledWith(expect.stringMatching(/System\.InvalidOperationException|stack trace|SQLSTATE|status 500/i))
+    expect(screen.getByText('Bulk Technical Blog 1')).toBeInTheDocument()
+    expect(screen.getByText('Bulk Technical Blog 2')).toBeInTheDocument()
+    expectSelectionSummary(2, 2)
+    expect(screen.getByRole('dialog')).toBeVisible()
+    expect(mocks.toastSuccess).not.toHaveBeenCalled()
+    expect(mocks.refresh).not.toHaveBeenCalled()
+  })
+
   it('opens and cancels a works bulk delete without deleting rows and preserves selection', async () => {
     render(
       <AdminWorksTableClient
@@ -626,6 +711,37 @@ describe('admin bulk selection tables', () => {
     await waitFor(() => expect(mocks.toastError).toHaveBeenCalledWith('One selected work could not be deleted'))
     expect(screen.getByText('Bulk Fail Work 1')).toBeInTheDocument()
     expect(screen.getByText('Bulk Fail Work 2')).toBeInTheDocument()
+    expectSelectionSummary(2, 2)
+    expect(screen.getByRole('dialog')).toBeVisible()
+    expect(mocks.toastSuccess).not.toHaveBeenCalled()
+    expect(mocks.refresh).not.toHaveBeenCalled()
+  })
+
+  it('sanitizes technical works bulk delete failures while preserving selected rows', async () => {
+    vi.mocked(deleteManyAdminWorks).mockRejectedValueOnce(
+      new Error('Cloudflare R2 storage exception stack trace status 503'),
+    )
+
+    render(
+      <AdminWorksTableClient
+        works={[
+          { id: 'w1', title: 'Bulk Technical Work 1', slug: 'bulk-technical-work-1', excerpt: '', tags: [], published: true, publishedAt: null, category: 'cat' },
+          { id: 'w2', title: 'Bulk Technical Work 2', slug: 'bulk-technical-work-2', excerpt: '', tags: [], published: false, publishedAt: null, category: 'cat' },
+        ]}
+      />,
+    )
+
+    fireEvent.click(screen.getByLabelText('Select Bulk Technical Work 1'))
+    fireEvent.click(screen.getByLabelText('Select Bulk Technical Work 2'))
+    fireEvent.click(screen.getByRole('button', { name: 'Delete Selected' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }))
+
+    await waitFor(() => {
+      expect(mocks.toastError).toHaveBeenCalledWith('Works could not be deleted. Please retry after the backend is healthy.')
+    })
+    expect(mocks.toastError).not.toHaveBeenCalledWith(expect.stringMatching(/Cloudflare|R2|storage|stack trace|status 503/i))
+    expect(screen.getByText('Bulk Technical Work 1')).toBeInTheDocument()
+    expect(screen.getByText('Bulk Technical Work 2')).toBeInTheDocument()
     expectSelectionSummary(2, 2)
     expect(screen.getByRole('dialog')).toBeVisible()
     expect(mocks.toastSuccess).not.toHaveBeenCalled()

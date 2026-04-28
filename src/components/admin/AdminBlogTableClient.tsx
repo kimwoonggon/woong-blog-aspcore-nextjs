@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import type { BlogAdminItem } from '@/lib/api/blogs'
 import { deleteAdminBlog, deleteManyAdminBlogs } from '@/lib/api/admin-mutations'
+import { sanitizeAdminMutationError } from '@/lib/admin-save-error'
 import { useResponsivePageSize } from '@/hooks/useResponsivePageSize'
 import { anyContainsNormalizedSearch } from '@/lib/search/normalized-search'
 import { toast } from 'sonner'
@@ -326,7 +327,10 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
         closeDeleteDialog({ restoreFocus: false })
         router.refresh()
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'Failed to delete blogs.')
+        toast.error(sanitizeAdminMutationError(
+          error instanceof Error ? error.message : '',
+          'Blog posts could not be deleted. Please retry after the backend is healthy.',
+        ))
       }
     })
   }

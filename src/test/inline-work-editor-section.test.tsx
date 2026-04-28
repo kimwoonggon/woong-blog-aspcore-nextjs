@@ -92,4 +92,34 @@ describe('InlineWorkEditorSection', () => {
     expect(mocks.refresh).toHaveBeenCalled()
     expect(mocks.toast.success).toHaveBeenCalledWith('Work deleted')
   })
+
+  it('sanitizes technical delete failures and leaves the inline work action retryable', async () => {
+    mocks.deleteAdminWork.mockRejectedValueOnce(
+      new Error('SQLSTATE 23503 stack trace at WoongBlog.Api.Modules.Works status 500'),
+    )
+
+    render(
+      <InlineWorkEditorSection
+        initialWork={{
+          id: 'work-1',
+          title: 'Technical delete work',
+          slug: 'technical-delete-work',
+        }}
+        afterDeleteHref="/works?page=2&pageSize=8"
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: '삭제' }))
+
+    expect(window.confirm).toHaveBeenCalled()
+    await waitFor(() => {
+      expect(mocks.deleteAdminWork).toHaveBeenCalledWith('work-1', 'technical-delete-work')
+    })
+    expect(mocks.toast.error).toHaveBeenCalledWith('Work could not be deleted. Please retry after the backend is healthy.')
+    expect(mocks.toast.error).not.toHaveBeenCalledWith(expect.stringMatching(/SQLSTATE|stack trace|WoongBlog\.Api|status 500/i))
+    expect(screen.getByRole('button', { name: '삭제' })).toBeEnabled()
+    expect(mocks.push).not.toHaveBeenCalled()
+    expect(mocks.refresh).not.toHaveBeenCalled()
+    expect(mocks.toast.success).not.toHaveBeenCalled()
+  })
 })

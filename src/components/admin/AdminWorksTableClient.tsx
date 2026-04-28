@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import type { WorkAdminItem } from '@/lib/api/works'
 import { deleteAdminWork, deleteManyAdminWorks } from '@/lib/api/admin-mutations'
+import { sanitizeAdminMutationError } from '@/lib/admin-save-error'
 import { useResponsivePageSize } from '@/hooks/useResponsivePageSize'
 import { anyContainsNormalizedSearch } from '@/lib/search/normalized-search'
 import { toast } from 'sonner'
@@ -305,7 +306,10 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
         closeDeleteDialog({ restoreFocus: false })
         router.refresh()
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'Failed to delete works.')
+        toast.error(sanitizeAdminMutationError(
+          error instanceof Error ? error.message : '',
+          'Works could not be deleted. Please retry after the backend is healthy.',
+        ))
       }
     })
   }
