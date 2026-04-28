@@ -2243,3 +2243,51 @@ Scope: frontend Home profile image upload and Blog/Tiptap inline image upload fa
 ### Next recommended batch
 
 Proceed to `Frontend Batch 28 - Admin Video Secondary Failure Sanitization Reinforcement`. Cover Work video remove/reorder/auto-thumbnail secondary failure messages where frontend-owned. Verify failures preserve video/editor state, avoid raw backend/storage details, and do not leak `undefined`, `null`, stack traces, SQL/provider names, or broken video labels. Avoid AI behavior, dark mode, pagination/search UI broadening, and browser-only tests unless a true browser-only behavior appears. Re-attempt full e2e only after Docker/backend availability is confirmed.
+
+## Batch 28 - Admin Video Secondary Failure Sanitization Reinforcement
+
+Date: 2026-04-28.
+
+Scope: frontend Work editor secondary video failure states for saved video removal, saved video reordering, and fallback thumbnail regeneration. Backend behavior, API contracts, upload endpoints, storage configuration, primary video upload flows, AI behavior, dark mode, pagination/search UI, browser-only routing behavior, live services, real storage, and seeded backend data were left out of scope.
+
+### Tests added or reinforced
+
+- `src/test/work-editor.test.tsx`
+  - Saved video delete failures sanitize SQL/status/stack details and keep the video visible for retry.
+  - Saved video reorder failures sanitize backend/status/stack details and preserve rendered order.
+  - Thumbnail regeneration upload failures sanitize Cloudflare/R2/storage/stack details without falsely saving rich media changes.
+
+### Production files changed
+
+- `src/components/admin/WorkEditor.tsx`
+  - Applied `sanitizeAdminUploadError` to saved video remove failures.
+  - Applied `sanitizeAdminUploadError` to saved video reorder failures.
+  - Applied `sanitizeAdminUploadError` to thumbnail fallback regeneration failures.
+
+### Behavior bugs found
+
+- Saved video delete failures could show raw SQL/status/stack details.
+- Saved video reorder failures could show raw backend/status/stack details.
+- Thumbnail regeneration upload failures could show raw Cloudflare/R2/storage/stack details.
+
+### Commands run
+
+| Command | Result | Notes |
+| --- | --- | --- |
+| `npx skills find react video failure sanitization testing` | Passed | Results were general sanitizer/security skills; no new skill was installed. |
+| `npm test -- --run src/test/work-editor.test.tsx` | Failed before fixes, then passed | RED run exposed raw remove/reorder messages. Final focused Batch 28 slice passed with 1 file and 37 tests. |
+| `npm test -- --run` | Passed | Final run passed with 78 files and 530 tests. Known Pact V3 warnings and jsdom navigation warning appeared. |
+| `npm run lint` | Passed | 0 errors, 6 existing warnings. |
+| `npm run typecheck` | Passed | `tsc --noEmit` completed successfully. |
+| `npm run build` | Passed | Next.js production build completed successfully. |
+| `git diff --check` | Passed | No whitespace errors. |
+
+### Remaining video gaps
+
+- Video insert-into-body failure handling remains covered mainly through existing editor integration tests.
+- Inline public Work editor video secondary failure routing was not broadened.
+- Full e2e still needs Docker Desktop WSL integration or an already running backend on `127.0.0.1:8080`.
+
+### Next recommended batch
+
+Proceed to `Frontend Batch 29 - Admin Inline Editor Routing and Return Path Reinforcement`. Cover public inline Blog/Work editor return paths, unsaved state preservation around sanitized failures, and safe navigation fallback behavior. Avoid AI behavior, dark mode, media validation, pagination/search UI broadening, and browser-only tests unless routing/history behavior cannot be covered deterministically in Vitest. Re-attempt full e2e only after Docker/backend availability is confirmed.

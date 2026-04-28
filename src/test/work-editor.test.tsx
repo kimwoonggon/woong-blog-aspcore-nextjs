@@ -1105,9 +1105,9 @@ describe('WorkEditor', () => {
     expect(mocks.toast.success).not.toHaveBeenCalled()
   })
 
-  it('keeps a saved video visible after delete failure and allows a retry to succeed', async () => {
+  it('keeps a saved video visible after sanitized delete failure and allows a retry to succeed', async () => {
     mocks.fetchWithCsrf
-      .mockResolvedValueOnce(errorJson('Video delete failed. Try again.', 500))
+      .mockResolvedValueOnce(errorJson('SQLSTATE 23503 stack trace status 500', 500))
       .mockResolvedValueOnce(okJson({ videos_version: 3, videos: [] }))
 
     render(
@@ -1122,8 +1122,10 @@ describe('WorkEditor', () => {
     fireEvent.click(screen.getByRole('button', { name: /Remove YouTube dQw4w9WgXcQ/i }))
 
     await waitFor(() => {
-      expect(mocks.toast.error).toHaveBeenCalledWith('Video delete failed. Try again.')
+      expect(mocks.toast.error).toHaveBeenCalledWith('Video could not be removed. Please retry after the backend is healthy.')
     })
+    expect(mocks.toast.error).not.toHaveBeenCalledWith(expect.stringContaining('SQLSTATE'))
+    expect(mocks.toast.error).not.toHaveBeenCalledWith(expect.stringContaining('stack trace'))
 
     expect(screen.getByTestId('saved-video-card')).toHaveTextContent('YouTube dQw4w9WgXcQ')
     expect(mocks.toast.success).not.toHaveBeenCalledWith('Video removed.')
@@ -1134,6 +1136,34 @@ describe('WorkEditor', () => {
       expect(mocks.toast.success).toHaveBeenCalledWith('Video removed.')
     })
     expect(screen.queryByTestId('saved-video-card')).not.toBeInTheDocument()
+  })
+
+  it('sanitizes technical reorder failures without changing the rendered order', async () => {
+    mocks.fetchWithCsrf.mockResolvedValueOnce(errorJson('WoongBlog.Api stack trace status 500', 500))
+
+    render(
+      <WorkEditor
+        initialWork={existingWork({
+          videos_version: 2,
+          videos: [
+            youtubeVideo('video-1', 'dQw4w9WgXcQ', 0),
+            youtubeVideo('video-2', '9bZkp7q19f0', 1),
+          ],
+        })}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /Move YouTube dQw4w9WgXcQ down/i }))
+
+    await waitFor(() => {
+      expect(mocks.toast.error).toHaveBeenCalledWith('Video order could not be saved. Please retry after the backend is healthy.')
+    })
+    expect(mocks.toast.error).not.toHaveBeenCalledWith(expect.stringContaining('WoongBlog.Api'))
+    expect(mocks.toast.error).not.toHaveBeenCalledWith(expect.stringContaining('stack trace'))
+
+    const cards = screen.getAllByTestId('saved-video-card')
+    expect(cards[0]).toHaveTextContent('YouTube dQw4w9WgXcQ')
+    expect(cards[1]).toHaveTextContent('YouTube 9bZkp7q19f0')
   })
 
   it('renders stable empty and single-video reorder states', () => {
@@ -1184,6 +1214,40 @@ describe('WorkEditor', () => {
       expect(mocks.toast.error).toHaveBeenCalledWith('Failed to fetch the saved video for thumbnail regeneration.')
     })
 
+    expect(screen.getByTestId('work-thumbnail-source')).toHaveTextContent('uploaded video')
+    expect(screen.queryByRole('img', { name: 'Work thumbnail preview' })).not.toBeInTheDocument()
+    expect(mocks.toast.success).not.toHaveBeenCalled()
+  })
+
+  it('sanitizes thumbnail regeneration upload failures without falsely saving rich media changes', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('video', { status: 200 })))
+    mocks.fetchWithCsrf.mockResolvedValueOnce(errorJson('Cloudflare R2 storage stack trace status 500', 500))
+
+    render(
+      <WorkEditor
+        initialWork={existingWork({
+          thumbnail_asset_id: 'thumb-manual',
+          thumbnail_url: '/media/work-thumbnails/manual.jpg',
+          videos: [{
+            id: 'video-local',
+            sourceType: 'local',
+            sourceKey: 'videos/work-1/demo.mp4',
+            playbackUrl: '/media/videos/work-1/demo.mp4',
+            originalFileName: 'demo.mp4',
+            mimeType: 'video/mp4',
+            sortOrder: 0,
+          }],
+        })}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /Remove Thumbnail/i }))
+
+    await waitFor(() => {
+      expect(mocks.toast.error).toHaveBeenCalledWith('Thumbnail could not be regenerated. Please retry after storage is healthy.')
+    })
+    expect(mocks.toast.error).not.toHaveBeenCalledWith(expect.stringContaining('Cloudflare'))
+    expect(mocks.toast.error).not.toHaveBeenCalledWith(expect.stringContaining('stack trace'))
     expect(screen.getByTestId('work-thumbnail-source')).toHaveTextContent('uploaded video')
     expect(screen.queryByRole('img', { name: 'Work thumbnail preview' })).not.toBeInTheDocument()
     expect(mocks.toast.success).not.toHaveBeenCalled()

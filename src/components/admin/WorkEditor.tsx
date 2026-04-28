@@ -569,7 +569,8 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
             try {
                 await regenerateThumbnailFallbackForCurrentWork()
             } catch (error) {
-                toast.error(error instanceof Error ? error.message : 'Failed to regenerate the fallback thumbnail.')
+                const message = error instanceof Error ? error.message : 'Failed to regenerate the fallback thumbnail.'
+                toast.error(sanitizeAdminUploadError(message, 'Thumbnail could not be regenerated. Please retry after storage is healthy.'))
             }
             return
         }
@@ -859,7 +860,8 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
             refreshInlinePublicWorkIfNeeded()
             toast.success('Video removed.')
         } catch (error) {
-            toast.error(error instanceof Error ? error.message : 'Failed to remove video.')
+            const message = error instanceof Error ? error.message : 'Failed to remove video.'
+            toast.error(sanitizeAdminUploadError(message, 'Video could not be removed. Please retry after the backend is healthy.'))
         } finally {
             setIsVideoBusy(false)
         }
@@ -900,7 +902,8 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
             setHasPersistedVideoChanges(true)
             refreshInlinePublicWorkIfNeeded()
         } catch (error) {
-            toast.error(error instanceof Error ? error.message : 'Failed to reorder videos.')
+            const message = error instanceof Error ? error.message : 'Failed to reorder videos.'
+            toast.error(sanitizeAdminUploadError(message, 'Video order could not be saved. Please retry after the backend is healthy.'))
         } finally {
             setIsVideoBusy(false)
         }
@@ -940,7 +943,8 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
             setHasPersistedVideoChanges(true)
             refreshInlinePublicWorkIfNeeded()
         } catch (error) {
-            toast.error(error instanceof Error ? error.message : 'Failed to reorder videos.')
+            const message = error instanceof Error ? error.message : 'Failed to reorder videos.'
+            toast.error(sanitizeAdminUploadError(message, 'Video order could not be saved. Please retry after the backend is healthy.'))
         } finally {
             setIsVideoBusy(false)
         }
