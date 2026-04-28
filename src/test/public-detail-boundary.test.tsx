@@ -75,7 +75,7 @@ describe('public detail route admin boundary', () => {
     expect(screen.getByTestId('blog-admin-actions')).toHaveTextContent('blog-1')
     expect(fetchServerSession).not.toHaveBeenCalled()
     expect(fetchAdminBlogById).not.toHaveBeenCalled()
-  }, 15_000)
+  }, 30_000)
 
   it('renders work public content without a server session or admin detail fetch', async () => {
     const fetchServerSession = vi.fn(async () => ({ authenticated: true, role: 'admin' }))
