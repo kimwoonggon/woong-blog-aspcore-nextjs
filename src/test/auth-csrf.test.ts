@@ -155,13 +155,16 @@ describe('auth csrf helpers', () => {
 
   it('throws when logout request fails', async () => {
     const fetchMock = vi.fn()
+      .mockResolvedValueOnce(mockJsonResponse({ authenticated: true }))
       .mockResolvedValueOnce(mockJsonResponse({ requestToken: 'logout-token', headerName: 'X-CSRF-TOKEN' }))
-      .mockResolvedValueOnce({ ok: false, status: 500 })
+      .mockResolvedValueOnce(mockJsonResponse({}, 500))
     vi.stubGlobal('fetch', fetchMock)
 
     const { logoutWithCsrf } = await import('@/lib/api/auth')
 
     await expect(logoutWithCsrf('/signed-out')).rejects.toThrow('Failed to sign out.')
+    expect(fetchMock).toHaveBeenCalledTimes(3)
+    expect(fetchMock.mock.calls[2][0]).toContain('/api/auth/logout?returnUrl=%2Fsigned-out')
   })
 
   it('falls back to the requested logout return url when response json parsing fails', async () => {
