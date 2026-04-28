@@ -149,7 +149,9 @@ describe('public detail admin actions', () => {
     expect(mocks.push).not.toHaveBeenCalled()
     expect(mocks.refresh).not.toHaveBeenCalled()
     expect(mocks.toast.success).not.toHaveBeenCalled()
-    expect(screen.getByRole('button', { name: '삭제' })).toBeEnabled()
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: '삭제' })).toBeEnabled()
+    })
   })
 
   it('uses only safe local Blog return paths after a successful detail delete', async () => {
@@ -221,7 +223,9 @@ describe('public detail admin actions', () => {
     expect(mocks.push).not.toHaveBeenCalled()
     expect(mocks.refresh).not.toHaveBeenCalled()
     expect(mocks.toast.success).not.toHaveBeenCalled()
-    expect(screen.getByRole('button', { name: '삭제' })).toBeEnabled()
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: '삭제' })).toBeEnabled()
+    })
   })
 
   it('uses only safe local Work return paths after a successful detail delete', async () => {
