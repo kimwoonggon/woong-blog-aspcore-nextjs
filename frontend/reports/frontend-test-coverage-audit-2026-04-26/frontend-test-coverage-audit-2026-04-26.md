@@ -2539,3 +2539,48 @@ Scope: frontend-owned public Blog and Work detail delete success navigation. Bac
 ### Next recommended batch
 
 Proceed to `Frontend Batch 34 - Public Admin Gate Session Failure Reinforcement`. Cover public admin gate/session lookup failure and stale cache behavior. Verify session fetch failures hide admin affordances without raw errors, admin/non-admin role decisions are deterministic, cache reset remains testable, and public content remains visible. Avoid AI behavior, dark mode, media validation, pagination/search UI broadening, and browser-only tests unless required.
+
+## Batch 34 - Public Admin Gate Session Failure Reinforcement
+
+Date: 2026-04-28.
+
+Scope: frontend-owned public admin gate session failure and cache behavior. Backend behavior, API contracts, AI behavior, dark mode, media validation, pagination/search UI, browser-only routing behavior, live services, real storage, and seeded backend data were left out of scope.
+
+### Tests added or reinforced
+
+- `src/test/public-admin-client-gate.test.tsx`
+  - Rejected session fetches hide admin affordances while public content remains visible.
+  - Raw backend/session error details do not appear in rendered public content.
+  - Malformed session payloads hide admin affordances.
+  - Rejected browser session checks are deduplicated across multiple gates.
+  - `resetPublicAdminClientSessionForTests` clears cached session state between admin and non-admin responses.
+
+### Production files changed
+
+- None.
+
+### Behavior bugs found
+
+- None. Existing public admin gate session handling behaved correctly under the reinforced tests.
+
+### Commands run
+
+| Command | Result | Notes |
+| --- | --- | --- |
+| `npx skills find react session cache failure gate testing` | Passed | Results were general session/testing skills; no new skill was installed. |
+| `npm test -- --run src/test/public-admin-client-gate.test.tsx` | Passed | Focused run passed with 1 file and 9 tests. |
+| `npm test -- --run` | Passed | Final run passed with 79 files and 550 tests. Known Pact V3 warnings and jsdom navigation warning appeared. |
+| `npm run lint` | Passed | 0 errors, 6 existing warnings. |
+| `npm run typecheck` | Passed | `tsc --noEmit` completed successfully. |
+| `npm run build` | Passed | Next.js production build completed successfully. |
+| `git diff --check` | Passed | No whitespace errors. |
+
+### Remaining public gate gaps
+
+- Browser cookie/session transitions across page reloads remain better suited to Playwright once Docker/backend e2e is available.
+- Public admin affordance visibility on fully rendered public pages is partly covered by existing tests and can receive a focused route-level sweep if needed.
+- Full e2e still needs Docker Desktop WSL integration or an already running backend on `127.0.0.1:8080`.
+
+### Next recommended batch
+
+Proceed to `Frontend Batch 35 - Public Admin Affordance Route Rendering Reinforcement`. Cover public pages that include admin affordances. Verify public content remains visible when admin affordances are hidden, no raw auth/session failure text leaks, and affordance placeholders do not create broken layout labels. Avoid AI behavior, dark mode, media validation, pagination/search UI broadening, and browser-only tests unless required.
