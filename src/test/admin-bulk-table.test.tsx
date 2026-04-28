@@ -166,6 +166,19 @@ describe('admin bulk selection tables', () => {
     expect(container.textContent).not.toMatch(/stack|trace|exception|status 500|sqlstate|npgsql|woongblog\.api/i)
   })
 
+  it('renders fallback dates for malformed admin blog table dates', () => {
+    const { container } = render(
+      <AdminBlogTableClient
+        blogs={[
+          { id: 'b1', title: 'Malformed Blog Date', slug: 'malformed-blog-date', excerpt: '', tags: [], published: true, publishedAt: 'not-a-date' },
+        ]}
+      />,
+    )
+
+    expect(screen.getByText('—')).toBeInTheDocument()
+    expect(container.textContent).not.toMatch(/Invalid Date|RangeError|undefined|null/i)
+  })
+
   it('clears blog bulk selection when the search query changes', () => {
     render(
       <AdminBlogTableClient
@@ -262,6 +275,19 @@ describe('admin bulk selection tables', () => {
     expect(screen.queryByTestId('admin-work-row')).not.toBeInTheDocument()
     expectNoSelectionSummary(0)
     expect(container.textContent).not.toMatch(/stack|trace|exception|status 500|sqlstate|npgsql|woongblog\.api/i)
+  })
+
+  it('renders fallback dates for malformed admin works table dates', () => {
+    const { container } = render(
+      <AdminWorksTableClient
+        works={[
+          { id: 'w1', title: 'Malformed Work Date', slug: 'malformed-work-date', excerpt: '', tags: [], published: true, publishedAt: 'not-a-date', category: 'cat' },
+        ]}
+      />,
+    )
+
+    expect(screen.getByText('—')).toBeInTheDocument()
+    expect(container.textContent).not.toMatch(/Invalid Date|RangeError|undefined|null/i)
   })
 
   it('clears works bulk selection when the search query changes', () => {

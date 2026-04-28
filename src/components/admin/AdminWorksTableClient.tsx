@@ -42,6 +42,15 @@ function normalizePageParam(value: string | null) {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 1
 }
 
+function formatAdminDate(value?: string | null) {
+  if (!value) {
+    return '—'
+  }
+
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? '—' : date.toLocaleDateString()
+}
+
 function deferStateUpdate(callback: () => void) {
   queueMicrotask(callback)
 }
@@ -370,7 +379,7 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
                   )}
                 </TableCell>
                 <TableCell className="text-sm tabular-nums text-muted-foreground">
-                  {work.publishedAt ? new Date(work.publishedAt).toLocaleDateString() : '—'}
+                  {formatAdminDate(work.publishedAt)}
                 </TableCell>
                 <TableCell>{work.category}</TableCell>
                 <TableCell className="text-right">

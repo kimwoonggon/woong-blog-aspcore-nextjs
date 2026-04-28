@@ -41,7 +41,12 @@ function getPageWindow(currentPage: number, totalPages: number, windowSize = 5) 
 }
 
 function formatPublishedDate(publishedAt?: string | null) {
-  return publishedAt ? new Date(publishedAt).toLocaleDateString() : '—'
+  if (!publishedAt) {
+    return '—'
+  }
+
+  const date = new Date(publishedAt)
+  return Number.isNaN(date.getTime()) ? '—' : date.toLocaleDateString()
 }
 
 function AdminCollectionSection<T extends CollectionItem>({

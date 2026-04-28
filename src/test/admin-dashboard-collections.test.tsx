@@ -108,4 +108,20 @@ describe('AdminDashboardCollections', () => {
     expect(screen.getByText('Beta Blog')).toBeInTheDocument()
     expect(screen.queryByText('Alpha Blog')).not.toBeInTheDocument()
   })
+
+  it('renders fallback dates for malformed dashboard collection dates', () => {
+    const { container } = render(
+      <AdminDashboardCollections
+        works={[
+          { id: 'work-1', title: 'Malformed Work Date', slug: 'work-one', excerpt: '', category: 'platform', tags: [], published: true, publishedAt: 'not-a-date' },
+        ]}
+        blogs={[
+          { id: 'blog-1', title: 'Malformed Blog Date', slug: 'blog-one', excerpt: '', tags: [], published: true, publishedAt: 'not-a-date' },
+        ]}
+      />,
+    )
+
+    expect(screen.getAllByText('—')).toHaveLength(2)
+    expect(container.textContent).not.toMatch(/Invalid Date|RangeError|undefined|null/i)
+  })
 })
