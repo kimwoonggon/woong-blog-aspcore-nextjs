@@ -2078,3 +2078,59 @@ Browser E2E note: no Playwright specs were changed or run. The requested Blog No
 ### Next recommended batch
 
 Proceed to `Frontend Batch 25 - Admin Editor Save Failure Sanitization Reinforcement`. Cover admin Blog/Page/Work editor save failure messages where frontend-owned. Verify failed saves preserve user input, avoid raw backend details, and do not leak `undefined`, `null`, stack traces, SQL/provider names, or broken return links. Avoid AI behavior, WorkVideo upload, media validation, dark mode, pagination/search UI broadening, and browser-only tests unless a true browser-only behavior appears.
+
+## Batch 25 - Admin Editor Save Failure Sanitization Reinforcement
+
+Date: 2026-04-28.
+
+Scope: frontend admin Blog, Page, and Work editor save failure message sanitization. Backend behavior, API contracts, public pages, public error-boundary UI, pagination/search UI, AI behavior changes, WorkVideo upload, media validation, dark mode, live services, real storage, seeded backend data, and browser-only tests were left out of scope.
+
+### Tests added or reinforced
+
+- `src/test/blog-editor.test.tsx`
+  - Technical save failures render safe Blog editor error copy and preserve title, excerpt, and body input.
+- `src/test/page-editor.test.tsx`
+  - Technical save failures render safe Page editor toast copy and preserve title/body input.
+- `src/test/work-editor.test.tsx`
+  - Technical save failures render safe Work editor error copy and preserve title, period, and body input.
+
+### Production files changed
+
+- `src/lib/admin-save-error.ts`
+  - Added a small shared sanitizer for technical save failure messages.
+- `src/components/admin/BlogEditor.tsx`
+  - Blog save failures now sanitize technical response text before rendering and toasting.
+- `src/components/admin/PageEditor.tsx`
+  - Page save failures now sanitize technical response text before toasting.
+- `src/components/admin/WorkEditor.tsx`
+  - Work save failures now sanitize technical response payloads before rendering and toasting.
+
+### Behavior bugs found
+
+- Blog editor save failures could show raw SQL/status/stack/provider details.
+- Page editor save failure toasts could show raw SQL/status/stack/provider details.
+- Work editor save failures could show raw SQL/status/stack/provider details.
+
+### Commands run
+
+| Command | Result | Notes |
+| --- | --- | --- |
+| `npx skills find react form editor save failure testing` | Passed | Results included low-install form/editor skills; no new skill was installed. |
+| `npm test -- --run src/test/page-editor.test.tsx src/test/blog-editor.test.tsx src/test/work-editor.test.tsx` | Failed before fixes, then passed | RED run failed with 3 editor save failure assertions. Final focused Batch 25 slice passed with 3 files and 52 tests. |
+| `npm test -- --run` | Passed | Final run passed with 78 files and 525 tests. Known Pact V3 warnings and jsdom navigation warning appeared. |
+| `npm run lint` | Passed | 0 errors, 6 existing warnings. |
+| `npm run typecheck` | Passed | `tsc --noEmit` completed successfully. |
+| `npm run build` | Passed | Next.js production build completed successfully. |
+| `git diff --check` | Passed | No whitespace errors. |
+
+Browser E2E note: no Playwright specs were changed or run. The requested editor save failure behavior was covered deterministically through Vitest component tests.
+
+### Remaining editor failure gaps
+
+- Upload/video-specific failure messages can still be audited separately without changing save-submit behavior.
+- Autosave-specific Blog Notion failure sanitization remains separate from standard editor save paths.
+- Success/redirect return-path behavior was not changed in this batch.
+
+### Next recommended batch
+
+Proceed to `Frontend Batch 26 - Admin Upload Failure Sanitization Reinforcement`. Cover thumbnail/icon/PDF/video upload failure messages where frontend-owned. Verify upload failures preserve selected form state, avoid raw backend/storage details, and do not leak `undefined`, `null`, stack traces, SQL/provider names, or broken preview labels. Avoid AI behavior, dark mode, pagination/search UI broadening, and browser-only tests unless a true browser-only behavior appears.

@@ -56,6 +56,7 @@ import {
     validateFlexibleMetadata,
 } from '@/components/admin/work-editor/utils'
 import { cn } from '@/lib/utils'
+import { sanitizeAdminSaveError } from '@/lib/admin-save-error'
 import { toast } from 'sonner'
 
 const DEFAULT_WORK_CATEGORY = 'Uncategorized'
@@ -1038,7 +1039,10 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
         )
 
         if (!response.ok) {
-            const message = await getResponseError(response, 'Failed to save work.')
+            const message = sanitizeAdminSaveError(
+                await getResponseError(response, 'Failed to save work.'),
+                'Work could not be saved. Please retry after the backend is healthy.',
+            )
             setSaveError(message)
             toast.error(message)
             return null

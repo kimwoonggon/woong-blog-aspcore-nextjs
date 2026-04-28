@@ -317,6 +317,25 @@ describe('WorkEditor', () => {
     expect(mocks.push).toHaveBeenCalledWith('/admin/works')
   })
 
+  it('sanitizes technical save failures without clearing work input', async () => {
+    mocks.fetchWithCsrf.mockResolvedValueOnce(errorJson('SQLSTATE 08006 stack trace from WoongBlog.Api status 500', 500))
+
+    render(<WorkEditor />)
+
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Work draft' } })
+    fireEvent.change(screen.getByLabelText('Project Period'), { target: { value: '2024.01 - 2024.03' } })
+    changeContent('<p>Work body should stay</p>')
+    fireEvent.click(screen.getByRole('button', { name: /Create Work/i }))
+
+    expect(await screen.findByTestId('admin-work-form-error')).toHaveTextContent(
+      'Work could not be saved. Please retry after the backend is healthy.',
+    )
+    expect(mocks.toast.error).toHaveBeenCalledWith('Work could not be saved. Please retry after the backend is healthy.')
+    expect(screen.getByLabelText('Title')).toHaveValue('Work draft')
+    expect(screen.getByLabelText('Project Period')).toHaveValue('2024.01 - 2024.03')
+    expect(screen.getByLabelText('Mock work content')).toHaveValue('<p>Work body should stay</p>')
+  })
+
   it('stores share message under all_properties.socialShareMessage when saving', async () => {
     mocks.fetchWithCsrf.mockResolvedValueOnce(okJson({ id: 'work-share', slug: 'work-share' }))
 

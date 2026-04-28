@@ -259,6 +259,32 @@ describe('BlogEditor', () => {
     expect(screen.getByLabelText('Mock blog content')).toHaveValue('<p>Body should stay</p>')
   })
 
+  it('sanitizes technical save failures without clearing blog input', async () => {
+    mocks.fetchWithCsrf.mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      json: async () => ({}),
+      text: async () => 'SQLSTATE 08006 stack trace from WoongBlog.Api status 500',
+    })
+
+    render(<BlogEditor />)
+
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Draft that should stay' } })
+    fireEvent.change(screen.getByLabelText('Excerpt'), { target: { value: 'Excerpt should stay' } })
+    fireEvent.change(screen.getByLabelText('Mock blog content'), {
+      target: { value: '<p>Body should stay</p>' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: /Create Post/i }))
+
+    expect(await screen.findByTestId('admin-blog-form-error')).toHaveTextContent(
+      'Blog post could not be saved. Please retry after the backend is healthy.',
+    )
+    expect(mocks.toast.error).toHaveBeenCalledWith('Blog post could not be saved. Please retry after the backend is healthy.')
+    expect(screen.getByLabelText('Title')).toHaveValue('Draft that should stay')
+    expect(screen.getByLabelText('Excerpt')).toHaveValue('Excerpt should stay')
+    expect(screen.getByLabelText('Mock blog content')).toHaveValue('<p>Body should stay</p>')
+  })
+
   it('keeps inline update saves excerpt-aware while returning to the public detail route', async () => {
     mocks.pathname = '/blog/existing-post'
     mocks.searchParams = 'relatedPage=2'

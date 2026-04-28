@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { isHtmlPageContent } from '@/lib/content/page-content'
 import { fetchWithCsrf } from '@/lib/api/auth'
+import { sanitizeAdminSaveError } from '@/lib/admin-save-error'
 import { toast } from 'sonner'
 import { getBrowserApiBaseUrl } from '@/lib/api/browser'
 import { revalidatePublicPathsAfterMutation } from '@/lib/public-revalidation-client'
@@ -51,7 +52,11 @@ export function PageEditor({ page, inlineMode = false, onSaved }: PageEditorProp
 
             if (!response.ok) {
                 const message = await response.text()
-                toast.error(`Error saving page: ${message}`, { id: toastId })
+                const safeMessage = sanitizeAdminSaveError(
+                    message,
+                    'Page could not be saved. Please retry after the backend is healthy.',
+                )
+                toast.error(`Error saving page: ${safeMessage}`, { id: toastId })
             } else {
                 await revalidatePublicPathsAfterMutation(getPagePublicRevalidationPaths(page.slug))
                 toast.success('Page updated successfully!', { id: toastId })

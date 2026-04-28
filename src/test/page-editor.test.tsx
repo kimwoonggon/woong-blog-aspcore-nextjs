@@ -128,6 +128,33 @@ describe('PageEditor', () => {
     })
   })
 
+  it('sanitizes technical save failures without clearing page input', async () => {
+    mocks.fetchWithCsrf.mockResolvedValueOnce({
+      ok: false,
+      text: async () => 'SQLSTATE 08006 stack trace from WoongBlog.Api status 500',
+    })
+
+    render(
+      <PageEditor
+        page={{ id: 'page-1', title: 'Contact', slug: 'contact', content: { html: '<p>Old</p>' } }}
+      />,
+    )
+
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Contact draft' } })
+    fireEvent.change(screen.getByLabelText('Content (HTML/Text)'), { target: { value: '<p>Draft body</p>' } })
+    fireEvent.click(screen.getByRole('button', { name: /Save Changes/i }))
+
+    await waitFor(() => {
+      expect(mocks.toast.error).toHaveBeenCalledWith(
+        'Error saving page: Page could not be saved. Please retry after the backend is healthy.',
+        { id: 'toast-id' },
+      )
+    })
+
+    expect(screen.getByLabelText('Title')).toHaveValue('Contact draft')
+    expect(screen.getByLabelText('Content (HTML/Text)')).toHaveValue('<p>Draft body</p>')
+  })
+
   it('shows a fatal save error when the request throws', async () => {
     mocks.fetchWithCsrf.mockRejectedValueOnce(new Error('network down'))
 
