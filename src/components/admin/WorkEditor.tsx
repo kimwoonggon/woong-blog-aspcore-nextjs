@@ -56,7 +56,7 @@ import {
     validateFlexibleMetadata,
 } from '@/components/admin/work-editor/utils'
 import { cn } from '@/lib/utils'
-import { sanitizeAdminSaveError } from '@/lib/admin-save-error'
+import { sanitizeAdminSaveError, sanitizeAdminUploadError } from '@/lib/admin-save-error'
 import { toast } from 'sonner'
 
 const DEFAULT_WORK_CATEGORY = 'Uncategorized'
@@ -530,7 +530,11 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
             }
         } catch (error) {
             const message = error instanceof Error ? error.message : 'Upload failed'
-            toast.error(`Failed to upload ${target}: ${message}`)
+            const safeMessage = sanitizeAdminUploadError(
+                message,
+                `${target === 'thumbnail' ? 'Thumbnail' : 'Icon'} could not be uploaded. Please retry after storage is healthy.`
+            )
+            toast.error(`Failed to upload ${target}: ${safeMessage}`)
         } finally {
             setUploadingTarget(null)
             event.target.value = ''
@@ -824,7 +828,8 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
         } catch (error) {
             window.clearTimeout(processingPhaseTimer)
             setVideoUploadStatus(null)
-            toast.error(error instanceof Error ? error.message : 'Failed to upload HLS video.')
+            const message = error instanceof Error ? error.message : 'Failed to upload HLS video.'
+            toast.error(sanitizeAdminUploadError(message, 'Video could not be uploaded. Please retry after storage is healthy.'))
         } finally {
             setIsVideoBusy(false)
         }
@@ -1133,7 +1138,8 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
 
             router.push(`/admin/works/${responsePayload.id}?videoInline=1`)
         } catch (error) {
-            toast.error(error instanceof Error ? error.message : 'Work was created, but some videos failed to attach.')
+            const message = error instanceof Error ? error.message : 'Work was created, but some videos failed to attach.'
+            toast.error(sanitizeAdminUploadError(message, 'Work was created, but some videos could not be uploaded. Please retry after storage is healthy.'))
             router.push(`/admin/works/${responsePayload.id}`)
         }
     }

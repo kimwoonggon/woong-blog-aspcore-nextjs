@@ -687,8 +687,8 @@ describe('WorkEditor', () => {
     expect(screen.queryByRole('img', { name: 'Work thumbnail preview' })).not.toBeInTheDocument()
   })
 
-  it('preserves title/body/metadata and shows no false success when thumbnail upload fails', async () => {
-    mocks.fetchWithCsrf.mockResolvedValueOnce(errorJson('storage offline', 500))
+  it('sanitizes thumbnail upload failures without clearing title/body/metadata', async () => {
+    mocks.fetchWithCsrf.mockResolvedValueOnce(errorJson('Cloudflare R2 storage offline stack trace status 500', 500))
 
     render(<WorkEditor />)
 
@@ -701,8 +701,12 @@ describe('WorkEditor', () => {
     fireEvent.change(thumbnailInput, { target: { files: [file] } })
 
     await waitFor(() => {
-      expect(mocks.toast.error).toHaveBeenCalledWith('Failed to upload thumbnail: storage offline')
+      expect(mocks.toast.error).toHaveBeenCalledWith(
+        'Failed to upload thumbnail: Thumbnail could not be uploaded. Please retry after storage is healthy.',
+      )
     })
+    expect(mocks.toast.error).not.toHaveBeenCalledWith(expect.stringContaining('Cloudflare'))
+    expect(mocks.toast.error).not.toHaveBeenCalledWith(expect.stringContaining('stack trace'))
     expect(mocks.toast.success).not.toHaveBeenCalled()
     expect(screen.getByLabelText('Title')).toHaveValue('Upload failure work')
     expect(screen.getAllByLabelText('Value')[0]).toHaveValue('Owner')
@@ -740,6 +744,41 @@ describe('WorkEditor', () => {
     expect(mocks.fetchWithCsrf).not.toHaveBeenCalled()
     expect(mocks.toast.success).not.toHaveBeenCalled()
     expect(screen.queryByRole('img', { name: 'Work icon preview' })).not.toBeInTheDocument()
+  })
+
+  it('sanitizes icon upload failures without replacing the existing preview', async () => {
+    mocks.fetchWithCsrf.mockResolvedValueOnce(errorJson('S3 bucket upload exception status 500', 500))
+
+    render(
+      <WorkEditor
+        initialWork={{
+          id: 'work-1',
+          title: 'Existing work',
+          category: 'platform',
+          tags: [],
+          published: true,
+          content: { html: '<p>Existing</p>' },
+          all_properties: {},
+          icon_asset_id: 'icon-existing',
+          icon_url: '/media/work-icons/existing.png',
+          videos_version: 0,
+          videos: [],
+        }}
+      />,
+    )
+
+    const iconInput = screen.getByLabelText('Icon Image')
+    const file = new File(['icon'], 'icon.png', { type: 'image/png' })
+    fireEvent.change(iconInput, { target: { files: [file] } })
+
+    await waitFor(() => {
+      expect(mocks.toast.error).toHaveBeenCalledWith(
+        'Failed to upload icon: Icon could not be uploaded. Please retry after storage is healthy.',
+      )
+    })
+    expect(mocks.toast.error).not.toHaveBeenCalledWith(expect.stringContaining('S3 bucket'))
+    expect(mocks.toast.success).not.toHaveBeenCalled()
+    expect(screen.getByRole('img', { name: 'Work icon preview' })).toHaveAttribute('src', '/media/work-icons/existing.png')
   })
 
   it('rejects unsupported video files before staging or uploading', async () => {
@@ -888,6 +927,40 @@ describe('WorkEditor', () => {
     expect(mocks.toast.success).not.toHaveBeenCalledWith('Work and videos created successfully')
     expect(mocks.push).toHaveBeenCalledWith('/admin/works/work-1')
   }, 7000)
+
+  it('sanitizes existing-work HLS upload failures and clears transient upload status', async () => {
+    mocks.fetchWithCsrf.mockResolvedValueOnce(errorJson('Cloudflare R2 CORS stack trace status 500', 500))
+
+    render(
+      <WorkEditor
+        initialWork={{
+          id: 'work-1',
+          title: 'Existing work',
+          category: 'platform',
+          tags: [],
+          published: true,
+          content: { html: '<p>Existing</p>' },
+          all_properties: {},
+          videos_version: 0,
+          videos: [],
+        }}
+      />,
+    )
+
+    const fileInput = screen.getByLabelText('Upload MP4 Video as HLS')
+    const file = new File(['\x00\x00\x00\x18ftypmp42'], 'demo.mp4', { type: 'video/mp4' })
+    fireEvent.change(fileInput, { target: { files: [file] } })
+
+    await waitFor(() => {
+      expect(mocks.toast.error).toHaveBeenCalledWith(
+        'Video could not be uploaded. Please retry after storage is healthy.',
+      )
+    })
+    expect(mocks.toast.error).not.toHaveBeenCalledWith(expect.stringContaining('Cloudflare'))
+    expect(mocks.toast.error).not.toHaveBeenCalledWith(expect.stringContaining('stack trace'))
+    expect(screen.queryByTestId('work-video-upload-status')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('mock-work-video-player')).not.toBeInTheDocument()
+  })
 
   it('persists auto-generated uploaded-video thumbnails immediately for existing works', async () => {
     mocks.fetchWithCsrf

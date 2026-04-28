@@ -148,10 +148,10 @@ describe('ResumeEditor', () => {
     expect(mocks.refresh).not.toHaveBeenCalled()
   })
 
-  it('surfaces binary upload failures before linking settings', async () => {
+  it('sanitizes binary upload failures before linking settings', async () => {
     mocks.fetchWithCsrf.mockResolvedValueOnce({
       ok: false,
-      json: async () => ({ error: 'binary upload failed' }),
+      json: async () => ({ error: 'R2 storage binary upload failed with stack trace status 500' }),
     })
 
     render(<ResumeEditor resumeAsset={null} />)
@@ -161,8 +161,13 @@ describe('ResumeEditor', () => {
     fireEvent.change(fileInput, { target: { files: [file] } })
 
     await waitFor(() => {
-      expect(mocks.toast.error).toHaveBeenCalledWith('binary upload failed', { id: 'toast-id' })
+      expect(mocks.toast.error).toHaveBeenCalledWith(
+        'Resume could not be uploaded. Please retry after storage is healthy.',
+        { id: 'toast-id' },
+      )
     })
+    expect(mocks.toast.error).not.toHaveBeenCalledWith(expect.stringContaining('R2 storage'), expect.anything())
+    expect(mocks.toast.error).not.toHaveBeenCalledWith(expect.stringContaining('stack trace'), expect.anything())
     expect(mocks.fetchWithCsrf).toHaveBeenCalledTimes(1)
     expect(mocks.toast.success).not.toHaveBeenCalled()
     expect(screen.getByText(/No resume uploaded yet/i)).toBeInTheDocument()
