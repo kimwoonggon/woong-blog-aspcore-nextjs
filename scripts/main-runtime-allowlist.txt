@@ -27,6 +27,7 @@ scripts/main-runtime-allowlist.txt
 scripts/promote-main-runtime.sh
 scripts/check-e2e-readiness.mjs
 scripts/run-architecture-tests.sh
+scripts/run-backend-coverage.sh
 scripts/run-backend-tests.sh
 scripts/run-component-tests.sh
 scripts/run-integration-tests.sh
