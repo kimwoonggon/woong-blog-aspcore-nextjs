@@ -349,6 +349,33 @@ describe('admin page success and not-found states', () => {
     expect(container.textContent).not.toMatch(/stack|trace|exception|status 500|sqlstate|npgsql|woongblog\.api/i)
   }, 15000)
 
+  it('renders safe member row fallbacks for malformed member values', async () => {
+    vi.doMock('@/lib/api/admin-members', () => ({
+      fetchAdminMembers: vi.fn(async () => [{
+        id: null,
+        displayName: '',
+        email: undefined,
+        role: null,
+        provider: '',
+        createdAt: 'not-a-date',
+        lastLoginAt: null,
+        activeSessionCount: Number.NaN,
+      }]),
+    }))
+
+    const AdminMembersPage = (await import('@/app/admin/members/page')).default
+    const { container } = render(await AdminMembersPage())
+
+    expect(screen.getByRole('table')).toBeInTheDocument()
+    expect(screen.getByTestId('member-row')).toBeInTheDocument()
+    expect(screen.getByText('Unknown member')).toBeInTheDocument()
+    expect(screen.getByText('No email provided')).toBeInTheDocument()
+    expect(screen.getByText('member')).toBeInTheDocument()
+    expect(screen.getByText('unknown')).toBeInTheDocument()
+    expect(screen.getAllByText('—')).toHaveLength(3)
+    expect(container.textContent).not.toMatch(/Invalid Date|NaN|undefined|null|stack|trace|exception|status 500|sqlstate|npgsql|woongblog\.api/i)
+  }, 15000)
+
   it('renders an empty-state admin works table when no works exist', async () => {
     vi.doMock('@/lib/api/works', () => ({
       fetchAdminWorks: vi.fn(async () => []),
@@ -529,6 +556,49 @@ describe('admin page success and not-found states', () => {
     expect(screen.getByText('Resume editor: none')).toBeInTheDocument()
     expect(screen.queryByText('unused home editor')).not.toBeInTheDocument()
     expect(screen.queryByText('unused page editor')).not.toBeInTheDocument()
+  })
+
+  it('renders safe admin page editor titles for malformed page records', async () => {
+    vi.doMock('@/lib/api/admin-pages', () => ({
+      fetchAdminSiteSettings: vi.fn(async () => ({
+        owner_name: 'Owner',
+        tagline: 'Tagline',
+        facebook_url: '',
+        instagram_url: '',
+        twitter_url: '',
+        linkedin_url: '',
+        github_url: '',
+        resume_asset_id: null,
+      })),
+      fetchAdminPages: vi.fn(async () => [
+        { id: 'page-home', title: null, slug: 'home', content: { headline: null } },
+        { id: 'page-intro', title: '', slug: 'introduction', content: { html: null } },
+        { id: 'page-contact', title: undefined, slug: 'contact', content: { html: '<p>Contact</p>' } },
+      ]),
+    }))
+    vi.doMock('@/lib/api/site-settings', () => ({
+      fetchResume: vi.fn(async () => null),
+    }))
+    vi.doMock('@/components/admin/SiteSettingsEditor', () => ({
+      SiteSettingsEditor: () => <div>Site settings ready</div>,
+    }))
+    vi.doMock('@/components/admin/HomePageEditor', () => ({
+      HomePageEditor: ({ pageTitle }: { pageTitle: string }) => <div>Home editor: {pageTitle}</div>,
+    }))
+    vi.doMock('@/components/admin/PageEditor', () => ({
+      PageEditor: ({ page }: { page: { title: string } }) => <div>Page editor: {page.title}</div>,
+    }))
+    vi.doMock('@/components/admin/ResumeEditor', () => ({
+      ResumeEditor: () => <div>Resume editor: none</div>,
+    }))
+
+    const AdminPagesPage = (await import('@/app/admin/pages/page')).default
+    const { container } = render(await AdminPagesPage())
+
+    expect(screen.getByText('Home editor: Home')).toBeInTheDocument()
+    expect(screen.getByText('Page editor: Introduction')).toBeInTheDocument()
+    expect(screen.getByText('Page editor: Contact')).toBeInTheDocument()
+    expect(container.textContent).not.toMatch(/undefined|null|Invalid Date|NaN|stack|trace|exception|status 500|sqlstate|npgsql|woongblog\.api/i)
   })
 
   it('renders the blog editor when an admin blog is found', async () => {

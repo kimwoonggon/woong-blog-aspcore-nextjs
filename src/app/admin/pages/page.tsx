@@ -16,6 +16,10 @@ import { isHtmlPageContent, toHomeContent } from '@/lib/content/page-content'
 
 export const revalidate = 0
 
+function displayTitle(value: unknown, fallback: string) {
+    return typeof value === 'string' && value.trim() ? value : fallback
+}
+
 export default async function AdminPagesPage() {
     let siteSettings: AdminSiteSettings | null = null
     let pages: AdminPageRecord[] = []
@@ -100,7 +104,7 @@ export default async function AdminPagesPage() {
                                 </div>
                                 <HomePageEditor
                                     pageId={homePage.id}
-                                    pageTitle={homePage.title}
+                                    pageTitle={displayTitle(homePage.title, 'Home')}
                                     initialContent={toHomeContent(homePage.content)}
                                 />
                             </section>
@@ -115,7 +119,7 @@ export default async function AdminPagesPage() {
                                 <PageEditor
                                     page={{
                                         id: introPage.id,
-                                        title: introPage.title,
+                                        title: displayTitle(introPage.title, 'Introduction'),
                                         slug: introPage.slug,
                                         content: isHtmlPageContent(introPage.content) ? introPage.content : { html: '' },
                                     }}
@@ -132,7 +136,7 @@ export default async function AdminPagesPage() {
                                 <PageEditor
                                     page={{
                                         id: contactPage.id,
-                                        title: contactPage.title,
+                                        title: displayTitle(contactPage.title, 'Contact'),
                                         slug: contactPage.slug,
                                         content: isHtmlPageContent(contactPage.content) ? contactPage.content : { html: '' },
                                     }}
