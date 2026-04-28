@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
+import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { TiptapEditor } from '@/components/admin/TiptapEditor'
 import { fetchWithCsrf } from '@/lib/api/auth'
 import { getBrowserApiBaseUrl } from '@/lib/api/browser'
@@ -47,13 +47,32 @@ function formatTimestamp(value?: string | null) {
         return '—'
     }
 
-    return new Date(value).toLocaleString('en-US', {
+    const date = new Date(value)
+    if (Number.isNaN(date.getTime())) {
+        return '—'
+    }
+
+    return date.toLocaleString('en-US', {
         year: 'numeric',
         month: 'short',
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
     })
+}
+
+function displayText(value: unknown, fallback: string) {
+    return typeof value === 'string' && value.trim() ? value : fallback
+}
+
+function usableId(value: unknown) {
+    return typeof value === 'string' && value.trim() ? value : null
+}
+
+function normalizedTags(value: unknown) {
+    return Array.isArray(value)
+        ? value.filter((tag): tag is string => typeof tag === 'string' && tag.trim().length > 0).map((tag) => tag.trim())
+        : []
 }
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error'
@@ -65,8 +84,11 @@ export function BlogNotionWorkspace({ blogs, activeBlog }: BlogNotionWorkspacePr
     const [librarySearch, setLibrarySearch] = useState('')
     const [showCapabilityHint, setShowCapabilityHint] = useState(true)
     const [showDocInfo, setShowDocInfo] = useState(true)
-    const [title, setTitle] = useState(activeBlog.title)
-    const [tagsInput, setTagsInput] = useState(activeBlog.tags?.join(', ') ?? '')
+    const activeBlogId = usableId(activeBlog.id)
+    const activeBlogTitle = displayText(activeBlog.title, 'Untitled post')
+    const activeBlogTags = normalizedTags(activeBlog.tags)
+    const [title, setTitle] = useState(activeBlogTitle)
+    const [tagsInput, setTagsInput] = useState(activeBlogTags.join(', '))
     const [published, setPublished] = useState(activeBlog.published)
     const [editorContent, setEditorContent] = useState(activeBlog.content.html ?? '')
     const [saveState, setSaveState] = useState<SaveState>('idle')
@@ -74,8 +96,8 @@ export function BlogNotionWorkspace({ blogs, activeBlog }: BlogNotionWorkspacePr
     const currentHtmlRef = useRef(activeBlog.content.html ?? '')
     const autosaveTimerRef = useRef<number | null>(null)
     const lastSavedRef = useRef({
-        title: activeBlog.title,
-        tags: activeBlog.tags ?? [],
+        title: activeBlogTitle,
+        tags: activeBlogTags,
         published: activeBlog.published,
         html: activeBlog.content.html ?? '',
     })
@@ -137,16 +159,18 @@ export function BlogNotionWorkspace({ blogs, activeBlog }: BlogNotionWorkspacePr
         setIsLibraryOpen(false)
         clearPendingAutosaveRevalidation()
         lastAutosaveRevalidationAtRef.current = 0
-        setTitle(activeBlog.title)
-        setTagsInput(activeBlog.tags?.join(', ') ?? '')
+        const nextTitle = displayText(activeBlog.title, 'Untitled post')
+        const nextTags = normalizedTags(activeBlog.tags)
+        setTitle(nextTitle)
+        setTagsInput(nextTags.join(', '))
         setPublished(activeBlog.published)
         setEditorContent(activeBlog.content.html ?? '')
         setSaveState('idle')
         currentHtmlRef.current = activeBlog.content.html ?? ''
         clearAutosaveTimer()
         lastSavedRef.current = {
-            title: activeBlog.title,
-            tags: activeBlog.tags ?? [],
+            title: nextTitle,
+            tags: nextTags,
             published: activeBlog.published,
             html: activeBlog.content.html ?? '',
         }
@@ -182,7 +206,7 @@ export function BlogNotionWorkspace({ blogs, activeBlog }: BlogNotionWorkspacePr
         setSaveState('saving')
 
         const response = await fetchWithCsrf(
-            `${getBrowserApiBaseUrl()}/admin/blogs/${encodeURIComponent(activeBlog.id)}`,
+            `${getBrowserApiBaseUrl()}/admin/blogs/${encodeURIComponent(activeBlogId ?? activeBlog.id)}`,
             {
                 method: 'PUT',
                 headers: {
@@ -228,6 +252,7 @@ export function BlogNotionWorkspace({ blogs, activeBlog }: BlogNotionWorkspacePr
         return true
     }, [
         activeBlog.id,
+        activeBlogId,
         activeBlog.slug,
         clearAutosaveTimer,
         clearPendingAutosaveRevalidation,
@@ -310,7 +335,7 @@ export function BlogNotionWorkspace({ blogs, activeBlog }: BlogNotionWorkspacePr
             return blogs
         }
 
-        return blogs.filter((blog) => blog.title.toLowerCase().includes(normalizedQuery))
+        return blogs.filter((blog) => displayText(blog.title, 'Untitled post').toLowerCase().includes(normalizedQuery))
     }, [blogs, librarySearch])
 
     useEffect(() => {
@@ -366,6 +391,8 @@ export function BlogNotionWorkspace({ blogs, activeBlog }: BlogNotionWorkspacePr
                         showCloseButton={false}
                     >
                         <div data-testid="notion-library-sheet" className="flex h-full flex-col overflow-hidden bg-background">
+                            <SheetTitle className="sr-only">Blog library</SheetTitle>
+                            <SheetDescription className="sr-only">Select a blog document to edit in Notion view.</SheetDescription>
                             <div className="border-b border-border/80 px-5 py-4">
                                 <div className="flex items-center justify-between gap-3">
                                     <div>
@@ -390,11 +417,14 @@ export function BlogNotionWorkspace({ blogs, activeBlog }: BlogNotionWorkspacePr
                                 }}
                             >
                                 {filteredBlogs.map((blog) => {
-                                    const isActive = blog.id === activeBlog.id
+                                    const blogId = usableId(blog.id)
+                                    const blogTitle = displayText(blog.title, 'Untitled post')
+                                    const blogTags = normalizedTags(blog.tags)
+                                    const isActive = blogId !== null && blogId === activeBlogId
 
                                     return (
                                         <div
-                                            key={blog.id}
+                                            key={blogId ?? `blog-${blogTitle}`}
                                             ref={isActive ? activeLibraryItemRef : undefined}
                                             className={`rounded-2xl border px-4 py-3 transition ${
                                                 isActive
@@ -405,7 +435,7 @@ export function BlogNotionWorkspace({ blogs, activeBlog }: BlogNotionWorkspacePr
                                             <div className="min-w-0 flex-1">
                                                 <div className="flex items-start justify-between gap-3">
                                                     <Link
-                                                        href={`/admin/blog/notion?id=${encodeURIComponent(blog.id)}`}
+                                                        href={blogId ? `/admin/blog/notion?id=${encodeURIComponent(blogId)}` : '/admin/blog/notion'}
                                                         data-testid="notion-blog-list-item"
                                                         className="block min-w-0"
                                                         onClick={() => {
@@ -416,19 +446,19 @@ export function BlogNotionWorkspace({ blogs, activeBlog }: BlogNotionWorkspacePr
                                                         }}
                                                     >
                                                         <p className="line-clamp-2 text-sm font-medium text-gray-900 underline-offset-4 hover:underline dark:text-gray-100">
-                                                            {blog.title}
+                                                            {blogTitle}
                                                         </p>
                                                     </Link>
-                                                    <Badge variant="secondary" className={blog.published ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300'}>
-                                                        {blog.published ? 'Published' : 'Draft'}
+                                                    <Badge variant="secondary" className={blog.published === true ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300'}>
+                                                        {blog.published === true ? 'Published' : 'Draft'}
                                                     </Badge>
                                                 </div>
                                                 <p className="mt-2 text-xs text-muted-foreground">
                                                     Updated {formatTimestamp(blog.updatedAt ?? blog.publishedAt)}
                                                 </p>
-                                                {blog.tags?.length ? (
+                                                {blogTags.length ? (
                                                     <p className="mt-2 line-clamp-1 text-xs text-muted-foreground">
-                                                        {blog.tags.join(' · ')}
+                                                        {blogTags.join(' · ')}
                                                     </p>
                                                 ) : null}
                                             </div>
@@ -440,7 +470,7 @@ export function BlogNotionWorkspace({ blogs, activeBlog }: BlogNotionWorkspacePr
                     </SheetContent>
                 </Sheet>
                 <span className="text-sm font-medium text-muted-foreground">
-                    {activeBlog.title || 'New post'}
+                    {activeBlogTitle}
                 </span>
             </div>
 
@@ -478,7 +508,7 @@ export function BlogNotionWorkspace({ blogs, activeBlog }: BlogNotionWorkspacePr
                                 {saveState === 'saving' ? 'Saving...' : saveState === 'saved' ? 'Saved' : saveState === 'error' ? 'Error' : 'Waiting'}
                             </span>
                             <AIFixDialog content={currentHtmlRef.current} onApply={handleAiApply} />
-                            <Link href={`/admin/blog/${activeBlog.id}`}>
+                            <Link href={activeBlogId ? `/admin/blog/${activeBlogId}` : '/admin/blog'}>
                                 <Button variant="outline">Open full editor</Button>
                             </Link>
                         </div>
