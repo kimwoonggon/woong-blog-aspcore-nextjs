@@ -8,9 +8,12 @@ The `dev` branch was green and staging images published successfully, but the ge
 
 This fix adds the missing test runner scripts and the frontend e2e readiness helper to `scripts/main-runtime-allowlist.txt` so future runtime-only main promotion branches include all files referenced by `ci-main-runtime.yml`.
 
+While validating the dev PR, CI also exposed the same async delete-failure assertion race previously fixed for public detail admin actions. The inline blog editor test now waits for the retryable enabled `삭제` state after a rejected delete mutation.
+
 ## Files Changed
 
 - `scripts/main-runtime-allowlist.txt`
+- `src/test/inline-blog-editor-section.test.tsx`
 
 ## Production Files Changed
 
@@ -27,6 +30,8 @@ This fix adds the missing test runner scripts and the frontend e2e readiness hel
 | --- | --- | --- |
 | `gh run watch 25060857252 --interval 20` | Failed as expected | Identified missing allowlist files; compose runtime verification passed. |
 | `ls scripts/run-*-tests.sh scripts/check-e2e-readiness.mjs` | Passed | Confirmed the missing files exist on `dev`. |
+| `npm test -- --run src/test/inline-blog-editor-section.test.tsx src/test/public-detail-admin-actions.test.tsx` | Passed | 2 files, 12 tests. |
+| `git diff --check` | Passed | No whitespace errors. |
 
 ## Risks And Deferred Items
 

@@ -3,7 +3,8 @@
   "date": "2026-04-28",
   "summary": "Adds files required by CI Main Runtime to the runtime promotion allowlist.",
   "filesChanged": [
-    "scripts/main-runtime-allowlist.txt"
+    "scripts/main-runtime-allowlist.txt",
+    "src/test/inline-blog-editor-section.test.tsx"
   ],
   "productionFilesChanged": [],
   "behaviorBugsFound": [
@@ -18,6 +19,15 @@
     },
     {
       "command": "ls scripts/run-*-tests.sh scripts/check-e2e-readiness.mjs",
+      "result": "passed"
+    },
+    {
+      "command": "npm test -- --run src/test/inline-blog-editor-section.test.tsx src/test/public-detail-admin-actions.test.tsx",
+      "result": "passed",
+      "notes": "2 files, 12 tests"
+    },
+    {
+      "command": "git diff --check",
       "result": "passed"
     }
   ],
