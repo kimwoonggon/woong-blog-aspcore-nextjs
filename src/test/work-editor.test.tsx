@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   refresh: vi.fn(),
   back: vi.fn(),
   pathname: '/admin/works/new',
+  searchParams: 'returnTo=%2Fadmin%2Fworks',
   fetchWithCsrf: vi.fn(),
   extractVideoFrameThumbnailBlob: vi.fn(),
   fetchRemoteImageBlob: vi.fn(),
@@ -20,7 +21,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mocks.push, replace: mocks.replace, refresh: mocks.refresh, back: mocks.back }),
   usePathname: () => mocks.pathname,
-  useSearchParams: () => new URLSearchParams('returnTo=%2Fadmin%2Fworks'),
+  useSearchParams: () => new URLSearchParams(mocks.searchParams),
 }))
 
 vi.mock('next/image', () => ({
@@ -175,6 +176,7 @@ describe('WorkEditor', () => {
     mocks.extractVideoFrameThumbnailBlob.mockReset()
     mocks.fetchRemoteImageBlob.mockReset()
     mocks.pathname = '/admin/works/new'
+    mocks.searchParams = 'returnTo=%2Fadmin%2Fworks'
     vi.stubGlobal('fetch', vi.fn())
     mocks.extractVideoFrameThumbnailBlob.mockResolvedValue(new Blob(['thumb'], { type: 'image/jpeg' }))
     mocks.fetchRemoteImageBlob.mockResolvedValue(new Blob(['thumb'], { type: 'image/jpeg' }))
@@ -634,6 +636,68 @@ describe('WorkEditor', () => {
     })
 
     expect(mocks.push).not.toHaveBeenCalled()
+  })
+
+  it('ignores unsafe public inline work returnTo paths after edit save', async () => {
+    mocks.pathname = '/works/existing-work'
+    mocks.searchParams = 'returnTo=%2F%2Fevil.example'
+    mocks.fetchWithCsrf.mockResolvedValueOnce(okJson({ id: 'work-1', slug: 'updated-work' }))
+
+    render(
+      <WorkEditor
+        inlineMode
+        initialWork={existingWork({
+          slug: 'existing-work',
+          title: 'Existing work',
+        })}
+      />,
+    )
+
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Updated work' } })
+    changeContent('<p>Updated inline body</p>')
+    fireEvent.click(screen.getByRole('button', { name: /Update Work/i }))
+
+    await waitFor(() => {
+      expect(mocks.fetchWithCsrf).toHaveBeenCalledWith(
+        '/api/admin/works/work-1',
+        expect.objectContaining({ method: 'PUT' }),
+      )
+    })
+
+    expect(mocks.push).not.toHaveBeenCalledWith('//evil.example')
+    expect(mocks.replace).toHaveBeenCalledWith('/works/updated-work')
+    expect(mocks.refresh).toHaveBeenCalled()
+    expect(screen.getByLabelText('Title')).toHaveValue('Updated work')
+    expect(screen.getByLabelText('Mock work content')).toHaveValue('<p>Updated inline body</p>')
+  })
+
+  it('preserves inline work edits and does not navigate on sanitized save failure', async () => {
+    mocks.pathname = '/works/existing-work'
+    mocks.searchParams = 'returnTo=%2Fworks%3Fpage%3D2'
+    mocks.fetchWithCsrf.mockResolvedValueOnce(errorJson('SQLSTATE 08006 stack trace status 500', 500))
+
+    render(
+      <WorkEditor
+        inlineMode
+        initialWork={existingWork({
+          slug: 'existing-work',
+          title: 'Existing work',
+        })}
+      />,
+    )
+
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Failed inline work' } })
+    changeContent('<p>Draft survives</p>')
+    fireEvent.click(screen.getByRole('button', { name: /Update Work/i }))
+
+    await waitFor(() => {
+      expect(mocks.toast.error).toHaveBeenCalledWith('Work could not be saved. Please retry after the backend is healthy.')
+    })
+    expect(mocks.push).not.toHaveBeenCalled()
+    expect(mocks.replace).not.toHaveBeenCalled()
+    expect(mocks.refresh).not.toHaveBeenCalled()
+    expect(screen.getByLabelText('Title')).toHaveValue('Failed inline work')
+    expect(screen.getByLabelText('Mock work content')).toHaveValue('<p>Draft survives</p>')
   })
 
   it('uploads a thumbnail preview and lets the user remove it', async () => {

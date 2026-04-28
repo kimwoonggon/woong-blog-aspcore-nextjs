@@ -147,6 +147,25 @@ function clearBeforeUnloadWarning() {
     }
 }
 
+function resolveReturnTo(requestedReturnTo: string | null, fallback = '/admin/works') {
+    if (!requestedReturnTo) {
+        return fallback
+    }
+
+    if (!requestedReturnTo.startsWith('/') || requestedReturnTo.startsWith('//')) {
+        return fallback
+    }
+
+    return requestedReturnTo
+}
+
+function buildInlineDetailQuerySuffix(searchParams: URLSearchParams) {
+    const nextParams = new URLSearchParams(searchParams)
+    nextParams.delete('returnTo')
+    const nextQuery = nextParams.toString()
+    return nextQuery ? `?${nextQuery}` : ''
+}
+
 export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEditorProps) {
     const router = useRouter()
     const pathname = usePathname()
@@ -154,9 +173,7 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
     const isEditing = Boolean(initialWork?.id)
     const defaultPublished = initialWork?.published ?? true
     const requestedReturnTo = searchParams.get('returnTo')
-    const returnTo = requestedReturnTo && requestedReturnTo.startsWith('/')
-        ? requestedReturnTo
-        : '/admin/works'
+    const returnTo = resolveReturnTo(requestedReturnTo)
 
     const [title, setTitle] = useState(initialWork?.title || '')
     const [category, setCategory] = useState(initialWork?.category || DEFAULT_WORK_CATEGORY)
@@ -254,8 +271,7 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
     const hasStagedVideos = stagedVideos.length > 0
     const hasUnsavedChanges = savedSnapshot !== currentSnapshot || (!isEditing && hasStagedVideos)
     const isDirty = hasUnsavedChanges
-    const searchParamsString = searchParams.toString()
-    const currentQuerySuffix = searchParamsString ? `?${searchParamsString}` : ''
+    const currentQuerySuffix = buildInlineDetailQuerySuffix(searchParams)
     const primarySaveMode: 'default' | 'with-videos' = !isEditing && hasStagedVideos ? 'with-videos' : 'default'
     const videoUploadStatusTimeoutRef = useRef<number | null>(null)
 
@@ -324,8 +340,8 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
         }
 
         if (editing && pathname.startsWith('/works/')) {
-            if (requestedReturnTo && requestedReturnTo.startsWith('/')) {
-                router.push(requestedReturnTo)
+            if (requestedReturnTo && returnTo !== '/admin/works') {
+                router.push(returnTo)
                 return true
             }
 
