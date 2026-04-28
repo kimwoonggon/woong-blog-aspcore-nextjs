@@ -34,7 +34,33 @@ interface PendingWorkDelete {
 }
 
 function matchesWorkQuery(work: WorkAdminItem, query: string) {
-  return anyContainsNormalizedSearch([work.title, work.category, ...work.tags], query)
+  return anyContainsNormalizedSearch([work.title, work.category, ...normalizeTextArray(work.tags)], query)
+}
+
+function normalizeDisplayText(value: unknown, fallback: string) {
+  return typeof value === 'string' && value.trim() ? value.trim() : fallback
+}
+
+function normalizeTextArray(value: unknown) {
+  return Array.isArray(value)
+    ? value
+      .filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+      .map((item) => item.trim())
+    : []
+}
+
+function normalizeRouteSegment(value: unknown) {
+  return typeof value === 'string' && value.trim() ? encodeURIComponent(value.trim()) : ''
+}
+
+function buildAdminWorkHref(id: unknown, returnTo: string) {
+  const segment = normalizeRouteSegment(id)
+  return segment ? `/admin/works/${segment}?returnTo=${returnTo}` : `/admin/works?returnTo=${returnTo}`
+}
+
+function buildPublicWorkHref(slug: unknown) {
+  const segment = normalizeRouteSegment(slug)
+  return segment ? `/works/${segment}` : '/works'
 }
 
 function normalizePageParam(value: string | null) {
@@ -327,15 +353,21 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
         </TableHeader>
         <TableBody>
           {visibleWorks.length > 0 ? (
-            visibleWorks.map((work) => (
+            visibleWorks.map((work, index) => {
+              const title = normalizeDisplayText(work.title, 'Untitled work')
+              const category = normalizeDisplayText(work.category, 'Uncategorized')
+              const adminHref = buildAdminWorkHref(work.id, returnTo)
+              const publicHref = buildPublicWorkHref(work.slug)
+
+              return (
               <TableRow
-                key={work.id}
+                key={normalizeDisplayText(work.id, `work-${index}`)}
                 data-testid="admin-work-row"
                 data-state={selectedSet.has(work.id) ? 'selected' : undefined}
               >
                 <TableCell>
                   <Checkbox
-                    aria-label={`Select ${work.title}`}
+                    aria-label={`Select ${title}`}
                     checked={selectedSet.has(work.id)}
                     onCheckedChange={() => toggle(work.id)}
                   />
@@ -345,7 +377,7 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
                     <div className="overflow-hidden rounded-md border border-border bg-muted">
                       <Image
                         src={work.thumbnailUrl}
-                        alt={`${work.title} thumbnail`}
+                        alt={`${title} thumbnail`}
                         width={64}
                         height={48}
                         unoptimized
@@ -360,11 +392,11 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
                 </TableCell>
                 <TableCell className="min-w-0 font-medium">
                   <Link
-                    href={`/admin/works/${work.id}?returnTo=${returnTo}`}
+                    href={adminHref}
                     prefetch={false}
                     className="block truncate transition-colors hover:text-primary hover:underline"
                   >
-                    {work.title}
+                    {title}
                   </Link>
                 </TableCell>
                 <TableCell>
@@ -381,16 +413,16 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
                 <TableCell className="text-sm tabular-nums text-muted-foreground">
                   {formatAdminDate(work.publishedAt)}
                 </TableCell>
-                <TableCell>{work.category}</TableCell>
+                <TableCell>{category}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
                     <Button asChild variant="ghost" size="icon">
                       <Link
-                        href={`/works/${work.slug}`}
+                        href={publicHref}
                         prefetch={false}
                         target="_blank"
                         rel="noreferrer"
-                        aria-label={`View public work: ${work.title}`}
+                        aria-label={`View public work: ${title}`}
                         title="View Public"
                       >
                         <Eye className="h-4 w-4" />
@@ -398,9 +430,9 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
                     </Button>
                     <Button asChild variant="ghost" size="icon">
                       <Link
-                        href={`/admin/works/${work.id}?returnTo=${returnTo}`}
+                        href={adminHref}
                         prefetch={false}
-                        aria-label={`Edit work: ${work.title}`}
+                        aria-label={`Edit work: ${title}`}
                         title="Edit"
                       >
                         <Pencil className="h-4 w-4" />
@@ -410,9 +442,9 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
                       variant="ghost"
                       size="icon"
                       className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
-                      aria-label={`Delete work: ${work.title}`}
+                      aria-label={`Delete work: ${title}`}
                       title="Delete"
-                      onClick={(event) => requestDelete([work.id], work.title, event.currentTarget)}
+                      onClick={(event) => requestDelete([work.id], title, event.currentTarget)}
                       disabled={isPending}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -420,7 +452,8 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
                   </div>
                 </TableCell>
               </TableRow>
-            ))
+            )
+            })
           ) : (
             <TableRow>
               <TableCell colSpan={7} className="h-24 text-center">

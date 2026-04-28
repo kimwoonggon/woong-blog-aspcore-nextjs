@@ -49,6 +49,27 @@ function formatPublishedDate(publishedAt?: string | null) {
   return Number.isNaN(date.getTime()) ? '—' : date.toLocaleDateString()
 }
 
+function normalizeDisplayText(value: unknown, fallback: string) {
+  return typeof value === 'string' && value.trim() ? value.trim() : fallback
+}
+
+function normalizeTextArray(value: unknown) {
+  return Array.isArray(value)
+    ? value
+      .filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+      .map((item) => item.trim())
+    : []
+}
+
+function normalizeRouteSegment(value: unknown) {
+  return typeof value === 'string' && value.trim() ? encodeURIComponent(value.trim()) : ''
+}
+
+function buildAdminItemHref(base: string, id: unknown, returnTo: string) {
+  const segment = normalizeRouteSegment(id)
+  return segment ? `${base}/${segment}?returnTo=${returnTo}` : `${base}?returnTo=${returnTo}`
+}
+
 function AdminCollectionSection<T extends CollectionItem>({
   title,
   emptyMessage,
@@ -109,17 +130,17 @@ function AdminCollectionSection<T extends CollectionItem>({
 
       {visibleItems.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {visibleItems.map((item) => (
+          {visibleItems.map((item, index) => (
             <Link
-              key={item.id}
-              href={`${editHrefBase}/${item.id}?returnTo=${encodedReturnTo}`}
+              key={normalizeDisplayText(item.id, `${title}-${currentPage}-${index}`)}
+              href={buildAdminItemHref(editHrefBase, item.id, encodedReturnTo)}
               className="group block"
               data-testid={`${title.toLowerCase().replace(/\s+/g, '-')}-card-link`}
             >
               <article className="responsive-feed-card h-full rounded-2xl border border-border/80 bg-background p-4 shadow-sm transition hover:border-primary/30 hover:shadow-md">
                 <div className="mb-3 flex items-start justify-between gap-3">
                   <h3 className="responsive-feed-title text-lg font-semibold text-foreground transition-colors group-hover:text-primary">
-                    {item.title}
+                    {normalizeDisplayText(item.title, title === 'Works' ? 'Untitled work' : 'Untitled blog post')}
                   </h3>
                   {item.published ? (
                     <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300">
@@ -205,7 +226,7 @@ export function AdminDashboardCollections({ works, blogs }: AdminDashboardCollec
         desktopPageSize={6}
         tabletPageSize={4}
         mobilePageSize={2}
-        renderMeta={(item) => <p>{item.category || 'Uncategorized'}</p>}
+        renderMeta={(item) => <p>{normalizeDisplayText(item.category, 'Uncategorized')}</p>}
       />
 
       <AdminCollectionSection
@@ -217,7 +238,7 @@ export function AdminDashboardCollections({ works, blogs }: AdminDashboardCollec
         desktopPageSize={6}
         tabletPageSize={3}
         mobilePageSize={1}
-        renderMeta={(item) => <p>{item.tags?.join(', ') || 'No tags'}</p>}
+        renderMeta={(item) => <p>{normalizeTextArray(item.tags).join(', ') || 'No tags'}</p>}
       />
     </div>
   )

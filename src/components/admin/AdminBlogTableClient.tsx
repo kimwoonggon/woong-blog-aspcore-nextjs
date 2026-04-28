@@ -34,7 +34,33 @@ interface PendingBlogDelete {
 }
 
 function matchesBlogQuery(blog: BlogAdminItem, query: string) {
-  return anyContainsNormalizedSearch([blog.title, ...blog.tags], query)
+  return anyContainsNormalizedSearch([blog.title, ...normalizeTextArray(blog.tags)], query)
+}
+
+function normalizeDisplayText(value: unknown, fallback: string) {
+  return typeof value === 'string' && value.trim() ? value.trim() : fallback
+}
+
+function normalizeTextArray(value: unknown) {
+  return Array.isArray(value)
+    ? value
+      .filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+      .map((item) => item.trim())
+    : []
+}
+
+function normalizeRouteSegment(value: unknown) {
+  return typeof value === 'string' && value.trim() ? encodeURIComponent(value.trim()) : ''
+}
+
+function buildAdminBlogHref(id: unknown, returnTo: string) {
+  const segment = normalizeRouteSegment(id)
+  return segment ? `/admin/blog/${segment}?returnTo=${returnTo}` : `/admin/blog?returnTo=${returnTo}`
+}
+
+function buildPublicBlogHref(slug: unknown) {
+  const segment = normalizeRouteSegment(slug)
+  return segment ? `/blog/${segment}` : '/blog'
 }
 
 function normalizePageParam(value: string | null) {
@@ -370,26 +396,32 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
         </TableHeader>
         <TableBody>
           {visibleBlogs.length > 0 ? (
-            visibleBlogs.map((blog) => (
+            visibleBlogs.map((blog, index) => {
+              const title = normalizeDisplayText(blog.title, 'Untitled blog post')
+              const tags = normalizeTextArray(blog.tags)
+              const adminHref = buildAdminBlogHref(blog.id, returnTo)
+              const publicHref = buildPublicBlogHref(blog.slug)
+
+              return (
               <TableRow
-                key={blog.id}
+                key={normalizeDisplayText(blog.id, `blog-${index}`)}
                 data-testid="admin-blog-row"
                 data-state={selectedSet.has(blog.id) ? 'selected' : undefined}
               >
                 <TableCell>
                   <Checkbox
-                    aria-label={`Select ${blog.title}`}
+                    aria-label={`Select ${title}`}
                     checked={selectedSet.has(blog.id)}
                     onCheckedChange={() => toggle(blog.id)}
                   />
                 </TableCell>
                 <TableCell className="min-w-0 font-medium">
                   <Link
-                    href={`/admin/blog/${blog.id}?returnTo=${returnTo}`}
+                    href={adminHref}
                     prefetch={false}
                     className="block truncate transition-colors hover:text-primary hover:underline"
                   >
-                    {blog.title}
+                    {title}
                   </Link>
                 </TableCell>
                 <TableCell>
@@ -407,16 +439,16 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
                   {formatAdminDate(blog.publishedAt)}
                 </TableCell>
                 <TableCell>
-                  {blog.tags.length > 0 ? (
+                  {tags.length > 0 ? (
                     <div className="flex flex-wrap gap-1">
-                      {blog.tags.slice(0, 3).map((tag) => (
+                      {tags.slice(0, 3).map((tag) => (
                         <Badge key={tag} variant="secondary" className="text-xs">
                           {tag}
                         </Badge>
                       ))}
-                      {blog.tags.length > 3 ? (
+                      {tags.length > 3 ? (
                         <Badge variant="outline" className="text-xs">
-                          +{blog.tags.length - 3}
+                          +{tags.length - 3}
                         </Badge>
                       ) : null}
                     </div>
@@ -428,18 +460,18 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
                   <div className="flex justify-end gap-2">
                     <Button asChild variant="ghost" size="icon">
                       <Link
-                        href={`/blog/${blog.slug}`}
+                        href={publicHref}
                         prefetch={false}
                         target="_blank"
                         rel="noreferrer"
-                        aria-label={`View public post: ${blog.title}`}
+                        aria-label={`View public post: ${title}`}
                         title="View Public"
                       >
                         <Eye className="h-4 w-4" />
                       </Link>
                     </Button>
                     <Button asChild variant="ghost" size="icon">
-                      <Link href={`/admin/blog/${blog.id}?returnTo=${returnTo}`} prefetch={false} aria-label={`Edit post: ${blog.title}`} title="Edit">
+                      <Link href={adminHref} prefetch={false} aria-label={`Edit post: ${title}`} title="Edit">
                         <Pencil className="h-4 w-4" />
                       </Link>
                     </Button>
@@ -447,9 +479,9 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
                       variant="ghost"
                       size="icon"
                       className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
-                      aria-label={`Delete post: ${blog.title}`}
+                      aria-label={`Delete post: ${title}`}
                       title="Delete"
-                      onClick={(event) => requestDelete([blog.id], blog.title, event.currentTarget)}
+                      onClick={(event) => requestDelete([blog.id], title, event.currentTarget)}
                       disabled={isPending}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -457,7 +489,8 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
                   </div>
                 </TableCell>
               </TableRow>
-            ))
+            )
+            })
           ) : (
             <TableRow>
               <TableCell colSpan={6} className="h-24 text-center">

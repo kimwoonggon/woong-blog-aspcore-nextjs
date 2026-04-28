@@ -2,6 +2,8 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AdminBlogTableClient } from '@/components/admin/AdminBlogTableClient'
 import { AdminWorksTableClient } from '@/components/admin/AdminWorksTableClient'
+import type { BlogAdminItem } from '@/lib/api/blogs'
+import type { WorkAdminItem } from '@/lib/api/works'
 import {
   deleteAdminBlog,
   deleteAdminWork,
@@ -179,6 +181,32 @@ describe('admin bulk selection tables', () => {
     expect(container.textContent).not.toMatch(/Invalid Date|RangeError|undefined|null/i)
   })
 
+  it('renders safe blog text and links for malformed admin blog values', () => {
+    const malformedBlog = {
+      id: null,
+      title: null,
+      slug: '//evil.test/<script>',
+      excerpt: '',
+      tags: null,
+      published: true,
+      publishedAt: null,
+    } as unknown as BlogAdminItem
+
+    const { container } = render(<AdminBlogTableClient blogs={[malformedBlog]} />)
+
+    expect(screen.getByText('Untitled blog post')).toBeInTheDocument()
+    expect(screen.getByText('No tags')).toBeInTheDocument()
+    expect(screen.getByLabelText('View public post: Untitled blog post')).toHaveAttribute(
+      'href',
+      '/blog/%2F%2Fevil.test%2F%3Cscript%3E',
+    )
+    expect(screen.getByLabelText('Edit post: Untitled blog post')).toHaveAttribute(
+      'href',
+      '/admin/blog?returnTo=%2Fadmin%2Fblog%3FpageSize%3D12',
+    )
+    expect(container.textContent).not.toMatch(/undefined|null/i)
+  })
+
   it('clears blog bulk selection when the search query changes', () => {
     render(
       <AdminBlogTableClient
@@ -288,6 +316,34 @@ describe('admin bulk selection tables', () => {
 
     expect(screen.getByText('—')).toBeInTheDocument()
     expect(container.textContent).not.toMatch(/Invalid Date|RangeError|undefined|null/i)
+  })
+
+  it('renders safe work text and links for malformed admin work values', () => {
+    const malformedWork = {
+      id: null,
+      title: null,
+      slug: 'javascript:alert(1)',
+      excerpt: '',
+      tags: null,
+      published: true,
+      publishedAt: null,
+      category: null,
+      thumbnailUrl: null,
+    } as unknown as WorkAdminItem
+
+    const { container } = render(<AdminWorksTableClient works={[malformedWork]} />)
+
+    expect(screen.getByText('Untitled work')).toBeInTheDocument()
+    expect(screen.getByText('Uncategorized')).toBeInTheDocument()
+    expect(screen.getByLabelText('View public work: Untitled work')).toHaveAttribute(
+      'href',
+      '/works/javascript%3Aalert(1)',
+    )
+    expect(screen.getByLabelText('Edit work: Untitled work')).toHaveAttribute(
+      'href',
+      '/admin/works?returnTo=%2Fadmin%2Fblog%3FpageSize%3D12',
+    )
+    expect(container.textContent).not.toMatch(/undefined|null/i)
   })
 
   it('clears works bulk selection when the search query changes', () => {
