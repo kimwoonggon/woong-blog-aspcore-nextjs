@@ -282,6 +282,37 @@ describe('TiptapEditor', () => {
     expect(mocks.state.currentHtml).toBe('<p>Draft body</p>')
   })
 
+  it('does not log raw storage details when inline image upload rejects', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    mocks.state.currentHtml = '<p>Draft body</p>'
+    mocks.fetchWithCsrf.mockRejectedValue(new Error('Cloudflare R2 storage stack trace status 500'))
+
+    render(<TiptapEditor content="<p>Draft body</p>" onChange={vi.fn()} />)
+
+    const file = new File(['image'], 'inline.png', { type: 'image/png' })
+
+    await act(async () => {
+      const handled = await mocks.state.config?.editorProps?.handleDrop?.(
+        {},
+        { dataTransfer: { files: [file] } } as unknown as DragEvent,
+        null,
+        false,
+      )
+      expect(handled).toBe(true)
+    })
+
+    await waitFor(() => {
+      expect(consoleErrorSpy).toHaveBeenCalledWith('Error uploading image:', expect.any(Error))
+    })
+    const loggedError = consoleErrorSpy.mock.calls.at(-1)?.[1]
+    expect(loggedError).toBeInstanceOf(Error)
+    expect((loggedError as Error).message).toBe('Image could not be uploaded. Please retry after storage is healthy.')
+    expect((loggedError as Error).message).not.toContain('Cloudflare')
+    expect((loggedError as Error).message).not.toContain('stack trace')
+    expect(mocks.state.setImage).not.toHaveBeenCalled()
+    expect(mocks.state.currentHtml).toBe('<p>Draft body</p>')
+  })
+
   it('allows retrying inline image upload after a failure', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => undefined)
     mocks.state.currentHtml = '<p>Draft body</p>'

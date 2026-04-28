@@ -14,6 +14,7 @@ import { getBrowserApiBaseUrl } from '@/lib/api/browser'
 import { revalidatePublicPathsAfterMutation } from '@/lib/public-revalidation-client'
 import { getPagePublicRevalidationPaths } from '@/lib/public-revalidation-paths'
 import { isAcceptedImageFile } from '@/lib/file-validation'
+import { sanitizeAdminUploadError } from '@/lib/admin-save-error'
 
 interface HomeContent {
     headline?: string
@@ -29,6 +30,7 @@ interface HomePageEditorProps {
 
 const DEFAULT_HEADLINE = 'Hi, I am John, Creative Technologist'
 const DEFAULT_INTRO_TEXT = 'Amet minim mollit non deserunt ullamco est sit aliqua dolor do amet sint.'
+const IMAGE_UPLOAD_FALLBACK = 'Image could not be uploaded. Please retry after storage is healthy.'
 
 export function HomePageEditor({ pageId, pageTitle, initialContent }: HomePageEditorProps) {
     const router = useRouter()
@@ -70,11 +72,16 @@ export function HomePageEditor({ pageId, pageTitle, initialContent }: HomePageEd
                 const data = await response.json()
                 setProfileImageUrl(data.publicUrl || data.url || '')
             } else {
-                const errorData = await response.json()
-                alert('Failed to upload image: ' + (errorData.error || 'Unknown error'))
+                const errorData = await response.json().catch(() => null) as { error?: unknown } | null
+                const message = typeof errorData?.error === 'string' ? errorData.error : 'Unknown error'
+                alert(`Failed to upload image: ${sanitizeAdminUploadError(message, IMAGE_UPLOAD_FALLBACK)}`)
             }
-        } catch {
-            alert('Failed to upload image')
+        } catch (error) {
+            if (error instanceof Error) {
+                alert(`Failed to upload image: ${sanitizeAdminUploadError(error.message, IMAGE_UPLOAD_FALLBACK)}`)
+            } else {
+                alert('Failed to upload image')
+            }
         } finally {
             setIsUploading(false)
             e.target.value = ''

@@ -51,10 +51,10 @@ describe('Admin editor exception handling', () => {
     expect(mocks.fetchWithCsrf).not.toHaveBeenCalled()
   })
 
-  it('HomePageEditor alerts when image upload fails', async () => {
+  it('HomePageEditor sanitizes technical image upload failures', async () => {
     mocks.fetchWithCsrf.mockResolvedValue({
       ok: false,
-      json: async () => ({ error: 'bad upload' }),
+      json: async () => ({ error: 'Cloudflare R2 storage stack trace status 500' }),
     } satisfies Partial<Response>)
 
     render(<HomePageEditor pageId="home-id" pageTitle="Home" initialContent={{}} />)
@@ -64,8 +64,12 @@ describe('Admin editor exception handling', () => {
     fireEvent.change(fileInput, { target: { files: [file] } })
 
     await waitFor(() => {
-      expect(alert).toHaveBeenCalledWith('Failed to upload image: bad upload')
+      expect(alert).toHaveBeenCalledWith(
+        'Failed to upload image: Image could not be uploaded. Please retry after storage is healthy.',
+      )
     })
+    expect(alert).not.toHaveBeenCalledWith(expect.stringContaining('Cloudflare'))
+    expect(alert).not.toHaveBeenCalledWith(expect.stringContaining('stack trace'))
   })
 
   it('HomePageEditor rejects invalid image files before upload and preserves form state', async () => {
@@ -91,10 +95,10 @@ describe('Admin editor exception handling', () => {
     expect(screen.queryByAltText('Profile')).not.toBeInTheDocument()
   })
 
-  it('HomePageEditor preserves form state and shows no success when upload fails', async () => {
+  it('HomePageEditor preserves form state and shows no success when technical upload fails', async () => {
     mocks.fetchWithCsrf.mockResolvedValue({
       ok: false,
-      json: async () => ({ error: 'image upload failed' }),
+      json: async () => ({ error: 'S3 bucket storage exception status 500' }),
     } satisfies Partial<Response>)
 
     render(<HomePageEditor pageId="home-id" pageTitle="Home" initialContent={{ profileImageUrl: '/media/original.png' }} />)
@@ -111,8 +115,11 @@ describe('Admin editor exception handling', () => {
     fireEvent.change(fileInput, { target: { files: [file] } })
 
     await waitFor(() => {
-      expect(alert).toHaveBeenCalledWith('Failed to upload image: image upload failed')
+      expect(alert).toHaveBeenCalledWith(
+        'Failed to upload image: Image could not be uploaded. Please retry after storage is healthy.',
+      )
     })
+    expect(alert).not.toHaveBeenCalledWith(expect.stringContaining('S3 bucket'))
     expect(alert).not.toHaveBeenCalledWith('Home page saved successfully!')
     expect(screen.getByLabelText(/Headline/i)).toHaveValue('Keep headline')
     expect(screen.getByLabelText(/Intro Text/i)).toHaveValue('Keep intro')
