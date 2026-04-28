@@ -56,9 +56,47 @@ export function normalizeYouTubeVideoId(value: string) {
     return null
   }
 
-  const directId = /^[a-zA-Z0-9_-]{11}$/.test(trimmed) ? trimmed : null
+  const isValidVideoId = (candidate: string | null | undefined) =>
+    candidate && /^[a-zA-Z0-9_-]{11}$/.test(candidate) ? candidate : null
+
+  const directId = isValidVideoId(trimmed)
   if (directId) {
     return directId
+  }
+
+  const urlCandidate = /^(?:https?:\/\/)?(?:www\.|m\.)?(?:youtube\.com|youtube-nocookie\.com|youtu\.be)\//i.test(trimmed)
+    ? trimmed
+    : null
+  if (urlCandidate) {
+    try {
+      const url = new URL(urlCandidate.startsWith('http') ? urlCandidate : `https://${urlCandidate}`)
+      const hostname = url.hostname.toLowerCase()
+
+      if (hostname === 'youtu.be') {
+        const [videoId] = url.pathname.split('/').filter(Boolean)
+        return isValidVideoId(videoId)
+      }
+
+      if (
+        hostname === 'youtube.com'
+        || hostname === 'www.youtube.com'
+        || hostname === 'm.youtube.com'
+        || hostname === 'youtube-nocookie.com'
+        || hostname === 'www.youtube-nocookie.com'
+      ) {
+        const watchVideoId = isValidVideoId(url.searchParams.get('v'))
+        if (watchVideoId) {
+          return watchVideoId
+        }
+
+        const pathParts = url.pathname.split('/').filter(Boolean)
+        if (pathParts[0] === 'embed' || pathParts[0] === 'shorts') {
+          return isValidVideoId(pathParts[1])
+        }
+      }
+    } catch {
+      return null
+    }
   }
 
   const patterns = [

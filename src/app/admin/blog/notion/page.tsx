@@ -47,7 +47,7 @@ export default async function AdminBlogNotionPage({ searchParams }: PageProps) {
     if (loadFailed) {
         return (
             <div className="space-y-8">
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-50">Blog Notion View</h1>
+                <h1 className="text-3xl font-bold text-foreground">Blog Notion View</h1>
                 <AdminErrorPanel
                     title="Blog Notion view is unavailable"
                     message="The blog list could not be loaded. Please retry after checking the backend and database connection."
@@ -69,8 +69,8 @@ export default async function AdminBlogNotionPage({ searchParams }: PageProps) {
     return (
         <div className="space-y-8">
             <div className="space-y-2">
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-50">Blog Notion View</h1>
-                <p className="text-gray-600 dark:text-gray-400">
+                <h1 className="text-3xl font-bold text-foreground">Blog Notion View</h1>
+                <p className="text-muted-foreground">
                     Blog-first, content-first workspace: the left list changes documents, while the editor body autosaves after a short pause.
                 </p>
             </div>
@@ -79,7 +79,7 @@ export default async function AdminBlogNotionPage({ searchParams }: PageProps) {
                 <BlogNotionWorkspace blogs={blogs} activeBlog={selectedBlog} />
             ) : (
                 <div className="rounded-3xl border border-dashed border-border/80 bg-background p-8 text-center shadow-sm">
-                    <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-50">Create your first post</h2>
+                    <h2 className="text-xl font-semibold text-foreground">Create your first post</h2>
                     <p className="mt-2 text-sm text-muted-foreground">
                         Notion View is ready, but there are no blog documents to open yet.
                     </p>

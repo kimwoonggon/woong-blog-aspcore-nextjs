@@ -71,11 +71,11 @@ export function SiteSettingsEditor({ initialSettings }: SiteSettingsEditorProps)
     }
 
     return (
-        <div className="space-y-6 rounded-lg border bg-white p-6 dark:border-gray-800 dark:bg-gray-950">
+        <div className="space-y-6 rounded-lg border border-border bg-card p-6 text-card-foreground">
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-xl font-bold">Site Settings</h2>
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="mt-1 text-sm text-muted-foreground">
                         These settings are used across the entire site (Navbar, Footer, Page Title)
                     </p>
                 </div>

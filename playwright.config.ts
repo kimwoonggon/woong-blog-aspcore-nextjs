@@ -81,7 +81,10 @@ const OPTIONAL_PUBLIC_SPECS = [
 const E2E_PROFILE = process.env.PLAYWRIGHT_E2E_PROFILE ?? 'core'
 const RUN_OPTIONAL_ONLY = E2E_PROFILE === 'optional'
 const RUN_EXHAUSTIVE = E2E_PROFILE === 'exhaustive'
-const CORE_OPTIONAL_IGNORES = RUN_EXHAUSTIVE || RUN_OPTIONAL_ONLY ? [] : OPTIONAL_E2E_SPECS
+const EXPLICITLY_REQUESTS_OPTIONAL_SPEC = process.argv
+  .map((arg) => arg.replace(/\\/g, '/'))
+  .some((arg) => OPTIONAL_E2E_SPECS.some((pattern) => pattern.test(arg)))
+const CORE_OPTIONAL_IGNORES = RUN_EXHAUSTIVE || RUN_OPTIONAL_ONLY || EXPLICITLY_REQUESTS_OPTIONAL_SPEC ? [] : OPTIONAL_E2E_SPECS
 
 const PLAYWRIGHT_BASE_URL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000'
 const IGNORE_LOCALHOST_HTTPS_ERRORS = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(
@@ -114,7 +117,7 @@ export default defineConfig({
           NODE_TLS_REJECT_UNAUTHORIZED: '0',
         },
         url: 'http://localhost:3000',
-        reuseExistingServer: true,
+        reuseExistingServer: false,
         timeout: 120_000,
       },
   projects: [

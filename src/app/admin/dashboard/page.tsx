@@ -14,12 +14,22 @@ interface PageProps {
     searchParams?: Promise<{ __qaSummaryFail?: string; __qaCollectionsFail?: string; __qaSlow?: string }>
 }
 
+type DashboardSummary = {
+    worksCount?: unknown
+    blogsCount?: unknown
+    viewsCount?: unknown
+}
+
+function formatDashboardCount(value: unknown) {
+    return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : '—'
+}
+
 export default async function AdminDashboard({ searchParams }: PageProps) {
     const resolvedSearchParams = await searchParams
     if (resolvedSearchParams?.__qaSlow === '1') {
         await new Promise((resolve) => setTimeout(resolve, 600))
     }
-    let summary: { worksCount: number; blogsCount: number; viewsCount: number } | null = null
+    let summary: DashboardSummary | null = null
     let works: WorkAdminItem[] = []
     let blogs: BlogAdminItem[] = []
     let workLoadFailed = false
@@ -56,7 +66,7 @@ export default async function AdminDashboard({ searchParams }: PageProps) {
         <div className="flex flex-col gap-8">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-50">Dashboard</h1>
+                    <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
                     <p className="mt-2 text-sm text-muted-foreground">
                         Jump to the public site, list views, or the new blog Notion workspace without leaving this screen.
                     </p>
@@ -82,7 +92,7 @@ export default async function AdminDashboard({ searchParams }: PageProps) {
                             <Eye className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">{summary.viewsCount}</div>
+                            <div className="text-2xl font-bold">{formatDashboardCount(summary.viewsCount)}</div>
                             <p className="text-xs text-muted-foreground">Tracked page views</p>
                         </CardContent>
                     </Card>
@@ -93,7 +103,7 @@ export default async function AdminDashboard({ searchParams }: PageProps) {
                             <Briefcase className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">{summary.worksCount}</div>
+                            <div className="text-2xl font-bold">{formatDashboardCount(summary.worksCount)}</div>
                             <p className="text-xs text-muted-foreground">All projects in the portfolio</p>
                         </CardContent>
                     </Card>
@@ -104,7 +114,7 @@ export default async function AdminDashboard({ searchParams }: PageProps) {
                             <FileText className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">{summary.blogsCount}</div>
+                            <div className="text-2xl font-bold">{formatDashboardCount(summary.blogsCount)}</div>
                             <p className="text-xs text-muted-foreground">All articles in the portfolio</p>
                         </CardContent>
                     </Card>
@@ -118,12 +128,19 @@ export default async function AdminDashboard({ searchParams }: PageProps) {
 
             {workLoadFailed || blogLoadFailed ? (
                 <AdminErrorPanel
-                    title="Dashboard content lists are unavailable"
-                    message="Works or blog posts could not be loaded for the dashboard. Please retry after checking the API and database connection."
+                    title={workLoadFailed && blogLoadFailed
+                        ? 'Dashboard content lists are unavailable'
+                        : 'Dashboard content lists are partially unavailable'}
+                    message="Some dashboard content could not be loaded. Available sections remain visible; retry after checking the API and database connection."
                 />
-            ) : (
-                <AdminDashboardCollections works={works} blogs={blogs} />
-            )}
+            ) : null}
+
+            <AdminDashboardCollections
+                works={works}
+                blogs={blogs}
+                worksUnavailable={workLoadFailed}
+                blogsUnavailable={blogLoadFailed}
+            />
         </div>
     )
 }

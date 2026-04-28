@@ -5,6 +5,7 @@
   "interactions": [
     {
       "description": "a public blog detail request",
+      "pending": false,
       "providerStates": [
         {
           "name": "published blog detail exists"
@@ -16,19 +17,25 @@
       },
       "response": {
         "body": {
-          "contentJson": "{\"html\":\"<p>Hello</p>\"}",
-          "coverUrl": "/media/cover.png",
-          "excerpt": "Excerpt",
-          "id": "44444444-4444-4444-4444-444444444444",
-          "publishedAt": "2026-04-20T00:00:00Z",
-          "slug": "seeded-blog",
-          "tags": [
-            "study"
-          ],
-          "title": "Seeded Blog"
+          "content": {
+            "contentJson": "{\"html\":\"<p>Hello</p>\"}",
+            "coverUrl": "/media/cover.png",
+            "excerpt": "Excerpt",
+            "id": "44444444-4444-4444-4444-444444444444",
+            "publishedAt": "2026-04-20T00:00:00Z",
+            "slug": "seeded-blog",
+            "tags": [
+              "study"
+            ],
+            "title": "Seeded Blog"
+          },
+          "contentType": "application/json",
+          "encoded": false
         },
         "headers": {
-          "Content-Type": "application/json"
+          "Content-Type": [
+            "application/json"
+          ]
         },
         "matchingRules": {
           "body": {
@@ -43,10 +50,12 @@
           }
         },
         "status": 200
-      }
+      },
+      "type": "Synchronous/HTTP"
     },
     {
       "description": "a public blog list request",
+      "pending": false,
       "providerStates": [
         {
           "name": "published blogs exist"
@@ -66,26 +75,32 @@
       },
       "response": {
         "body": {
-          "items": [
-            {
-              "coverUrl": "/media/cover.png",
-              "excerpt": "Excerpt",
-              "id": "44444444-4444-4444-4444-444444444444",
-              "publishedAt": "2026-04-20T00:00:00Z",
-              "slug": "seeded-blog",
-              "tags": [
-                "study"
-              ],
-              "title": "Seeded Blog"
-            }
-          ],
-          "page": 1,
-          "pageSize": 1,
-          "totalItems": 1,
-          "totalPages": 1
+          "content": {
+            "items": [
+              {
+                "coverUrl": "/media/cover.png",
+                "excerpt": "Excerpt",
+                "id": "44444444-4444-4444-4444-444444444444",
+                "publishedAt": "2026-04-20T00:00:00Z",
+                "slug": "seeded-blog",
+                "tags": [
+                  "study"
+                ],
+                "title": "Seeded Blog"
+              }
+            ],
+            "page": 1,
+            "pageSize": 1,
+            "totalItems": 1,
+            "totalPages": 1
+          },
+          "contentType": "application/json",
+          "encoded": false
         },
         "headers": {
-          "Content-Type": "application/json"
+          "Content-Type": [
+            "application/json"
+          ]
         },
         "matchingRules": {
           "body": {
@@ -141,10 +156,12 @@
           }
         },
         "status": 200
-      }
+      },
+      "type": "Synchronous/HTTP"
     },
     {
       "description": "a public home request",
+      "pending": false,
       "providerStates": [
         {
           "name": "public home exists"
@@ -156,49 +173,55 @@
       },
       "response": {
         "body": {
-          "featuredWorks": [
-            {
-              "category": "platform",
-              "excerpt": "Excerpt",
-              "iconUrl": "/media/icon.png",
-              "id": "11111111-1111-1111-1111-111111111111",
-              "period": "2026",
-              "publishedAt": "2026-04-20T00:00:00Z",
-              "slug": "seeded-work",
-              "tags": [
-                "platform"
-              ],
-              "thumbnailUrl": "/media/thumb.png",
-              "title": "Seeded Work"
+          "content": {
+            "featuredWorks": [
+              {
+                "category": "platform",
+                "excerpt": "Excerpt",
+                "iconUrl": "/media/icon.png",
+                "id": "11111111-1111-1111-1111-111111111111",
+                "period": "2026",
+                "publishedAt": "2026-04-20T00:00:00Z",
+                "slug": "seeded-work",
+                "tags": [
+                  "platform"
+                ],
+                "thumbnailUrl": "/media/thumb.png",
+                "title": "Seeded Work"
+              }
+            ],
+            "homePage": {
+              "contentJson": "{\"headline\":\"Hello\"}",
+              "title": "Home"
+            },
+            "recentPosts": [
+              {
+                "coverUrl": "/media/cover.png",
+                "excerpt": "Excerpt",
+                "id": "22222222-2222-2222-2222-222222222222",
+                "publishedAt": "2026-04-20T00:00:00Z",
+                "slug": "seeded-blog",
+                "tags": [
+                  "study"
+                ],
+                "title": "Seeded Blog"
+              }
+            ],
+            "siteSettings": {
+              "gitHubUrl": "https://github.com/owner",
+              "linkedInUrl": "https://linkedin.com/in/owner",
+              "ownerName": "Owner",
+              "resumePublicUrl": "/media/resume.pdf",
+              "tagline": "Tagline"
             }
-          ],
-          "homePage": {
-            "contentJson": "{\"headline\":\"Hello\"}",
-            "title": "Home"
           },
-          "recentPosts": [
-            {
-              "coverUrl": "/media/cover.png",
-              "excerpt": "Excerpt",
-              "id": "22222222-2222-2222-2222-222222222222",
-              "publishedAt": "2026-04-20T00:00:00Z",
-              "slug": "seeded-blog",
-              "tags": [
-                "study"
-              ],
-              "title": "Seeded Blog"
-            }
-          ],
-          "siteSettings": {
-            "gitHubUrl": "https://github.com/owner",
-            "linkedInUrl": "https://linkedin.com/in/owner",
-            "ownerName": "Owner",
-            "resumePublicUrl": "/media/resume.pdf",
-            "tagline": "Tagline"
-          }
+          "contentType": "application/json",
+          "encoded": false
         },
         "headers": {
-          "Content-Type": "application/json"
+          "Content-Type": [
+            "application/json"
+          ]
         },
         "matchingRules": {
           "body": {
@@ -231,10 +254,12 @@
           }
         },
         "status": 200
-      }
+      },
+      "type": "Synchronous/HTTP"
     },
     {
       "description": "a public page request",
+      "pending": false,
       "providerStates": [
         {
           "name": "public page exists"
@@ -246,13 +271,19 @@
       },
       "response": {
         "body": {
-          "contentJson": "{\"html\":\"<p>Hello</p>\"}",
-          "id": "33333333-3333-3333-3333-333333333333",
-          "slug": "introduction",
-          "title": "Introduction"
+          "content": {
+            "contentJson": "{\"html\":\"<p>Hello</p>\"}",
+            "id": "33333333-3333-3333-3333-333333333333",
+            "slug": "introduction",
+            "title": "Introduction"
+          },
+          "contentType": "application/json",
+          "encoded": false
         },
         "headers": {
-          "Content-Type": "application/json"
+          "Content-Type": [
+            "application/json"
+          ]
         },
         "matchingRules": {
           "body": {
@@ -267,10 +298,12 @@
           }
         },
         "status": 200
-      }
+      },
+      "type": "Synchronous/HTTP"
     },
     {
       "description": "a public site settings request",
+      "pending": false,
       "providerStates": [
         {
           "name": "public site settings exist"
@@ -282,16 +315,22 @@
       },
       "response": {
         "body": {
-          "facebookUrl": "",
-          "gitHubUrl": "https://github.com/owner",
-          "instagramUrl": "",
-          "linkedInUrl": "https://linkedin.com/in/owner",
-          "ownerName": "Owner",
-          "tagline": "Tagline",
-          "twitterUrl": ""
+          "content": {
+            "facebookUrl": "",
+            "gitHubUrl": "https://github.com/owner",
+            "instagramUrl": "",
+            "linkedInUrl": "https://linkedin.com/in/owner",
+            "ownerName": "Owner",
+            "tagline": "Tagline",
+            "twitterUrl": ""
+          },
+          "contentType": "application/json",
+          "encoded": false
         },
         "headers": {
-          "Content-Type": "application/json"
+          "Content-Type": [
+            "application/json"
+          ]
         },
         "matchingRules": {
           "body": {
@@ -306,10 +345,12 @@
           }
         },
         "status": 200
-      }
+      },
+      "type": "Synchronous/HTTP"
     },
     {
       "description": "a public work detail request",
+      "pending": false,
       "providerStates": [
         {
           "name": "published work detail exists"
@@ -321,24 +362,30 @@
       },
       "response": {
         "body": {
-          "category": "platform",
-          "contentJson": "{\"html\":\"<p>Hello</p>\"}",
-          "excerpt": "Excerpt",
-          "iconUrl": "/media/icon.png",
-          "id": "55555555-5555-5555-5555-555555555555",
-          "period": "2026",
-          "publishedAt": "2026-04-20T00:00:00Z",
-          "slug": "seeded-work",
-          "tags": [
-            "platform"
-          ],
-          "thumbnailUrl": "/media/thumb.png",
-          "title": "Seeded Work",
-          "videos": [],
-          "videos_version": 0
+          "content": {
+            "category": "platform",
+            "contentJson": "{\"html\":\"<p>Hello</p>\"}",
+            "excerpt": "Excerpt",
+            "iconUrl": "/media/icon.png",
+            "id": "55555555-5555-5555-5555-555555555555",
+            "period": "2026",
+            "publishedAt": "2026-04-20T00:00:00Z",
+            "slug": "seeded-work",
+            "tags": [
+              "platform"
+            ],
+            "thumbnailUrl": "/media/thumb.png",
+            "title": "Seeded Work",
+            "videos": [],
+            "videos_version": 0
+          },
+          "contentType": "application/json",
+          "encoded": false
         },
         "headers": {
-          "Content-Type": "application/json"
+          "Content-Type": [
+            "application/json"
+          ]
         },
         "matchingRules": {
           "body": {
@@ -361,10 +408,12 @@
           }
         },
         "status": 200
-      }
+      },
+      "type": "Synchronous/HTTP"
     },
     {
       "description": "a public work list request",
+      "pending": false,
       "providerStates": [
         {
           "name": "published works exist"
@@ -384,29 +433,35 @@
       },
       "response": {
         "body": {
-          "items": [
-            {
-              "category": "platform",
-              "excerpt": "Excerpt",
-              "iconUrl": "/media/icon.png",
-              "id": "55555555-5555-5555-5555-555555555555",
-              "period": "2026",
-              "publishedAt": "2026-04-20T00:00:00Z",
-              "slug": "seeded-work",
-              "tags": [
-                "platform"
-              ],
-              "thumbnailUrl": "/media/thumb.png",
-              "title": "Seeded Work"
-            }
-          ],
-          "page": 1,
-          "pageSize": 1,
-          "totalItems": 1,
-          "totalPages": 1
+          "content": {
+            "items": [
+              {
+                "category": "platform",
+                "excerpt": "Excerpt",
+                "iconUrl": "/media/icon.png",
+                "id": "55555555-5555-5555-5555-555555555555",
+                "period": "2026",
+                "publishedAt": "2026-04-20T00:00:00Z",
+                "slug": "seeded-work",
+                "tags": [
+                  "platform"
+                ],
+                "thumbnailUrl": "/media/thumb.png",
+                "title": "Seeded Work"
+              }
+            ],
+            "page": 1,
+            "pageSize": 1,
+            "totalItems": 1,
+            "totalPages": 1
+          },
+          "contentType": "application/json",
+          "encoded": false
         },
         "headers": {
-          "Content-Type": "application/json"
+          "Content-Type": [
+            "application/json"
+          ]
         },
         "matchingRules": {
           "body": {
@@ -462,10 +517,12 @@
           }
         },
         "status": 200
-      }
+      },
+      "type": "Synchronous/HTTP"
     },
     {
       "description": "an auth session request without a session cookie",
+      "pending": false,
       "providerStates": [
         {
           "name": "visitor is anonymous"
@@ -477,10 +534,16 @@
       },
       "response": {
         "body": {
-          "authenticated": false
+          "content": {
+            "authenticated": false
+          },
+          "contentType": "application/json",
+          "encoded": false
         },
         "headers": {
-          "Content-Type": "application/json"
+          "Content-Type": [
+            "application/json"
+          ]
         },
         "matchingRules": {
           "body": {
@@ -503,7 +566,8 @@
           }
         },
         "status": 200
-      }
+      },
+      "type": "Synchronous/HTTP"
     }
   ],
   "metadata": {
@@ -515,7 +579,7 @@
       "models": "1.3.9"
     },
     "pactSpecification": {
-      "version": "3.0.0"
+      "version": "4.0"
     }
   },
   "provider": {

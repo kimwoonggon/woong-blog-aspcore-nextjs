@@ -34,7 +34,7 @@ export default async function EditWorkPage({ params }: PageProps) {
 
     return (
         <div className="space-y-8">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-50">Edit Work</h1>
+            <h1 className="text-3xl font-bold text-foreground">Edit Work</h1>
             {loadFailed || !initialWork ? (
                 <AdminErrorPanel
                     title="Work editor is unavailable"

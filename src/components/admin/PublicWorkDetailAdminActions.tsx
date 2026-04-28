@@ -12,6 +12,7 @@ import { fetchWithCsrf } from '@/lib/api/auth'
 import { getBrowserApiBaseUrl } from '@/lib/api/browser'
 import type { AdminWorkDetailPayload } from '@/lib/api/works'
 import { deleteAdminWork } from '@/lib/api/admin-mutations'
+import { sanitizeAdminMutationError } from '@/lib/admin-save-error'
 import { toast } from 'sonner'
 
 interface PublicWorkDetailAdminActionsProps {
@@ -92,7 +93,10 @@ function PublicWorkDetailAdminActionsContent({ workId, afterDeleteHref }: { work
         router.push(afterDeleteHref)
         router.refresh()
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'Failed to delete work.')
+        toast.error(sanitizeAdminMutationError(
+          error instanceof Error ? error.message : '',
+          'Work could not be deleted. Please retry after the backend is healthy.',
+        ))
       }
     })
   }

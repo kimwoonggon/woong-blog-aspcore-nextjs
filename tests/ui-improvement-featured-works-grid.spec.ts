@@ -18,8 +18,11 @@ test('clicking a featured work card opens its detail page', async ({ page }) => 
 
   const firstCard = page.getByTestId('featured-work-card').first()
 
-  await firstCard.click()
-  await expect(page).toHaveURL(/\/works\/.+/)
+  await expect(firstCard).toHaveAttribute('href', /\/works\/.+/)
+  await Promise.all([
+    page.waitForURL(/\/works\/.+/),
+    firstCard.click(),
+  ])
 })
 
 test('View all from Works navigates to /works', async ({ page }) => {
@@ -27,7 +30,7 @@ test('View all from Works navigates to /works', async ({ page }) => {
 
   const section = page.getByRole('heading', { name: 'Works', exact: true }).locator('xpath=ancestor::section[1]')
   await section.getByRole('link', { name: 'View all' }).click()
-  await expect(page).toHaveURL(/\/works$/)
+  await expect(page).toHaveURL((url) => url.pathname === '/works')
 })
 
 test('featured work cards advertise hover interactions', async ({ page }) => {

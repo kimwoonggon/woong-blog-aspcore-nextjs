@@ -10,7 +10,7 @@ import { Metadata } from 'next'
 import { Suspense } from 'react'
 import { fetchAllPublicWorks, fetchPublicWorkBySlug } from '@/lib/api/works'
 import { hasWorkVideoEmbeds } from '@/lib/content/work-video-embeds'
-import { createPublicMetadata } from '@/lib/seo'
+import { buildWorkDetailMetadata } from './work-detail-metadata'
 import { formatDetailPublishDate, parseWorkContentHtml } from './work-detail-helpers'
 
 export const revalidate = 60
@@ -19,52 +19,54 @@ interface PageProps {
     params: Promise<{ slug: string }>
 }
 
-function resolveYouTubeThumbnail(sourceKey: string) {
-    const videoId = sourceKey.trim()
-    return videoId ? `https://img.youtube.com/vi/${encodeURIComponent(videoId)}/hqdefault.jpg` : null
+function safeDecodeSlug(slug: string) {
+    try {
+        return decodeURIComponent(slug)
+    } catch {
+        return null
+    }
 }
 
-function resolveWorkMetadataImage(work: Awaited<ReturnType<typeof fetchPublicWorkBySlug>>) {
-    if (!work) {
+function normalizeStaticParamSlug(slug: unknown) {
+    if (typeof slug !== 'string') {
         return null
     }
 
-    if (work.thumbnailUrl) {
-        return work.thumbnailUrl
+    const cleanedSlug = slug.trim()
+    if (!cleanedSlug || cleanedSlug.includes('/') || cleanedSlug.includes('?') || cleanedSlug.includes('#')) {
+        return null
     }
 
-    const youtubeVideo = work.videos.find((video) => video.sourceType === 'youtube' && video.sourceKey)
-    return youtubeVideo ? resolveYouTubeThumbnail(youtubeVideo.sourceKey) : null
+    return cleanedSlug
 }
 
-function resolveWorkMetadataDescription(work: Awaited<ReturnType<typeof fetchPublicWorkBySlug>>) {
-    if (!work) {
-        return ''
+function getSortablePublishedTime(value?: string | null) {
+    if (!value) {
+        return 0
     }
 
-    const shareMessage = work.socialShareMessage?.trim()
-    return shareMessage ? shareMessage : work.excerpt
+    const time = new Date(value).getTime()
+    return Number.isNaN(time) ? 0 : time
 }
 
 export async function generateStaticParams() {
     const works = await fetchAllPublicWorks().catch(() => [])
-    return works.map((work) => ({ slug: work.slug }))
+    return works.flatMap((work) => {
+        const slug = normalizeStaticParamSlug(work.slug)
+        return slug ? [{ slug }] : []
+    })
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
     const { slug } = await params
-    const decodedSlug = decodeURIComponent(slug)
-    const work = await fetchPublicWorkBySlug(decodedSlug)
+    const decodedSlug = safeDecodeSlug(slug)
+    if (!decodedSlug) return {}
+
+    const work = await fetchPublicWorkBySlug(decodedSlug).catch(() => null)
 
     if (!work) return {}
 
-    return createPublicMetadata({
-        title: work.title,
-        description: resolveWorkMetadataDescription(work),
-        path: `/works/${work.slug}`,
-        type: 'article',
-        images: resolveWorkMetadataImage(work),
-    })
+    return buildWorkDetailMetadata(work)
 }
 
 export default async function WorkDetailPage({ params }: PageProps) {
@@ -85,8 +87,8 @@ export default async function WorkDetailPage({ params }: PageProps) {
 
     const publishDate = formatDetailPublishDate(work.publishedAt)
     const sortedWorks = [...allWorks].sort((left, right) => {
-        const leftTime = left.publishedAt ? new Date(left.publishedAt).getTime() : 0
-        const rightTime = right.publishedAt ? new Date(right.publishedAt).getTime() : 0
+        const leftTime = getSortablePublishedTime(left.publishedAt)
+        const rightTime = getSortablePublishedTime(right.publishedAt)
 
         if (leftTime !== rightTime) {
             return rightTime - leftTime
@@ -103,8 +105,8 @@ export default async function WorkDetailPage({ params }: PageProps) {
             <div data-testid="work-article-content-layout" className="mx-auto xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,48rem)_minmax(0,1fr)] xl:items-start xl:gap-12">
                 <div data-testid="work-detail-body" className="mx-auto min-w-0 w-full max-w-3xl xl:col-start-2">
                     <header className="mb-8">
-                        <h1 data-testid="work-detail-title" className="mb-4 text-3xl font-heading font-bold leading-tight text-foreground text-balance md:text-4xl">
-                            {work.title}
+                        <h1 className="mb-4 text-3xl font-heading font-bold leading-tight text-foreground text-balance md:text-4xl">
+                            <span data-testid="work-detail-title">{work.title}</span>
                         </h1>
                         <div className="mb-6 flex flex-wrap items-center gap-4 text-muted-foreground">
                             <Badge variant="secondary" className="rounded-full bg-brand-navy px-3 text-white hover:bg-brand-navy/90">

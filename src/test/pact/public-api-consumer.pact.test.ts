@@ -1,6 +1,6 @@
 import path from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { Matchers, PactV3 } from '@pact-foundation/pact'
+import { Matchers, PactV3, SpecificationVersion } from '@pact-foundation/pact'
 
 const pactDirectory = path.resolve('tests/contracts/pacts')
 const { atLeastLike, boolean, integer, like } = Matchers
@@ -10,46 +10,26 @@ function pact() {
     consumer: 'WoongBlog Frontend',
     provider: 'WoongBlog API',
     dir: pactDirectory,
+    spec: SpecificationVersion.SPECIFICATION_VERSION_V4,
     logLevel: 'warn',
   })
 }
 
 async function withServerApi<T>(baseUrl: string, callback: () => Promise<T>) {
   vi.resetModules()
-  const serverUrl = new URL(baseUrl)
-  const proto = serverUrl.protocol.replace(':', '')
-  const host = serverUrl.host
+  vi.stubEnv('INTERNAL_API_ORIGIN', baseUrl)
 
-  vi.doMock('next/headers', () => ({
-    headers: vi.fn(async () => new Headers({
-      host,
-      'x-forwarded-host': host,
-      'x-forwarded-proto': proto,
-    })),
-    cookies: vi.fn(async () => ({
-      getAll: () => [],
-    })),
-  }))
-
-  vi.doMock('@/lib/api/server', () => ({
-    getServerApiBaseUrl: vi.fn(async () => `${baseUrl}/api`),
-    getServerForwardingHeaders: vi.fn(async () => ({})),
-    getServerCookieHeader: vi.fn(async () => ''),
-  }))
-
-  vi.doMock('@/lib/api/public-server', () => ({
-    getPublicServerApiBaseUrl: vi.fn(async () => `${baseUrl}/api`),
-  }))
-
-  return await callback()
+  try {
+    return await callback()
+  } finally {
+    vi.unstubAllEnvs()
+  }
 }
 
 describe('public API consumer Pact contracts', () => {
   afterEach(() => {
-    vi.doUnmock('@/lib/api/server')
-    vi.doUnmock('@/lib/api/public-server')
-    vi.doUnmock('next/headers')
     vi.unstubAllGlobals()
+    vi.unstubAllEnvs()
   })
 
   it('contracts public home payload', async () => {

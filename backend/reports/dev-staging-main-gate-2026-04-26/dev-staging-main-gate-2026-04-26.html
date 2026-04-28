@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Dev, Staging, and Main Gate Audit - 2026-04-26</title>
+    <style>
+      body { font-family: Arial, sans-serif; line-height: 1.5; max-width: 920px; margin: 32px auto; padding: 0 16px; color: #1f2937; }
+      h1, h2 { color: #111827; }
+      code { background: #f3f4f6; padding: 2px 4px; border-radius: 4px; }
+      li { margin: 4px 0; }
+    </style>
+  </head>
+  <body>
+    <h1>Dev, Staging, and Main Gate Audit - 2026-04-26</h1>
+    <h2>Summary</h2>
+    <p>The guarded flow completed successfully: <code>origin/dev</code> CI passed, staging publish passed, main promotion used the protected workflow/PR path, <code>origin/main</code> runtime CI passed, and main GHCR runtime image publish passed. No direct push to <code>main</code> was used.</p>
+    <h2>Changed</h2>
+    <ul>
+      <li>Staging GHCR publish now targets the linked runtime package family.</li>
+      <li>Main promotion workflow runs the promotion script through <code>bash</code>.</li>
+      <li>The workflow fixes were promoted to <code>main</code> through PR #19.</li>
+    </ul>
+    <h2>Validation</h2>
+    <ul>
+      <li><code>CI Dev</code> run <code>24952283239</code>: success.</li>
+      <li><code>Publish GHCR Dev</code> run <code>24952387360</code>: success.</li>
+      <li><code>Promote Main Runtime</code> run <code>24952539505</code>: success.</li>
+      <li>PR #19 <code>CI Main Runtime</code> run <code>24952563035</code>: success.</li>
+      <li>Main push <code>CI Main Runtime</code> run <code>24952671567</code>: success.</li>
+      <li><code>Publish GHCR Main</code> run <code>24952770138</code>: success.</li>
+    </ul>
+    <h2>Risks</h2>
+    <ul>
+      <li>GitHub Actions Node.js 20 deprecation warnings remain.</li>
+      <li>Production HTTPS default remains ambiguous because nginx defaults to <code>prod-bootstrap.conf</code>, not <code>prod.conf</code>.</li>
+      <li>Unrelated untracked local directories remain: <code>.next-playwright-verify/</code> and <code>.vscode/</code>.</li>
+    </ul>
+    <h2>Recommendation</h2>
+    <p>Keep the protected dev and main checks required, continue requiring staging publish success before dispatching main promotion, and handle the HTTPS nginx default plus Node 20 action upgrade as separate follow-up tasks.</p>
+  </body>
+</html>

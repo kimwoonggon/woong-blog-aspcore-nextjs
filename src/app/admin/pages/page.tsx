@@ -16,6 +16,10 @@ import { isHtmlPageContent, toHomeContent } from '@/lib/content/page-content'
 
 export const revalidate = 0
 
+function displayTitle(value: unknown, fallback: string) {
+    return typeof value === 'string' && value.trim() ? value : fallback
+}
+
 export default async function AdminPagesPage() {
     let siteSettings: AdminSiteSettings | null = null
     let pages: AdminPageRecord[] = []
@@ -51,7 +55,7 @@ export default async function AdminPagesPage() {
 
     return (
         <div className="space-y-8">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-50">Pages &amp; Settings</h1>
+            <h1 className="text-3xl font-bold text-foreground">Pages &amp; Settings</h1>
             {loadFailed || !siteSettings ? (
                 <AdminErrorPanel
                     title="Pages and settings are unavailable"
@@ -59,7 +63,7 @@ export default async function AdminPagesPage() {
                 />
             ) : (
                 <>
-                    <p className="text-gray-600 dark:text-gray-400">
+                    <p className="text-muted-foreground">
                         Edit your site&apos;s settings and page content here.
                     </p>
 
@@ -76,7 +80,7 @@ export default async function AdminPagesPage() {
                     <div className="space-y-12">
                         <section id="site-settings-editor">
                             <div className="mb-4">
-                                <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-50">Site Settings</h2>
+                                <h2 className="text-2xl font-semibold text-foreground">Site Settings</h2>
                                 <p className="mt-1 text-sm text-muted-foreground">Owner name, tagline, and social links for the public shell.</p>
                             </div>
                             <SiteSettingsEditor
@@ -95,12 +99,12 @@ export default async function AdminPagesPage() {
                         {homePage && (
                             <section id="home-page-editor">
                                 <div className="mb-4">
-                                    <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-50">Home</h2>
+                                    <h2 className="text-2xl font-semibold text-foreground">Home</h2>
                                     <p className="mt-1 text-sm text-muted-foreground">Update the hero copy and profile image for the landing page.</p>
                                 </div>
                                 <HomePageEditor
                                     pageId={homePage.id}
-                                    pageTitle={homePage.title}
+                                    pageTitle={displayTitle(homePage.title, 'Home')}
                                     initialContent={toHomeContent(homePage.content)}
                                 />
                             </section>
@@ -109,13 +113,13 @@ export default async function AdminPagesPage() {
                         {introPage && (
                             <section id="introduction-page-editor">
                                 <div className="mb-4">
-                                    <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-50">Introduction</h2>
+                                    <h2 className="text-2xl font-semibold text-foreground">Introduction</h2>
                                     <p className="mt-1 text-sm text-muted-foreground">Edit the long-form introduction page content.</p>
                                 </div>
                                 <PageEditor
                                     page={{
                                         id: introPage.id,
-                                        title: introPage.title,
+                                        title: displayTitle(introPage.title, 'Introduction'),
                                         slug: introPage.slug,
                                         content: isHtmlPageContent(introPage.content) ? introPage.content : { html: '' },
                                     }}
@@ -126,13 +130,13 @@ export default async function AdminPagesPage() {
                         {contactPage && (
                             <section id="contact-page-editor">
                                 <div className="mb-4">
-                                    <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-50">Contact</h2>
+                                    <h2 className="text-2xl font-semibold text-foreground">Contact</h2>
                                     <p className="mt-1 text-sm text-muted-foreground">Maintain the contact page body without hunting through URLs.</p>
                                 </div>
                                 <PageEditor
                                     page={{
                                         id: contactPage.id,
-                                        title: contactPage.title,
+                                        title: displayTitle(contactPage.title, 'Contact'),
                                         slug: contactPage.slug,
                                         content: isHtmlPageContent(contactPage.content) ? contactPage.content : { html: '' },
                                     }}
@@ -142,7 +146,7 @@ export default async function AdminPagesPage() {
 
                         <section id="resume-editor">
                             <div className="mb-4">
-                                <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-50">Resume</h2>
+                                <h2 className="text-2xl font-semibold text-foreground">Resume</h2>
                                 <p className="mt-1 text-sm text-muted-foreground">Upload the latest PDF that powers the public resume download.</p>
                             </div>
                             <ResumeEditor resumeAsset={resumeAsset} />

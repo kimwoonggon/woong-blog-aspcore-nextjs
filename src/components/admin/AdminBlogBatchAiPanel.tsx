@@ -37,6 +37,10 @@ interface AdminBlogBatchAiPanelProps {
   onApplied?: () => void
 }
 
+function hasApplyFailures(job: BlogAiBatchJobDetail) {
+  return job.failedCount > 0 || job.items.some((item) => item.status === 'failed' || Boolean(item.error))
+}
+
 export function AdminBlogBatchAiPanel({
   isOpen,
   selectedBlogIds,
@@ -331,10 +335,15 @@ export function AdminBlogBatchAiPanel({
         throw new Error(payload.error || 'Failed to apply AI batch results')
       }
 
-      setActiveJob(payload as unknown as BlogAiBatchJobDetail)
+      const appliedJob = payload as unknown as BlogAiBatchJobDetail
+      setActiveJob(appliedJob)
       await loadRecentJobs(activeJobId)
       onApplied?.()
-      toast.success('AI batch results applied')
+      if (hasApplyFailures(appliedJob)) {
+        toast.error('AI batch results partially applied; review failed items.')
+      } else {
+        toast.success('AI batch results applied')
+      }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to apply AI batch results')
     } finally {

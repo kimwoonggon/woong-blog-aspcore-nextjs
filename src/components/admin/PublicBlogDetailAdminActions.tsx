@@ -12,6 +12,7 @@ import { fetchWithCsrf } from '@/lib/api/auth'
 import { getBrowserApiBaseUrl } from '@/lib/api/browser'
 import type { AdminBlogDetail } from '@/lib/api/blogs'
 import { deleteAdminBlog } from '@/lib/api/admin-mutations'
+import { sanitizeAdminMutationError } from '@/lib/admin-save-error'
 import { toast } from 'sonner'
 
 interface PublicBlogDetailAdminActionsProps {
@@ -92,7 +93,10 @@ function PublicBlogDetailAdminActionsContent({ blogId, afterDeleteHref }: { blog
         router.push(afterDeleteHref)
         router.refresh()
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'Failed to delete study.')
+        toast.error(sanitizeAdminMutationError(
+          error instanceof Error ? error.message : '',
+          'Study could not be deleted. Please retry after the backend is healthy.',
+        ))
       }
     })
   }

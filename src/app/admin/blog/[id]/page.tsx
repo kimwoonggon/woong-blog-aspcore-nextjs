@@ -26,7 +26,7 @@ export default async function EditBlogPage({ params }: PageProps) {
 
     return (
         <div className="space-y-8">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-50">Edit Post</h1>
+            <h1 className="text-3xl font-bold text-foreground">Edit Post</h1>
             {loadFailed || !blog ? (
                 <AdminErrorPanel
                     title="Blog editor is unavailable"

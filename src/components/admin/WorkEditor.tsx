@@ -16,6 +16,7 @@ import { fetchWithCsrf } from '@/lib/api/auth'
 import { getBrowserApiBaseUrl } from '@/lib/api/browser'
 import { revalidatePublicPathsAfterMutation } from '@/lib/public-revalidation-client'
 import { getWorkPublicRevalidationPaths } from '@/lib/public-revalidation-paths'
+import { isAcceptedImageFile, isAcceptedMp4VideoFile } from '@/lib/file-validation'
 import type { WorkVideo } from '@/lib/api/works'
 import { extractVideoFrameThumbnailBlob, fetchRemoteImageBlob } from '@/lib/content/work-auto-thumbnail'
 import {
@@ -55,6 +56,7 @@ import {
     validateFlexibleMetadata,
 } from '@/components/admin/work-editor/utils'
 import { cn } from '@/lib/utils'
+import { sanitizeAdminSaveError, sanitizeAdminUploadError } from '@/lib/admin-save-error'
 import { toast } from 'sonner'
 
 const DEFAULT_WORK_CATEGORY = 'Uncategorized'
@@ -145,6 +147,25 @@ function clearBeforeUnloadWarning() {
     }
 }
 
+function resolveReturnTo(requestedReturnTo: string | null, fallback = '/admin/works') {
+    if (!requestedReturnTo) {
+        return fallback
+    }
+
+    if (!requestedReturnTo.startsWith('/') || requestedReturnTo.startsWith('//')) {
+        return fallback
+    }
+
+    return requestedReturnTo
+}
+
+function buildInlineDetailQuerySuffix(searchParams: URLSearchParams) {
+    const nextParams = new URLSearchParams(searchParams)
+    nextParams.delete('returnTo')
+    const nextQuery = nextParams.toString()
+    return nextQuery ? `?${nextQuery}` : ''
+}
+
 export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEditorProps) {
     const router = useRouter()
     const pathname = usePathname()
@@ -152,9 +173,7 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
     const isEditing = Boolean(initialWork?.id)
     const defaultPublished = initialWork?.published ?? true
     const requestedReturnTo = searchParams.get('returnTo')
-    const returnTo = requestedReturnTo && requestedReturnTo.startsWith('/')
-        ? requestedReturnTo
-        : '/admin/works'
+    const returnTo = resolveReturnTo(requestedReturnTo)
 
     const [title, setTitle] = useState(initialWork?.title || '')
     const [category, setCategory] = useState(initialWork?.category || DEFAULT_WORK_CATEGORY)
@@ -252,8 +271,7 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
     const hasStagedVideos = stagedVideos.length > 0
     const hasUnsavedChanges = savedSnapshot !== currentSnapshot || (!isEditing && hasStagedVideos)
     const isDirty = hasUnsavedChanges
-    const searchParamsString = searchParams.toString()
-    const currentQuerySuffix = searchParamsString ? `?${searchParamsString}` : ''
+    const currentQuerySuffix = buildInlineDetailQuerySuffix(searchParams)
     const primarySaveMode: 'default' | 'with-videos' = !isEditing && hasStagedVideos ? 'with-videos' : 'default'
     const videoUploadStatusTimeoutRef = useRef<number | null>(null)
 
@@ -322,8 +340,8 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
         }
 
         if (editing && pathname.startsWith('/works/')) {
-            if (requestedReturnTo && requestedReturnTo.startsWith('/')) {
-                router.push(requestedReturnTo)
+            if (requestedReturnTo && returnTo !== '/admin/works') {
+                router.push(returnTo)
                 return true
             }
 
@@ -507,6 +525,12 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
         const file = event.target.files?.[0]
         if (!file) return
 
+        if (!isAcceptedImageFile(file)) {
+            toast.error(`Please upload an image file for ${target}.`)
+            event.target.value = ''
+            return
+        }
+
         setUploadingTarget(target)
 
         try {
@@ -522,7 +546,11 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
             }
         } catch (error) {
             const message = error instanceof Error ? error.message : 'Upload failed'
-            toast.error(`Failed to upload ${target}: ${message}`)
+            const safeMessage = sanitizeAdminUploadError(
+                message,
+                `${target === 'thumbnail' ? 'Thumbnail' : 'Icon'} could not be uploaded. Please retry after storage is healthy.`
+            )
+            toast.error(`Failed to upload ${target}: ${safeMessage}`)
         } finally {
             setUploadingTarget(null)
             event.target.value = ''
@@ -557,7 +585,8 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
             try {
                 await regenerateThumbnailFallbackForCurrentWork()
             } catch (error) {
-                toast.error(error instanceof Error ? error.message : 'Failed to regenerate the fallback thumbnail.')
+                const message = error instanceof Error ? error.message : 'Failed to regenerate the fallback thumbnail.'
+                toast.error(sanitizeAdminUploadError(message, 'Thumbnail could not be regenerated. Please retry after storage is healthy.'))
             }
             return
         }
@@ -570,6 +599,11 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
         const trimmed = youtubeUrlInput.trim()
         if (!trimmed) {
             toast.error('Paste a YouTube URL or video ID first.')
+            return
+        }
+
+        if (!normalizeYouTubeVideoId(trimmed)) {
+            toast.error('Enter a valid YouTube URL or video ID.')
             return
         }
 
@@ -590,6 +624,12 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
     function handleStageHlsVideoFile(event: React.ChangeEvent<HTMLInputElement>) {
         const file = event.target.files?.[0]
         if (!file) return
+
+        if (!isAcceptedMp4VideoFile(file)) {
+            toast.error('Please upload an MP4 video file.')
+            event.target.value = ''
+            return
+        }
 
         if (isEditing) {
             void uploadHlsVideoForExistingWork(file)
@@ -805,7 +845,8 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
         } catch (error) {
             window.clearTimeout(processingPhaseTimer)
             setVideoUploadStatus(null)
-            toast.error(error instanceof Error ? error.message : 'Failed to upload HLS video.')
+            const message = error instanceof Error ? error.message : 'Failed to upload HLS video.'
+            toast.error(sanitizeAdminUploadError(message, 'Video could not be uploaded. Please retry after storage is healthy.'))
         } finally {
             setIsVideoBusy(false)
         }
@@ -835,7 +876,8 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
             refreshInlinePublicWorkIfNeeded()
             toast.success('Video removed.')
         } catch (error) {
-            toast.error(error instanceof Error ? error.message : 'Failed to remove video.')
+            const message = error instanceof Error ? error.message : 'Failed to remove video.'
+            toast.error(sanitizeAdminUploadError(message, 'Video could not be removed. Please retry after the backend is healthy.'))
         } finally {
             setIsVideoBusy(false)
         }
@@ -876,7 +918,8 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
             setHasPersistedVideoChanges(true)
             refreshInlinePublicWorkIfNeeded()
         } catch (error) {
-            toast.error(error instanceof Error ? error.message : 'Failed to reorder videos.')
+            const message = error instanceof Error ? error.message : 'Failed to reorder videos.'
+            toast.error(sanitizeAdminUploadError(message, 'Video order could not be saved. Please retry after the backend is healthy.'))
         } finally {
             setIsVideoBusy(false)
         }
@@ -916,7 +959,8 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
             setHasPersistedVideoChanges(true)
             refreshInlinePublicWorkIfNeeded()
         } catch (error) {
-            toast.error(error instanceof Error ? error.message : 'Failed to reorder videos.')
+            const message = error instanceof Error ? error.message : 'Failed to reorder videos.'
+            toast.error(sanitizeAdminUploadError(message, 'Video order could not be saved. Please retry after the backend is healthy.'))
         } finally {
             setIsVideoBusy(false)
         }
@@ -984,11 +1028,17 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
                 const processingPhaseTimer = window.setTimeout(() => {
                     setVideoUploadPhase('processing', draft.label)
                 }, 700)
-                const result = await addStagedUploadedVideo(workId, draft, currentVersion)
-                window.clearTimeout(processingPhaseTimer)
-                setVideoUploadPhase('complete', draft.label)
-                currentVersion = result.currentVersion
-                latestPayload = result.latestPayload
+                try {
+                    const result = await addStagedUploadedVideo(workId, draft, currentVersion)
+                    window.clearTimeout(processingPhaseTimer)
+                    setVideoUploadPhase('complete', draft.label)
+                    currentVersion = result.currentVersion
+                    latestPayload = result.latestPayload
+                } catch (error) {
+                    window.clearTimeout(processingPhaseTimer)
+                    setVideoUploadStatus(null)
+                    throw error
+                }
             }
         }
 
@@ -1014,7 +1064,10 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
         )
 
         if (!response.ok) {
-            const message = await getResponseError(response, 'Failed to save work.')
+            const message = sanitizeAdminSaveError(
+                await getResponseError(response, 'Failed to save work.'),
+                'Work could not be saved. Please retry after the backend is healthy.',
+            )
             setSaveError(message)
             toast.error(message)
             return null
@@ -1105,7 +1158,8 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
 
             router.push(`/admin/works/${responsePayload.id}?videoInline=1`)
         } catch (error) {
-            toast.error(error instanceof Error ? error.message : 'Work was created, but some videos failed to attach.')
+            const message = error instanceof Error ? error.message : 'Work was created, but some videos failed to attach.'
+            toast.error(sanitizeAdminUploadError(message, 'Work was created, but some videos could not be uploaded. Please retry after storage is healthy.'))
             router.push(`/admin/works/${responsePayload.id}`)
         }
     }

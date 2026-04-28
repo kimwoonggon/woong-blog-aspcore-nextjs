@@ -1,8 +1,10 @@
 import { fetchWithCsrf } from '@/lib/api/auth'
 import { getBrowserApiBaseUrl } from '@/lib/api/browser'
+import { sanitizeAdminUploadError } from '@/lib/admin-save-error'
 
 const MAX_EDITOR_IMAGE_EDGE = 1600
 const EDITOR_IMAGE_QUALITY = 0.82
+const EDITOR_IMAGE_UPLOAD_FALLBACK = 'Image could not be uploaded. Please retry after storage is healthy.'
 
 function canResizeImage(file: File) {
   return ['image/jpeg', 'image/png', 'image/webp'].includes(file.type)
@@ -77,13 +79,21 @@ export async function uploadEditorImage(file: File) {
   formData.append('file', uploadFile)
   formData.append('bucket', 'blogs/inline')
 
-  const response = await fetchWithCsrf(`${getBrowserApiBaseUrl()}/uploads`, {
-    method: 'POST',
-    body: formData,
-  })
+  let response: Response
+  try {
+    response = await fetchWithCsrf(`${getBrowserApiBaseUrl()}/uploads`, {
+      method: 'POST',
+      body: formData,
+    })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to upload image'
+    throw new Error(sanitizeAdminUploadError(message, EDITOR_IMAGE_UPLOAD_FALLBACK))
+  }
 
   if (!response.ok) {
-    throw new Error('Failed to upload image')
+    const errorData = await response.json().catch(() => null) as { error?: unknown } | null
+    const message = typeof errorData?.error === 'string' ? errorData.error : 'Failed to upload image'
+    throw new Error(sanitizeAdminUploadError(message, EDITOR_IMAGE_UPLOAD_FALLBACK))
   }
 
   const data = await response.json()

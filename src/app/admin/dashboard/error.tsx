@@ -1,7 +1,6 @@
 'use client'
 
 export default function AdminDashboardError({
-  error,
   reset,
 }: {
   error: Error & { digest?: string }
@@ -12,7 +11,7 @@ export default function AdminDashboardError({
       <p className="text-sm font-medium uppercase tracking-[0.24em] text-muted-foreground">Dashboard</p>
       <h2 className="mt-3 text-2xl font-semibold text-foreground">Dashboard data is unavailable.</h2>
       <p className="mt-3 text-sm text-muted-foreground">
-        {error.message || 'Retry after the backend and session state recover.'}
+        Retry after the backend and session state recover.
       </p>
       <button
         type="button"

@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Trash2 } from 'lucide-react'
 import { deleteAdminWork } from '@/lib/api/admin-mutations'
+import { sanitizeAdminMutationError } from '@/lib/admin-save-error'
 import { InlineAdminEditorShell } from '@/components/admin/InlineAdminEditorShell'
 import { WorkEditor } from '@/components/admin/WorkEditor'
 import { Button } from '@/components/ui/button'
@@ -41,7 +42,10 @@ export function InlineWorkEditorSection({
         router.push(afterDeleteHref)
         router.refresh()
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'Failed to delete work.')
+        toast.error(sanitizeAdminMutationError(
+          error instanceof Error ? error.message : '',
+          'Work could not be deleted. Please retry after the backend is healthy.',
+        ))
       }
     })
   }

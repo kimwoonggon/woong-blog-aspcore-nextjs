@@ -1,0 +1,81 @@
+{
+  "task": "dev-staging-main-gate",
+  "date": "2026-04-26",
+  "status": "success",
+  "summary": "origin/dev CI passed, staging publish passed, main promotion used the protected workflow/PR path, origin/main CI passed, and main GHCR publish passed.",
+  "changes": [
+    "Staging GHCR dev tags publish to the linked runtime package family.",
+    "Main promotion workflow runs scripts/promote-main-runtime.sh through bash.",
+    "Workflow fixes were promoted from dev to main through PR #19."
+  ],
+  "intentionally_not_changed": [
+    "No application runtime code was changed in the final gate repair.",
+    "No direct main push was performed.",
+    "GitHub branch protection was not changed through the API.",
+    "Production HTTPS nginx default was not changed.",
+    "README simplification was not included."
+  ],
+  "validations": [
+    {
+      "name": "CI Dev",
+      "run_id": 24952283239,
+      "ref": "dev",
+      "conclusion": "success"
+    },
+    {
+      "name": "Publish GHCR Dev",
+      "run_id": 24952387360,
+      "ref": "dev",
+      "conclusion": "success"
+    },
+    {
+      "name": "Promote Main Runtime",
+      "run_id": 24952539505,
+      "ref": "dev",
+      "conclusion": "success"
+    },
+    {
+      "name": "CI Main Runtime",
+      "run_id": 24952563035,
+      "ref": "release/main-promote-20260426",
+      "event": "pull_request",
+      "conclusion": "success"
+    },
+    {
+      "name": "CI Main Runtime",
+      "run_id": 24952671567,
+      "ref": "main",
+      "event": "push",
+      "conclusion": "success"
+    },
+    {
+      "name": "Publish GHCR Main",
+      "run_id": 24952770138,
+      "ref": "main",
+      "event": "workflow_run",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "name": "backend runtime image",
+          "duration": "2m28s",
+          "conclusion": "success"
+        },
+        {
+          "name": "frontend runtime image",
+          "duration": "7m15s",
+          "conclusion": "success"
+        }
+      ]
+    }
+  ],
+  "commits": {
+    "dev_merge": "6dbcddb63a6edf8fec2a73657e92292f34a87774",
+    "main_merge": "704ac021e858e45c30295ce1c3d36320e0b42b74"
+  },
+  "risks": [
+    "GitHub Actions Node.js 20 deprecation warnings remain.",
+    "Production services run in production mode, but nginx defaults to ./nginx/prod-bootstrap.conf rather than ./nginx/prod.conf.",
+    "Unrelated untracked local directories .next-playwright-verify/ and .vscode/ remain."
+  ],
+  "recommendation": "Keep dev protected with CI Dev required, keep main protected with CI Main Runtime required, require staging publish success before main promotion, and handle HTTPS nginx default plus Node 20 action upgrades separately."
+}

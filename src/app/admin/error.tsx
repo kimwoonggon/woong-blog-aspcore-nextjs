@@ -1,7 +1,6 @@
 'use client'
 
 export default function AdminSegmentError({
-  error,
   reset,
 }: {
   error: Error & { digest?: string }
@@ -12,7 +11,7 @@ export default function AdminSegmentError({
       <p className="text-sm font-medium uppercase tracking-[0.24em] text-muted-foreground">Admin</p>
       <h2 className="text-3xl font-semibold text-foreground">The admin workspace could not be loaded.</h2>
       <p className="max-w-2xl text-sm text-muted-foreground">
-        {error.message || 'Retry after the session and backend are healthy.'}
+        Retry after the session and backend are healthy.
       </p>
       <button
         type="button"
