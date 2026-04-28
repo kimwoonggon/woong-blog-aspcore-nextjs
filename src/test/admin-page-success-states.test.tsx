@@ -75,6 +75,38 @@ describe('admin page success and not-found states', () => {
     expect(container.textContent).not.toMatch(/stack|trace|exception|status 500|sqlstate|npgsql|woongblog\.api/i)
   }, 15000)
 
+  it('renders safe dashboard stat fallbacks for malformed summary counts', async () => {
+    vi.doMock('@/components/admin/AdminDashboardCollections', () => ({
+      AdminDashboardCollections: ({ works, blogs }: { works: unknown[]; blogs: unknown[] }) => (
+        <div data-testid="dashboard-collections">{works.length}:{blogs.length}</div>
+      ),
+    }))
+    vi.doMock('@/lib/api/admin-dashboard', () => ({
+      fetchAdminDashboardSummary: vi.fn(async () => ({
+        worksCount: Number.NaN,
+        blogsCount: undefined,
+        viewsCount: -12,
+      })),
+    }))
+    vi.doMock('@/lib/api/works', () => ({
+      fetchAdminWorks: vi.fn(async () => []),
+    }))
+    vi.doMock('@/lib/api/blogs', () => ({
+      fetchAdminBlogs: vi.fn(async () => []),
+    }))
+
+    const DashboardPage = (await import('@/app/admin/dashboard/page')).default
+    const { container } = render(await DashboardPage({}))
+
+    expect(screen.getByText('Total Views')).toBeInTheDocument()
+    expect(screen.getByText('Total Works')).toBeInTheDocument()
+    expect(screen.getByText('Total Blog Posts')).toBeInTheDocument()
+    expect(screen.getAllByText('—')).toHaveLength(3)
+    expect(screen.queryByText('Dashboard data is unavailable')).not.toBeInTheDocument()
+    expect(screen.getByTestId('dashboard-collections')).toHaveTextContent('0:0')
+    expect(container.textContent).not.toMatch(/NaN|-12|undefined|null|stack|trace|exception|status 500|sqlstate|npgsql|woongblog\.api/i)
+  }, 15000)
+
   it('renders the dashboard list error when content collections fail to load', async () => {
     vi.doMock('@/lib/api/admin-dashboard', () => ({
       fetchAdminDashboardSummary: vi.fn(async () => ({

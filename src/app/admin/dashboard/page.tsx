@@ -14,12 +14,22 @@ interface PageProps {
     searchParams?: Promise<{ __qaSummaryFail?: string; __qaCollectionsFail?: string; __qaSlow?: string }>
 }
 
+type DashboardSummary = {
+    worksCount?: unknown
+    blogsCount?: unknown
+    viewsCount?: unknown
+}
+
+function formatDashboardCount(value: unknown) {
+    return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : '—'
+}
+
 export default async function AdminDashboard({ searchParams }: PageProps) {
     const resolvedSearchParams = await searchParams
     if (resolvedSearchParams?.__qaSlow === '1') {
         await new Promise((resolve) => setTimeout(resolve, 600))
     }
-    let summary: { worksCount: number; blogsCount: number; viewsCount: number } | null = null
+    let summary: DashboardSummary | null = null
     let works: WorkAdminItem[] = []
     let blogs: BlogAdminItem[] = []
     let workLoadFailed = false
@@ -82,7 +92,7 @@ export default async function AdminDashboard({ searchParams }: PageProps) {
                             <Eye className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">{summary.viewsCount}</div>
+                            <div className="text-2xl font-bold">{formatDashboardCount(summary.viewsCount)}</div>
                             <p className="text-xs text-muted-foreground">Tracked page views</p>
                         </CardContent>
                     </Card>
@@ -93,7 +103,7 @@ export default async function AdminDashboard({ searchParams }: PageProps) {
                             <Briefcase className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">{summary.worksCount}</div>
+                            <div className="text-2xl font-bold">{formatDashboardCount(summary.worksCount)}</div>
                             <p className="text-xs text-muted-foreground">All projects in the portfolio</p>
                         </CardContent>
                     </Card>
@@ -104,7 +114,7 @@ export default async function AdminDashboard({ searchParams }: PageProps) {
                             <FileText className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">{summary.blogsCount}</div>
+                            <div className="text-2xl font-bold">{formatDashboardCount(summary.blogsCount)}</div>
                             <p className="text-xs text-muted-foreground">All articles in the portfolio</p>
                         </CardContent>
                     </Card>
