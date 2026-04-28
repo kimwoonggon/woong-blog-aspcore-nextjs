@@ -2681,3 +2681,60 @@ Scope: frontend public list create/admin affordance smoke behavior and post-36 c
 ### Next recommended batch
 
 Proceed to `Frontend Batch 37 - Full-Suite Stability and E2E Readiness Reinforcement` only after confirming whether the post-36 stop line should continue. Recommended scope: frontend test infrastructure stability and e2e readiness. Reduce long-running Vitest timing pressure, isolate remaining jsdom navigation warning source, document Docker/Playwright startup prerequisites, and run full e2e only after Docker/backend availability is confirmed.
+
+## Batch 37 - Full-Suite Stability and E2E Readiness Reinforcement
+
+Date: 2026-04-28.
+
+Scope: frontend test infrastructure and e2e readiness only. Production UI behavior, backend behavior, API contracts, AI behavior, dark mode, media validation, pagination/search UI, browser-only routing behavior, live services, real storage, and seeded backend data were left out of scope.
+
+### Tests added or reinforced
+
+- `src/test/e2e-readiness.test.ts`
+  - `BACKEND_PUBLISH_PORT` is honored when building default backend health URLs.
+  - Docker Desktop WSL integration failures are reported as readiness blockers.
+  - Healthy local HTTP endpoints are reported as ready.
+  - Unreachable local HTTP endpoints do not leak stack traces.
+  - Aggregate readiness blocks full Playwright e2e when any required local dependency is unavailable.
+
+### Test infrastructure files changed
+
+- `scripts/check-e2e-readiness.mjs`
+  - Added injectable Docker and HTTP checks with sanitized output.
+- `package.json`
+  - Added `npm run test:e2e:readiness`.
+  - Updated `npm test` to `vitest --pool=threads --maxWorkers=4`.
+- `docs/e2e-readiness.md`
+  - Documented readiness usage, default URLs, alternate backend port flow, Docker WSL integration blocker, and Vitest worker stability rationale.
+
+### Production files changed
+
+- None.
+
+### Behavior bugs found
+
+- None in production. A test-infrastructure stability issue was found: unbounded Vitest worker startup could fail the full run under WSL load even when test assertions passed. Switching to the `forks` pool worsened the issue, so the final fix keeps `threads` and bounds workers to 4.
+
+### Commands run
+
+| Command | Result | Notes |
+| --- | --- | --- |
+| `npx skills find vitest playwright e2e readiness stability docker` | Passed | Results were general Playwright/e2e skills; no new skill was installed. |
+| `npm test -- --run src/test/e2e-readiness.test.ts` | Failed once, then passed | RED failed before helper implementation. Final focused run passed with 1 file and 5 tests. |
+| `npm run test:e2e:readiness` | Blocked as expected | Docker daemon, backend health URL, and frontend URL blockers were reported without stack traces. |
+| `npm test -- --run src/test/e2e-readiness.test.ts src/test/tiptap-editor.test.tsx` | Passed | Worker-bound focused stability run passed with 2 files and 17 tests. |
+| `npm test -- --run` | Passed | Final run passed with 81 files and 559 tests using `--maxWorkers=4`. Known Pact V3 warnings and jsdom navigation warning appeared. |
+| `npm run lint` | Passed | 0 errors, 6 existing warnings. |
+| `npm run typecheck` | Passed | `tsc --noEmit` completed successfully after helper env typing was narrowed. |
+| `npm run build` | Passed | Next.js production build completed successfully. |
+| `git diff --check` | Passed | No whitespace errors. |
+
+### Remaining gaps
+
+- Full Playwright e2e still needs Docker Desktop WSL integration or an already running local stack.
+- The known jsdom `Not implemented: navigation to another Document` warning remains to be isolated.
+- Full Vitest now passes with bounded workers but takes roughly 14 minutes.
+
+### Next recommended batch
+
+Proceed to `Frontend Batch 38 - JSDOM Navigation Warning Isolation`. Recommended scope: frontend test infrastructure only. Identify which unit/component test triggers the jsdom navigation warning, replace real document navigation with a deterministic mock or behavior assertion where appropriate, and keep production behavior unchanged. Do not broaden into product feature coverage, AI behavior, media validation, dark mode, or Playwright unless the warning source proves browser-only.
