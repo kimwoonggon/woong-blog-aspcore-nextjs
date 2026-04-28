@@ -23,6 +23,8 @@ interface CollectionItem {
 interface AdminCollectionSectionProps<T extends CollectionItem> {
   title: string
   emptyMessage: string
+  unavailableMessage?: string
+  unavailable?: boolean
   editHrefBase: string
   returnTo: string
   items: T[]
@@ -73,6 +75,8 @@ function buildAdminItemHref(base: string, id: unknown, returnTo: string) {
 function AdminCollectionSection<T extends CollectionItem>({
   title,
   emptyMessage,
+  unavailableMessage,
+  unavailable = false,
   editHrefBase,
   returnTo,
   items,
@@ -163,7 +167,7 @@ function AdminCollectionSection<T extends CollectionItem>({
         </div>
       ) : (
         <div className="rounded-2xl border border-dashed border-border/80 bg-background/60 p-6 text-sm text-muted-foreground">
-          {emptyMessage}
+          {unavailable ? unavailableMessage ?? emptyMessage : emptyMessage}
         </div>
       )}
 
@@ -212,14 +216,23 @@ function AdminCollectionSection<T extends CollectionItem>({
 interface AdminDashboardCollectionsProps {
   works: WorkAdminItem[]
   blogs: BlogAdminItem[]
+  worksUnavailable?: boolean
+  blogsUnavailable?: boolean
 }
 
-export function AdminDashboardCollections({ works, blogs }: AdminDashboardCollectionsProps) {
+export function AdminDashboardCollections({
+  works,
+  blogs,
+  worksUnavailable = false,
+  blogsUnavailable = false,
+}: AdminDashboardCollectionsProps) {
   return (
     <div className="space-y-10">
       <AdminCollectionSection
         title="Works"
         emptyMessage="No works found."
+        unavailableMessage="Works could not be loaded."
+        unavailable={worksUnavailable}
         editHrefBase="/admin/works"
         returnTo="/admin/dashboard"
         items={works}
@@ -232,6 +245,8 @@ export function AdminDashboardCollections({ works, blogs }: AdminDashboardCollec
       <AdminCollectionSection
         title="Blog Posts"
         emptyMessage="No blog posts found."
+        unavailableMessage="Blog posts could not be loaded."
+        unavailable={blogsUnavailable}
         editHrefBase="/admin/blog"
         returnTo="/admin/dashboard"
         items={blogs}

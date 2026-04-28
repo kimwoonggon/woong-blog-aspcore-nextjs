@@ -89,7 +89,9 @@ describe('admin page success and not-found states', () => {
       }),
     }))
     vi.doMock('@/lib/api/blogs', () => ({
-      fetchAdminBlogs: vi.fn(async () => []),
+      fetchAdminBlogs: vi.fn(async () => {
+        throw new Error('failed')
+      }),
     }))
 
     const DashboardPage = (await import('@/app/admin/dashboard/page')).default
@@ -97,6 +99,85 @@ describe('admin page success and not-found states', () => {
 
     expect(screen.getAllByText('Dashboard content lists are unavailable')[0]).toBeInTheDocument()
   }, 15000)
+
+  it('keeps loaded dashboard blog content and safe navigation when works fail to load', async () => {
+    vi.doMock('@/components/admin/AdminDashboardCollections', async () => (
+      await vi.importActual<typeof import('@/components/admin/AdminDashboardCollections')>('@/components/admin/AdminDashboardCollections')
+    ))
+    vi.doMock('@/lib/api/admin-dashboard', () => ({
+      fetchAdminDashboardSummary: vi.fn(async () => ({
+        worksCount: 1,
+        blogsCount: 1,
+        viewsCount: 7,
+      })),
+    }))
+    vi.doMock('@/lib/api/works', () => ({
+      fetchAdminWorks: vi.fn(async () => {
+        throw new Error('SQLSTATE 08006 stack trace from WoongBlog.Api status 500')
+      }),
+    }))
+    vi.doMock('@/lib/api/blogs', () => ({
+      fetchAdminBlogs: vi.fn(async () => [{
+        id: 'blog-1',
+        title: 'Loaded Blog',
+        slug: 'loaded-blog',
+        published: true,
+        publishedAt: '2024-01-02T00:00:00.000Z',
+        tags: ['safe'],
+        excerpt: 'Loaded blog excerpt',
+      }]),
+    }))
+
+    const DashboardPage = (await import('@/app/admin/dashboard/page')).default
+    const { container } = render(await DashboardPage({}))
+
+    expect(screen.getByText('Dashboard content lists are partially unavailable')).toBeInTheDocument()
+    expect(screen.getByText('Works could not be loaded.')).toBeInTheDocument()
+    expect(screen.getByText('Loaded Blog')).toBeInTheDocument()
+    expect(screen.getByText('safe')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open Site' })).toHaveAttribute('href', '/')
+    expect(screen.getByRole('link', { name: 'Members' })).toHaveAttribute('href', '/admin/members')
+    expect(screen.getByRole('link', { name: 'Blog Notion View' })).toHaveAttribute('href', '/admin/blog/notion')
+    expect(container.textContent).not.toMatch(/stack|trace|exception|status 500|sqlstate|npgsql|woongblog\.api/i)
+  }, 30000)
+
+  it('keeps loaded dashboard work content when blogs fail to load', async () => {
+    vi.doMock('@/components/admin/AdminDashboardCollections', async () => (
+      await vi.importActual<typeof import('@/components/admin/AdminDashboardCollections')>('@/components/admin/AdminDashboardCollections')
+    ))
+    vi.doMock('@/lib/api/admin-dashboard', () => ({
+      fetchAdminDashboardSummary: vi.fn(async () => ({
+        worksCount: 1,
+        blogsCount: 1,
+        viewsCount: 7,
+      })),
+    }))
+    vi.doMock('@/lib/api/works', () => ({
+      fetchAdminWorks: vi.fn(async () => [{
+        id: 'work-1',
+        title: 'Loaded Work',
+        slug: 'loaded-work',
+        published: true,
+        publishedAt: '2024-01-01T00:00:00.000Z',
+        category: 'platform',
+        tags: [],
+      }]),
+    }))
+    vi.doMock('@/lib/api/blogs', () => ({
+      fetchAdminBlogs: vi.fn(async () => {
+        throw new Error('SQLSTATE 08006 stack trace from WoongBlog.Api status 500')
+      }),
+    }))
+
+    const DashboardPage = (await import('@/app/admin/dashboard/page')).default
+    const { container } = render(await DashboardPage({}))
+
+    expect(screen.getByText('Dashboard content lists are partially unavailable')).toBeInTheDocument()
+    expect(screen.getByText('Blog posts could not be loaded.')).toBeInTheDocument()
+    expect(screen.getByText('Loaded Work')).toBeInTheDocument()
+    expect(screen.getByText('platform')).toBeInTheDocument()
+    expect(container.textContent).not.toMatch(/stack|trace|exception|status 500|sqlstate|npgsql|woongblog\.api/i)
+  }, 30000)
 
   it('renders a populated admin blog table when blogs load successfully', async () => {
     vi.doMock('@/lib/api/blogs', () => ({
