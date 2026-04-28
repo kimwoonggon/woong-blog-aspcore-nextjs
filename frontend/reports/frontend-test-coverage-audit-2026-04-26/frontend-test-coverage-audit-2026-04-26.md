@@ -1816,3 +1816,59 @@ Browser E2E note: no Playwright specs were changed or run. The requested dashboa
 ### Next recommended batch
 
 Proceed to `Frontend Batch 20 - Admin Error Boundary and Layout Navigation Reinforcement`. Cover admin dashboard error boundary sanitization, admin layout/sidebar navigation active-state safety, and no raw backend details in admin boundary-level failures. Avoid AI, WorkVideo upload, media validation, dark mode, pagination/search UI broadening, and browser-only tests unless a true browser-only behavior appears.
+
+## Batch 20 - Admin Error Boundary and Layout Navigation Reinforcement
+
+Date: 2026-04-28.
+
+Scope: frontend admin dashboard error boundary and admin sidebar active-state route matching. Backend behavior, API contracts, public pages, public error-boundary UI, pagination/search UI, AI, WorkVideo upload, media validation, dark mode, live services, real storage, seeded backend data, and browser-only tests were left out of scope.
+
+### Tests added or reinforced
+
+- `src/test/admin-dashboard-error-boundary.test.tsx`
+  - Dashboard error boundary renders fixed safe fallback copy when given a technical backend-like error.
+  - Dashboard error boundary retry action still calls `reset`.
+  - Boundary output does not leak raw API details, stack traces, provider names, status codes, `undefined`, or `null`.
+- `src/test/admin-sidebar-nav.test.tsx`
+  - Nested admin blog Notion route marks only the most specific sidebar item active.
+  - Similar-looking route text such as `/admin/blogger` does not overmatch the Blog nav item.
+  - Dynamic Work edit routes mark Works active through segment-aware path matching.
+
+### Production files changed
+
+- `src/app/admin/dashboard/error.tsx`
+  - Dashboard boundary no longer renders raw `error.message`.
+  - Recovery copy is fixed and user-safe while preserving the existing retry behavior.
+- `src/components/admin/AdminSidebarNav.tsx`
+  - Sidebar active-state matching now respects path segment boundaries.
+  - Most-specific matching prevents nested routes from marking broader sibling items active at the same time.
+
+### Behavior bugs found
+
+- Admin dashboard error boundary could expose raw backend details through `error.message`.
+- Admin sidebar could mark both `Blog` and `Blog Notion View` active on `/admin/blog/notion`.
+- Admin sidebar could mark `Blog` active for similar-looking non-child paths such as `/admin/blogger`.
+
+### Commands run
+
+| Command | Result | Notes |
+| --- | --- | --- |
+| `npx skills find nextjs error boundary admin navigation testing` | Passed | Results included Next.js and error-boundary skills; no new skill was installed. |
+| `npm test -- --run src/test/admin-dashboard-error-boundary.test.tsx src/test/admin-sidebar-nav.test.tsx` | Failed before fixes, then passed | RED run failed with 2 files and 3 failing assertions. Final focused Batch 20 slice passed with 2 files and 4 tests. |
+| `npm test -- --run` | Passed | Final run passed with 77 files and 515 tests. Known Pact V3 warnings and jsdom navigation warning appeared. |
+| `npm run lint` | Passed | 0 errors, 6 existing warnings. |
+| `npm run typecheck` | Passed | `tsc --noEmit` completed successfully. |
+| `npm run build` | Passed | Next.js production build completed successfully. |
+| `git diff --check` | Passed | No whitespace errors. |
+
+Browser E2E note: no Playwright specs were changed or run. The requested admin boundary and navigation behavior was covered deterministically through Vitest component tests.
+
+### Remaining admin boundary/navigation gaps
+
+- Admin root `src/app/admin/error.tsx` remains a candidate for the same raw-detail sanitization coverage.
+- Admin layout session fetch failure and non-admin role redirect branches remain mostly E2E-covered rather than isolated with server component tests.
+- Dashboard summary card numeric fallbacks are not yet audited for malformed non-number payloads.
+
+### Next recommended batch
+
+Proceed to `Frontend Batch 21 - Admin Root Boundary and Layout Auth Branch Reinforcement`. Cover admin root error boundary sanitization, admin layout session failure/non-admin redirect behavior where testable, and safe fallback copy without raw backend details. Avoid AI, WorkVideo upload, media validation, dark mode, pagination/search UI broadening, and browser-only tests unless a true browser-only behavior appears.

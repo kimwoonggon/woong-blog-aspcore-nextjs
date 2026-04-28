@@ -15,13 +15,24 @@ const navItems = [
   { href: '/admin/members', label: 'Members', icon: Users },
 ]
 
+function matchesAdminNavPath(pathname: string, href: string) {
+  return pathname === href || (href !== '/admin/dashboard' && pathname.startsWith(`${href}/`))
+}
+
 export function AdminSidebarNav() {
-  const pathname = usePathname()
+  const pathname = usePathname() ?? ''
+  const activeHref = navItems.reduce<string | null>((current, item) => {
+    if (!matchesAdminNavPath(pathname, item.href)) {
+      return current
+    }
+
+    return !current || item.href.length > current.length ? item.href : current
+  }, null)
 
   return (
     <nav aria-label="Admin navigation" className="flex flex-col gap-1">
       {navItems.map(({ href, label, icon: Icon }) => {
-        const isActive = pathname === href || (href !== '/admin/dashboard' && pathname.startsWith(href))
+        const isActive = activeHref === href
 
         return (
           <Button
