@@ -71,6 +71,36 @@ function errorResponse(status = 500) {
   } as Response
 }
 
+function loadedBlog() {
+  return {
+    id: 'blog-1',
+    title: 'Loaded Blog',
+    slug: 'loaded-blog',
+    excerpt: '',
+    tags: [],
+    published: true,
+    content: { html: '<p>Loaded</p>' },
+    publishedAt: null,
+    updatedAt: null,
+  }
+}
+
+function loadedWork() {
+  return {
+    id: 'work-1',
+    title: 'Loaded Work',
+    slug: 'loaded-work',
+    excerpt: '',
+    tags: [],
+    published: true,
+    category: 'Case study',
+    content: { html: '<p>Loaded</p>' },
+    publishedAt: null,
+    updatedAt: null,
+    videos: [],
+  }
+}
+
 describe('public detail admin actions', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -99,17 +129,7 @@ describe('public detail admin actions', () => {
   })
 
   it('sanitizes Blog detail delete failures and preserves the public page', async () => {
-    vi.mocked(fetchWithCsrf).mockResolvedValueOnce(okJson({
-      id: 'blog-1',
-      title: 'Loaded Blog',
-      slug: 'loaded-blog',
-      excerpt: '',
-      tags: [],
-      published: true,
-      content: { html: '<p>Loaded</p>' },
-      publishedAt: null,
-      updatedAt: null,
-    }))
+    vi.mocked(fetchWithCsrf).mockResolvedValueOnce(okJson(loadedBlog()))
     vi.mocked(deleteAdminBlog).mockRejectedValueOnce(
       new Error('SQLSTATE 23503 stack trace at WoongBlog.Api.Modules.Blogs status 500'),
     )
@@ -132,6 +152,41 @@ describe('public detail admin actions', () => {
     expect(screen.getByRole('button', { name: '삭제' })).toBeEnabled()
   })
 
+  it('uses only safe local Blog return paths after a successful detail delete', async () => {
+    mocks.searchParams = 'returnTo=%2Fblog%3Fpage%3D5%26pageSize%3D12'
+    vi.mocked(fetchWithCsrf).mockResolvedValueOnce(okJson(loadedBlog()))
+
+    render(<PublicBlogDetailAdminActions blogId="blog-1" />)
+
+    fireEvent.click(screen.getByRole('button', { name: '글 수정' }))
+    expect(await screen.findByText('Mock blog editor: Loaded Blog')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: '삭제' }))
+
+    await waitFor(() => {
+      expect(mocks.push).toHaveBeenCalledWith('/blog?page=5&pageSize=12')
+    })
+    expect(mocks.push).not.toHaveBeenCalledWith(expect.stringMatching(/^\/\//))
+    expect(mocks.refresh).toHaveBeenCalled()
+    expect(mocks.toast.success).toHaveBeenCalledWith('Study deleted')
+  })
+
+  it('falls back to the related Blog page when detail delete returnTo is unsafe', async () => {
+    mocks.searchParams = 'returnTo=%2F%2Fevil.example%2Fadmin&relatedPage=4'
+    vi.mocked(fetchWithCsrf).mockResolvedValueOnce(okJson(loadedBlog()))
+
+    render(<PublicBlogDetailAdminActions blogId="blog-1" />)
+
+    fireEvent.click(screen.getByRole('button', { name: '글 수정' }))
+    expect(await screen.findByText('Mock blog editor: Loaded Blog')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: '삭제' }))
+
+    await waitFor(() => {
+      expect(mocks.push).toHaveBeenCalledWith('/blog?page=4&pageSize=12')
+    })
+    expect(mocks.push).not.toHaveBeenCalledWith(expect.stringMatching(/^\/\//))
+    expect(mocks.refresh).toHaveBeenCalled()
+  })
+
   it('renders a safe Work detail editor load failure panel without raw backend details', async () => {
     vi.mocked(fetchWithCsrf).mockResolvedValueOnce(errorResponse(500))
 
@@ -146,19 +201,7 @@ describe('public detail admin actions', () => {
   })
 
   it('sanitizes Work detail delete failures and preserves the public page', async () => {
-    vi.mocked(fetchWithCsrf).mockResolvedValueOnce(okJson({
-      id: 'work-1',
-      title: 'Loaded Work',
-      slug: 'loaded-work',
-      excerpt: '',
-      tags: [],
-      published: true,
-      category: 'Case study',
-      content: { html: '<p>Loaded</p>' },
-      publishedAt: null,
-      updatedAt: null,
-      videos: [],
-    }))
+    vi.mocked(fetchWithCsrf).mockResolvedValueOnce(okJson(loadedWork()))
     vi.mocked(deleteAdminWork).mockRejectedValueOnce(
       new Error('Npgsql.PostgresException stack trace at WoongBlog.Api.Modules.Works status 500'),
     )
@@ -179,5 +222,40 @@ describe('public detail admin actions', () => {
     expect(mocks.refresh).not.toHaveBeenCalled()
     expect(mocks.toast.success).not.toHaveBeenCalled()
     expect(screen.getByRole('button', { name: '삭제' })).toBeEnabled()
+  })
+
+  it('uses only safe local Work return paths after a successful detail delete', async () => {
+    mocks.searchParams = 'returnTo=%2Fworks%3Fpage%3D6%26pageSize%3D8'
+    vi.mocked(fetchWithCsrf).mockResolvedValueOnce(okJson(loadedWork()))
+
+    render(<PublicWorkDetailAdminActions workId="work-1" />)
+
+    fireEvent.click(screen.getByRole('button', { name: '작업 수정' }))
+    expect(await screen.findByText('Mock work editor: Loaded Work')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: '삭제' }))
+
+    await waitFor(() => {
+      expect(mocks.push).toHaveBeenCalledWith('/works?page=6&pageSize=8')
+    })
+    expect(mocks.push).not.toHaveBeenCalledWith(expect.stringMatching(/^\/\//))
+    expect(mocks.refresh).toHaveBeenCalled()
+    expect(mocks.toast.success).toHaveBeenCalledWith('Work deleted')
+  })
+
+  it('falls back to the related Work page when detail delete returnTo is unsafe', async () => {
+    mocks.searchParams = 'returnTo=%2F%2Fevil.example%2Fworks&relatedPage=3'
+    vi.mocked(fetchWithCsrf).mockResolvedValueOnce(okJson(loadedWork()))
+
+    render(<PublicWorkDetailAdminActions workId="work-1" />)
+
+    fireEvent.click(screen.getByRole('button', { name: '작업 수정' }))
+    expect(await screen.findByText('Mock work editor: Loaded Work')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: '삭제' }))
+
+    await waitFor(() => {
+      expect(mocks.push).toHaveBeenCalledWith('/works?page=3&pageSize=8')
+    })
+    expect(mocks.push).not.toHaveBeenCalledWith(expect.stringMatching(/^\/\//))
+    expect(mocks.refresh).toHaveBeenCalled()
   })
 })
