@@ -57,6 +57,24 @@ describe('AdminLayout auth protection', () => {
     expect(navigationMocks.redirect).toHaveBeenCalledWith('/')
   }, 30000)
 
+  it('redirects authenticated sessions without an admin role home before rendering admin chrome', async () => {
+    serverMocks.fetchServerSession.mockResolvedValue({ authenticated: true })
+
+    const AdminLayout = (await import('@/app/admin/layout')).default
+
+    await expect(AdminLayout({ children: <div>Protected admin content</div> })).rejects.toThrow('redirect:/')
+    expect(navigationMocks.redirect).toHaveBeenCalledWith('/')
+  }, 30000)
+
+  it('does not render admin chrome when the session check fails before layout render', async () => {
+    serverMocks.fetchServerSession.mockRejectedValue(new Error('SQLSTATE 08006 stack trace from session status 500'))
+
+    const AdminLayout = (await import('@/app/admin/layout')).default
+
+    await expect(AdminLayout({ children: <div>Protected admin content</div> })).rejects.toThrow('SQLSTATE 08006')
+    expect(navigationMocks.redirect).not.toHaveBeenCalled()
+  }, 30000)
+
   it('renders admin navigation and protected content for admin sessions', async () => {
     const AdminLayout = (await import('@/app/admin/layout')).default
     render(await AdminLayout({ children: <div>Protected admin content</div> }))

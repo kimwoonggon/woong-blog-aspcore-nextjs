@@ -1872,3 +1872,54 @@ Browser E2E note: no Playwright specs were changed or run. The requested admin b
 ### Next recommended batch
 
 Proceed to `Frontend Batch 21 - Admin Root Boundary and Layout Auth Branch Reinforcement`. Cover admin root error boundary sanitization, admin layout session failure/non-admin redirect behavior where testable, and safe fallback copy without raw backend details. Avoid AI, WorkVideo upload, media validation, dark mode, pagination/search UI broadening, and browser-only tests unless a true browser-only behavior appears.
+
+## Batch 21 - Admin Root Boundary and Layout Auth Branch Reinforcement
+
+Date: 2026-04-28.
+
+Scope: frontend admin root error boundary and admin layout auth edge-branch coverage. Backend behavior, API contracts, public pages, public error-boundary UI, pagination/search UI, AI, WorkVideo upload, media validation, dark mode, live services, real storage, seeded backend data, and browser-only tests were left out of scope.
+
+### Tests added or reinforced
+
+- `src/test/admin-root-error-boundary.test.tsx`
+  - Admin root error boundary renders fixed safe fallback copy when given a technical backend-like error.
+  - Admin root error boundary retry action still calls `reset`.
+  - Boundary output does not leak raw API details, stack traces, provider names, status codes, `undefined`, or `null`.
+- `src/test/admin-layout-auth.test.tsx`
+  - Authenticated sessions without an admin role redirect home before admin chrome renders.
+  - Session check failures reject before admin chrome or protected content render.
+  - Existing anonymous, non-admin, and admin success layout auth branches remain green.
+
+### Production files changed
+
+- `src/app/admin/error.tsx`
+  - Admin root boundary no longer renders raw `error.message`.
+  - Recovery copy is fixed and user-safe while preserving the existing retry behavior.
+
+### Behavior bugs found
+
+- Admin root error boundary could expose raw backend details through `error.message`.
+
+### Commands run
+
+| Command | Result | Notes |
+| --- | --- | --- |
+| `npx skills find nextjs admin error boundary layout auth testing` | Passed | Results included admin-dashboard, Next.js, and error-boundary skills; no new skill was installed. |
+| `npm test -- --run src/test/admin-root-error-boundary.test.tsx src/test/admin-layout-auth.test.tsx` | Failed before fixes, then passed | Initial import setup correction was needed. RED run failed with 1 root-boundary assertion. Final focused Batch 21 slice passed with 2 files and 6 tests. |
+| `npm test -- --run` | Passed | Final run passed with 78 files and 518 tests. Known Pact V3 warnings and jsdom navigation warning appeared. |
+| `npm run lint` | Passed | 0 errors, 6 existing warnings. |
+| `npm run typecheck` | Passed | `tsc --noEmit` completed successfully. |
+| `npm run build` | Passed | Next.js production build completed successfully. |
+| `git diff --check` | Passed | No whitespace errors. |
+
+Browser E2E note: no Playwright specs were changed or run. The requested admin boundary and layout auth branch behavior was covered deterministically through Vitest component/server tests.
+
+### Remaining admin boundary/layout gaps
+
+- Dashboard summary card numeric fallbacks are not yet audited for malformed non-number payloads.
+- Admin layout session fetch failures are covered as thrown server errors, but route-level integration into the sanitized root boundary is not covered with Playwright.
+- Admin members/pages/Notion list page malformed data fallbacks remain less complete than blog/work list fallbacks.
+
+### Next recommended batch
+
+Proceed to `Frontend Batch 22 - Admin Dashboard Summary Fallback Reinforcement`. Cover admin dashboard summary cards and counts with malformed, missing, negative, or non-number payloads. Verify no `NaN`, `undefined`, `null`, raw backend details, or broken labels render. Avoid AI, WorkVideo upload, media validation, dark mode, pagination/search UI broadening, and browser-only tests unless a true browser-only behavior appears.
