@@ -53,6 +53,10 @@ function normalizeRouteSegment(value: unknown) {
   return typeof value === 'string' && value.trim() ? encodeURIComponent(value.trim()) : ''
 }
 
+function normalizeMutationId(value: unknown) {
+  return typeof value === 'string' && value.trim() ? value.trim() : ''
+}
+
 function buildAdminBlogHref(id: unknown, returnTo: string) {
   const segment = normalizeRouteSegment(id)
   return segment ? `/admin/blog/${segment}?returnTo=${returnTo}` : `/admin/blog?returnTo=${returnTo}`
@@ -151,14 +155,18 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
     const start = (currentPage - 1) * pageSize
     return filteredBlogs.slice(start, start + pageSize)
   }, [currentPage, filteredBlogs, pageSize])
-  const visibleIds = useMemo(() => visibleBlogs.map((blog) => blog.id), [visibleBlogs])
+  const visibleIds = useMemo(() => (
+    visibleBlogs.map((blog) => normalizeMutationId(blog.id)).filter(Boolean)
+  ), [visibleBlogs])
   const effectiveSelectedIds = useMemo(
-    () => selectedIds.filter((id) => filteredBlogs.some((blog) => blog.id === id)),
+    () => selectedIds.filter((id) => filteredBlogs.some((blog) => normalizeMutationId(blog.id) === id)),
     [filteredBlogs, selectedIds],
   )
   const selectedCount = effectiveSelectedIds.length
   const selectedBlogTitles = useMemo(
-    () => blogs.filter((blog) => effectiveSelectedIds.includes(blog.id)).map((blog) => blog.title),
+    () => blogs
+      .filter((blog) => effectiveSelectedIds.includes(normalizeMutationId(blog.id)))
+      .map((blog) => normalizeDisplayText(blog.title, 'Untitled blog post')),
     [blogs, effectiveSelectedIds],
   )
   const allSelected = visibleBlogs.length > 0 && visibleIds.every((id) => effectiveSelectedIds.includes(id))
@@ -262,6 +270,10 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
   }, [currentPage, pageSize, pathname, query, router, searchParamsKey])
 
   function toggle(id: string) {
+    if (!id) {
+      return
+    }
+
     setSelectedIds((current) =>
       current.includes(id) ? current.filter((item) => item !== id) : [...current, id],
     )
@@ -276,12 +288,13 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
   }
 
   function requestDelete(ids: string[], title: string, restoreFocusTarget?: HTMLElement | null) {
-    if (ids.length === 0 || isPending) {
+    const validIds = ids.map(normalizeMutationId).filter(Boolean)
+    if (validIds.length === 0 || isPending) {
       return
     }
 
     deleteRestoreFocusRef.current = restoreFocusTarget ?? null
-    setPendingDelete({ ids, title })
+    setPendingDelete({ ids: validIds, title })
   }
 
   function closeDeleteDialog({ restoreFocus = true } = {}) {
@@ -304,7 +317,7 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
     startTransition(async () => {
       try {
         if (pendingDelete.ids.length === 1) {
-          const blog = blogs.find((item) => item.id === pendingDelete.ids[0])
+          const blog = blogs.find((item) => normalizeMutationId(item.id) === pendingDelete.ids[0])
           await deleteAdminBlog(pendingDelete.ids[0], blog?.slug)
         } else {
           await deleteManyAdminBlogs(pendingDelete.ids)
@@ -385,6 +398,7 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
                 aria-label="Select all blogs"
                 checked={allSelected}
                 onCheckedChange={toggleAll}
+                disabled={visibleIds.length === 0}
               />
             </TableHead>
             <TableHead>Title</TableHead>
@@ -399,6 +413,7 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
             visibleBlogs.map((blog, index) => {
               const title = normalizeDisplayText(blog.title, 'Untitled blog post')
               const tags = normalizeTextArray(blog.tags)
+              const blogId = normalizeMutationId(blog.id)
               const adminHref = buildAdminBlogHref(blog.id, returnTo)
               const publicHref = buildPublicBlogHref(blog.slug)
 
@@ -406,13 +421,14 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
               <TableRow
                 key={normalizeDisplayText(blog.id, `blog-${index}`)}
                 data-testid="admin-blog-row"
-                data-state={selectedSet.has(blog.id) ? 'selected' : undefined}
+                data-state={blogId && selectedSet.has(blogId) ? 'selected' : undefined}
               >
                 <TableCell>
                   <Checkbox
                     aria-label={`Select ${title}`}
-                    checked={selectedSet.has(blog.id)}
-                    onCheckedChange={() => toggle(blog.id)}
+                    checked={blogId ? selectedSet.has(blogId) : false}
+                    onCheckedChange={() => toggle(blogId)}
+                    disabled={!blogId}
                   />
                 </TableCell>
                 <TableCell className="min-w-0 font-medium">
@@ -481,8 +497,8 @@ export function AdminBlogTableClient({ blogs }: AdminBlogTableClientProps) {
                       className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
                       aria-label={`Delete post: ${title}`}
                       title="Delete"
-                      onClick={(event) => requestDelete([blog.id], title, event.currentTarget)}
-                      disabled={isPending}
+                      onClick={(event) => requestDelete([blogId], title, event.currentTarget)}
+                      disabled={isPending || !blogId}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>

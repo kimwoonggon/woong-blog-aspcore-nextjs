@@ -207,6 +207,30 @@ describe('admin bulk selection tables', () => {
     expect(container.textContent).not.toMatch(/undefined|null/i)
   })
 
+  it('disables blog mutation controls when an admin blog id is missing', () => {
+    const malformedBlog = {
+      id: null,
+      title: 'Missing Id Blog',
+      slug: 'missing-id-blog',
+      excerpt: '',
+      tags: [],
+      published: true,
+      publishedAt: null,
+    } as unknown as BlogAdminItem
+
+    render(<AdminBlogTableClient blogs={[malformedBlog]} />)
+
+    expect(screen.getByRole('checkbox', { name: 'Select all blogs' })).toBeDisabled()
+    expect(screen.getByRole('checkbox', { name: 'Select Missing Id Blog' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Delete post: Missing Id Blog' })).toBeDisabled()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete post: Missing Id Blog' }))
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.queryByText('Delete Selected')).not.toBeInTheDocument()
+    expect(deleteAdminBlog).not.toHaveBeenCalled()
+  })
+
   it('clears blog bulk selection when the search query changes', () => {
     render(
       <AdminBlogTableClient
@@ -344,6 +368,31 @@ describe('admin bulk selection tables', () => {
       '/admin/works?returnTo=%2Fadmin%2Fblog%3FpageSize%3D12',
     )
     expect(container.textContent).not.toMatch(/undefined|null/i)
+  })
+
+  it('disables work mutation controls when an admin work id is missing', () => {
+    const malformedWork = {
+      id: null,
+      title: 'Missing Id Work',
+      slug: 'missing-id-work',
+      excerpt: '',
+      tags: [],
+      published: true,
+      publishedAt: null,
+      category: 'ops',
+    } as unknown as WorkAdminItem
+
+    render(<AdminWorksTableClient works={[malformedWork]} />)
+
+    expect(screen.getByRole('checkbox', { name: 'Select all works' })).toBeDisabled()
+    expect(screen.getByRole('checkbox', { name: 'Select Missing Id Work' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Delete work: Missing Id Work' })).toBeDisabled()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete work: Missing Id Work' }))
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.queryByText('Delete Selected')).not.toBeInTheDocument()
+    expect(deleteAdminWork).not.toHaveBeenCalled()
   })
 
   it('clears works bulk selection when the search query changes', () => {

@@ -1702,3 +1702,61 @@ Browser E2E note: no Playwright specs were changed or run. The requested admin l
 ### Next recommended batch
 
 Proceed to `Frontend Batch 18 - Admin Mutation Guard and Fetch Failure Reinforcement`. Cover admin list mutation controls and fetch failure behavior where frontend-owned. Include missing-id delete/edit affordances, failed delete feedback without row loss, and admin blog/work list page fetch failure states if deterministic through server component tests. Avoid AI, WorkVideo upload, media validation, dark mode, pagination/search UI broadening, and browser-only tests unless a true browser-only behavior appears.
+
+## Batch 18 - Admin Mutation Guard and Fetch Failure Reinforcement
+
+Date: 2026-04-28.
+
+Scope: frontend admin blog/work list mutation guard reinforcement for malformed rows without usable ids. Backend behavior, API contracts, admin fetch/data source behavior, admin mutation helper network contracts, public pages, public error-boundary UI, pagination/search UI, AI, WorkVideo upload, media validation, dark mode, live services, real storage, seeded backend data, and browser-only tests were left out of scope.
+
+### Tests added or reinforced
+
+- `src/test/admin-bulk-table.test.tsx`
+  - Blog rows with missing ids disable select-all, row selection, and row delete controls.
+  - Work rows with missing ids disable select-all, row selection, and row delete controls.
+  - Clicking disabled missing-id delete controls does not open a confirmation dialog or call delete APIs.
+  - Existing failed-delete tests continue to verify row preservation and error feedback.
+- Existing `src/test/admin-page-success-states.test.tsx`
+  - Admin blog/works list fetch failures render safe failure panels without raw backend details.
+
+### Production files changed
+
+- `src/components/admin/AdminBlogTableClient.tsx`
+  - Blog table selection now includes only normalized usable ids.
+  - Missing-id blog rows disable row selection and delete controls.
+  - Delete requests filter out unusable ids before opening mutation confirmation.
+- `src/components/admin/AdminWorksTableClient.tsx`
+  - Work table selection now includes only normalized usable ids.
+  - Missing-id work rows disable row selection and delete controls.
+  - Delete requests filter out unusable ids before opening mutation confirmation.
+
+### Behavior bugs found
+
+- Admin blog rows with missing ids still exposed enabled select-all/selection controls.
+- Admin work rows with missing ids still exposed enabled select-all/selection controls.
+- Missing-id rows could reach mutation affordances even though no valid row id could be submitted safely.
+
+### Commands run
+
+| Command | Result | Notes |
+| --- | --- | --- |
+| `npx skills find react admin mutation testing error state` | Passed | Results included mutation-testing/admin-react skills; no new skill was installed. |
+| `npm test -- --run src/test/admin-bulk-table.test.tsx` | Failed before fixes, then passed | Final focused Batch 18 slice passed with 1 file and 25 tests. |
+| `npm test -- --run` | Passed | Final run passed with 75 files and 509 tests. Known Pact V3 warnings and jsdom navigation warning appeared. |
+| `npm run lint` | Passed | 0 errors, 6 existing warnings. |
+| `npm run typecheck` | Passed | `tsc --noEmit` completed successfully. |
+| `npm run build` | Passed | Next.js production build completed successfully. |
+| `git diff --check` | Passed | No whitespace errors. |
+
+Browser E2E note: no Playwright specs were changed or run. The requested admin mutation guard behavior was covered deterministically through Vitest component tests.
+
+### Remaining admin mutation/navigation gaps
+
+- Missing-id edit links now route to the list page, but there is no explicit disabled edit affordance.
+- Admin mutation helper unit tests still focus on API behavior indirectly through component tests.
+- Admin dashboard collection cards remain read-only links and have no mutation controls to guard.
+- Admin fetch failure coverage exists for blog/works list pages, but dashboard partial failure messaging could be expanded separately.
+
+### Next recommended batch
+
+Proceed to `Frontend Batch 19 - Admin Dashboard Partial Failure and Navigation Reinforcement`. Cover admin dashboard partial content failures, dashboard collection link fallbacks, and admin navigation route safety where deterministic. Avoid AI, WorkVideo upload, media validation, dark mode, pagination/search UI broadening, and browser-only tests unless a true browser-only behavior appears.

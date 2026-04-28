@@ -53,6 +53,10 @@ function normalizeRouteSegment(value: unknown) {
   return typeof value === 'string' && value.trim() ? encodeURIComponent(value.trim()) : ''
 }
 
+function normalizeMutationId(value: unknown) {
+  return typeof value === 'string' && value.trim() ? value.trim() : ''
+}
+
 function buildAdminWorkHref(id: unknown, returnTo: string) {
   const segment = normalizeRouteSegment(id)
   return segment ? `/admin/works/${segment}?returnTo=${returnTo}` : `/admin/works?returnTo=${returnTo}`
@@ -155,9 +159,11 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
     const start = (currentPage - 1) * pageSize
     return filteredWorks.slice(start, start + pageSize)
   }, [currentPage, filteredWorks, pageSize])
-  const visibleIds = useMemo(() => visibleWorks.map((work) => work.id), [visibleWorks])
+  const visibleIds = useMemo(() => (
+    visibleWorks.map((work) => normalizeMutationId(work.id)).filter(Boolean)
+  ), [visibleWorks])
   const effectiveSelectedIds = useMemo(
-    () => selectedIds.filter((id) => filteredWorks.some((work) => work.id === id)),
+    () => selectedIds.filter((id) => filteredWorks.some((work) => normalizeMutationId(work.id) === id)),
     [filteredWorks, selectedIds],
   )
   const selectedCount = effectiveSelectedIds.length
@@ -242,6 +248,10 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
   }, [currentPage, pageSize, pathname, query, router, searchParamsKey])
 
   function toggle(id: string) {
+    if (!id) {
+      return
+    }
+
     setSelectedIds((current) =>
       current.includes(id) ? current.filter((item) => item !== id) : [...current, id],
     )
@@ -256,12 +266,13 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
   }
 
   function requestDelete(ids: string[], title: string, restoreFocusTarget?: HTMLElement | null) {
-    if (ids.length === 0 || isPending) {
+    const validIds = ids.map(normalizeMutationId).filter(Boolean)
+    if (validIds.length === 0 || isPending) {
       return
     }
 
     deleteRestoreFocusRef.current = restoreFocusTarget ?? null
-    setPendingDelete({ ids, title })
+    setPendingDelete({ ids: validIds, title })
   }
 
   function closeDeleteDialog({ restoreFocus = true } = {}) {
@@ -284,7 +295,7 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
     startTransition(async () => {
       try {
         if (pendingDelete.ids.length === 1) {
-          const work = workItems.find((item) => item.id === pendingDelete.ids[0])
+          const work = workItems.find((item) => normalizeMutationId(item.id) === pendingDelete.ids[0])
           await deleteAdminWork(pendingDelete.ids[0], work?.slug)
         } else {
           await deleteManyAdminWorks(pendingDelete.ids)
@@ -341,6 +352,7 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
                 aria-label="Select all works"
                 checked={allSelected}
                 onCheckedChange={toggleAll}
+                disabled={visibleIds.length === 0}
               />
             </TableHead>
             <TableHead>Thumbnail</TableHead>
@@ -356,6 +368,7 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
             visibleWorks.map((work, index) => {
               const title = normalizeDisplayText(work.title, 'Untitled work')
               const category = normalizeDisplayText(work.category, 'Uncategorized')
+              const workId = normalizeMutationId(work.id)
               const adminHref = buildAdminWorkHref(work.id, returnTo)
               const publicHref = buildPublicWorkHref(work.slug)
 
@@ -363,13 +376,14 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
               <TableRow
                 key={normalizeDisplayText(work.id, `work-${index}`)}
                 data-testid="admin-work-row"
-                data-state={selectedSet.has(work.id) ? 'selected' : undefined}
+                data-state={workId && selectedSet.has(workId) ? 'selected' : undefined}
               >
                 <TableCell>
                   <Checkbox
                     aria-label={`Select ${title}`}
-                    checked={selectedSet.has(work.id)}
-                    onCheckedChange={() => toggle(work.id)}
+                    checked={workId ? selectedSet.has(workId) : false}
+                    onCheckedChange={() => toggle(workId)}
+                    disabled={!workId}
                   />
                 </TableCell>
                 <TableCell>
@@ -444,8 +458,8 @@ export function AdminWorksTableClient({ works }: AdminWorksTableClientProps) {
                       className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
                       aria-label={`Delete work: ${title}`}
                       title="Delete"
-                      onClick={(event) => requestDelete([work.id], title, event.currentTarget)}
-                      disabled={isPending}
+                      onClick={(event) => requestDelete([workId], title, event.currentTarget)}
+                      disabled={isPending || !workId}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
