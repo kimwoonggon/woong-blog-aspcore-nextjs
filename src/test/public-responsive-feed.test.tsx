@@ -258,6 +258,45 @@ describe('PublicResponsiveFeed', () => {
     expect(container.textContent).not.toMatch(/stack|trace|exception|status 500|sqlstate|npgsql|woongblog\.api/i)
   })
 
+  it('uses safe fallback labels for invalid public feed dates', () => {
+    setViewportMode('desktop')
+
+    const invalidBlogItem = {
+      ...buildBlogItems('invalid-study', 1)[0],
+      publishedAt: 'not-a-date',
+    }
+    const invalidWorkItem = {
+      ...buildWorkItems('invalid-work', 1)[0],
+      publishedAt: 'not-a-date',
+    }
+
+    const { container, rerender } = render(
+      <PublicResponsiveFeed
+        kind="blog"
+        query=""
+        desktopPayload={{ items: [invalidBlogItem], page: 1, pageSize: 12, totalItems: 1, totalPages: 1 }}
+        mobileInitialPayload={{ items: [invalidBlogItem], page: 1, pageSize: 10, totalItems: 1, totalPages: 1 }}
+        desktopReturnTo={encodeURIComponent('/blog?page=1&pageSize=12')}
+      />,
+    )
+
+    expect(screen.getByText('Unknown Date')).toBeInTheDocument()
+    expect(container.textContent).not.toMatch(/Invalid Date|RangeError/i)
+
+    rerender(
+      <PublicResponsiveFeed
+        kind="works"
+        query=""
+        desktopPayload={{ items: [invalidWorkItem], page: 1, pageSize: 8, totalItems: 1, totalPages: 1 }}
+        mobileInitialPayload={{ items: [invalidWorkItem], page: 1, pageSize: 10, totalItems: 1, totalPages: 1 }}
+        desktopReturnTo={encodeURIComponent('/works?page=1&pageSize=8')}
+      />,
+    )
+
+    expect(screen.getByText('Unknown Date')).toBeInTheDocument()
+    expect(container.textContent).not.toMatch(/Invalid Date|RangeError/i)
+  })
+
   it('renders public works empty states without admin affordances or raw failure details', () => {
     setViewportMode('desktop')
 

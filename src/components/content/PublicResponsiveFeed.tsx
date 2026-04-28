@@ -36,23 +36,32 @@ const studyRestoreHistoryKey = '__studyFeedRestore'
 const loadMoreErrorMessage = 'Failed to load more items.'
 const restoreErrorMessage = 'Failed to restore the Study feed.'
 
+function formatDateOrUnknown(publishedAt: string | null | undefined, options: Intl.DateTimeFormatOptions) {
+  if (!publishedAt) {
+    return 'Unknown Date'
+  }
+
+  const date = new Date(publishedAt)
+  if (Number.isNaN(date.getTime())) {
+    return 'Unknown Date'
+  }
+
+  return date.toLocaleDateString('en-US', options)
+}
+
 function formatBlogDate(publishedAt?: string | null) {
-  return publishedAt
-    ? new Date(publishedAt).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-      })
-    : 'Unknown Date'
+  return formatDateOrUnknown(publishedAt, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  })
 }
 
 function formatWorkDate(publishedAt?: string | null) {
-  return publishedAt
-    ? new Date(publishedAt).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-      })
-    : 'Unknown Date'
+  return formatDateOrUnknown(publishedAt, {
+    year: 'numeric',
+    month: 'short',
+  })
 }
 
 function isWorkItem(item: FeedItem): item is WorkListItem {

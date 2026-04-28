@@ -27,9 +27,25 @@ function safeDecodeSlug(slug: string) {
     }
 }
 
+function normalizeStaticParamSlug(slug: unknown) {
+    if (typeof slug !== 'string') {
+        return null
+    }
+
+    const cleanedSlug = slug.trim()
+    if (!cleanedSlug || cleanedSlug.includes('/') || cleanedSlug.includes('?') || cleanedSlug.includes('#')) {
+        return null
+    }
+
+    return cleanedSlug
+}
+
 export async function generateStaticParams() {
     const works = await fetchAllPublicWorks().catch(() => [])
-    return works.map((work) => ({ slug: work.slug }))
+    return works.flatMap((work) => {
+        const slug = normalizeStaticParamSlug(work.slug)
+        return slug ? [{ slug }] : []
+    })
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {

@@ -1467,3 +1467,65 @@ Browser E2E note: no Playwright specs were changed or run. The requested metadat
 ### Next recommended batch
 
 Proceed to `Frontend Batch 14 - Public Static Route and Date Display Reinforcement`. Cover `robots.ts`, blog/work `generateStaticParams` malformed slug filtering if frontend-owned, and public list/card date display fallbacks for invalid or missing dates through Vitest tests. Avoid public error-boundary UI, pagination/search UI, AI, WorkVideo upload, media validation, and browser-only tests unless a true browser-only behavior appears.
+
+## Batch 14 - Public Static Route and Date Display Reinforcement
+
+Date: 2026-04-28.
+
+Scope: frontend public static route helper and date display fallback reinforcement for robots output, blog/work `generateStaticParams`, public responsive feed dates, and related content dates. Backend behavior, API contracts, public error-boundary UI, pagination/search UI, AI, WorkVideo upload, media validation, dark mode, live services, real storage, seeded backend data, home page date formatting, and browser-only tests were left out of scope.
+
+### Tests added or reinforced
+
+- `src/test/public-static-routes.test.ts`
+  - `robots.ts` emits root allow, admin disallow, and a normalized sitemap URL.
+  - Blog/work `generateStaticParams` trims valid Unicode slugs.
+  - Blog/work `generateStaticParams` preserves unsafe-looking but valid text slugs.
+  - Blog/work `generateStaticParams` filters empty, nullish, slash, query, and hash slugs.
+- `src/test/public-responsive-feed.test.tsx`
+  - Blog and Work public feed cards render `Unknown Date` for invalid dates.
+  - Public feed cards do not leak `Invalid Date` or `RangeError` text.
+- `src/test/related-content-list.test.tsx`
+  - Related content cards render `—` for invalid or missing dates.
+  - Related content rendering no longer throws on invalid date input.
+
+### Production files changed
+
+- `src/app/(public)/blog/[slug]/page.tsx`
+  - `generateStaticParams` now trims public slugs and filters malformed static route params.
+- `src/app/(public)/works/[slug]/page.tsx`
+  - `generateStaticParams` now trims public slugs and filters malformed static route params.
+- `src/components/content/PublicResponsiveFeed.tsx`
+  - Public blog/work feed date formatting now returns `Unknown Date` for invalid dates.
+- `src/components/content/RelatedContentList.tsx`
+  - Related card date formatting now returns `—` for invalid dates instead of throwing.
+
+### Behavior bugs found
+
+- Blog/work `generateStaticParams` could return blank, nullish, slash, query, or hash slugs from malformed API payloads.
+- Public feed cards could display `Invalid Date` for malformed public blog/work dates.
+- Related content cards could throw `RangeError: Invalid time value` for malformed dates.
+
+### Commands run
+
+| Command | Result | Notes |
+| --- | --- | --- |
+| `npx skills find nextjs static params date testing` | Passed | Results were low-install external Next.js skills; no new skill was installed. |
+| `npm test -- --run src/test/public-static-routes.test.ts src/test/public-responsive-feed.test.tsx src/test/related-content-list.test.tsx` | Failed before fixes, then passed | Final focused Batch 14 slice passed with 3 files and 25 tests. |
+| `npm test -- --run` | Passed | Final run passed with 73 files and 498 tests. Known Pact V3 warnings and jsdom navigation warning appeared. |
+| `npm run lint` | Passed | 0 errors, 6 existing warnings. |
+| `npm run typecheck` | Passed | `tsc --noEmit` completed successfully. |
+| `npm run build` | Passed | Next.js production build completed successfully. |
+| `git diff --check` | Passed | No whitespace errors. |
+
+Browser E2E note: no Playwright specs were changed or run. The requested static route and date display behavior was covered deterministically through Vitest tests.
+
+### Remaining static route and date gaps
+
+- Home page featured/recent card date formatting remains server-component-local and still needs invalid date coverage.
+- Public detail adjacent/related sort ordering still uses direct `new Date(...).getTime()` in page modules and is not covered for invalid dates.
+- Admin dashboard/list date formatting remains outside this public-only batch.
+- Static params filtering is duplicated in blog/work route modules; extract only if another route starts needing the same behavior.
+
+### Next recommended batch
+
+Proceed to `Frontend Batch 15 - Public Home Date and Detail Ordering Reinforcement`. Cover public home featured/recent card invalid date fallbacks and blog/work detail adjacent/related ordering when dates are invalid or missing through Vitest tests. Avoid public error-boundary UI, pagination/search UI, AI, WorkVideo upload, media validation, dark mode, and browser-only tests unless a true browser-only behavior appears.

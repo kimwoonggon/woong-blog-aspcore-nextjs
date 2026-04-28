@@ -120,4 +120,23 @@ describe('RelatedContentList', () => {
     expect(screen.getByText('Page 3 of 3')).toBeInTheDocument()
     expect(screen.getByTestId('related-blog-current-card')).toHaveTextContent('Post 5')
   })
+
+  it('renders fallback dates for invalid or missing related item dates', () => {
+    const dateEdgeItems = [
+      { id: 'post-invalid', slug: 'post-invalid', title: 'Malformed Date Post', excerpt: 'Excerpt', publishedAt: 'not-a-date' },
+      { id: 'post-missing', slug: 'post-missing', title: 'Missing Date Post', excerpt: 'Excerpt', publishedAt: null },
+    ]
+
+    const { container } = render(
+      <RelatedContentList
+        heading="More Studies"
+        hrefBase="/blog"
+        items={dateEdgeItems}
+        testIdBase="related-blog"
+      />,
+    )
+
+    expect(screen.getAllByText('—')).toHaveLength(2)
+    expect(container.textContent).not.toMatch(/Invalid Date|RangeError/i)
+  })
 })

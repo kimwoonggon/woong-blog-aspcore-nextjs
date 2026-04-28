@@ -31,9 +31,25 @@ function buildBlogMetadataPath(slug: string) {
     return cleanedSlug ? `/blog/${encodeURIComponent(cleanedSlug)}` : '/blog'
 }
 
+function normalizeStaticParamSlug(slug: unknown) {
+    if (typeof slug !== 'string') {
+        return null
+    }
+
+    const cleanedSlug = slug.trim()
+    if (!cleanedSlug || cleanedSlug.includes('/') || cleanedSlug.includes('?') || cleanedSlug.includes('#')) {
+        return null
+    }
+
+    return cleanedSlug
+}
+
 export async function generateStaticParams() {
     const blogs = await fetchAllPublicBlogs().catch(() => [])
-    return blogs.map((blog) => ({ slug: blog.slug }))
+    return blogs.flatMap((blog) => {
+        const slug = normalizeStaticParamSlug(blog.slug)
+        return slug ? [{ slug }] : []
+    })
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
