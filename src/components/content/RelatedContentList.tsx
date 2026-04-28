@@ -35,7 +35,12 @@ const relatedDateFormatter = new Intl.DateTimeFormat('en', {
 })
 
 function formatPublishedDate(publishedAt?: string | null) {
-  return publishedAt ? relatedDateFormatter.format(new Date(publishedAt)) : '—'
+  if (!publishedAt) {
+    return '—'
+  }
+
+  const date = new Date(publishedAt)
+  return Number.isNaN(date.getTime()) ? '—' : relatedDateFormatter.format(date)
 }
 
 interface RelatedContentPagerProps extends RelatedContentListProps {

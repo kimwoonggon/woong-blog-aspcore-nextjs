@@ -4,16 +4,19 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using WoongBlog.Api.Domain.Entities;
+using WoongBlog.Infrastructure.Auth;
 using WoongBlog.Infrastructure.Persistence;
 using WoongBlog.Application.Modules.Content.Works.WorkVideos;
 using WoongBlog.Infrastructure.Modules.Content.Works.WorkVideos;
 
 namespace WoongBlog.Api.Tests;
 
+[Trait(TestCategories.Key, TestCategories.Integration)]
 public class WorkVideoEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 {
     private readonly CustomWebApplicationFactory _factory;
@@ -50,6 +53,130 @@ public class WorkVideoEndpointsTests : IClassFixture<CustomWebApplicationFactory
         var publicBody = await publicResponse.Content.ReadAsStringAsync();
         Assert.Contains("\"videos\":[", publicBody, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("dQw4w9WgXcQ", publicBody, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Theory]
+    [InlineData(null, HttpStatusCode.Unauthorized)]
+    [InlineData("user", HttpStatusCode.Forbidden)]
+    public async Task UploadUrl_WithValidCsrfButMissingAdminRole_ReturnsAuthFailure(
+        string? identity,
+        HttpStatusCode expectedStatus)
+    {
+        var client = await CreateClientWithCsrfAsync(identity);
+
+        var response = await client.PostAsJsonAsync($"/api/admin/works/{Guid.NewGuid()}/videos/upload-url", new
+        {
+            fileName = "auth-check.mp4",
+            contentType = "video/mp4",
+            size = SampleMp4Bytes.Length,
+            expectedVideosVersion = 0
+        });
+
+        Assert.Equal(expectedStatus, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task UploadUrl_ReturnsNotFound_WhenWorkIsMissing()
+    {
+        var client = _factory.CreateAuthenticatedClient();
+
+        var response = await client.PostAsJsonAsync($"/api/admin/works/{Guid.NewGuid()}/videos/upload-url", new
+        {
+            fileName = "missing-work.mp4",
+            contentType = "video/mp4",
+            size = SampleMp4Bytes.Length,
+            expectedVideosVersion = 0
+        });
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        var payload = await response.Content.ReadFromJsonAsync<ErrorPayload>();
+        Assert.Equal("Work not found.", payload?.Error);
+    }
+
+    [Fact]
+    public async Task UploadUrl_ReturnsBadRequest_WhenFileMetadataIsInvalid()
+    {
+        var client = _factory.CreateAuthenticatedClient();
+        var created = await CreateWorkAsync(client, $"Invalid Upload Metadata Work {Guid.NewGuid():N}");
+
+        var response = await client.PostAsJsonAsync($"/api/admin/works/{created.Id}/videos/upload-url", new
+        {
+            fileName = "not-a-video.mov",
+            contentType = "video/quicktime",
+            size = SampleMp4Bytes.Length,
+            expectedVideosVersion = 0
+        });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var payload = await response.Content.ReadFromJsonAsync<ErrorPayload>();
+        Assert.Equal("Only .mp4 uploads are supported.", payload?.Error);
+    }
+
+    [Fact]
+    public async Task UploadLocal_ReturnsBadRequest_WhenFileIsMissing()
+    {
+        var client = _factory.CreateAuthenticatedClient();
+        var created = await CreateWorkAsync(client, $"Missing Upload File Work {Guid.NewGuid():N}");
+        using var form = new MultipartFormDataContent();
+        form.Add(new StringContent("not-a-file"), "description");
+
+        var response = await client.PostAsync(
+            $"/api/admin/works/{created.Id}/videos/upload?uploadSessionId={Guid.NewGuid()}",
+            form);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var payload = await response.Content.ReadFromJsonAsync<ErrorPayload>();
+        Assert.Equal("No file uploaded.", payload?.Error);
+    }
+
+    [Fact]
+    public async Task LocalUploadConfirm_PersistsMetadataStoresFileAndProjectsPublicVideo()
+    {
+        var client = _factory.CreateAuthenticatedClient();
+        var created = await CreateWorkAsync(client, $"Persisted Upload Work {Guid.NewGuid():N}");
+
+        var confirmed = await UploadAndConfirmLocalVideoAsync(client, created);
+        var video = Assert.Single(confirmed.Payload.Videos);
+        Assert.Equal(WorkVideoSourceTypes.Local, video.SourceType);
+        Assert.Equal("demo.mp4", video.OriginalFileName);
+        Assert.Equal("video/mp4", video.MimeType);
+        Assert.Equal((long)SampleMp4Bytes.Length, video.FileSize);
+        Assert.Equal(0, video.SortOrder);
+        Assert.Equal(1, confirmed.Payload.VideosVersion);
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
+            var authOptions = scope.ServiceProvider.GetRequiredService<IOptions<AuthOptions>>().Value;
+            var physicalPath = Path.Combine(authOptions.MediaRoot, confirmed.UploadTarget.StorageKey);
+            var row = await dbContext.WorkVideos.SingleAsync(x => x.Id == video.Id);
+            var session = await dbContext.WorkVideoUploadSessions.SingleAsync(x => x.Id == confirmed.UploadTarget.UploadSessionId);
+            var work = await dbContext.Works.SingleAsync(x => x.Id == created.Id);
+
+            Assert.True(File.Exists(physicalPath));
+            Assert.Equal((long)SampleMp4Bytes.Length, new FileInfo(physicalPath).Length);
+            Assert.Equal(created.Id, row.WorkId);
+            Assert.Equal(WorkVideoSourceTypes.Local, row.SourceType);
+            Assert.Equal(confirmed.UploadTarget.StorageKey, row.SourceKey);
+            Assert.Equal("demo.mp4", row.OriginalFileName);
+            Assert.Equal("video/mp4", row.MimeType);
+            Assert.Equal((long)SampleMp4Bytes.Length, row.FileSize);
+            Assert.Equal(0, row.SortOrder);
+            Assert.Equal(WorkVideoUploadSessionStatuses.Confirmed, session.Status);
+            Assert.Equal(1, work.VideosVersion);
+        }
+
+        var publicResponse = await client.GetAsync($"/api/public/works/{created.Slug}");
+        publicResponse.EnsureSuccessStatusCode();
+        var publicPayload = await publicResponse.Content.ReadFromJsonAsync<PublicWorkDetailPayload>();
+        Assert.NotNull(publicPayload);
+        Assert.Equal(1, publicPayload!.VideosVersion);
+        var publicVideo = Assert.Single(publicPayload.Videos);
+        Assert.Equal(video.Id, publicVideo.Id);
+        Assert.Equal(WorkVideoSourceTypes.Local, publicVideo.SourceType);
+        Assert.Equal(confirmed.UploadTarget.StorageKey, publicVideo.SourceKey);
+        Assert.Equal($"/media/{confirmed.UploadTarget.StorageKey}", publicVideo.PlaybackUrl);
+        Assert.Equal("demo.mp4", publicVideo.OriginalFileName);
     }
 
     [Fact]
@@ -103,6 +230,56 @@ public class WorkVideoEndpointsTests : IClassFixture<CustomWebApplicationFactory
             Assert.Empty(dbContext.WorkVideoUploadSessions.Where(x => x.WorkId == created.Id));
             Assert.NotEmpty(dbContext.VideoStorageCleanupJobs.Where(x => x.WorkId == created.Id));
         }
+    }
+
+    [Fact]
+    public async Task DeleteWorkVideo_RemovesRecordAndSchedulesStorageCleanup()
+    {
+        var client = _factory.CreateAuthenticatedClient();
+        var created = await CreateWorkAsync(client, $"Delete Uploaded Video Work {Guid.NewGuid():N}");
+        var confirmed = await UploadAndConfirmLocalVideoAsync(client, created);
+        var video = Assert.Single(confirmed.Payload.Videos);
+
+        var deleteResponse = await client.DeleteAsync($"/api/admin/works/{created.Id}/videos/{video.Id}?expectedVideosVersion={confirmed.Payload.VideosVersion}");
+
+        deleteResponse.EnsureSuccessStatusCode();
+        var deletePayload = await deleteResponse.Content.ReadFromJsonAsync<MutationPayload>();
+        Assert.NotNull(deletePayload);
+        Assert.Equal(2, deletePayload!.VideosVersion);
+        Assert.Empty(deletePayload.Videos);
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
+            var work = await dbContext.Works.SingleAsync(x => x.Id == created.Id);
+            Assert.Equal(2, work.VideosVersion);
+            Assert.False(await dbContext.WorkVideos.AnyAsync(x => x.Id == video.Id));
+
+            var cleanupJob = await dbContext.VideoStorageCleanupJobs.SingleAsync(x => x.WorkVideoId == video.Id);
+            Assert.Equal(created.Id, cleanupJob.WorkId);
+            Assert.Equal(WorkVideoSourceTypes.Local, cleanupJob.StorageType);
+            Assert.Equal(confirmed.UploadTarget.StorageKey, cleanupJob.StorageKey);
+            Assert.Equal(VideoStorageCleanupJobStatuses.Pending, cleanupJob.Status);
+        }
+
+        var publicResponse = await client.GetAsync($"/api/public/works/{created.Slug}");
+        publicResponse.EnsureSuccessStatusCode();
+        var publicPayload = await publicResponse.Content.ReadFromJsonAsync<PublicWorkDetailPayload>();
+        Assert.NotNull(publicPayload);
+        Assert.Empty(publicPayload!.Videos);
+    }
+
+    [Fact]
+    public async Task DeleteWorkVideo_ReturnsNotFound_WhenVideoIsMissing()
+    {
+        var client = _factory.CreateAuthenticatedClient();
+        var created = await CreateWorkAsync(client, $"Missing Video Delete Work {Guid.NewGuid():N}");
+
+        var response = await client.DeleteAsync($"/api/admin/works/{created.Id}/videos/{Guid.NewGuid()}?expectedVideosVersion=0");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        var payload = await response.Content.ReadFromJsonAsync<ErrorPayload>();
+        Assert.Equal("Video not found.", payload?.Error);
     }
 
     [Fact]
@@ -345,6 +522,142 @@ public class WorkVideoEndpointsTests : IClassFixture<CustomWebApplicationFactory
         var publicFirstIndex = publicBody.IndexOf("9bZkp7q19f0", StringComparison.Ordinal);
         var publicSecondIndex = publicBody.IndexOf("dQw4w9WgXcQ", StringComparison.Ordinal);
         Assert.True(publicFirstIndex >= 0 && publicSecondIndex >= 0 && publicFirstIndex < publicSecondIndex);
+
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
+        var persistedOrder = await dbContext.WorkVideos
+            .Where(video => video.WorkId == created.Id)
+            .OrderBy(video => video.SortOrder)
+            .Select(video => new { video.Id, video.SortOrder })
+            .ToListAsync();
+        Assert.Equal(reorderedIds, persistedOrder.Select(video => video.Id).ToArray());
+        Assert.Equal(new[] { 0, 1 }, persistedOrder.Select(video => video.SortOrder).ToArray());
+    }
+
+    [Fact]
+    public async Task ReorderWorkVideos_ReturnsBadRequest_WhenPayloadContainsInvalidIds()
+    {
+        var client = _factory.CreateAuthenticatedClient();
+        var created = await CreateWorkAsync(client, $"Invalid Reorder Work {Guid.NewGuid():N}");
+
+        var firstAdd = await client.PostAsJsonAsync($"/api/admin/works/{created.Id}/videos/youtube", new
+        {
+            youtubeUrlOrId = "dQw4w9WgXcQ",
+            expectedVideosVersion = 0
+        });
+        firstAdd.EnsureSuccessStatusCode();
+        var firstPayload = await firstAdd.Content.ReadFromJsonAsync<MutationPayload>();
+        Assert.NotNull(firstPayload);
+
+        var secondAdd = await client.PostAsJsonAsync($"/api/admin/works/{created.Id}/videos/youtube", new
+        {
+            youtubeUrlOrId = "9bZkp7q19f0",
+            expectedVideosVersion = firstPayload!.VideosVersion
+        });
+        secondAdd.EnsureSuccessStatusCode();
+        var secondPayload = await secondAdd.Content.ReadFromJsonAsync<MutationPayload>();
+        Assert.NotNull(secondPayload);
+
+        var response = await client.PutAsJsonAsync($"/api/admin/works/{created.Id}/videos/order", new
+        {
+            orderedVideoIds = new[] { secondPayload!.Videos[0].Id, Guid.NewGuid() },
+            expectedVideosVersion = secondPayload.VideosVersion
+        });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var payload = await response.Content.ReadFromJsonAsync<ErrorPayload>();
+        Assert.Equal("Reorder payload must include every video exactly once.", payload?.Error);
+
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
+        var persistedOrder = await dbContext.WorkVideos
+            .Where(video => video.WorkId == created.Id)
+            .OrderBy(video => video.SortOrder)
+            .Select(video => video.SourceKey)
+            .ToListAsync();
+        Assert.Equal(new[] { "dQw4w9WgXcQ", "9bZkp7q19f0" }, persistedOrder);
+    }
+
+    [Fact]
+    public async Task PublicWorkVideoQuery_ReturnsPublishedVideoDataAndHidesDraftWorkVideos()
+    {
+        var client = _factory.CreateClient();
+        var publishedSlug = $"published-video-work-{Guid.NewGuid():N}";
+        var draftSlug = $"draft-video-work-{Guid.NewGuid():N}";
+        var publishedWorkId = Guid.NewGuid();
+        var draftWorkId = Guid.NewGuid();
+        var publishedVideoId = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
+            dbContext.Works.AddRange(
+                new Work
+                {
+                    Id = publishedWorkId,
+                    Title = "Published Video Work",
+                    Slug = publishedSlug,
+                    Excerpt = "published",
+                    Category = "video",
+                    ContentJson = "{}",
+                    AllPropertiesJson = "{}",
+                    Published = true,
+                    PublishedAt = now,
+                    CreatedAt = now,
+                    UpdatedAt = now,
+                    VideosVersion = 1
+                },
+                new Work
+                {
+                    Id = draftWorkId,
+                    Title = "Draft Video Work",
+                    Slug = draftSlug,
+                    Excerpt = "draft",
+                    Category = "video",
+                    ContentJson = "{}",
+                    AllPropertiesJson = "{}",
+                    Published = false,
+                    CreatedAt = now,
+                    UpdatedAt = now,
+                    VideosVersion = 1
+                });
+            dbContext.WorkVideos.AddRange(
+                new WorkVideo
+                {
+                    Id = publishedVideoId,
+                    WorkId = publishedWorkId,
+                    SourceType = WorkVideoSourceTypes.YouTube,
+                    SourceKey = "dQw4w9WgXcQ",
+                    OriginalFileName = "Published Demo",
+                    SortOrder = 0,
+                    CreatedAt = now
+                },
+                new WorkVideo
+                {
+                    Id = Guid.NewGuid(),
+                    WorkId = draftWorkId,
+                    SourceType = WorkVideoSourceTypes.YouTube,
+                    SourceKey = "9bZkp7q19f0",
+                    OriginalFileName = "Draft Demo",
+                    SortOrder = 0,
+                    CreatedAt = now
+                });
+            await dbContext.SaveChangesAsync();
+        }
+
+        var publishedResponse = await client.GetAsync($"/api/public/works/{publishedSlug}");
+        var draftResponse = await client.GetAsync($"/api/public/works/{draftSlug}");
+
+        publishedResponse.EnsureSuccessStatusCode();
+        Assert.Equal(HttpStatusCode.NotFound, draftResponse.StatusCode);
+        var publishedPayload = await publishedResponse.Content.ReadFromJsonAsync<PublicWorkDetailPayload>();
+        Assert.NotNull(publishedPayload);
+        var video = Assert.Single(publishedPayload!.Videos);
+        Assert.Equal(publishedVideoId, video.Id);
+        Assert.Equal(WorkVideoSourceTypes.YouTube, video.SourceType);
+        Assert.Equal("dQw4w9WgXcQ", video.SourceKey);
+        Assert.Null(video.PlaybackUrl);
     }
 
     [Fact]
@@ -394,6 +707,68 @@ public class WorkVideoEndpointsTests : IClassFixture<CustomWebApplicationFactory
         response.EnsureSuccessStatusCode();
         var payload = await response.Content.ReadFromJsonAsync<CreatedWorkPayload>();
         return payload!;
+    }
+
+    private async Task<ConfirmedLocalVideoUpload> UploadAndConfirmLocalVideoAsync(
+        HttpClient client,
+        CreatedWorkPayload created,
+        int expectedVideosVersion = 0)
+    {
+        var uploadUrlResponse = await client.PostAsJsonAsync($"/api/admin/works/{created.Id}/videos/upload-url", new
+        {
+            fileName = "demo.mp4",
+            contentType = "video/mp4",
+            size = SampleMp4Bytes.Length,
+            expectedVideosVersion
+        });
+        uploadUrlResponse.EnsureSuccessStatusCode();
+        var uploadTarget = await uploadUrlResponse.Content.ReadFromJsonAsync<UploadTargetPayload>();
+        Assert.NotNull(uploadTarget);
+        Assert.Equal("POST", uploadTarget!.UploadMethod);
+        Assert.Equal($"/api/admin/works/{created.Id}/videos/upload?uploadSessionId={uploadTarget.UploadSessionId}", uploadTarget.UploadUrl);
+        Assert.EndsWith(".mp4", uploadTarget.StorageKey, StringComparison.OrdinalIgnoreCase);
+
+        using (var form = new MultipartFormDataContent())
+        {
+            var fileContent = new ByteArrayContent(SampleMp4Bytes);
+            fileContent.Headers.ContentType = new MediaTypeHeaderValue("video/mp4");
+            form.Add(fileContent, "file", "demo.mp4");
+
+            var uploadResponse = await client.PostAsync($"/api/admin/works/{created.Id}/videos/upload?uploadSessionId={uploadTarget.UploadSessionId}", form);
+            uploadResponse.EnsureSuccessStatusCode();
+            var uploadPayload = await uploadResponse.Content.ReadFromJsonAsync<SuccessPayload>();
+            Assert.NotNull(uploadPayload);
+            Assert.True(uploadPayload!.Success);
+        }
+
+        var confirmResponse = await client.PostAsJsonAsync($"/api/admin/works/{created.Id}/videos/confirm", new
+        {
+            uploadSessionId = uploadTarget.UploadSessionId,
+            expectedVideosVersion
+        });
+        confirmResponse.EnsureSuccessStatusCode();
+        var payload = await confirmResponse.Content.ReadFromJsonAsync<MutationPayload>();
+        Assert.NotNull(payload);
+
+        return new ConfirmedLocalVideoUpload(uploadTarget, payload!);
+    }
+
+    private async Task<HttpClient> CreateClientWithCsrfAsync(string? identity)
+    {
+        var client = _factory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            AllowAutoRedirect = false
+        });
+
+        if (!string.IsNullOrWhiteSpace(identity))
+        {
+            client.DefaultRequestHeaders.Add(TestAuthHandler.HeaderName, identity);
+        }
+
+        var csrfPayload = await client.GetFromJsonAsync<CsrfTokenResponse>("/api/auth/csrf");
+        Assert.NotNull(csrfPayload?.RequestToken);
+        client.DefaultRequestHeaders.Add(csrfPayload!.HeaderName, csrfPayload.RequestToken);
+        return client;
     }
 
     private static async Task<MutationPayload> UploadHlsVideoAsync(HttpClient client, Guid workId, int expectedVersion)
@@ -505,15 +880,38 @@ printf '20.0'
         public string SourceType { get; set; } = string.Empty;
         public string SourceKey { get; set; } = string.Empty;
         public string? PlaybackUrl { get; set; }
+        public string? OriginalFileName { get; set; }
+        public string? MimeType { get; set; }
+        public long? FileSize { get; set; }
+        public int SortOrder { get; set; }
         [JsonPropertyName("timeline_preview_vtt_url")]
         public string? TimelinePreviewVttUrl { get; set; }
         [JsonPropertyName("timeline_preview_sprite_url")]
         public string? TimelinePreviewSpriteUrl { get; set; }
     }
 
+    private sealed class PublicWorkDetailPayload
+    {
+        [JsonPropertyName("videos_version")]
+        public int VideosVersion { get; set; }
+        public VideoPayload[] Videos { get; set; } = [];
+    }
+
+    private sealed class SuccessPayload
+    {
+        public bool Success { get; set; }
+    }
+
+    private sealed class ErrorPayload
+    {
+        public string Error { get; set; } = string.Empty;
+    }
+
     private sealed record CsrfTokenResponse(string RequestToken, string HeaderName);
 
     private sealed record FakeFfTools(string DirectoryPath, string FfmpegPath, string FfprobePath, string ArgsPath);
+
+    private sealed record ConfirmedLocalVideoUpload(UploadTargetPayload UploadTarget, MutationPayload Payload);
 
     private static readonly byte[] SampleMp4Bytes =
     [

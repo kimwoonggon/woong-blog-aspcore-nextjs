@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace WoongBlog.Api.Tests;
 
+[Trait(TestCategories.Key, TestCategories.Integration)]
 public class AuthEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 {
     private readonly CustomWebApplicationFactory _factory;

@@ -6,6 +6,7 @@ using WoongBlog.Infrastructure.Persistence.Seeding;
 
 namespace WoongBlog.Api.Tests;
 
+[Trait(TestCategories.Key, TestCategories.Integration)]
 public class PersistenceContractTests
 {
     private static IEntityType RequireEntityType(IModel model, Type entityType)

@@ -1,6 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { AdminDashboardCollections } from '@/components/admin/AdminDashboardCollections'
+import type { BlogAdminItem } from '@/lib/api/blogs'
+import type { WorkAdminItem } from '@/lib/api/works'
 
 vi.mock('@/hooks/useResponsivePageSize', () => ({
   useResponsivePageSize: vi.fn(() => 1),
@@ -107,5 +109,61 @@ describe('AdminDashboardCollections', () => {
     fireEvent.change(screen.getByLabelText('Blog Posts title search'), { target: { value: 'beta' } })
     expect(screen.getByText('Beta Blog')).toBeInTheDocument()
     expect(screen.queryByText('Alpha Blog')).not.toBeInTheDocument()
+  })
+
+  it('renders fallback dates for malformed dashboard collection dates', () => {
+    const { container } = render(
+      <AdminDashboardCollections
+        works={[
+          { id: 'work-1', title: 'Malformed Work Date', slug: 'work-one', excerpt: '', category: 'platform', tags: [], published: true, publishedAt: 'not-a-date' },
+        ]}
+        blogs={[
+          { id: 'blog-1', title: 'Malformed Blog Date', slug: 'blog-one', excerpt: '', tags: [], published: true, publishedAt: 'not-a-date' },
+        ]}
+      />,
+    )
+
+    expect(screen.getAllByText('—')).toHaveLength(2)
+    expect(container.textContent).not.toMatch(/Invalid Date|RangeError|undefined|null/i)
+  })
+
+  it('renders safe dashboard text and edit links for malformed collection values', () => {
+    const malformedWork = {
+      id: null,
+      title: null,
+      slug: '',
+      excerpt: '',
+      category: null,
+      tags: null,
+      published: true,
+      publishedAt: null,
+    } as unknown as WorkAdminItem
+    const malformedBlog = {
+      id: null,
+      title: null,
+      slug: '',
+      excerpt: '',
+      tags: null,
+      published: false,
+      publishedAt: null,
+    } as unknown as BlogAdminItem
+
+    const { container } = render(
+      <AdminDashboardCollections works={[malformedWork]} blogs={[malformedBlog]} />,
+    )
+
+    expect(screen.getByText('Untitled work')).toBeInTheDocument()
+    expect(screen.getByText('Untitled blog post')).toBeInTheDocument()
+    expect(screen.getByText('Uncategorized')).toBeInTheDocument()
+    expect(screen.getByText('No tags')).toBeInTheDocument()
+    expect(screen.getByTestId('works-card-link')).toHaveAttribute(
+      'href',
+      '/admin/works?returnTo=%2Fadmin%2Fdashboard',
+    )
+    expect(screen.getByTestId('blog-posts-card-link')).toHaveAttribute(
+      'href',
+      '/admin/blog?returnTo=%2Fadmin%2Fdashboard',
+    )
+    expect(container.textContent).not.toMatch(/undefined|null/i)
   })
 })

@@ -1,0 +1,179 @@
+{
+  "report": "backend-full-coverage-review-2026-04-26",
+  "date": "2026-04-26",
+  "scope": "backend coverage audit only",
+  "source": "coverage/backend/full",
+  "productionCodeChanged": false,
+  "testCodeChanged": false,
+  "subagentsUsed": [
+    "infrastructure and external seams review",
+    "api and application behavior review",
+    "executive prioritization review"
+  ],
+  "coverage": {
+    "full": {
+      "lineCoverage": 90.1,
+      "coveredLines": 3527,
+      "coverableLines": 3912,
+      "branchCoverage": 60.9,
+      "coveredBranches": 405,
+      "totalBranches": 665,
+      "methodCoverage": 93.9,
+      "fullMethodCoverage": 85.6
+    },
+    "assemblies": {
+      "WoongBlog.Api": {
+        "lineCoverage": 99.3,
+        "branchCoverage": 69.5
+      },
+      "WoongBlog.Application": {
+        "lineCoverage": 93.7,
+        "branchCoverage": 60.2
+      },
+      "WoongBlog.Domain": {
+        "lineCoverage": 85.7,
+        "branchCoverage": 50.0
+      },
+      "WoongBlog.Infrastructure": {
+        "lineCoverage": 80.3,
+        "branchCoverage": 60.8
+      }
+    }
+  },
+  "wellCovered": [
+    "Most API endpoint wiring is executed",
+    "Admin content mutation happy paths and representative auth/CSRF behavior",
+    "Public page/blog/work/site DTO projection, pagination, draft hiding, and search behavior",
+    "AI batch happy paths, auto-apply, partial failure, and persistence",
+    "WorkVideo local upload, confirm, delete, reorder, cleanup scheduling, HLS success, and public projection"
+  ],
+  "misleadingSignals": [
+    "90.1% line coverage is inflated by thin endpoints, DTOs, module registration, and broad startup execution",
+    "Full coverage includes architecture tests and a skipped contract project",
+    "CustomWebApplicationFactory/TestAuthHandler proves endpoint authorization but not production cookie/OIDC events",
+    "DI/startup coverage can execute constructors/registrations without proving runtime failure behavior",
+    "Branch coverage is the better current planning signal"
+  ],
+  "highRiskAreas": [
+    {
+      "priority": "P1",
+      "area": "AI provider execution",
+      "evidence": [
+        "BlogAiFixService 62.8% line / 38.2% branch",
+        "AiHttpResultMapper 70.0% line / 40.0% branch"
+      ],
+      "recommendedTestLevel": [
+        "Component",
+        "Integration"
+      ],
+      "recommendedTests": [
+        "Fake HttpMessageHandler OpenAI and Azure success",
+        "Non-2xx provider errors",
+        "Empty choices and malformed JSON",
+        "Missing configuration failures",
+        "Codex timeout/start/auth/image artifact branches",
+        "HTTP status mapper NotFound/Conflict/fallback 500"
+      ]
+    },
+    {
+      "priority": "P1",
+      "area": "WorkVideo R2/object storage and HLS",
+      "evidence": [
+        "R2VideoStorageService 9.0% line / 0.0% branch",
+        "WorkVideoStorageSelector 78.2% line / 30.0% branch",
+        "WorkVideoPolicy 52.7% line / 31.6% branch",
+        "FfmpegVideoTranscoder 61.7% line / 50.0% branch"
+      ],
+      "recommendedTestLevel": [
+        "Unit",
+        "Component",
+        "Integration"
+      ],
+      "recommendedTests": [
+        "R2 configured/unconfigured playback URL",
+        "Presigned upload target behavior",
+        "Metadata NotFound returns null",
+        "Single object and HLS prefix delete behavior",
+        "R2/local storage selector matrix",
+        "Confirm failure for missing object, wrong size or MIME, invalid MP4, stale version, repeated confirm",
+        "ffmpeg start failure, timeout, non-zero stderr, missing manifest, invalid ffprobe duration"
+      ]
+    },
+    {
+      "priority": "P1",
+      "area": "Production auth/OIDC/cookie behavior",
+      "evidence": [
+        "AppOpenIdConnectEvents 0.0% line",
+        "AppCookieAuthenticationEvents 11.1% line / 0.0% branch",
+        "AuthOptionsValidator 59.7% line / 66.6% branch"
+      ],
+      "recommendedTestLevel": [
+        "Component",
+        "Integration"
+      ],
+      "recommendedTests": [
+        "Admin OIDC callback enriches claims/session properties",
+        "Non-admin callback revokes session and redirects",
+        "Remote failure audit and redirect",
+        "Cookie API 401/browser redirect",
+        "Access denied API 403/browser redirect",
+        "Invalid principal reject/signout"
+      ]
+    },
+    {
+      "priority": "P1",
+      "area": "Validation exception contract",
+      "evidence": [
+        "ValidationExceptionFilter 0.0% line / 0.0% branch"
+      ],
+      "recommendedTestLevel": [
+        "Unit",
+        "Component"
+      ],
+      "recommendedTests": [
+        "ValidationException groups failures by property",
+        "Duplicate messages are de-duplicated",
+        "ValidationProblemDetails shape is stable",
+        "Non-validation exceptions pass through"
+      ]
+    },
+    {
+      "priority": "P2",
+      "area": "Proxy/security and media/search helpers",
+      "evidence": [
+        "ForwardedHeadersOptionsFactory 55.1% line / 43.7% branch",
+        "SecurityOptionsValidator 50.0% line / 64.2% branch",
+        "UploadAssetEndpoint 94.1% line / 25.0% branch",
+        "ContentSearchText 60.0% line / 60.0% branch",
+        "AdminContentJson 91.9% line / 60.7% branch",
+        "AdminContentText 89.4% line / 50.0% branch"
+      ],
+      "recommendedTestLevel": [
+        "Unit",
+        "Integration"
+      ],
+      "recommendedTests": [
+        "Known proxy/network parsing matrix",
+        "Security option validation matrix",
+        "Upload policy failure returns 400",
+        "Storage failure returns 500 without orphan side effects",
+        "Search normalization for Korean, English, punctuation, whitespace, HTML and JSON",
+        "Malformed/non-object JSON and markdown/plain text extraction"
+      ]
+    }
+  ],
+  "doNotChase": [
+    "Do not increase UnitTests coverage just to improve the number",
+    "Do not unit-test EF query behavior, auth middleware, routing, or storage side effects",
+    "Do not add a high global threshold yet",
+    "Do not treat WoongBlog.Api 99.3% line coverage as exhaustive endpoint behavior"
+  ],
+  "validations": [
+    "Verified plugin cache absolute paths",
+    "Ran npx skills find dotnet coverage test audit; no external skill installed",
+    "Parsed coverage/backend/full/report/Summary.json",
+    "Inspected key per-class coverage HTML files",
+    "Used three subagents for independent review slices"
+  ],
+  "recommendation": "Treat the current suite as a solid baseline, not a finish line. Reinforce AI provider failures, WorkVideo R2/storage/HLS failures, production auth events, validation/proxy/security contracts, and media/search edge cases before adding coverage thresholds."
+}

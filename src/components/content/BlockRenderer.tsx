@@ -74,7 +74,7 @@ function BlockItem({ block }: { block: Block }) {
             return <hr className="my-8 border-gray-200 dark:border-gray-800" />
         case 'code':
             return (
-                <pre className="overflow-x-auto rounded bg-gray-900 p-4 text-white my-6">
+                <pre className="content-code-block my-6">
                     <code>{block.text}</code>
                 </pre>
             )

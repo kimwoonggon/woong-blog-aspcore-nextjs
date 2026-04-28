@@ -1,0 +1,132 @@
+# Backend Full Coverage Review TODO - 2026-04-26
+
+## User Instructions
+
+- Inspect `coverage/backend/full` HTML coverage output.
+- Use subagents.
+- Review carefully what the current test situation is.
+- Identify what tests should be strengthened.
+- Keep the review focused on backend coverage/test quality.
+
+## Scope Check Before TODO Execution
+
+- This is an audit-only task.
+- Production code and test code must not be modified.
+- Existing uncommitted coverage-tooling changes from the prior task must be preserved and not reverted.
+- Planned write set:
+  - `todolist-2026-04-26.md`
+  - `backend/reports/backend-full-coverage-review-2026-04-26/*`
+- Coverage source of truth:
+  - `coverage/backend/full/report/index.html`
+  - `coverage/backend/full/report/Summary.json`
+  - per-class HTML files under `coverage/backend/full/report/`
+  - `coverage/backend/full/report/Cobertura.xml`
+- Specialist skill search completed with `npx skills find dotnet coverage test audit`; no external skill installed because returned skills had low install counts.
+
+## TODOs
+
+- [x] Prepare backup before writing audit artifacts.
+  - Verification: `backend/reports/backend-full-coverage-review-2026-04-26/prechange-backup/` and `prechange-backup.patch` created.
+- [x] Confirm planned work still matches this TODO list before detailed review.
+  - Planned verification: focused workspace/status and coverage artifact inspection.
+  - Verification: reviewed `coverage/backend/full` artifacts and current dirty status; audit-only write set remains TODO plus `backend/reports/backend-full-coverage-review-2026-04-26/*`.
+- [x] Delegate independent coverage review slices to subagents.
+  - Planned verification: collect subagent findings for infrastructure/external seams, API/application behavior, and prioritization.
+  - Verification: spawned three explorer subagents for infrastructure/external seams, API/Application behavior, and executive prioritization.
+- [x] Parse full coverage metrics locally.
+  - Planned verification: extract total, assembly, class, and branch-risk summaries from `Summary.json` and coverage HTML/Cobertura artifacts.
+  - Verification:
+    - Parsed `coverage/backend/full/report/Summary.json`: full line 90.1%, branch 60.9%, method 93.9%, full-method 85.6%.
+    - Extracted assembly coverage for `WoongBlog.Api`, `WoongBlog.Application`, `WoongBlog.Domain`, and `WoongBlog.Infrastructure`.
+    - Extracted low-line and low-branch classes from `Summary.json`.
+    - Inspected key per-class HTML files for red/uncovered lines: `BlogAiFixService`, `R2VideoStorageService`, `WorkVideoPolicy`, `ValidationExceptionFilter`, auth events, `FfmpegVideoTranscoder`, `ForwardedHeadersOptionsFactory`, `ContentSearchText`, `UploadAssetEndpoint`, and `AiHttpResultMapper`.
+- [x] Integrate findings into persistent audit artifacts.
+  - Planned verification: Markdown, HTML, and JSON reports include current situation, reinforced-test recommendations, risks, and final recommendation.
+  - Verification:
+    - Created `backend/reports/backend-full-coverage-review-2026-04-26/backend-full-coverage-review-2026-04-26.md`.
+    - Created `backend/reports/backend-full-coverage-review-2026-04-26/backend-full-coverage-review-2026-04-26.html`.
+    - Created `backend/reports/backend-full-coverage-review-2026-04-26/backend-full-coverage-review-2026-04-26.json`.
+    - Reports summarize current backend coverage, misleading signals, low-coverage production areas, high-risk low-coverage areas, and recommended next coverage targets.
+- [x] Validate report artifacts and final consistency.
+  - Planned verification: JSON parse, `git diff --check`, and final status review.
+  - Verification:
+    - Parsed the report JSON with Node and verified report slug, full line coverage 90.1%, full branch coverage 60.9%, and risk-area entries.
+    - Ran `git diff --check`; no whitespace errors were reported.
+    - Reviewed `git status --short`; audit-only files are newly added alongside pre-existing coverage-tooling changes.
+
+---
+
+# Backend AI Provider Failure Coverage TODO - 2026-04-26
+
+## User Instructions
+
+- Implement backend-only AI provider failure and edge-path coverage from the supplied plan.
+- Do not use real OpenAI, Azure OpenAI, Codex, or external service calls.
+- Add `BlogAiFixServiceProviderComponentTests` with deterministic HTTP fakes and serialized environment variable handling.
+- Add `AiHttpResultMapperTests` without exposing new production APIs.
+- Do not touch WorkVideo/R2/HLS coverage in this task.
+- Generate persistent audit artifacts under `backend/reports/backend-ai-provider-failure-coverage-2026-04-26/`.
+
+## Scope Check Before TODO Execution
+
+- This is a backend test reinforcement task.
+- Expected production code change: none; `BlogAiFixService` already accepts `HttpClient`.
+- Existing uncommitted user/previous-agent changes must be preserved and not reverted.
+- Planned write set:
+  - `todolist-2026-04-26.md`
+  - `backend/tests/WoongBlog.Api.ComponentTests/BlogAiFixServiceProviderComponentTests.cs`
+  - `backend/tests/WoongBlog.Api.UnitTests/AiHttpResultMapperTests.cs`
+  - `backend/tests/WoongBlog.Api.UnitTests/WoongBlog.Api.UnitTests.csproj`
+  - `backend/reports/backend-ai-provider-failure-coverage-2026-04-26/*`
+- Specialist skill search completed with `npx --yes skills find dotnet testing`; returned .NET testing skills had low install counts, so no external skill was installed. Local `tdd` and .NET conventions will be used.
+- Plugin cache directories were verified as absolute paths before long-running validation.
+
+## Instruction Mapping
+
+- Backend-only provider tests: TODOs 3, 4, and 7.
+- No real external calls: TODO 3 deterministic fake `HttpMessageHandler`.
+- Environment variable isolation: TODO 3 scope helper and xUnit collection.
+- Unit mapper coverage through internals: TODO 4 and project reference update.
+- Required validation: TODO 5 and TODO 6.
+- Mandatory audit report: TODO 7.
+
+## TODOs
+
+- [x] Prepare backup before modifying test project files.
+  - Verification: created `backend/reports/backend-ai-provider-failure-coverage-2026-04-26/prechange-backup/prechange-backup.patch` and `prechange-status.txt`.
+- [x] Confirm actual work still matches this TODO list before implementation.
+  - Verification: inspected `BlogAiFixService`, `AiHttpResultMapper`, existing backend test layout, and project references; plan still fits without production-code changes.
+- [x] Add `BlogAiFixServiceProviderComponentTests` for OpenAI and Azure success, failure, malformed JSON, empty content, configuration, URL/header, model/deployment, and cleanup behavior.
+  - Verification: `dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj --filter BlogAiFixServiceProviderComponentTests` passed with 20 tests.
+- [x] Add `AiHttpResultMapperTests` and the minimal UnitTests project reference needed for `WoongBlog.Api` internals.
+  - Verification: `dotnet test backend/tests/WoongBlog.Api.UnitTests/WoongBlog.Api.UnitTests.csproj --filter AiHttpResultMapperTests` passed with 5 tests.
+- [x] Run targeted backend test validations.
+  - Planned verification:
+    - `dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj --filter BlogAiFixServiceProviderComponentTests`
+    - `dotnet test backend/tests/WoongBlog.Api.UnitTests/WoongBlog.Api.UnitTests.csproj --filter AiHttpResultMapperTests`
+  - Verification:
+    - `dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj --filter BlogAiFixServiceProviderComponentTests` passed; 20 passed, 0 failed.
+    - `dotnet test backend/tests/WoongBlog.Api.UnitTests/WoongBlog.Api.UnitTests.csproj --filter AiHttpResultMapperTests` passed; 5 passed, 0 failed.
+    - Existing warning observed: `NU1901` for `AWSSDK.Core` 4.0.0.17 low-severity vulnerability.
+- [x] Run required full validation commands and parse coverage where available.
+  - Planned verification:
+    - `./scripts/run-backend-coverage.sh component -v minimal`
+    - `./scripts/run-backend-coverage.sh full -v minimal`
+    - `dotnet test backend/WoongBlog.sln`
+    - `git diff --check`
+  - Verification:
+    - `./scripts/run-backend-coverage.sh component -v minimal` passed; 96 passed, 0 failed.
+    - `./scripts/run-backend-coverage.sh full -v minimal` passed after removing a direct `Microsoft.AspNetCore.App` UnitTests reference that violated architecture boundaries.
+    - `dotnet test backend/WoongBlog.sln` passed; contract verification skipped as configured, and component/unit/architecture/integration tests passed.
+    - `git diff --check` passed.
+    - Parsed `coverage/backend/component/report/Summary.json`: component line 41.9%, branch 33.6%, `BlogAiFixService` line 79.2%, branch 57.4%.
+    - Parsed `coverage/backend/full/report/Summary.json`: full line 91.3%, branch 64.8%, `BlogAiFixService` line 84.1%, branch 62.7%, `AiHttpResultMapper` line 100.0%, branch 100.0%.
+    - Existing warning observed: `NU1901` for `AWSSDK.Core` 4.0.0.17 low-severity vulnerability.
+- [x] Generate audit artifacts and final consistency check.
+  - Planned verification: Markdown, JSON, and HTML reports include changes, non-changes, commands, coverage notes, risks, and final recommendation.
+  - Verification:
+    - Created `backend/reports/backend-ai-provider-failure-coverage-2026-04-26/backend-ai-provider-failure-coverage-2026-04-26.md`.
+    - Created `backend/reports/backend-ai-provider-failure-coverage-2026-04-26/backend-ai-provider-failure-coverage-2026-04-26.json`.
+    - Created `backend/reports/backend-ai-provider-failure-coverage-2026-04-26/backend-ai-provider-failure-coverage-2026-04-26.html`.
+    - Parsed the report JSON with Node and verified report slug plus full line/branch coverage.
+    - Ran `git diff --check` after audit artifact creation; no whitespace errors were reported.

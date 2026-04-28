@@ -141,6 +141,38 @@ describe('BlogNotionWorkspace selection state', () => {
     expect(screen.getByRole('button', { name: /AI Content Fixer/i })).toBeInTheDocument()
   })
 
+  it('renders safe list and document fallbacks for malformed blog values', () => {
+    const malformedBlogs = [
+      {
+        id: '',
+        title: '',
+        slug: '',
+        published: null,
+        publishedAt: 'not-a-date',
+        updatedAt: undefined,
+        tags: [null, 'safe', ''],
+        excerpt: 'excerpt',
+        content: { html: '<p>Malformed</p>' },
+      },
+    ] as never
+
+    const { container } = render(
+      <BlogNotionWorkspace
+        blogs={malformedBlogs}
+        activeBlog={malformedBlogs[0]}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /Library/i }))
+
+    expect(screen.getAllByText('Untitled post').length).toBeGreaterThanOrEqual(2)
+    expect(screen.getByRole('link', { name: 'Untitled post' })).toHaveAttribute('href', '/admin/blog/notion')
+    expect(container.querySelector('a[href="/admin/blog"]')).not.toBeNull()
+    expect(screen.getByText('safe')).toBeInTheDocument()
+    expect(screen.getAllByText('—').length).toBeGreaterThanOrEqual(2)
+    expect(document.body.textContent).not.toMatch(/Invalid Date|NaN|undefined|null|trace|exception|status 500|sqlstate|npgsql|woongblog\.api/i)
+  })
+
   it('still supports metadata save in notion view', async () => {
     vi.mocked(fetchWithCsrf).mockResolvedValue({
       ok: true,

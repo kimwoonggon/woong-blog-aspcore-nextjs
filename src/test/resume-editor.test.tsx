@@ -55,6 +55,43 @@ describe('ResumeEditor', () => {
     expect(mocks.fetchWithCsrf).not.toHaveBeenCalled()
   })
 
+  it('rejects PDF-like files with invalid MIME or invalid extension before upload', async () => {
+    render(<ResumeEditor resumeAsset={null} />)
+
+    const fileInput = document.querySelector('#resume-upload') as HTMLInputElement
+    fireEvent.change(fileInput, {
+      target: { files: [new File(['pdf'], 'resume.txt', { type: 'application/pdf' })] },
+    })
+
+    await waitFor(() => {
+      expect(mocks.toast.error).toHaveBeenCalledWith('Please upload a PDF file.')
+    })
+
+    fireEvent.change(fileInput, {
+      target: { files: [new File(['not-pdf'], 'resume.pdf', { type: 'text/plain' })] },
+    })
+
+    await waitFor(() => {
+      expect(mocks.toast.error).toHaveBeenCalledTimes(2)
+    })
+    expect(mocks.fetchWithCsrf).not.toHaveBeenCalled()
+    expect(mocks.toast.success).not.toHaveBeenCalled()
+  })
+
+  it('rejects empty PDF files before upload', async () => {
+    render(<ResumeEditor resumeAsset={null} />)
+
+    const fileInput = document.querySelector('#resume-upload') as HTMLInputElement
+    fireEvent.change(fileInput, {
+      target: { files: [new File([], 'resume.pdf', { type: 'application/pdf' })] },
+    })
+
+    await waitFor(() => {
+      expect(mocks.toast.error).toHaveBeenCalledWith('Please upload a non-empty PDF file.')
+    })
+    expect(mocks.fetchWithCsrf).not.toHaveBeenCalled()
+  })
+
   it('uploads a pdf, links it in site settings, and refreshes the page', async () => {
     mocks.fetchWithCsrf
       .mockResolvedValueOnce({
@@ -111,10 +148,10 @@ describe('ResumeEditor', () => {
     expect(mocks.refresh).not.toHaveBeenCalled()
   })
 
-  it('surfaces binary upload failures before linking settings', async () => {
+  it('sanitizes binary upload failures before linking settings', async () => {
     mocks.fetchWithCsrf.mockResolvedValueOnce({
       ok: false,
-      json: async () => ({ error: 'binary upload failed' }),
+      json: async () => ({ error: 'R2 storage binary upload failed with stack trace status 500' }),
     })
 
     render(<ResumeEditor resumeAsset={null} />)
@@ -124,9 +161,49 @@ describe('ResumeEditor', () => {
     fireEvent.change(fileInput, { target: { files: [file] } })
 
     await waitFor(() => {
+      expect(mocks.toast.error).toHaveBeenCalledWith(
+        'Resume could not be uploaded. Please retry after storage is healthy.',
+        { id: 'toast-id' },
+      )
+    })
+    expect(mocks.toast.error).not.toHaveBeenCalledWith(expect.stringContaining('R2 storage'), expect.anything())
+    expect(mocks.toast.error).not.toHaveBeenCalledWith(expect.stringContaining('stack trace'), expect.anything())
+    expect(mocks.fetchWithCsrf).toHaveBeenCalledTimes(1)
+    expect(mocks.toast.success).not.toHaveBeenCalled()
+    expect(screen.getByText(/No resume uploaded yet/i)).toBeInTheDocument()
+  })
+
+  it('allows reselect retry after a failed resume upload', async () => {
+    mocks.fetchWithCsrf
+      .mockResolvedValueOnce({
+        ok: false,
+        json: async () => ({ error: 'binary upload failed' }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ id: 'resume-2', path: 'public-resume/retry.pdf' }),
+      })
+      .mockResolvedValueOnce({ ok: true })
+
+    render(<ResumeEditor resumeAsset={null} />)
+
+    const fileInput = document.querySelector('#resume-upload') as HTMLInputElement
+    fireEvent.change(fileInput, {
+      target: { files: [new File(['pdf'], 'resume.pdf', { type: 'application/pdf' })] },
+    })
+
+    await waitFor(() => {
       expect(mocks.toast.error).toHaveBeenCalledWith('binary upload failed', { id: 'toast-id' })
     })
-    expect(mocks.fetchWithCsrf).toHaveBeenCalledTimes(1)
+
+    fireEvent.change(fileInput, {
+      target: { files: [new File(['pdf'], 'retry.pdf', { type: 'application/pdf' })] },
+    })
+
+    await waitFor(() => {
+      expect(mocks.toast.success).toHaveBeenCalledWith('Resume uploaded and linked!', { id: 'toast-id' })
+    })
+    expect(screen.getByText('public-resume/retry.pdf')).toBeInTheDocument()
   })
 
   it('falls back to the generic upload error message when a non-Error rejection is thrown', async () => {

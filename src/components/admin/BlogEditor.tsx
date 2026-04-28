@@ -17,6 +17,7 @@ import { getBrowserApiBaseUrl } from '@/lib/api/browser'
 import { normalizeBlogHtmlForSave } from '@/lib/content/blog-content'
 import { revalidatePublicPathsAfterMutation } from '@/lib/public-revalidation-client'
 import { getBlogPublicRevalidationPaths } from '@/lib/public-revalidation-paths'
+import { sanitizeAdminSaveError } from '@/lib/admin-save-error'
 import { toast } from 'sonner'
 
 interface Blog {
@@ -189,8 +190,12 @@ export function BlogEditor({ initialBlog, inlineMode = false, onSaved, inlineRet
 
             if (!response.ok) {
                 const message = await response.text()
-                setSaveError(message || 'Failed to save blog post.')
-                toast.error(message || 'Failed to save blog post.')
+                const safeMessage = sanitizeAdminSaveError(
+                    message,
+                    'Blog post could not be saved. Please retry after the backend is healthy.',
+                )
+                setSaveError(safeMessage)
+                toast.error(safeMessage)
                 return
             }
 

@@ -16,15 +16,16 @@ interface ResponsivePageSizeSyncProps {
 const studyRestoreStorageKey = 'woong-study-mobile-feed-state'
 const studyRestoreHistoryKey = '__studyFeedRestore'
 
-function isPendingStudyRestore(value: unknown) {
+function isPendingStudyRestore(value: unknown, query: string) {
   if (!value || typeof value !== 'object') {
     return false
   }
 
-  return (value as Record<string, unknown>).restoreOnHistoryReturn === true
+  const record = value as Record<string, unknown>
+  return record.restoreOnHistoryReturn === true && record.query === query
 }
 
-function hasPendingStudyRestore(pathname: string) {
+function hasPendingStudyRestore(pathname: string, query: string) {
   if (pathname !== '/blog') {
     return false
   }
@@ -32,7 +33,7 @@ function hasPendingStudyRestore(pathname: string) {
   const historyRestore = window.history.state && typeof window.history.state === 'object'
     ? (window.history.state as Record<string, unknown>)[studyRestoreHistoryKey]
     : null
-  if (isPendingStudyRestore(historyRestore)) {
+  if (isPendingStudyRestore(historyRestore, query)) {
     return true
   }
 
@@ -42,7 +43,7 @@ function hasPendingStudyRestore(pathname: string) {
   }
 
   try {
-    return isPendingStudyRestore(JSON.parse(rawSessionRestore) as unknown)
+    return isPendingStudyRestore(JSON.parse(rawSessionRestore) as unknown, query)
   } catch {
     return false
   }
@@ -63,7 +64,8 @@ export function ResponsivePageSizeSync({
   useEffect(() => {
     const sync = () => {
       const isBelowDesktop = window.innerWidth < 1024
-      if (skipWhenStudyRestorePending && isBelowDesktop && hasPendingStudyRestore(pathname)) {
+      const query = searchParams.get('query')?.trim() ?? ''
+      if (skipWhenStudyRestorePending && isBelowDesktop && hasPendingStudyRestore(pathname, query)) {
         return
       }
 

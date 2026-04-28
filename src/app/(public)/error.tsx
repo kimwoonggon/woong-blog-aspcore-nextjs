@@ -1,7 +1,6 @@
 'use client'
 
 export default function PublicSegmentError({
-  error,
   reset,
 }: {
   error: Error & { digest?: string }
@@ -12,7 +11,7 @@ export default function PublicSegmentError({
       <p className="text-sm font-medium uppercase tracking-[0.24em] text-muted-foreground">Public pages</p>
       <h2 className="text-3xl font-semibold text-foreground">This page could not be loaded.</h2>
       <p className="max-w-2xl text-sm text-muted-foreground">
-        {error.message || 'The public content request failed. Retry once the backend is healthy.'}
+        The public content request failed. Retry once the service is healthy.
       </p>
       <button
         type="button"

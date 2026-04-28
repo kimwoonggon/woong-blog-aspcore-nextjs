@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Backend Test Coverage Updates - 2026-04-25</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 2rem; line-height: 1.5; color: #1f2937; }
+    h1, h2 { line-height: 1.2; }
+    code { background: #f3f4f6; padding: 0.1rem 0.25rem; border-radius: 0.25rem; }
+    table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+    th, td { border: 1px solid #d1d5db; padding: 0.5rem; text-align: left; vertical-align: top; }
+    th { background: #f9fafb; }
+  </style>
+</head>
+<body>
+  <h1>Backend Test Coverage Updates - 2026-04-25</h1>
+  <p>Scope: backend only. This report now includes the Priority 1 auth/session/CSRF update, the Priority 1 destructive admin mutation update, the public read/query update, the WorkVideo behavior update, the AI/Codex/batch/runtime config update, the persistence/startup composition update, and the final cleanup/taxonomy update. No production code was changed.</p>
+
+  <h2>Tests Added</h2>
+  <ul>
+    <li><code>AuthFlowIntegrationTests.cs</code>: session payloads, admin 401/403/200 matrix, fake OIDC login challenge, external return URL non-exposure, logout CSRF/success, CSRF invalid/valid site-settings behavior, and valid-CSRF auth failures.</li>
+    <li><code>AuthRecorderComponentTests.cs</code>: malformed session-id claim, absolute-expired session revocation, and missing-profile session revocation.</li>
+    <li><code>AdminMutationEndpointsTests.cs</code>: page update, blog create/update/delete, work create/update/delete, site-settings update, valid-CSRF auth rejection, validation failures, response shapes, persistence, publish/unpublish behavior, missing-entity behavior, and unrelated-record preservation.</li>
+    <li><code>PublicQueryHandlerComponentTests.cs</code>: public home/site/page/blog/work query behavior, draft exclusion, ordering, pagination boundaries, missing slugs, stable empty pages, and asset/media DTO fields.</li>
+    <li><code>PublicEndpointsTests.cs</code>: public endpoint status, routes, typed serialization shape, anonymous access, not-found behavior, draft exclusion, ordering, asset/media DTO fields, and stable empty list responses.</li>
+    <li><code>WorkVideoEndpointsTests.cs</code>: WorkVideo upload auth, missing work, invalid/missing file handling, successful local upload metadata and file persistence, public projection, individual delete, cleanup scheduling, invalid reorder IDs, persisted order, missing video, and draft work video hiding.</li>
+    <li><code>WorkVideoComponentTests.cs</code>: local video storage side effects, HLS directory deletion, cleanup service success/failure/max-attempt behavior, expired-session cleanup, reorder handler/store ordering, and delete cleanup normalization.</li>
+    <li><code>AdminAiEndpointsTests.cs</code>: representative Admin AI anonymous rejection, invalid persistent batch target validation, and deterministic active batch-job reuse.</li>
+    <li><code>AiBatchRuntimeComponentTests.cs</code>: batch target selection, queued job/item persistence, status transitions, full/partial failure persistence, runtime config defaults/fallback, option post-configuration, and invalid option validation.</li>
+    <li><code>BlogAiFixServiceCodexRuntimeComponentTests.cs</code>: fake Codex process model/reasoning/workdir arguments and non-zero stderr failure handling.</li>
+    <li><code>DbContextModelContractComponentTests.cs</code>: DbContext aggregate keys, required fields, JSON columns, index/unique metadata, WorkVideo cascade metadata, and search-field update refresh.</li>
+    <li><code>PostgresPersistenceContractTests.cs</code>: Postgres schema/search patching, bootstrap idempotence, runtime data preservation, relational NOT NULL/unique violations, and database-side WorkVideo/upload-session cascade.</li>
+    <li><code>StartupCompositionTests.cs</code>: broad DI resolution, Application handler/validator resolution, hosted service registration, options binding, health/OpenAPI/runtime-config startup, and CSRF-before-authorization behavior.</li>
+    <li><code>StartupOptionsValidationTests.cs</code>: invalid AI batch concurrency, missing auth media root, and missing antiforgery header validation.</li>
+    <li><code>ArchitectureBoundaryTests.cs</code>: centralized Program service, middleware, and endpoint composition order.</li>
+    <li>Final cleanup: added missing <code>Category=Integration</code> traits to <code>AdminContentEndpointsTests.cs</code>, <code>AuthEndpointsTests.cs</code>, <code>AuthSecurityTests.cs</code>, and <code>UploadsControllerTests.cs</code>; converted <code>ProviderContractVerificationTests.cs</code> to an explicit setup skip when Pact provider setup is absent.</li>
+  </ul>
+
+  <h2>Files Changed</h2>
+  <ul>
+    <li><code>backend/tests/WoongBlog.Api.IntegrationTests/AdminMutationEndpointsTests.cs</code></li>
+    <li><code>backend/tests/WoongBlog.Api.IntegrationTests/AdminAiEndpointsTests.cs</code></li>
+    <li><code>backend/tests/WoongBlog.Api.IntegrationTests/AuthFlowIntegrationTests.cs</code></li>
+    <li><code>backend/tests/WoongBlog.Api.IntegrationTests/TestOidcChallengeHandler.cs</code></li>
+    <li><code>backend/tests/WoongBlog.Api.IntegrationTests/TestAuthHandler.cs</code></li>
+    <li><code>backend/tests/WoongBlog.Api.IntegrationTests/CustomWebApplicationFactory.cs</code></li>
+    <li><code>backend/tests/WoongBlog.Api.ComponentTests/AiBatchRuntimeComponentTests.cs</code></li>
+    <li><code>backend/tests/WoongBlog.Api.ComponentTests/AuthRecorderComponentTests.cs</code></li>
+    <li><code>backend/tests/WoongBlog.Api.ComponentTests/BlogAiFixServiceCodexRuntimeComponentTests.cs</code></li>
+    <li><code>backend/tests/WoongBlog.Api.ComponentTests/PublicQueryHandlerComponentTests.cs</code></li>
+    <li><code>backend/tests/WoongBlog.Api.IntegrationTests/PublicEndpointsTests.cs</code></li>
+    <li><code>backend/tests/WoongBlog.Api.IntegrationTests/WorkVideoEndpointsTests.cs</code></li>
+    <li><code>backend/tests/WoongBlog.Api.ComponentTests/WorkVideoComponentTests.cs</code></li>
+    <li><code>backend/tests/WoongBlog.Api.ComponentTests/DbContextModelContractComponentTests.cs</code></li>
+    <li><code>backend/tests/WoongBlog.Api.IntegrationTests/PostgresPersistenceContractTests.cs</code></li>
+    <li><code>backend/tests/WoongBlog.Api.IntegrationTests/PersistenceContractTests.cs</code></li>
+    <li><code>backend/tests/WoongBlog.Api.IntegrationTests/DatabaseBootstrapperTests.cs</code></li>
+    <li><code>backend/tests/WoongBlog.Api.IntegrationTests/StartupCompositionTests.cs</code></li>
+    <li><code>backend/tests/WoongBlog.Api.IntegrationTests/StartupOptionsValidationTests.cs</code></li>
+    <li><code>backend/tests/WoongBlog.Api.ArchitectureTests/ArchitectureBoundaryTests.cs</code></li>
+    <li><code>todolist-2026-04-25.md</code></li>
+    <li><code>backend/reports/backend-test-coverage-audit-2026-04-24/backend-test-coverage-audit-2026-04-24.md</code></li>
+    <li><code>backend/reports/backend-test-coverage-audit-2026-04-24/backend-test-coverage-audit-2026-04-24.html</code></li>
+    <li><code>backend/reports/backend-test-coverage-audit-2026-04-24/backend-test-coverage-audit-2026-04-24.json</code></li>
+  </ul>
+
+  <h2>Admin Mutation Coverage Improved</h2>
+  <ul>
+    <li>Page update now has endpoint-level auth rejection, success response shape, persistence, invalid-request no-write, and unrelated-record preservation coverage.</li>
+    <li>Blog create/update/delete now have endpoint-level auth rejection, validation failure, missing-entity, hard-delete, publish/unpublish, response-shape, DB persistence, and unrelated-record preservation coverage.</li>
+    <li>Work create/update/delete now have endpoint-level auth rejection, validation failure, missing-entity, hard-delete, publish/unpublish, response-shape, DB persistence, and unrelated-record preservation coverage without WorkVideo endpoint tests.</li>
+    <li>Site settings update now has endpoint-level auth rejection, response-shape, partial update, omitted-field preservation, and invalid-request no-write coverage.</li>
+  </ul>
+
+  <h2>Public Query Coverage Improved</h2>
+  <ul>
+    <li>Public home now covers typed endpoint shape plus component-level missing prerequisites, field mapping, asset projection, draft filtering, and published-date ordering.</li>
+    <li>Public site settings now covers all public social fields at component level and the current public JSON contract at endpoint level.</li>
+    <li>Public pages now cover direct slug success and missing-slug not found behavior at component and endpoint levels.</li>
+    <li>Public blog/work lists now cover draft exclusion, published-date ordering, asset mapping, stable empty responses, pagination boundaries, and anonymous endpoint access.</li>
+    <li>Public blog/work details now cover draft/missing slug exclusion and related asset/media DTO fields.</li>
+  </ul>
+
+  <h2>WorkVideo Coverage Improved</h2>
+  <ul>
+    <li>Upload now covers endpoint auth rejection, missing work, invalid metadata, missing multipart file, response shape, DB persistence, confirmed session status, local file side effect, and public projection.</li>
+    <li>Metadata persistence verifies source type/key, original file name, MIME type, file size, sort order, and <code>videos_version</code>.</li>
+    <li>Reorder/delete coverage now includes deterministic persisted order, invalid IDs, missing video, individual delete DB removal, cleanup scheduling, and public projection after delete.</li>
+    <li>Component tests now cover local storage save/read/delete, HLS directory delete semantics, cleanup service success/failure/max attempts, expired-session cleanup, reorder handler/store behavior, and delete cleanup normalization.</li>
+  </ul>
+
+  <h2>AI Batch Runtime Coverage Improved</h2>
+  <ul>
+    <li>Admin AI endpoint coverage now includes representative anonymous rejection and invalid persistent batch target validation.</li>
+    <li>Batch creation now covers selected/all target selection, queued job and pending item persistence, custom prompt normalization, provider/model/reasoning metadata, worker-count clamping, and batch signal emission.</li>
+    <li>Batch status transitions now cover running reset, queued-to-running-to-completed success, all-failed final failed state, partial failure final completed state, and persisted item <code>FixedHtml</code>/<code>Error</code> results.</li>
+    <li>Runtime failure handling now asserts failed item errors are recorded without corrupting unrelated blog content.</li>
+    <li>Runtime config now covers stable DTO defaults, provider fallback, environment-style option loading, and invalid options validation.</li>
+    <li>Codex runtime now covers fake-process model/reasoning/workdir arguments and non-zero stderr failure handling.</li>
+  </ul>
+
+  <h2>Persistence And Startup Coverage Improved</h2>
+  <ul>
+    <li>EF model metadata now covers aggregate keys, required fields, JSON column contracts, indexes, unique constraints, and WorkVideo cascade relationship metadata.</li>
+    <li>Postgres/Testcontainers now covers relational NOT NULL, duplicate slug/key unique constraints, database-side WorkVideo/upload-session cascade, bootstrap idempotence, and runtime data preservation.</li>
+    <li>Content search synchronization now covers updates to existing blog and work rows.</li>
+    <li>Full startup composition now resolves representative Application handlers, Infrastructure stores/services, hosted services, health checks, and options.</li>
+    <li>Options validation now covers additional missing or invalid AI, auth storage, and antiforgery values.</li>
+    <li>Middleware and endpoint registration now covers Testing OpenAPI, health payload shape, runtime config startup without external services, and CSRF-before-authorization behavior.</li>
+    <li>Architecture coverage now pins centralized Program composition order.</li>
+  </ul>
+
+  <h2>Validation</h2>
+  <table>
+    <thead>
+      <tr><th>Command</th><th>Result</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~AdminMutationEndpointsTests</code></td><td>Passed: 32 integration cases.</td></tr>
+      <tr><td><code>dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj --filter FullyQualifiedName~PublicQueryHandlerComponentTests</code></td><td>Passed: 32 component tests.</td></tr>
+      <tr><td><code>dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~PublicEndpointsTests</code></td><td>Passed: 27 integration tests.</td></tr>
+      <tr><td><code>dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~WorkVideoEndpointsTests</code></td><td>Passed: 17 integration tests.</td></tr>
+      <tr><td><code>dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj --filter FullyQualifiedName~WorkVideoComponentTests</code></td><td>Passed: 8 component tests.</td></tr>
+      <tr><td><code>dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~AdminAiEndpointsTests</code></td><td>Passed: 17 integration tests.</td></tr>
+      <tr><td><code>dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj --filter FullyQualifiedName~AiBatchRuntimeComponentTests</code></td><td>Passed: 10 component tests.</td></tr>
+      <tr><td><code>dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj --filter "FullyQualifiedName~AiBatchRuntimeComponentTests|FullyQualifiedName~BlogAiFixServiceCodexRuntimeComponentTests"</code></td><td>Passed: 16 component tests.</td></tr>
+      <tr><td><code>dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj --filter FullyQualifiedName~DbContextModelContractComponentTests</code></td><td>Passed: 4 component tests.</td></tr>
+      <tr><td><code>dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~PostgresPersistenceContractTests</code></td><td>Passed: 3 Postgres/Testcontainers integration tests.</td></tr>
+      <tr><td><code>dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~StartupCompositionTests</code></td><td>Passed: 7 startup composition integration tests.</td></tr>
+      <tr><td><code>dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~StartupOptionsValidationTests</code></td><td>Passed: 8 startup options validation tests.</td></tr>
+      <tr><td><code>dotnet test backend/tests/WoongBlog.Api.ArchitectureTests/WoongBlog.Api.ArchitectureTests.csproj --filter FullyQualifiedName~Program_ComposesServicesMiddlewareAndEndpoints_InExpectedBoundaryOrder</code></td><td>Passed: 1 architecture test.</td></tr>
+      <tr><td><code>dotnet test backend/WoongBlog.sln</code></td><td>Passed: Contract 1, Unit 14, Component 76, Architecture 31, Integration 194.</td></tr>
+      <tr><td><code>dotnet test backend/WoongBlog.sln --filter "Category=Architecture"</code></td><td>Passed: Architecture 31.</td></tr>
+      <tr><td><code>dotnet test backend/WoongBlog.sln --filter "Category=Component"</code></td><td>Passed: Component 76.</td></tr>
+      <tr><td><code>dotnet test backend/WoongBlog.sln --filter "Category=Integration"</code></td><td>Passed: Integration 160.</td></tr>
+      <tr><td><code>dotnet test backend/tests/WoongBlog.Api.ContractTests/WoongBlog.Api.ContractTests.csproj</code></td><td>Passed with 1 skipped contract test because <code>PACT_PROVIDER_BASE_URL</code> and local pact files are not configured.</td></tr>
+      <tr><td><code>docker ps</code></td><td>Failed: Docker is not available in this WSL distro, so Testcontainers cannot start Postgres.</td></tr>
+      <tr><td><code>dotnet test backend/WoongBlog.sln</code></td><td>Failed locally: Contract 1 skipped, Unit 14 passed, Component 76 passed, Architecture 31 passed, Integration 191 passed and 3 failed due Docker/Testcontainers setup.</td></tr>
+      <tr><td><code>dotnet test backend/WoongBlog.sln --filter "Category=Unit"</code></td><td>Passed: Unit 14.</td></tr>
+      <tr><td><code>dotnet test backend/WoongBlog.sln --filter "Category=Component"</code></td><td>Passed: Component 76.</td></tr>
+      <tr><td><code>dotnet test backend/WoongBlog.sln --filter "Category=Integration"</code></td><td>Failed locally: Integration filter now selects all 194 integration cases; 191 passed and 3 Postgres/Testcontainers cases failed because Docker is unavailable.</td></tr>
+      <tr><td><code>dotnet test backend/WoongBlog.sln --filter "Category=Architecture"</code></td><td>Passed: Architecture 31.</td></tr>
+      <tr><td><code>node -e "JSON.parse(...)"</code></td><td>Passed after final cleanup report update.</td></tr>
+      <tr><td><code>git diff --check</code></td><td>Passed after final cleanup report update.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Final Cleanup Result</h2>
+  <p>Current suite shape: Unit 14, Component 76, Integration 194, Architecture 31, and one Contract test that explicitly skips without external Pact setup. The final cleanup preserved production behavior and only adjusted test taxonomy/contract reporting.</p>
+  <p>Across the eight work packets, the original audit added no tests, six implementation packets added the auth, admin mutation, public read/query, WorkVideo, AI/runtime, and persistence/startup tests listed above, and this final packet added no feature tests beyond safe taxonomy cleanup.</p>
+
+  <h2>Remaining Gaps</h2>
+  <p>Remaining risk includes Docker/Testcontainers unavailability in this local WSL environment, missing Pact provider setup, invalid/missing/stale CSRF sampling for every mutation family, blog/work duplicate slug update behavior, invalid JSON semantics, asset update semantics, endpoint-level missing-site/home/resume public read paths, PostgreSQL-backed public query/search semantics, media upload/delete, remaining AI batch endpoint matrices, AI cancel/clear/not-found/cancellation paths, runtime prompt-file fallback, Codex timeout/auth/invalid-command paths, OpenAI/Azure fake-HTTP provider paths, WorkVideo R2/object-storage behavior, confirm-upload failure paths, HLS failure/rollback behavior, hosted worker lifecycle/cancellation behavior, optional startup provider/config matrices, and missing metrics/OpenTelemetry endpoint coverage.</p>
+
+  <h2>Recommendation</h2>
+  <p>Keep the P1 auth, admin mutation, public read/query, WorkVideo, AI batch/runtime, persistence/startup, and final taxonomy cleanup changes. Next, enable Docker/Testcontainers and Pact provider setup, then re-run the full backend suite before continuing with media tests, remaining AI endpoint matrices, hosted worker lifecycle coverage, optional startup provider/config matrices, PostgreSQL-backed query/search semantics, and deeper WorkVideo R2/HLS failure coverage.</p>
+</body>
+</html>

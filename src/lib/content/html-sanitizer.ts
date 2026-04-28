@@ -61,6 +61,10 @@ function isAllowedUrl(value: string) {
     return false
   }
 
+  if (trimmed.startsWith('//')) {
+    return false
+  }
+
   if (trimmed.startsWith('/') || trimmed.startsWith('#')) {
     return true
   }
@@ -118,8 +122,8 @@ export function sanitizeHtml(html: string) {
   if (typeof document === 'undefined') {
     return html
       .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, '')
-      .replace(/\son[a-z]+\s*=\s*(['"]).*?\1/gi, '')
-      .replace(/\s(?:href|src)\s*=\s*(['"])\s*javascript:[\s\S]*?\1/gi, '')
+      .replace(/\son[a-z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+      .replace(/\s(?:href|src)\s*=\s*(?:"\s*(?:javascript:|\/\/)[^"]*"|'\s*(?:javascript:|\/\/)[^']*'|(?:javascript:|\/\/)[^\s>]*)/gi, '')
   }
 
   const template = document.createElement('template')

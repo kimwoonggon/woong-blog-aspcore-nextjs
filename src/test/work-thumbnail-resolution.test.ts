@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   buildYouTubeThumbnailUrl,
   extractFirstContentImageUrl,
+  normalizeYouTubeVideoId,
   resolveDraftThumbnailSource,
   resolveWorkThumbnailSource,
   shouldReplaceWorkThumbnailSource,
@@ -53,6 +54,20 @@ describe('work thumbnail resolution', () => {
         { kind: 'file', file: new File(['video'], 'demo.mp4', { type: 'video/mp4' }) },
       ]),
     ).toMatchObject({ kind: 'uploaded-video' })
+  })
+
+  it.each([
+    ['direct id', 'dQw4w9WgXcQ', 'dQw4w9WgXcQ'],
+    ['short URL', 'https://youtu.be/dQw4w9WgXcQ?si=abc', 'dQw4w9WgXcQ'],
+    ['watch URL with v first', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=1s', 'dQw4w9WgXcQ'],
+    ['watch URL with v later', 'https://www.youtube.com/watch?feature=shared&v=dQw4w9WgXcQ', 'dQw4w9WgXcQ'],
+    ['embed URL', 'https://www.youtube.com/embed/dQw4w9WgXcQ', 'dQw4w9WgXcQ'],
+    ['shorts URL', 'https://www.youtube.com/shorts/dQw4w9WgXcQ?feature=share', 'dQw4w9WgXcQ'],
+    ['whitespace', '   ', null],
+    ['invalid id length', 'dQw4w9WgX', null],
+    ['non-youtube URL', 'https://example.com/watch?v=dQw4w9WgXcQ', null],
+  ])('normalizes YouTube ID from %s', (_label, value, expected) => {
+    expect(normalizeYouTubeVideoId(value)).toBe(expected)
   })
 
   it('replaces lower-priority automatic thumbnails but never replaces manual ones', () => {

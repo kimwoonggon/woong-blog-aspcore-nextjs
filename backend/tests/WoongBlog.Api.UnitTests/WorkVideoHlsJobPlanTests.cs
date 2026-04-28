@@ -42,4 +42,20 @@ public sealed class WorkVideoHlsJobPlanTests
         Assert.Null(video.TimelinePreviewVttStorageKey);
         Assert.Null(video.TimelinePreviewSpriteStorageKey);
     }
+
+    [Fact]
+    public void Create_WithR2Storage_EmbedsUnderlyingStorageInHlsSourceKey()
+    {
+        var workId = Guid.NewGuid();
+
+        var plan = WorkVideoHlsJobPlan.Create(workId, WorkVideoSourceTypes.R2, "clip.mp4", 2048);
+
+        Assert.True(WorkVideoHlsSourceKey.TryParse(plan.SourceKey, out var storageType, out var manifestStorageKey));
+        Assert.Equal(WorkVideoSourceTypes.R2, storageType);
+        Assert.Equal(plan.ManifestStorageKey, manifestStorageKey);
+        Assert.Equal($"videos/{workId:N}/{plan.VideoId:N}/hls", plan.HlsPrefix);
+        Assert.Equal($"{plan.HlsPrefix}/{WorkVideoPolicy.HlsManifestFileName}", plan.ManifestStorageKey);
+        Assert.Equal($"{plan.HlsPrefix}/{WorkVideoPolicy.TimelinePreviewVttFileName}", plan.TimelinePreviewVttStorageKey);
+        Assert.Equal($"{plan.HlsPrefix}/{WorkVideoPolicy.TimelinePreviewSpriteFileName}", plan.TimelinePreviewSpriteStorageKey);
+    }
 }

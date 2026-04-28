@@ -16,7 +16,7 @@ import {
 import { useEffect, useRef, useState, useSyncExternalStore } from "react"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/ui/ThemeToggle"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"
 
 const navItems = [
@@ -103,6 +103,7 @@ export function Navbar({ ownerName = "John Doe" }: NavbarProps) {
     const headerRowRef = useRef<HTMLDivElement | null>(null)
     const brandRef = useRef<HTMLDivElement | null>(null)
     const actionsRef = useRef<HTMLDivElement | null>(null)
+    const lastMenuTriggerRef = useRef<HTMLButtonElement | null>(null)
     const mobileSearchInputRef = useRef<HTMLInputElement | null>(null)
     const lastAutoOpenedSearchKeyRef = useRef<string | null>(null)
     const closeMenu = () => setIsOpen(false)
@@ -203,6 +204,19 @@ export function Navbar({ ownerName = "John Doe" }: NavbarProps) {
         })
     }
 
+    function handleMenuOpenChange(nextOpen: boolean) {
+        setIsOpen(nextOpen)
+
+        if (!nextOpen) {
+            const trigger = lastMenuTriggerRef.current
+            if (trigger && document.contains(trigger)) {
+                queueMicrotask(() => {
+                    trigger.focus()
+                })
+            }
+        }
+    }
+
     return (
         <>
             <header className="sticky top-0 z-[50] border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75 relative">
@@ -228,7 +242,7 @@ export function Navbar({ ownerName = "John Doe" }: NavbarProps) {
                     </nav>
                 ) : null}
 
-                <Sheet open={isOpen} onOpenChange={setIsOpen}>
+                <Sheet open={isOpen} onOpenChange={handleMenuOpenChange}>
                     <div ref={headerRowRef} className="container mx-auto flex h-16 items-center gap-2 px-3 md:px-6 lg:h-20 lg:gap-3">
                         <div className="flex shrink-0 items-center lg:hidden">
                             <SheetTrigger asChild>
@@ -237,6 +251,12 @@ export function Navbar({ ownerName = "John Doe" }: NavbarProps) {
                                     variant="ghost"
                                     className="h-11 min-w-11 rounded-full px-3"
                                     aria-label="Toggle Menu"
+                                    onFocus={(event) => {
+                                        lastMenuTriggerRef.current = event.currentTarget
+                                    }}
+                                    onPointerDown={(event) => {
+                                        lastMenuTriggerRef.current = event.currentTarget
+                                    }}
                                 >
                                     <Menu className="h-5 w-5" />
                                 </Button>
@@ -278,6 +298,12 @@ export function Navbar({ ownerName = "John Doe" }: NavbarProps) {
                                         variant="ghost"
                                         className="h-11 min-w-11 rounded-full px-3"
                                         aria-label="Toggle Menu"
+                                        onFocus={(event) => {
+                                            lastMenuTriggerRef.current = event.currentTarget
+                                        }}
+                                        onPointerDown={(event) => {
+                                            lastMenuTriggerRef.current = event.currentTarget
+                                        }}
                                     >
                                         <Menu className="h-5 w-5" />
                                     </Button>
@@ -336,6 +362,10 @@ export function Navbar({ ownerName = "John Doe" }: NavbarProps) {
 
                     <SheetContent side="right" className="w-[92vw] max-w-sm p-0">
                         <div className="flex h-full flex-col">
+                            <SheetTitle className="sr-only">Public navigation</SheetTitle>
+                            <SheetDescription className="sr-only">
+                                Choose a public page or switch the color theme.
+                            </SheetDescription>
                             <div className="border-b px-6 py-5">
                                 <Link href="/" className="flex flex-col" onClick={() => setIsOpen(false)}>
                                     <span className="text-2xl font-semibold text-foreground">{ownerName}</span>

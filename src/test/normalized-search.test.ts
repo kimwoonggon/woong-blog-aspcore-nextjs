@@ -14,4 +14,27 @@ describe('normalized search', () => {
     expect(normalizeSearchText(' Next.js  테스트 ')).toContain('nextjs')
     expect(normalizeSearchText(' Next.js  테스트 ')).toContain('테스트')
   })
+
+  it.each([
+    ['whitespace-only query', 'Anything searchable', '   \n\t  ', true],
+    ['null query', 'Anything searchable', null, true],
+    ['undefined target with real query', undefined, 'missing', false],
+    ['empty target with empty query', '', '', true],
+    ['mixed Korean and English with repeated spaces', 'Next.js   테스트 문서', 'nextjs 테스트', true],
+    ['case-insensitive English', 'Frontend Reinforcement', 'frontEND', true],
+    ['symbol-heavy compact query', 'T,B,N 안녕하세요', '!!!t---b___n???', true],
+    ['symbol-heavy Korean query', '테스트 기반 개발', '***테!!스--트***', true],
+  ])('handles %s', (_label, value, query, expected) => {
+    expect(containsNormalizedSearch(value, query)).toBe(expected)
+  })
+
+  it.each([
+    ['   repeated   spaces   ', 'repeatedspaces'],
+    ['Ｔ，Ｂ，Ｎ 안녕하세요', 'tbn안녕하세요'],
+    [null, ''],
+    [undefined, ''],
+    ['!@#$%^&*()', ''],
+  ])('normalizes %j to %j', (value, expected) => {
+    expect(normalizeSearchText(value)).toBe(expected)
+  })
 })

@@ -11,6 +11,8 @@ import {
 describe('blog-content helpers', () => {
   it('parses html and markdown fields safely', () => {
     expect(parseBlogContentJson(undefined)).toBeNull()
+    expect(parseBlogContentJson('{not json')).toBeNull()
+    expect(parseBlogContentJson('[]')).toBeNull()
     expect(parseBlogContentJson('{"html":"<p>Hello</p>","markdown":"# Hello"}')).toEqual({
       html: '<p>Hello</p>',
       markdown: '# Hello',
@@ -29,6 +31,24 @@ describe('blog-content helpers', () => {
     expect(rendered).toContain('<h2>Heading</h2>')
     expect(rendered).toContain('<p>Paragraph with <a href="/blog">link</a>.</p>')
     expect(rendered).toContain('<img src="/media/hero.png" alt="hero" />')
+  })
+
+  it('preserves Korean multiline code blocks and inline code without leaking parser errors', () => {
+    const rendered = resolveBlogRenderableHtml(JSON.stringify({
+      markdown: [
+        '문단에는 `인라인 코드`가 있습니다.',
+        '',
+        '```ts',
+        'const message = "안녕하세요";',
+        'console.log(message);',
+        '```',
+      ].join('\n'),
+    }))
+
+    expect(rendered).toContain('<code>인라인 코드</code>')
+    expect(rendered).toContain('<pre><code class="language-ts">')
+    expect(rendered).toContain('const message = &quot;안녕하세요&quot;;\nconsole.log(message);')
+    expect(rendered).not.toMatch(/SyntaxError|Unexpected token|stack|trace/i)
   })
 
   it('keeps mermaid fenced markdown as a regular code block', () => {
@@ -56,6 +76,12 @@ describe('blog-content helpers', () => {
 
     expect(rendered).toContain('<h1>Preferred markdown</h1>')
     expect(rendered).not.toContain('Old html')
+  })
+
+  it('returns safe empty renderable output for malformed or empty content', () => {
+    for (const raw of [undefined, null, '', '{not json', JSON.stringify({ html: '', markdown: '' })]) {
+      expect(resolveBlogRenderableHtml(raw)).toBe('')
+    }
   })
 
   it('converts markdown text wrapped by simple paragraph tags', () => {

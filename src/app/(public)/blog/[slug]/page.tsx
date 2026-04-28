@@ -18,22 +18,62 @@ interface PageProps {
     params: Promise<{ slug: string }>
 }
 
+function safeDecodeSlug(slug: string) {
+    try {
+        return decodeURIComponent(slug)
+    } catch {
+        return null
+    }
+}
+
+function buildBlogMetadataPath(slug: string) {
+    const cleanedSlug = slug.trim()
+    return cleanedSlug ? `/blog/${encodeURIComponent(cleanedSlug)}` : '/blog'
+}
+
+function normalizeStaticParamSlug(slug: unknown) {
+    if (typeof slug !== 'string') {
+        return null
+    }
+
+    const cleanedSlug = slug.trim()
+    if (!cleanedSlug || cleanedSlug.includes('/') || cleanedSlug.includes('?') || cleanedSlug.includes('#')) {
+        return null
+    }
+
+    return cleanedSlug
+}
+
+function getSortablePublishedTime(value?: string | null) {
+    if (!value) {
+        return 0
+    }
+
+    const time = new Date(value).getTime()
+    return Number.isNaN(time) ? 0 : time
+}
+
 export async function generateStaticParams() {
     const blogs = await fetchAllPublicBlogs().catch(() => [])
-    return blogs.map((blog) => ({ slug: blog.slug }))
+    return blogs.flatMap((blog) => {
+        const slug = normalizeStaticParamSlug(blog.slug)
+        return slug ? [{ slug }] : []
+    })
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
     const { slug } = await params
-    const decodedSlug = decodeURIComponent(slug)
-    const blog = await fetchPublicBlogBySlug(decodedSlug)
+    const decodedSlug = safeDecodeSlug(slug)
+    if (!decodedSlug) return {}
+
+    const blog = await fetchPublicBlogBySlug(decodedSlug).catch(() => null)
 
     if (!blog) return {}
 
     return createPublicMetadata({
         title: blog.title,
         description: blog.excerpt,
-        path: `/blog/${blog.slug}`,
+        path: buildBlogMetadataPath(blog.slug),
         type: 'article',
     })
 }
@@ -54,8 +94,8 @@ export default async function BlogDetailPage({ params }: PageProps) {
 
     const publishDate = formatDetailPublishDate(blog.publishedAt)
     const sortedBlogs = [...allBlogs].sort((left, right) => {
-        const leftTime = left.publishedAt ? new Date(left.publishedAt).getTime() : 0
-        const rightTime = right.publishedAt ? new Date(right.publishedAt).getTime() : 0
+        const leftTime = getSortablePublishedTime(left.publishedAt)
+        const rightTime = getSortablePublishedTime(right.publishedAt)
 
         if (leftTime !== rightTime) {
             return rightTime - leftTime
@@ -72,8 +112,8 @@ export default async function BlogDetailPage({ params }: PageProps) {
             <div data-testid="blog-article-content-layout" className="mx-auto xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,48rem)_minmax(0,1fr)] xl:items-start xl:gap-12">
                 <div data-testid="blog-detail-body" className="mx-auto min-w-0 w-full max-w-3xl xl:col-start-2">
                     <header className="mb-8">
-                        <h1 data-testid="blog-detail-title" className="mb-4 text-3xl font-heading font-bold leading-tight text-foreground text-balance md:text-4xl">
-                            {blog.title}
+                        <h1 className="mb-4 text-3xl font-heading font-bold leading-tight text-foreground text-balance md:text-4xl">
+                            <span data-testid="blog-detail-title">{blog.title}</span>
                         </h1>
                         <div className="mb-6 flex flex-wrap items-center gap-4 font-medium text-muted-foreground">
                             <Badge variant="secondary" className="rounded-full bg-brand-navy px-3 text-white hover:bg-brand-navy/90">

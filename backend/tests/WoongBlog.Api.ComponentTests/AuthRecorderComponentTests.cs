@@ -119,6 +119,24 @@ public class AuthRecorderComponentTests
     }
 
     [Fact]
+    public async Task ValidateSessionAsync_ReturnsFalse_WhenSessionIdClaimIsMalformed()
+    {
+        await using var dbContext = CreateDbContext();
+        var recorder = new AuthRecorder(dbContext, Options.Create(new AuthOptions()));
+
+        var principal = new ClaimsPrincipal(new ClaimsIdentity(
+        [
+            new Claim(AuthClaimTypes.ProfileId, Guid.NewGuid().ToString()),
+            new Claim(AuthClaimTypes.SessionId, "not-a-guid"),
+            new Claim(AuthClaimTypes.Role, "user")
+        ], "cookie"));
+
+        var isValid = await recorder.ValidateSessionAsync(principal);
+
+        Assert.False(isValid);
+    }
+
+    [Fact]
     public async Task ValidateSessionAsync_ReturnsFalse_WhenSessionRevoked()
     {
         await using var dbContext = CreateDbContext();
@@ -289,6 +307,82 @@ public class AuthRecorderComponentTests
         var isValid = await recorder.ValidateSessionAsync(principal);
 
         Assert.False(isValid);
+    }
+
+    [Fact]
+    public async Task ValidateSessionAsync_ReturnsFalseAndRevokesSession_WhenAbsoluteExpirationHasPassed()
+    {
+        await using var dbContext = CreateDbContext();
+        var recorder = new AuthRecorder(
+            dbContext,
+            Options.Create(new AuthOptions
+            {
+                SlidingExpirationMinutes = 300,
+                AbsoluteExpirationHours = 1
+            }));
+
+        var profile = new WoongBlog.Api.Domain.Entities.Profile
+        {
+            Id = Guid.NewGuid(),
+            Email = "user@example.com",
+            Provider = "google",
+            ProviderSubject = "subject-absolute-expired",
+            Role = "user"
+        };
+        var session = new WoongBlog.Api.Domain.Entities.AuthSession
+        {
+            Id = Guid.NewGuid(),
+            ProfileId = profile.Id,
+            SessionKey = "absolute-expired",
+            LastSeenAt = DateTimeOffset.UtcNow,
+            ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(-1)
+        };
+        dbContext.Profiles.Add(profile);
+        dbContext.AuthSessions.Add(session);
+        await dbContext.SaveChangesAsync();
+
+        var principal = new ClaimsPrincipal(new ClaimsIdentity(
+        [
+            new Claim(AuthClaimTypes.ProfileId, profile.Id.ToString()),
+            new Claim(AuthClaimTypes.SessionId, session.Id.ToString()),
+            new Claim(AuthClaimTypes.Role, "user")
+        ], "cookie"));
+
+        var isValid = await recorder.ValidateSessionAsync(principal);
+
+        Assert.False(isValid);
+        Assert.NotNull(dbContext.AuthSessions.Single().RevokedAt);
+    }
+
+    [Fact]
+    public async Task ValidateSessionAsync_ReturnsFalseAndRevokesSession_WhenProfileIsMissing()
+    {
+        await using var dbContext = CreateDbContext();
+        var recorder = new AuthRecorder(dbContext, Options.Create(new AuthOptions()));
+
+        var missingProfileId = Guid.NewGuid();
+        var session = new WoongBlog.Api.Domain.Entities.AuthSession
+        {
+            Id = Guid.NewGuid(),
+            ProfileId = missingProfileId,
+            SessionKey = "missing-profile",
+            LastSeenAt = DateTimeOffset.UtcNow,
+            ExpiresAt = DateTimeOffset.UtcNow.AddHours(1)
+        };
+        dbContext.AuthSessions.Add(session);
+        await dbContext.SaveChangesAsync();
+
+        var principal = new ClaimsPrincipal(new ClaimsIdentity(
+        [
+            new Claim(AuthClaimTypes.ProfileId, missingProfileId.ToString()),
+            new Claim(AuthClaimTypes.SessionId, session.Id.ToString()),
+            new Claim(AuthClaimTypes.Role, "user")
+        ], "cookie"));
+
+        var isValid = await recorder.ValidateSessionAsync(principal);
+
+        Assert.False(isValid);
+        Assert.NotNull(dbContext.AuthSessions.Single().RevokedAt);
     }
 
     [Fact]

@@ -12,6 +12,12 @@ describe('page-content helpers', () => {
     expect(parsePageContentJson('{"html":"<p>Hello</p>"}')).toEqual({ html: '<p>Hello</p>' })
   })
 
+  it('returns null for malformed or empty page content without leaking parser errors', () => {
+    for (const raw of ['', null, undefined, '{not json', '["not", "a", "page"]']) {
+      expect(parsePageContentJson(raw)).toBeNull()
+    }
+  })
+
   it('detects html and block content safely', () => {
     expect(isHtmlPageContent({ html: '<p>Hello</p>' })).toBe(true)
     expect(isHtmlPageContent({ html: 1 })).toBe(false)
@@ -22,6 +28,12 @@ describe('page-content helpers', () => {
     expect(isBlockPageContent({
       blocks: [{ id: 1, type: 'p' }],
     })).toBe(false)
+    expect(isBlockPageContent({
+      blocks: [
+        { id: 'unknown-1', type: 'unknown-block', text: '알 수 없는 블록' },
+        { id: 'code-1', type: 'code', text: 'const value = 1' },
+      ],
+    })).toBe(true)
   })
 
   it('filters home content down to optional string fields', () => {

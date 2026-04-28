@@ -31,6 +31,8 @@ vi.mock('@/components/ui/sheet', () => ({
   Sheet: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   SheetTrigger: ({ children }: { children: ReactNode }) => <>{children}</>,
   SheetContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  SheetTitle: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  SheetDescription: ({ children }: { children: ReactNode }) => <p>{children}</p>,
 }))
 
 describe('Navbar mobile controls', () => {

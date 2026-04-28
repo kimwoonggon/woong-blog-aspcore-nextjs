@@ -1,0 +1,67 @@
+# Frontend Test Coverage Audit - 2026-04-26
+
+## Batch 3 - WorkVideo Upload and Rich Media Failure Reinforcement
+
+### Tests Added
+
+- `src/test/work-editor.test.tsx`
+  - invalid YouTube input is rejected without staging a video
+  - backend YouTube 400 validation errors remain visible without clearing editor state
+  - backend YouTube 409 duplicate conflicts remain visible without adding a video
+  - create-time staged HLS attach failure does not leave a false complete/processing state
+  - reorder conflict keeps original saved video order
+  - saved video delete failure keeps the video visible and retry can succeed
+  - empty and single-video saved lists keep stable reorder controls
+  - thumbnail regeneration failure shows a safe error without a false success
+- `src/test/work-video-player.test.tsx`
+  - HLS video data with no playback URL renders a safe unavailable state instead of playable controls
+
+### Production Files Changed
+
+- `src/components/admin/WorkEditor.tsx`
+  - validates YouTube URLs before staging or sending them
+  - clears transient staged HLS upload status when attach processing fails
+- `src/components/content/WorkVideoPlayer.tsx`
+  - renders a safe unavailable state when a non-YouTube video has no playback URL
+  - shows a safe playback error if HLS/native playback loading fails
+
+### Behavior Bugs Found
+
+- Invalid YouTube text could be staged for new works because only blank input was rejected client-side.
+- A staged create-time HLS failure could leave stale upload progress text after the attach request failed.
+- HLS video records without a playback URL rendered native video controls and a play overlay even though no playable source existed.
+
+### Commands Run
+
+- `npm test -- --run src/test/work-editor.test.tsx src/test/work-video-player.test.tsx`
+  - Passed: 2 files / 39 tests
+- `npm run test:e2e -- tests/admin-work-video-create-flow.spec.ts tests/admin-work-video-edit-flow.spec.ts tests/admin-work-video-drag-order.spec.ts tests/admin-work-video-s3-compatible.spec.ts tests/public-work-videos.spec.ts`
+  - Failed before tests ran: Playwright web server timed out because frontend requests to backend `127.0.0.1:8080` were refused.
+- `./scripts/dev-up.sh`
+  - Failed after image build: Docker could not bind `127.0.0.1:8080` (`/forwards/expose returned unexpected status: 500`).
+- `docker compose -f docker-compose.dev.yml up -d`
+  - Failed with the same `127.0.0.1:8080` port-forward error.
+- `docker compose -f docker-compose.dev.yml down`
+  - Passed; removed the partially created dev stack.
+- `npm test -- --run`
+  - Failed in the full threaded suite: `src/test/work-detail-metadata.test.ts` timed out; this file passed in isolation.
+- `npm test -- --run src/test/work-detail-metadata.test.ts`
+  - Passed: 1 file / 2 tests
+- `npm run lint`
+  - Passed: 0 errors, 6 existing warnings
+- `npm run typecheck`
+  - Passed
+- `npm run build`
+  - Passed
+- `git diff --check`
+  - Passed
+
+### Remaining WorkVideo/Upload/Rich Media Gaps
+
+- The legacy `upload-url` / browser PUT / confirm path exists in `WorkEditor` internals but is not reachable from the current UI, which always stages HLS uploads. It was not tested through private implementation details.
+- Route-mocked WorkVideo Playwright coverage could not be revalidated because the compose-backed dev environment could not bind backend port `127.0.0.1:8080`.
+- No deterministic frontend-owned thumbnail generation retry UI exists beyond safe error surfacing; retry remains the same user action.
+
+### Next Recommended Batch
+
+Batch 4 should first unblock the localhost Docker port-forward issue, then add one or two route-mocked browser tests around WorkVideo public playback and admin create/edit recovery flows. After the environment is stable, broaden into public media error-boundary coverage rather than adding more private component mocks.
