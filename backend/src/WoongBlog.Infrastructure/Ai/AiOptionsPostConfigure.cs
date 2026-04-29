@@ -20,7 +20,7 @@ internal sealed class AiOptionsPostConfigure(IConfiguration configuration) : IPo
         options.AzureOpenAiApiVersion = FirstConfigured(configuration["AZURE_OPENAI_API_VERSION"], options.AzureOpenAiApiVersion, "2024-08-01-preview");
         options.CodexCommand = FirstConfigured(configuration["CODEX_COMMAND"], options.CodexCommand, "codex");
         options.CodexArguments = ParseShellArguments(configuration["CODEX_ARGUMENTS"], options.CodexArguments, ["exec"]);
-        options.CodexModel = FirstConfigured(configuration["CODEX_MODEL"], options.CodexModel, "gpt-5.4");
+        options.CodexModel = FirstConfigured(configuration["CODEX_MODEL"], options.CodexModel, "gpt-5.5");
         options.CodexReasoningEffort = FirstConfigured(configuration["CODEX_REASONING_EFFORT"], options.CodexReasoningEffort, "medium");
 
         if (int.TryParse(configuration["CODEX_TIMEOUT_MS"], out var timeoutMs) && timeoutMs > 0)
@@ -44,7 +44,7 @@ internal sealed class AiOptionsPostConfigure(IConfiguration configuration) : IPo
         options.CodexAllowedModels = ParseCsv(
             configuration["CODEX_ALLOWED_MODELS"],
             options.CodexAllowedModels,
-            ["gpt-5.4", "gpt-5.3-codex", "gpt-5.3-codex-spark"]);
+            ["gpt-5.5", "gpt-5.4", "gpt-5.3-codex", "gpt-5.3-codex-spark"]);
         options.CodexAllowedReasoningEfforts = ParseCsv(
             configuration["CODEX_ALLOWED_REASONING_EFFORTS"],
             options.CodexAllowedReasoningEfforts,

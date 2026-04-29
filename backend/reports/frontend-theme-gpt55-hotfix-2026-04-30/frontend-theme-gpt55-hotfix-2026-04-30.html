@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Audit Report: Theme + AI Hotfix</title>
+    <style>
+      body { font-family: Arial, Helvetica, sans-serif; line-height: 1.5; padding: 20px; }
+      h1, h2, h3 { margin-top: 1.4em; }
+      li { margin-bottom: 0.4em; }
+      code { background: #f5f5f5; padding: 0 4px; border-radius: 4px; }
+    </style>
+  </head>
+  <body>
+    <h1>Audit Report: Theme + AI Hotfix</h1>
+    <p><strong>Date:</strong> 2026-04-30</p>
+    <h2>Summary</h2>
+    <ul>
+      <li>System theme sync enabled for browser preference.</li>
+      <li>AI dialog reset logic added so Start AI Fix is available after reopen.</li>
+      <li>gpt-5.5 added as default and allowed Codex model.</li>
+    </ul>
+
+    <h2>Test Validation</h2>
+    <ul>
+      <li><code>npm run test -- src/test/admin-ai-fix-dialog.test.tsx src/test/admin-blog-batch-ai-panel.test.tsx</code> : <strong>2 files / 28 tests passed</strong></li>
+      <li><code>dotnet test backend/WoongBlog.sln</code>: full backend suite executed</li>
+      <ul>
+        <li>ComponentTests: 114 passed</li>
+        <li>UnitTests: 56 passed</li>
+        <li>ArchitectureTests: 35 passed</li>
+        <li>IntegrationTests: 196 passed</li>
+        <li>ContractTests: skipped (no pact inputs)</li>
+      </ul>
+    </ul>
+
+    <h2>Notes</h2>
+    <ul>
+      <li>NU1901 warning from AWSSDK.Core observed; unchanged from existing state.</li>
+      <li>Playwright/e2e suites not executed in this pass.</li>
+    </ul>
+
+    <h2>Recommendation</h2>
+    <p>Push to <code>dev</code>, then merge to <code>main</code> after CI confirms no regressions.</p>
+  </body>
+</html>
