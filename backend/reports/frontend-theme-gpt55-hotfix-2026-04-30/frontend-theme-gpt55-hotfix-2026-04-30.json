@@ -1,0 +1,38 @@
+{
+  "task": "frontend-theme-gpt55-hotfix",
+  "date": "2026-04-30",
+  "goal": "System theme sync + AI fix dialog stability + gpt-5.5 model onboarding",
+  "changedFiles": [
+    "src/components/providers/ThemeProvider.tsx",
+    "src/components/ui/ThemeToggle.tsx",
+    "src/components/admin/AIFixDialog.tsx",
+    "src/components/admin/AdminBlogBatchAiPanel.tsx",
+    "backend/src/WoongBlog.Api/appsettings.json",
+    "backend/src/WoongBlog.Infrastructure/Ai/AiOptionsPostConfigure.cs",
+    "backend/src/WoongBlog.Application/Modules/AI/AiOptions.cs",
+    "todolist-2026-04-30.md"
+  ],
+  "validation": {
+    "frontend": {
+      "command": "npm run test -- src/test/admin-ai-fix-dialog.test.tsx src/test/admin-blog-batch-ai-panel.test.tsx",
+      "result": "passed",
+      "details": "2 test files, 28 tests passed"
+    },
+    "backend": {
+      "command": "dotnet test backend/WoongBlog.sln",
+      "result": "passed",
+      "details": [
+        "ComponentTests 114 passed",
+        "UnitTests 56 passed",
+        "ArchitectureTests 35 passed",
+        "IntegrationTests 196 passed",
+        "ContractTests skipped (no pact input)"
+      ]
+    }
+  },
+  "risks": [
+    "NU1901 low severity warning from AWSSDK.Core during restore",
+    "No e2e suites run in this pass"
+  ],
+  "nextRecommendation": "Push to dev branch first, then merge to main after CI confirms no regressions."
+}

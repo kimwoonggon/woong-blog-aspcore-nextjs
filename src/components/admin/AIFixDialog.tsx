@@ -63,12 +63,23 @@ export function AIFixDialog({
     const [fixedContent, setFixedContent] = useState<string | null>(null)
     const [runtimeConfig, setRuntimeConfig] = useState<AdminAiRuntimeConfig | null>(null)
     const [selectedProvider, setSelectedProvider] = useState<ProviderOption>('openai')
-    const [codexModel, setCodexModel] = useState('gpt-5.4')
+    const [codexModel, setCodexModel] = useState('gpt-5.5')
     const [codexReasoningEffort, setCodexReasoningEffort] = useState('medium')
     const [customPrompt, setCustomPrompt] = useState('')
     const [savedPrompt, setSavedPrompt] = useState('')
     const promptStorageKey = resolvePromptStorageKey(apiEndpoint)
     const enrichTitle = typeof extraBodyParams.title === 'string' ? extraBodyParams.title : ''
+
+    function handleOpenChange(nextOpen: boolean) {
+        if (!nextOpen) {
+            setOpen(false)
+            setLoading(false)
+            setFixedContent(null)
+            return
+        }
+
+        setOpen(true)
+    }
 
     useEffect(() => {
         if (!open) {
@@ -96,7 +107,7 @@ export function AIFixDialog({
                     : availableProviders[0]
 
                 setSelectedProvider(resolvedProvider)
-                setCodexModel(savedModel || config.codexModel || 'gpt-5.4')
+                setCodexModel(savedModel || config.codexModel || 'gpt-5.5')
                 setCodexReasoningEffort(savedReasoning || config.codexReasoningEffort || 'medium')
                 const prompt = savedPrompt || resolveDefaultPrompt(config, apiEndpoint, enrichTitle)
                 setCustomPrompt(prompt)
@@ -200,7 +211,7 @@ export function AIFixDialog({
     const hasUnsavedPrompt = customPrompt !== savedPrompt
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>
                 <Button variant="outline" size="sm" className="gap-2" type="button">
                     <Wand2 size={16} />

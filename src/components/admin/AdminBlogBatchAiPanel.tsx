@@ -66,7 +66,7 @@ export function AdminBlogBatchAiPanel({
   const [rangeCount, setRangeCount] = useState('10')
   const [dateStart, setDateStart] = useState('')
   const [dateEnd, setDateEnd] = useState('')
-  const [codexModel, setCodexModel] = useState('gpt-5.4')
+  const [codexModel, setCodexModel] = useState('gpt-5.5')
   const [codexReasoningEffort, setCodexReasoningEffort] = useState('medium')
   const [customPrompt, setCustomPrompt] = useState('')
   const [savedPrompt, setSavedPrompt] = useState('')
@@ -185,7 +185,7 @@ export function AdminBlogBatchAiPanel({
         const availableProviders = (config.availableProviders?.length ? config.availableProviders : [config.provider]) as Array<'openai' | 'azure' | 'codex'>
         const preferredProvider = (savedProvider || config.provider) as 'openai' | 'azure' | 'codex'
         setSelectedProvider(availableProviders.includes(preferredProvider) ? preferredProvider : availableProviders[0])
-        setCodexModel(savedModel || config.codexModel || 'gpt-5.4')
+        setCodexModel(savedModel || config.codexModel || 'gpt-5.5')
         setCodexReasoningEffort(savedReasoning || config.codexReasoningEffort || 'medium')
         const prompt = savedPrompt || config.defaultBlogFixPrompt || config.defaultSystemPrompt || ''
         if (!promptTouchedRef.current) {

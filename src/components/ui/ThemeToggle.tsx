@@ -19,7 +19,7 @@ interface ThemeToggleProps {
 }
 
 export function ThemeToggle({ className, testId = "theme-toggle", showLabel = false }: ThemeToggleProps) {
-  const { setTheme, theme } = useTheme()
+  const { setTheme, theme, resolvedTheme } = useTheme()
   const mounted = useSyncExternalStore(
     () => () => {},
     () => true,
@@ -39,7 +39,8 @@ export function ThemeToggle({ className, testId = "theme-toggle", showLabel = fa
     )
   }
 
-  const currentTheme = (theme === "dark" ? "dark" : "light") as ThemeMode
+  const systemTheme = theme === "system" ? (resolvedTheme ?? "light") : theme
+  const currentTheme = (systemTheme === "dark" ? "dark" : "light") as ThemeMode
   const nextTheme = currentTheme === "dark" ? "light" : "dark"
   const label = currentTheme === "dark" ? "Dark mode" : "Light mode"
 
