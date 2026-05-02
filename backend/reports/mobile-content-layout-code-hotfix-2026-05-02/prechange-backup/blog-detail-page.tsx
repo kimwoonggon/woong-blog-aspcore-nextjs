@@ -108,8 +108,8 @@ export default async function BlogDetailPage({ params }: PageProps) {
     const olderBlog = currentIndex >= 0 && currentIndex < sortedBlogs.length - 1 ? sortedBlogs[currentIndex + 1] : null
 
     return (
-        <article className="mx-auto w-full max-w-7xl px-4 py-8 md:px-6 md:py-12">
-            <div data-testid="blog-article-content-layout" className="mx-auto w-full min-w-0 xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,48rem)_minmax(0,1fr)] xl:items-start xl:gap-12">
+        <article className="mx-auto w-full px-4 py-8 md:px-6 md:py-12">
+            <div data-testid="blog-article-content-layout" className="mx-auto xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,48rem)_minmax(0,1fr)] xl:items-start xl:gap-12">
                 <div data-testid="blog-detail-body" className="mx-auto min-w-0 w-full max-w-3xl xl:col-start-2">
                     <header className="mb-8">
                         <h1 className="mb-4 text-3xl font-heading font-bold leading-tight text-foreground text-balance md:text-4xl">
@@ -133,7 +133,7 @@ export default async function BlogDetailPage({ params }: PageProps) {
 
                     <PublicBlogDetailAdminActions blogId={blog.id} />
 
-                    <div id="blog-detail-content" className="mt-8 min-w-0 overflow-hidden">
+                    <div id="blog-detail-content" className="mt-8">
                         {renderedContent && (
                             <InteractiveRenderer html={renderedContent} />
                         )}
@@ -148,7 +148,7 @@ export default async function BlogDetailPage({ params }: PageProps) {
                 </aside>
             </div>
 
-            <div className="mx-auto w-full max-w-3xl">
+            <div className="mx-auto max-w-3xl">
                 {(olderBlog || newerBlog) && (
                     <Suspense fallback={null}>
                         <nav

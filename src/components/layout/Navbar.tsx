@@ -66,6 +66,24 @@ function focusSearchInput(target: HTMLInputElement | null) {
     return true
 }
 
+function restoreScrollPosition(scrollY: number) {
+    if (typeof window === "undefined") {
+        return
+    }
+
+    window.scrollTo(window.scrollX, scrollY)
+}
+
+function restoreScrollPositionAfterFocus(scrollY: number) {
+    restoreScrollPosition(scrollY)
+    window.requestAnimationFrame(() => {
+        restoreScrollPosition(scrollY)
+    })
+    window.setTimeout(() => {
+        restoreScrollPosition(scrollY)
+    }, 0)
+}
+
 function resolveMobileSearchConfig(pathname: string): MobileSearchConfig | null {
     if (pathname === "/blog") {
         return {
@@ -198,9 +216,11 @@ export function Navbar({ ownerName = "John Doe" }: NavbarProps) {
             return
         }
 
+        const scrollY = window.scrollY
         setMobileSearchOpen(true)
         window.requestAnimationFrame(() => {
             focusSearchInput(mobileSearchInputRef.current)
+            restoreScrollPositionAfterFocus(scrollY)
         })
     }
 
@@ -313,7 +333,7 @@ export function Navbar({ ownerName = "John Doe" }: NavbarProps) {
                     </div>
 
                     {mobileSearchConfig ? (
-                        <div className={cn("absolute inset-x-0 top-full border-b bg-background/95 px-3 py-3 shadow-sm md:px-6 lg:hidden", mobileSearchOpen ? "block" : "hidden")}>
+                        <div className={cn("fixed inset-x-0 top-16 z-[70] border-b bg-background/95 px-3 py-3 shadow-sm md:px-6 lg:hidden", mobileSearchOpen ? "block" : "hidden")}>
                             <form
                                 key={`mobile-search-${pathname}-${mobileSearchQuery}`}
                                 action={mobileSearchConfig.pathname}
