@@ -222,7 +222,7 @@ export function AIFixDialog({
     const availableProviders = normalizeProviderOptions(runtimeConfig?.availableProviders?.length ? runtimeConfig.availableProviders : runtimeConfig ? [runtimeConfig.provider] : ['openai'])
     const allowedCodexModels = resolveAllowedCodexModels(runtimeConfig)
     const hasUnsavedPrompt = customPrompt !== savedPrompt
-    const actionLabel = apiEndpoint.includes('/work-enrich') ? 'Start AI Enrich' : 'Start AI Fix'
+    const actionLabel = 'Start AI Fix'
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -398,7 +398,7 @@ export function AIFixDialog({
                                             Compare the original content on the left and apply the generated revision only when it looks right.
                                         </p>
                                     </div>
-                                    <Button onClick={handleFix} disabled={loading}>
+                                    <Button onClick={handleFix} disabled={loading} aria-label="Start AI Fix from preview">
                                         {actionLabel}
                                     </Button>
                                 </div>
