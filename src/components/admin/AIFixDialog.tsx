@@ -23,6 +23,7 @@ interface AIFixDialogProps {
 type ProviderOption = 'openai' | 'codex'
 const blogFixSystemPromptKey = 'admin-ai-blog-fix-system-prompt'
 const workEnrichSystemPromptKey = 'admin-ai-work-enrich-system-prompt'
+const defaultCodexModels = ['gpt-5.5', 'gpt-5.4', 'gpt-5.3-codex', 'gpt-5.3-codex-spark']
 
 function normalizeProvider(value?: string | null): ProviderOption {
     if (value === 'codex') {
@@ -49,6 +50,17 @@ function resolveDefaultPrompt(config: AdminAiRuntimeConfig, apiEndpoint: string,
     }
 
     return config.defaultBlogFixPrompt || config.defaultSystemPrompt || ''
+}
+
+function resolveAllowedCodexModels(config: AdminAiRuntimeConfig | null) {
+    const models = config?.allowedCodexModels?.length ? config.allowedCodexModels : defaultCodexModels
+    return Array.from(new Set(models.includes('gpt-5.5') ? models : ['gpt-5.5', ...models]))
+}
+
+function resolveSelectedCodexModel(savedModel: string | null, config: AdminAiRuntimeConfig) {
+    const allowedModels = resolveAllowedCodexModels(config)
+    const preferredModel = savedModel || config.codexModel || 'gpt-5.5'
+    return allowedModels.includes(preferredModel) ? preferredModel : allowedModels[0]
 }
 
 export function AIFixDialog({
@@ -107,7 +119,7 @@ export function AIFixDialog({
                     : availableProviders[0]
 
                 setSelectedProvider(resolvedProvider)
-                setCodexModel(savedModel || config.codexModel || 'gpt-5.5')
+                setCodexModel(resolveSelectedCodexModel(savedModel, config))
                 setCodexReasoningEffort(savedReasoning || config.codexReasoningEffort || 'medium')
                 const prompt = savedPrompt || resolveDefaultPrompt(config, apiEndpoint, enrichTitle)
                 setCustomPrompt(prompt)
@@ -208,7 +220,9 @@ export function AIFixDialog({
     }
 
     const availableProviders = normalizeProviderOptions(runtimeConfig?.availableProviders?.length ? runtimeConfig.availableProviders : runtimeConfig ? [runtimeConfig.provider] : ['openai'])
+    const allowedCodexModels = resolveAllowedCodexModels(runtimeConfig)
     const hasUnsavedPrompt = customPrompt !== savedPrompt
+    const actionLabel = 'Start AI Fix'
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -230,6 +244,12 @@ export function AIFixDialog({
                             {title}
                         </DialogTitle>
                         <div className="flex items-center gap-2">
+                            {!fixedContent ? (
+                                <Button size="sm" onClick={handleFix} disabled={loading} className="gap-2">
+                                    {loading ? <Loader2 size={16} className="animate-spin" /> : <Wand2 size={16} />}
+                                    {loading ? 'Processing...' : actionLabel}
+                                </Button>
+                            ) : null}
                             <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
                                 Cancel
                             </Button>
@@ -288,7 +308,7 @@ export function AIFixDialog({
                                         }}
                                         className="rounded-md border border-input bg-background px-2 py-1 text-sm"
                                     >
-                                        {(runtimeConfig?.allowedCodexModels || []).map((model) => (
+                                        {allowedCodexModels.map((model) => (
                                             <option key={model} value={model}>{model}</option>
                                         ))}
                                     </select>
@@ -378,8 +398,8 @@ export function AIFixDialog({
                                             Compare the original content on the left and apply the generated revision only when it looks right.
                                         </p>
                                     </div>
-                                    <Button onClick={handleFix}>
-                                        Start AI Fix
+                                    <Button onClick={handleFix} disabled={loading} aria-label="Start AI Fix from preview">
+                                        {actionLabel}
                                     </Button>
                                 </div>
                             )}
