@@ -1,0 +1,19 @@
+{
+  "task": "codex-gpt55-runtime-env-hotfix",
+  "date": "2026-05-03",
+  "changed": [
+    ".env",
+    ".env.example",
+    ".env.staging.example",
+    ".env.prod.example",
+    "src/components/admin/AIFixDialog.tsx",
+    "todolist-2026-05-03.md"
+  ],
+  "validation": [
+    "inspected runtime env override",
+    "docker dev stack rebuilt and restarted",
+    "next production build completed inside docker rebuild"
+  ],
+  "pushed": false,
+  "recommendation": "Verify UI in browser, then commit and push via dev-to-staging flow."
+}
