@@ -100,9 +100,9 @@ export default async function WorkDetailPage({ params }: PageProps) {
     const newerWork = currentIndex > 0 ? sortedWorks[currentIndex - 1] : null
     const olderWork = currentIndex >= 0 && currentIndex < sortedWorks.length - 1 ? sortedWorks[currentIndex + 1] : null
     return (
-        <article className="mx-auto w-full max-w-7xl px-4 py-8 md:px-6 md:py-12">
+        <article className="mx-auto w-full px-4 py-8 md:px-6 md:py-12">
             <div id="work-detail-toc-start" aria-hidden="true" className="h-0" />
-            <div data-testid="work-article-content-layout" className="mx-auto w-full min-w-0 xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,48rem)_minmax(0,1fr)] xl:items-start xl:gap-12">
+            <div data-testid="work-article-content-layout" className="mx-auto xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,48rem)_minmax(0,1fr)] xl:items-start xl:gap-12">
                 <div data-testid="work-detail-body" className="mx-auto min-w-0 w-full max-w-3xl xl:col-start-2">
                     <header className="mb-8">
                         <h1 className="mb-4 text-3xl font-heading font-bold leading-tight text-foreground text-balance md:text-4xl">
@@ -134,7 +134,7 @@ export default async function WorkDetailPage({ params }: PageProps) {
 
                     <PublicWorkDetailAdminActions workId={work.id} />
 
-                    <div id="work-detail-content" className="mt-8 min-w-0 overflow-hidden">
+                    <div id="work-detail-content" className="mt-8">
                         {orderedVideos.length > 0 && !hasInlineVideoEmbeds && (
                             <div className="mb-8 space-y-4">
                                 <div data-testid="work-lead-video">
@@ -176,7 +176,7 @@ export default async function WorkDetailPage({ params }: PageProps) {
             </div>
 
             <div id="work-detail-toc-end" aria-hidden="true" className="h-0" />
-            <div className="mx-auto w-full max-w-3xl">
+            <div className="mx-auto max-w-3xl">
                 {(olderWork || newerWork) && (
                     <Suspense fallback={null}>
                         <nav

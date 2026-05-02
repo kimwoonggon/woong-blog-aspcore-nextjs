@@ -101,9 +101,9 @@
   --code-block-bg: #f1f3f5;
   --code-block-fg: #1f2937;
   --code-block-border: #d9dee7;
-  --inline-code-bg: transparent;
-  --inline-code-fg: #0f5f74;
-  --inline-code-border: transparent;
+  --inline-code-bg: #eef1f5;
+  --inline-code-fg: #243041;
+  --inline-code-border: #d8dee8;
 }
 
 .dark {
@@ -146,9 +146,9 @@
   --code-block-bg: #2b2f36;
   --code-block-fg: #d9dee7;
   --code-block-border: #454b55;
-  --inline-code-bg: transparent;
-  --inline-code-fg: #8fd0dd;
-  --inline-code-border: transparent;
+  --inline-code-bg: #30343c;
+  --inline-code-fg: #e1e5eb;
+  --inline-code-border: #4a505a;
 }
 
 @layer base {
@@ -162,11 +162,6 @@
 
   html.dark {
     color-scheme: dark;
-  }
-
-  html:has(#blog-detail-content),
-  html:has(#work-detail-content) {
-    scroll-padding-top: 6rem;
   }
 
   body {
@@ -230,9 +225,6 @@
   .prose {
     color: var(--foreground);
     max-width: none;
-    min-width: 0;
-    width: 100%;
-    overflow-wrap: break-word;
   }
 
   .prose h1,
@@ -244,7 +236,6 @@
     line-height: 1.2;
     margin-top: 1.75rem;
     margin-bottom: 0.75rem;
-    scroll-margin-top: 6rem;
   }
 
   .prose h1 {
@@ -275,7 +266,6 @@
 
   .prose p {
     margin: 0.9rem 0;
-    max-width: 72ch;
   }
 
   .prose ul,
@@ -304,65 +294,27 @@
 
   .prose code {
     background: var(--inline-code-bg);
-    border: 0;
-    border-radius: 0;
+    border: 1px solid var(--inline-code-border);
+    border-radius: 0.35rem;
     color: var(--inline-code-fg);
-    font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
     font-size: 0.92em;
-    font-weight: 600;
-    padding: 0;
+    padding: 0.12rem 0.38rem;
   }
 
   .prose pre,
   .prose pre[class],
   .content-code-block {
-    background:
-      linear-gradient(90deg, color-mix(in oklab, var(--brand-cyan) 20%, transparent), transparent 34%),
-      var(--code-block-bg);
+    background: var(--code-block-bg);
     border: 1px solid var(--code-block-border);
-    border-radius: 1rem;
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06), 0 18px 40px rgb(15 23 42 / 0.10);
-    box-sizing: border-box;
+    border-radius: 0.875rem;
     color: var(--code-block-fg);
     font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
     font-size: 0.94rem;
     line-height: 1.75;
     margin: 1.25rem 0;
-    max-width: 100%;
     overflow-x: auto;
-    padding: 2.25rem 1.125rem 1rem;
-    position: relative;
+    padding: 1rem 1.125rem;
     white-space: pre;
-    width: 100%;
-  }
-
-  .prose pre::before,
-  .prose pre[class]::before,
-  .content-code-block::before {
-    color: color-mix(in oklab, var(--code-block-fg) 56%, transparent);
-    content: "code";
-    font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 0.18em;
-    position: absolute;
-    right: 1rem;
-    text-transform: uppercase;
-    top: 0.72rem;
-  }
-
-  .prose pre::after,
-  .prose pre[class]::after,
-  .content-code-block::after {
-    background: #ff5f57;
-    border-radius: 999px;
-    box-shadow: 0.78rem 0 #ffbd2e, 1.56rem 0 #28c840;
-    content: "";
-    height: 0.5rem;
-    left: 1rem;
-    position: absolute;
-    top: 0.9rem;
-    width: 0.5rem;
   }
 
   .prose pre code,
@@ -371,10 +323,8 @@
     background: transparent;
     border: 0;
     color: inherit;
-    display: block;
     font-size: inherit;
     line-height: inherit;
-    min-width: max-content;
     padding: 0;
   }
 

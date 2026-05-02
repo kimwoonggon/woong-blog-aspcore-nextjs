@@ -131,7 +131,9 @@ export default async function AdminDashboard({ searchParams }: PageProps) {
                     title={workLoadFailed && blogLoadFailed
                         ? 'Dashboard content lists are unavailable'
                         : 'Dashboard content lists are partially unavailable'}
-                    message="Some dashboard content could not be loaded. Available sections remain visible; retry after checking the API and database connection."
+                    message={workLoadFailed && blogLoadFailed
+                        ? 'Works or blog posts could not be loaded for the dashboard. Please retry after checking the API and database connection.'
+                        : 'Some dashboard content could not be loaded. Available sections remain visible; retry after checking the API and database connection.'}
                 />
             ) : null}
 

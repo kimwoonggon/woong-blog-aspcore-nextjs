@@ -1,0 +1,22 @@
+{
+  "task": "mobile-content-layout-code-hotfix",
+  "date": "2026-05-02",
+  "changed": [
+    "Public detail width containment",
+    "Code block styling and mobile-safe overflow",
+    "Reduced inline code badge styling",
+    "Detail-only scroll padding for sticky-navbar anchors",
+    "Mobile search fixed overlay with scroll preservation",
+    "Explicit light theme default",
+    "Dashboard collections fallback copy"
+  ],
+  "validationsPerformed": [
+    "BACKEND_PUBLISH_PORT=18080 ./scripts/dev-up.sh passed",
+    "Focused failure set passed: 34 tests",
+    "Mobile/search and scroll-margin focused set passed: 4 tests",
+    "Response-time focused set passed: 9 tests",
+    "Latest full e2e: 423 passed, 4 skipped, 1 latency-budget failure"
+  ],
+  "remainingRisk": "Full-suite response-time latency flake for Public nav click to Works; focused rerun passed.",
+  "finalRecommendation": "Proceed with scoped push and monitor CI latency budget."
+}
