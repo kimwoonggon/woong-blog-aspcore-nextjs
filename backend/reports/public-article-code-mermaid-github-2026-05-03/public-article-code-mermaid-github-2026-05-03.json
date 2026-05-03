@@ -1,0 +1,50 @@
+{
+  "taskSlug": "public-article-code-mermaid-github-2026-05-03",
+  "date": "2026-05-03",
+  "scope": "Public Study/blog and Work article code block and Mermaid rendering styles",
+  "changed": [
+    "Replaced custom prose code gradient, shadow, label, and mac-dot chrome with GitHub-like light/dark code surfaces.",
+    "Added inline code, code block, Mermaid shell, and highlight.js token CSS variables for light and dark modes.",
+    "Updated MermaidRenderer to use theme base with explicit light/dark themeVariables.",
+    "Added theme class observation so Mermaid diagrams rerender after light/dark toggles.",
+    "Added Playwright and Vitest coverage for code and Mermaid readability."
+  ],
+  "intentionallyNotChanged": [
+    "Article content storage and parsing",
+    "HTML sanitization",
+    "Editor data model",
+    "Public navigation and layout rails",
+    "Unrelated dirty worktree files"
+  ],
+  "validations": [
+    {
+      "command": "npx vitest run src/test/mermaid-renderer.test.tsx",
+      "result": "failed before implementation as expected"
+    },
+    {
+      "command": "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 PLAYWRIGHT_E2E_PROFILE=exhaustive npx playwright test tests/dark-mode.spec.ts --project=chromium-authenticated --grep \"DM-18\" --workers=1",
+      "result": "failed before implementation as expected, passed after implementation with 2/2 tests"
+    },
+    {
+      "command": "BACKEND_PUBLISH_PORT=18080 NGINX_HTTPS_PORT=3002 docker compose -f docker-compose.dev.yml up -d --build frontend nginx",
+      "result": "passed; frontend next build and TypeScript completed"
+    },
+    {
+      "command": "npx vitest run src/test/mermaid-renderer.test.tsx src/test/interactive-renderer.test.tsx",
+      "result": "passed 13/13"
+    },
+    {
+      "command": "npx eslint src/components/content/MermaidRenderer.tsx src/test/mermaid-renderer.test.tsx tests/dark-mode.spec.ts",
+      "result": "passed"
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    }
+  ],
+  "risks": [
+    "Unusual Mermaid diagram syntaxes may need additional color variable tuning.",
+    "Future highlight.js token classes not currently mapped may need extra scoped overrides."
+  ],
+  "recommendation": "Keep the change and ship with the focused tests."
+}

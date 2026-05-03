@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Public Article Code And Mermaid GitHub Styling Audit</title>
+  <style>
+    body { color: #1f2328; font-family: Arial, sans-serif; line-height: 1.55; margin: 40px auto; max-width: 960px; padding: 0 20px; }
+    code { background: #eff1f3; border-radius: 4px; padding: 2px 4px; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #d0d7de; padding: 8px; text-align: left; vertical-align: top; }
+    th { background: #f6f8fa; }
+    h1, h2 { line-height: 1.2; }
+  </style>
+</head>
+<body>
+  <h1>Public Article Code And Mermaid GitHub Styling Audit (2026-05-03)</h1>
+  <h2>Summary</h2>
+  <p>Updated public Study/blog and Work article code and Mermaid rendering to use GitHub-like light/dark surfaces, removed mac-style code chrome, and added focused unit and Playwright coverage.</p>
+  <h2>Changed</h2>
+  <ul>
+    <li><code>src/app/globals.css</code>: GitHub-like code, inline code, highlight.js, and Mermaid shell variables/styles.</li>
+    <li><code>src/components/content/MermaidRenderer.tsx</code>: Mermaid <code>base</code> theme with explicit light/dark variables and theme-change rerendering.</li>
+    <li><code>src/types/mermaid.d.ts</code>: added <code>themeVariables</code> typing.</li>
+    <li>Tests updated in <code>src/test/mermaid-renderer.test.tsx</code> and <code>tests/dark-mode.spec.ts</code>.</li>
+  </ul>
+  <h2>Validation</h2>
+  <table>
+    <tr><th>Check</th><th>Result</th></tr>
+    <tr><td>Docker compose frontend rebuild</td><td>Passed through <code>next build</code> and TypeScript.</td></tr>
+    <tr><td>Vitest renderer checks</td><td>Passed 13/13.</td></tr>
+    <tr><td>Focused Playwright DM-18 checks</td><td>Passed 2/2.</td></tr>
+    <tr><td>ESLint targeted files</td><td>Passed.</td></tr>
+    <tr><td><code>git diff --check</code></td><td>Passed.</td></tr>
+  </table>
+  <h2>Recommendation</h2>
+  <p>Keep the change. It satisfies the requested visual behavior without changing article data or parsing contracts.</p>
+</body>
+</html>

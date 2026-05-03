@@ -1,17 +1,25 @@
 import { render, screen, waitFor } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { MermaidRenderer } from '@/components/content/MermaidRenderer'
 
+const mermaidMocks = vi.hoisted(() => ({
+  initialize: vi.fn(),
+  render: vi.fn(async () => ({
+    svg: '<svg id="mermaid-test" width="640" height="320"><g></g></svg>',
+  })),
+}))
+
 vi.mock('mermaid', () => ({
-  default: {
-    initialize: vi.fn(),
-    render: vi.fn(async () => ({
-      svg: '<svg id="mermaid-test" width="640" height="320"><g></g></svg>',
-    })),
-  },
+  default: mermaidMocks,
 }))
 
 describe('MermaidRenderer', () => {
+  beforeEach(() => {
+    document.documentElement.classList.remove('dark')
+    mermaidMocks.initialize.mockClear()
+    mermaidMocks.render.mockClear()
+  })
+
   it('centers rendered diagrams with overflow-safe SVG rules', async () => {
     const { container } = render(<MermaidRenderer code="flowchart TD\n  A --> B" />)
 
@@ -20,6 +28,7 @@ describe('MermaidRenderer', () => {
     })
 
     const wrapper = screen.getByTestId('mermaid-renderer')
+    expect(wrapper.className).toContain('mermaid-diagram-shell')
     expect(wrapper.className).toContain('overflow-x-auto')
     expect(wrapper.className).toContain('text-center')
     expect(wrapper.className).toContain('[&_svg]:mx-auto')
@@ -37,5 +46,41 @@ describe('MermaidRenderer', () => {
     const wrapper = screen.getByTestId('mermaid-renderer')
     expect(wrapper.className).toContain('my-custom-mermaid')
     expect(wrapper.className).toContain('[&_svg]:mx-auto')
+  })
+
+  it('initializes Mermaid with GitHub-readable light theme variables', async () => {
+    render(<MermaidRenderer code="flowchart TD\n  A --> B" />)
+
+    await waitFor(() => {
+      expect(mermaidMocks.initialize).toHaveBeenCalled()
+    })
+
+    expect(mermaidMocks.initialize).toHaveBeenCalledWith(expect.objectContaining({
+      theme: 'base',
+      themeVariables: expect.objectContaining({
+        background: '#f6f8fa',
+        primaryTextColor: '#1f2328',
+        lineColor: '#57606a',
+      }),
+    }))
+  })
+
+  it('initializes Mermaid with GitHub-readable dark theme variables', async () => {
+    document.documentElement.classList.add('dark')
+
+    render(<MermaidRenderer code="flowchart TD\n  A --> B" />)
+
+    await waitFor(() => {
+      expect(mermaidMocks.initialize).toHaveBeenCalled()
+    })
+
+    expect(mermaidMocks.initialize).toHaveBeenCalledWith(expect.objectContaining({
+      theme: 'base',
+      themeVariables: expect.objectContaining({
+        background: '#0d1117',
+        primaryTextColor: '#e6edf3',
+        lineColor: '#8b949e',
+      }),
+    }))
   })
 })

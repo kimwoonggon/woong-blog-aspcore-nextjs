@@ -11,7 +11,8 @@ import {
   gotoWithTheme,
 } from './helpers/ui-improvement'
 import { expectResponsiveNavMode, toggleThemeForViewport } from './helpers/responsive-policy'
-import { createBlogFixture } from './helpers/content-fixtures'
+import { createBlogFixture, createWorkFixture } from './helpers/content-fixtures'
+import { expectMermaidRendered } from './helpers/mermaid'
 
 async function firstPublicSlug(page: Page, collection: 'blogs' | 'works') {
   const response = await page.request.get(`/api/public/${collection}?page=1&pageSize=1`)
@@ -31,7 +32,70 @@ async function expectReadableCodeBoxMetrics(page: Page, codeBlockSelector: strin
 
   expect(paddingTop).toBeGreaterThanOrEqual(14)
   expect(paddingLeft).toBeGreaterThanOrEqual(14)
-  expect(borderRadius).toBeGreaterThanOrEqual(8)
+  expect(borderRadius).toBeGreaterThanOrEqual(6)
+  expect(borderRadius).toBeLessThanOrEqual(8)
+}
+
+async function expectNoCodeWindowChrome(page: Page, codeBlockSelector: string) {
+  const chrome = await page.locator(codeBlockSelector).first().evaluate((element) => {
+    const before = window.getComputedStyle(element, '::before')
+    const after = window.getComputedStyle(element, '::after')
+
+    return {
+      beforeContent: before.content,
+      afterContent: after.content,
+      afterBoxShadow: after.boxShadow,
+    }
+  })
+
+  expect(chrome.beforeContent).toBe('none')
+  expect(chrome.afterContent).toBe('none')
+  expect(chrome.afterBoxShadow).toBe('none')
+}
+
+async function expectGitHubLightCodeColors(page: Page, codeBlockSelector: string, inlineCodeSelector: string) {
+  const codeBlock = page.locator(codeBlockSelector).first()
+  const inlineCode = page.locator(inlineCodeSelector).first()
+  const background = await getColorChannels(codeBlock, 'background-color')
+  const foreground = await getColorChannels(codeBlock, 'color')
+  const inlineBackground = await getColorChannels(inlineCode, 'background-color')
+
+  expect(channelDistance(background, [246, 248, 250])).toBeLessThanOrEqual(8)
+  expect(channelDistance(inlineBackground, [239, 241, 243])).toBeLessThanOrEqual(16)
+  expect(inlineBackground[3]).toBeGreaterThan(0)
+  expect(contrastRatio(foreground, background)).toBeGreaterThanOrEqual(4.5)
+}
+
+async function expectGitHubDarkCodeColors(page: Page, codeBlockSelector: string, inlineCodeSelector: string) {
+  const codeBlock = page.locator(codeBlockSelector).first()
+  const inlineCode = page.locator(inlineCodeSelector).first()
+  const background = await getColorChannels(codeBlock, 'background-color')
+  const foreground = await getColorChannels(codeBlock, 'color')
+  const inlineBackground = await getColorChannels(inlineCode, 'background-color')
+
+  expect(channelDistance(background, [22, 27, 34])).toBeLessThanOrEqual(8)
+  expect(channelDistance(inlineBackground, [48, 54, 61])).toBeLessThanOrEqual(18)
+  expect(inlineBackground[3]).toBeGreaterThan(0)
+  expect(contrastRatio(foreground, background)).toBeGreaterThanOrEqual(4.5)
+}
+
+async function expectGitHubMermaidSurface(page: Page, selector: string, mode: 'light' | 'dark') {
+  const shell = page.locator(selector).first()
+  await expect(shell).toBeVisible()
+
+  const background = await getColorChannels(shell, 'background-color')
+  const foreground = await getColorChannels(shell, 'color')
+  const border = await getColorChannels(shell, 'border-top-color')
+
+  if (mode === 'light') {
+    expect(channelDistance(background, [246, 248, 250])).toBeLessThanOrEqual(8)
+    expect(channelDistance(border, [208, 215, 222])).toBeLessThanOrEqual(16)
+  } else {
+    expect(channelDistance(background, [22, 27, 34])).toBeLessThanOrEqual(8)
+    expect(channelDistance(border, [48, 54, 61])).toBeLessThanOrEqual(16)
+  }
+
+  expect(contrastRatio(foreground, background)).toBeGreaterThanOrEqual(4.5)
 }
 
 function rgbChannels(channels: readonly number[]) {
@@ -223,6 +287,7 @@ test('DM-11: contact page email link uses the semantic primary color in dark mod
     const inlineCode = page.locator('#blog-detail-content .prose p code').first()
 
     await expectReadableCodeBoxMetrics(page, '#blog-detail-content .prose pre')
+    await expectNoCodeWindowChrome(page, '#blog-detail-content .prose pre')
     await expect(inlineCode).toHaveText('inlineValue')
     await expect(blockCode).toHaveText('const message = "안녕하세요";\nconsole.log(message);')
 
@@ -230,33 +295,66 @@ test('DM-11: contact page email link uses the semantic primary color in dark mod
     const lightForeground = await getColorChannels(codeBlock, 'color')
     const inlineBackground = await getColorChannels(inlineCode, 'background-color')
 
+    await expectGitHubLightCodeColors(page, '#blog-detail-content .prose pre', '#blog-detail-content .prose p code')
     expect(lightBackground[3]).toBeGreaterThan(0)
     expect(lightBackground[0]).toBeGreaterThan(210)
     expect(lightBackground[1]).toBeGreaterThan(210)
     expect(lightBackground[2]).toBeGreaterThan(210)
-    expect(lightBackground[0]).toBeLessThan(250)
-    expect(lightBackground[1]).toBeLessThan(250)
-    expect(lightBackground[2]).toBeLessThan(250)
+    expect(lightBackground[0]).toBeLessThanOrEqual(250)
+    expect(lightBackground[1]).toBeLessThanOrEqual(250)
+    expect(lightBackground[2]).toBeLessThanOrEqual(250)
     expect(contrastRatio(lightForeground, lightBackground)).toBeGreaterThanOrEqual(4.5)
     expect(inlineBackground.slice(0, 3)).not.toEqual(lightBackground.slice(0, 3))
 
     await toggleThemeForViewport(page)
     await expectDarkHtml(page)
     await expectReadableCodeBoxMetrics(page, '#blog-detail-content .prose pre')
+    await expectNoCodeWindowChrome(page, '#blog-detail-content .prose pre')
+    await expectGitHubDarkCodeColors(page, '#blog-detail-content .prose pre', '#blog-detail-content .prose p code')
     await expect(codeBlock).toBeVisible()
 
     const darkBackground = await getColorChannels(codeBlock, 'background-color')
     const darkForeground = await getColorChannels(codeBlock, 'color')
 
     expect(darkBackground[3]).toBeGreaterThan(0)
-    expect(darkBackground[0]).toBeGreaterThanOrEqual(32)
-    expect(darkBackground[1]).toBeGreaterThanOrEqual(32)
-    expect(darkBackground[2]).toBeGreaterThanOrEqual(32)
+    expect(darkBackground[0]).toBeGreaterThanOrEqual(13)
+    expect(darkBackground[1]).toBeGreaterThanOrEqual(13)
+    expect(darkBackground[2]).toBeGreaterThanOrEqual(13)
     expect(Math.max(...darkBackground.slice(0, 3)) - Math.min(...darkBackground.slice(0, 3))).toBeLessThanOrEqual(18)
     expect(darkForeground[0]).toBeLessThan(250)
     expect(darkForeground[1]).toBeLessThan(250)
     expect(darkForeground[2]).toBeLessThan(250)
     expect(contrastRatio(darkForeground, darkBackground)).toBeGreaterThanOrEqual(4.5)
+  })
+
+  test('DM-18b: public Mermaid diagrams use GitHub-readable surfaces in light and dark mode', async ({ page, request }, testInfo) => {
+    const mermaidCode = `flowchart TD
+      Start[Light mode] --> Render[Readable Mermaid]
+      Render --> Done[Dark mode too]`
+    const html = `<p>Diagram intro</p><mermaid-block data-code="${mermaidCode.replace(/\n/g, '&#10;')}"></mermaid-block><p>Diagram outro</p>`
+    const blogFixture = await createBlogFixture(request, testInfo, {
+      titlePrefix: 'Playwright Mermaid Readability',
+      html,
+      tags: ['playwright-fixture', 'mermaid-readability'],
+    })
+    const workFixture = await createWorkFixture(request, testInfo, {
+      titlePrefix: 'Playwright Work Mermaid Readability',
+      html,
+      category: 'mermaid-readability',
+      tags: ['playwright-fixture', 'mermaid-readability'],
+    })
+
+    for (const route of [`/blog/${blogFixture.slug}`, `/works/${workFixture.slug}`]) {
+      await gotoWithTheme(page, route, 'light')
+      await expectLightHtml(page)
+      await expectMermaidRendered(page)
+      await expectGitHubMermaidSurface(page, '[data-testid="mermaid-renderer"]', 'light')
+
+      await toggleThemeForViewport(page)
+      await expectDarkHtml(page)
+      await expectMermaidRendered(page)
+      await expectGitHubMermaidSurface(page, '[data-testid="mermaid-renderer"]', 'dark')
+    }
   })
 
   test('DM-19: prose text remains readable in dark mode', async ({ page }) => {
