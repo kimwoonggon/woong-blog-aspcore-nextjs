@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Home Works Mobile Overflow Follow-up Audit - 2026-05-03</title>
+    <style>
+      body {
+        color: #1f2937;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        line-height: 1.55;
+        margin: 2rem auto;
+        max-width: 860px;
+        padding: 0 1rem;
+      }
+      h1,
+      h2 {
+        color: #111827;
+      }
+      code {
+        background: #f3f4f6;
+        border-radius: 4px;
+        padding: 0.1rem 0.25rem;
+      }
+      li {
+        margin: 0.35rem 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Home Works Mobile Overflow Follow-up Audit - 2026-05-03</h1>
+    <h2>Summary</h2>
+    <p>
+      Fixed the remaining mobile Works overflow by making the Works grid an explicit
+      one-column mobile grid and allowing all card/content layers to shrink and wrap.
+    </p>
+    <h2>Changed</h2>
+    <ul>
+      <li>Added <code>min-w-0</code> and <code>max-w-full</code> to the Works section/card stack.</li>
+      <li>Changed the mobile Works grid to <code>grid-cols-1</code>.</li>
+      <li>Added wrapping safeguards for category, title, and excerpt text.</li>
+      <li>Added Playwright regressions for long unbroken content and extremely short mobile heights.</li>
+    </ul>
+    <h2>Not Changed</h2>
+    <ul>
+      <li>Study layout was left unchanged.</li>
+      <li>No global overflow hiding was added.</li>
+      <li>No viewport-specific card width was introduced.</li>
+    </ul>
+    <h2>Validations</h2>
+    <ul>
+      <li>ESLint passed for the changed page and Playwright spec.</li>
+      <li>Docker compose frontend/nginx rebuild completed successfully.</li>
+      <li>Focused Playwright mobile overflow checks passed.</li>
+      <li>Full featured Works Playwright spec passed 15/15.</li>
+    </ul>
+    <h2>Recommendation</h2>
+    <p>Push to <code>dev</code>, wait for CI, then promote to <code>main</code>.</p>
+  </body>
+</html>

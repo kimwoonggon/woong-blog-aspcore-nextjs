@@ -112,11 +112,11 @@ export default async function HomePage() {
 
       <section
         data-testid="featured-works-section"
-        className="animate-fade-in-up rounded-[2rem] border border-border/60 bg-brand-section-bg px-4 py-7 md:px-6"
+        className="animate-fade-in-up min-w-0 max-w-full rounded-[2rem] border border-border/60 bg-brand-section-bg px-4 py-7 md:px-6"
         style={{ animationDelay: '350ms' }}
       >
-        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div>
+        <div className="mb-6 flex min-w-0 flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div className="min-w-0">
             <h2 className="text-xl font-heading font-bold text-foreground md:text-2xl">
               Works
             </h2>
@@ -129,16 +129,16 @@ export default async function HomePage() {
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Link>
         </div>
-        <div data-testid="featured-works-grid" className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+        <div data-testid="featured-works-grid" className="grid min-w-0 grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
           {featuredWorks.length > 0 ? (
             featuredWorks.map((work) => {
               const thumbnailUrl = work.thumbnailUrl || null
               const publishDate = formatPublishedMonth(work.publishedAt)
 
               return (
-                <Link key={work.id} href={`/works/${work.slug}`} data-testid="featured-work-card" className="group block h-full">
-                  <Card className="flex h-full flex-col overflow-hidden rounded-2xl border-border/80 bg-background py-0 shadow-sm transition hover:border-primary/30 hover:shadow-md">
-                    <div className="relative aspect-[4/3] overflow-hidden bg-muted">
+                <Link key={work.id} href={`/works/${work.slug}`} data-testid="featured-work-card" className="group block h-full min-w-0 max-w-full">
+                  <Card className="flex h-full min-w-0 max-w-full flex-col overflow-hidden rounded-2xl border-border/80 bg-background py-0 shadow-sm transition hover:border-primary/30 hover:shadow-md">
+                    <div className="relative min-w-0 aspect-[4/3] overflow-hidden bg-muted">
                       {thumbnailUrl ? (
                         <LocalQaNoImageBoundary fallback={<FeaturedWorkNoImagePlaceholder />}>
                           <Image
@@ -153,19 +153,19 @@ export default async function HomePage() {
                         <FeaturedWorkNoImagePlaceholder />
                       )}
                     </div>
-                    <CardContent className="flex flex-1 flex-col p-4 sm:p-5">
-                      <div className="mb-2 flex flex-wrap items-center gap-2">
-                        <span className="rounded-full bg-brand-navy px-2.5 py-0.5 text-xs font-bold text-white">
+                    <CardContent className="flex min-w-0 flex-1 flex-col p-4 sm:p-5">
+                      <div className="mb-2 flex min-w-0 flex-wrap items-center gap-2">
+                        <span className="shrink-0 rounded-full bg-brand-navy px-2.5 py-0.5 text-xs font-bold text-white">
                           {publishDate}
                         </span>
-                        <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        <span className="min-w-0 break-words text-xs font-medium uppercase tracking-wide text-muted-foreground [overflow-wrap:anywhere]">
                           {work.category}
                         </span>
                       </div>
-                      <h3 className="line-clamp-2 text-lg font-heading font-bold leading-tight text-foreground transition-colors group-hover:text-brand-accent sm:text-xl">
+                      <h3 className="line-clamp-2 min-w-0 break-words text-lg font-heading font-bold leading-tight text-foreground transition-colors group-hover:text-brand-accent [overflow-wrap:anywhere] sm:text-xl">
                         {work.title}
                       </h3>
-                      <p className="mt-2 line-clamp-2 flex-1 text-sm leading-relaxed text-foreground/80">
+                      <p className="mt-2 line-clamp-2 min-w-0 flex-1 break-words text-sm leading-relaxed text-foreground/80 [overflow-wrap:anywhere]">
                         {work.excerpt}
                       </p>
                     </CardContent>
