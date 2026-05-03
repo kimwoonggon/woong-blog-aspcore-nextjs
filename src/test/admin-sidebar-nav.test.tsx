@@ -51,4 +51,13 @@ describe('AdminSidebarNav', () => {
 
     expect(screen.getByRole('link', { name: 'Works' })).toHaveAttribute('aria-current', 'page')
   })
+
+  it('exposes the load-test dashboard navigation item', () => {
+    mocks.pathname = '/admin/load-test'
+
+    render(<AdminSidebarNav />)
+
+    expect(screen.getByRole('link', { name: 'Load Test' })).toHaveAttribute('href', '/admin/load-test')
+    expect(screen.getByRole('link', { name: 'Load Test' })).toHaveAttribute('aria-current', 'page')
+  })
 })

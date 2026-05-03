@@ -2,12 +2,13 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Briefcase, FileText, LayoutDashboard, Settings, Users } from 'lucide-react'
+import { Activity, Briefcase, FileText, LayoutDashboard, Settings, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
 const navItems = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/admin/load-test', label: 'Load Test', icon: Activity },
   { href: '/admin/works', label: 'Works', icon: Briefcase },
   { href: '/admin/blog', label: 'Blog', icon: FileText },
   { href: '/admin/blog/notion', label: 'Blog Notion View', icon: FileText },
