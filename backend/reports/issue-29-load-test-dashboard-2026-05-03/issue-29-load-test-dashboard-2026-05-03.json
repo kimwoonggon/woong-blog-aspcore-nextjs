@@ -1,0 +1,60 @@
+{
+  "slug": "issue-29-load-test-dashboard-2026-05-03",
+  "generatedAt": "2026-05-03",
+  "issue": {
+    "number": 29,
+    "title": "부하 테스트 측정",
+    "url": "https://github.com/kimwoonggon/woong-blog-aspcore-nextjs/issues/29"
+  },
+  "summary": "Added an admin-only real-time load-test dashboard for Work and Study read latency measurement.",
+  "changed": [
+    "Added src/lib/load-test-dashboard.ts",
+    "Added src/components/admin/LoadTestDashboard.tsx",
+    "Added src/app/admin/load-test/page.tsx",
+    "Added Load Test to AdminSidebarNav",
+    "Added Vitest and Playwright coverage"
+  ],
+  "intentionallyNotChanged": [
+    "No distributed backend load generator",
+    "No persisted load-test history",
+    "No CI performance gate",
+    "No public Work/Study rendering changes",
+    "No unrelated dirty state changes"
+  ],
+  "validations": [
+    {
+      "command": "npx vitest run src/test/load-test-dashboard.test.ts",
+      "result": "passed"
+    },
+    {
+      "command": "npx vitest run src/test/load-test-dashboard.test.ts src/test/admin-sidebar-nav.test.tsx",
+      "result": "passed"
+    },
+    {
+      "command": "npx eslint src/lib/load-test-dashboard.ts src/components/admin/LoadTestDashboard.tsx src/app/admin/load-test/page.tsx src/components/admin/AdminSidebarNav.tsx src/test/load-test-dashboard.test.ts src/test/admin-sidebar-nav.test.tsx tests/admin-load-test-dashboard.spec.ts",
+      "result": "passed"
+    },
+    {
+      "command": "BACKEND_PUBLISH_PORT=18080 NGINX_HTTPS_PORT=3002 docker compose -f docker-compose.dev.yml up -d --build frontend nginx",
+      "result": "passed"
+    },
+    {
+      "command": "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 PLAYWRIGHT_E2E_PROFILE=exhaustive npx playwright test tests/admin-load-test-dashboard.spec.ts --project=chromium-authenticated --workers=1 --grep \"admin can run\"",
+      "result": "passed"
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "passed"
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    }
+  ],
+  "risks": [
+    "Browser-driven synthetic load testing is not a distributed server-side load test.",
+    "Default full scenario can issue many requests, though concurrency is capped.",
+    "Results are ephemeral and are not persisted."
+  ],
+  "recommendation": "Proceed with dev push and CI, then promote to main after dev succeeds."
+}
