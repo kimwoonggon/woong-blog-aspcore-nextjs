@@ -2,7 +2,7 @@
 
 ## What changed
 
-- Prepared the `dev` branch changes for push so the updated promotion workflow can run from GitHub Actions.
+- Pushed the `dev` branch changes so the updated promotion workflow can run from GitHub Actions.
 - The pushed change set includes:
   - automated `CI Dev` success trigger into `Promote Main Runtime`
   - automatic `release/main-promote -> main` PR creation or reuse
@@ -30,6 +30,8 @@
 
 - Confirmed current branch is `dev`.
 - Confirmed worktree contents before push.
+- Created commit `795c296` with message `Automate runtime promotion from dev to main`.
+- Pushed `dev` to `origin/dev` successfully.
 
 ## Risks, yellow flags, and deferred follow-up
 
@@ -40,4 +42,4 @@
 
 ## Final recommendation
 
-- After push, watch the `CI Dev` run and the follow-up promotion workflow run in GitHub Actions.
+- Watch the `CI Dev` run for commit `795c296`, then confirm the follow-up promotion workflow creates or updates the `release/main-promote -> main` PR and enables auto-merge.
