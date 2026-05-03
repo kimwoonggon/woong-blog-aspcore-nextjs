@@ -1,0 +1,43 @@
+{
+  "slug": "frontend-ci-pact-fix-2026-05-04",
+  "date": "2026-05-04",
+  "title": "Frontend CI Pact Fix",
+  "goal": "main CI에서 Pact 세션 계약 테스트의 /api/auth/session 미수신 실패를 제거",
+  "changes": [
+    {
+      "file": "src/test/pact/public-api-consumer.pact.test.ts",
+      "description": "Added beforeEach cleanup in Pact describe block to call vi.unstubAllGlobals() and vi.unstubAllEnvs() before each test."
+    },
+    {
+      "file": "todolist-2026-05-04.md",
+      "description": "Updated TODO progress and verification records for CI Pact 안정화."
+    }
+  ],
+  "validations": [
+    {
+      "command": "npx vitest run --pool=threads --maxWorkers=1 src/test/pact/public-api-consumer.pact.test.ts",
+      "result": "passed",
+      "tests": "1 file / 6 tests"
+    },
+    {
+      "command": "npx vitest run --pool=threads --maxWorkers=1 src/test/public-responsive-feed.test.tsx src/test/pact/public-api-consumer.pact.test.ts",
+      "result": "passed",
+      "tests": "2 files / 23 tests"
+    },
+    {
+      "command": "npx vitest run --pool=forks --maxWorkers=1 src/test/pact/public-api-consumer.pact.test.ts",
+      "result": "passed",
+      "tests": "1 file / 6 tests"
+    },
+    {
+      "command": "npx eslint src/test/pact/public-api-consumer.pact.test.ts",
+      "result": "passed",
+      "tests": "no lint errors"
+    }
+  ],
+  "risks": [
+    "CI 실행 환경에서 전체 테스트에서 간헐적으로 vitest worker timeout 이슈가 관찰될 수 있어 재시도 또는 워커 설정 조정이 필요할 수 있음.",
+    "일부 기존 테스트 파일이 fetch stub 정리를 완전하게 하지 않아 향후 다른 계약 테스트에서 동일 유형 오염이 재발할 가능성이 있음."
+  ],
+  "recommendation": "Run full frontend unit suite on dev branch first, then promote to main after CI passes."
+}

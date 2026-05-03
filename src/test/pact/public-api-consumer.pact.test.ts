@@ -1,5 +1,5 @@
 import path from 'node:path'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Matchers, PactV3, SpecificationVersion } from '@pact-foundation/pact'
 
 const pactDirectory = path.resolve('tests/contracts/pacts')
@@ -27,6 +27,11 @@ async function withServerApi<T>(baseUrl: string, callback: () => Promise<T>) {
 }
 
 describe('public API consumer Pact contracts', () => {
+  beforeEach(() => {
+    vi.unstubAllGlobals()
+    vi.unstubAllEnvs()
+  })
+
   afterEach(() => {
     vi.unstubAllGlobals()
     vi.unstubAllEnvs()

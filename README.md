@@ -40,6 +40,15 @@ Runtime responsibilities are split clearly:
 
 The repository keeps `dev` as the integration branch and `main` as the production branch.
 
+Release flow:
+
+- `CI Dev` validates changes on `dev`.
+- A successful `dev` run refreshes `release/main-promote` and ensures a promotion PR to `main` exists.
+- That promotion PR is marked for auto-merge, so `CI Main Runtime` on the `main`-targeted PR becomes the release gate.
+- When the promotion PR checks pass and repository merge rules allow it, GitHub merges it into `main`.
+- `main` is not pushed directly from `dev`; it advances through the promotion PR path.
+- A merge to `main` triggers `CI Main Runtime` and `Publish GHCR Main`.
+
 ## License
 
 This project is proprietary.

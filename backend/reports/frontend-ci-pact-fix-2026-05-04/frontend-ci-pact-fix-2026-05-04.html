@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>frontend-ci-pact-fix-2026-05-04</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      body { font-family: Arial, Helvetica, sans-serif; margin: 24px; line-height: 1.45; }
+      code { background: #f4f4f4; padding: 2px 4px; border-radius: 4px; }
+      h1 { font-size: 1.3rem; }
+      h2 { margin-top: 1.4rem; }
+      ul { margin-top: 0.5rem; }
+      .warning { color: #8a6d3b; background: #fcf8e3; border: 1px solid #faebcc; padding: 8px; display: inline-block; }
+    </style>
+  </head>
+  <body>
+    <h1>Audit: Pact Session Contract Stability</h1>
+    <p><strong>Date:</strong> 2026-05-04</p>
+    <p><strong>Scope:</strong> CI main 실패 원인 중 Pact 계약 테스트의 <code>/api/auth/session</code> 미수신 이슈 보완.</p>
+
+    <h2>Changes</h2>
+    <ul>
+      <li>Added <code>beforeEach</code> in <code>src/test/pact/public-api-consumer.pact.test.ts</code> to call:
+        <code>vi.unstubAllGlobals()</code> and <code>vi.unstubAllEnvs()</code> before each Pact contract test case.
+      </li>
+      <li>Updated <code>todolist-2026-05-04.md</code> with follow-up items for CI Pact stabilization and verification results.</li>
+    </ul>
+
+    <h2>Why</h2>
+    <p>
+      CI에서 Pact 테스트가 실제 네트워크 호출 없이 실패하면서
+      <code>expected request /api/auth/session was not received</code> 경고가 발생했습니다.
+      테스트 간 글로벌 상태 오염을 제거해 Pact mock 서버 호출 경로를 보장합니다.
+    </p>
+
+    <h2>Validation</h2>
+    <ul>
+      <li><code>npx vitest run --pool=threads --maxWorkers=1 src/test/pact/public-api-consumer.pact.test.ts</code> (passed)</li>
+      <li><code>npx vitest run --pool=threads --maxWorkers=1 src/test/public-responsive-feed.test.tsx src/test/pact/public-api-consumer.pact.test.ts</code> (passed)</li>
+      <li><code>npx vitest run --pool=forks --maxWorkers=1 src/test/pact/public-api-consumer.pact.test.ts</code> (passed)</li>
+      <li><code>npx eslint src/test/pact/public-api-consumer.pact.test.ts</code> (passed)</li>
+    </ul>
+
+    <h2>Risks</h2>
+    <p class="warning">
+      Additional test files still modify <code>fetch</code> without restoring in <code>afterEach</code> in some places.
+      Current fix is scoped to the Pact suite.
+    </p>
+
+    <h2>Recommendation</h2>
+    <ol>
+      <li>Run CI on <code>dev</code> first; confirm <code>frontend lint, types, and unit tests</code> passes.</li>
+      <li>If green, promote to <code>main</code> and verify the same CI workflow again.</li>
+    </ol>
+  </body>
+</html>
