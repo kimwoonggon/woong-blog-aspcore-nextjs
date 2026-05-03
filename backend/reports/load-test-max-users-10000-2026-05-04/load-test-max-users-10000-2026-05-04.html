@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Load Test: Max Users 10,000 Audit</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 24px; line-height: 1.5; }
+      h1 { font-size: 1.6rem; }
+      section { margin-bottom: 16px; }
+      pre { background: #f6f6f6; padding: 12px; border: 1px solid #ddd; }
+    </style>
+  </head>
+  <body>
+    <h1>Load Test: Max Users 10,000 Audit</h1>
+    <p>Generated: 2026-05-04</p>
+
+    <section>
+      <h2>Summary</h2>
+      <p>Expanded load test user upper bound to 10,000 while keeping dashboard UI and flow unchanged.</p>
+    </section>
+
+    <section>
+      <h2>Files Changed</h2>
+      <ul>
+        <li><code>src/lib/load-test-dashboard.ts</code> (set <code>MAX_USERS = 10_000</code>)</li>
+        <li><code>src/components/admin/LoadTestDashboard.tsx</code> (bound user inputs to <code>MAX_USERS</code>)</li>
+        <li><code>src/test/load-test-dashboard.test.ts</code> (updated bound/clamp assertions)</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Validations</h2>
+      <ul>
+        <li><code>npx vitest run src/test/load-test-dashboard.test.ts</code></li>
+        <li><code>npx eslint src/lib/load-test-dashboard.ts src/components/admin/LoadTestDashboard.tsx src/test/load-test-dashboard.test.ts</code></li>
+        <li><code>npm run typecheck</code></li>
+      </ul>
+    </section>
+  </body>
+</html>

@@ -10,6 +10,7 @@ import {
   DEFAULT_LOAD_TEST_CONFIG,
   appendLoadTestCacheBust,
   buildUserSteps,
+  MAX_USERS,
   sanitizeLoadTestConfig,
   summarizeLoadTestSamples,
   type LoadTestConfig,
@@ -302,7 +303,7 @@ export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashbo
                   id="load-test-start-users"
                   type="number"
                   min={1}
-                  max={1000}
+                  max={MAX_USERS}
                   value={safeConfig.startUsers}
                   onChange={(event) => updateNumberField('startUsers', event.target.value)}
                 />
@@ -313,7 +314,7 @@ export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashbo
                   id="load-test-max-users"
                   type="number"
                   min={1}
-                  max={1000}
+                  max={MAX_USERS}
                   value={safeConfig.maxUsers}
                   onChange={(event) => updateNumberField('maxUsers', event.target.value)}
                 />
@@ -324,7 +325,7 @@ export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashbo
                   id="load-test-step-users"
                   type="number"
                   min={1}
-                  max={1000}
+                  max={MAX_USERS}
                   value={safeConfig.stepUsers}
                   onChange={(event) => updateNumberField('stepUsers', event.target.value)}
                 />

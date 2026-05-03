@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   DEFAULT_LOAD_TEST_CONFIG,
+  MAX_USERS,
   buildLoadTestTargets,
   buildUserSteps,
   sanitizeLoadTestConfig,
@@ -26,18 +27,36 @@ describe('load test dashboard planning', () => {
   it('clamps unsafe or invalid user input to the supported dashboard range', () => {
     expect(sanitizeLoadTestConfig({
       startUsers: -10,
-      maxUsers: 2500,
+      maxUsers: 20_000,
       stepUsers: 0,
       requestsPerUser: 0,
       concurrency: 999,
       timeoutMs: 100,
     })).toEqual({
       startUsers: 1,
-      maxUsers: 1000,
+      maxUsers: MAX_USERS,
       stepUsers: 1,
       requestsPerUser: 1,
       concurrency: 100,
       timeoutMs: 1000,
+    })
+  })
+
+  it('allows max users up to 10,000', () => {
+    expect(sanitizeLoadTestConfig({
+      startUsers: 500,
+      maxUsers: 10000,
+      stepUsers: 500,
+      requestsPerUser: 1,
+      concurrency: 10,
+      timeoutMs: 10_000,
+    })).toEqual({
+      startUsers: 500,
+      maxUsers: 10000,
+      stepUsers: 500,
+      requestsPerUser: 1,
+      concurrency: 10,
+      timeoutMs: 10_000,
     })
   })
 

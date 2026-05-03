@@ -57,7 +57,7 @@ export const DEFAULT_LOAD_TEST_CONFIG: LoadTestConfig = {
 }
 
 const MIN_USERS = 1
-const MAX_USERS = 1000
+export const MAX_USERS = 10_000
 const MIN_TIMEOUT_MS = 1000
 const MAX_TIMEOUT_MS = 60_000
 const MAX_CONCURRENCY = 100
