@@ -48,6 +48,7 @@ Release flow:
 - When the promotion PR checks pass and repository merge rules allow it, GitHub merges it into `main`.
 - `main` is not pushed directly from `dev`; it advances through the promotion PR path.
 - A merge to `main` triggers `CI Main Runtime` and `Publish GHCR Main`.
+- The promotion workflow depends on the repository secret `PROMOTION_TOKEN` so its branch updates and PR mutations can trigger downstream GitHub Actions normally.
 
 ## License
 
