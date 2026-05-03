@@ -1,0 +1,52 @@
+{
+  "task": "home-works-mobile-overflow",
+  "date": "2026-05-03",
+  "summary": "Fixed mobile home Works section overflow by removing negative horizontal margin compensation and adding a Playwright regression.",
+  "changed": [
+    {
+      "path": "src/app/(public)/page.tsx",
+      "details": "Removed negative horizontal margin compensation from featured-works-section."
+    },
+    {
+      "path": "tests/ui-improvement-featured-works-grid.spec.ts",
+      "details": "Added mobile content rail alignment regression for featured Works section and first card; named the representative phone viewport fixture."
+    },
+    {
+      "path": "todolist-2026-05-03.md",
+      "details": "Appended task TODO/progress while preserving existing TODO content."
+    }
+  ],
+  "intentionallyNotChanged": [
+    "Works card structure, media ratio, typography, and hover behavior",
+    "Study Notes and other home sections",
+    "Navbar and mobile bottom navigation behavior",
+    "Unrelated existing worktree changes"
+  ],
+  "validations": [
+    {
+      "command": "npx eslint 'src/app/(public)/page.tsx' tests/ui-improvement-featured-works-grid.spec.ts",
+      "result": "passed"
+    },
+    {
+      "command": "docker compose -f docker-compose.dev.yml up -d --build",
+      "result": "build passed through frontend next build; default port publishing failed for 127.0.0.1:8080 and 3001"
+    },
+    {
+      "command": "BACKEND_PUBLISH_PORT=18080 NGINX_HTTPS_PORT=3002 docker compose -f docker-compose.dev.yml up -d",
+      "result": "passed"
+    },
+    {
+      "command": "curl -I http://127.0.0.1:3000",
+      "result": "200 OK"
+    },
+    {
+      "command": "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 PLAYWRIGHT_E2E_PROFILE=exhaustive npx playwright test tests/ui-improvement-featured-works-grid.spec.ts --project=chromium-public --grep \"Works stays aligned|Works collapses\" --workers=1",
+      "result": "passed, 2 tests"
+    }
+  ],
+  "risks": [
+    "Initial red Playwright run was blocked before assertion because standalone dev server could not reach backend on 127.0.0.1:8080.",
+    "Default Docker port publishing failed in this environment; compose validation used backend 18080 and HTTPS 3002 overrides."
+  ],
+  "recommendation": "Keep the scoped CSS fix and regression test."
+}

@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Home Works Mobile Overflow Audit - 2026-05-03</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 860px; margin: 32px auto; padding: 0 20px; line-height: 1.55; color: #1f2937; }
+    h1, h2 { line-height: 1.2; }
+    code { background: #f3f4f6; padding: 0.1rem 0.25rem; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>Home Works Mobile Overflow Audit - 2026-05-03</h1>
+  <h2>Summary</h2>
+  <p>Fixed the mobile home Works section by removing negative horizontal margin compensation from the featured Works section, so it follows the parent content rail naturally.</p>
+  <h2>Changed</h2>
+  <ul>
+    <li><code>src/app/(public)/page.tsx</code>: removed negative horizontal margin compensation from <code>featured-works-section</code>.</li>
+    <li><code>tests/ui-improvement-featured-works-grid.spec.ts</code>: added a mobile alignment regression and named the representative phone viewport fixture.</li>
+    <li><code>todolist-2026-05-03.md</code>: appended this task while preserving existing TODO content.</li>
+  </ul>
+  <h2>Validations</h2>
+  <ul>
+    <li>Targeted ESLint passed.</li>
+    <li>Docker compose build completed through frontend <code>next build</code>.</li>
+    <li>Compose ran on <code>http://127.0.0.1:3000</code> with backend port override <code>18080</code> and HTTPS override <code>3002</code>.</li>
+    <li>Focused Playwright passed: mobile collapse and mobile content-rail alignment.</li>
+  </ul>
+  <h2>Risks</h2>
+  <p>The first red run was blocked by a missing backend on <code>127.0.0.1:8080</code>. Final validation used the supported compose stack.</p>
+  <h2>Recommendation</h2>
+  <p>Keep the scoped CSS fix and regression test. No broader layout refactor is needed.</p>
+</body>
+</html>
