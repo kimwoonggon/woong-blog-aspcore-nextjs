@@ -138,6 +138,120 @@ test('Works stays aligned to the mobile home content rail', async ({ page }) => 
   expect(metrics.cardRight).toBeLessThanOrEqual(metrics.contentRight + 1)
 })
 
+test('Works cards do not overflow on mobile with long unbroken content', async ({ page }) => {
+  for (const viewport of [
+    { width: 320, height: 667 },
+    representativePhoneViewport,
+  ]) {
+    await page.setViewportSize(viewport)
+    await page.goto('/')
+
+    const firstCard = page.getByTestId('featured-work-card').first()
+    await expect(firstCard).toBeVisible()
+
+    await page.evaluate(() => {
+      const firstCard = document.querySelector('[data-testid="featured-work-card"]')
+      const title = firstCard?.querySelector('h3')
+      const category = firstCard?.querySelector('[data-slot="card-content"] span:last-child')
+
+      if (!firstCard || !title || !category) {
+        throw new Error('Expected first Works card title and category to exist')
+      }
+
+      title.textContent = 'SUPERLONGUNBROKENWORKTITLEWITHOUTANYSPACES'.repeat(4)
+      category.textContent = 'SUPERLONGCATEGORYWITHOUTBREAKS'.repeat(3)
+    })
+
+    const metrics = await page.evaluate(() => {
+      const section = document.querySelector('[data-testid="featured-works-section"]')
+      const grid = document.querySelector('[data-testid="featured-works-grid"]')
+      const firstCard = document.querySelector('[data-testid="featured-work-card"]')
+      const nav = document.querySelector('[data-testid="mobile-bottom-nav"]')
+
+      if (!section || !grid || !firstCard || !nav) {
+        throw new Error('Expected mobile Works layout and nav elements to exist')
+      }
+
+      const sectionRect = section.getBoundingClientRect()
+      const gridRect = grid.getBoundingClientRect()
+      const cardRect = firstCard.getBoundingClientRect()
+      const navRect = nav.getBoundingClientRect()
+
+      return {
+        cardLeft: cardRect.left,
+        cardRight: cardRect.right,
+        documentWidth: Math.max(document.body.scrollWidth, document.documentElement.scrollWidth),
+        gridRight: gridRect.right,
+        navLeft: navRect.left,
+        navRight: navRect.right,
+        sectionRight: sectionRect.right,
+        viewportWidth: window.innerWidth,
+      }
+    })
+
+    expect(metrics.documentWidth).toBeLessThanOrEqual(metrics.viewportWidth + 1)
+    expect(metrics.sectionRight).toBeLessThanOrEqual(metrics.navRight + 1)
+    expect(metrics.gridRight).toBeLessThanOrEqual(metrics.navRight + 1)
+    expect(metrics.cardLeft).toBeGreaterThanOrEqual(metrics.navLeft - 1)
+    expect(metrics.cardRight).toBeLessThanOrEqual(metrics.navRight + 1)
+  }
+})
+
+test('Works card width stays stable when mobile viewport height is extremely short', async ({ page }) => {
+  const measureWithHeight = async (width: number, height: number) => {
+    await page.setViewportSize({ width, height })
+    await page.goto('/')
+
+    const firstCard = page.getByTestId('featured-work-card').first()
+    await expect(firstCard).toBeVisible()
+
+    await page.evaluate(() => {
+      const firstCard = document.querySelector('[data-testid="featured-work-card"]')
+      const title = firstCard?.querySelector('h3')
+      const category = firstCard?.querySelector('[data-slot="card-content"] span:last-child')
+
+      if (!firstCard || !title || !category) {
+        throw new Error('Expected first Works card title and category to exist')
+      }
+
+      title.textContent = 'SUPERLONGUNBROKENWORKTITLEWITHOUTANYSPACES'.repeat(4)
+      category.textContent = 'SUPERLONGCATEGORYWITHOUTBREAKS'.repeat(3)
+    })
+
+    return page.evaluate(() => {
+      const grid = document.querySelector('[data-testid="featured-works-grid"]')
+      const firstCard = document.querySelector('[data-testid="featured-work-card"]')
+      const nav = document.querySelector('[data-testid="mobile-bottom-nav"]')
+
+      if (!grid || !firstCard || !nav) {
+        throw new Error('Expected mobile Works grid, card, and nav elements to exist')
+      }
+
+      const cardRect = firstCard.getBoundingClientRect()
+      const navRect = nav.getBoundingClientRect()
+
+      return {
+        cardRight: cardRect.right,
+        cardWidth: cardRect.width,
+        documentWidth: Math.max(document.body.scrollWidth, document.documentElement.scrollWidth),
+        gridTemplateColumns: window.getComputedStyle(grid).gridTemplateColumns,
+        navRight: navRect.right,
+        viewportWidth: window.innerWidth,
+      }
+    })
+  }
+
+  for (const width of [320, representativePhoneViewport.width]) {
+    const normalHeight = await measureWithHeight(width, representativePhoneViewport.height)
+    const shortHeight = await measureWithHeight(width, width === 320 ? 240 : 260)
+
+    expect(shortHeight.documentWidth).toBeLessThanOrEqual(shortHeight.viewportWidth + 1)
+    expect(shortHeight.cardRight).toBeLessThanOrEqual(shortHeight.navRight + 1)
+    expect(shortHeight.gridTemplateColumns).toBe(normalHeight.gridTemplateColumns)
+    expect(Math.abs(shortHeight.cardWidth - normalHeight.cardWidth)).toBeLessThanOrEqual(1)
+  }
+})
+
 test('Works uses two columns on tablet and three on desktop', async ({ page }) => {
   const measureColumns = async (width: number, height: number) => {
     await page.setViewportSize({ width, height })

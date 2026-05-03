@@ -1,0 +1,44 @@
+{
+  "task": "home-works-mobile-overflow-followup",
+  "date": "2026-05-03",
+  "summary": "Fixed remaining mobile Works card overflow caused by implicit grid sizing and long unbroken card content.",
+  "changed": [
+    "Added shrink-safe min-width behavior to the Works section, grid, link, card, media, and content stack.",
+    "Changed the Works mobile grid to an explicit one-column grid.",
+    "Added overflow wrapping to Works category, title, and excerpt content.",
+    "Added Playwright coverage for long unbroken content and extremely short mobile viewport heights."
+  ],
+  "intentionallyNotChanged": [
+    "Study card layout",
+    "Desktop and tablet Works column counts",
+    "Global body/html overflow behavior",
+    "Unrelated local files and prior reports"
+  ],
+  "validations": [
+    {
+      "command": "npx eslint 'src/app/(public)/page.tsx' tests/ui-improvement-featured-works-grid.spec.ts",
+      "result": "passed"
+    },
+    {
+      "command": "BACKEND_PUBLISH_PORT=18080 NGINX_HTTPS_PORT=3002 docker compose -f docker-compose.dev.yml up -d --build frontend nginx",
+      "result": "passed"
+    },
+    {
+      "command": "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 PLAYWRIGHT_E2E_PROFILE=exhaustive npx playwright test tests/ui-improvement-featured-works-grid.spec.ts --project=chromium-public --grep \"Works cards do not overflow|Works stays aligned|Works collapses\" --workers=1",
+      "result": "passed 3/3"
+    },
+    {
+      "command": "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 PLAYWRIGHT_E2E_PROFILE=exhaustive npx playwright test tests/ui-improvement-featured-works-grid.spec.ts --project=chromium-public --grep \"Works card width stays stable\" --workers=1",
+      "result": "passed 1/1"
+    },
+    {
+      "command": "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 PLAYWRIGHT_E2E_PROFILE=exhaustive npx playwright test tests/ui-improvement-featured-works-grid.spec.ts --project=chromium-public --workers=1",
+      "result": "passed 15/15"
+    }
+  ],
+  "risks": [
+    "Real backend content can vary, but the regression injects worst-case long unbroken content to cover this overflow path.",
+    "CI and main runtime promotion checks still need to pass after push."
+  ],
+  "recommendation": "Push to dev, wait for CI, then promote to main with the runtime promotion flow."
+}
