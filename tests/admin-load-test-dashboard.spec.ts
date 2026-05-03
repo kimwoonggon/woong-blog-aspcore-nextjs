@@ -13,14 +13,18 @@ test('admin can run a small Work and Study read load test', async ({ page, reque
     html: '<p>Study read load fixture body.</p>',
   })
 
+  const loadRequestUrls: string[] = []
+  const loadRequestCookies: Array<string | undefined> = []
   let loadRequestCount = 0
-  await page.route(/\/(?:works|blog)(?:\/[^?]+)?\?__loadTestRun=/, async (route) => {
+  await page.route(/\/api\/public\/(?:works|blogs)(?:\/[^?]+)?(?:\?[^#]*)?__loadTestRun=/, async (route) => {
     loadRequestCount += 1
-    await new Promise((resolve) => setTimeout(resolve, loadRequestCount % 2 === 0 ? 900 : 80))
+    loadRequestUrls.push(route.request().url())
+    loadRequestCookies.push(route.request().headers().cookie)
+    await new Promise((resolve) => setTimeout(resolve, loadRequestCount % 2 === 0 ? 350 : 80))
     await route.fulfill({
       status: 200,
-      contentType: 'text/html',
-      body: '<!doctype html><html><body><main>load test response</main></body></html>',
+      contentType: 'application/json',
+      body: '{"items":[],"page":1,"pageSize":1,"totalItems":0,"totalPages":0}',
     })
   })
 
@@ -28,15 +32,19 @@ test('admin can run a small Work and Study read load test', async ({ page, reque
 
   await expect(page.getByRole('heading', { name: 'Load Test Dashboard' })).toBeVisible()
   await expect(page.getByRole('navigation').getByRole('link', { name: 'Load Test' })).toBeVisible()
-  await expect(page.getByText('Work list')).toBeVisible()
-  await expect(page.getByText('Work read')).toBeVisible()
-  await expect(page.getByText('Study list')).toBeVisible()
-  await expect(page.getByText('Study read')).toBeVisible()
+  await expect(page.getByText('Work list', { exact: true })).toBeVisible()
+  await expect(page.getByText('Work read', { exact: true })).toBeVisible()
+  await expect(page.getByText('Study list', { exact: true })).toBeVisible()
+  await expect(page.getByText('Study read', { exact: true })).toBeVisible()
+  await expect(page.getByLabel('Work read URL')).toHaveValue(/\/api\/public\/works\//)
+  await expect(page.getByLabel('Study read URL')).toHaveValue(/\/api\/public\/blogs\//)
 
   await page.getByLabel('Start users').fill('2')
   await page.getByLabel('Max users').fill('2')
   await page.getByLabel('Step users').fill('1')
   await page.getByLabel('Concurrency').fill('2')
+  await page.getByLabel('Work read URL').fill('/api/public/works/custom-work-target')
+  await page.getByLabel('Study read URL').fill('/api/public/blogs/custom-study-target')
 
   await page.getByRole('button', { name: 'Run load test' }).click()
 
@@ -50,4 +58,9 @@ test('admin can run a small Work and Study read load test', async ({ page, reque
   await expect(page.getByTestId('load-test-summary-table')).toContainText('2 / 2')
   await expect(page.getByTestId('load-test-summary-table')).toContainText('Study list')
   await expect(page.getByTestId('load-test-result-count')).toContainText(/4 scenarios/)
+  expect(loadRequestUrls.some((url) => url.includes('/api/public/works/custom-work-target?'))).toBe(true)
+  expect(loadRequestUrls.some((url) => url.includes('/api/public/blogs/custom-study-target?'))).toBe(true)
+  expect(loadRequestUrls.some((url) => url.includes('__loadTestUser=1'))).toBe(true)
+  expect(loadRequestUrls.some((url) => url.includes('__loadTestUser=2'))).toBe(true)
+  expect(loadRequestCookies.every((cookie) => !cookie)).toBe(true)
 })

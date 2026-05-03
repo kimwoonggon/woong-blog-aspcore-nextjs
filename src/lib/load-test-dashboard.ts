@@ -107,19 +107,19 @@ export function buildUserSteps(config: LoadTestConfig) {
 
 export function buildLoadTestTargets({ workSlugs = [], blogSlugs = [] }: LoadTestTargetInput): LoadTestTarget[] {
   const targets: LoadTestTarget[] = [
-    { id: 'works-list', label: 'Work list', path: '/works', group: 'work' },
+    { id: 'works-list', label: 'Work list', path: '/api/public/works?page=1&pageSize=12', group: 'work' },
   ]
 
   const firstWorkSlug = workSlugs.find(Boolean)
   if (firstWorkSlug) {
-    targets.push({ id: 'work-read', label: 'Work read', path: `/works/${encodeURIComponent(firstWorkSlug)}`, group: 'work' })
+    targets.push({ id: 'work-read', label: 'Work read', path: `/api/public/works/${encodeURIComponent(firstWorkSlug)}`, group: 'work' })
   }
 
-  targets.push({ id: 'study-list', label: 'Study list', path: '/blog', group: 'study' })
+  targets.push({ id: 'study-list', label: 'Study list', path: '/api/public/blogs?page=1&pageSize=12', group: 'study' })
 
   const firstBlogSlug = blogSlugs.find(Boolean)
   if (firstBlogSlug) {
-    targets.push({ id: 'study-read', label: 'Study read', path: `/blog/${encodeURIComponent(firstBlogSlug)}`, group: 'study' })
+    targets.push({ id: 'study-read', label: 'Study read', path: `/api/public/blogs/${encodeURIComponent(firstBlogSlug)}`, group: 'study' })
   }
 
   return targets
@@ -164,7 +164,11 @@ export function summarizeLoadTestSamples(
   }
 }
 
-export function appendLoadTestCacheBust(path: string, runId: string, requestIndex: number) {
+export function appendLoadTestCacheBust(path: string, runId: string, requestIndex: number, userCount = 1) {
   const separator = path.includes('?') ? '&' : '?'
-  return `${path}${separator}__loadTestRun=${encodeURIComponent(runId)}&__loadTestRequest=${requestIndex}`
+  const safeUserCount = Math.max(1, Math.trunc(userCount))
+  const virtualUser = (requestIndex % safeUserCount) + 1
+  const iteration = Math.floor(requestIndex / safeUserCount) + 1
+
+  return `${path}${separator}__loadTestRun=${encodeURIComponent(runId)}&__loadTestUser=${virtualUser}&__loadTestRequest=${requestIndex}&__loadTestIteration=${iteration}`
 }

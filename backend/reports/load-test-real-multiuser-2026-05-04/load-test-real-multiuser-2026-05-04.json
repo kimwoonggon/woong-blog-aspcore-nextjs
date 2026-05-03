@@ -1,0 +1,33 @@
+{
+  "task": "load-test-real-multiuser-dashboard",
+  "generated": "2026-05-04",
+  "summary": "Updated the admin load-test dashboard to use backend API targets by default, add per-virtual-user request identity, omit admin cookies, and allow target URLs to be edited from the UI.",
+  "changed": [
+    "Default load-test targets now point to /api/public/works and /api/public/blogs endpoints.",
+    "Work read and Study read URLs are editable in the dashboard.",
+    "Every request includes __loadTestRun, __loadTestUser, __loadTestRequest, and __loadTestIteration.",
+    "Load-test fetches omit credentials to avoid admin-cookie bias.",
+    "Vitest and Playwright coverage was updated."
+  ],
+  "notChanged": [
+    "No distributed load generator was added.",
+    "No k6 or JMeter integration was added.",
+    "No backend endpoint behavior was changed.",
+    "No result persistence was added.",
+    "Unrelated dirty files were left untouched."
+  ],
+  "validations": [
+    "npx skills find \"load testing docker backend k6 playwright\"",
+    "npx vitest run src/test/load-test-dashboard.test.ts",
+    "npx eslint src/lib/load-test-dashboard.ts src/components/admin/LoadTestDashboard.tsx src/test/load-test-dashboard.test.ts tests/admin-load-test-dashboard.spec.ts",
+    "npm run typecheck",
+    "BACKEND_PUBLISH_PORT=18080 NGINX_HTTPS_PORT=3002 docker compose -f docker-compose.dev.yml up -d --build frontend nginx",
+    "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 PLAYWRIGHT_E2E_PROFILE=exhaustive npx playwright test tests/admin-load-test-dashboard.spec.ts --project=chromium-authenticated --workers=1 --grep \"admin can run\""
+  ],
+  "risks": [
+    "Browser-driven load generation is still limited by browser connection behavior.",
+    "Absolute cross-origin target URLs may require CORS support.",
+    "Production-grade distributed capacity testing still needs a server-side or external load generator."
+  ],
+  "recommendation": "Use this dashboard for backend API read-load checks and Docker stats observation; add k6/server-side load generation for production capacity testing."
+}
