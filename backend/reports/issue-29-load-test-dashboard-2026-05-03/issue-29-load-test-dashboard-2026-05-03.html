@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Issue 29 Load Test Dashboard Audit</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2rem; color: #111827; line-height: 1.55; }
+    main { max-width: 900px; margin: 0 auto; }
+    h1, h2 { line-height: 1.2; }
+    code { background: #f3f4f6; padding: 0.1rem 0.25rem; border-radius: 0.25rem; }
+    li { margin: 0.2rem 0; }
+    .note { border: 1px solid #e5e7eb; background: #f9fafb; padding: 1rem; border-radius: 0.5rem; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Issue 29 Load Test Dashboard Audit</h1>
+    <p><strong>Generated:</strong> 2026-05-03</p>
+    <section class="note">
+      <p>Implemented an admin-only real-time load-test dashboard at <code>/admin/load-test</code> for Work and Study read latency measurement.</p>
+    </section>
+    <h2>Changed</h2>
+    <ul>
+      <li>Added shared load-test utilities, admin dashboard UI, route, and sidebar navigation.</li>
+      <li>Added Vitest coverage for scenario planning and statistics.</li>
+      <li>Added Playwright E2E coverage for live in-progress results.</li>
+    </ul>
+    <h2>Validation</h2>
+    <ul>
+      <li>Vitest targeted tests passed.</li>
+      <li>Focused ESLint passed.</li>
+      <li>Docker compose frontend/nginx rebuild passed.</li>
+      <li>Focused Playwright E2E passed against <code>http://127.0.0.1:3000</code>.</li>
+      <li><code>npm run typecheck</code> and <code>git diff --check</code> passed.</li>
+    </ul>
+    <h2>Risk</h2>
+    <p>This is a browser-driven synthetic read-load dashboard, not a distributed backend load generator. Results are live but ephemeral.</p>
+    <h2>Recommendation</h2>
+    <p>Proceed with dev push and CI, then promote to main after dev succeeds.</p>
+  </main>
+</body>
+</html>
