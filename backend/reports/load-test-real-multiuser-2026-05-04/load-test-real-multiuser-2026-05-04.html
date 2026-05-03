@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Load Test Real Multiuser Dashboard Audit</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 2rem; line-height: 1.5; color: #111827; }
+    code { background: #f3f4f6; padding: 0.1rem 0.25rem; border-radius: 0.25rem; }
+    h1, h2 { line-height: 1.2; }
+  </style>
+</head>
+<body>
+  <h1>Load Test Real Multiuser Dashboard Audit</h1>
+  <p><strong>Generated:</strong> 2026-05-04</p>
+  <h2>Summary</h2>
+  <p>The admin load-test dashboard now targets backend public API endpoints by default, adds per-request virtual-user identity, omits admin cookies during load requests, and allows target URLs to be edited from the UI.</p>
+  <h2>Validations</h2>
+  <ul>
+    <li><code>npx vitest run src/test/load-test-dashboard.test.ts</code></li>
+    <li><code>npx eslint src/lib/load-test-dashboard.ts src/components/admin/LoadTestDashboard.tsx src/test/load-test-dashboard.test.ts tests/admin-load-test-dashboard.spec.ts</code></li>
+    <li><code>npm run typecheck</code></li>
+    <li><code>docker compose -f docker-compose.dev.yml up -d --build frontend nginx</code></li>
+    <li><code>npx playwright test tests/admin-load-test-dashboard.spec.ts --project=chromium-authenticated --workers=1 --grep "admin can run"</code></li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Use this dashboard for backend API read-load checks. Use k6 or a server-side runner for production-grade distributed capacity testing.</p>
+</body>
+</html>
