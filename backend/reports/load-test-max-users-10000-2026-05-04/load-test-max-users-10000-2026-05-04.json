@@ -1,0 +1,33 @@
+{
+  "task": "load-test-max-users-10000",
+  "generatedAt": "2026-05-04T00:00:00Z",
+  "goal": "Allow load test max users up to 10,000 without changing dashboard UI.",
+  "changes": [
+    {
+      "file": "src/lib/load-test-dashboard.ts",
+      "description": "Set MAX_USERS constant to 10_000."
+    },
+    {
+      "file": "src/components/admin/LoadTestDashboard.tsx",
+      "description": "Use shared MAX_USERS constant for startUsers, maxUsers, stepUsers input max values."
+    },
+    {
+      "file": "src/test/load-test-dashboard.test.ts",
+      "description": "Update clamping assertions and add test for 10,000 boundary."
+    },
+    {
+      "file": "todolist-2026-05-04.md",
+      "description": "Added follow-up TODO items for this request."
+    }
+  ],
+  "validations": [
+    "npx vitest run src/test/load-test-dashboard.test.ts",
+    "npx eslint src/lib/load-test-dashboard.ts src/components/admin/LoadTestDashboard.tsx src/test/load-test-dashboard.test.ts",
+    "npm run typecheck"
+  ],
+  "risks": [
+    "Browser-based synthetic load is not a substitute for distributed load testing tools.",
+    "Very high step sizes can increase scenario count."
+  ],
+  "recommendation": "Run dev CI and promote to main after CI pass."
+}
