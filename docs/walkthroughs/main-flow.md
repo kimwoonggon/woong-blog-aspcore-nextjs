@@ -21,3 +21,4 @@ dev 통과 -> release/main-promote 자동 갱신/PR 생성 -> main 대상 검증
 - `dev` 성공만으로 `main` 에 직접 push 되지 않는다.
 - 자동화 경로는 `promotion branch 준비 -> promotion PR -> main 대상 검증 -> auto-merge` 다.
 - GitHub repository 의 auto-merge 허용과 branch rule 이 이 경로를 막지 않아야 한다.
+- promotion workflow 는 repo secret `PROMOTION_TOKEN` 을 사용해야 downstream `pull_request` / CI 가 정상적으로 이어진다.
