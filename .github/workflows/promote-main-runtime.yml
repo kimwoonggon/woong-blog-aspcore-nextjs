@@ -22,7 +22,6 @@ on:
       - completed
 
 permissions:
-  actions: write
   contents: write
   pull-requests: write
 
@@ -46,6 +45,7 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+          token: ${{ secrets.PROMOTION_TOKEN }}
 
       - name: Configure git identity
         run: |
@@ -71,6 +71,7 @@ jobs:
           TARGET_BRANCH: ${{ env.TARGET_BRANCH }}
           PROMOTION_BRANCH: ${{ env.PROMOTION_BRANCH }}
         with:
+          github-token: ${{ secrets.PROMOTION_TOKEN }}
           script: |
             const owner = context.repo.owner;
             const repo = context.repo.repo;
@@ -160,16 +161,4 @@ jobs:
               core.info(`Enabled auto-merge for promotion PR #${pr.number}`);
             } catch (error) {
               core.warning(`Unable to enable auto-merge for promotion PR #${pr.number}: ${error.message}`);
-            }
-
-            try {
-              await github.rest.actions.createWorkflowDispatch({
-                owner,
-                repo,
-                workflow_id: 'ci-main-runtime.yml',
-                ref: promotionBranch,
-              });
-              core.info(`Dispatched CI Main Runtime for ${promotionBranch}`);
-            } catch (error) {
-              core.warning(`Unable to dispatch CI Main Runtime for ${promotionBranch}: ${error.message}`);
             }
