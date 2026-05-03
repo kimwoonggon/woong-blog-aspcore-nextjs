@@ -2,6 +2,8 @@ import { expect, test } from './helpers/performance-test'
 import { getStyle } from './helpers/ui-improvement'
 import { isLocalQaBaseUrl, LOCAL_QA_FLAG_SKIP_REASON } from './helpers/local-qa'
 
+const representativePhoneViewport = { width: 375, height: 667 }
+
 test('Featured works renders as a grid card layout', async ({ page }) => {
   await page.goto('/')
 
@@ -79,7 +81,7 @@ test('home featured works no longer shows the legacy click-to-view-details fallb
 })
 
 test('Works collapses to one column on mobile', async ({ page }) => {
-  await page.setViewportSize({ width: 375, height: 667 })
+  await page.setViewportSize(representativePhoneViewport)
   await page.goto('/')
 
   const cards = page.getByTestId('featured-work-card')
@@ -92,6 +94,48 @@ test('Works collapses to one column on mobile', async ({ page }) => {
   expect(secondBox).toBeTruthy()
   expect(Math.abs(firstBox!.x - secondBox!.x)).toBeLessThan(4)
   expect(secondBox!.y).toBeGreaterThan(firstBox!.y)
+})
+
+test('Works stays aligned to the mobile home content rail', async ({ page }) => {
+  await page.setViewportSize(representativePhoneViewport)
+  await page.goto('/')
+
+  const section = page.getByTestId('featured-works-section')
+  const firstCard = page.getByTestId('featured-work-card').first()
+
+  await expect(section).toBeVisible()
+  await expect(firstCard).toBeVisible()
+
+  const metrics = await page.evaluate(() => {
+    const pageContainer = document.querySelector('main > div.container')
+    const section = document.querySelector('[data-testid="featured-works-section"]')
+    const firstCard = document.querySelector('[data-testid="featured-work-card"]')
+
+    if (!pageContainer || !section || !firstCard) {
+      throw new Error('Expected home Works layout elements to exist')
+    }
+
+    const containerRect = pageContainer.getBoundingClientRect()
+    const sectionRect = section.getBoundingClientRect()
+    const cardRect = firstCard.getBoundingClientRect()
+    const containerStyles = window.getComputedStyle(pageContainer)
+    const contentLeft = containerRect.left + parseFloat(containerStyles.paddingLeft)
+    const contentRight = containerRect.right - parseFloat(containerStyles.paddingRight)
+
+    return {
+      cardLeft: cardRect.left,
+      cardRight: cardRect.right,
+      contentLeft,
+      contentRight,
+      sectionLeft: sectionRect.left,
+      sectionRight: sectionRect.right,
+    }
+  })
+
+  expect(metrics.sectionLeft).toBeGreaterThanOrEqual(metrics.contentLeft - 1)
+  expect(metrics.sectionRight).toBeLessThanOrEqual(metrics.contentRight + 1)
+  expect(metrics.cardLeft).toBeGreaterThanOrEqual(metrics.contentLeft - 1)
+  expect(metrics.cardRight).toBeLessThanOrEqual(metrics.contentRight + 1)
 })
 
 test('Works uses two columns on tablet and three on desktop', async ({ page }) => {
