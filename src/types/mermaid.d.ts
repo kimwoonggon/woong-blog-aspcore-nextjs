@@ -3,6 +3,7 @@ declare module 'mermaid' {
     startOnLoad?: boolean
     securityLevel?: string
     theme?: string
+    themeVariables?: Record<string, string | number | boolean>
     fontFamily?: string
   }
 
