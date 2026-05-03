@@ -46,11 +46,25 @@ describe('load test dashboard planning', () => {
       workSlugs: ['portfolio-api'],
       blogSlugs: ['nextjs-study'],
     })).toEqual([
-      { id: 'works-list', label: 'Work list', path: '/works', group: 'work' },
-      { id: 'work-read', label: 'Work read', path: '/works/portfolio-api', group: 'work' },
-      { id: 'study-list', label: 'Study list', path: '/blog', group: 'study' },
-      { id: 'study-read', label: 'Study read', path: '/blog/nextjs-study', group: 'study' },
+      { id: 'works-list', label: 'Work list', path: '/api/public/works?page=1&pageSize=12', group: 'work' },
+      { id: 'work-read', label: 'Work read', path: '/api/public/works/portfolio-api', group: 'work' },
+      { id: 'study-list', label: 'Study list', path: '/api/public/blogs?page=1&pageSize=12', group: 'study' },
+      { id: 'study-read', label: 'Study read', path: '/api/public/blogs/nextjs-study', group: 'study' },
     ])
+  })
+
+  it('adds distinct virtual-user identity to every load-test request URL', async () => {
+    const { appendLoadTestCacheBust } = await import('@/lib/load-test-dashboard')
+
+    expect(appendLoadTestCacheBust('/api/public/works/demo', 'run-1', 0, 3)).toBe(
+      '/api/public/works/demo?__loadTestRun=run-1&__loadTestUser=1&__loadTestRequest=0&__loadTestIteration=1',
+    )
+    expect(appendLoadTestCacheBust('/api/public/works/demo', 'run-1', 3, 3)).toBe(
+      '/api/public/works/demo?__loadTestRun=run-1&__loadTestUser=1&__loadTestRequest=3&__loadTestIteration=2',
+    )
+    expect(appendLoadTestCacheBust('/api/public/works?page=1', 'run-1', 1, 3)).toContain(
+      '/api/public/works?page=1&__loadTestRun=run-1&__loadTestUser=2',
+    )
   })
 
   it('summarizes request samples with percentiles and error rate', () => {

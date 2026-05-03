@@ -78,6 +78,7 @@ async function measureLoadTestRequest(
   target: LoadTestTarget,
   runId: string,
   requestIndex: number,
+  userCount: number,
   timeoutMs: number,
   registerController: (controller: AbortController) => void,
   unregisterController: (controller: AbortController) => void,
@@ -88,9 +89,9 @@ async function measureLoadTestRequest(
   registerController(controller)
 
   try {
-    const response = await fetch(appendLoadTestCacheBust(target.path, runId, requestIndex), {
+    const response = await fetch(appendLoadTestCacheBust(target.path, runId, requestIndex, userCount), {
       cache: 'no-store',
-      credentials: 'same-origin',
+      credentials: 'omit',
       signal: controller.signal,
     })
     await response.text()
@@ -114,6 +115,7 @@ async function measureLoadTestRequest(
 
 export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashboardProps) {
   const [config, setConfig] = useState<LoadTestConfig>(DEFAULT_LOAD_TEST_CONFIG)
+  const [editableTargets, setEditableTargets] = useState<LoadTestTarget[]>(targets)
   const [results, setResults] = useState<LoadTestScenarioResult[]>([])
   const [status, setStatus] = useState<LoadTestStatus>({
     phase: 'idle',
@@ -126,9 +128,15 @@ export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashbo
 
   const safeConfig = useMemo(() => sanitizeLoadTestConfig(config), [config])
   const userSteps = useMemo(() => buildUserSteps(safeConfig), [safeConfig])
+  const runnableTargets = useMemo(
+    () => editableTargets
+      .map((target) => ({ ...target, path: target.path.trim() }))
+      .filter((target) => target.path.length > 0),
+    [editableTargets],
+  )
   const totalPlannedRequests = useMemo(
-    () => targets.length * userSteps.reduce((sum, users) => sum + (users * safeConfig.requestsPerUser), 0),
-    [safeConfig.requestsPerUser, targets.length, userSteps],
+    () => runnableTargets.length * userSteps.reduce((sum, users) => sum + (users * safeConfig.requestsPerUser), 0),
+    [safeConfig.requestsPerUser, runnableTargets.length, userSteps],
   )
   const latestResult = results.at(-1)
   const avgP95 = results.length
@@ -141,6 +149,10 @@ export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashbo
       ...current,
       [field]: inputNumberValue(value),
     }))
+  }
+
+  function updateTargetPath(targetId: string, value: string) {
+    setEditableTargets((current) => current.map((target) => target.id === targetId ? { ...target, path: value } : target))
   }
 
   function registerController(controller: AbortController) {
@@ -177,6 +189,7 @@ export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashbo
           target,
           runId,
           requestIndex,
+          userCount,
           safeConfig.timeoutMs,
           registerController,
           unregisterController,
@@ -195,7 +208,7 @@ export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashbo
   }
 
   async function runLoadTest() {
-    if (!targets.length || status.phase === 'running') {
+    if (!runnableTargets.length || status.phase === 'running') {
       return
     }
 
@@ -210,7 +223,7 @@ export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashbo
     })
 
     for (const userCount of userSteps) {
-      for (const target of targets) {
+      for (const target of runnableTargets) {
         if (cancelledRef.current) {
           setStatus((current) => ({ ...current, phase: 'stopped', currentLabel: 'Stopped' }))
           return
@@ -247,7 +260,7 @@ export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashbo
           <Button
             type="button"
             className="gap-2"
-            disabled={status.phase === 'running' || !targets.length}
+            disabled={status.phase === 'running' || !runnableTargets.length}
             onClick={() => void runLoadTest()}
           >
             <Play aria-hidden="true" size={16} />
@@ -352,7 +365,7 @@ export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashbo
             </div>
 
             <div className="mt-6 grid gap-3 md:grid-cols-2">
-              {targets.map((target) => (
+              {editableTargets.map((target) => (
                 <div key={target.id} className="rounded-lg border border-border bg-muted/30 p-3">
                   <div className="flex items-center justify-between gap-3">
                     <p className="font-medium text-foreground">{target.label}</p>
@@ -360,7 +373,16 @@ export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashbo
                       {target.group}
                     </span>
                   </div>
-                  <p className="mt-1 break-all text-sm text-muted-foreground">{target.path}</p>
+                  <div className="mt-3 space-y-2">
+                    <Label htmlFor={`load-test-target-${target.id}`} className="text-xs text-muted-foreground">
+                      {target.label} URL
+                    </Label>
+                    <Input
+                      id={`load-test-target-${target.id}`}
+                      value={target.path}
+                      onChange={(event) => updateTargetPath(target.id, event.target.value)}
+                    />
+                  </div>
                 </div>
               ))}
             </div>
@@ -390,7 +412,7 @@ export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashbo
             <div>
               <p className="text-sm text-muted-foreground">Planned scenarios</p>
               <p className="mt-1 font-medium text-foreground">
-                {numberFormatter.format(userSteps.length * targets.length)} scenarios · {numberFormatter.format(totalPlannedRequests)} requests
+                {numberFormatter.format(userSteps.length * runnableTargets.length)} scenarios · {numberFormatter.format(totalPlannedRequests)} requests
               </p>
             </div>
             <div className="h-2 overflow-hidden rounded-full bg-muted">
