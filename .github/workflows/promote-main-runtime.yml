@@ -22,6 +22,7 @@ on:
       - completed
 
 permissions:
+  actions: write
   contents: write
   pull-requests: write
 
@@ -159,4 +160,16 @@ jobs:
               core.info(`Enabled auto-merge for promotion PR #${pr.number}`);
             } catch (error) {
               core.warning(`Unable to enable auto-merge for promotion PR #${pr.number}: ${error.message}`);
+            }
+
+            try {
+              await github.rest.actions.createWorkflowDispatch({
+                owner,
+                repo,
+                workflow_id: 'ci-main-runtime.yml',
+                ref: promotionBranch,
+              });
+              core.info(`Dispatched CI Main Runtime for ${promotionBranch}`);
+            } catch (error) {
+              core.warning(`Unable to dispatch CI Main Runtime for ${promotionBranch}: ${error.message}`);
             }
