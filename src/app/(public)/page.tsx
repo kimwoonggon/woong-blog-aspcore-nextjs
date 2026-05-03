@@ -112,7 +112,7 @@ export default async function HomePage() {
 
       <section
         data-testid="featured-works-section"
-        className="animate-fade-in-up -mx-4 rounded-[2rem] border border-border/60 bg-brand-section-bg px-4 py-7 md:-mx-6 md:px-6"
+        className="animate-fade-in-up rounded-[2rem] border border-border/60 bg-brand-section-bg px-4 py-7 md:px-6"
         style={{ animationDelay: '350ms' }}
       >
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
