@@ -6,6 +6,7 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using WoongBlog.Api.Domain.Entities;
@@ -15,6 +16,7 @@ using WoongBlog.Infrastructure.Proxy;
 using WoongBlog.Infrastructure.Security;
 using WoongBlog.Infrastructure.Storage;
 using WoongBlog.Infrastructure.Ai;
+using WoongBlog.Infrastructure.Persistence.Diagnostics;
 using WoongBlog.Infrastructure.Modules.Content.Works.WorkVideos;
 using WoongBlog.Infrastructure.Modules.Identity.Services;
 using WoongBlog.Application.Modules.AI;
@@ -236,10 +238,12 @@ public class StartupCompositionTests : IClassFixture<CustomWebApplicationFactory
         var healthResponse = await client.GetAsync("/api/health", TestContext.Current.CancellationToken);
         var openApiResponse = await client.GetAsync("/api/openapi/v1.json", TestContext.Current.CancellationToken);
         var runtimeConfigResponse = await client.GetAsync("/api/admin/ai/runtime-config", TestContext.Current.CancellationToken);
+        var loadTestDiagnosticsResponse = await client.GetAsync("/api/admin/load-test/diagnostics", TestContext.Current.CancellationToken);
 
         healthResponse.EnsureSuccessStatusCode();
         openApiResponse.EnsureSuccessStatusCode();
         runtimeConfigResponse.EnsureSuccessStatusCode();
+        loadTestDiagnosticsResponse.EnsureSuccessStatusCode();
 
         var health = await healthResponse.Content.ReadFromJsonAsync<HealthPayload>(TestContext.Current.CancellationToken);
         Assert.NotNull(health);
@@ -255,6 +259,83 @@ public class StartupCompositionTests : IClassFixture<CustomWebApplicationFactory
             cancellationToken: TestContext.Current.CancellationToken);
         Assert.True(runtimeConfigJson.RootElement.TryGetProperty("provider", out _));
         Assert.True(runtimeConfigJson.RootElement.TryGetProperty("availableProviders", out _));
+
+        using var diagnosticsJson = await JsonDocument.ParseAsync(
+            await loadTestDiagnosticsResponse.Content.ReadAsStreamAsync(TestContext.Current.CancellationToken),
+            cancellationToken: TestContext.Current.CancellationToken);
+        var diagnostics = diagnosticsJson.RootElement;
+        Assert.True(diagnostics.TryGetProperty("timestamp", out _));
+        Assert.True(diagnostics.TryGetProperty("process", out var process));
+        Assert.True(process.GetProperty("memoryBytes").GetInt64() > 0);
+        Assert.True(process.GetProperty("processorCount").GetInt32() > 0);
+        Assert.True(diagnostics.TryGetProperty("gc", out var gc));
+        Assert.True(gc.GetProperty("heapSizeBytes").GetInt64() >= 0);
+        Assert.True(gc.GetProperty("gen0Collections").GetInt32() >= 0);
+        Assert.True(gc.GetProperty("gen1Collections").GetInt32() >= 0);
+        Assert.True(gc.GetProperty("gen2Collections").GetInt32() >= 0);
+        Assert.True(diagnostics.TryGetProperty("threadPool", out var threadPool));
+        Assert.True(threadPool.GetProperty("maxWorkerThreads").GetInt32() > 0);
+        Assert.True(threadPool.GetProperty("availableWorkerThreads").GetInt32() >= 0);
+        Assert.True(threadPool.GetProperty("pendingWorkItemCount").GetInt64() >= 0);
+        Assert.True(threadPool.GetProperty("completedWorkItemCount").GetInt64() >= 0);
+        Assert.True(diagnostics.TryGetProperty("database", out var database));
+        Assert.Equal("unavailable", database.GetProperty("status").GetString());
+        Assert.True(database.GetProperty("timeoutCount").GetInt32() >= 0);
+        Assert.True(database.TryGetProperty("errorCount", out var errorCount));
+        Assert.True(errorCount.GetInt64() >= 0);
+        Assert.True(database.TryGetProperty("commandLatency", out var commandLatency));
+        Assert.True(commandLatency.TryGetProperty("sampleCount", out var commandSampleCount));
+        Assert.True(commandSampleCount.GetInt32() >= 0);
+        Assert.True(database.TryGetProperty("connectionOpenLatency", out var connectionOpenLatency));
+        Assert.True(connectionOpenLatency.TryGetProperty("sampleCount", out var connectionSampleCount));
+        Assert.True(connectionSampleCount.GetInt32() >= 0);
+        Assert.True(database.TryGetProperty("slowQueryCount", out var slowQueryCount));
+        Assert.True(slowQueryCount.GetInt64() >= 0);
+        Assert.True(database.TryGetProperty("recentSlowQueries", out var recentSlowQueries));
+        Assert.Equal(JsonValueKind.Array, recentSlowQueries.ValueKind);
+        Assert.True(database.TryGetProperty("idleInTransactionConnections", out var idleInTransactionConnections));
+        Assert.True(idleInTransactionConnections.ValueKind is JsonValueKind.Number or JsonValueKind.Null);
+    }
+
+    [Fact]
+    public async Task LoadTestDiagnostics_RequiresAdminAuthorization()
+    {
+        var client = _factory.CreateClient();
+
+        var response = await client.GetAsync("/api/admin/load-test/diagnostics", TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task LoadTestDiagnostics_WhenDbCollectorThrows_ReturnsErrorDatabasePayload()
+    {
+        await using var throwingFactory = _factory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureServices(services =>
+            {
+                services.RemoveAll<IDatabaseDiagnosticsCollector>();
+                services.AddSingleton<IDatabaseDiagnosticsCollector, ThrowingDatabaseDiagnosticsCollector>();
+            });
+        });
+
+        var client = throwingFactory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            BaseAddress = new Uri("https://localhost")
+        });
+        client.DefaultRequestHeaders.Add(TestAuthHandler.HeaderName, "admin");
+
+        var response = await client.GetAsync("/api/admin/load-test/diagnostics", TestContext.Current.CancellationToken);
+        response.EnsureSuccessStatusCode();
+
+        using var diagnosticsJson = await JsonDocument.ParseAsync(
+            await response.Content.ReadAsStreamAsync(TestContext.Current.CancellationToken),
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        var database = diagnosticsJson.RootElement.GetProperty("database");
+        Assert.Equal("error", database.GetProperty("status").GetString());
+        Assert.Equal("collector_failure", database.GetProperty("errorCategory").GetString());
+        Assert.Contains("simulated collector failure", database.GetProperty("error").GetString(), StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -279,4 +360,20 @@ public class StartupCompositionTests : IClassFixture<CustomWebApplicationFactory
     }
 
     private sealed record HealthPayload(string Status, string Service, DateTimeOffset Timestamp);
+
+    private sealed class ThrowingDatabaseDiagnosticsCollector : IDatabaseDiagnosticsCollector
+    {
+        public void RecordCommand(TimeSpan duration, string? commandText, Exception? exception = null)
+        {
+        }
+
+        public void RecordConnectionOpen(TimeSpan duration, Exception? exception = null)
+        {
+        }
+
+        public DatabaseDiagnosticsMetricsSnapshot CaptureSnapshot()
+        {
+            throw new InvalidOperationException("simulated collector failure");
+        }
+    }
 }

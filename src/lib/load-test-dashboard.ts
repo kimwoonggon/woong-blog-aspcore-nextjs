@@ -1,4 +1,6 @@
 export type LoadTestGroup = 'work' | 'study'
+export type LoadTestPattern = 'step' | 'soak' | 'spike'
+export type LoadTestHealthStatus = 'green' | 'yellow' | 'red' | 'unavailable'
 
 export type LoadTestTarget = {
   id: string
@@ -8,12 +10,15 @@ export type LoadTestTarget = {
 }
 
 export type LoadTestConfig = {
+  pattern: LoadTestPattern
   startUsers: number
   maxUsers: number
   stepUsers: number
   requestsPerUser: number
   concurrency: number
   timeoutMs: number
+  soakDurationSeconds: number
+  spikeRampSeconds: number
 }
 
 export type LoadTestSample = {
@@ -21,6 +26,14 @@ export type LoadTestSample = {
   durationMs: number
   status?: number
   error?: string
+}
+
+export type LoadTestFailureBreakdown = {
+  http5xxCount: number
+  status429Count: number
+  status503Count: number
+  timeoutCount: number
+  abortedCount: number
 }
 
 export type LoadTestScenarioResult = {
@@ -40,6 +53,11 @@ export type LoadTestScenarioResult = {
   p50Ms: number
   p95Ms: number
   maxMs: number
+  http5xxCount: number
+  status429Count: number
+  status503Count: number
+  timeoutCount: number
+  abortedCount: number
 }
 
 export type LoadTestTargetInput = {
@@ -47,25 +65,172 @@ export type LoadTestTargetInput = {
   blogSlugs?: string[]
 }
 
+export type LoadTestHealth = {
+  status: LoadTestHealthStatus
+  reason: string
+}
+
+export type RuntimeDiagnosticsPayload = {
+  timestamp: string
+  process: {
+    memoryBytes: number
+    processorCount: number
+  }
+  gc: {
+    heapSizeBytes: number
+    gen0Collections: number
+    gen1Collections: number
+    gen2Collections: number
+    timeInGcPercent: number | null
+  }
+  threadPool: {
+    workerThreads: number
+    pendingWorkItemCount: number
+    completedWorkItemCount: number | null
+    availableWorkerThreads: number
+    maxWorkerThreads: number
+  }
+  database: {
+    status: 'available' | 'unavailable' | 'error'
+    latencyMs: number | null
+    openConnections: number | null
+    activeConnections: number | null
+    idleConnections: number | null
+    idleInTransactionConnections?: number | null
+    commandLatency?: {
+      sampleCount: number
+      p50Ms: number | null
+      p95Ms: number | null
+      p99Ms: number | null
+    }
+    connectionOpenLatency?: {
+      sampleCount: number
+      p50Ms: number | null
+      p95Ms: number | null
+      p99Ms: number | null
+    }
+    slowQueryCount?: number
+    recentSlowQueries?: Array<{
+      capturedAt: string
+      durationMs: number
+      sqlPreview: string
+      errorCategory?: string | null
+    }>
+    timeoutCount: number
+    errorCount?: number
+    errorCategory?: string | null
+    error?: string | null
+  }
+}
+
+export type RuntimeMetricTrend = {
+  current: number
+  peak: number
+  delta: number
+}
+
+export type RuntimeDiagnosticsSummary = {
+  sampleCount: number
+  status: 'available' | 'unavailable'
+  memoryBytes: RuntimeMetricTrend
+  gcHeapBytes: RuntimeMetricTrend
+  gen2Collections: RuntimeMetricTrend
+  timeInGcPercent: RuntimeMetricTrend
+  threadPoolWorkerThreads: RuntimeMetricTrend
+  threadPoolQueueLength: RuntimeMetricTrend
+  threadPoolCompletedWorkItemCount: RuntimeMetricTrend
+  databaseLatencyMs: RuntimeMetricTrend
+  databaseTimeoutCount: RuntimeMetricTrend
+  dbCommandP95Ms: RuntimeMetricTrend
+  dbCommandP99Ms: RuntimeMetricTrend
+  dbConnectionOpenP95Ms: RuntimeMetricTrend
+  dbSlowQueryCount: RuntimeMetricTrend
+  dbErrorCount: RuntimeMetricTrend
+  dbOpenConnections: RuntimeMetricTrend
+  dbActiveConnections: RuntimeMetricTrend
+  dbIdleConnections: RuntimeMetricTrend
+  dbIdleInTransactionConnections: RuntimeMetricTrend
+}
+
 export const DEFAULT_LOAD_TEST_CONFIG: LoadTestConfig = {
+  pattern: 'step',
   startUsers: 100,
   maxUsers: 1000,
   stepUsers: 100,
   requestsPerUser: 1,
   concurrency: 25,
   timeoutMs: 10_000,
+  soakDurationSeconds: 300,
+  spikeRampSeconds: 60,
 }
 
 const MIN_USERS = 1
 export const MAX_USERS = 10_000
 const MIN_TIMEOUT_MS = 1000
 const MAX_TIMEOUT_MS = 60_000
-const MAX_CONCURRENCY = 100
+export const MAX_CONCURRENCY = 1_000
 const MAX_REQUESTS_PER_USER = 5
+const MIN_PATTERN_SECONDS = 10
+const MAX_PATTERN_SECONDS = 60 * 60
+
+export const LOAD_TEST_THRESHOLDS = {
+  http: {
+    greenP95Ms: 300,
+    redP95Ms: 800,
+    greenErrorRatePercent: 0.1,
+    redErrorRatePercent: 1,
+  },
+  runtime: {
+    redThreadPoolQueueDelta: 20,
+    yellowGen2Delta: 1,
+    redGen2Delta: 5,
+    yellowTimeInGcPercent: 5,
+    redTimeInGcPercent: 10,
+    yellowMemoryGrowthBytes: 128 * 1024 * 1024,
+    redMemoryGrowthBytes: 512 * 1024 * 1024,
+  },
+  database: {
+    yellowLatencyMs: 100,
+    redLatencyMs: 250,
+  },
+} as const
 
 function toInteger(value: unknown, fallback: number) {
   const numberValue = typeof value === 'number' ? value : Number(value)
   return Number.isFinite(numberValue) ? Math.trunc(numberValue) : fallback
+}
+
+export function summarizeLoadTestFailureBreakdown(samples: LoadTestSample[]): LoadTestFailureBreakdown {
+  return samples.reduce<LoadTestFailureBreakdown>((summary, sample) => {
+    const status = sample.status ?? 0
+    if (status >= 500) {
+      summary.http5xxCount += 1
+    }
+    if (status === 429) {
+      summary.status429Count += 1
+    }
+    if (status === 503) {
+      summary.status503Count += 1
+    }
+    const lowerError = sample.error?.toLowerCase() ?? ''
+    if (lowerError.includes('timeout') || lowerError.includes('timed out')) {
+      summary.timeoutCount += 1
+    }
+    if (lowerError.includes('abort')) {
+      summary.abortedCount += 1
+    }
+    return summary
+  }, {
+    http5xxCount: 0,
+    status429Count: 0,
+    status503Count: 0,
+    timeoutCount: 0,
+    abortedCount: 0,
+  })
+}
+
+function sanitizeLoadTestPattern(value: unknown): LoadTestPattern {
+  return value === 'soak' || value === 'spike' || value === 'step' ? value : DEFAULT_LOAD_TEST_CONFIG.pattern
 }
 
 function clamp(value: number, min: number, max: number) {
@@ -81,17 +246,25 @@ export function sanitizeLoadTestConfig(config: Partial<LoadTestConfig>): LoadTes
   const maxUsers = clamp(toInteger(config.maxUsers, DEFAULT_LOAD_TEST_CONFIG.maxUsers), startUsers, MAX_USERS)
 
   return {
+    pattern: sanitizeLoadTestPattern(config.pattern),
     startUsers,
     maxUsers,
     stepUsers: clamp(toInteger(config.stepUsers, DEFAULT_LOAD_TEST_CONFIG.stepUsers), 1, MAX_USERS),
     requestsPerUser: clamp(toInteger(config.requestsPerUser, DEFAULT_LOAD_TEST_CONFIG.requestsPerUser), 1, MAX_REQUESTS_PER_USER),
     concurrency: clamp(toInteger(config.concurrency, DEFAULT_LOAD_TEST_CONFIG.concurrency), 1, MAX_CONCURRENCY),
     timeoutMs: clamp(toInteger(config.timeoutMs, DEFAULT_LOAD_TEST_CONFIG.timeoutMs), MIN_TIMEOUT_MS, MAX_TIMEOUT_MS),
+    soakDurationSeconds: clamp(toInteger(config.soakDurationSeconds, DEFAULT_LOAD_TEST_CONFIG.soakDurationSeconds), MIN_PATTERN_SECONDS, MAX_PATTERN_SECONDS),
+    spikeRampSeconds: clamp(toInteger(config.spikeRampSeconds, DEFAULT_LOAD_TEST_CONFIG.spikeRampSeconds), MIN_PATTERN_SECONDS, MAX_PATTERN_SECONDS),
   }
 }
 
 export function buildUserSteps(config: LoadTestConfig) {
   const safeConfig = sanitizeLoadTestConfig(config)
+
+  if (safeConfig.pattern === 'soak' || safeConfig.pattern === 'spike') {
+    return [safeConfig.maxUsers]
+  }
+
   const steps: number[] = []
 
   for (let users = safeConfig.startUsers; users <= safeConfig.maxUsers; users += safeConfig.stepUsers) {
@@ -103,6 +276,95 @@ export function buildUserSteps(config: LoadTestConfig) {
   }
 
   return steps
+}
+
+export function buildSoakUserTimeline(config: LoadTestConfig) {
+  const safeConfig = sanitizeLoadTestConfig(config)
+  return Array.from({ length: safeConfig.soakDurationSeconds }, () => safeConfig.maxUsers)
+}
+
+export function buildSpikeUserTimeline(config: LoadTestConfig) {
+  const safeConfig = sanitizeLoadTestConfig(config)
+  const duration = safeConfig.spikeRampSeconds
+
+  if (duration <= 1) {
+    return [safeConfig.maxUsers]
+  }
+
+  const timeline: number[] = []
+  for (let second = 0; second < duration; second += 1) {
+    const progress = second / (duration - 1)
+    const users = Math.round(safeConfig.startUsers + ((safeConfig.maxUsers - safeConfig.startUsers) * progress))
+    timeline.push(clamp(users, safeConfig.startUsers, safeConfig.maxUsers))
+  }
+
+  timeline[timeline.length - 1] = safeConfig.maxUsers
+  return timeline
+}
+
+export function estimatePatternRequestCount(config: LoadTestConfig) {
+  const safeConfig = sanitizeLoadTestConfig(config)
+  const requestsPerUser = safeConfig.requestsPerUser
+
+  if (safeConfig.pattern === 'soak') {
+    return buildSoakUserTimeline(safeConfig).reduce((sum, users) => sum + (users * requestsPerUser), 0)
+  }
+
+  if (safeConfig.pattern === 'spike') {
+    return buildSpikeUserTimeline(safeConfig).reduce((sum, users) => sum + (users * requestsPerUser), 0)
+  }
+
+  return buildUserSteps(safeConfig).reduce((sum, users) => sum + (users * requestsPerUser), 0)
+}
+
+export async function runWithConcurrency<T>(
+  tasks: Array<() => Promise<T>>,
+  concurrency: number,
+  options?: {
+    onInFlightChange?: (inFlight: number) => void
+  },
+) {
+  const safeConcurrency = Math.max(1, Math.trunc(concurrency))
+
+  if (!tasks.length) {
+    options?.onInFlightChange?.(0)
+    return [] as T[]
+  }
+
+  const results = new Array<T>(tasks.length)
+  let nextIndex = 0
+  let activeCount = 0
+
+  return await new Promise<T[]>((resolve, reject) => {
+    const launchNext = () => {
+      if (nextIndex >= tasks.length && activeCount === 0) {
+        resolve(results)
+        return
+      }
+
+      while (activeCount < safeConcurrency && nextIndex < tasks.length) {
+        const taskIndex = nextIndex
+        nextIndex += 1
+        activeCount += 1
+        options?.onInFlightChange?.(activeCount)
+
+        void tasks[taskIndex]()
+          .then((result) => {
+            results[taskIndex] = result
+          })
+          .catch((error) => {
+            reject(error)
+          })
+          .finally(() => {
+            activeCount -= 1
+            options?.onInFlightChange?.(activeCount)
+            launchNext()
+          })
+      }
+    }
+
+    launchNext()
+  })
 }
 
 export function buildLoadTestTargets({ workSlugs = [], blogSlugs = [] }: LoadTestTargetInput): LoadTestTarget[] {
@@ -145,6 +407,7 @@ export function summarizeLoadTestSamples(
   const requestCount = samples.length
   const failureCount = requestCount - successCount
   const totalDuration = durations.reduce((sum, duration) => sum + duration, 0)
+  const failureBreakdown = summarizeLoadTestFailureBreakdown(samples)
 
   return {
     targetId: target.id,
@@ -161,6 +424,11 @@ export function summarizeLoadTestSamples(
     p50Ms: roundMetric(percentile(durations, 50)),
     p95Ms: roundMetric(percentile(durations, 95)),
     maxMs: durations.length ? roundMetric(Math.max(...durations)) : 0,
+    http5xxCount: failureBreakdown.http5xxCount,
+    status429Count: failureBreakdown.status429Count,
+    status503Count: failureBreakdown.status503Count,
+    timeoutCount: failureBreakdown.timeoutCount,
+    abortedCount: failureBreakdown.abortedCount,
   }
 }
 
@@ -171,4 +439,207 @@ export function appendLoadTestCacheBust(path: string, runId: string, requestInde
   const iteration = Math.floor(requestIndex / safeUserCount) + 1
 
   return `${path}${separator}__loadTestRun=${encodeURIComponent(runId)}&__loadTestUser=${virtualUser}&__loadTestRequest=${requestIndex}&__loadTestIteration=${iteration}`
+}
+
+export function evaluateHttpScenarioHealth(result: Pick<LoadTestScenarioResult, 'p95Ms' | 'errorRate'>): LoadTestHealth {
+  if (result.errorRate >= LOAD_TEST_THRESHOLDS.http.redErrorRatePercent || result.p95Ms >= LOAD_TEST_THRESHOLDS.http.redP95Ms) {
+    return { status: 'red', reason: 'HTTP error rate or p95 latency is above the red threshold.' }
+  }
+
+  if (result.errorRate >= LOAD_TEST_THRESHOLDS.http.greenErrorRatePercent || result.p95Ms >= LOAD_TEST_THRESHOLDS.http.greenP95Ms) {
+    return { status: 'yellow', reason: 'HTTP p95 latency or error rate needs review.' }
+  }
+
+  return { status: 'green', reason: 'HTTP p95 latency and error rate are within the initial target.' }
+}
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value)
+}
+
+function isNullableFiniteNumber(value: unknown): value is number | null {
+  return value === null || isFiniteNumber(value)
+}
+
+export function isRuntimeDiagnosticsPayload(value: unknown): value is RuntimeDiagnosticsPayload {
+  if (!isObject(value) || typeof value.timestamp !== 'string') {
+    return false
+  }
+
+  const process = value.process
+  const gc = value.gc
+  const threadPool = value.threadPool
+  const database = value.database
+
+  if (!isObject(process) || !isFiniteNumber(process.memoryBytes) || !isFiniteNumber(process.processorCount)) {
+    return false
+  }
+
+  if (
+    !isObject(gc)
+    || !isFiniteNumber(gc.heapSizeBytes)
+    || !isFiniteNumber(gc.gen0Collections)
+    || !isFiniteNumber(gc.gen1Collections)
+    || !isFiniteNumber(gc.gen2Collections)
+    || !isNullableFiniteNumber(gc.timeInGcPercent)
+  ) {
+    return false
+  }
+
+  if (
+    !isObject(threadPool)
+    || !isFiniteNumber(threadPool.workerThreads)
+    || !isFiniteNumber(threadPool.pendingWorkItemCount)
+    || !isNullableFiniteNumber(threadPool.completedWorkItemCount)
+    || !isFiniteNumber(threadPool.availableWorkerThreads)
+    || !isFiniteNumber(threadPool.maxWorkerThreads)
+  ) {
+    return false
+  }
+
+  if (!isObject(database)) {
+    return false
+  }
+
+  const databaseStatus = database.status
+  const commandLatency = database.commandLatency
+  const connectionOpenLatency = database.connectionOpenLatency
+  const slowQueryCount = database.slowQueryCount
+  const errorCount = database.errorCount
+
+  const isLatencyShape = (value: unknown) => {
+    if (!isObject(value)) {
+      return false
+    }
+
+    return isFiniteNumber(value.sampleCount)
+      && isNullableFiniteNumber(value.p50Ms)
+      && isNullableFiniteNumber(value.p95Ms)
+      && isNullableFiniteNumber(value.p99Ms)
+  }
+
+  const areSlowSamplesValid = !database.recentSlowQueries
+    || (Array.isArray(database.recentSlowQueries)
+      && database.recentSlowQueries.every((sample) => isObject(sample)
+        && typeof sample.capturedAt === 'string'
+        && isFiniteNumber(sample.durationMs)
+        && typeof sample.sqlPreview === 'string'
+      ))
+
+  return (databaseStatus === 'available' || databaseStatus === 'unavailable' || databaseStatus === 'error')
+    && isNullableFiniteNumber(database.latencyMs)
+    && isNullableFiniteNumber(database.openConnections)
+    && isNullableFiniteNumber(database.activeConnections)
+    && isNullableFiniteNumber(database.idleConnections)
+    && isNullableFiniteNumber(database.idleInTransactionConnections)
+    && isFiniteNumber(database.timeoutCount)
+    && (commandLatency === undefined || isLatencyShape(commandLatency))
+    && (connectionOpenLatency === undefined || isLatencyShape(connectionOpenLatency))
+    && (slowQueryCount === undefined || isFiniteNumber(slowQueryCount))
+    && (errorCount === undefined || isFiniteNumber(errorCount))
+    && areSlowSamplesValid
+}
+
+function emptyTrend(): RuntimeMetricTrend {
+  return { current: 0, peak: 0, delta: 0 }
+}
+
+function summarizeTrend(values: number[]): RuntimeMetricTrend {
+  if (!values.length) {
+    return emptyTrend()
+  }
+
+  const first = values[0] ?? 0
+  const current = values.at(-1) ?? first
+  return {
+    current: roundMetric(current),
+    peak: roundMetric(Math.max(...values)),
+    delta: roundMetric(current - first),
+  }
+}
+
+export function buildDiagnosticsSnapshotSummary(snapshots: RuntimeDiagnosticsPayload[]): RuntimeDiagnosticsSummary {
+  if (!snapshots.length) {
+    return {
+      sampleCount: 0,
+      status: 'unavailable',
+      memoryBytes: emptyTrend(),
+      gcHeapBytes: emptyTrend(),
+      gen2Collections: emptyTrend(),
+      timeInGcPercent: emptyTrend(),
+      threadPoolWorkerThreads: emptyTrend(),
+      threadPoolQueueLength: emptyTrend(),
+      threadPoolCompletedWorkItemCount: emptyTrend(),
+      databaseLatencyMs: emptyTrend(),
+      databaseTimeoutCount: emptyTrend(),
+      dbCommandP95Ms: emptyTrend(),
+      dbCommandP99Ms: emptyTrend(),
+      dbConnectionOpenP95Ms: emptyTrend(),
+      dbSlowQueryCount: emptyTrend(),
+      dbErrorCount: emptyTrend(),
+      dbOpenConnections: emptyTrend(),
+      dbActiveConnections: emptyTrend(),
+      dbIdleConnections: emptyTrend(),
+      dbIdleInTransactionConnections: emptyTrend(),
+    }
+  }
+
+  return {
+    sampleCount: snapshots.length,
+    status: 'available',
+    memoryBytes: summarizeTrend(snapshots.map((snapshot) => snapshot.process.memoryBytes)),
+    gcHeapBytes: summarizeTrend(snapshots.map((snapshot) => snapshot.gc.heapSizeBytes)),
+    gen2Collections: summarizeTrend(snapshots.map((snapshot) => snapshot.gc.gen2Collections)),
+    timeInGcPercent: summarizeTrend(snapshots.map((snapshot) => snapshot.gc.timeInGcPercent ?? 0)),
+    threadPoolWorkerThreads: summarizeTrend(snapshots.map((snapshot) => snapshot.threadPool.workerThreads)),
+    threadPoolQueueLength: summarizeTrend(snapshots.map((snapshot) => snapshot.threadPool.pendingWorkItemCount)),
+    threadPoolCompletedWorkItemCount: summarizeTrend(snapshots.map((snapshot) => snapshot.threadPool.completedWorkItemCount ?? 0)),
+    databaseLatencyMs: summarizeTrend(snapshots.map((snapshot) => snapshot.database.latencyMs ?? 0)),
+    databaseTimeoutCount: summarizeTrend(snapshots.map((snapshot) => snapshot.database.timeoutCount)),
+    dbCommandP95Ms: summarizeTrend(snapshots.map((snapshot) => snapshot.database.commandLatency?.p95Ms ?? 0)),
+    dbCommandP99Ms: summarizeTrend(snapshots.map((snapshot) => snapshot.database.commandLatency?.p99Ms ?? 0)),
+    dbConnectionOpenP95Ms: summarizeTrend(snapshots.map((snapshot) => snapshot.database.connectionOpenLatency?.p95Ms ?? 0)),
+    dbSlowQueryCount: summarizeTrend(snapshots.map((snapshot) => snapshot.database.slowQueryCount ?? 0)),
+    dbErrorCount: summarizeTrend(snapshots.map((snapshot) => snapshot.database.errorCount ?? 0)),
+    dbOpenConnections: summarizeTrend(snapshots.map((snapshot) => snapshot.database.openConnections ?? 0)),
+    dbActiveConnections: summarizeTrend(snapshots.map((snapshot) => snapshot.database.activeConnections ?? 0)),
+    dbIdleConnections: summarizeTrend(snapshots.map((snapshot) => snapshot.database.idleConnections ?? 0)),
+    dbIdleInTransactionConnections: summarizeTrend(snapshots.map((snapshot) => snapshot.database.idleInTransactionConnections ?? 0)),
+  }
+}
+
+export function evaluateRuntimeDiagnosticsHealth(summaryOrSnapshots: RuntimeDiagnosticsSummary | RuntimeDiagnosticsPayload[]): LoadTestHealth {
+  const summary = Array.isArray(summaryOrSnapshots)
+    ? buildDiagnosticsSnapshotSummary(summaryOrSnapshots)
+    : summaryOrSnapshots
+
+  if (summary.sampleCount === 0 || summary.status === 'unavailable') {
+    return { status: 'unavailable', reason: 'Runtime diagnostics have not been collected yet.' }
+  }
+
+  if (
+    summary.databaseTimeoutCount.current > 0
+    || summary.threadPoolQueueLength.delta >= LOAD_TEST_THRESHOLDS.runtime.redThreadPoolQueueDelta
+    || summary.gen2Collections.delta >= LOAD_TEST_THRESHOLDS.runtime.redGen2Delta
+    || summary.timeInGcPercent.current >= LOAD_TEST_THRESHOLDS.runtime.redTimeInGcPercent
+    || summary.memoryBytes.delta >= LOAD_TEST_THRESHOLDS.runtime.redMemoryGrowthBytes
+    || summary.databaseLatencyMs.current >= LOAD_TEST_THRESHOLDS.database.redLatencyMs
+  ) {
+    return { status: 'red', reason: 'Runtime or DB pressure crossed a red threshold.' }
+  }
+
+  if (
+    summary.gen2Collections.delta >= LOAD_TEST_THRESHOLDS.runtime.yellowGen2Delta
+    || summary.timeInGcPercent.current >= LOAD_TEST_THRESHOLDS.runtime.yellowTimeInGcPercent
+    || summary.memoryBytes.delta >= LOAD_TEST_THRESHOLDS.runtime.yellowMemoryGrowthBytes
+    || summary.databaseLatencyMs.current >= LOAD_TEST_THRESHOLDS.database.yellowLatencyMs
+  ) {
+    return { status: 'yellow', reason: 'Runtime or DB pressure needs review.' }
+  }
+
+  return { status: 'green', reason: 'Runtime and DB diagnostics are within the initial target.' }
 }
