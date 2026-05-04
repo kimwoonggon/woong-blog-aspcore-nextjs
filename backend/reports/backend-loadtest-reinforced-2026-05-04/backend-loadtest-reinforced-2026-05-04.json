@@ -1,0 +1,91 @@
+{
+  "taskSlug": "backend-loadtest-reinforced-2026-05-04",
+  "date": "2026-05-04",
+  "scope": {
+    "architecturePreserved": [
+      "Next.js",
+      "ASP.NET Core",
+      "nginx",
+      "docker-compose"
+    ],
+    "excluded": [
+      "SignalR",
+      "k8s/HPA",
+      "NBomber/C# worker",
+      "Redis backplane changes",
+      "new npm/NuGet dependencies"
+    ]
+  },
+  "implemented": {
+    "frontend": [
+      "step/soak/spike execution with time-based soak and ramp spike",
+      "runWithConcurrency scheduler",
+      "concurrency max 1000",
+      "run status current/peak in-flight and elapsed time",
+      "high concurrency warning",
+      "HTTP failure breakdown (5xx/429/503/timeout/abort)",
+      "runtime panel and database pressure panel"
+    ],
+    "backend": [
+      "admin diagnostics endpoint /api/admin/load-test/diagnostics",
+      "database diagnostics collector with ring buffers",
+      "EF command/connection interceptors",
+      "DB command latency p50/p95/p99",
+      "DB connection-open latency p50/p95/p99",
+      "slow query count and sanitized samples",
+      "DB timeout and error counts",
+      "pg_stat_activity open/active/idle/idle-in-transaction counts",
+      "resilient fallback database.status=error on collector/probe failure",
+      "threadPool.completedWorkItemCount in payload"
+    ]
+  },
+  "requirementsChecklist": {
+    "soakSpikeRealism": "done",
+    "concurrency1000AndWarnings": "done",
+    "peakInflight": "done",
+    "runtimeAndDbPanels": "done",
+    "dbLatencyBreakdown": "done",
+    "failureBreakdown429503": "done",
+    "collectorFailureFallback": "done",
+    "testsReinforced": "done"
+  },
+  "validation": {
+    "passed": [
+      "npm run typecheck",
+      "npx vitest run src/test/load-test-dashboard.test.ts (15 passed)",
+      "npm run lint (0 errors, warnings only)",
+      "npm run build",
+      "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 npx playwright test tests/admin-load-test-dashboard.spec.ts --workers=1 (1 passed)",
+      "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter \"FullyQualifiedName~StartupCompositionTests\" --no-restore (9 passed)",
+      "dotnet test backend/WoongBlog.sln --no-restore (403 passed, 1 skipped)",
+      "dotnet build backend/WoongBlog.sln --no-restore",
+      "BACKEND_PUBLISH_PORT=18080 NGINX_HTTPS_PORT=3002 docker compose -f docker-compose.dev.yml up -d --build frontend nginx",
+      "git diff --check"
+    ],
+    "partialOrBlocked": [
+      {
+        "command": "npm test -- --run",
+        "status": "blocked",
+        "reason": "full suite no-progress hang in current environment; process terminated after extended wait"
+      },
+      {
+        "command": "pnpm quality-gate",
+        "status": "blocked",
+        "reason": "pnpm not installed (pnpm: command not found)"
+      }
+    ],
+    "existingWarnings": [
+      "NU1901 AWSSDK.Core warning in backend projects",
+      "existing unrelated ESLint warnings"
+    ]
+  },
+  "knownLimits": [
+    "Browser-based load is not equivalent to distributed load generators",
+    "pg_stat_activity is server-view state, not exact internal Npgsql pool busy/idle counts",
+    "In-memory diagnostics buffers reset on process restart"
+  ],
+  "nextStepRecommendation": [
+    "optional bounded backend limiter metrics (active/queued/rejected/queue-timeout)",
+    "external load-runner path for high-fidelity concurrency testing"
+  ]
+}

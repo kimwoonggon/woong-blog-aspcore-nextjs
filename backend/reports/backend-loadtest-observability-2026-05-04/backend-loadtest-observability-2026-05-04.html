@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Backend Load-Test Observability Audit - 2026-05-04</title>
+  <style>
+    body { font-family: system-ui, sans-serif; line-height: 1.5; margin: 2rem; max-width: 960px; }
+    code { background: #f4f4f5; padding: 0.1rem 0.25rem; border-radius: 4px; }
+    li { margin: 0.25rem 0; }
+  </style>
+</head>
+<body>
+  <h1>Backend Load-Test Observability Audit - 2026-05-04</h1>
+  <h2>Summary</h2>
+  <p>The existing <code>/admin/load-test</code> HTTP dashboard now includes typed step/soak/spike planning and backend runtime diagnostics for memory, GC, ThreadPool, and DB probe pressure.</p>
+  <h2>Changed</h2>
+  <ul>
+    <li>Added typed load pattern, threshold, diagnostics payload, and runtime summary helpers.</li>
+    <li>Added dashboard runtime metrics polling and current/peak/delta display.</li>
+    <li>Added admin-only <code>GET /api/admin/load-test/diagnostics</code>.</li>
+    <li>Updated unit, Playwright, and backend integration tests.</li>
+  </ul>
+  <h2>Not Changed</h2>
+  <ul>
+    <li>No SignalR, k8s, NBomber, C# Worker simulator, Redis backplane, HPA, or pod restart observability was introduced.</li>
+    <li>No new dependencies were added.</li>
+    <li>Existing HTTP target request behavior was preserved.</li>
+  </ul>
+  <h2>Validations</h2>
+  <ul>
+    <li><code>npx vitest run src/test/load-test-dashboard.test.ts</code>: passed 10/10.</li>
+    <li><code>npm run typecheck</code>: passed.</li>
+    <li>Focused ESLint: passed.</li>
+    <li>Focused backend integration tests: passed 8/8.</li>
+    <li>Docker compose build/start for frontend/nginx: passed.</li>
+    <li>Focused Playwright load-test dashboard spec: passed 1/1 with <code>PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000</code>.</li>
+    <li><code>npm run lint</code>: 0 errors, 6 unrelated warnings.</li>
+    <li><code>dotnet test backend/WoongBlog.sln</code>: 402 passed, 1 skipped; existing NU1901 warnings remain.</li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Accept this implementation for the current scope. A later increment can add persistent run-summary export.</p>
+</body>
+</html>

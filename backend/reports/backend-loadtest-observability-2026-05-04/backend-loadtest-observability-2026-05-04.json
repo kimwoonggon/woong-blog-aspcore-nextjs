@@ -1,0 +1,66 @@
+{
+  "task": "backend-loadtest-observability-2026-05-04",
+  "objective": "Extend the existing /admin/load-test HTTP dashboard with backend runtime and DB pressure visibility plus step/soak/spike load pattern modeling, without introducing SignalR, k8s, NBomber, C# Worker simulators, Redis backplane, HPA, or pod restart observability.",
+  "changed": [
+    "Added typed step/soak/spike load patterns and thresholds in src/lib/load-test-dashboard.ts",
+    "Added runtime diagnostics payload validation and current/peak/delta summaries",
+    "Added backend runtime metrics panel and diagnostics polling in src/components/admin/LoadTestDashboard.tsx",
+    "Added admin-only GET /api/admin/load-test/diagnostics",
+    "Expanded Vitest, Playwright, and backend integration tests"
+  ],
+  "notChanged": [
+    "No SignalR",
+    "No k8s",
+    "No NBomber",
+    "No C# Worker simulator",
+    "No Redis backplane",
+    "No HPA or pod restart observability",
+    "No new dependencies",
+    "No public route/API behavior changes"
+  ],
+  "validations": [
+    {
+      "command": "npx vitest run src/test/load-test-dashboard.test.ts",
+      "result": "passed",
+      "details": "10/10 tests passed"
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "passed"
+    },
+    {
+      "command": "npx eslint src/lib/load-test-dashboard.ts src/components/admin/LoadTestDashboard.tsx src/test/load-test-dashboard.test.ts tests/admin-load-test-dashboard.spec.ts",
+      "result": "passed"
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter \"FullyQualifiedName~StartupCompositionTests\"",
+      "result": "passed",
+      "details": "8/8 tests passed"
+    },
+    {
+      "command": "BACKEND_PUBLISH_PORT=18080 NGINX_HTTPS_PORT=3002 docker compose -f docker-compose.dev.yml up -d --build frontend nginx",
+      "result": "passed"
+    },
+    {
+      "command": "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 ENABLE_LOCAL_ADMIN_SHORTCUT=true PLAYWRIGHT_EXPECT_LOCAL_ADMIN_SHORTCUT=visible npx playwright test tests/admin-load-test-dashboard.spec.ts --workers=1",
+      "result": "passed",
+      "details": "1/1 test passed"
+    },
+    {
+      "command": "npm run lint",
+      "result": "passed_with_warnings",
+      "details": "0 errors, 6 unrelated warnings"
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln",
+      "result": "passed_with_warnings",
+      "details": "402 passed, 1 skipped; existing NU1901 AWSSDK.Core warnings"
+    }
+  ],
+  "risks": [
+    "DB timeout count is process-local and only increments for timeout-like diagnostics probe failures",
+    "PostgreSQL connection counts are available only for Npgsql relational connections",
+    "Soak and spike are modeled within the current HTTP request runner and are not persistent-connection simulations"
+  ],
+  "recommendation": "Accept for current scope; consider persistent run-summary export as a follow-up."
+}
