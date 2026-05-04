@@ -17,7 +17,8 @@ test('home hero includes Read Study CTA to /blog', async ({ page }) => {
   const cta = page.getByRole('link', { name: 'Read Study' })
   await expect(cta).toBeVisible()
   await cta.click()
-  await expect(page).toHaveURL(/\/blog$/)
+  await expect(page).toHaveURL((url) => url.pathname === '/blog')
+  await expect(page.getByRole('heading', { name: 'Study', exact: true })).toBeVisible()
 })
 
 test('hero CTA buttons remain visible and touch-sized on mobile', async ({ page }) => {

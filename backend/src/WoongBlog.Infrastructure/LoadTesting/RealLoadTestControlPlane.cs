@@ -13,9 +13,39 @@ public sealed class RealLoadTestControlPlane(
 {
     public async Task<RealLoadTestStartResponse> StartAsync(RealLoadTestStartRequest request, CancellationToken cancellationToken)
     {
-        var normalizedRequest = ValidateAndNormalize(request, options.Value);
+        RealLoadTestStartRequest normalizedRequest;
+        try
+        {
+            normalizedRequest = ValidateAndNormalize(request, options.Value);
+        }
+        catch (RealLoadTestValidationException exception)
+        {
+            logger.LogWarning(
+                exception,
+                "Load test start validation failed. runId={RunId}, runner={Runner}, scenario={Scenario}, target={Target}, rate={Rate}, durationSeconds={DurationSeconds}, maxVUS={MaxVus}, validationReason={ValidationReason}",
+                string.Empty,
+                request?.Runner ?? string.Empty,
+                request?.Scenario ?? string.Empty,
+                request?.Target ?? string.Empty,
+                request?.Rate ?? 0,
+                request?.DurationSeconds ?? 0,
+                request?.MaxVus ?? 0,
+                exception.Message);
+            throw;
+        }
+
         var nowUtc = DateTimeOffset.UtcNow;
         var runId = BuildRunId(nowUtc, normalizedRequest.Scenario);
+
+        logger.LogInformation(
+            "Starting load test request with runId={RunId}, runner={Runner}, scenario={Scenario}, target={Target}, rate={Rate}, durationSeconds={DurationSeconds}, maxVUS={MaxVus}",
+            runId,
+            normalizedRequest.Runner,
+            normalizedRequest.Scenario,
+            normalizedRequest.Target,
+            normalizedRequest.Rate,
+            normalizedRequest.DurationSeconds,
+            normalizedRequest.MaxVus);
 
         var run = new RealLoadTestRunEntry(
             runId,
@@ -23,14 +53,28 @@ public sealed class RealLoadTestControlPlane(
             normalizedRequest.Scenario,
             normalizedRequest.Target,
             normalizedRequest.Rate,
+            normalizedRequest.PeakRate ?? normalizedRequest.Rate,
             normalizedRequest.DurationSeconds,
             normalizedRequest.MaxVus,
+            normalizedRequest.StartVus ?? 1,
+            normalizedRequest.Targets,
             nowUtc);
 
         run.Status = RealLoadTestRunStates.Running;
 
         if (!runRegistry.TryAddRun(run, out var conflictReason))
         {
+            logger.LogWarning(
+                "Load test start blocked by conflict. runId={RunId}, runner={Runner}, scenario={Scenario}, target={Target}, rate={Rate}, durationSeconds={DurationSeconds}, maxVUS={MaxVus}, conflict={ConflictReason}",
+                runId,
+                run.Runner,
+                run.Scenario,
+                run.Target,
+                run.Rate,
+                run.DurationSeconds,
+                run.MaxVus,
+                conflictReason);
+
             throw new RealLoadTestConflictException($"Cannot start a new run: {conflictReason}");
         }
 
@@ -44,7 +88,16 @@ public sealed class RealLoadTestControlPlane(
             }
             catch (Exception exception)
             {
-                logger.LogError(exception, "Unhandled load test runner exception for run {RunId}", run.RunId);
+                logger.LogError(
+                    exception,
+                    "Unhandled load test runner exception for run {RunId}, runner={Runner}, scenario={Scenario}, target={Target}, rate={Rate}, durationSeconds={DurationSeconds}, maxVUS={MaxVus}",
+                    run.RunId,
+                    run.Runner,
+                    run.Scenario,
+                    run.Target,
+                    run.Rate,
+                    run.DurationSeconds,
+                    run.MaxVus);
             }
         }, CancellationToken.None);
 
@@ -53,6 +106,7 @@ public sealed class RealLoadTestControlPlane(
             run.Status,
             run.Runner,
             run.Scenario,
+            run.Targets,
             run.StartedAtUtc);
     }
 
@@ -90,6 +144,8 @@ public sealed class RealLoadTestControlPlane(
             summary.P99Ms,
             summary.MaxMs,
             summary.StatusCounts,
+            run.LatencyBreakdown,
+            summary.TargetMetrics,
             metrics);
     }
 
@@ -118,6 +174,17 @@ public sealed class RealLoadTestControlPlane(
                 shouldCancel = true;
             }
         }
+
+        logger.LogInformation(
+            "Stop requested for run {RunId}, runner={Runner}, scenario={Scenario}, target={Target}, rate={Rate}, durationSeconds={DurationSeconds}, maxVUS={MaxVus}, shouldCancel={ShouldCancel}",
+            run.RunId,
+            run.Runner,
+            run.Scenario,
+            run.Target,
+            run.Rate,
+            run.DurationSeconds,
+            run.MaxVus,
+            shouldCancel);
 
         if (shouldCancel)
         {
@@ -190,18 +257,155 @@ public sealed class RealLoadTestControlPlane(
                 $"MaxVus must be between {options.MinMaxVus} and {options.MaxMaxVus}.");
         }
 
-        if (!options.UseFakeRunnerForTests && !string.Equals(runner, "fake", StringComparison.OrdinalIgnoreCase))
-        {
-            throw new RealLoadTestValidationException("Only fake runner mode is currently enabled.");
-        }
+        var peakRate = NormalizePeakRate(request, scenario, options);
+        var startVus = NormalizeStartVus(request, scenario, options);
+        var effectiveRunner = options.UseFakeRunnerForTests || !options.RealRunnerEnabled
+            ? "fake"
+            : runner;
+        var targets = NormalizeTargets(request.Targets, target);
 
         return new RealLoadTestStartRequest(
             scenario,
-            runner,
+            effectiveRunner,
             target,
             request.Rate,
+            peakRate,
             request.DurationSeconds,
-            request.MaxVus);
+            request.MaxVus,
+            startVus,
+            targets);
+    }
+
+    private static int NormalizePeakRate(
+        RealLoadTestStartRequest request,
+        string scenario,
+        LoadTestingOptions options)
+    {
+        var defaultPeakRate = scenario == "public-api-spike"
+            ? (int)Math.Min(options.MaxRate, (long)request.Rate * 2)
+            : request.Rate;
+        var peakRate = request.PeakRate ?? defaultPeakRate;
+
+        if (peakRate < options.MinRate || peakRate > options.MaxRate)
+        {
+            throw new RealLoadTestValidationException(
+                $"PeakRate must be between {options.MinRate} and {options.MaxRate}.");
+        }
+
+        if (scenario == "public-api-spike" && peakRate < request.Rate)
+        {
+            throw new RealLoadTestValidationException("PeakRate must be greater than or equal to Rate for public-api-spike.");
+        }
+
+        return peakRate;
+    }
+
+    private static int NormalizeStartVus(
+        RealLoadTestStartRequest request,
+        string scenario,
+        LoadTestingOptions options)
+    {
+        var defaultStartVus = scenario == "public-api-stress"
+            ? Math.Max(options.MinMaxVus, request.MaxVus / 10)
+            : options.MinMaxVus;
+        var startVus = request.StartVus ?? defaultStartVus;
+
+        if (startVus < options.MinMaxVus || startVus > request.MaxVus)
+        {
+            throw new RealLoadTestValidationException(
+                $"StartVus must be between {options.MinMaxVus} and MaxVus.");
+        }
+
+        return startVus;
+    }
+
+    private static IReadOnlyList<RealLoadTestTargetSpec> NormalizeTargets(
+        IReadOnlyList<RealLoadTestTargetSpec>? requestedTargets,
+        string targetPreset)
+    {
+        var candidates = requestedTargets is { Count: > 0 }
+            ? requestedTargets
+            : DefaultTargetsForPreset(targetPreset);
+
+        var normalized = candidates
+            .Select(NormalizeTarget)
+            .Where(static target => target is not null)
+            .Cast<RealLoadTestTargetSpec>()
+            .Where(target => TargetMatchesPreset(target, targetPreset))
+            .GroupBy(static target => target.Id, StringComparer.OrdinalIgnoreCase)
+            .Select(static group => group.First())
+            .ToArray();
+
+        if (normalized.Length == 0)
+        {
+            normalized = DefaultTargetsForPreset(targetPreset).ToArray();
+        }
+
+        return normalized;
+    }
+
+    private static RealLoadTestTargetSpec? NormalizeTarget(RealLoadTestTargetSpec? target)
+    {
+        if (target is null)
+        {
+            return null;
+        }
+
+        var id = NormalizeToken(target.Id);
+        var label = string.IsNullOrWhiteSpace(target.Label) ? id : target.Label.Trim();
+        var path = target.Path?.Trim() ?? string.Empty;
+        var group = RealLoadTestCatalog.Normalize(target.Group ?? string.Empty);
+
+        if (string.IsNullOrWhiteSpace(id)
+            || string.IsNullOrWhiteSpace(path)
+            || (group != "work" && group != "study")
+            || !IsAllowedTargetPath(path))
+        {
+            return null;
+        }
+
+        return new RealLoadTestTargetSpec(id, label, path, group);
+    }
+
+    private static bool TargetMatchesPreset(RealLoadTestTargetSpec target, string targetPreset)
+    {
+        return targetPreset switch
+        {
+            "public-works-only" => target.Group == "work",
+            "public-blogs-only" => target.Group == "study",
+            _ => true
+        };
+    }
+
+    private static IReadOnlyList<RealLoadTestTargetSpec> DefaultTargetsForPreset(string targetPreset)
+    {
+        var targets = new[]
+        {
+            new RealLoadTestTargetSpec("works-list", "Work list", "/api/public/works?page=1&pageSize=12", "work"),
+            new RealLoadTestTargetSpec("study-list", "Study list", "/api/public/blogs?page=1&pageSize=12", "study")
+        };
+
+        return targets.Where(target => TargetMatchesPreset(target, targetPreset)).ToArray();
+    }
+
+    private static string NormalizeToken(string value)
+    {
+        var characters = value.Trim().ToLowerInvariant()
+            .Select(character => char.IsLetterOrDigit(character) || character is '-' or '_' ? character : '-')
+            .ToArray();
+
+        return new string(characters).Trim('-');
+    }
+
+    private static bool IsAllowedTargetPath(string path)
+    {
+        if (path.StartsWith("/", StringComparison.Ordinal))
+        {
+            return true;
+        }
+
+        return Uri.TryCreate(path, UriKind.Absolute, out var uri)
+            && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
     }
 
     private static string BuildRunId(DateTimeOffset nowUtc, string scenario)

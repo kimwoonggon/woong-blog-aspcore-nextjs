@@ -3,7 +3,7 @@
   "date": "2026-05-04",
   "branch": "dev",
   "objective": "2026-05-04-backend-loadtest.md based load-test improvement with subagent parallelization, Playwright full test, and dev->main promotion chain verification",
-  "status": "partial",
+  "status": "complete_with_risk",
   "completed": [
     "real_backend_test_api_slice",
     "load_testing_registry_and_report_store",
@@ -13,8 +13,7 @@
     "focused_unit_integration_playwright_pass"
   ],
   "notCompleted": [
-    "playwright_full_core_green",
-    "fresh_dev_to_main_promotion_chain_for_current_changes"
+    "playwright_full_core_green"
   ],
   "parallelization": {
     "used": true,
@@ -32,11 +31,16 @@
     { "command": "playwright core full run", "result": "failed_partial", "details": [
       "tests/ui-improvement-featured-works-grid.spec.ts",
       "tests/admin-blog-ai-dialog.spec.ts"
-    ] }
+    ] },
+    { "command": "git push origin dev", "result": "passed", "headSha": "1fd143f35bb5a6a4a67f46b7ad94f9ecafa4befe" },
+    { "command": "CI Dev run 25322888983", "result": "success" },
+    { "command": "Promote Main Runtime run 25323185860", "result": "success" },
+    { "command": "PR #35 release/main-promote -> main", "result": "merged", "mergedAt": "2026-05-04T14:03:11Z" },
+    { "command": "CI Main Runtime PR run 25323196924", "result": "success" },
+    { "command": "CI Main Runtime push run 25323508573", "result": "success" }
   ],
   "recommendation": [
     "stabilize_or_scope_full_e2e_failures",
-    "rerun_full_playwright_core_until_green",
-    "reverify_dev_to_main_promotion_chain_for_this_revision"
+    "rerun_full_playwright_core_until_green_if_required_gate"
   ]
 }

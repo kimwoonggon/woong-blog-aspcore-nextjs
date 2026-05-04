@@ -355,7 +355,7 @@ public class StartupCompositionTests : IClassFixture<CustomWebApplicationFactory
     }
 
     [Fact]
-    public async Task RealLoadTestControlPlane_StartStatusMetricsAndStop_HappyPath()
+    public async Task RealLoadTestControlPlane_StartStatusMetricsAndStop_HappyPath_WhenRealRunnerDisabled_ForcesFakeRunner()
     {
         var client = _factory.CreateAuthenticatedClient();
         var startResponse = await client.PostAsJsonAsync(
@@ -366,8 +366,27 @@ public class StartupCompositionTests : IClassFixture<CustomWebApplicationFactory
                 runner = "k6",
                 target = "public-api-mix",
                 rate = 120,
+                peakRate = 180,
                 durationSeconds = 120,
-                maxVus = 1000
+                maxVus = 1000,
+                startVus = 20,
+                targets = new[]
+                {
+                    new
+                    {
+                        id = "work-list",
+                        label = "Work list",
+                        path = "/api/public/works?page=1&pageSize=12",
+                        group = "work"
+                    },
+                    new
+                    {
+                        id = "study-read",
+                        label = "Study read",
+                        path = "/api/public/blogs/seeded-study",
+                        group = "study"
+                    }
+                }
             },
             TestContext.Current.CancellationToken);
 
@@ -376,8 +395,10 @@ public class StartupCompositionTests : IClassFixture<CustomWebApplicationFactory
         Assert.NotNull(startPayload);
         Assert.False(string.IsNullOrWhiteSpace(startPayload!.RunId));
         Assert.Equal("running", startPayload.Status);
-        Assert.Equal("k6", startPayload.Runner);
+        Assert.Equal("fake", startPayload.Runner);
         Assert.Equal("public-api-rps", startPayload.Scenario);
+        Assert.Equal(2, startPayload.Targets.Count);
+        Assert.Contains(startPayload.Targets, target => target.Id == "study-read" && target.Path == "/api/public/blogs/seeded-study");
         Assert.NotEqual(default, startPayload.StartedAtUtc);
 
         var statusResponse = await client.GetAsync($"/api/admin/load-tests/real/{startPayload.RunId}", TestContext.Current.CancellationToken);
@@ -386,11 +407,12 @@ public class StartupCompositionTests : IClassFixture<CustomWebApplicationFactory
         Assert.NotNull(statusPayload);
         Assert.Equal(startPayload.RunId, statusPayload!.RunId);
         Assert.Equal("running", statusPayload.Status);
-        Assert.Equal("k6", statusPayload.Runner);
+        Assert.Equal("fake", statusPayload.Runner);
         Assert.Equal("public-api-rps", statusPayload.Scenario);
         Assert.True(statusPayload.ElapsedSeconds >= 0);
         Assert.True(statusPayload.TotalRequests >= 0);
         Assert.True(statusPayload.FailedRequests >= 0);
+        Assert.Equal(2, statusPayload.Targets.Count);
 
         await Task.Delay(TimeSpan.FromMilliseconds(700), TestContext.Current.CancellationToken);
         var metricsResponse = await client.GetAsync($"/api/admin/load-tests/real/{startPayload.RunId}/metrics", TestContext.Current.CancellationToken);
@@ -404,6 +426,11 @@ public class StartupCompositionTests : IClassFixture<CustomWebApplicationFactory
         Assert.NotNull(metricsPayload.StatusCounts);
         Assert.NotNull(metricsPayload.Metrics);
         Assert.NotEmpty(metricsPayload.Metrics);
+        Assert.NotEmpty(metricsPayload.TargetMetrics);
+        Assert.Contains(metricsPayload.TargetMetrics, target => target.TargetId == "study-read" && target.RequestCount > 0);
+        Assert.NotNull(metricsPayload.LatencyBreakdown);
+        Assert.True(metricsPayload.LatencyBreakdown.P95Ms >= 0);
+        Assert.True(metricsPayload.LatencyBreakdown.AppElapsedP95Ms >= 0);
 
         var stopResponse = await client.PostAsync(
             $"/api/admin/load-tests/real/{startPayload.RunId}/stop",
@@ -415,6 +442,86 @@ public class StartupCompositionTests : IClassFixture<CustomWebApplicationFactory
         Assert.Equal(startPayload.RunId, stopPayload!.RunId);
         Assert.Equal("stopped", stopPayload.Status);
         Assert.NotNull(stopPayload.StoppedAtUtc);
+    }
+
+    [Fact]
+    public async Task RealLoadTestControlPlane_StartRejectsSpikePeakRateBelowBaseRate()
+    {
+        var client = _factory.CreateAuthenticatedClient();
+        var startResponse = await client.PostAsJsonAsync(
+            "/api/admin/load-tests/real/start",
+            new
+            {
+                scenario = "public-api-spike",
+                runner = "k6",
+                target = "public-api-mix",
+                rate = 50,
+                peakRate = 25,
+                durationSeconds = 30,
+                maxVus = 50,
+                startVus = 5
+            },
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.BadRequest, startResponse.StatusCode);
+
+        using var payload = await JsonDocument.ParseAsync(
+            await startResponse.Content.ReadAsStreamAsync(TestContext.Current.CancellationToken),
+            cancellationToken: TestContext.Current.CancellationToken);
+        Assert.Contains("PeakRate", payload.RootElement.GetProperty("error").GetString(), StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task RealLoadTestControlPlane_RealRunnerDisabledFallsBackToFakeRunner()
+    {
+        await using var disabledFactory = _factory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureAppConfiguration((_, configBuilder) =>
+            {
+                configBuilder.AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["LoadTesting:UseFakeRunnerForTests"] = "false",
+                    ["LoadTesting:RealRunnerEnabled"] = "false"
+                });
+            });
+        });
+
+        var client = disabledFactory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            AllowAutoRedirect = false
+        });
+
+        client.DefaultRequestHeaders.Add(TestAuthHandler.HeaderName, "admin");
+
+        var csrfResponse = await client.GetAsync("/api/auth/csrf", TestContext.Current.CancellationToken);
+        csrfResponse.EnsureSuccessStatusCode();
+
+        using var csrfPayload = await JsonDocument.ParseAsync(
+            await csrfResponse.Content.ReadAsStreamAsync(TestContext.Current.CancellationToken),
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        var csrfToken = csrfPayload.RootElement.GetProperty("requestToken").GetString();
+        Assert.False(string.IsNullOrWhiteSpace(csrfToken));
+        client.DefaultRequestHeaders.Add("X-CSRF-TOKEN", csrfToken);
+
+        var startResponse = await client.PostAsJsonAsync(
+            "/api/admin/load-tests/real/start",
+            new
+            {
+                scenario = "public-api-rps",
+                runner = "k6",
+                target = "public-api-mix",
+                rate = 120,
+                durationSeconds = 30,
+                maxVus = 100
+            },
+            TestContext.Current.CancellationToken);
+
+        startResponse.EnsureSuccessStatusCode();
+        var startPayload = await startResponse.Content.ReadFromJsonAsync<RealLoadTestStartResponse>(TestContext.Current.CancellationToken);
+        Assert.NotNull(startPayload);
+        Assert.Equal("fake", startPayload!.Runner);
+        Assert.Equal("running", startPayload.Status);
     }
 
     [Fact]
@@ -476,6 +583,7 @@ public class StartupCompositionTests : IClassFixture<CustomWebApplicationFactory
         string Status,
         string Runner,
         string Scenario,
+        IReadOnlyList<RealLoadTestTargetResponse> Targets,
         DateTimeOffset StartedAtUtc);
 
     private sealed record RealLoadTestStatusResponse(
@@ -495,7 +603,8 @@ public class StartupCompositionTests : IClassFixture<CustomWebApplicationFactory
         double P95Ms,
         double P99Ms,
         double MaxMs,
-        IReadOnlyDictionary<string, long> StatusCounts);
+        IReadOnlyDictionary<string, long> StatusCounts,
+        IReadOnlyList<RealLoadTestTargetResponse> Targets);
 
     private sealed record RealLoadTestMetricPoint(
         DateTimeOffset TimestampUtc,
@@ -507,7 +616,9 @@ public class StartupCompositionTests : IClassFixture<CustomWebApplicationFactory
         double P95Ms,
         double P99Ms,
         double MaxMs,
-        IReadOnlyDictionary<string, long> StatusCounts);
+        IReadOnlyDictionary<string, long> StatusCounts,
+        RealLoadTestLatencyBreakdownResponse LatencyBreakdown,
+        IReadOnlyList<RealLoadTestTargetMetricsResponse> TargetMetrics);
 
     private sealed record RealLoadTestMetricsResponse(
         string RunId,
@@ -520,12 +631,41 @@ public class StartupCompositionTests : IClassFixture<CustomWebApplicationFactory
         double P99Ms,
         double MaxMs,
         IReadOnlyDictionary<string, long> StatusCounts,
+        RealLoadTestLatencyBreakdownResponse LatencyBreakdown,
+        IReadOnlyList<RealLoadTestTargetMetricsResponse> TargetMetrics,
         IReadOnlyList<RealLoadTestMetricPoint> Metrics);
 
     private sealed record RealLoadTestStopResponse(
         string RunId,
         string Status,
         DateTimeOffset? StoppedAtUtc);
+
+    private sealed record RealLoadTestTargetResponse(
+        string Id,
+        string Label,
+        string Path,
+        string Group);
+
+    private sealed record RealLoadTestLatencyBreakdownResponse(
+        double MinMs,
+        double P50Ms,
+        double P95Ms,
+        double P99Ms,
+        double MaxMs,
+        double AppElapsedP95Ms,
+        double? NginxRequestTimeP95Ms,
+        double? NginxUpstreamP95Ms);
+
+    private sealed record RealLoadTestTargetMetricsResponse(
+        string TargetId,
+        string TargetLabel,
+        string TargetPath,
+        string Group,
+        long RequestCount,
+        long SuccessCount,
+        long FailureCount,
+        double P95Ms,
+        IReadOnlyDictionary<string, long> StatusCounts);
 
     private sealed class ThrowingDatabaseDiagnosticsCollector : IDatabaseDiagnosticsCollector
     {

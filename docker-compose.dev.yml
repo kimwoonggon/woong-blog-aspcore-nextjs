@@ -34,6 +34,7 @@ services:
       Proxy__KnownNetworks__0: ${PROXY_KNOWN_NETWORK:-172.16.0.0/12}
       Security__UseHttpsRedirection: "false"
       Security__UseHsts: "false"
+      LoadTesting__BaseUrl: http://nginx
       CloudflareR2__AccountId: ${CloudflareR2__AccountId:-}
       CloudflareR2__AccessKeyId: ${CloudflareR2__AccessKeyId:-}
       CloudflareR2__SecretAccessKey: ${CloudflareR2__SecretAccessKey:-}

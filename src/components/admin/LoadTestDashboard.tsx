@@ -10,10 +10,12 @@ import {
   DEFAULT_LOAD_TEST_CONFIG,
   DEFAULT_REAL_BACKEND_TEST_CONFIG,
   appendLoadTestCacheBust,
+  buildRealBackendStartPayload,
   buildDiagnosticsSnapshotSummary,
   buildSoakUserTimeline,
   buildSpikeUserTimeline,
   buildUserSteps,
+  describeRealBackendExecutionProfile,
   estimatePatternRequestCount,
   evaluateHttpScenarioHealth,
   evaluateRuntimeDiagnosticsHealth,
@@ -35,6 +37,7 @@ import {
   type RuntimeDiagnosticsPayload,
   type RuntimeMetricTrend,
 } from '@/lib/load-test-dashboard'
+import { fetchWithCsrf } from '@/lib/api/auth'
 
 type LoadTestDashboardProps = {
   targets: LoadTestTarget[]
@@ -155,7 +158,11 @@ function normalizeRealBackendPhase(rawStatus: string, fallback: RealBackendRunPh
     return 'completed'
   }
 
-  if (normalized.includes('run') || normalized.includes('queue') || normalized.includes('start') || normalized.includes('progress')) {
+  if (normalized.includes('queue')) {
+    return 'starting'
+  }
+
+  if (normalized.includes('run') || normalized.includes('start') || normalized.includes('progress')) {
     return 'running'
   }
 
@@ -299,6 +306,10 @@ export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashbo
 
   const safeConfig = useMemo(() => sanitizeLoadTestConfig(config), [config])
   const safeRealBackendConfig = useMemo(() => sanitizeRealBackendTestConfig(realBackendConfig), [realBackendConfig])
+  const realBackendExecutionProfile = useMemo(
+    () => describeRealBackendExecutionProfile(safeRealBackendConfig),
+    [safeRealBackendConfig],
+  )
   const userSteps = useMemo(() => buildUserSteps(safeConfig), [safeConfig])
   const runnableTargets = useMemo(
     () => editableTargets
@@ -352,6 +363,13 @@ export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashbo
   const realBackendStatusText = realBackendSnapshot?.status ?? formatRealBackendPhase(realBackendPhase)
   const realBackendLatencyBreakdown = realBackendSnapshot?.latencyBreakdown
   const realBackendHttpCounts = realBackendSnapshot?.httpCounts
+  const realBackendTargetMetrics = realBackendSnapshot?.targetMetrics ?? []
+  const realBackendMetricsPending = realBackendSnapshot?.metricsPending
+    ?? (!!realBackendRunId && (realBackendPhase === 'starting' || realBackendPhase === 'running'))
+  const realBackendPayload = useMemo(
+    () => buildRealBackendStartPayload(safeRealBackendConfig, runnableTargets),
+    [runnableTargets, safeRealBackendConfig],
+  )
 
   function updateNumberField(field: keyof LoadTestConfig, value: string) {
     setConfig((current) => sanitizeLoadTestConfig({
@@ -378,7 +396,7 @@ export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashbo
     }))
   }
 
-  function updateRealBackendNumberField(field: 'rate' | 'durationSeconds' | 'maxVUs', value: string) {
+  function updateRealBackendNumberField(field: 'rate' | 'peakRate' | 'durationSeconds' | 'maxVUs' | 'startVUs', value: string) {
     setRealBackendConfig((current) => sanitizeRealBackendTestConfig({
       ...current,
       [field]: inputNumberValue(value),
@@ -452,6 +470,25 @@ export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashbo
     return null
   }
 
+  function resolveRealBackendStatus(payload: unknown) {
+    if (!payload || typeof payload !== 'object') {
+      return null
+    }
+
+    const record = payload as Record<string, unknown>
+    const directStatus = typeof record.status === 'string' && record.status.trim().length ? record.status : null
+    if (directStatus) {
+      return directStatus
+    }
+
+    if (record.run && typeof record.run === 'object' && record.run !== null) {
+      const nested = record.run as Record<string, unknown>
+      return typeof nested.status === 'string' && nested.status.trim().length ? nested.status : null
+    }
+
+    return null
+  }
+
   async function pollRealBackendRun(currentRunId: string) {
     try {
       const [statusResponse, metricsResponse] = await Promise.all([
@@ -500,6 +537,7 @@ export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashbo
     }
 
     const nextConfig = safeRealBackendConfig
+    const nextPayload = realBackendPayload
     setRealBackendConfig(nextConfig)
     setRealBackendError(null)
     setRealBackendPhase('starting')
@@ -508,13 +546,12 @@ export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashbo
     clearRealBackendPollingTimer()
 
     try {
-      const response = await fetch('/api/admin/load-tests/real/start', {
+      const response = await fetchWithCsrf('/api/admin/load-tests/real/start', {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
         },
-        credentials: 'same-origin',
-        body: JSON.stringify(nextConfig),
+        body: JSON.stringify(nextPayload),
       })
 
       if (!response.ok) {
@@ -528,7 +565,14 @@ export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashbo
       }
 
       setRealBackendRunId(runId)
-      setRealBackendPhase('running')
+      const initialStatus = resolveRealBackendStatus(payload) ?? 'running'
+      const initialSnapshot = summarizeRealBackendRunSnapshot(runId, payload, null)
+      setRealBackendSnapshot(initialSnapshot)
+      setRealBackendPhase(normalizeRealBackendPhase(initialStatus, 'starting'))
+      if (initialSnapshot.status === 'completed' || initialSnapshot.status === 'failed' || initialSnapshot.status === 'stopped') {
+        return
+      }
+
       void pollRealBackendRun(runId)
     } catch (error) {
       setRealBackendPhase('failed')
@@ -546,9 +590,8 @@ export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashbo
     clearRealBackendPollingTimer()
 
     try {
-      const response = await fetch(`/api/admin/load-tests/real/${encodeURIComponent(realBackendRunId)}/stop`, {
+      const response = await fetchWithCsrf(`/api/admin/load-tests/real/${encodeURIComponent(realBackendRunId)}/stop`, {
         method: 'POST',
-        credentials: 'same-origin',
       })
 
       if (!response.ok) {
@@ -1033,7 +1076,7 @@ export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashbo
         <CardContent className="space-y-4">
           <div className="rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
             Browser Test uses browser-generated fetch load.
-            Real Backend Test runs an external load runner and only displays its results in this UI.
+            Real Backend Test runs the selected Work/Study target URLs through an external load runner and displays its results in this UI.
           </div>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             <div className="space-y-2">
@@ -1075,25 +1118,50 @@ export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashbo
                 onChange={(event) => updateRealBackendTextField('runner', event.target.value)}
               >
                 <option value="k6">k6</option>
-                <option value="nbomber">nbomber</option>
-                <option value="wrk">wrk</option>
-                <option value="autocannon">autocannon</option>
                 <option value="fake">fake</option>
               </select>
             </div>
+            {realBackendExecutionProfile.showRate ? (
+              <div className="space-y-2">
+                <Label htmlFor="real-backend-rate">{realBackendExecutionProfile.rateLabel}</Label>
+                <Input
+                  id="real-backend-rate"
+                  type="number"
+                  min={1}
+                  max={100000}
+                  value={safeRealBackendConfig.rate}
+                  onChange={(event) => updateRealBackendNumberField('rate', event.target.value)}
+                />
+              </div>
+            ) : null}
+            {realBackendExecutionProfile.showPeakRate ? (
+              <div className="space-y-2">
+                <Label htmlFor="real-backend-peak-rate">Peak RPS</Label>
+                <Input
+                  id="real-backend-peak-rate"
+                  type="number"
+                  min={1}
+                  max={100000}
+                  value={safeRealBackendConfig.peakRate}
+                  onChange={(event) => updateRealBackendNumberField('peakRate', event.target.value)}
+                />
+              </div>
+            ) : null}
+            {realBackendExecutionProfile.showStartVUs ? (
+              <div className="space-y-2">
+                <Label htmlFor="real-backend-start-vus">Start VUs</Label>
+                <Input
+                  id="real-backend-start-vus"
+                  type="number"
+                  min={1}
+                  max={safeRealBackendConfig.maxVUs}
+                  value={safeRealBackendConfig.startVUs}
+                  onChange={(event) => updateRealBackendNumberField('startVUs', event.target.value)}
+                />
+              </div>
+            ) : null}
             <div className="space-y-2">
-              <Label htmlFor="real-backend-rate">Rate</Label>
-              <Input
-                id="real-backend-rate"
-                type="number"
-                min={1}
-                max={100000}
-                value={safeRealBackendConfig.rate}
-                onChange={(event) => updateRealBackendNumberField('rate', event.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="real-backend-duration">Duration seconds</Label>
+              <Label htmlFor="real-backend-duration">{realBackendExecutionProfile.durationLabel}</Label>
               <Input
                 id="real-backend-duration"
                 type="number"
@@ -1103,17 +1171,24 @@ export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashbo
                 onChange={(event) => updateRealBackendNumberField('durationSeconds', event.target.value)}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="real-backend-max-vus">Max VUs</Label>
-              <Input
-                id="real-backend-max-vus"
-                type="number"
-                min={1}
-                max={10000}
-                value={safeRealBackendConfig.maxVUs}
-                onChange={(event) => updateRealBackendNumberField('maxVUs', event.target.value)}
-              />
-            </div>
+            {realBackendExecutionProfile.showMaxVUs ? (
+              <div className="space-y-2">
+                <Label htmlFor="real-backend-max-vus">{realBackendExecutionProfile.maxVUsLabel}</Label>
+                <Input
+                  id="real-backend-max-vus"
+                  type="number"
+                  min={1}
+                  max={10000}
+                  value={safeRealBackendConfig.maxVUs}
+                  onChange={(event) => updateRealBackendNumberField('maxVUs', event.target.value)}
+                />
+              </div>
+            ) : null}
+          </div>
+
+          <div className="rounded-md border border-border bg-background px-3 py-2 text-xs text-muted-foreground" data-testid="real-backend-execution-profile">
+            <p className="font-medium text-foreground">{realBackendExecutionProfile.modeLabel}</p>
+            <p className="mt-1">{realBackendExecutionProfile.summary}</p>
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -1138,6 +1213,20 @@ export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashbo
             </Button>
           </div>
 
+          <div className="rounded-lg border border-border bg-muted/20 p-4">
+            <p className="text-sm font-medium text-foreground">Real target URLs</p>
+            <div className="mt-2 grid gap-2 text-xs text-muted-foreground md:grid-cols-2">
+              {realBackendPayload.targets.length ? realBackendPayload.targets.map((target) => (
+                <div key={target.id} className="rounded-md border border-border bg-background px-3 py-2">
+                  <p className="font-medium text-foreground">{target.label}</p>
+                  <p className="mt-1 break-all">{target.path}</p>
+                </div>
+              )) : (
+                <p>No runnable real backend targets are configured.</p>
+              )}
+            </div>
+          </div>
+
           <div className={`rounded-lg border p-3 text-sm ${realBackendPhaseClassName(realBackendPhase)}`} data-testid="real-backend-live-status">
             <p className="font-medium">
               {formatRealBackendPhase(realBackendPhase)} · {realBackendStatusText}
@@ -1157,32 +1246,46 @@ export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashbo
             </div>
             <div className="rounded-lg border border-border bg-muted/30 p-3">
               <p className="text-xs font-medium uppercase text-muted-foreground">Requests</p>
-              <p className="mt-2 text-lg font-semibold text-foreground">{numberFormatter.format(realBackendSnapshot?.requests ?? 0)}</p>
+              <p className="mt-2 text-lg font-semibold text-foreground">
+                {realBackendMetricsPending ? 'summary pending' : numberFormatter.format(realBackendSnapshot?.requests ?? 0)}
+              </p>
             </div>
             <div className="rounded-lg border border-border bg-muted/30 p-3">
               <p className="text-xs font-medium uppercase text-muted-foreground">Latency</p>
-              <p className="mt-2 text-lg font-semibold text-foreground">{formatMs(realBackendSnapshot?.latencyMs ?? 0)}</p>
+              <p className="mt-2 text-lg font-semibold text-foreground">
+                {realBackendMetricsPending ? 'summary pending' : formatMs(realBackendSnapshot?.latencyMs ?? 0)}
+              </p>
             </div>
             <div className="rounded-lg border border-border bg-muted/30 p-3">
               <p className="text-xs font-medium uppercase text-muted-foreground">Throughput</p>
               <p className="mt-2 text-lg font-semibold text-foreground">
-                {numberFormatter.format(realBackendSnapshot?.throughputRps ?? 0)} rps
+                {realBackendMetricsPending ? 'summary pending' : `${numberFormatter.format(realBackendSnapshot?.throughputRps ?? 0)} rps`}
               </p>
             </div>
             <div className="rounded-lg border border-border bg-muted/30 p-3">
               <p className="text-xs font-medium uppercase text-muted-foreground">HTTP counts</p>
-              <p className="mt-2 text-sm font-semibold text-foreground">
-                total {numberFormatter.format(realBackendHttpCounts?.total ?? 0)} · ok {numberFormatter.format(realBackendHttpCounts?.success ?? 0)} · failed {numberFormatter.format(realBackendHttpCounts?.failed ?? 0)}
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                2xx {numberFormatter.format(realBackendHttpCounts?.status2xx ?? 0)} · 3xx {numberFormatter.format(realBackendHttpCounts?.status3xx ?? 0)} · 4xx {numberFormatter.format(realBackendHttpCounts?.status4xx ?? 0)} · 5xx {numberFormatter.format(realBackendHttpCounts?.status5xx ?? 0)}
-              </p>
+              {realBackendMetricsPending ? (
+                <p className="mt-2 text-sm font-semibold text-foreground">summary pending</p>
+              ) : (
+                <>
+                  <p className="mt-2 text-sm font-semibold text-foreground">
+                    total {numberFormatter.format(realBackendHttpCounts?.total ?? 0)} · ok {numberFormatter.format(realBackendHttpCounts?.success ?? 0)} · failed {numberFormatter.format(realBackendHttpCounts?.failed ?? 0)}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    2xx {numberFormatter.format(realBackendHttpCounts?.status2xx ?? 0)} · 3xx {numberFormatter.format(realBackendHttpCounts?.status3xx ?? 0)} · 4xx {numberFormatter.format(realBackendHttpCounts?.status4xx ?? 0)} · 5xx {numberFormatter.format(realBackendHttpCounts?.status5xx ?? 0)}
+                  </p>
+                </>
+              )}
             </div>
           </div>
 
           <div className="rounded-lg border border-border bg-muted/20 p-4" data-testid="real-backend-latency-breakdown">
             <p className="text-sm font-medium text-foreground">Latency breakdown</p>
-            {realBackendLatencyBreakdown?.available ? (
+            {realBackendMetricsPending ? (
+              <p className="mt-2 text-sm text-muted-foreground">
+                k6 summary pending; latency breakdown will appear after the runner publishes metrics.
+              </p>
+            ) : realBackendLatencyBreakdown?.available ? (
               <div className="mt-2 grid gap-2 text-sm text-foreground sm:grid-cols-2 xl:grid-cols-5">
                 <p>min {realBackendLatencyBreakdown.minMs === null ? '—' : formatMs(realBackendLatencyBreakdown.minMs)}</p>
                 <p>p50 {realBackendLatencyBreakdown.p50Ms === null ? '—' : formatMs(realBackendLatencyBreakdown.p50Ms)}</p>
@@ -1197,20 +1300,81 @@ export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashbo
             )}
           </div>
 
+          <div className="overflow-x-auto rounded-lg border border-border bg-muted/20 p-4" data-testid="real-backend-target-summary">
+            <p className="text-sm font-medium text-foreground">Real backend target summary</p>
+            <table className="mt-3 w-full min-w-[720px] text-sm">
+              <thead className="text-left text-xs uppercase text-muted-foreground">
+                <tr>
+                  <th className="py-2 pr-3">Target</th>
+                  <th className="py-2 pr-3">URL</th>
+                  <th className="py-2 pr-3">Requests</th>
+                  <th className="py-2 pr-3">P95</th>
+                  <th className="py-2 pr-3">HTTP</th>
+                </tr>
+              </thead>
+              <tbody>
+                {realBackendTargetMetrics.length ? realBackendTargetMetrics.map((target) => (
+                  <tr key={target.targetId} className="border-t border-border">
+                    <td className="py-2 pr-3 font-medium text-foreground">{target.targetLabel}</td>
+                    <td className="py-2 pr-3 text-muted-foreground">
+                      <span className="break-all">{target.targetPath}</span>
+                    </td>
+                    <td className="py-2 pr-3 text-foreground">
+                      {numberFormatter.format(target.successCount)} / {numberFormatter.format(target.requestCount)}
+                    </td>
+                    <td className="py-2 pr-3 text-foreground">{formatMs(target.p95Ms)}</td>
+                    <td className="py-2 pr-3 text-muted-foreground">
+                      2xx {numberFormatter.format(target.statusCounts['2xx'] ?? 0)} · 4xx {numberFormatter.format(target.statusCounts['4xx'] ?? 0)} · 5xx {numberFormatter.format(target.statusCounts['5xx'] ?? 0)}
+                    </td>
+                  </tr>
+                )) : (
+                  <tr>
+                    <td className="py-4 text-muted-foreground" colSpan={5}>
+                      {realBackendMetricsPending ? 'Runner summary pending; target metrics will appear after k6 publishes metrics.' : 'No real backend target metrics yet.'}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
           <div className="rounded-lg border border-border bg-muted/20 p-4" data-testid="real-backend-component-breakdown">
             <p className="text-sm font-medium text-foreground">Client · nginx · app · db</p>
             <div className="mt-2 grid gap-2 text-sm text-foreground sm:grid-cols-2">
               <p>
                 client p95:{' '}
-                {realBackendLatencyBreakdown?.p95Ms !== null && realBackendLatencyBreakdown?.p95Ms !== undefined
+                {realBackendMetricsPending
+                  ? 'summary pending'
+                  : realBackendLatencyBreakdown?.p95Ms !== null && realBackendLatencyBreakdown?.p95Ms !== undefined
                   ? formatMs(realBackendLatencyBreakdown.p95Ms)
                   : realBackendSnapshot?.latencyMs
                     ? formatMs(realBackendSnapshot.latencyMs)
                     : 'unavailable'}
               </p>
-              <p>nginx request_time p95: unavailable</p>
-              <p>nginx upstream p95: unavailable</p>
-              <p>ASP.NET app elapsed p95: unavailable</p>
+              <p>
+                nginx request_time p95:{' '}
+                {realBackendMetricsPending
+                  ? 'summary pending'
+                  : realBackendLatencyBreakdown?.nginxRequestTimeP95Ms !== null && realBackendLatencyBreakdown?.nginxRequestTimeP95Ms !== undefined
+                  ? formatMs(realBackendLatencyBreakdown.nginxRequestTimeP95Ms)
+                  : 'unavailable'}
+              </p>
+              <p>
+                nginx upstream p95:{' '}
+                {realBackendMetricsPending
+                  ? 'summary pending'
+                  : realBackendLatencyBreakdown?.nginxUpstreamP95Ms !== null && realBackendLatencyBreakdown?.nginxUpstreamP95Ms !== undefined
+                  ? formatMs(realBackendLatencyBreakdown.nginxUpstreamP95Ms)
+                  : 'unavailable'}
+              </p>
+              <p>
+                ASP.NET app elapsed p95:{' '}
+                {realBackendMetricsPending
+                  ? 'summary pending'
+                  : realBackendLatencyBreakdown?.appElapsedP95Ms !== null && realBackendLatencyBreakdown?.appElapsedP95Ms !== undefined
+                  ? formatMs(realBackendLatencyBreakdown.appElapsedP95Ms)
+                  : (realBackendLatencyBreakdown?.appElapsedReason ?? 'unavailable')}
+              </p>
               <p>
                 db command p95:{' '}
                 {latestDiagnosticsSample?.database.commandLatency?.p95Ms !== null
@@ -1220,7 +1384,7 @@ export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashbo
               </p>
             </div>
             <p className="mt-2 text-xs text-muted-foreground">
-              Nginx/app elapsed ingestion is not configured in this environment, so those values are reported as unavailable.
+              Component timing uses runner, proxy, app, and diagnostics metrics when present; missing sources remain unavailable.
             </p>
           </div>
         </CardContent>

@@ -1,0 +1,1010 @@
+[RUN] start 2026-05-04T15:55:39Z
+
+Running 434 tests using 1 worker
+
+(node:94173) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:94173) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓    1 [chromium-public] › tests/admin-redirect.spec.ts:3:5 › unauthenticated admin access redirects to login (677ms)
+  ✓    2 [chromium-public] › tests/auth-login.spec.ts:5:5 › anonymous login page renders and sign-in CTA requests the backend auth launcher (581ms)
+  ✓    3 [chromium-public] › tests/auth-login.spec.ts:34:5 › login page renders safe error copy without echoing unknown error query text (524ms)
+  ✓    4 [chromium-public] › tests/ci-compose-public.spec.ts:5:5 › compose runtime serves frontend, backend, and db-backed public pages (3.0s)
+  ✓    5 [chromium-public] › tests/ci-compose-public.spec.ts:20:5 › login page reflects branch auth policy (842ms)
+  ✓    6 [chromium-public] › tests/e2e-dark-mode-journey.spec.ts:6:5 › E2E-007 dark mode stays coherent across the main public journey (5.5s)
+  ✓    7 [chromium-public] › tests/e2e-response-time.spec.ts:18:5 › response time: Study list direct load meets budget (1.0s)
+  ✓    8 [chromium-public] › tests/e2e-response-time.spec.ts:36:5 › response time: Works list direct load meets budget (577ms)
+  ✓    9 [chromium-public] › tests/e2e-response-time.spec.ts:54:5 › response time: desktop public nav clicks meet budget (2.7s)
+  ✓   10 [chromium-public] › tests/e2e-response-time.spec.ts:114:5 › response time: public detail card opens meet budget (1.6s)
+  ✓   11 [chromium-public] › tests/e2e-response-time.spec.ts:149:5 › response time: Study mobile append next page meets budget (823ms)
+  ✓   12 [chromium-public] › tests/e2e-response-time.spec.ts:167:5 › response time: Works mobile append next page meets budget (772ms)
+  ✓   13 [chromium-public] › tests/e2e-response-time.spec.ts:185:5 › response time: unified public search submit meets budget (1.5s)
+  ✓   14 [chromium-public] › tests/e2e-response-time.spec.ts:213:7 › authenticated response-time paths › response time: AI Fix provider dropdown is ready within budget (1.6s)
+  ✓   15 [chromium-public] › tests/e2e-response-time.spec.ts:255:7 › authenticated response-time paths › response time: admin site settings save refreshes public home within budget (1.4s)
+  ✓   16 [chromium-public] › tests/e2e-visitor-content-exploration.spec.ts:4:5 › E2E-003 visitor can move from home to works, through related content, and into blog details (2.9s)
+  ✓   17 [chromium-public] › tests/e2e-visitor-pagination-journey.spec.ts:3:5 › E2E-004 visitor can keep a paginated reading path stable across list and detail pages (1.6s)
+  ✓   18 [chromium-public] › tests/e2e-visitor-pagination-journey.spec.ts:34:5 › E2E-004 visitor can continue the same paginated path through the works archive (1.7s)
+  ✓   19 [chromium-public] › tests/home.spec.ts:4:5 › public home page renders the full primary navigation (1.0s)
+  ✓   20 [chromium-public] › tests/home.spec.ts:17:5 › primary navbar routes to every public destination (7.1s)
+  ✓   21 [chromium-public] › tests/introduction.spec.ts:3:5 › introduction page renders backend-managed content (1.2s)
+  ✓   22 [chromium-public] › tests/mobile-public-navigation.spec.ts:3:5 › mobile header controls and bottom tabs render with all destinations (4.4s)
+  ✓   23 [chromium-public] › tests/mobile-public-navigation.spec.ts:41:5 › mobile search button focuses list search inputs or routes to study (2.4s)
+  ✓   24 [chromium-public] › tests/mobile-public-navigation.spec.ts:67:5 › desktop keeps inline navigation and hides mobile bottom tabs (832ms)
+  ✓   25 [chromium-public] › tests/public-404.spec.ts:3:5 › unknown public routes render the shared 404 page (648ms)
+  ✓   26 [chromium-public] › tests/public-404.spec.ts:11:5 › unknown blog slugs render the shared 404 page (613ms)
+  ✓   27 [chromium-public] › tests/public-404.spec.ts:18:5 › unknown work slugs render the shared 404 page (709ms)
+  ✓   28 [chromium-public] › tests/public-api-error.spec.ts:4:5 › CF-005 shows a user-facing fallback when a public page payload is malformed (656ms)
+  ✓   29 [chromium-public] › tests/public-blog-empty-state.spec.ts:4:5 › PF-014 shows an empty-state message when no blog posts are available (524ms)
+  ✓   30 [chromium-public] › tests/public-blog-inline-redirects.spec.ts:6:5 › public study inline create returns to the first blog page after save (1.8s)
+  ✓   31 [chromium-public] › tests/public-blog-inline-redirects.spec.ts:27:5 › public study detail inline edit returns to the originating blog page (2.7s)
+  ✓   32 [chromium-public] › tests/public-blog-inline-redirects.spec.ts:48:5 › public blog list clamps an invalid page to the nearest valid page (974ms)
+  ✓   33 [chromium-public] › tests/public-blog-pagination.spec.ts:7:5 › study list auto-appends the next page on mobile without a Load more button (905ms)
+  ✓   34 [chromium-public] › tests/public-blog-pagination.spec.ts:28:5 › study list keeps desktop pagination layout after mobile reading then desktop browser back (2.3s)
+  ✓   35 [chromium-public] › tests/public-blog-pagination.spec.ts:62:5 › study list keeps manual Load more on tablet and desktop pagination at >=1024px (1.6s)
+  ✓   36 [chromium-public] › tests/public-blog-pagination.spec.ts:94:5 › study cards show multiple saved tags and never substitute body text for a blank excerpt (1.1s)
+  ✓   37 [chromium-public] › tests/public-blog-toc-active.spec.ts:15:5 › blog detail TOC updates its active heading as the reader moves deeper into the article (1.7s)
+  ✓   38 [chromium-public] › tests/public-blog-toc-layout.spec.ts:4:5 › blog table of contents stays in a right rail instead of covering article content (1.6s)
+  ✓   39 [chromium-public] › tests/public-contact-fallback-email.spec.ts:3:5 › contact page does not inject a fallback direct email block (628ms)
+  ✓   40 [chromium-public] › tests/public-content.spec.ts:3:5 › works and blog pages render headings (1.3s)
+  ✓   41 [chromium-public] › tests/public-detail-pages.spec.ts:3:5 › contact page renders heading and contact content (833ms)
+  ✓   42 [chromium-public] › tests/public-detail-pages.spec.ts:9:5 › work detail page renders seeded detail content and stable related cards (1.1s)
+  ✓   43 [chromium-public] › tests/public-detail-pages.spec.ts:34:5 › blog detail page renders seeded blog content and stable related cards (848ms)
+  ✘   44 [chromium-public] › tests/public-detail-toc-fallback.spec.ts:6:5 › blog detail keeps TOC card visible with fallback copy when headings are missing (24ms)
+(node:3083) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:3083) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   45 [chromium-public] › tests/public-detail-toc-fallback.spec.ts:31:5 › work detail keeps TOC card visible with fallback copy when headings are missing (1.4s)
+  ✓   46 [chromium-public] › tests/public-edge-nav.spec.ts:3:5 › introduction does not expose left/right edge navigation links (832ms)
+  ✓   47 [chromium-public] › tests/public-edge-nav.spec.ts:11:5 › blog edge arrows paginate between blog pages (965ms)
+  ✓   48 [chromium-public] › tests/public-edge-nav.spec.ts:21:5 › works edge arrows paginate between work pages (869ms)
+  ✓   49 [chromium-public] › tests/public-home-cta-section.spec.ts:9:5 › home CTA section exposes quick navigation cards for works, study, and introduction (1.4s)
+  ✓   50 [chromium-public] › tests/public-home-cta-section.spec.ts:26:5 › home CTA section cards navigate to their destination pages (3.4s)
+  ✓   51 [chromium-public] › tests/public-keyboard-accessibility.spec.ts:33:5 › public pages expose one focusable main landmark for the skip link target (1.9s)
+  ✓   52 [chromium-public] › tests/public-keyboard-accessibility.spec.ts:44:5 › mobile public menu opens, traps focus, closes with Escape, and navigates by keyboard (1.8s)
+  ✓   53 [chromium-public] › tests/public-layout-stability.spec.ts:29:5 › works and blog listing cards stay aligned in desktop rows (1.1s)
+  ✓   54 [chromium-public] › tests/public-layout-stability.spec.ts:46:5 › related content cards keep stable desktop rows on detail pages (3.0s)
+  ✓   55 [chromium-public] › tests/public-layout-stability.spec.ts:68:5 › works and blog grids collapse to a single mobile column (887ms)
+  ✓   56 [chromium-public] › tests/public-layout-stability.spec.ts:85:5 › work and blog detail pages keep related content stacked on mobile (1.9s)
+  ✓   57 [chromium-public] › tests/public-page-inline-save.spec.ts:9:7 › /introduction inline page save closes the editor and refreshes content (978ms)
+  ✓   58 [chromium-public] › tests/public-page-inline-save.spec.ts:9:7 › /contact inline page save closes the editor and refreshes content (1.1s)
+  ✓   59 [chromium-public] › tests/public-resume-empty-state.spec.ts:4:5 › PF-072 shows the no-resume message when no resume PDF is configured (677ms)
+  ✓   60 [chromium-public] › tests/public-seo-metadata.spec.ts:21:5 › blog detail metadata uses the visible article title and excerpt (1.2s)
+  ✓   61 [chromium-public] › tests/public-seo-metadata.spec.ts:26:5 › work detail metadata uses the visible project title and excerpt (1.1s)
+  -   62 [chromium-public] › tests/public-seo-metadata.spec.ts:31:5 › work detail exposes og:image and twitter:image when thumbnail is available
+  ✓   63 [chromium-public] › tests/public-seo-metadata.spec.ts:42:5 › work detail metadata prefers socialShareMessage over excerpt for description fields (1.3s)
+  ✓   64 [chromium-public] › tests/public-seo-metadata.spec.ts:58:5 › site exposes a branded svg favicon (830ms)
+  ✓   65 [chromium-public] › tests/public-work-toc.spec.ts:14:5 › work detail exposes a desktop table of contents that anchors into the article body (2.0s)
+  ✓   66 [chromium-public] › tests/public-works-cta.spec.ts:3:5 › works archive header no longer exposes secondary template CTAs (659ms)
+  ✓   67 [chromium-public] › tests/public-works-cta.spec.ts:11:5 › works archive keeps search as the primary header action (542ms)
+  ✓   68 [chromium-public] › tests/public-works-pagination.spec.ts:4:5 › works list auto-appends on mobile and stops without a Load more button (670ms)
+  ✓   69 [chromium-public] › tests/public-works-pagination.spec.ts:37:5 › works list uses infinite feed on tablet (820px) and appends next page (688ms)
+  ✓   70 [chromium-public] › tests/public-works-pagination.spec.ts:71:5 › works list keeps desktop pagination and hides infinite controls at >=1024px (828ms)
+  ✓   71 [chromium-public] › tests/public-works-search.spec.ts:5:5 › public study search submits query without searchMode (1.6s)
+  ✓   72 [chromium-public] › tests/public-works-search.spec.ts:29:5 › public works search submits query without searchMode (1.2s)
+  ✓   73 [chromium-public] › tests/ui-header-responsive-layout.spec.ts:16:5 › header keeps the public theme action separated on medium desktop widths (1.4s)
+  ✓   74 [chromium-public] › tests/ui-header-responsive-layout.spec.ts:35:5 › header keeps desktop nav separated from action controls on wide screens (1.2s)
+  ✓   75 [chromium-public] › tests/ui-header-responsive.spec.ts:30:9 › responsive header › uses drawer navigation plus bottom tabs on compact viewports at 390x844 (884ms)
+  ✓   76 [chromium-public] › tests/ui-header-responsive.spec.ts:30:9 › responsive header › uses drawer navigation plus bottom tabs on compact viewports at 768x1024 (1.2s)
+  ✓   77 [chromium-public] › tests/ui-header-responsive.spec.ts:53:7 › responsive header › keeps the mobile menu trigger at the left edge with safe spacing (736ms)
+  ✓   78 [chromium-public] › tests/ui-header-responsive.spec.ts:74:9 › responsive header › keeps the inline nav non-overlapping at 1920x1080 (1.5s)
+  ✓   79 [chromium-public] › tests/ui-improvement-badge-color.spec.ts:4:5 › blog detail date badge uses brand navy (1.2s)
+  ✓   80 [chromium-public] › tests/ui-improvement-badge-color.spec.ts:11:5 › work detail date badge uses brand navy (2.3s)
+  ✓   81 [chromium-public] › tests/ui-improvement-badge-color.spec.ts:18:5 › dark mode date badges keep accessible white-on-navy contrast (2.7s)
+  ✓   82 [chromium-public] › tests/ui-improvement-blog-card-anchors.spec.ts:4:5 › blog cards expose date and tag badge anchors (595ms)
+  ✓   83 [chromium-public] › tests/ui-improvement-blog-card-anchors.spec.ts:14:5 › blog tag pills keep accessible contrast in dark mode (1.4s)
+  ✓   84 [chromium-public] › tests/ui-improvement-blog-card-anchors.spec.ts:25:5 › blog grid uses three columns at xl breakpoint (906ms)
+  ✓   85 [chromium-public] › tests/ui-improvement-blog-prev-next.spec.ts:3:5 › blog detail exposes previous or next navigation links (913ms)
+  ✓   86 [chromium-public] › tests/ui-improvement-blog-stripe-grid.spec.ts:2:5 › blog cards expose the accent stripe visual anchor (566ms)
+  ✓   87 [chromium-public] › tests/ui-improvement-blog-stripe-grid.spec.ts:10:5 › blog grid uses three columns on xl desktop (824ms)
+  ✓   88 [chromium-public] › tests/ui-improvement-blog-toc.spec.ts:6:5 › desktop blog detail renders a table of contents and anchors headings (1.6s)
+  ✓   89 [chromium-public] › tests/ui-improvement-blog-toc.spec.ts:29:5 › mobile blog detail hides the table of contents (1.6s)
+  ✓   90 [chromium-public] › tests/ui-improvement-color-scheme.spec.ts:4:5 › light mode sets html color-scheme to light (746ms)
+  ✓   91 [chromium-public] › tests/ui-improvement-color-scheme.spec.ts:11:5 › dark mode sets html color-scheme to dark (1.6s)
+  ✓   92 [chromium-public] › tests/ui-improvement-container-width.spec.ts:3:5 › home container stays within max-w-7xl on large screens (1.8s)
+  ✓   93 [chromium-public] › tests/ui-improvement-container-width.spec.ts:13:5 › home and blog pages share the same container width on desktop (1.4s)
+  ✓   94 [chromium-public] › tests/ui-improvement-container-width.spec.ts:31:5 › home hero intro and static public shells stay within readable line lengths (1.1s)
+  ✓   95 [chromium-public] › tests/ui-improvement-container-width.spec.ts:47:5 › public containers stay horizontally centered on desktop (685ms)
+  ✓   96 [chromium-public] › tests/ui-improvement-contrast.spec.ts:4:5 › dark mode muted text contrast is at least 4.5:1 (1.5s)
+  ✓   97 [chromium-public] › tests/ui-improvement-contrast.spec.ts:15:5 › dark mode secondary work metadata keeps accessible contrast (941ms)
+  ✓   98 [chromium-public] › tests/ui-improvement-featured-works-grid.spec.ts:7:5 › Featured works renders as a grid card layout (971ms)
+  ✓   99 [chromium-public] › tests/ui-improvement-featured-works-grid.spec.ts:18:5 › clicking a featured work card opens its detail page (1.0s)
+  ✓  100 [chromium-public] › tests/ui-improvement-featured-works-grid.spec.ts:30:5 › View all from Works navigates to /works (673ms)
+  ✓  101 [chromium-public] › tests/ui-improvement-featured-works-grid.spec.ts:38:5 › featured work cards advertise hover interactions (843ms)
+  ✓  102 [chromium-public] › tests/ui-improvement-featured-works-grid.spec.ts:57:5 › featured work cards use the richer no-image placeholder treatment (612ms)
+  ✓  103 [chromium-public] › tests/ui-improvement-featured-works-grid.spec.ts:67:5 › home featured works no-image placeholder matches icon plus label pattern (858ms)
+  ✓  104 [chromium-public] › tests/ui-improvement-featured-works-grid.spec.ts:78:5 › home featured works no longer shows the legacy click-to-view-details fallback copy (491ms)
+  ✓  105 [chromium-public] › tests/ui-improvement-featured-works-grid.spec.ts:83:5 › Works collapses to one column on mobile (905ms)
+  ✓  106 [chromium-public] › tests/ui-improvement-featured-works-grid.spec.ts:99:5 › Works stays aligned to the mobile home content rail (614ms)
+  ✘  107 [chromium-public] › tests/ui-improvement-featured-works-grid.spec.ts:141:5 › Works cards do not overflow on mobile with long unbroken content (689ms)
+(node:10370) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:10370) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  108 [chromium-public] › tests/ui-improvement-featured-works-grid.spec.ts:200:5 › Works card width stays stable when mobile viewport height is extremely short (1.2s)
+(node:11205) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:11205) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  109 [chromium-public] › tests/ui-improvement-featured-works-grid.spec.ts:255:5 › Works uses two columns on tablet and three on desktop (1.9s)
+  ✓  110 [chromium-public] › tests/ui-improvement-featured-works-grid.spec.ts:271:5 › hero CTAs keep a clear primary-versus-secondary visual hierarchy (1.4s)
+  ✓  111 [chromium-public] › tests/ui-improvement-featured-works-grid.spec.ts:285:5 › featured work media keeps a 4:3 ratio and cards keep consistent heights (1.0s)
+  ✓  112 [chromium-public] › tests/ui-improvement-featured-works-grid.spec.ts:310:5 › featured work cards keep a shared resting shadow and a stronger hover elevation (2.5s)
+  ✓  113 [chromium-public] › tests/ui-improvement-focus-visible.spec.ts:3:5 › keyboard-focused public links keep a visible focus outline (1.3s)
+  ✓  114 [chromium-public] › tests/ui-improvement-focus-visible.spec.ts:15:5 › keyboard users can traverse the primary navigation in visual order (2.5s)
+  ✓  115 [chromium-public] › tests/ui-improvement-focus-visible.spec.ts:37:5 › primary home CTAs keep visible focus treatment and accessible touch targets (2.0s)
+  ✓  116 [chromium-public] › tests/ui-improvement-footer-nav.spec.ts:3:5 › footer exposes public navigation links (2.0s)
+  ✓  117 [chromium-public] › tests/ui-improvement-hero-alt.spec.ts:3:5 › hero profile image uses descriptive alt text (747ms)
+  ✓  118 [chromium-public] › tests/ui-improvement-hero-cta.spec.ts:4:5 › home hero includes View My Works CTA to /works (2.2s)
+  ✓  119 [chromium-public] › tests/ui-improvement-hero-cta.spec.ts:14:5 › home hero includes Read Study CTA to /blog (1.7s)
+  ✓  120 [chromium-public] › tests/ui-improvement-hero-cta.spec.ts:23:5 › hero CTA buttons remain visible and touch-sized on mobile (778ms)
+  ✓  121 [chromium-public] › tests/ui-improvement-hero-cta.spec.ts:39:5 › hero CTA wrapper becomes immediately visible with reduced motion (707ms)
+  ✓  122 [chromium-public] › tests/ui-improvement-hero-lcp.spec.ts:4:5 › hero heading is visible within one second (1.5s)
+  ✓  123 [chromium-public] › tests/ui-improvement-hero-lcp.spec.ts:15:5 › reduced motion makes hero content immediately visible (817ms)
+  ✓  124 [chromium-public] › tests/ui-improvement-home-copy-cleanup.spec.ts:3:5 › home featured works no longer uses the generic click to view details fallback copy (852ms)
+  ✓  125 [chromium-public] › tests/ui-improvement-navbar-dedup.spec.ts:3:5 › navbar no longer renders the duplicate Latest writing link (904ms)
+  ✓  126 [chromium-public] › tests/ui-improvement-navbar-dedup.spec.ts:10:5 › primary Study navigation link still routes to /blog (786ms)
+  ✓  127 [chromium-public] › tests/ui-improvement-recent-posts-cards.spec.ts:4:5 › Recent posts cards keep a visible border (810ms)
+  ✓  128 [chromium-public] › tests/ui-improvement-recent-posts-cards.spec.ts:13:5 › Recent posts tags render as rounded badge-style pills (681ms)
+  ✓  129 [chromium-public] › tests/ui-improvement-recent-posts-cards.spec.ts:20:5 › Recent posts cards advertise hover border and shadow states (624ms)
+  ✓  130 [chromium-public] › tests/ui-improvement-recent-posts-cards.spec.ts:28:5 › Recent posts titles use card-level group hover accent styling (585ms)
+  ✓  131 [chromium-public] › tests/ui-improvement-recent-posts-cards.spec.ts:36:5 › Recent posts cards clamp the title and excerpt to consistent line counts (608ms)
+  ✓  132 [chromium-public] › tests/ui-improvement-recent-posts-cards.spec.ts:47:5 › Recent posts card metadata, title, and excerpt stay vertically aligned (1.1s)
+  ✓  133 [chromium-public] › tests/ui-improvement-recent-posts-cards.spec.ts:74:5 › Recent posts cards keep a shared shadow token before hover (844ms)
+  ✓  134 [chromium-public] › tests/ui-improvement-recent-posts.spec.ts:4:5 › Study Notes section uses the default page background (822ms)
+  ✓  135 [chromium-public] › tests/ui-improvement-recent-posts.spec.ts:14:5 › Study Notes heading uses bold weight (1.8s)
+  ✓  136 [chromium-public] › tests/ui-improvement-recent-posts.spec.ts:22:5 › Study Notes removes template eyebrow and descriptive copy (884ms)
+  ✓  137 [chromium-public] › tests/ui-improvement-recent-posts.spec.ts:31:5 › Study Notes section keeps compact spacing after copy cleanup (1.3s)
+  ✓  138 [chromium-public] › tests/ui-improvement-reduced-motion.spec.ts:4:5 › reduced motion disables fade-in-up animations (1.0s)
+  ✓  139 [chromium-public] › tests/ui-improvement-reduced-motion.spec.ts:19:5 › default motion keeps the animation class on hero content (752ms)
+  ✓  140 [chromium-public] › tests/ui-improvement-related-content-width.spec.ts:7:5 › blog detail related content width stays aligned with the reading column (877ms)
+  ✓  141 [chromium-public] › tests/ui-improvement-related-content-width.spec.ts:22:5 › work detail related content width stays aligned with the reading column (1.6s)
+  ✓  142 [chromium-public] › tests/ui-improvement-related-page-retention.spec.ts:3:5 › blog detail prev-next keeps relatedPage in the url (958ms)
+  ✓  143 [chromium-public] › tests/ui-improvement-related-page-retention.spec.ts:13:5 › work detail prev-next keeps relatedPage in the url (1.4s)
+  ✓  144 [chromium-public] › tests/ui-improvement-responsive-fallback.spec.ts:3:5 › narrow but tall viewports still use the compact card typography fallback (511ms)
+  ✓  145 [chromium-public] › tests/ui-improvement-scroll-margin.spec.ts:4:5 › public detail headings reserve scroll margin under the sticky navbar (1.6s)
+  ✓  146 [chromium-public] › tests/ui-improvement-section-order.spec.ts:4:5 › Works appears before Study Notes on the home page (807ms)
+  ✓  147 [chromium-public] › tests/ui-improvement-section-order.spec.ts:18:5 › Works section uses the brand section background (1.1s)
+  ✓  148 [chromium-public] › tests/ui-improvement-skip-link.spec.ts:3:5 › Tab reveals the skip link and Enter moves focus to main content (1.2s)
+  ✓  149 [chromium-public] › tests/ui-improvement-skip-link.spec.ts:17:5 › skip link stays hidden for pointer users before focus (700ms)
+  ✓  150 [chromium-public] › tests/ui-improvement-static-public-pages.spec.ts:3:5 › introduction and contact pages keep the public reading layout (828ms)
+  ✓  151 [chromium-public] › tests/ui-improvement-static-public-pages.spec.ts:18:5 › resume page keeps a tall viewer shell without clipping the document area (637ms)
+  ✓  152 [chromium-public] › tests/ui-improvement-static-public-pages.spec.ts:27:5 › static public pages keep a clean unframed header pattern (1.3s)
+  ✓  153 [chromium-public] › tests/ui-improvement-text-balance.spec.ts:3:5 › hero heading applies balanced text wrapping (732ms)
+  ✓  154 [chromium-public] › tests/ui-improvement-work-prev-next.spec.ts:3:5 › works detail exposes previous or next navigation links (1.6s)
+  ✓  155 [chromium-public] › tests/ui-improvement-works-card-height.spec.ts:3:5 › works cards use a flexible height instead of a fixed 30rem height (644ms)
+  ✓  156 [chromium-public] › tests/ui-improvement-works-card-height.spec.ts:14:5 › shorter viewports keep the reduced works card min-height (812ms)
+  ✓  157 [chromium-public] › tests/ui-improvement-works-no-fade.spec.ts:4:5 › works heading renders immediately without the hero fade-in animation (618ms)
+  ✓  158 [chromium-public] › tests/ui-improvement-works-no-image.spec.ts:4:5 › works cards use the richer no-image placeholder treatment (633ms)
+  ✓  159 [chromium-public] › tests/ui-improvement-works-video-layout.spec.ts:3:5 › work detail keeps the first video upfront and folds the rest (1.7s)
+  ✓  160 [chromium-public] › tests/ui-pub-overflow.spec.ts:6:7 › / avoids horizontal overflow on mobile (683ms)
+  ✓  161 [chromium-public] › tests/ui-pub-overflow.spec.ts:6:7 › /works avoids horizontal overflow on mobile (486ms)
+  ✓  162 [chromium-public] › tests/ui-pub-overflow.spec.ts:6:7 › /blog avoids horizontal overflow on mobile (450ms)
+  ✓  163 [chromium-public] › tests/ui-pub-overflow.spec.ts:6:7 › /introduction avoids horizontal overflow on mobile (513ms)
+  ✓  164 [chromium-public] › tests/ui-pub-overflow.spec.ts:6:7 › /contact avoids horizontal overflow on mobile (519ms)
+  ✓  165 [chromium-public] › tests/ui-pub-overflow.spec.ts:6:7 › /resume avoids horizontal overflow on mobile (409ms)
+  ✓  166 [chromium-public] › tests/ui-pub-overflow.spec.ts:6:7 › /works/seeded-work avoids horizontal overflow on mobile (1.3s)
+  ✓  167 [chromium-public] › tests/ui-pub-overflow.spec.ts:6:7 › /blog/seeded-blog avoids horizontal overflow on mobile (840ms)
+  ✓  168 [chromium-public] › tests/ui-pub-related-page-navigation.spec.ts:3:5 › blog detail prev-next keeps the originating related page state (1.2s)
+  ✓  169 [chromium-public] › tests/ui-pub-related-page-navigation.spec.ts:29:5 › work detail prev-next keeps the originating related page state (1.8s)
+(node:17505) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:17505) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  170 [chromium-authenticated] › tests/admin-auth-session-expiry.spec.ts:4:5 › expired admin sessions redirect protected routes back to login (2.1s)
+  ✘  171 [chromium-authenticated] › tests/admin-blog-ai-dialog.spec.ts:29:5 › blog AI fix dialog loads runtime config, applies a fixed draft, and keeps editing local (2.8s)
+(node:18801) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:18801) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  172 [chromium-authenticated] › tests/admin-blog-ai-dialog.spec.ts:90:5 › blog AI fix failure preserves the draft and can retry with mocked routes (2.2s)
+(node:19555) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:19555) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  173 [chromium-authenticated] › tests/admin-blog-ai-dialog.spec.ts:156:5 › work AI enrich uses mocked failure and success responses without live AI (1.7s)
+(node:20400) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:20400) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  174 [chromium-authenticated] › tests/admin-blog-edit.spec.ts:9:5 › admin can edit an existing blog post with mixed special input (5.1s)
+  ✓  175 [chromium-authenticated] › tests/admin-blog-edit.spec.ts:51:5 › blog notion view supports list selection and content autosave (10.0s)
+  ✓  176 [chromium-authenticated] › tests/admin-blog-image-upload.spec.ts:7:5 › blog editor uploads an inline image and public blog renders it (3.9s)
+  ✓  177 [chromium-authenticated] › tests/admin-blog-image-validation.spec.ts:7:5 › blog editor keeps editing state when inline image upload fails (1.1s)
+  ✓  178 [chromium-authenticated] › tests/admin-blog-publish.spec.ts:7:5 › admin can create and publish a blog post that appears on public blog page (3.9s)
+  ✓  179 [chromium-authenticated] › tests/admin-blog-publish.spec.ts:42:5 › admin can keep a blog post as draft and publish it later (6.8s)
+  ✓  180 [chromium-authenticated] › tests/admin-blog-publish.spec.ts:91:5 › admin can toggle a published blog post back to draft and publish it again (9.9s)
+  ✓  181 [chromium-authenticated] › tests/admin-blog-validation.spec.ts:5:5 › blog editor requires a title before it enables create (1.2s)
+  ✓  182 [chromium-authenticated] › tests/admin-blog-validation.spec.ts:20:5 › blog editor clamps excerpt length to preview-safe limits (918ms)
+  ✓  183 [chromium-authenticated] › tests/admin-blog-validation.spec.ts:33:5 › blog editor accepts mixed special-character and Korean input (2.3s)
+  ✓  184 [chromium-authenticated] › tests/admin-blog-validation.spec.ts:54:5 › blog editor shows backend validation feedback without leaving the editor (1.4s)
+  ✓  185 [chromium-authenticated] › tests/admin-bulk-delete.spec.ts:6:5 › admin can bulk delete selected blogs and works with confirmation (3.2s)
+  ✓  186 [chromium-authenticated] › tests/admin-dashboard-error-state.spec.ts:5:5 › AF-013 shows the dashboard error panel when stats loading fails (1.1s)
+  ✓  187 [chromium-authenticated] › tests/admin-dashboard-error-state.spec.ts:16:5 › AF-013 shows the dashboard collections fallback when work and blog lists fail (606ms)
+  ✓  188 [chromium-authenticated] › tests/admin-dashboard.spec.ts:6:5 › admin dashboard shows summary cards with numeric counts (1.3s)
+  ✓  189 [chromium-authenticated] › tests/admin-dashboard.spec.ts:26:5 › admin dashboard cards open edit pages directly and expose pagination controls (2.4s)
+  ✓  190 [chromium-authenticated] › tests/admin-dashboard.spec.ts:51:5 › admin sidebar exposes a direct public site shortcut (1.0s)
+  ✓  191 [chromium-authenticated] › tests/admin-dashboard.spec.ts:60:5 › admin dashboard quick navigation links point to the site, members, and notion workspace (1.1s)
+  ✓  192 [chromium-authenticated] › tests/admin-dashboard.spec.ts:72:5 › admin dashboard recent content sections show linked titles and summary metadata (1.0s)
+  ✓  193 [chromium-authenticated] › tests/admin-home-extreme-input.spec.ts:6:5 › home page editor persists mixed Korean, English, and punctuation input (2.0s)
+  ✓  194 [chromium-authenticated] › tests/admin-home-image-upload.spec.ts:7:5 › home page editor uploads a profile image and public home renders it (2.2s)
+  ✓  195 [chromium-authenticated] › tests/admin-home-image-validation.spec.ts:6:5 › home page image upload shows explicit error when backend upload fails (1.3s)
+  ✓  196 [chromium-authenticated] › tests/admin-input-exceptions.spec.ts:6:5 › admin work editor no longer exposes raw json metadata editing (1.0s)
+  ✓  197 [chromium-authenticated] › tests/admin-input-exceptions.spec.ts:15:5 › admin blog editor surfaces save failure when backend rejects input (1.4s)
+  ✓  198 [chromium-authenticated] › tests/admin-input-exceptions.spec.ts:40:5 › admin resume upload rejects non-pdf files (1.1s)
+  ✓  199 [chromium-authenticated] › tests/admin-load-test-dashboard.spec.ts:6:5 › admin can run a small Work and Study read load test (3.1s)
+  ✓  200 [chromium-authenticated] › tests/admin-load-test-dashboard.spec.ts:123:5 › admin can run and stop a real backend test with polling + metrics fallback (1.3s)
+  ✓  201 [chromium-authenticated] › tests/admin-members.spec.ts:5:5 › admin members page lists joined users with privacy-safe fields (483ms)
+  ✓  202 [chromium-authenticated] › tests/admin-members.spec.ts:18:5 › admin members page stays read-only without edit or delete actions (453ms)
+  ✓  203 [chromium-authenticated] › tests/admin-menus.spec.ts:6:5 › authenticated admin sees primary admin menus (1.3s)
+  ✓  204 [chromium-authenticated] › tests/admin-mermaid-public-independence.spec.ts:12:5 › public blog and work pages stay stable when mermaid content exists (6.3s)
+  ✓  205 [chromium-authenticated] › tests/admin-pages-settings.spec.ts:24:5 › admin can update site settings from admin pages (1.5s)
+  ✓  206 [chromium-authenticated] › tests/admin-pages-settings.spec.ts:56:5 › admin can update the introduction page from admin pages (1.8s)
+  ✓  207 [chromium-authenticated] › tests/admin-pages-settings.spec.ts:84:5 › admin can update the contact page from admin pages (1.3s)
+  ✓  208 [chromium-authenticated] › tests/admin-pages-validation.spec.ts:5:5 › admin pages save fails for overlong introduction title (780ms)
+  ✓  209 [chromium-authenticated] › tests/admin-resume-upload.spec.ts:7:5 › admin can upload a resume pdf and public resume page exposes download (1.3s)
+  ✓  210 [chromium-authenticated] › tests/admin-resume-upload.spec.ts:52:5 › admin can delete the uploaded resume and clear the public resume page (1.4s)
+  ✓  211 [chromium-authenticated] › tests/admin-resume-validation.spec.ts:6:5 › resume editor rejects non-pdf uploads and stays on admin page (836ms)
+  ✓  212 [chromium-authenticated] › tests/admin-search-pagination.spec.ts:178:5 › admin blog page supports title search and compact pagination controls (1.2s)
+  ✓  213 [chromium-authenticated] › tests/admin-search-pagination.spec.ts:212:5 › admin blog pagination adapts the row count across desktop, tablet, and mobile widths (3.8s)
+  ✓  214 [chromium-authenticated] › tests/admin-search-pagination.spec.ts:227:5 › admin blog edit and delete keep the current filtered page location (3.7s)
+  ✓  215 [chromium-authenticated] › tests/admin-search-pagination.spec.ts:308:5 › admin works page supports title search and compact pagination controls (1.5s)
+  ✘  216 [chromium-authenticated] › tests/admin-search-pagination.spec.ts:344:5 › admin search ignores punctuation, spacing, and case without resetting typed input (14ms)
+(node:27674) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:27674) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  217 [chromium-authenticated] › tests/admin-search-pagination.spec.ts:379:5 › admin works pagination adapts the row count across desktop, tablet, and mobile widths (4.0s)
+  ✓  218 [chromium-authenticated] › tests/admin-search-pagination.spec.ts:394:5 › admin work edit and delete keep the current filtered page location (3.7s)
+  ✓  219 [chromium-authenticated] › tests/admin-search-pagination.spec.ts:499:5 › admin dashboard supports independent title search for works and blog collections (1.4s)
+  ✓  220 [chromium-authenticated] › tests/admin-site-settings-extreme-input.spec.ts:7:5 › site settings persist mixed special-character owner and tagline values (1.2s)
+  ✓  221 [chromium-authenticated] › tests/admin-work-auto-thumbnail.spec.ts:15:5 › auto-fills thumbnail from an uploaded video when no manual thumbnail exists (2.9s)
+  ✓  222 [chromium-authenticated] › tests/admin-work-auto-thumbnail.spec.ts:40:5 › prefers uploaded-video auto thumbnails over youtube thumbnails (1.9s)
+  ✓  223 [chromium-authenticated] › tests/admin-work-auto-thumbnail.spec.ts:72:5 › falls back to the first content image when there are no videos and no explicit thumbnail (2.1s)
+  ✓  224 [chromium-authenticated] › tests/admin-work-auto-thumbnail.spec.ts:102:5 › auto-fills a thumbnail when the work only has a YouTube video (2.1s)
+  ✓  225 [chromium-authenticated] › tests/admin-work-auto-thumbnail.spec.ts:125:5 › auto-fills a thumbnail when an existing work without one gets an uploaded video (2.4s)
+  ✓  226 [chromium-authenticated] › tests/admin-work-edit.spec.ts:7:5 › admin can edit an existing work entry with mixed special input (2.9s)
+  ✓  227 [chromium-authenticated] › tests/admin-work-image-upload.spec.ts:7:5 › work editor uploads thumbnail/icon media and reuses them across admin/public views (2.4s)
+  ✓  228 [chromium-authenticated] › tests/admin-work-publish.spec.ts:13:5 › admin can create and publish a work that appears on public works page (2.7s)
+  ✓  229 [chromium-authenticated] › tests/admin-work-publish.spec.ts:64:5 › admin can keep a work as draft and publish it later (3.9s)
+  ✓  230 [chromium-authenticated] › tests/admin-work-publish.spec.ts:110:5 › admin can toggle a published work back to draft and publish it again (5.3s)
+  ✘  231 [chromium-authenticated] › tests/admin-work-special-input.spec.ts:6:5 › work editor accepts Korean and punctuation-heavy input and publishes publicly (18ms)
+(node:31394) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:31394) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  232 [chromium-authenticated] › tests/admin-work-validation.spec.ts:5:5 › work editor exposes structured metadata controls instead of raw json (1.2s)
+  ✓  233 [chromium-authenticated] › tests/admin-work-validation.spec.ts:15:5 › work editor shows save failure for missing required fields (1.1s)
+  ✓  234 [chromium-authenticated] › tests/admin-work-video-create-flow.spec.ts:6:5 › admin can create a work with staged YouTube and uploaded videos (3.6s)
+  ✓  235 [chromium-authenticated] › tests/admin-work-video-drag-order.spec.ts:5:5 › AF-062 saved work videos can be reordered by drag and drop and the public order updates (4.8s)
+  ✓  236 [chromium-authenticated] › tests/admin-work-video-edit-flow.spec.ts:5:5 › admin can add videos inline while editing an existing work (3.8s)
+  ✓  237 [chromium-authenticated] › tests/admin-work-video-edit-flow.spec.ts:46:5 › admin can reorder saved videos and delete a removed video while editing an existing work (3.5s)
+  ✓  238 [chromium-authenticated] › tests/admin-work-video-mixed-flow.spec.ts:19:5 › admin can create a mixed work with two youtube links, two mp4 uploads, and rich body copy (6.6s)
+  ✓  239 [chromium-authenticated] › tests/admin-work-video-s3-compatible.spec.ts:6:5 › s3-compatible lane processes an uploaded MP4 as HLS and renders it publicly (2.2s)
+  ✓  240 [chromium-authenticated] › tests/dark-mode.spec.ts:122:7 › theme toggle › DM-01: theme toggle button is visible in the navbar (649ms)
+  ✓  241 [chromium-authenticated] › tests/dark-mode.spec.ts:127:7 › theme toggle › DM-02: clicking the theme toggle applies the dark class directly (1.3s)
+  ✓  242 [chromium-authenticated] › tests/dark-mode.spec.ts:137:7 › theme toggle › DM-03: clicking the theme toggle again removes the dark class (975ms)
+  ✓  243 [chromium-authenticated] › tests/dark-mode.spec.ts:149:7 › theme toggle › DM-04: the selected theme persists after reload (1.1s)
+  ✓  244 [chromium-authenticated] › tests/dark-mode.spec.ts:158:7 › theme toggle › DM-05: default theme is light and the old theme dropdown is absent (930ms)
+  ✓  245 [chromium-authenticated] › tests/dark-mode.spec.ts:168:7 › theme toggle › DM-05b: mobile drawer theme row toggles dark and light directly (1.2s)
+  ✓  246 [chromium-authenticated] › tests/dark-mode.spec.ts:180:7 › public pages › DM-06: home page renders dark mode surfaces and section backgrounds (1.3s)
+  ✓  247 [chromium-authenticated] › tests/dark-mode.spec.ts:192:7 › public pages › DM-07: works listing cards use dark brand colors (951ms)
+  ✓  248 [chromium-authenticated] › tests/dark-mode.spec.ts:203:5 › public pages › DM-08: work detail page keeps navy detail anchors in dark mode (1.2s)
+  ✓  249 [chromium-authenticated] › tests/dark-mode.spec.ts:215:7 › public pages › DM-09: blog listing hover state uses accent color in dark mode (983ms)
+  ✓  250 [chromium-authenticated] › tests/dark-mode.spec.ts:228:5 › public pages › DM-10: blog detail page uses navy detail anchors and keeps prose readable (3.0s)
+  ✓  251 [chromium-authenticated] › tests/dark-mode.spec.ts:244:5 › public pages › DM-11: contact page email link uses the semantic primary color in dark mode (725ms)
+  ✓  252 [chromium-authenticated] › tests/dark-mode.spec.ts:258:7 › public pages › DM-12: footer renders with a dark background and stable links (1.0s)
+  ✓  253 [chromium-authenticated] › tests/dark-mode.spec.ts:275:7 › public pages › DM-18: public prose code blocks stay readable after light and dark theme changes (1.9s)
+  ✓  254 [chromium-authenticated] › tests/dark-mode.spec.ts:330:7 › public pages › DM-18b: public Mermaid diagrams use GitHub-readable surfaces in light and dark mode (3.6s)
+  ✓  255 [chromium-authenticated] › tests/dark-mode.spec.ts:360:7 › public pages › DM-19: prose text remains readable in dark mode (1.5s)
+  ✓  256 [chromium-authenticated] › tests/dark-mode.spec.ts:371:7 › public pages › DM-20: mobile menu exposes a wide direct theme toggle in dark mode (1.5s)
+  ✓  257 [chromium-authenticated] › tests/dark-mode.spec.ts:387:7 › public pages › DM-21: dark to light transitions keep the works layout stable (1.8s)
+  ✓  258 [chromium-authenticated] › tests/dark-mode.spec.ts:400:7 › public pages › DM-22: pagination uses the dark active state variant (1.0s)
+  ✓  259 [chromium-authenticated] › tests/dark-mode.spec.ts:411:7 › public pages › DM-23: dark mode body text contrast is at least 4.5:1 (1.3s)
+  ✓  260 [chromium-authenticated] › tests/dark-mode.spec.ts:418:7 › public pages › DM-24: muted text contrast is at least 4.5:1 in dark mode (1.5s)
+  ✓  261 [chromium-authenticated] › tests/dark-mode.spec.ts:430:7 › login and admin dark mode › DM-13: login page renders with dark surfaces (554ms)
+  ✘  262 [chromium-authenticated] › tests/dark-mode.spec.ts:446:7 › login and admin dark mode › DM-14: admin dashboard uses dark cards and surfaces (19ms)
+(node:36301) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:36301) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  263 [chromium-authenticated] › tests/dark-mode.spec.ts:453:7 › login and admin dark mode › DM-15: blog editor uses the dark primary button token (2.7s)
+  ✓  264 [chromium-authenticated] › tests/dark-mode.spec.ts:464:7 › login and admin dark mode › DM-16: work editor uses the dark primary button token (2.1s)
+  ✓  265 [chromium-authenticated] › tests/dark-mode.spec.ts:475:7 › login and admin dark mode › DM-17: destructive buttons gain the dark hover state (1.6s)
+  ✓  266 [chromium-authenticated] › tests/dark-mode.spec.ts:485:7 › login and admin dark mode › DM-25: global dark palette uses soft readable surfaces across public and admin UI (4.3s)
+  ✓  267 [chromium-authenticated] › tests/public-blog-detail-inline-edit.spec.ts:8:5 › admin can edit a public blog detail inline and return to the originating blog page (2.6s)
+  ✓  268 [chromium-authenticated] › tests/public-blog-detail-inline-edit.spec.ts:36:5 › public blog detail shows paginated related posts (2.9s)
+  ✓  269 [chromium-authenticated] › tests/public-footer-social.spec.ts:13:5 › PF-084 footer renders only the configured social icons (3.0s)
+  ✓  270 [chromium-authenticated] › tests/public-inline-editors-unsaved-warning.spec.ts:27:5 › public blog inline editor clears beforeunload after save (5.8s)
+  ✓  271 [chromium-authenticated] › tests/public-inline-editors-unsaved-warning.spec.ts:62:5 › public work inline editor clears beforeunload after save (3.1s)
+  ✓  272 [chromium-authenticated] › tests/public-inline-editors.spec.ts:5:5 › introduction and contact inline editors open in place and can be closed with back buttons (1.4s)
+  ✓  273 [chromium-authenticated] › tests/public-inline-editors.spec.ts:22:5 › works and study inline create panels open in place and can be closed (2.5s)
+  ✓  274 [chromium-authenticated] › tests/public-inline-editors.spec.ts:40:5 › resume page exposes inline PDF upload shell for admins (665ms)
+  ✓  275 [chromium-authenticated] › tests/public-work-detail-inline-edit.spec.ts:8:5 › admin can edit a public work detail inline and return to the originating works page (2.3s)
+  ✓  276 [chromium-authenticated] › tests/public-work-detail-inline-edit.spec.ts:34:5 › public work detail shows paginated related items (1.7s)
+  ✓  277 [chromium-authenticated] › tests/public-work-videos.spec.ts:6:5 › public work detail renders uploaded and youtube videos when present (4.3s)
+  ✓  278 [chromium-authenticated] › tests/public-work-videos.spec.ts:29:5 › PF-041 public work detail lets visitors play and pause an uploaded video (3.5s)
+  ✓  279 [chromium-authenticated] › tests/public-work-videos.spec.ts:82:5 › PF-043 public work detail keeps public video render order aligned with saved sort order (7.3s)
+  ✓  280 [chromium-authenticated] › tests/public-work-videos.spec.ts:118:5 › PF-044 public work detail exposes hover preview near the native progress region and desktop resize modes for uploaded videos (5.6s)
+  ✓  281 [chromium-authenticated] › tests/public-work-videos.spec.ts:202:5 › PF-045 mobile public work detail disables timeline preview on touch devices (3.9s)
+  ✓  282 [chromium-authenticated] › tests/resume.spec.ts:4:5 › resume page exposes a download action (1.3s)
+  ✓  283 [chromium-authenticated] › tests/resume.spec.ts:51:5 › resume page keeps the PDF viewer usable on mobile (1.2s)
+  ✓  284 [chromium-authenticated] › tests/ui-admin-blog-excerpt.spec.ts:5:5 › BlogEditor exposes an excerpt field with a live character counter (992ms)
+  ✓  285 [chromium-authenticated] › tests/ui-admin-blog-published-position.spec.ts:5:5 › Published checkbox stays above the blog editor body area (1.4s)
+  ✓  286 [chromium-authenticated] › tests/ui-admin-copy-cleanup.spec.ts:5:5 › admin blog list uses concise management copy (1.1s)
+  ✓  287 [chromium-authenticated] › tests/ui-admin-copy-cleanup.spec.ts:13:5 › admin works list uses concise management copy (1.2s)
+  ✓  288 [chromium-authenticated] › tests/ui-admin-delete-dialog.spec.ts:61:5 › blog delete uses an in-app dialog instead of browser confirm (2.4s)
+  ✓  289 [chromium-authenticated] › tests/ui-admin-delete-dialog.spec.ts:70:5 › works delete uses an in-app dialog instead of browser confirm (1.7s)
+  ✓  290 [chromium-authenticated] › tests/ui-admin-delete-dialog.spec.ts:79:5 › blog delete dialog supports keyboard focus, Escape, cancel, and confirm (2.3s)
+  ✓  291 [chromium-authenticated] › tests/ui-admin-editor-keyboard-save.spec.ts:19:5 › blog editor saves from the keyboard shortcut (1.9s)
+  ✓  292 [chromium-authenticated] › tests/ui-admin-editor-keyboard-save.spec.ts:42:5 › work editor saves from the keyboard shortcut (1.8s)
+  ✓  293 [chromium-authenticated] › tests/ui-admin-footer-social-size.spec.ts:5:5 › VA-304 footer social icons keep 44px touch targets once configured (1.3s)
+  ✓  294 [chromium-authenticated] › tests/ui-admin-form-errors.spec.ts:5:5 › WQ-009 blog editor exposes save errors through an inline live region (2.1s)
+  ✓  295 [chromium-authenticated] › tests/ui-admin-form-errors.spec.ts:31:5 › WQ-009 work editor exposes save errors through an inline live region (1.0s)
+  ✘  296 [chromium-authenticated] › tests/ui-admin-keyboard-accessibility.spec.ts:45:5 › mobile admin navigation exposes a labeled nav and supports sequential keyboard focus (6.5s)
+(node:43581) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:43581) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  297 [chromium-authenticated] › tests/ui-admin-keyboard-accessibility.spec.ts:66:5 › AI content dialog opens and closes by keyboard without invoking live AI (1.9s)
+(node:45326) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:45326) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  298 [chromium-authenticated] › tests/ui-admin-notion-autosave-info.spec.ts:37:5 › AF-042 autosave status waits for the autosave interval, then shows Saving and Saved after notion content changes (6.7s)
+  ✓  299 [chromium-authenticated] › tests/ui-admin-notion-autosave-info.spec.ts:81:5 › AF-042 autosave revalidation is throttled while explicit metadata save revalidates immediately (9.7s)
+  ✓  300 [chromium-authenticated] › tests/ui-admin-notion-autosave-info.spec.ts:131:5 › AF-042 autosave status shows Error when notion autosave fails (6.3s)
+  ✓  301 [chromium-authenticated] › tests/ui-admin-notion-autosave-info.spec.ts:170:5 › AF-045 notion document info panel shows timestamps and slug for the selected post (3.0s)
+  ✓  302 [chromium-authenticated] › tests/ui-admin-notion-autosave-info.spec.ts:211:5 › AF-046 Ctrl+S saves notion content and metadata immediately (4.6s)
+  ✓  303 [chromium-authenticated] › tests/ui-admin-notion-client-switch.spec.ts:5:5 › switching documents in notion view keeps the editor visible while changing the active document (13.6s)
+  ✓  304 [chromium-authenticated] › tests/ui-admin-notion-client-switch.spec.ts:37:5 › selected notion document persists after reload via url state (11.9s)
+  ✓  305 [chromium-authenticated] › tests/ui-admin-notion-doc-info-toggle.spec.ts:7:5 › doc info toggle off expands the notion editor area (3.1s)
+  ✓  306 [chromium-authenticated] › tests/ui-admin-notion-doc-info-toggle.spec.ts:23:5 › doc info toggle on restores the side panel (3.6s)
+  ✓  307 [chromium-authenticated] › tests/ui-admin-notion-hint-dismiss.spec.ts:3:5 › capability hint can be dismissed and stays hidden after reload (5.9s)
+  ✓  308 [chromium-authenticated] › tests/ui-admin-notion-hint-dismiss.spec.ts:15:5 › clearing localStorage restores the capability hint (5.9s)
+  ✓  309 [chromium-authenticated] › tests/ui-admin-notion-library-search.spec.ts:3:5 › library search filters visible notion documents (6.6s)
+  ✓  310 [chromium-authenticated] › tests/ui-admin-notion-library-search.spec.ts:25:5 › clearing search restores the full notion document list (7.5s)
+  ✓  311 [chromium-authenticated] › tests/ui-admin-notion-library-sheet.spec.ts:3:5 › notion view does not expose the library panel by default (2.1s)
+  ✓  312 [chromium-authenticated] › tests/ui-admin-notion-library-sheet.spec.ts:11:5 › library button opens sheet and exposes blog list (5.7s)
+  ✓  313 [chromium-authenticated] › tests/ui-admin-notion-library-sheet.spec.ts:23:5 › selecting a document closes the sheet and keeps editor visible (6.9s)
+  ✓  314 [chromium-authenticated] › tests/ui-admin-notion-library-sheet.spec.ts:38:5 › editor shell keeps at least 80 percent of the viewport width on desktop (2.7s)
+  ✓  315 [chromium-authenticated] › tests/ui-admin-notion-visual-state.spec.ts:7:5 › VA-241 selected notion document stays visually highlighted inside the library sheet (5.1s)
+  ✓  316 [chromium-authenticated] › tests/ui-admin-notion-visual-state.spec.ts:33:5 › VA-242 notion save-state chip changes visual treatment across saved and error states (6.5s)
+  ✓  317 [chromium-authenticated] › tests/ui-admin-save-btn.spec.ts:5:5 › Blog and Work primary save buttons no longer use the legacy hover-scale styling (1.1s)
+  ✓  318 [chromium-authenticated] › tests/ui-admin-semantic-colors.spec.ts:7:5 › VA-005 success, warning, and error states keep distinct semantic color treatments (9.8s)
+  ✓  319 [chromium-authenticated] › tests/ui-admin-sidebar-active.spec.ts:3:5 › dashboard nav item is visually active on /admin/dashboard (1.7s)
+  ✓  320 [chromium-authenticated] › tests/ui-admin-sidebar-active.spec.ts:12:5 › blog nav item is visually active on /admin/blog (1.1s)
+  ✓  321 [chromium-authenticated] › tests/ui-admin-sidebar-active.spec.ts:21:5 › works nav item stays non-active on /admin/dashboard (1.2s)
+  ✓  322 [chromium-authenticated] › tests/ui-admin-sidebar-links.spec.ts:3:5 › sidebar exposes a single View Site link (1.9s)
+  ✓  323 [chromium-authenticated] › tests/ui-admin-sidebar-links.spec.ts:11:5 › View Site opens in a new tab (1.9s)
+  ✓  324 [chromium-authenticated] › tests/ui-admin-sidebar-text.spec.ts:3:5 › sidebar removes the legacy marketing helper copy (1.7s)
+  ✓  325 [chromium-authenticated] › tests/ui-admin-sidebar-width.spec.ts:3:5 › admin sidebar width collapses to 256px on desktop (1.9s)
+  ✓  326 [chromium-authenticated] › tests/ui-admin-sidebar-width.spec.ts:14:5 › admin main content keeps at least 960px on 1280px viewport (1.5s)
+  ✓  327 [chromium-authenticated] › tests/ui-admin-table-lang.spec.ts:20:5 › admin blog table chrome uses English labels (1.3s)
+  ✓  328 [chromium-authenticated] › tests/ui-admin-table-lang.spec.ts:24:5 › admin works table chrome uses English labels (1.0s)
+  ✓  329 [chromium-authenticated] › tests/ui-admin-table-polish.spec.ts:59:5 › admin blog list renders short tag lists as separate badges (2.3s)
+  ✓  330 [chromium-authenticated] › tests/ui-admin-table-polish.spec.ts:76:5 › admin blog list collapses extra tags into an overflow badge (2.7s)
+  ✓  331 [chromium-authenticated] › tests/ui-admin-table-polish.spec.ts:96:5 › admin works list includes a thumbnail column (2.9s)
+  ✓  332 [chromium-authenticated] › tests/ui-admin-table-polish.spec.ts:112:5 › admin blog list uses compact pagination controls (2.1s)
+  ✓  333 [chromium-authenticated] › tests/ui-admin-table-polish.spec.ts:117:5 › admin works list uses compact pagination controls (1.6s)
+  ✓  334 [chromium-authenticated] › tests/ui-admin-table-search.spec.ts:5:5 › admin blog table can filter by tag (1.7s)
+  ✓  335 [chromium-authenticated] › tests/ui-admin-table-search.spec.ts:28:5 › admin works table can filter by category (1.5s)
+  ✓  336 [chromium-authenticated] › tests/ui-admin-table-selection-visual.spec.ts:5:5 › VA-213 selected admin table rows gain a visual selected state (1.2s)
+  ✓  337 [chromium-authenticated] › tests/ui-admin-tiptap-link-popover.spec.ts:23:5 › link toolbar opens a popover and applies links without browser dialogs (2.7s)
+  ✓  338 [chromium-authenticated] › tests/ui-admin-tiptap-link-popover.spec.ts:67:5 › link toolbar removes existing links from the current selection (2.5s)
+  ✓  339 [chromium-authenticated] › tests/ui-admin-tiptap-semantic.spec.ts:13:5 › dark mode tiptap surfaces resolve to semantic background tokens (3.0s)
+  ✓  340 [chromium-authenticated] › tests/ui-admin-tiptap-sticky-toolbar.spec.ts:20:5 › editor toolbar stays pinned while scrolling long content (2.0s)
+  ✓  341 [chromium-authenticated] › tests/ui-admin-unsaved-dialog.spec.ts:5:5 › VA-233 blog editor shows a warning dialog with keep and discard actions when cancelling dirty changes (1.1s)
+  ✓  342 [chromium-authenticated] › tests/ui-admin-unsaved-dialog.spec.ts:17:5 › VA-233 work editor shows a warning dialog with keep and discard actions when cancelling dirty changes (1.7s)
+  ✓  343 [chromium-authenticated] › tests/ui-admin-unsaved-warning.spec.ts:5:5 › blog editor registers beforeunload only after a real change (976ms)
+  ✓  344 [chromium-authenticated] › tests/ui-admin-unsaved-warning.spec.ts:14:5 › work editor registers beforeunload only after a real change (1.0s)
+  ✓  345 [chromium-authenticated] › tests/ui-admin-unsaved-warning.spec.ts:23:5 › blog editor clears beforeunload after a successful save (2.0s)
+  ✓  346 [chromium-authenticated] › tests/ui-admin-unsaved-warning.spec.ts:46:5 › work editor clears beforeunload after a successful save (1.7s)
+  ✓  347 [chromium-authenticated] › tests/ui-admin-work-create-cta.spec.ts:5:5 › work create form shows a single default create CTA before videos are staged (951ms)
+  ✓  348 [chromium-authenticated] › tests/ui-admin-work-create-cta.spec.ts:12:5 › work create CTA switches to the staged-video create label (911ms)
+  ✓  349 [chromium-authenticated] › tests/ui-admin-work-create-cta.spec.ts:24:5 › work create CTA stays consolidated when multiple videos are staged (1.4s)
+  ✓  350 [chromium-authenticated] › tests/ui-admin-work-editor-tabs.spec.ts:5:5 › WorkEditor exposes General, Media & Videos, and Content tabs (1.2s)
+  ✓  351 [chromium-authenticated] › tests/ui-admin-work-editor-tabs.spec.ts:13:5 › tab navigation reveals the expected work editor sections and preserves entered data (2.0s)
+  ✓  352 [chromium-authenticated] › tests/ui-admin-work-metadata-ui.spec.ts:5:5 › structured metadata fields can be added and removed without raw JSON editing (2.3s)
+  ✓  353 [chromium-authenticated] › tests/ui-admin-work-metadata-ui.spec.ts:23:5 › Media tab no longer renders a raw JSON textarea for flexible metadata (1.1s)
+  ✓  354 [chromium-authenticated] › tests/ui-loading-states.spec.ts:4:5 › WQ-024 and VA-403 public route transitions expose loading feedback or complete cleanly (2.2s)
+  ✓  355 [chromium-authenticated] › tests/ui-loading-states.spec.ts:20:5 › WQ-024 admin dashboard transitions expose loading chrome before the dashboard resolves (1.7s)
+  ✓  356 [chromium-authenticated] › tests/ui-quality-a11y-advanced.spec.ts:11:5 › WQ-005 keyboard users can traverse the desktop primary navigation in visual order (1.8s)
+  ✓  357 [chromium-authenticated] › tests/ui-quality-accessibility.spec.ts:4:5 › WQ-007 key public pages keep sequential heading hierarchy (2.7s)
+  ✓  358 [chromium-authenticated] › tests/ui-quality-accessibility.spec.ts:23:5 › WQ-004 and WQ-010 navigation and footer controls keep labels while decorative icons stay hidden (1.6s)
+  ✓  359 [chromium-authenticated] › tests/ui-quality-accessibility.spec.ts:58:5 › WQ-008 admin editors keep labels programmatically associated with key controls (2.1s)
+  ✓  360 [chromium-authenticated] › tests/ui-quality-accessibility.spec.ts:90:5 › WQ-025 and WQ-034 root layout keeps viewport-safe metadata and swapped web fonts (1.2s)
+  ✓  361 [chromium-authenticated] › tests/ui-quality-accessibility.spec.ts:100:5 › WQ-022 and WQ-021 home hero and work listing images use priority and lazy loading appropriately (1.3s)
+  ✓  362 [chromium-authenticated] › tests/ui-quality-accessibility.spec.ts:114:5 › WQ-035 mobile public copy keeps a 16px minimum body size (1.1s)
+  ✓  363 [chromium-authenticated] › tests/ui-quality-blog-detail-visuals.spec.ts:7:5 › VA-120 blog TOC stays visually separated from the article body (1.3s)
+  ✓  364 [chromium-authenticated] › tests/ui-quality-blog-detail-visuals.spec.ts:33:5 › VA-121 blog body keeps readable paragraph line-height and spacing (921ms)
+  ✓  365 [chromium-authenticated] › tests/ui-quality-blog-detail-visuals.spec.ts:55:5 › VA-122 blog previous and next cards keep balanced sizing and shared chrome (938ms)
+  ✓  366 [chromium-authenticated] › tests/ui-quality-dark-harmony.spec.ts:4:5 › VA-002 dark mode keeps body, section, and card surfaces tonally separated (1.4s)
+  ✓  367 [chromium-authenticated] › tests/ui-quality-font-loading.spec.ts:3:5 › WQ-025 root layout loads Next fonts with swap display behavior (929ms)
+  ✓  368 [chromium-authenticated] › tests/ui-quality-grid-pagination.spec.ts:8:5 › WQ-020 and VA-131 work card media reserves space and keeps cover cropping (1.7s)
+  -  369 [chromium-authenticated] › tests/ui-quality-grid-pagination.spec.ts:29:5 › WQ-031 and VA-130 works archive grid adapts from tablet to desktop columns
+  ✓  370 [chromium-authenticated] › tests/ui-quality-grid-pagination.spec.ts:44:5 › WQ-036 and VA-112 public pagination compresses on mobile while keeping an active page state (1.5s)
+  ✓  371 [chromium-authenticated] › tests/ui-quality-image-accessibility.spec.ts:4:5 › WQ-003 meaningful public images expose descriptive alt text (1.0s)
+  ✓  372 [chromium-authenticated] › tests/ui-quality-image-accessibility.spec.ts:28:5 › WQ-003 work listing images and no-image placeholders stay understandable (919ms)
+  ✘  373 [chromium-authenticated] › tests/ui-quality-layout-rhythm.spec.ts:7:5 › VA-022 home sections keep a consistent vertical rhythm (1.2s)
+(node:64247) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:64247) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  374 [chromium-authenticated] › tests/ui-quality-layout-rhythm.spec.ts:32:5 › VA-024 featured works grid keeps a consistent gap token (1.4s)
+  ✓  375 [chromium-authenticated] › tests/ui-quality-layout-rhythm.spec.ts:47:5 › VA-100 hero text and portrait stay visually balanced on desktop (1.2s)
+  ✓  376 [chromium-authenticated] › tests/ui-quality-layout-shift.spec.ts:18:5 › WQ-023 public slow route transition keeps cumulative layout shift below 0.1 (1.9s)
+  ✓  377 [chromium-authenticated] › tests/ui-quality-layout-shift.spec.ts:35:5 › WQ-023 admin slow dashboard transition keeps cumulative layout shift below 0.1 (1.7s)
+  ✓  378 [chromium-authenticated] › tests/ui-quality-line-length.spec.ts:22:5 › VA-011 long-form public prose keeps body lines within a readable character width (2.2s)
+  ✓  379 [chromium-authenticated] › tests/ui-quality-motion-access-targets.spec.ts:4:5 › VA-305 public pagination controls keep 44px touch targets (1.1s)
+  ✓  380 [chromium-authenticated] › tests/ui-quality-motion-access-targets.spec.ts:23:5 › VA-400 and VA-401 mobile sheet motion stays under 400ms and avoids linear easing (1.9s)
+  ✓  381 [chromium-authenticated] › tests/ui-quality-motion-access-targets.spec.ts:42:5 › VA-405 home sections reveal with increasing fade-in delays (932ms)
+  ✓  382 [chromium-authenticated] › tests/ui-quality-responsive-admin.spec.ts:8:5 › WQ-031 tablet layouts reduce public card grids to two columns (1.6s)
+  ✓  383 [chromium-authenticated] › tests/ui-quality-responsive-admin.spec.ts:24:5 › WQ-033 admin sidebar collapses into a stacked top rail on mobile without horizontal overflow (1.4s)
+  ✓  384 [chromium-authenticated] › tests/ui-quality-spacing-system.spec.ts:9:5 › VA-020 key layout paddings and gaps follow the 4px spacing rhythm (1.5s)
+  ✓  385 [chromium-authenticated] › tests/ui-quality-toast-accessibility.spec.ts:6:5 › WQ-012 admin toasts announce politely without stealing focus (1.8s)
+  ✓  386 [chromium-authenticated] › tests/ui-quality-token-consistency.spec.ts:6:5 › VA-001 primary and destructive surfaces resolve from the shared semantic tokens (2.1s)
+  -  387 [chromium-authenticated] › tests/ui-quality-typography.spec.ts:7:5 › VA-010 public body copy keeps a readable 1.5-1.75 line-height ratio
+  ✓  388 [chromium-authenticated] › tests/ui-quality-typography.spec.ts:28:5 › VA-012 public type scale keeps heading sizes in descending order above body copy (1.4s)
+  ✓  389 [chromium-authenticated] › tests/ui-quality-typography.spec.ts:51:5 › VA-013 public typography keeps stronger font weights on headings than body copy (1.3s)
+  ✓  390 [chromium-authenticated] › tests/ui-quality-visual-advanced.spec.ts:4:5 › VA-010 blog card excerpt keeps a readable line-height ratio and preserves the excerpt clamp (1.2s)
+  ✓  391 [chromium-authenticated] › tests/ui-quality-visual-advanced.spec.ts:32:5 › VA-012 and VA-013 home hero keeps a clear typography scale and weight hierarchy (1.2s)
+  ✓  392 [chromium-authenticated] › tests/ui-quality-visual-advanced.spec.ts:53:5 › VA-120 blog detail table of contents keeps its own surfaced container styling (1.2s)
+  ✓  393 [chromium-authenticated] › tests/ui-quality-visual-advanced.spec.ts:78:5 › VA-142 work detail metadata stays visually subordinate to the page title (1.5s)
+  ✓  394 [chromium-authenticated] › tests/ui-quality-visual-contracts.spec.ts:4:5 › VA-015 feed cards clamp titles to 2 lines and excerpts to 3 lines (1.3s)
+  ✓  395 [chromium-authenticated] › tests/ui-quality-visual-contracts.spec.ts:22:5 › VA-132 work category badges stay uppercase with compact pill spacing (1.1s)
+  ✓  396 [chromium-authenticated] › tests/ui-quality-visual-contracts.spec.ts:37:5 › VA-141 YouTube embeds stay within the article width on work detail pages (2.0s)
+  ✓  397 [chromium-authenticated] › tests/ui-quality-visual-contracts.spec.ts:59:5 › VA-202 admin sidebar text keeps readable heading and nav label sizing (1.5s)
+  ✓  398 [chromium-authenticated] › tests/ui-quality-visual-contracts.spec.ts:76:5 › VA-211 and VA-212 admin table columns and search field keep aligned readable controls (1.3s)
+  -  399 [chromium-authenticated] › tests/ui-quality-visual-contracts.spec.ts:93:5 › VA-400 mobile menu motion stays within the planned duration budget
+  ✓  400 [chromium-authenticated] › tests/ui-quality-visual-contracts.spec.ts:109:5 › VA-401 mobile menu motion avoids linear easing (1.1s)
+  ✓  401 [chromium-authenticated] › tests/ui-quality-visual-metrics.spec.ts:5:5 › VA-300 and VA-303 navbar stays sticky with backdrop treatment and footer stays visually separated (1.2s)
+  ✓  402 [chromium-authenticated] › tests/ui-quality-visual-metrics.spec.ts:22:5 › VA-302 theme toggle keeps a direct 44px action without popover chrome (1.2s)
+  ✓  403 [chromium-authenticated] › tests/ui-quality-visual-metrics.spec.ts:40:5 › VA-301 and VA-400 mobile menu sheet keeps motion tokens and overlay styling (1.1s)
+  ✘  404 [chromium-authenticated] › tests/ui-quality-visual-metrics.spec.ts:61:5 › VA-305 public pagination keeps minimum touch targets and a differentiated active state (1.3s)
+(node:68105) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:68105) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  405 [chromium-authenticated] › tests/ui-quality-visual-metrics.spec.ts:85:5 › VA-202, VA-210, VA-211, and VA-212 admin navigation and tables keep readable alignment and touch-friendly rows (1.5s)
+  ✓  406 [chromium-authenticated] › tests/ui-quality-visual-metrics.spec.ts:107:5 › VA-221 and VA-223 admin editors keep distinct field surfaces and a prominent save button (1.1s)
+  ✓  407 [chromium-authenticated] › tests/ui-quality-visual-metrics.spec.ts:124:5 › VA-231, VA-232, and VA-404 admin delete dialog uses overlay, elevation, and entry animation tokens (1.4s)
+  ✓  408 [chromium-authenticated] › tests/ui-quality-works-grid-balance.spec.ts:3:5 › VA-130 works archive keeps four cards aligned on the first desktop row (1.0s)
+  ✓  409 [chromium-authenticated] › tests/ui-quality-z-index.spec.ts:5:5 › VA-033 theme toggle is direct and does not open obsolete dropdown chrome (1.9s)
+  ✓  410 [chromium-authenticated] › tests/ui-quality-z-index.spec.ts:21:5 › VA-033 dialogs render above dropdown layering (1.6s)
+  ✓  411 [chromium-authenticated] › tests/work-green-video-thumbnail.spec.ts:6:5 › uploaded green-only mp4 generates and persists an automatic thumbnail (2.6s)
+  ✓  412 [chromium-authenticated] › tests/work-green-video-thumbnail.spec.ts:31:5 › uploaded green-only mp4 thumbnail is green at the pixel level (2.5s)
+  ✓  413 [chromium-authenticated] › tests/work-inline-create-flow.spec.ts:9:5 › public works inline create saves in place and closes after a text-only create (2.0s)
+  ✓  414 [chromium-authenticated] › tests/work-inline-create-flow.spec.ts:31:5 › public works inline create with staged videos stays on /works and refreshes the list (2.6s)
+  ✓  415 [chromium-authenticated] › tests/work-inline-create-flow.spec.ts:58:5 › existing work video uploads persist thumbnails immediately without requiring Update Work (2.7s)
+  ✓  416 [chromium-authenticated] › tests/work-inline-redirects.spec.ts:9:5 › public works inline create returns to the first works page after save (2.2s)
+  ✓  417 [chromium-authenticated] › tests/work-inline-redirects.spec.ts:31:5 › public work detail inline edit returns the user to the originating works page after save (2.6s)
+  ✓  418 [chromium-authenticated] › tests/work-inline-redirects.spec.ts:53:5 › public work detail video-only edits enable Update Work without requiring body changes (3.8s)
+  ✓  419 [chromium-authenticated] › tests/work-single-delete-ux.spec.ts:6:5 › single work delete uses the in-app dialog and removes the row (3.7s)
+  ✓  420 [chromium-authenticated] › tests/work-single-delete-ux.spec.ts:38:5 › single work delete failure keeps the row visible and allows retry (2.6s)
+(node:71525) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:71525) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  421 [chromium-runtime-auth] › tests/admin-auth-authorization.spec.ts:5:5 › non-admin local login attempts are rejected before admin access is granted (1.2s)
+  ✓  422 [chromium-runtime-auth] › tests/auth-security-browser.spec.ts:5:5 › browser mutation flow requires csrf token and succeeds with one (2.2s)
+  ✓  423 [chromium-runtime-auth] › tests/auth-security-browser.spec.ts:44:5 › browser auth flow avoids storage tokens and logout works with csrf (1.3s)
+  ✓  424 [chromium-runtime-auth] › tests/public-admin-affordances.spec.ts:11:5 › login page reflects the expected local admin shortcut policy (1.1s)
+  ✓  425 [chromium-runtime-auth] › tests/public-admin-affordances.spec.ts:22:5 › admin session keeps public page and list edit affordances without navbar account controls (5.2s)
+  ✓  426 [chromium-runtime-auth] › tests/public-admin-affordances.spec.ts:39:5 › admin session keeps public detail edit affordances without exposing delete outside the editor shell (4.1s)
+  ✓  427 [chromium-runtime-auth] › tests/public-admin-affordances.spec.ts:51:5 › signed-in public navbar omits account, admin, logout, and login controls (793ms)
+  ✘  428 [chromium-runtime-auth] › tests/public-admin-affordances.spec.ts:64:5 › mobile public drawer omits account, admin, logout, and login controls (6.2s)
+(node:74378) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:74378) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  429 [chromium-runtime-auth] › tests/public-admin-affordances.spec.ts:79:5 › unauthenticated visitors do not see public edit or create affordances (5.5s)
+  ✓  430 [chromium-runtime-auth] › tests/public-admin-affordances.spec.ts:98:5 › non-admin signed-in visitors do not see public edit or create affordances (5.5s)
+  ✓  431 [chromium-runtime-auth] › tests/test-server-runtime.spec.ts:4:5 › managed test server exposes proxied auth session and local admin bootstrap (2.4s)
+  ✓  432 [chromium-runtime-auth] › tests/test-server-runtime.spec.ts:28:5 › authenticated admin visiting login is redirected to the safe returnUrl target (2.0s)
+  ✓  433 [chromium-runtime-auth] › tests/ui-header-overlays.spec.ts:21:5 › theme toggle changes theme directly without opening an overlay (1.2s)
+  ✓  434 [chromium-runtime-auth] › tests/ui-header-overlays.spec.ts:37:5 › signed-in public header has no account overlay trigger (1.7s)
+
+
+  1) [chromium-public] › tests/public-detail-toc-fallback.spec.ts:6:5 › blog detail keeps TOC card visible with fallback copy when headings are missing 
+
+    Error: Error reading storage state from test-results/playwright/admin-storage-state.json:
+    ENOENT: no such file or directory, open 'test-results/playwright/admin-storage-state.json'
+
+    attachment #1: e2e-latency.json (application/json) ─────────────────────────────────────────────
+    test-results/playwright/public-detail-toc-fallback-c721b-y-when-headings-are-missing-chromium-public/attachments/e2e-latency-json-d0fdc59c5cdbd8c801198cffcf9b4e49a86c5fb9.json
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/playwright/public-detail-toc-fallback-c721b-y-when-headings-are-missing-chromium-public/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/playwright/public-detail-toc-fallback-c721b-y-when-headings-are-missing-chromium-public/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium-public] › tests/ui-improvement-featured-works-grid.spec.ts:141:5 › Works cards do not overflow on mobile with long unbroken content 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBeLessThanOrEqual[2m([22m[32mexpected[39m[2m)[22m
+
+    Expected: <= [32m321[39m
+    Received:    [31m330[39m
+
+      190 |     })
+      191 |
+    > 192 |     expect(metrics.documentWidth).toBeLessThanOrEqual(metrics.viewportWidth + 1)
+          |                                   ^
+      193 |     expect(metrics.sectionRight).toBeLessThanOrEqual(metrics.navRight + 1)
+      194 |     expect(metrics.gridRight).toBeLessThanOrEqual(metrics.navRight + 1)
+      195 |     expect(metrics.cardLeft).toBeGreaterThanOrEqual(metrics.navLeft - 1)
+        at /mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-improvement-featured-works-grid.spec.ts:192:35
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/playwright/ui-improvement-featured-wo-972ed--with-long-unbroken-content-chromium-public/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: e2e-latency.json (application/json) ─────────────────────────────────────────────
+    test-results/playwright/ui-improvement-featured-wo-972ed--with-long-unbroken-content-chromium-public/attachments/e2e-latency-json-ffca58a732e0728dd644decaba748c9ccf9e9d1a.json
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #3: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/playwright/ui-improvement-featured-wo-972ed--with-long-unbroken-content-chromium-public/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/playwright/ui-improvement-featured-wo-972ed--with-long-unbroken-content-chromium-public/error-context.md
+
+    attachment #5: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/playwright/ui-improvement-featured-wo-972ed--with-long-unbroken-content-chromium-public/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/playwright/ui-improvement-featured-wo-972ed--with-long-unbroken-content-chromium-public/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) [chromium-public] › tests/ui-improvement-featured-works-grid.spec.ts:200:5 › Works card width stays stable when mobile viewport height is extremely short 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBeLessThanOrEqual[2m([22m[32mexpected[39m[2m)[22m
+
+    Expected: <= [32m321[39m
+    Received:    [31m330[39m
+
+      246 |     const shortHeight = await measureWithHeight(width, width === 320 ? 240 : 260)
+      247 |
+    > 248 |     expect(shortHeight.documentWidth).toBeLessThanOrEqual(shortHeight.viewportWidth + 1)
+          |                                       ^
+      249 |     expect(shortHeight.cardRight).toBeLessThanOrEqual(shortHeight.navRight + 1)
+      250 |     expect(shortHeight.gridTemplateColumns).toBe(normalHeight.gridTemplateColumns)
+      251 |     expect(Math.abs(shortHeight.cardWidth - normalHeight.cardWidth)).toBeLessThanOrEqual(1)
+        at /mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-improvement-featured-works-grid.spec.ts:248:39
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/playwright/ui-improvement-featured-wo-63252-t-height-is-extremely-short-chromium-public/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: e2e-latency.json (application/json) ─────────────────────────────────────────────
+    test-results/playwright/ui-improvement-featured-wo-63252-t-height-is-extremely-short-chromium-public/attachments/e2e-latency-json-47121bafa3a89a50e7660cb3aaaf33dfc9e77aaf.json
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #3: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/playwright/ui-improvement-featured-wo-63252-t-height-is-extremely-short-chromium-public/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/playwright/ui-improvement-featured-wo-63252-t-height-is-extremely-short-chromium-public/error-context.md
+
+    attachment #5: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/playwright/ui-improvement-featured-wo-63252-t-height-is-extremely-short-chromium-public/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/playwright/ui-improvement-featured-wo-63252-t-height-is-extremely-short-chromium-public/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) [chromium-authenticated] › tests/admin-blog-ai-dialog.spec.ts:29:5 › blog AI fix dialog loads runtime config, applies a fixed draft, and keeps editing local 
+
+    Error: locator.dispatchEvent: Error: strict mode violation: locator('[data-slot="dialog-content"]').getByRole('button', { name: 'Start AI Fix' }) resolved to 2 elements:
+        1) <button data-size="sm" data-slot="button" data-variant="default" class="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-prim…>…</button> aka getByRole('button', { name: 'Start AI Fix', exact: true })
+        2) <button data-slot="button" data-size="default" data-variant="default" aria-label="Start AI Fix from preview" class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invali…>Start AI Fix</button> aka getByRole('button', { name: 'Start AI Fix from preview' })
+
+    Call log:
+    [2m  - waiting for locator('[data-slot="dialog-content"]').getByRole('button', { name: 'Start AI Fix' })[22m
+
+
+      72 |   await Promise.all([
+      73 |     page.waitForResponse((res) => res.url().includes('/api/admin/ai/blog-fix') && res.request().method() === 'POST' && res.ok()),
+    > 74 |     page.locator('[data-slot="dialog-content"]').getByRole('button', { name: 'Start AI Fix' }).dispatchEvent('click'),
+         |                                                                                                ^
+      75 |   ])
+      76 |
+      77 |   const dialogContent = page.locator('[data-slot="dialog-content"]')
+        at /mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/admin-blog-ai-dialog.spec.ts:74:96
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/playwright/admin-blog-ai-dialog-blog--659ce-aft-and-keeps-editing-local-chromium-authenticated/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: e2e-latency.json (application/json) ─────────────────────────────────────────────
+    test-results/playwright/admin-blog-ai-dialog-blog--659ce-aft-and-keeps-editing-local-chromium-authenticated/attachments/e2e-latency-json-57e75d821ba0f9fe017edc0c5071973a77e47733.json
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #3: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/playwright/admin-blog-ai-dialog-blog--659ce-aft-and-keeps-editing-local-chromium-authenticated/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/playwright/admin-blog-ai-dialog-blog--659ce-aft-and-keeps-editing-local-chromium-authenticated/error-context.md
+
+    attachment #5: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/playwright/admin-blog-ai-dialog-blog--659ce-aft-and-keeps-editing-local-chromium-authenticated/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/playwright/admin-blog-ai-dialog-blog--659ce-aft-and-keeps-editing-local-chromium-authenticated/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  5) [chromium-authenticated] › tests/admin-blog-ai-dialog.spec.ts:90:5 › blog AI fix failure preserves the draft and can retry with mocked routes 
+
+    Error: locator.dispatchEvent: Error: strict mode violation: locator('[data-slot="dialog-content"]').getByRole('button', { name: 'Start AI Fix' }) resolved to 2 elements:
+        1) <button data-size="sm" data-slot="button" data-variant="default" class="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-prim…>…</button> aka getByRole('button', { name: 'Start AI Fix', exact: true })
+        2) <button data-slot="button" data-size="default" data-variant="default" aria-label="Start AI Fix from preview" class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invali…>Start AI Fix</button> aka getByRole('button', { name: 'Start AI Fix from preview' })
+
+    Call log:
+    [2m  - waiting for locator('[data-slot="dialog-content"]').getByRole('button', { name: 'Start AI Fix' })[22m
+
+
+      133 |   await Promise.all([
+      134 |     page.waitForResponse((res) => res.url().includes('/api/admin/ai/blog-fix') && res.request().method() === 'POST' && res.status() === 504),
+    > 135 |     dialogContent.getByRole('button', { name: 'Start AI Fix' }).dispatchEvent('click'),
+          |                                                                 ^
+      136 |   ])
+      137 |
+      138 |   await expect(page.getByText('AI fix timed out while waiting for the backend response. Please retry.')).toBeVisible()
+        at /mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/admin-blog-ai-dialog.spec.ts:135:65
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/playwright/admin-blog-ai-dialog-blog--e0fc6-an-retry-with-mocked-routes-chromium-authenticated/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: e2e-latency.json (application/json) ─────────────────────────────────────────────
+    test-results/playwright/admin-blog-ai-dialog-blog--e0fc6-an-retry-with-mocked-routes-chromium-authenticated/attachments/e2e-latency-json-44a13eaa9a19bcb9f7556620a61d71fe71ce90ef.json
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #3: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/playwright/admin-blog-ai-dialog-blog--e0fc6-an-retry-with-mocked-routes-chromium-authenticated/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/playwright/admin-blog-ai-dialog-blog--e0fc6-an-retry-with-mocked-routes-chromium-authenticated/error-context.md
+
+    attachment #5: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/playwright/admin-blog-ai-dialog-blog--e0fc6-an-retry-with-mocked-routes-chromium-authenticated/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/playwright/admin-blog-ai-dialog-blog--e0fc6-an-retry-with-mocked-routes-chromium-authenticated/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  6) [chromium-authenticated] › tests/admin-blog-ai-dialog.spec.ts:156:5 › work AI enrich uses mocked failure and success responses without live AI 
+
+    Error: locator.dispatchEvent: Error: strict mode violation: locator('[data-slot="dialog-content"]').getByRole('button', { name: 'Start AI Fix' }) resolved to 2 elements:
+        1) <button data-size="sm" data-slot="button" data-variant="default" class="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-prim…>…</button> aka getByRole('button', { name: 'Start AI Fix', exact: true })
+        2) <button data-slot="button" data-size="default" data-variant="default" aria-label="Start AI Fix from preview" class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invali…>Start AI Fix</button> aka getByRole('button', { name: 'Start AI Fix from preview' })
+
+    Call log:
+    [2m  - waiting for locator('[data-slot="dialog-content"]').getByRole('button', { name: 'Start AI Fix' })[22m
+
+
+      201 |   await Promise.all([
+      202 |     page.waitForResponse((res) => res.url().includes('/api/admin/ai/work-enrich') && res.request().method() === 'POST' && res.status() === 500),
+    > 203 |     dialogContent.getByRole('button', { name: 'Start AI Fix' }).dispatchEvent('click'),
+          |                                                                 ^
+      204 |   ])
+      205 |
+      206 |   await expect(page.getByText('Mocked work enrich failure')).toBeVisible()
+        at /mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/admin-blog-ai-dialog.spec.ts:203:65
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/playwright/admin-blog-ai-dialog-work--86979-s-responses-without-live-AI-chromium-authenticated/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: e2e-latency.json (application/json) ─────────────────────────────────────────────
+    test-results/playwright/admin-blog-ai-dialog-work--86979-s-responses-without-live-AI-chromium-authenticated/attachments/e2e-latency-json-85bbba21e325e3d063bcd0cd62b0e46ff2f89bb5.json
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #3: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/playwright/admin-blog-ai-dialog-work--86979-s-responses-without-live-AI-chromium-authenticated/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/playwright/admin-blog-ai-dialog-work--86979-s-responses-without-live-AI-chromium-authenticated/error-context.md
+
+    attachment #5: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/playwright/admin-blog-ai-dialog-work--86979-s-responses-without-live-AI-chromium-authenticated/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/playwright/admin-blog-ai-dialog-work--86979-s-responses-without-live-AI-chromium-authenticated/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  7) [chromium-authenticated] › tests/admin-search-pagination.spec.ts:344:5 › admin search ignores punctuation, spacing, and case without resetting typed input 
+
+    Error: Error reading storage state from test-results/playwright/admin-storage-state.json:
+    ENOENT: no such file or directory, open 'test-results/playwright/admin-storage-state.json'
+
+    attachment #1: e2e-latency.json (application/json) ─────────────────────────────────────────────
+    test-results/playwright/admin-search-pagination-ad-a6135-thout-resetting-typed-input-chromium-authenticated/attachments/e2e-latency-json-6d16d4ddb4cfb14d4dddb5ee5019fa0b12170145.json
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/playwright/admin-search-pagination-ad-a6135-thout-resetting-typed-input-chromium-authenticated/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/playwright/admin-search-pagination-ad-a6135-thout-resetting-typed-input-chromium-authenticated/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  8) [chromium-authenticated] › tests/admin-work-special-input.spec.ts:6:5 › work editor accepts Korean and punctuation-heavy input and publishes publicly 
+
+    Error: Error reading storage state from test-results/playwright/admin-storage-state.json:
+    ENOENT: no such file or directory, open 'test-results/playwright/admin-storage-state.json'
+
+    attachment #1: e2e-latency.json (application/json) ─────────────────────────────────────────────
+    test-results/playwright/admin-work-special-input-w-a160e-nput-and-publishes-publicly-chromium-authenticated/attachments/e2e-latency-json-39f977540c330653754d929d497fe2f65c821974.json
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/playwright/admin-work-special-input-w-a160e-nput-and-publishes-publicly-chromium-authenticated/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/playwright/admin-work-special-input-w-a160e-nput-and-publishes-publicly-chromium-authenticated/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  9) [chromium-authenticated] › tests/dark-mode.spec.ts:446:7 › login and admin dark mode › DM-14: admin dashboard uses dark cards and surfaces 
+
+    Error: Error reading storage state from test-results/playwright/admin-storage-state.json:
+    ENOENT: no such file or directory, open 'test-results/playwright/admin-storage-state.json'
+
+    attachment #1: e2e-latency.json (application/json) ─────────────────────────────────────────────
+    test-results/playwright/dark-mode-login-and-admin--bcfe0-ses-dark-cards-and-surfaces-chromium-authenticated/attachments/e2e-latency-json-36be1e7838ff8b9e6399a1370abd9bafa3984129.json
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/playwright/dark-mode-login-and-admin--bcfe0-ses-dark-cards-and-surfaces-chromium-authenticated/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/playwright/dark-mode-login-and-admin--bcfe0-ses-dark-cards-and-surfaces-chromium-authenticated/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  10) [chromium-authenticated] › tests/ui-admin-keyboard-accessibility.spec.ts:45:5 › mobile admin navigation exposes a labeled nav and supports sequential keyboard focus 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeFocused[2m([22m[2m)[22m failed
+
+    Locator:  getByRole('navigation', { name: 'Admin navigation' }).getByRole('link', { name: 'Works', exact: true })
+    Expected: focused
+    Received: inactive
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toBeFocused" with timeout 5000ms[22m
+    [2m  - waiting for getByRole('navigation', { name: 'Admin navigation' }).getByRole('link', { name: 'Works', exact: true })[22m
+    [2m    9 × locator resolved to <a data-slot="button" data-size="default" href="/admin/works" data-variant="ghost" class="inline-flex items-center whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive…>…</a>[22m
+    [2m      - unexpected value "inactive"[22m
+
+
+      56 |   for (const name of orderedLinks) {
+      57 |     const link = nav.getByRole('link', { name, exact: true })
+    > 58 |     await expect(link).toBeFocused()
+         |                        ^
+      59 |
+      60 |     if (name !== orderedLinks[orderedLinks.length - 1]) {
+      61 |       await page.keyboard.press('Tab')
+        at /mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-keyboard-accessibility.spec.ts:58:24
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/playwright/ui-admin-keyboard-accessib-a3b97-s-sequential-keyboard-focus-chromium-authenticated/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: e2e-latency.json (application/json) ─────────────────────────────────────────────
+    test-results/playwright/ui-admin-keyboard-accessib-a3b97-s-sequential-keyboard-focus-chromium-authenticated/attachments/e2e-latency-json-de825a886d4f54e5265dc9f7813f2f1ca8e1e911.json
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #3: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/playwright/ui-admin-keyboard-accessib-a3b97-s-sequential-keyboard-focus-chromium-authenticated/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/playwright/ui-admin-keyboard-accessib-a3b97-s-sequential-keyboard-focus-chromium-authenticated/error-context.md
+
+    attachment #5: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/playwright/ui-admin-keyboard-accessib-a3b97-s-sequential-keyboard-focus-chromium-authenticated/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/playwright/ui-admin-keyboard-accessib-a3b97-s-sequential-keyboard-focus-chromium-authenticated/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  11) [chromium-authenticated] › tests/ui-admin-keyboard-accessibility.spec.ts:66:5 › AI content dialog opens and closes by keyboard without invoking live AI 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('[data-slot="dialog-content"]').getByRole('button', { name: 'Start AI Fix' })
+    Expected: visible
+    Error: strict mode violation: locator('[data-slot="dialog-content"]').getByRole('button', { name: 'Start AI Fix' }) resolved to 2 elements:
+        1) <button data-size="sm" data-slot="button" data-variant="default" class="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-prim…>…</button> aka getByRole('button', { name: 'Start AI Fix', exact: true })
+        2) <button data-slot="button" data-size="default" data-variant="default" aria-label="Start AI Fix from preview" class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invali…>Start AI Fix</button> aka getByRole('button', { name: 'Start AI Fix from preview' })
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('[data-slot="dialog-content"]').getByRole('button', { name: 'Start AI Fix' })[22m
+
+
+      82 |   await expect(dialog).toBeVisible()
+      83 |   await expect.poll(() => activeElementState(page)).toMatchObject({ inDialog: true })
+    > 84 |   await expect(page.locator('[data-slot="dialog-content"]').getByRole('button', { name: 'Start AI Fix' })).toBeVisible()
+         |                                                                                                            ^
+      85 |
+      86 |   await page.keyboard.press('Escape')
+      87 |   await expect(dialog).toBeHidden()
+        at /mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-keyboard-accessibility.spec.ts:84:108
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/playwright/ui-admin-keyboard-accessib-cbf5a-rd-without-invoking-live-AI-chromium-authenticated/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: e2e-latency.json (application/json) ─────────────────────────────────────────────
+    test-results/playwright/ui-admin-keyboard-accessib-cbf5a-rd-without-invoking-live-AI-chromium-authenticated/attachments/e2e-latency-json-66701743d7d0dc3601dbc2dabc5fb196c6a6217a.json
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #3: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/playwright/ui-admin-keyboard-accessib-cbf5a-rd-without-invoking-live-AI-chromium-authenticated/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/playwright/ui-admin-keyboard-accessib-cbf5a-rd-without-invoking-live-AI-chromium-authenticated/error-context.md
+
+    attachment #5: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/playwright/ui-admin-keyboard-accessib-cbf5a-rd-without-invoking-live-AI-chromium-authenticated/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/playwright/ui-admin-keyboard-accessib-cbf5a-rd-without-invoking-live-AI-chromium-authenticated/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  12) [chromium-authenticated] › tests/ui-quality-layout-rhythm.spec.ts:7:5 › VA-022 home sections keep a consistent vertical rhythm 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBeLessThanOrEqual[2m([22m[32mexpected[39m[2m)[22m
+
+    Expected: <= [32m16[39m
+    Received:    [31m16.909393310546875[39m
+
+      26 |   const baseline = gaps[0]
+      27 |   for (const gap of gaps.slice(1)) {
+    > 28 |     expect(Math.abs(gap - baseline)).toBeLessThanOrEqual(16)
+         |                                      ^
+      29 |   }
+      30 | })
+      31 |
+        at /mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-quality-layout-rhythm.spec.ts:28:38
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/playwright/ui-quality-layout-rhythm-V-1c514--consistent-vertical-rhythm-chromium-authenticated/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: e2e-latency.json (application/json) ─────────────────────────────────────────────
+    test-results/playwright/ui-quality-layout-rhythm-V-1c514--consistent-vertical-rhythm-chromium-authenticated/attachments/e2e-latency-json-e03527212af881ce96d3b44224993afbb9a74eec.json
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #3: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/playwright/ui-quality-layout-rhythm-V-1c514--consistent-vertical-rhythm-chromium-authenticated/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/playwright/ui-quality-layout-rhythm-V-1c514--consistent-vertical-rhythm-chromium-authenticated/error-context.md
+
+    attachment #5: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/playwright/ui-quality-layout-rhythm-V-1c514--consistent-vertical-rhythm-chromium-authenticated/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/playwright/ui-quality-layout-rhythm-V-1c514--consistent-vertical-rhythm-chromium-authenticated/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  13) [chromium-authenticated] › tests/ui-quality-visual-metrics.spec.ts:61:5 › VA-305 public pagination keeps minimum touch targets and a differentiated active state 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBeGreaterThanOrEqual[2m([22m[32mexpected[39m[2m)[22m
+
+    Expected: >= [32m30[39m
+    Received:    [31m0[39m
+
+      77 |   })
+      78 |
+    > 79 |   expect(metrics.height).toBeGreaterThanOrEqual(30)
+         |                          ^
+      80 |   expect(metrics.backgroundColor).not.toBe('rgba(0, 0, 0, 0)')
+      81 | })
+      82 |
+        at /mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-quality-visual-metrics.spec.ts:79:26
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/playwright/ui-quality-visual-metrics--42c0d-differentiated-active-state-chromium-authenticated/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: e2e-latency.json (application/json) ─────────────────────────────────────────────
+    test-results/playwright/ui-quality-visual-metrics--42c0d-differentiated-active-state-chromium-authenticated/attachments/e2e-latency-json-cd861481b7ae94489513c8f937382d8b51655e04.json
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #3: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/playwright/ui-quality-visual-metrics--42c0d-differentiated-active-state-chromium-authenticated/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/playwright/ui-quality-visual-metrics--42c0d-differentiated-active-state-chromium-authenticated/error-context.md
+
+    attachment #5: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/playwright/ui-quality-visual-metrics--42c0d-differentiated-active-state-chromium-authenticated/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/playwright/ui-quality-visual-metrics--42c0d-differentiated-active-state-chromium-authenticated/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  14) [chromium-runtime-auth] › tests/public-admin-affordances.spec.ts:64:5 › mobile public drawer omits account, admin, logout, and login controls 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: getByRole('dialog')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for getByRole('dialog')[22m
+
+
+      68 |
+      69 |   const drawer = page.getByRole('dialog')
+    > 70 |   await expect(drawer).toBeVisible()
+         |                        ^
+      71 |   await expect(drawer.getByText('Account')).toHaveCount(0)
+      72 |   await expect(drawer.getByRole('link', { name: 'My Page' })).toHaveCount(0)
+      73 |   await expect(drawer.getByRole('link', { name: 'Admin Page' })).toHaveCount(0)
+        at /mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/public-admin-affordances.spec.ts:70:24
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/playwright/public-admin-affordances-m-4e4d8-n-logout-and-login-controls-chromium-runtime-auth/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: e2e-latency.json (application/json) ─────────────────────────────────────────────
+    test-results/playwright/public-admin-affordances-m-4e4d8-n-logout-and-login-controls-chromium-runtime-auth/attachments/e2e-latency-json-739d426514630af944b3d1fa06f6797a6f8c4948.json
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #3: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/playwright/public-admin-affordances-m-4e4d8-n-logout-and-login-controls-chromium-runtime-auth/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/playwright/public-admin-affordances-m-4e4d8-n-logout-and-login-controls-chromium-runtime-auth/error-context.md
+
+    attachment #5: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/playwright/public-admin-affordances-m-4e4d8-n-logout-and-login-controls-chromium-runtime-auth/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/playwright/public-admin-affordances-m-4e4d8-n-logout-and-login-controls-chromium-runtime-auth/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  14 failed
+    [chromium-public] › tests/public-detail-toc-fallback.spec.ts:6:5 › blog detail keeps TOC card visible with fallback copy when headings are missing 
+    [chromium-public] › tests/ui-improvement-featured-works-grid.spec.ts:141:5 › Works cards do not overflow on mobile with long unbroken content 
+    [chromium-public] › tests/ui-improvement-featured-works-grid.spec.ts:200:5 › Works card width stays stable when mobile viewport height is extremely short 
+    [chromium-authenticated] › tests/admin-blog-ai-dialog.spec.ts:29:5 › blog AI fix dialog loads runtime config, applies a fixed draft, and keeps editing local 
+    [chromium-authenticated] › tests/admin-blog-ai-dialog.spec.ts:90:5 › blog AI fix failure preserves the draft and can retry with mocked routes 
+    [chromium-authenticated] › tests/admin-blog-ai-dialog.spec.ts:156:5 › work AI enrich uses mocked failure and success responses without live AI 
+    [chromium-authenticated] › tests/admin-search-pagination.spec.ts:344:5 › admin search ignores punctuation, spacing, and case without resetting typed input 
+    [chromium-authenticated] › tests/admin-work-special-input.spec.ts:6:5 › work editor accepts Korean and punctuation-heavy input and publishes publicly 
+    [chromium-authenticated] › tests/dark-mode.spec.ts:446:7 › login and admin dark mode › DM-14: admin dashboard uses dark cards and surfaces 
+    [chromium-authenticated] › tests/ui-admin-keyboard-accessibility.spec.ts:45:5 › mobile admin navigation exposes a labeled nav and supports sequential keyboard focus 
+    [chromium-authenticated] › tests/ui-admin-keyboard-accessibility.spec.ts:66:5 › AI content dialog opens and closes by keyboard without invoking live AI 
+    [chromium-authenticated] › tests/ui-quality-layout-rhythm.spec.ts:7:5 › VA-022 home sections keep a consistent vertical rhythm 
+    [chromium-authenticated] › tests/ui-quality-visual-metrics.spec.ts:61:5 › VA-305 public pagination keeps minimum touch targets and a differentiated active state 
+    [chromium-runtime-auth] › tests/public-admin-affordances.spec.ts:64:5 › mobile public drawer omits account, admin, logout, and login controls 
+  4 skipped
+  416 passed (19.3m)
+Wrote test-results/playwright/e2e-latency-summary.json
+Wrote test-results/playwright/e2e-latency-summary.md
+Latency artifacts: 384, budget failures: 1, warnings: 39
+[RUN] exit 1 at 2026-05-04T16:15:13Z

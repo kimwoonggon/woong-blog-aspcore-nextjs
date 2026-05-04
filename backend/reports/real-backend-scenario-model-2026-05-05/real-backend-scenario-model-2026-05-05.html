@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Real Backend Scenario Model Audit - 2026-05-05</title>
+  <style>
+    body { font-family: system-ui, sans-serif; line-height: 1.5; max-width: 920px; margin: 32px auto; padding: 0 20px; color: #1f2937; }
+    h1, h2 { color: #111827; }
+    code { background: #f3f4f6; padding: 2px 4px; border-radius: 4px; }
+    li { margin: 6px 0; }
+  </style>
+</head>
+<body>
+  <h1>Real Backend Scenario Model Audit - 2026-05-05</h1>
+  <h2>Summary</h2>
+  <p>The Real Backend Test now uses scenario-specific k6 controls instead of implying the Browser Test user/concurrency model applies directly.</p>
+  <ul>
+    <li>RPS uses Target RPS, duration, and Max VUs cap.</li>
+    <li>Spike uses Base RPS, Peak RPS, duration, and Max VUs cap.</li>
+    <li>Soak uses VUs and duration.</li>
+    <li>Stress uses Start VUs, Max VUs, and duration.</li>
+    <li>Running all-zero k6 snapshots show <code>summary pending</code>.</li>
+  </ul>
+  <h2>Validation</h2>
+  <ul>
+    <li>Vitest focused dashboard suite passed 24/24.</li>
+    <li>RealLoadTestControlPlane integration tests passed 4/4.</li>
+    <li>Typecheck passed.</li>
+    <li>Lint passed with six existing unrelated warnings.</li>
+    <li>Docker dev stack built and started with <code>BACKEND_PUBLISH_PORT=18080</code>.</li>
+    <li>Admin load-test Playwright spec passed 2/2.</li>
+    <li>Live k6 smoke completed with 29 requests, 0 failed requests, and two target metric rows.</li>
+    <li>Backend solution tests passed all non-skipped suites.</li>
+  </ul>
+  <h2>Risks</h2>
+  <ul>
+    <li>k6 metrics remain completion-summary based, not live streamed.</li>
+    <li>Full e2e and branch promotion remain pending.</li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Keep the correction and run a fresh full e2e suite before pushing <code>dev</code> or promoting to <code>main</code>.</p>
+</body>
+</html>

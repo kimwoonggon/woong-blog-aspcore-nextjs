@@ -1,0 +1,1354 @@
+{
+  "generatedAt": "2026-05-04T16:15:13.044Z",
+  "testCount": 384,
+  "budgetFailureCount": 1,
+  "warningCount": 39,
+  "slowestTests": [
+    {
+      "title": "switching documents in notion view keeps the editor visible while changing the active document",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-client-switch.spec.ts",
+      "projectName": "chromium-authenticated",
+      "durationMs": 13460.27,
+      "status": "passed"
+    },
+    {
+      "title": "selected notion document persists after reload via url state",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-client-switch.spec.ts",
+      "projectName": "chromium-authenticated",
+      "durationMs": 11705.48,
+      "status": "passed"
+    },
+    {
+      "title": "blog notion view supports list selection and content autosave",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/admin-blog-edit.spec.ts",
+      "projectName": "chromium-authenticated",
+      "durationMs": 11094.46,
+      "status": "passed"
+    },
+    {
+      "title": "VA-005 success, warning, and error states keep distinct semantic color treatments",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-semantic-colors.spec.ts",
+      "projectName": "chromium-authenticated",
+      "durationMs": 9611.6,
+      "status": "passed"
+    },
+    {
+      "title": "admin can toggle a published blog post back to draft and publish it again",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/admin-blog-publish.spec.ts",
+      "projectName": "chromium-authenticated",
+      "durationMs": 9496.19,
+      "status": "passed"
+    },
+    {
+      "title": "AF-042 autosave revalidation is throttled while explicit metadata save revalidates immediately",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-autosave-info.spec.ts",
+      "projectName": "chromium-authenticated",
+      "durationMs": 9434.79,
+      "status": "passed"
+    },
+    {
+      "title": "E2E-007 dark mode stays coherent across the main public journey",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/e2e-dark-mode-journey.spec.ts",
+      "projectName": "chromium-public",
+      "durationMs": 8285.91,
+      "status": "passed"
+    },
+    {
+      "title": "clearing search restores the full notion document list",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-library-search.spec.ts",
+      "projectName": "chromium-authenticated",
+      "durationMs": 7399.55,
+      "status": "passed"
+    },
+    {
+      "title": "public blog and work pages stay stable when mermaid content exists",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/admin-mermaid-public-independence.spec.ts",
+      "projectName": "chromium-authenticated",
+      "durationMs": 7205.05,
+      "status": "passed"
+    },
+    {
+      "title": "admin can keep a blog post as draft and publish it later",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/admin-blog-publish.spec.ts",
+      "projectName": "chromium-authenticated",
+      "durationMs": 7109.22,
+      "status": "passed"
+    },
+    {
+      "title": "PF-043 public work detail keeps public video render order aligned with saved sort order",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/public-work-videos.spec.ts",
+      "projectName": "chromium-authenticated",
+      "durationMs": 7051.24,
+      "status": "passed"
+    },
+    {
+      "title": "admin can edit an existing blog post with mixed special input",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/admin-blog-edit.spec.ts",
+      "projectName": "chromium-authenticated",
+      "durationMs": 6943.47,
+      "status": "passed"
+    },
+    {
+      "title": "selecting a document closes the sheet and keeps editor visible",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-library-sheet.spec.ts",
+      "projectName": "chromium-authenticated",
+      "durationMs": 6817.68,
+      "status": "passed"
+    },
+    {
+      "title": "primary navbar routes to every public destination",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/home.spec.ts",
+      "projectName": "chromium-public",
+      "durationMs": 6811.38,
+      "status": "passed"
+    },
+    {
+      "title": "AF-042 autosave status waits for the autosave interval, then shows Saving and Saved after notion content changes",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-autosave-info.spec.ts",
+      "projectName": "chromium-authenticated",
+      "durationMs": 6620.89,
+      "status": "passed"
+    },
+    {
+      "title": "library search filters visible notion documents",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-library-search.spec.ts",
+      "projectName": "chromium-authenticated",
+      "durationMs": 6529.59,
+      "status": "passed"
+    },
+    {
+      "title": "VA-242 notion save-state chip changes visual treatment across saved and error states",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-visual-state.spec.ts",
+      "projectName": "chromium-authenticated",
+      "durationMs": 6419.54,
+      "status": "passed"
+    },
+    {
+      "title": "AF-042 autosave status shows Error when notion autosave fails",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-autosave-info.spec.ts",
+      "projectName": "chromium-authenticated",
+      "durationMs": 6124.99,
+      "status": "passed"
+    },
+    {
+      "title": "mobile admin navigation exposes a labeled nav and supports sequential keyboard focus",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-keyboard-accessibility.spec.ts",
+      "projectName": "chromium-authenticated",
+      "durationMs": 6034.18,
+      "status": "failed"
+    },
+    {
+      "title": "admin can create and publish a blog post that appears on public blog page",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/admin-blog-publish.spec.ts",
+      "projectName": "chromium-authenticated",
+      "durationMs": 5857.71,
+      "status": "passed"
+    }
+  ],
+  "slowestApiResponses": [
+    {
+      "url": "http://127.0.0.1:3000/api/admin/blogs/b3b2e981-9cd0-431f-b862-42a854752008",
+      "method": "PUT",
+      "status": 200,
+      "durationMs": 947.83,
+      "startedAt": "2026-05-04T16:08:18.305Z",
+      "source": "page",
+      "testTitle": "AF-042 autosave status waits for the autosave interval, then shows Saving and Saved after notion content changes",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-autosave-info.spec.ts"
+    },
+    {
+      "url": "http://127.0.0.1:3000/api/admin/blogs/70bdb2aa-ea2d-4ca1-a9d2-7a419fb6eecf",
+      "method": "PUT",
+      "status": 500,
+      "durationMs": 922.51,
+      "startedAt": "2026-05-04T16:08:34.677Z",
+      "source": "page",
+      "testTitle": "AF-042 autosave status shows Error when notion autosave fails",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-autosave-info.spec.ts"
+    },
+    {
+      "url": "http://127.0.0.1:3000/admin/dashboard",
+      "method": "GET",
+      "status": 200,
+      "durationMs": 873.65,
+      "startedAt": "2026-05-04T16:09:16.684Z",
+      "source": "request",
+      "testTitle": "mobile blog detail hides the table of contents",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-improvement-blog-toc.spec.ts"
+    },
+    {
+      "url": "http://127.0.0.1:3000/api/admin/site-settings",
+      "method": "PUT",
+      "durationMs": 628.69,
+      "startedAt": "2026-05-04T16:07:26.954Z",
+      "source": "page",
+      "testTitle": "response time: admin site settings save refreshes public home within budget",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/e2e-response-time.spec.ts"
+    },
+    {
+      "url": "http://127.0.0.1:3000/api/admin/site-settings",
+      "method": "PUT",
+      "status": 200,
+      "durationMs": 576.42,
+      "startedAt": "2026-05-04T16:07:26.954Z",
+      "source": "page",
+      "testTitle": "response time: admin site settings save refreshes public home within budget",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/e2e-response-time.spec.ts"
+    },
+    {
+      "url": "http://127.0.0.1:3000/api/admin/blogs",
+      "method": "POST",
+      "status": 200,
+      "durationMs": 527.01,
+      "startedAt": "2026-05-04T16:06:59.571Z",
+      "source": "request",
+      "testTitle": "blog delete uses an in-app dialog instead of browser confirm",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-delete-dialog.spec.ts"
+    },
+    {
+      "url": "http://127.0.0.1:3000/admin/dashboard",
+      "method": "GET",
+      "status": 200,
+      "durationMs": 478.94,
+      "startedAt": "2026-05-04T16:13:13.464Z",
+      "source": "request",
+      "testTitle": "admin can edit an existing blog post with mixed special input",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/admin-blog-edit.spec.ts"
+    },
+    {
+      "url": "http://127.0.0.1:3000/admin/dashboard",
+      "method": "GET",
+      "status": 200,
+      "durationMs": 416.97,
+      "startedAt": "2026-05-04T16:08:06.169Z",
+      "source": "request",
+      "testTitle": "blog detail TOC updates its active heading as the reader moves deeper into the article",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/public-blog-toc-active.spec.ts"
+    },
+    {
+      "url": "http://127.0.0.1:3000/admin/dashboard",
+      "method": "GET",
+      "status": 200,
+      "durationMs": 391.58,
+      "startedAt": "2026-05-04T16:13:20.276Z",
+      "source": "request",
+      "testTitle": "blog notion view supports list selection and content autosave",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/admin-blog-edit.spec.ts"
+    },
+    {
+      "url": "http://127.0.0.1:3000/api/public/works?page=1&pageSize=12&__loadTestRun=moreh0ma-qxnyv2&__loadTestUser=2&__loadTestRequest=1&__loadTestIteration=1",
+      "method": "GET",
+      "status": 200,
+      "durationMs": 352.78,
+      "startedAt": "2026-05-04T16:14:41.522Z",
+      "source": "page",
+      "testTitle": "admin can run a small Work and Study read load test",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/admin-load-test-dashboard.spec.ts"
+    },
+    {
+      "url": "http://127.0.0.1:3000/api/public/blogs?page=1&pageSize=12&__loadTestRun=moreh0ma-qxnyv2&__loadTestUser=2&__loadTestRequest=1&__loadTestIteration=1",
+      "method": "GET",
+      "status": 200,
+      "durationMs": 352.72,
+      "startedAt": "2026-05-04T16:14:42.231Z",
+      "source": "page",
+      "testTitle": "admin can run a small Work and Study read load test",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/admin-load-test-dashboard.spec.ts"
+    },
+    {
+      "url": "http://127.0.0.1:3000/api/public/works/custom-work-target?__loadTestRun=moreh0ma-qxnyv2&__loadTestUser=2&__loadTestRequest=1&__loadTestIteration=1",
+      "method": "GET",
+      "status": 200,
+      "durationMs": 352.71,
+      "startedAt": "2026-05-04T16:14:41.877Z",
+      "source": "page",
+      "testTitle": "admin can run a small Work and Study read load test",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/admin-load-test-dashboard.spec.ts"
+    },
+    {
+      "url": "http://127.0.0.1:3000/api/admin/blogs/25b3d59a-330b-4d75-a221-80774a4cdfac",
+      "method": "PUT",
+      "status": 500,
+      "durationMs": 348.33,
+      "startedAt": "2026-05-04T16:10:19.904Z",
+      "source": "page",
+      "testTitle": "VA-005 success, warning, and error states keep distinct semantic color treatments",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-semantic-colors.spec.ts"
+    },
+    {
+      "url": "http://127.0.0.1:3000/admin/dashboard",
+      "method": "GET",
+      "status": 200,
+      "durationMs": 341.38,
+      "startedAt": "2026-05-04T16:08:46.797Z",
+      "source": "request",
+      "testTitle": "work detail exposes a desktop table of contents that anchors into the article body",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/public-work-toc.spec.ts"
+    },
+    {
+      "url": "http://127.0.0.1:3000/admin/dashboard",
+      "method": "GET",
+      "status": 200,
+      "durationMs": 334.69,
+      "startedAt": "2026-05-04T16:11:13.537Z",
+      "source": "request",
+      "testTitle": "public detail headings reserve scroll margin under the sticky navbar",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-improvement-scroll-margin.spec.ts"
+    },
+    {
+      "url": "http://127.0.0.1:3000/api/auth/session",
+      "method": "GET",
+      "status": 200,
+      "durationMs": 325.83,
+      "startedAt": "2026-05-04T16:08:33.883Z",
+      "source": "page",
+      "testTitle": "AF-042 autosave status shows Error when notion autosave fails",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-autosave-info.spec.ts"
+    },
+    {
+      "url": "http://127.0.0.1:3000/api/admin/works/e64709fe-8698-4c23-a259-ffefc082b1c6/videos/hls-job",
+      "method": "POST",
+      "status": 200,
+      "durationMs": 322.88,
+      "startedAt": "2026-05-04T16:06:49.640Z",
+      "source": "page",
+      "testTitle": "PF-045 mobile public work detail disables timeline preview on touch devices",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/public-work-videos.spec.ts"
+    },
+    {
+      "url": "http://127.0.0.1:3000/admin/dashboard",
+      "method": "GET",
+      "status": 200,
+      "durationMs": 320.36,
+      "startedAt": "2026-05-04T16:09:14.817Z",
+      "source": "request",
+      "testTitle": "desktop blog detail renders a table of contents and anchors headings",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-improvement-blog-toc.spec.ts"
+    },
+    {
+      "url": "http://127.0.0.1:3000/revalidate-public",
+      "method": "POST",
+      "status": 200,
+      "durationMs": 316.38,
+      "startedAt": "2026-05-04T16:10:41.736Z",
+      "source": "page",
+      "testTitle": "admin blog list collapses extra tags into an overflow badge",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-table-polish.spec.ts"
+    },
+    {
+      "url": "https://www.youtube-nocookie.com/api/stats/qoe?cpn=r_OeUVsA0W7mmi7A&el=embedded&ns=yt&fexp=v1%2C24004644%2C27005591%2C53408%2C34656%2C106030%2C18644%2C117689%2C9252%2C3479%2C13030%2C6258%2C16948%2C35401%2C33147%2C1248%2C30906%2C15105%2C25059%2C4174%2C30446%2C13518%2C5188%2C21437%2C4571%2C11038%2C1978%2C16087%2C9404%2C23826%2C9500%2C1840%2C22474%2C1645%2C10126%2C11471%2C10930%2C2229%2C21520%2C10455%2C529%2C9706%2C14341%2C3305%2C894%2C460%2C952%2C2754%2C9842%2C2933%2C9350%2C2197%2C1626%2C8030%2C3571%2C7020%2C3426%2C1304%2C8445%2C4170%2C7181%2C8954%2C2549%2C1491%2C2704%2C1288%2C3222%2C2257%2C172%2C2411%2C1172%2C369%2C5444%2C2314%2C3342%2C3258&cl=907881858&seq=1&event=streamingstats&docid=dQw4w9WgXcQ&cbr=Chrome&cbrver=145.0.7632.6&c=WEB_EMBEDDED_PLAYER&cver=2.20260501.01.00&cplayer=UNIPLAYER&cos=Windows&cosver=10.0&cplatform=DESKTOP&vps=0.000:N,0.000:ER&cmt=0.000:0.000,0.000:0.000&error=0.000:auth::0.000:0;a6s.0;r.Video_unavailable&vis=0.000:0&bh=0.000:0.000&qclc=ChByX09lVVZzQTBXN21taTdBEAE",
+      "method": "POST",
+      "durationMs": 314.52,
+      "startedAt": "2026-05-04T16:06:40.911Z",
+      "source": "page",
+      "testTitle": "PF-043 public work detail keeps public video render order aligned with saved sort order",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/public-work-videos.spec.ts"
+    }
+  ],
+  "slowestInteractions": [
+    {
+      "name": "pointerdown",
+      "durationMs": 1880,
+      "startTimeMs": 2615.1,
+      "interactionId": 3657,
+      "source": "performance-observer",
+      "target": "[data-testid=\"notion-library-trigger\"]",
+      "testTitle": "library search filters visible notion documents",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-library-search.spec.ts"
+    },
+    {
+      "name": "mousedown",
+      "durationMs": 1880,
+      "startTimeMs": 2615.1,
+      "interactionId": 0,
+      "source": "performance-observer",
+      "target": "[data-testid=\"notion-library-trigger\"]",
+      "testTitle": "library search filters visible notion documents",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-library-search.spec.ts"
+    },
+    {
+      "name": "pointerup",
+      "durationMs": 1880,
+      "startTimeMs": 2615.3,
+      "interactionId": 3657,
+      "source": "performance-observer",
+      "target": "[data-testid=\"notion-library-trigger\"]",
+      "testTitle": "library search filters visible notion documents",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-library-search.spec.ts"
+    },
+    {
+      "name": "mouseup",
+      "durationMs": 1880,
+      "startTimeMs": 2615.3,
+      "interactionId": 0,
+      "source": "performance-observer",
+      "target": "[data-testid=\"notion-library-trigger\"]",
+      "testTitle": "library search filters visible notion documents",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-library-search.spec.ts"
+    },
+    {
+      "name": "click",
+      "durationMs": 1880,
+      "startTimeMs": 2615.3,
+      "interactionId": 3657,
+      "source": "performance-observer",
+      "target": "[data-testid=\"notion-library-trigger\"]",
+      "testTitle": "library search filters visible notion documents",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-library-search.spec.ts"
+    },
+    {
+      "name": "click",
+      "durationMs": 1828.7,
+      "startTimeMs": 2623.6,
+      "source": "raf",
+      "target": "[data-testid=\"notion-library-trigger\"]",
+      "testTitle": "library search filters visible notion documents",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-library-search.spec.ts"
+    },
+    {
+      "name": "pointerover",
+      "durationMs": 1744,
+      "startTimeMs": 2407.5,
+      "interactionId": 0,
+      "source": "performance-observer",
+      "target": "[data-testid=\"notion-library-trigger\"]",
+      "testTitle": "clearing search restores the full notion document list",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-library-search.spec.ts"
+    },
+    {
+      "name": "pointerenter",
+      "durationMs": 1744,
+      "startTimeMs": 2407.5,
+      "interactionId": 0,
+      "source": "performance-observer",
+      "testTitle": "clearing search restores the full notion document list",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-library-search.spec.ts"
+    },
+    {
+      "name": "pointerenter",
+      "durationMs": 1744,
+      "startTimeMs": 2407.5,
+      "interactionId": 0,
+      "source": "performance-observer",
+      "target": "html",
+      "testTitle": "clearing search restores the full notion document list",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-library-search.spec.ts"
+    },
+    {
+      "name": "pointerenter",
+      "durationMs": 1744,
+      "startTimeMs": 2407.5,
+      "interactionId": 0,
+      "source": "performance-observer",
+      "target": "body",
+      "testTitle": "clearing search restores the full notion document list",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-library-search.spec.ts"
+    },
+    {
+      "name": "pointerenter",
+      "durationMs": 1744,
+      "startTimeMs": 2407.5,
+      "interactionId": 0,
+      "source": "performance-observer",
+      "target": "div",
+      "testTitle": "clearing search restores the full notion document list",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-library-search.spec.ts"
+    },
+    {
+      "name": "pointerenter",
+      "durationMs": 1744,
+      "startTimeMs": 2407.5,
+      "interactionId": 0,
+      "source": "performance-observer",
+      "target": "main",
+      "testTitle": "clearing search restores the full notion document list",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-library-search.spec.ts"
+    },
+    {
+      "name": "pointerenter",
+      "durationMs": 1744,
+      "startTimeMs": 2407.5,
+      "interactionId": 0,
+      "source": "performance-observer",
+      "target": "div",
+      "testTitle": "clearing search restores the full notion document list",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-library-search.spec.ts"
+    },
+    {
+      "name": "pointerenter",
+      "durationMs": 1744,
+      "startTimeMs": 2407.5,
+      "interactionId": 0,
+      "source": "performance-observer",
+      "target": "div",
+      "testTitle": "clearing search restores the full notion document list",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-library-search.spec.ts"
+    },
+    {
+      "name": "pointerenter",
+      "durationMs": 1744,
+      "startTimeMs": 2407.5,
+      "interactionId": 0,
+      "source": "performance-observer",
+      "target": "div",
+      "testTitle": "clearing search restores the full notion document list",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-library-search.spec.ts"
+    },
+    {
+      "name": "pointerenter",
+      "durationMs": 1744,
+      "startTimeMs": 2407.5,
+      "interactionId": 0,
+      "source": "performance-observer",
+      "target": "[data-testid=\"notion-library-trigger\"]",
+      "testTitle": "clearing search restores the full notion document list",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-library-search.spec.ts"
+    },
+    {
+      "name": "mouseover",
+      "durationMs": 1744,
+      "startTimeMs": 2407.5,
+      "interactionId": 0,
+      "source": "performance-observer",
+      "target": "[data-testid=\"notion-library-trigger\"]",
+      "testTitle": "clearing search restores the full notion document list",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-library-search.spec.ts"
+    },
+    {
+      "name": "pointerdown",
+      "durationMs": 1744,
+      "startTimeMs": 2407.7,
+      "interactionId": 5638,
+      "source": "performance-observer",
+      "target": "[data-testid=\"notion-library-trigger\"]",
+      "testTitle": "clearing search restores the full notion document list",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-library-search.spec.ts"
+    },
+    {
+      "name": "mousedown",
+      "durationMs": 1744,
+      "startTimeMs": 2407.7,
+      "interactionId": 0,
+      "source": "performance-observer",
+      "target": "[data-testid=\"notion-library-trigger\"]",
+      "testTitle": "clearing search restores the full notion document list",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-library-search.spec.ts"
+    },
+    {
+      "name": "pointerup",
+      "durationMs": 1744,
+      "startTimeMs": 2408.4,
+      "interactionId": 5638,
+      "source": "performance-observer",
+      "target": "[data-testid=\"notion-library-trigger\"]",
+      "testTitle": "clearing search restores the full notion document list",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-library-search.spec.ts"
+    }
+  ],
+  "slowestMeasuredSteps": [
+    {
+      "name": "Admin blog update to public detail refresh",
+      "durationMs": 3766.27,
+      "startedAt": "2026-05-04T16:13:15.556Z",
+      "status": "passed",
+      "budget": {
+        "warnMs": 3000,
+        "hardMs": 4500,
+        "failOnHard": true,
+        "name": "adminMutationPublicRefresh"
+      },
+      "testTitle": "admin can edit an existing blog post with mixed special input",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/admin-blog-edit.spec.ts"
+    },
+    {
+      "name": "Admin blog create to public detail refresh",
+      "durationMs": 3396.59,
+      "startedAt": "2026-05-04T16:13:40.569Z",
+      "status": "passed",
+      "budget": {
+        "warnMs": 3000,
+        "hardMs": 4500,
+        "failOnHard": true,
+        "name": "adminMutationPublicRefresh"
+      },
+      "testTitle": "admin can create and publish a blog post that appears on public blog page",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/admin-blog-publish.spec.ts"
+    },
+    {
+      "name": "Public nav click to Works",
+      "durationMs": 1714.3,
+      "startedAt": "2026-05-04T16:06:48.241Z",
+      "status": "passed",
+      "budget": {
+        "warnMs": 1000,
+        "hardMs": 1500,
+        "failOnHard": true,
+        "name": "publicNavClick"
+      },
+      "testTitle": "response time: desktop public nav clicks meet budget",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/e2e-response-time.spec.ts"
+    },
+    {
+      "name": "Admin site settings save response-time path",
+      "durationMs": 885.38,
+      "startedAt": "2026-05-04T16:07:26.841Z",
+      "status": "passed",
+      "budget": {
+        "warnMs": 3000,
+        "hardMs": 4500,
+        "failOnHard": true,
+        "name": "adminMutationPublicRefresh"
+      },
+      "testTitle": "response time: admin site settings save refreshes public home within budget",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/e2e-response-time.spec.ts"
+    },
+    {
+      "name": "Admin work bulk delete confirmation to backend response",
+      "durationMs": 852.08,
+      "startedAt": "2026-05-04T16:14:13.816Z",
+      "status": "passed",
+      "budget": {
+        "warnMs": 2000,
+        "hardMs": 3000,
+        "failOnHard": true,
+        "name": "adminCrud"
+      },
+      "testTitle": "admin can bulk delete selected blogs and works with confirmation",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/admin-bulk-delete.spec.ts"
+    },
+    {
+      "name": "Admin blog bulk delete confirmation to backend response",
+      "durationMs": 727.75,
+      "startedAt": "2026-05-04T16:14:12.187Z",
+      "status": "passed",
+      "budget": {
+        "warnMs": 2000,
+        "hardMs": 3000,
+        "failOnHard": true,
+        "name": "adminCrud"
+      },
+      "testTitle": "admin can bulk delete selected blogs and works with confirmation",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/admin-bulk-delete.spec.ts"
+    },
+    {
+      "name": "Admin introduction page save to public refresh",
+      "durationMs": 702.02,
+      "startedAt": "2026-05-04T16:14:58.674Z",
+      "status": "passed",
+      "budget": {
+        "warnMs": 3000,
+        "hardMs": 4500,
+        "failOnHard": true,
+        "name": "adminMutationPublicRefresh"
+      },
+      "testTitle": "admin can update the introduction page from admin pages",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/admin-pages-settings.spec.ts"
+    },
+    {
+      "name": "Public Work card opens detail",
+      "durationMs": 686.65,
+      "startedAt": "2026-05-04T16:07:20.258Z",
+      "status": "passed",
+      "budget": {
+        "warnMs": 1500,
+        "hardMs": 2500,
+        "failOnHard": true,
+        "name": "publicDetailOpen"
+      },
+      "testTitle": "response time: public detail card opens meet budget",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/e2e-response-time.spec.ts"
+    },
+    {
+      "name": "Works list direct load to primary content visible",
+      "durationMs": 578.82,
+      "startedAt": "2026-05-04T16:06:46.907Z",
+      "status": "passed",
+      "budget": {
+        "warnMs": 1000,
+        "hardMs": 1500,
+        "failOnHard": true,
+        "name": "publicRouteLoad"
+      },
+      "testTitle": "response time: Works list direct load meets budget",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/e2e-response-time.spec.ts"
+    },
+    {
+      "name": "Admin resume upload to public resume refresh",
+      "durationMs": 570.46,
+      "startedAt": "2026-05-04T16:15:02.945Z",
+      "status": "passed",
+      "budget": {
+        "warnMs": 3000,
+        "hardMs": 4500,
+        "failOnHard": true,
+        "name": "adminMutationPublicRefresh"
+      },
+      "testTitle": "admin can upload a resume pdf and public resume page exposes download",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/admin-resume-upload.spec.ts"
+    },
+    {
+      "name": "Works unified search submit",
+      "durationMs": 533.72,
+      "startedAt": "2026-05-04T16:08:55.455Z",
+      "status": "passed",
+      "budget": {
+        "warnMs": 1000,
+        "hardMs": 1500,
+        "failOnHard": true,
+        "name": "publicSearch"
+      },
+      "testTitle": "public works search submits query without searchMode",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/public-works-search.spec.ts"
+    },
+    {
+      "name": "Admin contact page save to public refresh",
+      "durationMs": 525.75,
+      "startedAt": "2026-05-04T16:15:00.485Z",
+      "status": "passed",
+      "budget": {
+        "warnMs": 3000,
+        "hardMs": 4500,
+        "failOnHard": true,
+        "name": "adminMutationPublicRefresh"
+      },
+      "testTitle": "admin can update the contact page from admin pages",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/admin-pages-settings.spec.ts"
+    },
+    {
+      "name": "Public Study card opens detail",
+      "durationMs": 482.54,
+      "startedAt": "2026-05-04T16:07:21.465Z",
+      "status": "passed",
+      "budget": {
+        "warnMs": 1500,
+        "hardMs": 2500,
+        "failOnHard": true,
+        "name": "publicDetailOpen"
+      },
+      "testTitle": "response time: public detail card opens meet budget",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/e2e-response-time.spec.ts"
+    },
+    {
+      "name": "Admin resume delete to public resume refresh",
+      "durationMs": 459.74,
+      "startedAt": "2026-05-04T16:15:04.801Z",
+      "status": "passed",
+      "budget": {
+        "warnMs": 3000,
+        "hardMs": 4500,
+        "failOnHard": true,
+        "name": "adminMutationPublicRefresh"
+      },
+      "testTitle": "admin can delete the uploaded resume and clear the public resume page",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/admin-resume-upload.spec.ts"
+    },
+    {
+      "name": "Study list direct load to primary content visible",
+      "durationMs": 433.68,
+      "startedAt": "2026-05-04T16:06:45.541Z",
+      "status": "passed",
+      "budget": {
+        "warnMs": 1000,
+        "hardMs": 1500,
+        "failOnHard": true,
+        "name": "publicRouteLoad"
+      },
+      "testTitle": "response time: Study list direct load meets budget",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/e2e-response-time.spec.ts"
+    },
+    {
+      "name": "Admin site settings save to public home refresh",
+      "durationMs": 306.52,
+      "startedAt": "2026-05-04T16:14:56.084Z",
+      "status": "passed",
+      "budget": {
+        "warnMs": 3000,
+        "hardMs": 4500,
+        "failOnHard": true,
+        "name": "adminMutationPublicRefresh"
+      },
+      "testTitle": "admin can update site settings from admin pages",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/admin-pages-settings.spec.ts"
+    },
+    {
+      "name": "Study unified search submit response-time path",
+      "durationMs": 233.7,
+      "startedAt": "2026-05-04T16:07:24.507Z",
+      "status": "passed",
+      "budget": {
+        "warnMs": 1000,
+        "hardMs": 1500,
+        "failOnHard": true,
+        "name": "publicSearch"
+      },
+      "testTitle": "response time: unified public search submit meets budget",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/e2e-response-time.spec.ts"
+    },
+    {
+      "name": "Works desktop pagination next navigation",
+      "durationMs": 191.85,
+      "startedAt": "2026-05-04T16:08:52.701Z",
+      "status": "passed",
+      "budget": {
+        "warnMs": 800,
+        "hardMs": 1200,
+        "failOnHard": true,
+        "name": "publicPagination"
+      },
+      "testTitle": "works list keeps desktop pagination and hides infinite controls at >=1024px",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/public-works-pagination.spec.ts"
+    },
+    {
+      "name": "AI Fix provider dropdown response-time path",
+      "durationMs": 177.88,
+      "startedAt": "2026-05-04T16:07:25.966Z",
+      "status": "passed",
+      "budget": {
+        "warnMs": 1000,
+        "hardMs": 1500,
+        "failOnHard": true,
+        "name": "aiDialogOpen"
+      },
+      "testTitle": "response time: AI Fix provider dropdown is ready within budget",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/e2e-response-time.spec.ts"
+    },
+    {
+      "name": "Study unified search submit",
+      "durationMs": 176.03,
+      "startedAt": "2026-05-04T16:08:53.801Z",
+      "status": "passed",
+      "budget": {
+        "warnMs": 1000,
+        "hardMs": 1500,
+        "failOnHard": true,
+        "name": "publicSearch"
+      },
+      "testTitle": "public study search submits query without searchMode",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/public-works-search.spec.ts"
+    }
+  ],
+  "budgetFailures": [
+    {
+      "severity": "hard",
+      "kind": "step",
+      "name": "Public nav click to Works",
+      "durationMs": 1714.3,
+      "warnMs": 1000,
+      "hardMs": 1500,
+      "failOnHard": true,
+      "message": "step \"Public nav click to Works\" took 1714.3ms, exceeding hard budget 1500ms",
+      "testTitle": "response time: desktop public nav clicks meet budget",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/e2e-response-time.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/e2e-response-time-response-028f3-blic-nav-clicks-meet-budget-chromium-public/attachments/e2e-latency-json-3b52f427b46d2bb3923b268b41aba61f163482bc.json"
+    }
+  ],
+  "warnings": [
+    {
+      "severity": "warn",
+      "kind": "api",
+      "name": "GET http://127.0.0.1:3000/admin/dashboard",
+      "durationMs": 478.94,
+      "warnMs": 350,
+      "hardMs": 600,
+      "failOnHard": false,
+      "message": "api \"GET http://127.0.0.1:3000/admin/dashboard\" took 478.94ms, exceeding warn budget 350ms",
+      "testTitle": "admin can edit an existing blog post with mixed special input",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/admin-blog-edit.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/admin-blog-edit-admin-can--52ecf-st-with-mixed-special-input-chromium-authenticated/attachments/e2e-latency-json-640310513db3c7782f0da7ac4e785131cabe7d36.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "step",
+      "name": "Admin blog update to public detail refresh",
+      "durationMs": 3766.27,
+      "warnMs": 3000,
+      "hardMs": 4500,
+      "failOnHard": false,
+      "message": "step \"Admin blog update to public detail refresh\" took 3766.27ms, exceeding warn budget 3000ms",
+      "testTitle": "admin can edit an existing blog post with mixed special input",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/admin-blog-edit.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/admin-blog-edit-admin-can--52ecf-st-with-mixed-special-input-chromium-authenticated/attachments/e2e-latency-json-640310513db3c7782f0da7ac4e785131cabe7d36.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "api",
+      "name": "GET http://127.0.0.1:3000/admin/dashboard",
+      "durationMs": 391.58,
+      "warnMs": 350,
+      "hardMs": 600,
+      "failOnHard": false,
+      "message": "api \"GET http://127.0.0.1:3000/admin/dashboard\" took 391.58ms, exceeding warn budget 350ms",
+      "testTitle": "blog notion view supports list selection and content autosave",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/admin-blog-edit.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/admin-blog-edit-blog-notio-d44f3-ection-and-content-autosave-chromium-authenticated/attachments/e2e-latency-json-e2e8c50aab87963e9df1670728663eab132ea6e9.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "step",
+      "name": "Admin blog create to public detail refresh",
+      "durationMs": 3396.59,
+      "warnMs": 3000,
+      "hardMs": 4500,
+      "failOnHard": false,
+      "message": "step \"Admin blog create to public detail refresh\" took 3396.59ms, exceeding warn budget 3000ms",
+      "testTitle": "admin can create and publish a blog post that appears on public blog page",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/admin-blog-publish.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/admin-blog-publish-admin-c-eb60d-appears-on-public-blog-page-chromium-authenticated/attachments/e2e-latency-json-c06e98b81eb540b503870bd28eeb911dd499d2c4.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "api",
+      "name": "GET http://127.0.0.1:3000/api/public/works?page=1&pageSize=12&__loadTestRun=moreh0ma-qxnyv2&__loadTestUser=2&__loadTestRequest=1&__loadTestIteration=1",
+      "durationMs": 352.78,
+      "warnMs": 350,
+      "hardMs": 600,
+      "failOnHard": false,
+      "message": "api \"GET http://127.0.0.1:3000/api/public/works?page=1&pageSize=12&__loadTestRun=moreh0ma-qxnyv2&__loadTestUser=2&__loadTestRequest=1&__loadTestIteration=1\" took 352.78ms, exceeding warn budget 350ms",
+      "testTitle": "admin can run a small Work and Study read load test",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/admin-load-test-dashboard.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/admin-load-test-dashboard--37503-rk-and-Study-read-load-test-chromium-authenticated/attachments/e2e-latency-json-b36f3318be6965cfb6c94b1636902202d0bee0c4.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "api",
+      "name": "GET http://127.0.0.1:3000/api/public/works/custom-work-target?__loadTestRun=moreh0ma-qxnyv2&__loadTestUser=2&__loadTestRequest=1&__loadTestIteration=1",
+      "durationMs": 352.71,
+      "warnMs": 350,
+      "hardMs": 600,
+      "failOnHard": false,
+      "message": "api \"GET http://127.0.0.1:3000/api/public/works/custom-work-target?__loadTestRun=moreh0ma-qxnyv2&__loadTestUser=2&__loadTestRequest=1&__loadTestIteration=1\" took 352.71ms, exceeding warn budget 350ms",
+      "testTitle": "admin can run a small Work and Study read load test",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/admin-load-test-dashboard.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/admin-load-test-dashboard--37503-rk-and-Study-read-load-test-chromium-authenticated/attachments/e2e-latency-json-b36f3318be6965cfb6c94b1636902202d0bee0c4.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "api",
+      "name": "GET http://127.0.0.1:3000/api/public/blogs?page=1&pageSize=12&__loadTestRun=moreh0ma-qxnyv2&__loadTestUser=2&__loadTestRequest=1&__loadTestIteration=1",
+      "durationMs": 352.72,
+      "warnMs": 350,
+      "hardMs": 600,
+      "failOnHard": false,
+      "message": "api \"GET http://127.0.0.1:3000/api/public/blogs?page=1&pageSize=12&__loadTestRun=moreh0ma-qxnyv2&__loadTestUser=2&__loadTestRequest=1&__loadTestIteration=1\" took 352.72ms, exceeding warn budget 350ms",
+      "testTitle": "admin can run a small Work and Study read load test",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/admin-load-test-dashboard.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/admin-load-test-dashboard--37503-rk-and-Study-read-load-test-chromium-authenticated/attachments/e2e-latency-json-b36f3318be6965cfb6c94b1636902202d0bee0c4.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "api",
+      "name": "PUT http://127.0.0.1:3000/api/admin/site-settings",
+      "durationMs": 576.42,
+      "warnMs": 350,
+      "hardMs": 600,
+      "failOnHard": false,
+      "message": "api \"PUT http://127.0.0.1:3000/api/admin/site-settings\" took 576.42ms, exceeding warn budget 350ms",
+      "testTitle": "response time: admin site settings save refreshes public home within budget",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/e2e-response-time.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/e2e-response-time-authenti-121eb-s-public-home-within-budget-chromium-public/attachments/e2e-latency-json-ebc95c28c8e4f258bf0164c52cc8faa52a90478d.json"
+    },
+    {
+      "severity": "hard",
+      "kind": "api",
+      "name": "PUT http://127.0.0.1:3000/api/admin/site-settings",
+      "durationMs": 628.69,
+      "warnMs": 350,
+      "hardMs": 600,
+      "failOnHard": false,
+      "message": "api \"PUT http://127.0.0.1:3000/api/admin/site-settings\" took 628.69ms, exceeding hard budget 600ms",
+      "testTitle": "response time: admin site settings save refreshes public home within budget",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/e2e-response-time.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/e2e-response-time-authenti-121eb-s-public-home-within-budget-chromium-public/attachments/e2e-latency-json-ebc95c28c8e4f258bf0164c52cc8faa52a90478d.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "api",
+      "name": "GET http://127.0.0.1:3000/admin/dashboard",
+      "durationMs": 416.97,
+      "warnMs": 350,
+      "hardMs": 600,
+      "failOnHard": false,
+      "message": "api \"GET http://127.0.0.1:3000/admin/dashboard\" took 416.97ms, exceeding warn budget 350ms",
+      "testTitle": "blog detail TOC updates its active heading as the reader moves deeper into the article",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/public-blog-toc-active.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/public-blog-toc-active-blo-b6000-ves-deeper-into-the-article-chromium-public/attachments/e2e-latency-json-247522499bb47d5abe5120c6dc8ea78f087a1ca9.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "api",
+      "name": "POST http://127.0.0.1:3000/api/admin/blogs",
+      "durationMs": 527.01,
+      "warnMs": 350,
+      "hardMs": 600,
+      "failOnHard": false,
+      "message": "api \"POST http://127.0.0.1:3000/api/admin/blogs\" took 527.01ms, exceeding warn budget 350ms",
+      "testTitle": "blog delete uses an in-app dialog instead of browser confirm",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-delete-dialog.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/ui-admin-delete-dialog-blo-d8f8a--instead-of-browser-confirm-chromium-authenticated/attachments/e2e-latency-json-92a218f44e5815ca390380623e0e7b7bde72a1cc.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "interaction",
+      "name": "hover-leave",
+      "durationMs": 328,
+      "warnMs": 220,
+      "hardMs": 360,
+      "failOnHard": false,
+      "message": "interaction \"hover-leave\" took 328ms, exceeding warn budget 220ms",
+      "testTitle": "AF-042 autosave revalidation is throttled while explicit metadata save revalidates immediately",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-autosave-info.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/ui-admin-notion-autosave-i-3b9b9-ave-revalidates-immediately-chromium-authenticated/attachments/e2e-latency-json-3a4efd5e0afa444ce337b1e827ec4d997e126f1e.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "interaction",
+      "name": "hover-enter",
+      "durationMs": 328,
+      "warnMs": 220,
+      "hardMs": 360,
+      "failOnHard": false,
+      "message": "interaction \"hover-enter\" took 328ms, exceeding warn budget 220ms",
+      "testTitle": "AF-042 autosave revalidation is throttled while explicit metadata save revalidates immediately",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-autosave-info.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/ui-admin-notion-autosave-i-3b9b9-ave-revalidates-immediately-chromium-authenticated/attachments/e2e-latency-json-3a4efd5e0afa444ce337b1e827ec4d997e126f1e.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "interaction",
+      "name": "click",
+      "durationMs": 328,
+      "warnMs": 300,
+      "hardMs": 550,
+      "failOnHard": false,
+      "message": "interaction \"click\" took 328ms, exceeding warn budget 300ms",
+      "testTitle": "AF-042 autosave revalidation is throttled while explicit metadata save revalidates immediately",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-autosave-info.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/ui-admin-notion-autosave-i-3b9b9-ave-revalidates-immediately-chromium-authenticated/attachments/e2e-latency-json-3a4efd5e0afa444ce337b1e827ec4d997e126f1e.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "interaction",
+      "name": "input",
+      "durationMs": 328,
+      "warnMs": 260,
+      "hardMs": 450,
+      "failOnHard": false,
+      "message": "interaction \"input\" took 328ms, exceeding warn budget 260ms",
+      "testTitle": "AF-046 Ctrl+S saves notion content and metadata immediately",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-autosave-info.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/ui-admin-notion-autosave-i-40afd-nt-and-metadata-immediately-chromium-authenticated/attachments/e2e-latency-json-7217a2b23a6de1d37b77df903cc7a3076650e951.json"
+    },
+    {
+      "severity": "hard",
+      "kind": "api",
+      "name": "PUT http://127.0.0.1:3000/api/admin/blogs/b3b2e981-9cd0-431f-b862-42a854752008",
+      "durationMs": 947.83,
+      "warnMs": 350,
+      "hardMs": 600,
+      "failOnHard": false,
+      "message": "api \"PUT http://127.0.0.1:3000/api/admin/blogs/b3b2e981-9cd0-431f-b862-42a854752008\" took 947.83ms, exceeding hard budget 600ms",
+      "testTitle": "AF-042 autosave status waits for the autosave interval, then shows Saving and Saved after notion content changes",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-autosave-info.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/ui-admin-notion-autosave-i-8e02a-fter-notion-content-changes-chromium-authenticated/attachments/e2e-latency-json-1f9f2db5d52f0272322ca103370b9251dd026b3e.json"
+    },
+    {
+      "severity": "hard",
+      "kind": "api",
+      "name": "PUT http://127.0.0.1:3000/api/admin/blogs/70bdb2aa-ea2d-4ca1-a9d2-7a419fb6eecf",
+      "durationMs": 922.51,
+      "warnMs": 350,
+      "hardMs": 600,
+      "failOnHard": false,
+      "message": "api \"PUT http://127.0.0.1:3000/api/admin/blogs/70bdb2aa-ea2d-4ca1-a9d2-7a419fb6eecf\" took 922.51ms, exceeding hard budget 600ms",
+      "testTitle": "AF-042 autosave status shows Error when notion autosave fails",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-autosave-info.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/ui-admin-notion-autosave-i-d2df0--when-notion-autosave-fails-chromium-authenticated/attachments/e2e-latency-json-7d98d2d05f73b9322aa471a08b6a5ac4447fea3e.json"
+    },
+    {
+      "severity": "hard",
+      "kind": "interaction",
+      "name": "click",
+      "durationMs": 1696,
+      "warnMs": 300,
+      "hardMs": 550,
+      "failOnHard": false,
+      "message": "interaction \"click\" took 1696ms, exceeding hard budget 550ms",
+      "testTitle": "switching documents in notion view keeps the editor visible while changing the active document",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-client-switch.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/ui-admin-notion-client-swi-78e28-hanging-the-active-document-chromium-authenticated/attachments/e2e-latency-json-649c2862ad23c49362c3175bb6464c727426d42f.json"
+    },
+    {
+      "severity": "hard",
+      "kind": "interaction",
+      "name": "hover-leave",
+      "durationMs": 472,
+      "warnMs": 220,
+      "hardMs": 360,
+      "failOnHard": false,
+      "message": "interaction \"hover-leave\" took 472ms, exceeding hard budget 360ms",
+      "testTitle": "switching documents in notion view keeps the editor visible while changing the active document",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-client-switch.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/ui-admin-notion-client-swi-78e28-hanging-the-active-document-chromium-authenticated/attachments/e2e-latency-json-649c2862ad23c49362c3175bb6464c727426d42f.json"
+    },
+    {
+      "severity": "hard",
+      "kind": "interaction",
+      "name": "hover-enter",
+      "durationMs": 472,
+      "warnMs": 220,
+      "hardMs": 360,
+      "failOnHard": false,
+      "message": "interaction \"hover-enter\" took 472ms, exceeding hard budget 360ms",
+      "testTitle": "switching documents in notion view keeps the editor visible while changing the active document",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-client-switch.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/ui-admin-notion-client-swi-78e28-hanging-the-active-document-chromium-authenticated/attachments/e2e-latency-json-649c2862ad23c49362c3175bb6464c727426d42f.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "interaction",
+      "name": "click",
+      "durationMs": 472,
+      "warnMs": 300,
+      "hardMs": 550,
+      "failOnHard": false,
+      "message": "interaction \"click\" took 472ms, exceeding warn budget 300ms",
+      "testTitle": "switching documents in notion view keeps the editor visible while changing the active document",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-client-switch.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/ui-admin-notion-client-swi-78e28-hanging-the-active-document-chromium-authenticated/attachments/e2e-latency-json-649c2862ad23c49362c3175bb6464c727426d42f.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "interaction",
+      "name": "hover-enter",
+      "durationMs": 272,
+      "warnMs": 220,
+      "hardMs": 360,
+      "failOnHard": false,
+      "message": "interaction \"hover-enter\" took 272ms, exceeding warn budget 220ms",
+      "testTitle": "doc info toggle off expands the notion editor area",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-doc-info-toggle.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/ui-admin-notion-doc-info-t-b6cd7-ands-the-notion-editor-area-chromium-authenticated/attachments/e2e-latency-json-b878f3104134405df04cda829660d7088bbeb080.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "interaction",
+      "name": "hover-enter",
+      "durationMs": 272,
+      "warnMs": 220,
+      "hardMs": 360,
+      "failOnHard": false,
+      "message": "interaction \"hover-enter\" took 272ms, exceeding warn budget 220ms",
+      "testTitle": "doc info toggle on restores the side panel",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-doc-info-toggle.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/ui-admin-notion-doc-info-t-d9fe0--on-restores-the-side-panel-chromium-authenticated/attachments/e2e-latency-json-be461811de2c67101e52ce3e91e861d5a40eb5d9.json"
+    },
+    {
+      "severity": "hard",
+      "kind": "interaction",
+      "name": "click",
+      "durationMs": 1880,
+      "warnMs": 300,
+      "hardMs": 550,
+      "failOnHard": false,
+      "message": "interaction \"click\" took 1880ms, exceeding hard budget 550ms",
+      "testTitle": "library search filters visible notion documents",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-library-search.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/ui-admin-notion-library-se-1023a-rs-visible-notion-documents-chromium-authenticated/attachments/e2e-latency-json-9ae982fe83ce3a6a41a94465b9bffca68419daaf.json"
+    },
+    {
+      "severity": "hard",
+      "kind": "interaction",
+      "name": "hover-enter",
+      "durationMs": 1744,
+      "warnMs": 220,
+      "hardMs": 360,
+      "failOnHard": false,
+      "message": "interaction \"hover-enter\" took 1744ms, exceeding hard budget 360ms",
+      "testTitle": "clearing search restores the full notion document list",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-library-search.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/ui-admin-notion-library-se-9f1c4-e-full-notion-document-list-chromium-authenticated/attachments/e2e-latency-json-0c9ead85820c026c3cbb2347ebcde3144122524b.json"
+    },
+    {
+      "severity": "hard",
+      "kind": "interaction",
+      "name": "click",
+      "durationMs": 1744,
+      "warnMs": 300,
+      "hardMs": 550,
+      "failOnHard": false,
+      "message": "interaction \"click\" took 1744ms, exceeding hard budget 550ms",
+      "testTitle": "clearing search restores the full notion document list",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-library-search.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/ui-admin-notion-library-se-9f1c4-e-full-notion-document-list-chromium-authenticated/attachments/e2e-latency-json-0c9ead85820c026c3cbb2347ebcde3144122524b.json"
+    },
+    {
+      "severity": "hard",
+      "kind": "interaction",
+      "name": "keydown",
+      "durationMs": 1063.3,
+      "warnMs": 260,
+      "hardMs": 450,
+      "failOnHard": false,
+      "message": "interaction \"keydown\" took 1063.3ms, exceeding hard budget 450ms",
+      "testTitle": "clearing search restores the full notion document list",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-library-search.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/ui-admin-notion-library-se-9f1c4-e-full-notion-document-list-chromium-authenticated/attachments/e2e-latency-json-0c9ead85820c026c3cbb2347ebcde3144122524b.json"
+    },
+    {
+      "severity": "hard",
+      "kind": "interaction",
+      "name": "keydown",
+      "durationMs": 1104,
+      "warnMs": 260,
+      "hardMs": 450,
+      "failOnHard": false,
+      "message": "interaction \"keydown\" took 1104ms, exceeding hard budget 450ms",
+      "testTitle": "clearing search restores the full notion document list",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-library-search.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/ui-admin-notion-library-se-9f1c4-e-full-notion-document-list-chromium-authenticated/attachments/e2e-latency-json-0c9ead85820c026c3cbb2347ebcde3144122524b.json"
+    },
+    {
+      "severity": "hard",
+      "kind": "interaction",
+      "name": "input",
+      "durationMs": 1104,
+      "warnMs": 260,
+      "hardMs": 450,
+      "failOnHard": false,
+      "message": "interaction \"input\" took 1104ms, exceeding hard budget 450ms",
+      "testTitle": "clearing search restores the full notion document list",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-library-search.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/ui-admin-notion-library-se-9f1c4-e-full-notion-document-list-chromium-authenticated/attachments/e2e-latency-json-0c9ead85820c026c3cbb2347ebcde3144122524b.json"
+    },
+    {
+      "severity": "hard",
+      "kind": "interaction",
+      "name": "hover-enter",
+      "durationMs": 1440,
+      "warnMs": 220,
+      "hardMs": 360,
+      "failOnHard": false,
+      "message": "interaction \"hover-enter\" took 1440ms, exceeding hard budget 360ms",
+      "testTitle": "selecting a document closes the sheet and keeps editor visible",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-library-sheet.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/ui-admin-notion-library-sh-03417-et-and-keeps-editor-visible-chromium-authenticated/attachments/e2e-latency-json-9dedfaa13b99655ddf91aeb16eace815cc96ddc9.json"
+    },
+    {
+      "severity": "hard",
+      "kind": "interaction",
+      "name": "click",
+      "durationMs": 1440,
+      "warnMs": 300,
+      "hardMs": 550,
+      "failOnHard": false,
+      "message": "interaction \"click\" took 1440ms, exceeding hard budget 550ms",
+      "testTitle": "selecting a document closes the sheet and keeps editor visible",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-library-sheet.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/ui-admin-notion-library-sh-03417-et-and-keeps-editor-visible-chromium-authenticated/attachments/e2e-latency-json-9dedfaa13b99655ddf91aeb16eace815cc96ddc9.json"
+    },
+    {
+      "severity": "hard",
+      "kind": "interaction",
+      "name": "hover-leave",
+      "durationMs": 376,
+      "warnMs": 220,
+      "hardMs": 360,
+      "failOnHard": false,
+      "message": "interaction \"hover-leave\" took 376ms, exceeding hard budget 360ms",
+      "testTitle": "selecting a document closes the sheet and keeps editor visible",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-library-sheet.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/ui-admin-notion-library-sh-03417-et-and-keeps-editor-visible-chromium-authenticated/attachments/e2e-latency-json-9dedfaa13b99655ddf91aeb16eace815cc96ddc9.json"
+    },
+    {
+      "severity": "hard",
+      "kind": "interaction",
+      "name": "hover-enter",
+      "durationMs": 376,
+      "warnMs": 220,
+      "hardMs": 360,
+      "failOnHard": false,
+      "message": "interaction \"hover-enter\" took 376ms, exceeding hard budget 360ms",
+      "testTitle": "selecting a document closes the sheet and keeps editor visible",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-library-sheet.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/ui-admin-notion-library-sh-03417-et-and-keeps-editor-visible-chromium-authenticated/attachments/e2e-latency-json-9dedfaa13b99655ddf91aeb16eace815cc96ddc9.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "interaction",
+      "name": "click",
+      "durationMs": 376,
+      "warnMs": 300,
+      "hardMs": 550,
+      "failOnHard": false,
+      "message": "interaction \"click\" took 376ms, exceeding warn budget 300ms",
+      "testTitle": "selecting a document closes the sheet and keeps editor visible",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-library-sheet.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/ui-admin-notion-library-sh-03417-et-and-keeps-editor-visible-chromium-authenticated/attachments/e2e-latency-json-9dedfaa13b99655ddf91aeb16eace815cc96ddc9.json"
+    },
+    {
+      "severity": "hard",
+      "kind": "interaction",
+      "name": "hover-enter",
+      "durationMs": 1464,
+      "warnMs": 220,
+      "hardMs": 360,
+      "failOnHard": false,
+      "message": "interaction \"hover-enter\" took 1464ms, exceeding hard budget 360ms",
+      "testTitle": "library button opens sheet and exposes blog list",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-library-sheet.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/ui-admin-notion-library-sh-b0c5a-sheet-and-exposes-blog-list-chromium-authenticated/attachments/e2e-latency-json-677d59ff8be3b894708a75f369597c38d0b0d2a1.json"
+    },
+    {
+      "severity": "hard",
+      "kind": "interaction",
+      "name": "click",
+      "durationMs": 1464,
+      "warnMs": 300,
+      "hardMs": 550,
+      "failOnHard": false,
+      "message": "interaction \"click\" took 1464ms, exceeding hard budget 550ms",
+      "testTitle": "library button opens sheet and exposes blog list",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-library-sheet.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/ui-admin-notion-library-sh-b0c5a-sheet-and-exposes-blog-list-chromium-authenticated/attachments/e2e-latency-json-677d59ff8be3b894708a75f369597c38d0b0d2a1.json"
+    },
+    {
+      "severity": "hard",
+      "kind": "interaction",
+      "name": "hover-enter",
+      "durationMs": 1496,
+      "warnMs": 220,
+      "hardMs": 360,
+      "failOnHard": false,
+      "message": "interaction \"hover-enter\" took 1496ms, exceeding hard budget 360ms",
+      "testTitle": "VA-241 selected notion document stays visually highlighted inside the library sheet",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-visual-state.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/ui-admin-notion-visual-sta-8d330-ed-inside-the-library-sheet-chromium-authenticated/attachments/e2e-latency-json-5f909665279d5838cc0d1170babf82eaa0cf7a21.json"
+    },
+    {
+      "severity": "hard",
+      "kind": "interaction",
+      "name": "click",
+      "durationMs": 1496,
+      "warnMs": 300,
+      "hardMs": 550,
+      "failOnHard": false,
+      "message": "interaction \"click\" took 1496ms, exceeding hard budget 550ms",
+      "testTitle": "VA-241 selected notion document stays visually highlighted inside the library sheet",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-visual-state.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/ui-admin-notion-visual-sta-8d330-ed-inside-the-library-sheet-chromium-authenticated/attachments/e2e-latency-json-5f909665279d5838cc0d1170babf82eaa0cf7a21.json"
+    },
+    {
+      "severity": "hard",
+      "kind": "api",
+      "name": "GET http://127.0.0.1:3000/admin/dashboard",
+      "durationMs": 873.65,
+      "warnMs": 350,
+      "hardMs": 600,
+      "failOnHard": false,
+      "message": "api \"GET http://127.0.0.1:3000/admin/dashboard\" took 873.65ms, exceeding hard budget 600ms",
+      "testTitle": "mobile blog detail hides the table of contents",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-improvement-blog-toc.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/ui-improvement-blog-toc-mo-734d4-hides-the-table-of-contents-chromium-public/attachments/e2e-latency-json-001c7ffc3e783d40d2894892a00f2150ca0179ac.json"
+    }
+  ]
+}

@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.Globalization;
 using Microsoft.AspNetCore.HttpOverrides;
 using WoongBlog.Api.Application;
 using WoongBlog.Api.Common;
@@ -43,6 +45,17 @@ var app = builder.Build();
 app.ValidateStartupOptions();
 app.UseForwardedHeaders();
 app.UseConfiguredTransportSecurity();
+app.Use(async (context, next) =>
+{
+    var stopwatch = Stopwatch.StartNew();
+    context.Response.OnStarting(() =>
+    {
+        context.Response.Headers["X-App-Elapsed-Ms"] = stopwatch.Elapsed.TotalMilliseconds.ToString(
+            CultureInfo.InvariantCulture);
+        return Task.CompletedTask;
+    });
+    await next();
+});
 app.UseMiddleware<SecurityHeadersMiddleware>();
 app.EnsureAuthStorageDirectories();
 await app.InitializeDatabaseAsync();

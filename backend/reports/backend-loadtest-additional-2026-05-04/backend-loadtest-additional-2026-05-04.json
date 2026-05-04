@@ -1,0 +1,143 @@
+{
+  "taskSlug": "backend-loadtest-additional-2026-05-04",
+  "date": "2026-05-05",
+  "branch": "dev",
+  "objective": "Execute additional validation and gate checks defined in 2026-05-04-backend-loadtest-additional.md",
+  "status": "complete_with_risk",
+  "whatWasDone": [
+    "playwright_full_run_executed",
+    "playwright_failed_spec_repro_loop_executed",
+    "ci_chain_verification_collected",
+    "failure_case_reproducibility_classified",
+    "additional_audit_artifacts_generated"
+  ],
+  "whatWasNotCompleted": [
+    "playwright_full_core_green"
+  ],
+  "commands": [
+    {
+      "name": "Playwright full core run",
+      "command": "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 ENABLE_LOCAL_ADMIN_SHORTCUT=true PLAYWRIGHT_EXPECT_LOCAL_ADMIN_SHORTCUT=visible PLAYWRIGHT_E2E_PROFILE=core node scripts/run-e2e-latency.mjs -- --workers=1",
+      "result": "failed",
+      "pass": 416,
+      "fail": 14,
+      "skipped": 4,
+      "total": 434,
+      "evidence": [
+        "backend/reports/backend-loadtest-additional-2026-05-04/reruns/full-core-20260504T155539Z.log",
+        "backend/reports/backend-loadtest-additional-2026-05-04/reruns/full-core-20260504T155539Z.exitcode",
+        "backend/reports/backend-loadtest-additional-2026-05-04/reruns/full-core-20260504T155539Z-summary.json",
+        "backend/reports/backend-loadtest-additional-2026-05-04/reruns/full-core-20260504T155539Z-summary.md",
+        "backend/reports/backend-loadtest-additional-2026-05-04/reruns/full-core-latest.log"
+      ]
+    },
+    {
+      "name": "Focused replay run",
+      "command": "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 ENABLE_LOCAL_ADMIN_SHORTCUT=true PLAYWRIGHT_EXPECT_LOCAL_ADMIN_SHORTCUT=visible PLAYWRIGHT_E2E_PROFILE=core node scripts/run-e2e-latency.mjs -- --workers=1 tests/public-blog-inline-redirects.spec.ts tests/ui-improvement-featured-works-grid.spec.ts tests/admin-blog-ai-dialog.spec.ts tests/admin-blog-edit.spec.ts tests/ui-admin-keyboard-accessibility.spec.ts tests/ui-admin-tiptap-link-popover.spec.ts tests/ui-quality-visual-metrics.spec.ts tests/work-inline-create-flow.spec.ts",
+      "result": "failed",
+      "pass": 30,
+      "fail": 7,
+      "skipped": 0,
+      "total": 37,
+      "artifactDir": "test-results/playwright",
+      "evidence": [
+        "backend/reports/backend-loadtest-additional-2026-05-04/reruns/repro-core-20260504T161519Z.log",
+        "backend/reports/backend-loadtest-additional-2026-05-04/reruns/repro-core-20260504T161519Z.exitcode",
+        "backend/reports/backend-loadtest-additional-2026-05-04/reruns/repro-latest.log"
+      ]
+    }
+  ],
+  "failureTriage": {
+    "fullRunFailureCount": 14,
+    "fullRunFails": [
+      "tests/public-detail-toc-fallback.spec.ts:6",
+      "tests/ui-improvement-featured-works-grid.spec.ts:141",
+      "tests/ui-improvement-featured-works-grid.spec.ts:200",
+      "tests/admin-blog-ai-dialog.spec.ts:29",
+      "tests/admin-blog-ai-dialog.spec.ts:90",
+      "tests/admin-blog-ai-dialog.spec.ts:156",
+      "tests/admin-search-pagination.spec.ts:344",
+      "tests/admin-work-special-input.spec.ts:6",
+      "tests/dark-mode.spec.ts:446",
+      "tests/ui-admin-keyboard-accessibility.spec.ts:45",
+      "tests/ui-admin-keyboard-accessibility.spec.ts:66",
+      "tests/ui-quality-layout-rhythm.spec.ts:7",
+      "tests/ui-quality-visual-metrics.spec.ts:61",
+      "tests/public-admin-affordances.spec.ts:64"
+    ],
+    "reproRunFailureCount": 7,
+    "reproRunFails": [
+      "tests/ui-improvement-featured-works-grid.spec.ts:141",
+      "tests/ui-improvement-featured-works-grid.spec.ts:200",
+      "tests/admin-blog-ai-dialog.spec.ts:29",
+      "tests/admin-blog-ai-dialog.spec.ts:90",
+      "tests/admin-blog-ai-dialog.spec.ts:156",
+      "tests/ui-admin-keyboard-accessibility.spec.ts:45",
+      "tests/ui-admin-keyboard-accessibility.spec.ts:66"
+    ],
+    "nonReproducibleFromFullRun": [
+      "tests/public-detail-toc-fallback.spec.ts:6",
+      "tests/admin-search-pagination.spec.ts:344",
+      "tests/admin-work-special-input.spec.ts:6",
+      "tests/dark-mode.spec.ts:446",
+      "tests/ui-quality-layout-rhythm.spec.ts:7",
+      "tests/ui-quality-visual-metrics.spec.ts:61",
+      "tests/public-admin-affordances.spec.ts:64"
+    ]
+  },
+  "ciChain": {
+    "ciDev": {
+      "number": 109,
+      "runId": 25322888983,
+      "url": "https://github.com/kimwoonggon/woong-blog-aspcore-nextjs/actions/runs/25322888983",
+      "conclusion": "success"
+    },
+    "promoteMainRuntime": {
+      "number": 12,
+      "runId": 25323185860,
+      "url": "https://github.com/kimwoonggon/woong-blog-aspcore-nextjs/actions/runs/25323185860",
+      "event": "workflow_run",
+      "conclusion": "success"
+    },
+    "releaseMainPromotePr": {
+      "number": 35,
+      "url": "https://github.com/kimwoonggon/woong-blog-aspcore-nextjs/pull/35",
+      "state": "MERGED",
+      "mergedAt": "2026-05-04T14:03:11Z"
+    },
+    "ciMainRuntime": [
+      {
+        "number": 69,
+        "runId": 25323196924,
+        "event": "pull_request",
+        "url": "https://github.com/kimwoonggon/woong-blog-aspcore-nextjs/actions/runs/25323196924",
+        "conclusion": "success"
+      },
+      {
+        "number": 70,
+        "runId": 25323508573,
+        "event": "push",
+        "url": "https://github.com/kimwoonggon/woong-blog-aspcore-nextjs/actions/runs/25323508573",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "risks": [
+    "Full Playwright core suite is not green (14 fails).",
+    "Admin AI dialog strict-mode collisions in 3 tests appear stable and need selector cleanup.",
+    "Mobile admin keyboard focus path remains flaky in 2 tests and needs deterministic focus handling.",
+    "Featured works-grid responsive checks show 2 deterministic fails in the focused rerun.",
+    "Remaining 7 non-reproducible fails from full run require secondary triage."
+  ],
+  "nextActions": [
+    "Fix strict selector handling in admin-blog-ai-dialog and rerun targeted specs.",
+    "Stabilize keyboard focus and tab sequence in ui-admin-keyboard-accessibility and rerun.",
+    "Harden mobile width checks in ui-improvement-featured-works-grid tests.",
+    "Re-run full core set and update failure trend."
+  ],
+  "artifacts": {
+    "markdown": "backend/reports/backend-loadtest-additional-2026-05-04/backend-loadtest-additional-2026-05-04.md",
+    "html": "backend/reports/backend-loadtest-additional-2026-05-04/backend-loadtest-additional-2026-05-04.html",
+    "json": "backend/reports/backend-loadtest-additional-2026-05-04/backend-loadtest-additional-2026-05-04.json"
+  }
+}

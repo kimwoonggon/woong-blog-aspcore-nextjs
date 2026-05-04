@@ -502,7 +502,7 @@ test.describe('login and admin dark mode', () => {
     expect(maxRgbChannel(cardBorder)).toBeLessThanOrEqual(90)
 
     await gotoWithTheme(page, '/admin/blog')
-    const adminSearch = page.getByLabel('Search blog titles')
+    const adminSearch = page.getByRole('textbox', { name: 'Search blog titles' }).first()
     await expect(adminSearch).toBeVisible()
     const inputBackground = await getColorChannels(adminSearch, 'background-color')
     expect(inputBackground[3]).toBeGreaterThan(0)

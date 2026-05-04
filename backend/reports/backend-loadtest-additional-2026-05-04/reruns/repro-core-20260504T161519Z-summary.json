@@ -1,0 +1,753 @@
+{
+  "generatedAt": "2026-05-04T16:20:18.657Z",
+  "testCount": 114,
+  "budgetFailureCount": 0,
+  "warningCount": 11,
+  "slowestTests": [
+    {
+      "title": "switching documents in notion view keeps the editor visible while changing the active document",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-client-switch.spec.ts",
+      "projectName": "chromium-authenticated",
+      "durationMs": 12364.77,
+      "status": "passed"
+    },
+    {
+      "title": "selected notion document persists after reload via url state",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-client-switch.spec.ts",
+      "projectName": "chromium-authenticated",
+      "durationMs": 10846.99,
+      "status": "passed"
+    },
+    {
+      "title": "admin can toggle a published work back to draft and publish it again",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/admin-work-publish.spec.ts",
+      "projectName": "chromium-authenticated",
+      "durationMs": 10732.74,
+      "status": "passed"
+    },
+    {
+      "title": "blog notion view supports list selection and content autosave",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/admin-blog-edit.spec.ts",
+      "projectName": "chromium-authenticated",
+      "durationMs": 9898.1,
+      "status": "passed"
+    },
+    {
+      "title": "AF-042 autosave revalidation is throttled while explicit metadata save revalidates immediately",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-autosave-info.spec.ts",
+      "projectName": "chromium-authenticated",
+      "durationMs": 7848.22,
+      "status": "passed"
+    },
+    {
+      "title": "admin can create a mixed work with two youtube links, two mp4 uploads, and rich body copy",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/admin-work-video-mixed-flow.spec.ts",
+      "projectName": "chromium-authenticated",
+      "durationMs": 6699.87,
+      "status": "passed"
+    },
+    {
+      "title": "mobile admin navigation exposes a labeled nav and supports sequential keyboard focus",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-keyboard-accessibility.spec.ts",
+      "projectName": "chromium-authenticated",
+      "durationMs": 5948.18,
+      "status": "failed"
+    },
+    {
+      "title": "admin can edit an existing blog post with mixed special input",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/admin-blog-edit.spec.ts",
+      "projectName": "chromium-authenticated",
+      "durationMs": 5803.34,
+      "status": "passed"
+    },
+    {
+      "title": "AF-042 autosave status waits for the autosave interval, then shows Saving and Saved after notion content changes",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-autosave-info.spec.ts",
+      "projectName": "chromium-authenticated",
+      "durationMs": 5787.8,
+      "status": "passed"
+    },
+    {
+      "title": "AF-042 autosave status shows Error when notion autosave fails",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-autosave-info.spec.ts",
+      "projectName": "chromium-authenticated",
+      "durationMs": 5550.25,
+      "status": "passed"
+    },
+    {
+      "title": "admin can add videos inline while editing an existing work",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/admin-work-video-edit-flow.spec.ts",
+      "projectName": "chromium-authenticated",
+      "durationMs": 5240.21,
+      "status": "passed"
+    },
+    {
+      "title": "public study detail inline edit returns to the originating blog page",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/public-blog-inline-redirects.spec.ts",
+      "projectName": "chromium-public",
+      "durationMs": 5043.87,
+      "status": "passed"
+    },
+    {
+      "title": "public blog inline editor clears beforeunload after save",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/public-inline-editors-unsaved-warning.spec.ts",
+      "projectName": "chromium-authenticated",
+      "durationMs": 4667.91,
+      "status": "passed"
+    },
+    {
+      "title": "admin can keep a work as draft and publish it later",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/admin-work-publish.spec.ts",
+      "projectName": "chromium-authenticated",
+      "durationMs": 4455.83,
+      "status": "passed"
+    },
+    {
+      "title": "PF-043 public work detail keeps public video render order aligned with saved sort order",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/public-work-videos.spec.ts",
+      "projectName": "chromium-authenticated",
+      "durationMs": 4381.94,
+      "status": "passed"
+    },
+    {
+      "title": "AF-046 Ctrl+S saves notion content and metadata immediately",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-autosave-info.spec.ts",
+      "projectName": "chromium-authenticated",
+      "durationMs": 4235.23,
+      "status": "passed"
+    },
+    {
+      "title": "DM-25: global dark palette uses soft readable surfaces across public and admin UI",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/dark-mode.spec.ts",
+      "projectName": "chromium-authenticated",
+      "durationMs": 3915.6,
+      "status": "passed"
+    },
+    {
+      "title": "AF-062 saved work videos can be reordered by drag and drop and the public order updates",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/admin-work-video-drag-order.spec.ts",
+      "projectName": "chromium-authenticated",
+      "durationMs": 3524.4,
+      "status": "passed"
+    },
+    {
+      "title": "DM-18b: public Mermaid diagrams use GitHub-readable surfaces in light and dark mode",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/dark-mode.spec.ts",
+      "projectName": "chromium-authenticated",
+      "durationMs": 3253.21,
+      "status": "passed"
+    },
+    {
+      "title": "admin can reorder saved videos and delete a removed video while editing an existing work",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/admin-work-video-edit-flow.spec.ts",
+      "projectName": "chromium-authenticated",
+      "durationMs": 3233.01,
+      "status": "passed"
+    }
+  ],
+  "slowestApiResponses": [
+    {
+      "url": "http://127.0.0.1:3000/api/admin/blogs/c6851f50-a6c3-40c5-9849-9279a2593ea3",
+      "method": "PUT",
+      "status": 200,
+      "durationMs": 944.12,
+      "startedAt": "2026-05-04T16:19:27.325Z",
+      "source": "page",
+      "testTitle": "AF-042 autosave status waits for the autosave interval, then shows Saving and Saved after notion content changes",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-autosave-info.spec.ts"
+    },
+    {
+      "url": "http://127.0.0.1:3000/api/admin/blogs/40a2b603-06aa-4dbd-98fc-a0404b4fa13c",
+      "method": "PUT",
+      "status": 500,
+      "durationMs": 913.9,
+      "startedAt": "2026-05-04T16:19:41.250Z",
+      "source": "page",
+      "testTitle": "AF-042 autosave status shows Error when notion autosave fails",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-autosave-info.spec.ts"
+    },
+    {
+      "url": "http://127.0.0.1:3000/revalidate-public",
+      "method": "POST",
+      "status": 200,
+      "durationMs": 430.09,
+      "startedAt": "2026-05-04T16:20:13.557Z",
+      "source": "page",
+      "testTitle": "public works inline create with staged videos stays on /works and refreshes the list",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/work-inline-create-flow.spec.ts"
+    },
+    {
+      "url": "http://127.0.0.1:3000/api/auth/session",
+      "method": "GET",
+      "status": 200,
+      "durationMs": 338.73,
+      "startedAt": "2026-05-04T16:19:26.688Z",
+      "source": "page",
+      "testTitle": "AF-042 autosave status waits for the autosave interval, then shows Saving and Saved after notion content changes",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-autosave-info.spec.ts"
+    },
+    {
+      "url": "http://127.0.0.1:3000/revalidate-public",
+      "method": "POST",
+      "status": 200,
+      "durationMs": 336.46,
+      "startedAt": "2026-05-04T16:19:10.585Z",
+      "source": "page",
+      "testTitle": "blog notion view supports list selection and content autosave",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/admin-blog-edit.spec.ts"
+    },
+    {
+      "url": "http://127.0.0.1:3000/revalidate-public",
+      "method": "POST",
+      "status": 200,
+      "durationMs": 280,
+      "startedAt": "2026-05-04T16:19:48.713Z",
+      "source": "page",
+      "testTitle": "AF-046 Ctrl+S saves notion content and metadata immediately",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-autosave-info.spec.ts"
+    },
+    {
+      "url": "http://127.0.0.1:3000/api/admin/blogs/1f438924-120f-44a7-b325-b54aeeddb85b",
+      "method": "PUT",
+      "status": 200,
+      "durationMs": 279.25,
+      "startedAt": "2026-05-04T16:19:34.696Z",
+      "source": "page",
+      "testTitle": "AF-042 autosave revalidation is throttled while explicit metadata save revalidates immediately",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-autosave-info.spec.ts"
+    },
+    {
+      "url": "https://www.youtube-nocookie.com/api/stats/qoe?cpn=UjtGsJcseiUXQQj7&el=embedded&ns=yt&fexp=v1%2C24004644%2C494889%2C26510702%2C53408%2C34656%2C106030%2C18644%2C117689%2C9252%2C3479%2C13030%2C23206%2C69796%2C30906%2C15105%2C25059%2C4174%2C30446%2C13518%2C5188%2C21437%2C4571%2C5238%2C5800%2C1977%2C1191%2C14236%2C661%2C6620%2C2784%2C23826%2C9500%2C1840%2C22474%2C7200%2C4571%2C11470%2C13160%2C1465%2C20055%2C9390%2C1595%2C5784%2C3921%2C14341%2C3305%2C895%2C457%2C954%2C2754%2C9842%2C2498%2C9787%2C2196%2C1625%2C8030%2C3571%2C6114%2C906%2C3426%2C1304%2C8445%2C4170%2C7181%2C8954%2C2548%2C555%2C937%2C1134%2C1572%2C1286%2C3222%2C2429%2C2412%2C1540%2C490%2C4954%2C2315%2C3342%2C3257&cl=907881858&seq=1&event=streamingstats&docid=dQw4w9WgXcQ&cbr=Chrome&cbrver=145.0.7632.6&c=WEB_EMBEDDED_PLAYER&cver=2.20260501.01.00&cplayer=UNIPLAYER&cos=Windows&cosver=10.0&cplatform=DESKTOP&vps=0.000:N,0.000:ER&cmt=0.000:0.000,0.000:0.000&error=0.000:auth::0.000:0;a6s.0;r.Video_unavailable&vis=0.000:0&bh=0.000:0.000&qclc=ChBVanRHc0pjc2VpVVhRUWo3EAE",
+      "method": "POST",
+      "durationMs": 254.22,
+      "startedAt": "2026-05-04T16:16:48.185Z",
+      "source": "page",
+      "testTitle": "admin can create a mixed work with two youtube links, two mp4 uploads, and rich body copy",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/admin-work-video-mixed-flow.spec.ts"
+    },
+    {
+      "url": "http://127.0.0.1:3000/api/auth/session",
+      "method": "GET",
+      "status": 200,
+      "durationMs": 251.88,
+      "startedAt": "2026-05-04T16:19:32.600Z",
+      "source": "page",
+      "testTitle": "AF-042 autosave revalidation is throttled while explicit metadata save revalidates immediately",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-autosave-info.spec.ts"
+    },
+    {
+      "url": "http://127.0.0.1:3000/revalidate-public",
+      "method": "POST",
+      "status": 200,
+      "durationMs": 244.39,
+      "startedAt": "2026-05-04T16:19:28.274Z",
+      "source": "page",
+      "testTitle": "AF-042 autosave status waits for the autosave interval, then shows Saving and Saved after notion content changes",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-autosave-info.spec.ts"
+    },
+    {
+      "url": "http://127.0.0.1:3000/api/auth/session",
+      "method": "GET",
+      "status": 200,
+      "durationMs": 237.21,
+      "startedAt": "2026-05-04T16:19:40.641Z",
+      "source": "page",
+      "testTitle": "AF-042 autosave status shows Error when notion autosave fails",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-autosave-info.spec.ts"
+    },
+    {
+      "url": "http://127.0.0.1:3000/api/auth/session",
+      "method": "GET",
+      "status": 200,
+      "durationMs": 235.97,
+      "startedAt": "2026-05-04T16:19:10.294Z",
+      "source": "page",
+      "testTitle": "blog notion view supports list selection and content autosave",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/admin-blog-edit.spec.ts"
+    },
+    {
+      "url": "http://127.0.0.1:3000/revalidate-public",
+      "method": "POST",
+      "status": 200,
+      "durationMs": 224.26,
+      "startedAt": "2026-05-04T16:19:33.191Z",
+      "source": "page",
+      "testTitle": "AF-042 autosave revalidation is throttled while explicit metadata save revalidates immediately",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-autosave-info.spec.ts"
+    },
+    {
+      "url": "https://www.youtube-nocookie.com/api/stats/qoe?cpn=o8BKLvkfefP36AAD&el=embedded&ns=yt&fexp=v1%2C23853953%2C150691%2C27005591%2C53408%2C34656%2C47714%2C58316%2C18644%2C117689%2C9252%2C3479%2C13030%2C23206%2C100702%2C15105%2C25059%2C4174%2C30446%2C13518%2C5188%2C21437%2C4571%2C11038%2C1978%2C15425%2C662%2C7518%2C1886%2C23826%2C9500%2C1840%2C22474%2C11771%2C11470%2C13160%2C1460%2C20060%2C10985%2C5783%2C3922%2C14341%2C3305%2C894%2C459%2C953%2C2754%2C12341%2C434%2C8148%2C1204%2C2196%2C1625%2C8030%2C3571%2C7020%2C3426%2C1304%2C8445%2C4170%2C7181%2C8954%2C2550%2C1490%2C1726%2C979%2C862%2C424%2C3222%2C2430%2C2076%2C1498%2C378%2C7759%2C3342%2C3255&cl=907881858&seq=1&event=streamingstats&docid=dQw4w9WgXcQ&cbr=Chrome&cbrver=145.0.7632.6&c=WEB_EMBEDDED_PLAYER&cver=2.20260501.01.00&cplayer=UNIPLAYER&cos=Windows&cosver=10.0&cplatform=DESKTOP&vps=0.000:N,0.000:ER&cmt=0.000:0.000,0.000:0.000&error=0.000:auth::0.000:0;a6s.0;r.Video_unavailable&vis=0.000:0&bh=0.000:0.000&qclc=ChBvOEJLTHZrZmVmUDM2QUFEEAE",
+      "method": "POST",
+      "durationMs": 213.03,
+      "startedAt": "2026-05-04T16:18:08.257Z",
+      "source": "page",
+      "testTitle": "PF-043 public work detail keeps public video render order aligned with saved sort order",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/public-work-videos.spec.ts"
+    },
+    {
+      "url": "https://www.youtube-nocookie.com/api/stats/qoe?cpn=UjtGsJcseiUXQQj7&el=embedded&ns=yt&fexp=v1%2C24004644%2C494889%2C26510702%2C53408%2C34656%2C106030%2C18644%2C117689%2C9252%2C3479%2C13030%2C23206%2C69796%2C30906%2C15105%2C25059%2C4174%2C30446%2C13518%2C5188%2C21437%2C4571%2C5238%2C5800%2C1977%2C1191%2C14236%2C661%2C6620%2C2784%2C23826%2C9500%2C1840%2C22474%2C7200%2C4571%2C11470%2C13160%2C1465%2C20055%2C9390%2C1595%2C5784%2C3921%2C14341%2C3305%2C895%2C457%2C954%2C2754%2C9842%2C2498%2C9787%2C2196%2C1625%2C8030%2C3571%2C6114%2C906%2C3426%2C1304%2C8445%2C4170%2C7181%2C8954%2C2548%2C555%2C937%2C1134%2C1572%2C1286%2C3222%2C2429%2C2412%2C1540%2C490%2C4954%2C2315%2C3342%2C3257&cl=907881858&seq=1&event=streamingstats&docid=dQw4w9WgXcQ&cbr=Chrome&cbrver=145.0.7632.6&c=WEB_EMBEDDED_PLAYER&cver=2.20260501.01.00&cplayer=UNIPLAYER&cos=Windows&cosver=10.0&cplatform=DESKTOP&vps=0.000:N,0.000:ER&cmt=0.000:0.000,0.000:0.000&error=0.000:auth::0.000:0;a6s.0;r.Video_unavailable&vis=0.000:0&bh=0.000:0.000&qclc=ChBVanRHc0pjc2VpVVhRUWo3EAE",
+      "method": "POST",
+      "status": 204,
+      "durationMs": 205.43,
+      "startedAt": "2026-05-04T16:16:48.185Z",
+      "source": "page",
+      "testTitle": "admin can create a mixed work with two youtube links, two mp4 uploads, and rich body copy",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/admin-work-video-mixed-flow.spec.ts"
+    },
+    {
+      "url": "http://127.0.0.1:3000/revalidate-public",
+      "method": "POST",
+      "status": 200,
+      "durationMs": 203.42,
+      "startedAt": "2026-05-04T16:20:11.367Z",
+      "source": "page",
+      "testTitle": "public works inline create saves in place and closes after a text-only create",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/work-inline-create-flow.spec.ts"
+    },
+    {
+      "url": "http://127.0.0.1:3000/api/admin/works/2157b37b-8a5b-4b1f-9a58-b3cc50140028/videos/hls-job",
+      "method": "POST",
+      "status": 200,
+      "durationMs": 179.18,
+      "startedAt": "2026-05-04T16:20:16.117Z",
+      "source": "page",
+      "testTitle": "existing work video uploads persist thumbnails immediately without requiring Update Work",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/work-inline-create-flow.spec.ts"
+    },
+    {
+      "url": "http://127.0.0.1:3000/api/admin/works/2f8d7296-5de1-45ee-8514-7bbd92eaa703/videos/hls-job",
+      "method": "POST",
+      "status": 200,
+      "durationMs": 172.91,
+      "startedAt": "2026-05-04T16:16:50.122Z",
+      "source": "page",
+      "testTitle": "s3-compatible lane processes an uploaded MP4 as HLS and renders it publicly",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/admin-work-video-s3-compatible.spec.ts"
+    },
+    {
+      "url": "http://127.0.0.1:3000/revalidate-public",
+      "method": "POST",
+      "status": 200,
+      "durationMs": 172.77,
+      "startedAt": "2026-05-04T16:16:12.210Z",
+      "source": "page",
+      "testTitle": "admin can toggle a published work back to draft and publish it again",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/admin-work-publish.spec.ts"
+    },
+    {
+      "url": "http://127.0.0.1:3000/api/admin/works/e3c5bd6b-8736-4483-88c4-9367748c7980/videos/hls-job",
+      "method": "POST",
+      "status": 200,
+      "durationMs": 165.18,
+      "startedAt": "2026-05-04T16:18:01.482Z",
+      "source": "page",
+      "testTitle": "public work detail renders uploaded and youtube videos when present",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/public-work-videos.spec.ts"
+    }
+  ],
+  "slowestInteractions": [
+    {
+      "name": "pointerdown",
+      "durationMs": 1808,
+      "startTimeMs": 1778.5,
+      "interactionId": 6596,
+      "source": "performance-observer",
+      "target": "[data-testid=\"notion-library-trigger\"]",
+      "testTitle": "switching documents in notion view keeps the editor visible while changing the active document",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-client-switch.spec.ts"
+    },
+    {
+      "name": "mousedown",
+      "durationMs": 1808,
+      "startTimeMs": 1778.5,
+      "interactionId": 0,
+      "source": "performance-observer",
+      "target": "[data-testid=\"notion-library-trigger\"]",
+      "testTitle": "switching documents in notion view keeps the editor visible while changing the active document",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-client-switch.spec.ts"
+    },
+    {
+      "name": "pointerup",
+      "durationMs": 1808,
+      "startTimeMs": 1778.5,
+      "interactionId": 6596,
+      "source": "performance-observer",
+      "target": "[data-testid=\"notion-library-trigger\"]",
+      "testTitle": "switching documents in notion view keeps the editor visible while changing the active document",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-client-switch.spec.ts"
+    },
+    {
+      "name": "mouseup",
+      "durationMs": 1808,
+      "startTimeMs": 1778.5,
+      "interactionId": 0,
+      "source": "performance-observer",
+      "target": "[data-testid=\"notion-library-trigger\"]",
+      "testTitle": "switching documents in notion view keeps the editor visible while changing the active document",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-client-switch.spec.ts"
+    },
+    {
+      "name": "click",
+      "durationMs": 1808,
+      "startTimeMs": 1778.5,
+      "interactionId": 6596,
+      "source": "performance-observer",
+      "target": "[data-testid=\"notion-library-trigger\"]",
+      "testTitle": "switching documents in notion view keeps the editor visible while changing the active document",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-client-switch.spec.ts"
+    },
+    {
+      "name": "click",
+      "durationMs": 1747.1,
+      "startTimeMs": 1787.2,
+      "source": "raf",
+      "target": "[data-testid=\"notion-library-trigger\"]",
+      "testTitle": "switching documents in notion view keeps the editor visible while changing the active document",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-client-switch.spec.ts"
+    },
+    {
+      "name": "pointerout",
+      "durationMs": 560,
+      "startTimeMs": 4582.1,
+      "interactionId": 0,
+      "source": "performance-observer",
+      "target": "div",
+      "testTitle": "switching documents in notion view keeps the editor visible while changing the active document",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-client-switch.spec.ts"
+    },
+    {
+      "name": "pointerover",
+      "durationMs": 560,
+      "startTimeMs": 4582.1,
+      "interactionId": 0,
+      "source": "performance-observer",
+      "target": "p",
+      "testTitle": "switching documents in notion view keeps the editor visible while changing the active document",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-client-switch.spec.ts"
+    },
+    {
+      "name": "pointerenter",
+      "durationMs": 560,
+      "startTimeMs": 4582.1,
+      "interactionId": 0,
+      "source": "performance-observer",
+      "target": "div",
+      "testTitle": "switching documents in notion view keeps the editor visible while changing the active document",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-client-switch.spec.ts"
+    },
+    {
+      "name": "pointerenter",
+      "durationMs": 560,
+      "startTimeMs": 4582.1,
+      "interactionId": 0,
+      "source": "performance-observer",
+      "target": "div",
+      "testTitle": "switching documents in notion view keeps the editor visible while changing the active document",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-client-switch.spec.ts"
+    },
+    {
+      "name": "pointerenter",
+      "durationMs": 560,
+      "startTimeMs": 4582.1,
+      "interactionId": 0,
+      "source": "performance-observer",
+      "target": "div",
+      "testTitle": "switching documents in notion view keeps the editor visible while changing the active document",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-client-switch.spec.ts"
+    },
+    {
+      "name": "pointerenter",
+      "durationMs": 560,
+      "startTimeMs": 4582.1,
+      "interactionId": 0,
+      "source": "performance-observer",
+      "target": "[data-testid=\"notion-blog-list-item\"]",
+      "testTitle": "switching documents in notion view keeps the editor visible while changing the active document",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-client-switch.spec.ts"
+    },
+    {
+      "name": "pointerenter",
+      "durationMs": 560,
+      "startTimeMs": 4582.1,
+      "interactionId": 0,
+      "source": "performance-observer",
+      "target": "p",
+      "testTitle": "switching documents in notion view keeps the editor visible while changing the active document",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-client-switch.spec.ts"
+    },
+    {
+      "name": "mouseout",
+      "durationMs": 560,
+      "startTimeMs": 4582.1,
+      "interactionId": 0,
+      "source": "performance-observer",
+      "target": "div",
+      "testTitle": "switching documents in notion view keeps the editor visible while changing the active document",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-client-switch.spec.ts"
+    },
+    {
+      "name": "mouseover",
+      "durationMs": 560,
+      "startTimeMs": 4582.1,
+      "interactionId": 0,
+      "source": "performance-observer",
+      "target": "p",
+      "testTitle": "switching documents in notion view keeps the editor visible while changing the active document",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-client-switch.spec.ts"
+    },
+    {
+      "name": "pointerdown",
+      "durationMs": 560,
+      "startTimeMs": 4582.1,
+      "interactionId": 6603,
+      "source": "performance-observer",
+      "target": "p",
+      "testTitle": "switching documents in notion view keeps the editor visible while changing the active document",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-client-switch.spec.ts"
+    },
+    {
+      "name": "mousedown",
+      "durationMs": 560,
+      "startTimeMs": 4582.1,
+      "interactionId": 0,
+      "source": "performance-observer",
+      "target": "p",
+      "testTitle": "switching documents in notion view keeps the editor visible while changing the active document",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-client-switch.spec.ts"
+    },
+    {
+      "name": "pointerup",
+      "durationMs": 560,
+      "startTimeMs": 4582.2,
+      "interactionId": 6603,
+      "source": "performance-observer",
+      "target": "p",
+      "testTitle": "switching documents in notion view keeps the editor visible while changing the active document",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-client-switch.spec.ts"
+    },
+    {
+      "name": "mouseup",
+      "durationMs": 560,
+      "startTimeMs": 4582.2,
+      "interactionId": 0,
+      "source": "performance-observer",
+      "target": "p",
+      "testTitle": "switching documents in notion view keeps the editor visible while changing the active document",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-client-switch.spec.ts"
+    },
+    {
+      "name": "click",
+      "durationMs": 560,
+      "startTimeMs": 4582.2,
+      "interactionId": 6603,
+      "source": "performance-observer",
+      "target": "p",
+      "testTitle": "switching documents in notion view keeps the editor visible while changing the active document",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-client-switch.spec.ts"
+    }
+  ],
+  "slowestMeasuredSteps": [
+    {
+      "name": "Admin blog update to public detail refresh",
+      "durationMs": 4148.98,
+      "startedAt": "2026-05-04T16:18:56.548Z",
+      "status": "passed",
+      "budget": {
+        "warnMs": 3000,
+        "hardMs": 4500,
+        "failOnHard": true,
+        "name": "adminMutationPublicRefresh"
+      },
+      "testTitle": "admin can edit an existing blog post with mixed special input",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/admin-blog-edit.spec.ts"
+    },
+    {
+      "name": "Published work public detail render after create",
+      "durationMs": 1134.09,
+      "startedAt": "2026-05-04T16:16:04.926Z",
+      "status": "passed",
+      "budget": {
+        "warnMs": 4500,
+        "hardMs": 10000,
+        "failOnHard": false,
+        "name": "published-work-public-detail-navigation"
+      },
+      "testTitle": "admin can create and publish a work that appears on public works page",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/admin-work-publish.spec.ts"
+    },
+    {
+      "name": "Admin work create mutation and revalidation",
+      "durationMs": 567.73,
+      "startedAt": "2026-05-04T16:16:04.358Z",
+      "status": "passed",
+      "budget": {
+        "warnMs": 3000,
+        "hardMs": 4500,
+        "failOnHard": true,
+        "name": "adminMutationPublicRefresh"
+      },
+      "testTitle": "admin can create and publish a work that appears on public works page",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/admin-work-publish.spec.ts"
+    },
+    {
+      "name": "AI Fix dialog open to provider dropdown ready",
+      "durationMs": 375.93,
+      "startedAt": "2026-05-04T16:17:49.565Z",
+      "status": "passed",
+      "budget": {
+        "warnMs": 1000,
+        "hardMs": 1500,
+        "failOnHard": true,
+        "name": "aiDialogOpen"
+      },
+      "testTitle": "blog AI fix dialog loads runtime config, applies a fixed draft, and keeps editing local",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/admin-blog-ai-dialog.spec.ts"
+    }
+  ],
+  "budgetFailures": [],
+  "warnings": [
+    {
+      "severity": "warn",
+      "kind": "step",
+      "name": "Admin blog update to public detail refresh",
+      "durationMs": 4148.98,
+      "warnMs": 3000,
+      "hardMs": 4500,
+      "failOnHard": false,
+      "message": "step \"Admin blog update to public detail refresh\" took 4148.98ms, exceeding warn budget 3000ms",
+      "testTitle": "admin can edit an existing blog post with mixed special input",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/admin-blog-edit.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/admin-blog-edit-admin-can--52ecf-st-with-mixed-special-input-chromium-authenticated/attachments/e2e-latency-json-640310513db3c7782f0da7ac4e785131cabe7d36.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "interaction",
+      "name": "input",
+      "durationMs": 352,
+      "warnMs": 260,
+      "hardMs": 450,
+      "failOnHard": false,
+      "message": "interaction \"input\" took 352ms, exceeding warn budget 260ms",
+      "testTitle": "AF-042 autosave revalidation is throttled while explicit metadata save revalidates immediately",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-autosave-info.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/ui-admin-notion-autosave-i-3b9b9-ave-revalidates-immediately-chromium-authenticated/attachments/e2e-latency-json-3a4efd5e0afa444ce337b1e827ec4d997e126f1e.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "interaction",
+      "name": "hover-leave",
+      "durationMs": 288,
+      "warnMs": 220,
+      "hardMs": 360,
+      "failOnHard": false,
+      "message": "interaction \"hover-leave\" took 288ms, exceeding warn budget 220ms",
+      "testTitle": "AF-042 autosave revalidation is throttled while explicit metadata save revalidates immediately",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-autosave-info.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/ui-admin-notion-autosave-i-3b9b9-ave-revalidates-immediately-chromium-authenticated/attachments/e2e-latency-json-3a4efd5e0afa444ce337b1e827ec4d997e126f1e.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "interaction",
+      "name": "hover-enter",
+      "durationMs": 288,
+      "warnMs": 220,
+      "hardMs": 360,
+      "failOnHard": false,
+      "message": "interaction \"hover-enter\" took 288ms, exceeding warn budget 220ms",
+      "testTitle": "AF-042 autosave revalidation is throttled while explicit metadata save revalidates immediately",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-autosave-info.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/ui-admin-notion-autosave-i-3b9b9-ave-revalidates-immediately-chromium-authenticated/attachments/e2e-latency-json-3a4efd5e0afa444ce337b1e827ec4d997e126f1e.json"
+    },
+    {
+      "severity": "hard",
+      "kind": "api",
+      "name": "PUT http://127.0.0.1:3000/api/admin/blogs/c6851f50-a6c3-40c5-9849-9279a2593ea3",
+      "durationMs": 944.12,
+      "warnMs": 350,
+      "hardMs": 600,
+      "failOnHard": false,
+      "message": "api \"PUT http://127.0.0.1:3000/api/admin/blogs/c6851f50-a6c3-40c5-9849-9279a2593ea3\" took 944.12ms, exceeding hard budget 600ms",
+      "testTitle": "AF-042 autosave status waits for the autosave interval, then shows Saving and Saved after notion content changes",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-autosave-info.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/ui-admin-notion-autosave-i-8e02a-fter-notion-content-changes-chromium-authenticated/attachments/e2e-latency-json-1f9f2db5d52f0272322ca103370b9251dd026b3e.json"
+    },
+    {
+      "severity": "hard",
+      "kind": "api",
+      "name": "PUT http://127.0.0.1:3000/api/admin/blogs/40a2b603-06aa-4dbd-98fc-a0404b4fa13c",
+      "durationMs": 913.9,
+      "warnMs": 350,
+      "hardMs": 600,
+      "failOnHard": false,
+      "message": "api \"PUT http://127.0.0.1:3000/api/admin/blogs/40a2b603-06aa-4dbd-98fc-a0404b4fa13c\" took 913.9ms, exceeding hard budget 600ms",
+      "testTitle": "AF-042 autosave status shows Error when notion autosave fails",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-autosave-info.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/ui-admin-notion-autosave-i-d2df0--when-notion-autosave-fails-chromium-authenticated/attachments/e2e-latency-json-7d98d2d05f73b9322aa471a08b6a5ac4447fea3e.json"
+    },
+    {
+      "severity": "hard",
+      "kind": "interaction",
+      "name": "click",
+      "durationMs": 1808,
+      "warnMs": 300,
+      "hardMs": 550,
+      "failOnHard": false,
+      "message": "interaction \"click\" took 1808ms, exceeding hard budget 550ms",
+      "testTitle": "switching documents in notion view keeps the editor visible while changing the active document",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-client-switch.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/ui-admin-notion-client-swi-78e28-hanging-the-active-document-chromium-authenticated/attachments/e2e-latency-json-649c2862ad23c49362c3175bb6464c727426d42f.json"
+    },
+    {
+      "severity": "hard",
+      "kind": "interaction",
+      "name": "hover-leave",
+      "durationMs": 560,
+      "warnMs": 220,
+      "hardMs": 360,
+      "failOnHard": false,
+      "message": "interaction \"hover-leave\" took 560ms, exceeding hard budget 360ms",
+      "testTitle": "switching documents in notion view keeps the editor visible while changing the active document",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-client-switch.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/ui-admin-notion-client-swi-78e28-hanging-the-active-document-chromium-authenticated/attachments/e2e-latency-json-649c2862ad23c49362c3175bb6464c727426d42f.json"
+    },
+    {
+      "severity": "hard",
+      "kind": "interaction",
+      "name": "hover-enter",
+      "durationMs": 560,
+      "warnMs": 220,
+      "hardMs": 360,
+      "failOnHard": false,
+      "message": "interaction \"hover-enter\" took 560ms, exceeding hard budget 360ms",
+      "testTitle": "switching documents in notion view keeps the editor visible while changing the active document",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-client-switch.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/ui-admin-notion-client-swi-78e28-hanging-the-active-document-chromium-authenticated/attachments/e2e-latency-json-649c2862ad23c49362c3175bb6464c727426d42f.json"
+    },
+    {
+      "severity": "hard",
+      "kind": "interaction",
+      "name": "click",
+      "durationMs": 560,
+      "warnMs": 300,
+      "hardMs": 550,
+      "failOnHard": false,
+      "message": "interaction \"click\" took 560ms, exceeding hard budget 550ms",
+      "testTitle": "switching documents in notion view keeps the editor visible while changing the active document",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-client-switch.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/ui-admin-notion-client-swi-78e28-hanging-the-active-document-chromium-authenticated/attachments/e2e-latency-json-649c2862ad23c49362c3175bb6464c727426d42f.json"
+    },
+    {
+      "severity": "warn",
+      "kind": "interaction",
+      "name": "click",
+      "durationMs": 336,
+      "warnMs": 300,
+      "hardMs": 550,
+      "failOnHard": false,
+      "message": "interaction \"click\" took 336ms, exceeding warn budget 300ms",
+      "testTitle": "doc info toggle off expands the notion editor area",
+      "file": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/tests/ui-admin-notion-doc-info-toggle.spec.ts",
+      "artifactPath": "/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/test-results/playwright/ui-admin-notion-doc-info-t-b6cd7-ands-the-notion-editor-area-chromium-authenticated/attachments/e2e-latency-json-b878f3104134405df04cda829660d7088bbeb080.json"
+    }
+  ]
+}

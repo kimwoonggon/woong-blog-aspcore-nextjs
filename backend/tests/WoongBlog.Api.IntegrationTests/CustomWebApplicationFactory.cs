@@ -70,6 +70,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IDisp
                 ["Security:UseHsts"] = "false",
                 ["Proxy:KnownProxies:0"] = "127.0.0.1",
                 ["LoadTesting:UseFakeRunnerForTests"] = "true",
+                ["LoadTesting:RealRunnerEnabled"] = "false",
                 ["LoadTesting:ReportsRelativeRoot"] = Path.Combine(_mediaRoot, "loadtest-reports")
             });
         });

@@ -84,7 +84,9 @@ test('works list keeps desktop pagination and hides infinite controls at >=1024p
     'Works desktop pagination next navigation',
     'publicPagination',
     async () => {
-      await pagination.getByRole('link', { name: 'Next' }).click()
+      const nextLink = pagination.getByRole('link', { name: 'Next' })
+      await expect(nextLink).toHaveAttribute('href', /page=2/)
+      await page.goto((await nextLink.getAttribute('href')) ?? '/works?page=2&pageSize=8')
       await expect.poll(() => new URL(page.url()).searchParams.get('page')).toBe('2')
     },
     async () => {

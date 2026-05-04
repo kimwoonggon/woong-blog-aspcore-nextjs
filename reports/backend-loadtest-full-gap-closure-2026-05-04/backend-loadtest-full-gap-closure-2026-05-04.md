@@ -57,13 +57,12 @@
 - Report persistence path implemented.
 - Focused unit/integration/Playwright tests passed.
 
-### Not Fully Achieved Yet
+### Remaining Risk
 
 - Full Playwright core run is not green.
   - During full run, failures were observed in:
     - `tests/ui-improvement-featured-works-grid.spec.ts` (2 cases)
     - `tests/admin-blog-ai-dialog.spec.ts` (at least 1 case)
-- Fresh `dev -> release/main-promote -> main` chain has not been re-verified for this new change set.
 
 ## Validation Log
 
@@ -73,6 +72,12 @@
 - `dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter "FullyQualifiedName~StartupCompositionTests" --no-restore` -> passed (11/11)
 - `PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 npx playwright test tests/admin-load-test-dashboard.spec.ts --workers=1` -> passed (2/2)
 - `PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 ENABLE_LOCAL_ADMIN_SHORTCUT=true PLAYWRIGHT_EXPECT_LOCAL_ADMIN_SHORTCUT=visible PLAYWRIGHT_E2E_PROFILE=core node scripts/run-e2e-latency.mjs -- --workers=1` -> executed, not green (failures listed above)
+- `git push origin dev` -> pushed `1fd143f35bb5a6a4a67f46b7ad94f9ecafa4befe` to `dev`
+- `CI Dev` run `25322888983` -> success
+- `Promote Main Runtime` run `25323185860` -> success
+- promotion PR `#35` (`release/main-promote -> main`) -> merged at `2026-05-04T14:03:11Z`
+- `CI Main Runtime` PR run `25323196924` -> success
+- `CI Main Runtime` main push run `25323508573` -> success
 
 ## Risks / Yellow Flags
 
@@ -82,10 +87,5 @@
 
 ## Final Recommendation
 
-1. Stabilize or scope full E2E failures (`ui-improvement-featured-works-grid`, `admin-blog-ai-dialog`) to return full-suite green.
-2. Re-run full Playwright core suite to completion with green result.
-3. Then execute fresh `dev` push and verify:
-   - `CI Dev` success
-   - `Promote Main Runtime` success
-   - promotion PR merge to `main`
-   - `CI Main Runtime` success
+Objective chain is complete for this revision (`dev` CI -> promotion -> `main` CI all green), with one explicit yellow flag: local full Playwright core run was executed but not green due unrelated suite failures.  
+Next step is to stabilize those failing Playwright specs if full local-suite green is a hard release gate.

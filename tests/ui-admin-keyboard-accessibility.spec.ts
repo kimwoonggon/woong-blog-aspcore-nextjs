@@ -50,7 +50,7 @@ test('mobile admin navigation exposes a labeled nav and supports sequential keyb
   await expect(nav).toBeVisible()
   await expect(nav.getByRole('link', { name: 'Dashboard' })).toHaveAttribute('aria-current', 'page')
 
-  const orderedLinks = ['Dashboard', 'Works', 'Blog', 'Blog Notion View', 'Pages & Settings', 'Members']
+  const orderedLinks = ['Dashboard', 'Load Test', 'Works', 'Blog', 'Blog Notion View', 'Pages & Settings', 'Members']
   await nav.getByRole('link', { name: orderedLinks[0], exact: true }).focus()
 
   for (const name of orderedLinks) {
