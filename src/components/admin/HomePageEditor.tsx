@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -39,8 +39,14 @@ export function HomePageEditor({ pageId, pageTitle, initialContent }: HomePageEd
     const [profileImageUrl, setProfileImageUrl] = useState(initialContent.profileImageUrl || '')
     const [isSaving, setIsSaving] = useState(false)
     const [isUploading, setIsUploading] = useState(false)
+    const didMount = useRef(false)
 
     useEffect(() => {
+        if (!didMount.current) {
+            didMount.current = true
+            return
+        }
+
         setHeadline(initialContent.headline || DEFAULT_HEADLINE)
         setIntroText(initialContent.introText || DEFAULT_INTRO_TEXT)
         setProfileImageUrl(initialContent.profileImageUrl || '')

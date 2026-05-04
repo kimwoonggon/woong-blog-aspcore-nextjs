@@ -1,0 +1,28 @@
+{
+  "task": "Real backend dashboard additions",
+  "date": "2026-05-04",
+  "scope": [
+    "src/lib/load-test-dashboard.ts",
+    "src/components/admin/LoadTestDashboard.tsx",
+    "src/test/load-test-dashboard.test.ts",
+    "tests/admin-load-test-dashboard.spec.ts"
+  ],
+  "changes": {
+    "parsing": "Added app elapsed extraction precedence and status-based fallback reasons; added optional source/reason metadata",
+    "summarization": "Normalized status values to queued/running/completed/failed/stopped in summarizeRealBackendRunSnapshot",
+    "polling": "Kept polling until completed/failed/stopped and updated start handling for queued/non-running start responses",
+    "ui": "Updated client/nginx/app/db breakdown row rendering with conditional display and explicit app elapsed fallback text",
+    "tests": "Added unit tests for extraction and status normalization, and Playwright assertion updates"
+  },
+  "validations": [
+    "npx vitest run src/test/load-test-dashboard.test.ts",
+    "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 npx playwright test tests/admin-load-test-dashboard.spec.ts --workers=1",
+    "npm run typecheck",
+    "npm run lint"
+  ],
+  "risks": [
+    "Payload schema variation may leave nginx/app elapsed values unavailable and render fallback text",
+    "Start response status semantics are interpreted via string matching only"
+  ],
+  "recommendation": "Merge and follow up with backend payload fixture coverage for app elapsed and queued state transitions"
+}

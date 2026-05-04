@@ -26,8 +26,22 @@ export type RealBackendTestConfig = {
   target: string
   runner: string
   rate: number
+  peakRate: number
   durationSeconds: number
   maxVUs: number
+  startVUs: number
+}
+
+export type RealBackendExecutionProfile = {
+  modeLabel: string
+  summary: string
+  rateLabel: string
+  maxVUsLabel: string
+  durationLabel: string
+  showRate: boolean
+  showPeakRate: boolean
+  showStartVUs: boolean
+  showMaxVUs: boolean
 }
 
 export type LoadTestSample = {
@@ -164,11 +178,19 @@ export type RuntimeDiagnosticsSummary = {
 export type RealBackendLatencyBreakdown = {
   available: boolean
   reason: string | null
+  source?: string | null
   minMs: number | null
   p50Ms: number | null
   p95Ms: number | null
   p99Ms: number | null
   maxMs: number | null
+  appElapsedP95Ms?: number | null
+  appElapsedReason?: string | null
+  appElapsedSource?: string | null
+  nginxRequestTimeP95Ms?: number | null
+  nginxRequestP95Source?: string | null
+  nginxUpstreamP95Ms?: number | null
+  nginxUpstreamSource?: string | null
 }
 
 export type RealBackendHttpCounts = {
@@ -181,14 +203,32 @@ export type RealBackendHttpCounts = {
   status5xx: number
 }
 
+export type RealBackendTargetMetric = {
+  targetId: string
+  targetLabel: string
+  targetPath: string
+  group: LoadTestGroup
+  requestCount: number
+  successCount: number
+  failureCount: number
+  p95Ms: number
+  statusCounts: Record<string, number>
+}
+
+export type RealBackendStartPayload = RealBackendTestConfig & {
+  targets: LoadTestTarget[]
+}
+
 export type RealBackendRunSnapshot = {
   runId: string
   status: string
+  metricsPending: boolean
   requests: number
   throughputRps: number
   latencyMs: number
   latencyBreakdown: RealBackendLatencyBreakdown
   httpCounts: RealBackendHttpCounts
+  targetMetrics: RealBackendTargetMetric[]
 }
 
 export const DEFAULT_LOAD_TEST_CONFIG: LoadTestConfig = {
@@ -208,8 +248,10 @@ export const DEFAULT_REAL_BACKEND_TEST_CONFIG: RealBackendTestConfig = {
   target: 'public-api-mix',
   runner: 'k6',
   rate: 10,
+  peakRate: 20,
   durationSeconds: 30,
   maxVUs: 10,
+  startVUs: 1,
 }
 
 const MIN_USERS = 1
@@ -249,6 +291,32 @@ export const LOAD_TEST_THRESHOLDS = {
 function toInteger(value: unknown, fallback: number) {
   const numberValue = typeof value === 'number' ? value : Number(value)
   return Number.isFinite(numberValue) ? Math.trunc(numberValue) : fallback
+}
+
+function normalizeRealBackendStatus(rawStatus: string) {
+  const normalized = rawStatus.trim().toLowerCase()
+
+  if (normalized.includes('queued') || normalized.includes('queue')) {
+    return 'queued'
+  }
+
+  if (normalized.includes('complete') || normalized.includes('success') || normalized.includes('finish')) {
+    return 'completed'
+  }
+
+  if (normalized.includes('fail') || normalized.includes('error')) {
+    return 'failed'
+  }
+
+  if (normalized.includes('stop') || normalized.includes('cancel')) {
+    return 'stopped'
+  }
+
+  if (normalized.includes('run')) {
+    return 'running'
+  }
+
+  return normalized || 'unknown'
 }
 
 export function summarizeLoadTestFailureBreakdown(samples: LoadTestSample[]): LoadTestFailureBreakdown {
@@ -318,18 +386,118 @@ function trimString(value: unknown, fallback: string) {
   return trimmed.length ? trimmed : fallback
 }
 
+function numberWithCommas(value: number) {
+  return new Intl.NumberFormat('en-US').format(value)
+}
+
 export function sanitizeRealBackendTestConfig(config: Partial<RealBackendTestConfig>): RealBackendTestConfig {
+  const scenario = trimString(config.scenario, DEFAULT_REAL_BACKEND_TEST_CONFIG.scenario)
+  const rate = clamp(toInteger(config.rate, DEFAULT_REAL_BACKEND_TEST_CONFIG.rate), 1, MAX_REAL_BACKEND_RATE)
+  const maxVUs = clamp(toInteger(config.maxVUs, DEFAULT_REAL_BACKEND_TEST_CONFIG.maxVUs), 1, MAX_REAL_BACKEND_VUS)
+  const peakRate = clamp(toInteger(config.peakRate, DEFAULT_REAL_BACKEND_TEST_CONFIG.peakRate), 1, MAX_REAL_BACKEND_RATE)
+
   return {
-    scenario: trimString(config.scenario, DEFAULT_REAL_BACKEND_TEST_CONFIG.scenario),
+    scenario,
     target: trimString(config.target, DEFAULT_REAL_BACKEND_TEST_CONFIG.target),
     runner: trimString(config.runner, DEFAULT_REAL_BACKEND_TEST_CONFIG.runner),
-    rate: clamp(toInteger(config.rate, DEFAULT_REAL_BACKEND_TEST_CONFIG.rate), 1, MAX_REAL_BACKEND_RATE),
+    rate,
+    peakRate: scenario === 'public-api-spike' ? Math.max(rate, peakRate) : peakRate,
     durationSeconds: clamp(
       toInteger(config.durationSeconds, DEFAULT_REAL_BACKEND_TEST_CONFIG.durationSeconds),
       1,
       MAX_REAL_BACKEND_DURATION_SECONDS,
     ),
-    maxVUs: clamp(toInteger(config.maxVUs, DEFAULT_REAL_BACKEND_TEST_CONFIG.maxVUs), 1, MAX_REAL_BACKEND_VUS),
+    maxVUs,
+    startVUs: clamp(toInteger(config.startVUs, DEFAULT_REAL_BACKEND_TEST_CONFIG.startVUs), 1, maxVUs),
+  }
+}
+
+export function describeRealBackendExecutionProfile(config: Partial<RealBackendTestConfig>): RealBackendExecutionProfile {
+  const safeConfig = sanitizeRealBackendTestConfig(config)
+  const duration = `${numberWithCommas(safeConfig.durationSeconds)} seconds`
+
+  if (safeConfig.scenario === 'public-api-spike') {
+    return {
+      modeLabel: 'Spike arrival rate',
+      summary: `Spike arrival rate: ${numberWithCommas(safeConfig.rate)} rps -> ${numberWithCommas(safeConfig.peakRate)} rps -> ${numberWithCommas(safeConfig.rate)} rps over ${duration}. Max VUs cap is runner capacity; concurrency is observed, not configured directly.`,
+      rateLabel: 'Base RPS',
+      maxVUsLabel: 'Max VUs cap',
+      durationLabel: 'Duration seconds',
+      showRate: true,
+      showPeakRate: true,
+      showStartVUs: false,
+      showMaxVUs: true,
+    }
+  }
+
+  if (safeConfig.scenario === 'public-api-soak') {
+    return {
+      modeLabel: 'Soak VUs',
+      summary: `Soak VUs: hold ${numberWithCommas(safeConfig.maxVUs)} VUs for ${duration}. Request rate is produced by those VUs and measured from the runner.`,
+      rateLabel: 'Target RPS',
+      maxVUsLabel: 'VUs',
+      durationLabel: 'Duration seconds',
+      showRate: false,
+      showPeakRate: false,
+      showStartVUs: false,
+      showMaxVUs: true,
+    }
+  }
+
+  if (safeConfig.scenario === 'public-api-stress') {
+    return {
+      modeLabel: 'Stress VUs',
+      summary: `Stress VUs: ramp ${numberWithCommas(safeConfig.startVUs)} VUs -> ${numberWithCommas(safeConfig.maxVUs)} VUs -> ${numberWithCommas(safeConfig.startVUs)} VUs over ${duration}. Throughput and concurrency are measured from the run.`,
+      rateLabel: 'Target RPS',
+      maxVUsLabel: 'Max VUs',
+      durationLabel: 'Duration seconds',
+      showRate: false,
+      showPeakRate: false,
+      showStartVUs: true,
+      showMaxVUs: true,
+    }
+  }
+
+  return {
+    modeLabel: 'Constant arrival rate',
+    summary: `Constant arrival rate: ${numberWithCommas(safeConfig.rate)} rps for ${duration}. Max VUs cap is runner capacity; concurrency is observed, not configured directly.`,
+    rateLabel: 'Target RPS',
+    maxVUsLabel: 'Max VUs cap',
+    durationLabel: 'Duration seconds',
+    showRate: true,
+    showPeakRate: false,
+    showStartVUs: false,
+    showMaxVUs: true,
+  }
+}
+
+function filterRealBackendTargets(targets: LoadTestTarget[], selectedTarget: string) {
+  if (selectedTarget === 'public-works-only') {
+    return targets.filter((target) => target.group === 'work')
+  }
+
+  if (selectedTarget === 'public-blogs-only') {
+    return targets.filter((target) => target.group === 'study')
+  }
+
+  return targets
+}
+
+export function buildRealBackendStartPayload(
+  config: Partial<RealBackendTestConfig>,
+  targets: LoadTestTarget[],
+): RealBackendStartPayload {
+  const safeConfig = sanitizeRealBackendTestConfig(config)
+  const runnableTargets = filterRealBackendTargets(targets, safeConfig.target)
+    .map((target) => ({
+      ...target,
+      path: target.path.trim(),
+    }))
+    .filter((target) => target.path.length > 0)
+
+  return {
+    ...safeConfig,
+    targets: runnableTargets,
   }
 }
 
@@ -357,6 +525,209 @@ function readStringFromRecord(record: Record<string, unknown>, keys: string[]): 
   }
 
   return null
+}
+
+function readAppElapsedSourceFromRecord(record: Record<string, unknown>) {
+  const direct = readNumberFromRecord(record, ['appElapsedP95Ms', 'appElapsedMs', 'appElapsed'])
+  if (direct !== null) {
+    return {
+      value: roundMetric(direct),
+      source: 'appElapsed',
+    }
+  }
+
+  const appRecord = isRecord(record.app) ? record.app : null
+  if (appRecord) {
+    const fromApp = readNumberFromRecord(appRecord, ['appElapsedP95Ms', 'appElapsedMs', 'appElapsed', 'p95Ms', 'p95'])
+    if (fromApp !== null) {
+      return {
+        value: roundMetric(fromApp),
+        source: 'app.elapsed',
+      }
+    }
+  }
+
+  const nestedLatency = isRecord(record.latencyBreakdown) ? record.latencyBreakdown : null
+  if (nestedLatency && isRecord(nestedLatency.app)) {
+    const fromNestedApp = readNumberFromRecord(nestedLatency.app, ['p95Ms', 'p95', 'appElapsedP95Ms', 'appElapsedMs', 'appElapsed'])
+    if (fromNestedApp !== null) {
+      return {
+        value: roundMetric(fromNestedApp),
+        source: 'latencyBreakdown.app',
+      }
+    }
+  }
+
+  return null
+}
+
+function readNginxRequestTimeSourceFromRecord(record: Record<string, unknown>) {
+  const sourceValues = readNumberFromRecord(record, ['nginxRequestTimeP95Ms', 'requestTimeP95Ms', 'request_time_p95', 'requestTimeP95'])
+  if (sourceValues !== null) {
+    return {
+      value: roundMetric(sourceValues),
+      source: 'nginx.request_time',
+    }
+  }
+
+  return null
+}
+
+function readNginxUpstreamSourceFromRecord(record: Record<string, unknown>) {
+  const sourceValues = readNumberFromRecord(record, ['nginxUpstreamP95Ms', 'upstreamResponseTimeP95Ms', 'upstream_response_time_p95', 'upstreamP95'])
+  if (sourceValues !== null) {
+    return {
+      value: roundMetric(sourceValues),
+      source: 'nginx.upstream',
+    }
+  }
+
+  return null
+}
+
+function resolveAppElapsedFromPayloads(payloads: unknown[]) {
+  const candidates: Array<{ record: Record<string, unknown>, source: string }> = []
+
+  for (const payload of payloads) {
+    if (!isRecord(payload)) {
+      continue
+    }
+
+    const status = isRecord(payload.status) ? payload.status : null
+    if (status) {
+      const statusMetrics = isRecord(status.metrics) ? status.metrics : null
+      if (statusMetrics) {
+        if (isRecord(statusMetrics.latencyBreakdown)) {
+          candidates.push({ record: statusMetrics.latencyBreakdown, source: 'status.metrics.latencyBreakdown' })
+        }
+      }
+
+      if (isRecord(status.latencyBreakdown)) {
+        candidates.push({ record: status.latencyBreakdown, source: 'status.latencyBreakdown' })
+      }
+    }
+
+    const metrics = isRecord(payload.metrics) ? payload.metrics : null
+    if (isRecord(metrics)) {
+      candidates.push({ record: metrics, source: 'metrics' })
+
+      if (isRecord(metrics.latencyBreakdown)) {
+        candidates.push({ record: metrics.latencyBreakdown, source: 'metrics.latencyBreakdown' })
+      }
+    }
+
+    if (isRecord(payload.latencyBreakdown)) {
+      candidates.push({ record: payload.latencyBreakdown, source: 'payload.latencyBreakdown' })
+    }
+  }
+
+  for (const candidate of candidates) {
+    const appElapsed = readAppElapsedSourceFromRecord(candidate.record)
+    if (appElapsed) {
+      return {
+        value: appElapsed.value,
+        reason: null,
+        source: candidate.source,
+      }
+    }
+  }
+
+  return null
+}
+
+function resolveNginxRequestTimeFromPayloads(payloads: unknown[]) {
+  for (const payload of payloads) {
+    if (!isRecord(payload)) {
+      continue
+    }
+
+    const status = isRecord(payload.status) ? payload.status : null
+    const statusMetrics = status && isRecord(status.metrics) ? status.metrics : null
+    const candidateRecords: Array<{ record: Record<string, unknown>, source: string }> = []
+
+    if (statusMetrics) {
+      candidateRecords.push({ record: statusMetrics, source: 'status.metrics' })
+    }
+
+    if (status && isRecord(status.latencyBreakdown)) {
+      candidateRecords.push({ record: status.latencyBreakdown, source: 'status.latencyBreakdown' })
+    }
+
+    if (isRecord(payload.metrics)) {
+      candidateRecords.push({ record: payload.metrics, source: 'metrics' })
+    }
+
+    if (isRecord(payload.latencyBreakdown)) {
+      candidateRecords.push({ record: payload.latencyBreakdown, source: 'payload.latencyBreakdown' })
+    }
+
+    for (const candidate of candidateRecords) {
+      const valueSource = readNginxRequestTimeSourceFromRecord(candidate.record)
+      if (valueSource) {
+        return {
+          value: valueSource.value,
+          source: `${candidate.source}:${valueSource.source}`,
+        }
+      }
+    }
+  }
+
+  return null
+}
+
+function resolveNginxUpstreamFromPayloads(payloads: unknown[]) {
+  for (const payload of payloads) {
+    if (!isRecord(payload)) {
+      continue
+    }
+
+    const status = isRecord(payload.status) ? payload.status : null
+    const statusMetrics = status && isRecord(status.metrics) ? status.metrics : null
+    const candidateRecords: Array<{ record: Record<string, unknown>, source: string }> = []
+
+    if (statusMetrics) {
+      candidateRecords.push({ record: statusMetrics, source: 'status.metrics' })
+    }
+
+    if (status && isRecord(status.latencyBreakdown)) {
+      candidateRecords.push({ record: status.latencyBreakdown, source: 'status.latencyBreakdown' })
+    }
+
+    if (isRecord(payload.metrics)) {
+      candidateRecords.push({ record: payload.metrics, source: 'metrics' })
+    }
+
+    if (isRecord(payload.latencyBreakdown)) {
+      candidateRecords.push({ record: payload.latencyBreakdown, source: 'payload.latencyBreakdown' })
+    }
+
+    for (const candidate of candidateRecords) {
+      const valueSource = readNginxUpstreamSourceFromRecord(candidate.record)
+      if (valueSource) {
+        return {
+          value: valueSource.value,
+          source: `${candidate.source}:${valueSource.source}`,
+        }
+      }
+    }
+  }
+
+  return null
+}
+
+function inferRealBackendStatusFromPayloads(payloads: unknown[]) {
+  for (const payload of payloads) {
+    if (!isRecord(payload)) {
+      continue
+    }
+
+    const status = readStringFromRecord(payload, ['status', 'state', 'phase'])
+    if (status) {
+      return status
+    }
+  }
+
+  return 'unknown'
 }
 
 function resolveLatencyRecord(payloads: unknown[]) {
@@ -435,6 +806,71 @@ function mergeHttpCounts(payloads: unknown[]) {
   return summary
 }
 
+function readStatusCounts(record: unknown): Record<string, number> {
+  if (!isRecord(record)) {
+    return {}
+  }
+
+  return Object.entries(record).reduce<Record<string, number>>((counts, [key, value]) => {
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      counts[key] = value
+    }
+    return counts
+  }, {})
+}
+
+function readTargetMetricsFromRecord(record: Record<string, unknown>) {
+  const rawTargets = Array.isArray(record.targetMetrics)
+    ? record.targetMetrics
+    : Array.isArray(record.targets)
+      ? record.targets
+      : []
+
+  return rawTargets.filter(isRecord).map((target): RealBackendTargetMetric | null => {
+    const targetId = readStringFromRecord(target, ['targetId', 'id'])
+    const targetLabel = readStringFromRecord(target, ['targetLabel', 'label'])
+    const targetPath = readStringFromRecord(target, ['targetPath', 'path'])
+    const group = readStringFromRecord(target, ['group'])
+
+    if (!targetId || !targetLabel || !targetPath || (group !== 'work' && group !== 'study')) {
+      return null
+    }
+
+    const requestCount = readNumberFromRecord(target, ['requestCount', 'requests', 'totalRequests']) ?? 0
+    const failureCount = readNumberFromRecord(target, ['failureCount', 'failedRequests', 'failed']) ?? 0
+    const successCount = readNumberFromRecord(target, ['successCount', 'successfulRequests', 'success'])
+      ?? Math.max(0, requestCount - failureCount)
+    const p95Ms = readNumberFromRecord(target, ['p95Ms', 'p95', 'latencyMs']) ?? 0
+
+    return {
+      targetId,
+      targetLabel,
+      targetPath,
+      group,
+      requestCount,
+      successCount,
+      failureCount,
+      p95Ms: roundMetric(p95Ms),
+      statusCounts: readStatusCounts(target.statusCounts),
+    }
+  }).filter((target): target is RealBackendTargetMetric => target !== null)
+}
+
+function extractRealBackendTargetMetrics(payloads: unknown[]) {
+  for (const payload of payloads) {
+    if (!isRecord(payload)) {
+      continue
+    }
+
+    const targetMetrics = readTargetMetricsFromRecord(payload)
+    if (targetMetrics.length) {
+      return targetMetrics
+    }
+  }
+
+  return []
+}
+
 function inferRequests(payloads: unknown[]) {
   for (const payload of payloads) {
     if (!isRecord(payload)) {
@@ -495,16 +931,31 @@ function inferLatency(payloads: unknown[]) {
 }
 
 export function extractRealBackendLatencyBreakdown(...payloads: unknown[]): RealBackendLatencyBreakdown {
+  const statusText = inferRealBackendStatusFromPayloads(payloads)
+  const normalizedStatus = normalizeRealBackendStatus(statusText)
+  const statusAwareReason = normalizedStatus && normalizedStatus !== 'unknown'
+    ? `Latency breakdown is unavailable for this run. Current status: ${normalizedStatus}.`
+    : 'Latency breakdown is unavailable for this run.'
   const latency = resolveLatencyRecord(payloads)
   if (!latency) {
     return {
       available: false,
-      reason: 'Latency breakdown is unavailable for this run.',
+      reason: statusAwareReason,
+      source: null,
       minMs: null,
       p50Ms: null,
       p95Ms: null,
       p99Ms: null,
       maxMs: null,
+      appElapsedP95Ms: null,
+      appElapsedReason: normalizedStatus !== 'unknown'
+        ? `ASP.NET app elapsed p95 is unavailable for status ${normalizedStatus}.`
+        : 'ASP.NET app elapsed p95 is unavailable.',
+      appElapsedSource: null,
+      nginxRequestTimeP95Ms: null,
+      nginxRequestP95Source: null,
+      nginxUpstreamP95Ms: null,
+      nginxUpstreamSource: null,
     }
   }
 
@@ -515,26 +966,49 @@ export function extractRealBackendLatencyBreakdown(...payloads: unknown[]): Real
   const maxMs = readNumberFromRecord(latency, ['maxMs', 'max'])
   const hasValues = [minMs, p50Ms, p95Ms, p99Ms, maxMs].some((value) => value !== null)
 
+  const appElapsed = resolveAppElapsedFromPayloads(payloads)
+  const nginxRequestTime = resolveNginxRequestTimeFromPayloads(payloads)
+  const nginxUpstream = resolveNginxUpstreamFromPayloads(payloads)
+  const appElapsedFallbackReason = normalizedStatus !== 'unknown'
+    ? `ASP.NET app elapsed p95 is unavailable for status ${normalizedStatus}.`
+    : 'ASP.NET app elapsed p95 is unavailable.'
+
   if (!hasValues) {
     return {
       available: false,
-      reason: 'Latency breakdown is unavailable for this run.',
+      reason: statusAwareReason,
+      source: null,
       minMs: null,
       p50Ms: null,
       p95Ms: null,
       p99Ms: null,
       maxMs: null,
+      appElapsedP95Ms: appElapsed?.value ?? null,
+      appElapsedReason: appElapsed ? null : appElapsedFallbackReason,
+      appElapsedSource: appElapsed ? appElapsed.source : null,
+      nginxRequestTimeP95Ms: nginxRequestTime?.value ?? null,
+      nginxRequestP95Source: nginxRequestTime ? nginxRequestTime.source : null,
+      nginxUpstreamP95Ms: nginxUpstream?.value ?? null,
+      nginxUpstreamSource: nginxUpstream ? nginxUpstream.source : null,
     }
   }
 
   return {
     available: true,
     reason: null,
+    source: 'latencyBreakdown',
     minMs: minMs === null ? null : roundMetric(minMs),
     p50Ms: p50Ms === null ? null : roundMetric(p50Ms),
     p95Ms: p95Ms === null ? null : roundMetric(p95Ms),
     p99Ms: p99Ms === null ? null : roundMetric(p99Ms),
     maxMs: maxMs === null ? null : roundMetric(maxMs),
+    appElapsedP95Ms: appElapsed?.value ?? null,
+    appElapsedReason: appElapsed ? null : appElapsedFallbackReason,
+    appElapsedSource: appElapsed ? appElapsed.source : null,
+    nginxRequestTimeP95Ms: nginxRequestTime?.value ?? null,
+    nginxRequestP95Source: nginxRequestTime ? nginxRequestTime.source : null,
+    nginxUpstreamP95Ms: nginxUpstream?.value ?? null,
+    nginxUpstreamSource: nginxUpstream ? nginxUpstream.source : null,
   }
 }
 
@@ -547,21 +1021,49 @@ export function summarizeRealBackendRunSnapshot(runId: string, statusPayload: un
   const latestMetricPoint = metricPoints.at(-1) ?? null
   const status = readStringFromRecord(statusRecord, ['status', 'state', 'phase'])
     ?? readStringFromRecord(metricsRecord, ['status', 'state', 'phase'])
-    ?? 'unknown'
+    ?? inferRealBackendStatusFromPayloads([statusRecord, metricsRecord])
+
+  const normalizedStatus = normalizeRealBackendStatus(status)
   const payloads = latestMetricPoint
     ? [latestMetricPoint, metricsRecord, statusRecord]
     : [metricsRecord, statusRecord]
   const httpCounts = mergeHttpCounts(payloads)
   const requests = inferRequests(payloads) || httpCounts.total
+  const targetMetrics = extractRealBackendTargetMetrics(payloads)
+  const metricsPending = (normalizedStatus === 'queued' || normalizedStatus === 'running')
+    && requests === 0
+    && httpCounts.total === 0
+    && targetMetrics.length === 0
+  const pendingLatencyBreakdown: RealBackendLatencyBreakdown = {
+    available: false,
+    reason: 'k6 summary pending; runner metrics will appear after the first summary point is available.',
+    source: null,
+    minMs: null,
+    p50Ms: null,
+    p95Ms: null,
+    p99Ms: null,
+    maxMs: null,
+    appElapsedP95Ms: null,
+    appElapsedReason: 'k6 summary pending; ASP.NET app elapsed p95 is not available yet.',
+    appElapsedSource: null,
+    nginxRequestTimeP95Ms: null,
+    nginxRequestP95Source: null,
+    nginxUpstreamP95Ms: null,
+    nginxUpstreamSource: null,
+  }
 
   return {
     runId,
-    status,
+    status: normalizedStatus,
+    metricsPending,
     requests,
     throughputRps: inferThroughput(payloads),
     latencyMs: inferLatency(payloads),
-    latencyBreakdown: extractRealBackendLatencyBreakdown(metricsRecord, statusRecord),
+    latencyBreakdown: metricsPending
+      ? pendingLatencyBreakdown
+      : extractRealBackendLatencyBreakdown(metricsRecord, statusRecord),
     httpCounts,
+    targetMetrics,
   }
 }
 

@@ -13,9 +13,6 @@ public static class RealLoadTestCatalog
     private static readonly HashSet<string> AllowedRunners = new(StringComparer.OrdinalIgnoreCase)
     {
         "k6",
-        "nbomber",
-        "wrk",
-        "autocannon",
         "fake"
     };
 

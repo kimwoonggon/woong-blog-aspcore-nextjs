@@ -1,0 +1,59 @@
+{
+  "task": "real-backend-scenario-model",
+  "date": "2026-05-05",
+  "status": "implemented",
+  "changed": [
+    "Added peakRate and startVUs to the real backend frontend config and payload.",
+    "Added scenario-specific controls for RPS, spike, soak, and stress k6 scenarios.",
+    "Added execution profile copy that distinguishes arrival-rate scenarios from VU scenarios.",
+    "Changed running all-zero k6 snapshots to display summary pending instead of result-looking zero metrics.",
+    "Extended backend start validation for PeakRate and StartVus.",
+    "Updated k6 generated script to use PEAK_RATE for spike and START_VUS for stress."
+  ],
+  "notChanged": [
+    "Browser Test user/concurrency model",
+    "k6 live partial metric streaming",
+    "Production promotion",
+    "Full e2e execution status"
+  ],
+  "validations": [
+    {
+      "command": "npx vitest run src/test/load-test-dashboard.test.ts",
+      "result": "passed 24/24"
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter \"FullyQualifiedName~StartupCompositionTests.RealLoadTestControlPlane\" --no-restore",
+      "result": "passed 4/4"
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "passed"
+    },
+    {
+      "command": "npm run lint",
+      "result": "passed with six existing unrelated warnings"
+    },
+    {
+      "command": "BACKEND_PUBLISH_PORT=18080 NGINX_HTTPS_PORT=3002 docker compose -f docker-compose.dev.yml up -d --build backend frontend nginx",
+      "result": "images built and stack started with backend port override"
+    },
+    {
+      "command": "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 npx playwright test tests/admin-load-test-dashboard.spec.ts --project=chromium-authenticated",
+      "result": "passed 2/2"
+    },
+    {
+      "command": "live k6 smoke through /api/admin/load-tests/real/start",
+      "result": "completed with totalRequests=29, failedRequests=0, p95Ms=5.1, targetMetrics=2"
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln --no-restore",
+      "result": "passed non-skipped backend suites; contract provider verification skipped by suite policy"
+    }
+  ],
+  "risks": [
+    "k6 metrics are still completion-summary based, not live-streamed.",
+    "Default backend port 8080 hit Docker port forwarding failure; BACKEND_PUBLISH_PORT=18080 worked.",
+    "Full e2e and push/promotion remain pending."
+  ],
+  "recommendation": "Run a fresh full e2e suite before pushing dev or promoting to main."
+}

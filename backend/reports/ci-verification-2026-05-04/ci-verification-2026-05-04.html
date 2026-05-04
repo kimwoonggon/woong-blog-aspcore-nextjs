@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CI Verification Report — 2026-05-04</title>
+  <style>
+    body { font-family: Arial, Helvetica, sans-serif; line-height: 1.45; padding: 24px; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background: #f0f0f0; }
+    .ok { color: #0a7d2f; font-weight: 600; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  </style>
+</head>
+<body>
+  <h1>CI Verification Report — 2026-05-04</h1>
+  <p>Repository: <a href="https://github.com/kimwoonggon/woong-blog-aspcore-nextjs">kimwoonggon/woong-blog-aspcore-nextjs</a></p>
+
+  <h2>Chain evidence</h2>
+  <table>
+    <tr><th>Stage</th><th>Run/PR</th><th>Event</th><th>Head</th><th>Status</th><th>Conclusion</th><th>URL</th><th>Timestamp (UTC)</th></tr>
+    <tr>
+      <td>CI Dev</td>
+      <td class="mono">25322888983 (#109)</td>
+      <td>push</td>
+      <td class="mono">1fd143f35bb5a6a4a67f46b7ad94f9ecafa4befe</td>
+      <td class="ok">completed</td>
+      <td class="ok">success</td>
+      <td><a href="https://github.com/kimwoonggon/woong-blog-aspcore-nextjs/actions/runs/25322888983">link</a></td>
+      <td>2026-05-04T13:50:55Z</td>
+    </tr>
+    <tr>
+      <td>Promote Main Runtime</td>
+      <td class="mono">25323185860 (#12)</td>
+      <td>workflow_run</td>
+      <td class="mono">5e28992dbb14dcd57386410a6ebece1013d47e0b</td>
+      <td class="ok">completed</td>
+      <td class="ok">success</td>
+      <td><a href="https://github.com/kimwoonggon/woong-blog-aspcore-nextjs/actions/runs/25323185860">link</a></td>
+      <td>2026-05-04T13:56:48Z</td>
+    </tr>
+    <tr>
+      <td>Release PR</td>
+      <td class="mono">#35</td>
+      <td>created by workflow</td>
+      <td class="mono">release/main-promote → main</td>
+      <td class="ok">merged</td>
+      <td>merged</td>
+      <td><a href="https://github.com/kimwoonggon/woong-blog-aspcore-nextjs/pull/35">link</a></td>
+      <td>2026-05-04T14:03:11Z</td>
+    </tr>
+    <tr>
+      <td>CI Main Runtime (PR)</td>
+      <td class="mono">25323196924 (#69)</td>
+      <td>pull_request</td>
+      <td class="mono">5f008b58715fc283bf231bf686e50717fd937c21</td>
+      <td class="ok">completed</td>
+      <td class="ok">success</td>
+      <td><a href="https://github.com/kimwoonggon/woong-blog-aspcore-nextjs/actions/runs/25323196924">link</a></td>
+      <td>2026-05-04T13:57:01Z</td>
+    </tr>
+    <tr>
+      <td>CI Main Runtime (push merge)</td>
+      <td class="mono">25323508573 (#70)</td>
+      <td>push</td>
+      <td class="mono">c797ef393d659dd5e64fdb8ffa337d5e73974dc0</td>
+      <td class="ok">completed</td>
+      <td class="ok">success</td>
+      <td><a href="https://github.com/kimwoonggon/woong-blog-aspcore-nextjs/actions/runs/25323508573">link</a></td>
+      <td>2026-05-04T14:03:14Z</td>
+    </tr>
+  </table>
+
+  <h2>Open PR check</h2>
+  <p class="ok">No open PRs from <span class="mono">release/main-promote</span> to <span class="mono">main</span>.</p>
+
+  <h2>Commands used</h2>
+  <ul>
+    <li class="mono">gh run list --workflow "CI Dev" --branch dev --limit 3 --json number,status,conclusion,url,createdAt,updatedAt,headSha,databaseId</li>
+    <li class="mono">gh run list --workflow "Promote Main Runtime" --limit 6 --json number,status,conclusion,event,url,headBranch,headSha,databaseId</li>
+    <li class="mono">gh run view 25323185860 --log | rg -n "SOURCE_BRANCH|SOURCE_REF|Created promotion PR #"</li>
+    <li class="mono">gh pr list --base main --head release/main-promote --state open --json number,title,state,url,mergeable,createdAt,author</li>
+    <li class="mono">gh pr list --base main --head release/main-promote --limit 5 --state all --json number,title,state,url,mergedAt,closedAt,mergedBy,createdAt,headRefName</li>
+    <li class="mono">gh run list --workflow "CI Main Runtime" --limit 8 --json number,event,status,conclusion,url,headBranch,headSha,createdAt,databaseId,displayTitle</li>
+  </ul>
+
+  <h2>Conclusion</h2>
+  <p class="ok">Chain is currently fully succeeding in current state.</p>
+</body>
+</html>

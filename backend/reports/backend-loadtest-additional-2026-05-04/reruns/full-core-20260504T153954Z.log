@@ -1,0 +1,85 @@
+[RUN] full command start: 2026-05-04T15:39:54Z
+
+Running 434 tests using 1 worker
+
+(node:22744) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:22744) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓    1 [chromium-public] › tests/admin-redirect.spec.ts:3:5 › unauthenticated admin access redirects to login (670ms)
+  ✓    2 [chromium-public] › tests/auth-login.spec.ts:5:5 › anonymous login page renders and sign-in CTA requests the backend auth launcher (570ms)
+  ✓    3 [chromium-public] › tests/auth-login.spec.ts:34:5 › login page renders safe error copy without echoing unknown error query text (555ms)
+  ✓    4 [chromium-public] › tests/ci-compose-public.spec.ts:5:5 › compose runtime serves frontend, backend, and db-backed public pages (3.7s)
+  ✓    5 [chromium-public] › tests/ci-compose-public.spec.ts:20:5 › login page reflects branch auth policy (858ms)
+  ✓    6 [chromium-public] › tests/e2e-dark-mode-journey.spec.ts:6:5 › E2E-007 dark mode stays coherent across the main public journey (5.1s)
+  ✓    7 [chromium-public] › tests/e2e-response-time.spec.ts:18:5 › response time: Study list direct load meets budget (654ms)
+  ✓    8 [chromium-public] › tests/e2e-response-time.spec.ts:36:5 › response time: Works list direct load meets budget (592ms)
+  ✓    9 [chromium-public] › tests/e2e-response-time.spec.ts:54:5 › response time: desktop public nav clicks meet budget (2.5s)
+  ✓   10 [chromium-public] › tests/e2e-response-time.spec.ts:114:5 › response time: public detail card opens meet budget (1.8s)
+  ✓   11 [chromium-public] › tests/e2e-response-time.spec.ts:149:5 › response time: Study mobile append next page meets budget (708ms)
+  ✓   12 [chromium-public] › tests/e2e-response-time.spec.ts:167:5 › response time: Works mobile append next page meets budget (582ms)
+  ✓   13 [chromium-public] › tests/e2e-response-time.spec.ts:185:5 › response time: unified public search submit meets budget (1.2s)
+  ✘   14 [chromium-public] › tests/e2e-response-time.spec.ts:213:7 › authenticated response-time paths › response time: AI Fix provider dropdown is ready within budget (32.4s)
+(node:27056) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:27056) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘   15 [chromium-public] › tests/e2e-response-time.spec.ts:255:7 › authenticated response-time paths › response time: admin site settings save refreshes public home within budget (32.1s)
+(node:30282) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:30282) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   16 [chromium-public] › tests/e2e-visitor-content-exploration.spec.ts:4:5 › E2E-003 visitor can move from home to works, through related content, and into blog details (4.3s)
+  ✓   17 [chromium-public] › tests/e2e-visitor-pagination-journey.spec.ts:3:5 › E2E-004 visitor can keep a paginated reading path stable across list and detail pages (1.9s)
+  ✓   18 [chromium-public] › tests/e2e-visitor-pagination-journey.spec.ts:34:5 › E2E-004 visitor can continue the same paginated path through the works archive (2.8s)
+  ✓   19 [chromium-public] › tests/home.spec.ts:4:5 › public home page renders the full primary navigation (610ms)
+  ✓   20 [chromium-public] › tests/home.spec.ts:17:5 › primary navbar routes to every public destination (10.4s)
+  ✓   21 [chromium-public] › tests/introduction.spec.ts:3:5 › introduction page renders backend-managed content (967ms)
+  ✓   22 [chromium-public] › tests/mobile-public-navigation.spec.ts:3:5 › mobile header controls and bottom tabs render with all destinations (3.6s)
+  ✓   23 [chromium-public] › tests/mobile-public-navigation.spec.ts:41:5 › mobile search button focuses list search inputs or routes to study (3.4s)
+  ✓   24 [chromium-public] › tests/mobile-public-navigation.spec.ts:67:5 › desktop keeps inline navigation and hides mobile bottom tabs (1.1s)
+  ✓   25 [chromium-public] › tests/public-404.spec.ts:3:5 › unknown public routes render the shared 404 page (650ms)
+  ✓   26 [chromium-public] › tests/public-404.spec.ts:11:5 › unknown blog slugs render the shared 404 page (879ms)
+  ✓   27 [chromium-public] › tests/public-404.spec.ts:18:5 › unknown work slugs render the shared 404 page (1.2s)
+  ✓   28 [chromium-public] › tests/public-api-error.spec.ts:4:5 › CF-005 shows a user-facing fallback when a public page payload is malformed (942ms)
+  ✓   29 [chromium-public] › tests/public-blog-empty-state.spec.ts:4:5 › PF-014 shows an empty-state message when no blog posts are available (614ms)
+  ✘   30 [chromium-public] › tests/public-blog-inline-redirects.spec.ts:6:5 › public study inline create returns to the first blog page after save (31.8s)
+(node:37102) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:37102) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘   31 [chromium-public] › tests/public-blog-inline-redirects.spec.ts:27:5 › public study detail inline edit returns to the originating blog page (31.4s)
+(node:40439) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:40439) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   32 [chromium-public] › tests/public-blog-inline-redirects.spec.ts:48:5 › public blog list clamps an invalid page to the nearest valid page (1.6s)
+  ✓   33 [chromium-public] › tests/public-blog-pagination.spec.ts:7:5 › study list auto-appends the next page on mobile without a Load more button (807ms)
+  ✓   34 [chromium-public] › tests/public-blog-pagination.spec.ts:28:5 › study list keeps desktop pagination layout after mobile reading then desktop browser back (1.6s)
+  ✓   35 [chromium-public] › tests/public-blog-pagination.spec.ts:62:5 › study list keeps manual Load more on tablet and desktop pagination at >=1024px (1.6s)
+  ✓   36 [chromium-public] › tests/public-blog-pagination.spec.ts:94:5 › study cards show multiple saved tags and never substitute body text for a blank excerpt (1.2s)
+  ✓   37 [chromium-public] › tests/public-blog-toc-active.spec.ts:15:5 › blog detail TOC updates its active heading as the reader moves deeper into the article (2.5s)
+  ✓   38 [chromium-public] › tests/public-blog-toc-layout.spec.ts:4:5 › blog table of contents stays in a right rail instead of covering article content (1.9s)
+  ✓   39 [chromium-public] › tests/public-contact-fallback-email.spec.ts:3:5 › contact page does not inject a fallback direct email block (1.1s)
+  ✓   40 [chromium-public] › tests/public-content.spec.ts:3:5 › works and blog pages render headings (1.1s)
+  ✓   41 [chromium-public] › tests/public-detail-pages.spec.ts:3:5 › contact page renders heading and contact content (827ms)
+  ✓   42 [chromium-public] › tests/public-detail-pages.spec.ts:9:5 › work detail page renders seeded detail content and stable related cards (1.2s)
+  ✓   43 [chromium-public] › tests/public-detail-pages.spec.ts:34:5 › blog detail page renders seeded blog content and stable related cards (900ms)
+  ✓   44 [chromium-public] › tests/public-detail-toc-fallback.spec.ts:6:5 › blog detail keeps TOC card visible with fallback copy when headings are missing (1.9s)
+  ✓   45 [chromium-public] › tests/public-detail-toc-fallback.spec.ts:31:5 › work detail keeps TOC card visible with fallback copy when headings are missing (2.1s)
+  ✓   46 [chromium-public] › tests/public-edge-nav.spec.ts:3:5 › introduction does not expose left/right edge navigation links (896ms)
+  ✓   47 [chromium-public] › tests/public-edge-nav.spec.ts:11:5 › blog edge arrows paginate between blog pages (1.1s)
+  ✓   48 [chromium-public] › tests/public-edge-nav.spec.ts:21:5 › works edge arrows paginate between work pages (1.0s)
+  ✓   49 [chromium-public] › tests/public-home-cta-section.spec.ts:9:5 › home CTA section exposes quick navigation cards for works, study, and introduction (1.4s)
+  ✓   50 [chromium-public] › tests/public-home-cta-section.spec.ts:26:5 › home CTA section cards navigate to their destination pages (4.6s)
+  ✓   51 [chromium-public] › tests/public-keyboard-accessibility.spec.ts:33:5 › public pages expose one focusable main landmark for the skip link target (2.5s)
+  ✓   52 [chromium-public] › tests/public-keyboard-accessibility.spec.ts:44:5 › mobile public menu opens, traps focus, closes with Escape, and navigates by keyboard (1.8s)
+  ✓   53 [chromium-public] › tests/public-layout-stability.spec.ts:29:5 › works and blog listing cards stay aligned in desktop rows (2.5s)
+  ✓   54 [chromium-public] › tests/public-layout-stability.spec.ts:46:5 › related content cards keep stable desktop rows on detail pages (3.8s)
+  ✓   55 [chromium-public] › tests/public-layout-stability.spec.ts:68:5 › works and blog grids collapse to a single mobile column (2.0s)
+  ✓   56 [chromium-public] › tests/public-layout-stability.spec.ts:85:5 › work and blog detail pages keep related content stacked on mobile (2.5s)
+  ✘   57 [chromium-public] › tests/public-page-inline-save.spec.ts:9:7 › /introduction inline page save closes the editor and refreshes content (31.6s)
+(node:48161) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:48161) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)

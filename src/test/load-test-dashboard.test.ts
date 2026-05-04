@@ -6,9 +6,11 @@ import {
   MAX_USERS,
   buildDiagnosticsSnapshotSummary,
   buildLoadTestTargets,
+  buildRealBackendStartPayload,
   buildSoakUserTimeline,
   buildSpikeUserTimeline,
   buildUserSteps,
+  describeRealBackendExecutionProfile,
   estimatePatternRequestCount,
   evaluateHttpScenarioHealth,
   evaluateRuntimeDiagnosticsHealth,
@@ -380,13 +382,154 @@ describe('load test dashboard planning', () => {
       target: '',
       runner: '',
       rate: -10,
+      peakRate: 5,
       durationSeconds: 999999,
       maxVUs: 0,
+      startVUs: 50,
     })).toEqual({
       ...DEFAULT_REAL_BACKEND_TEST_CONFIG,
       rate: 1,
+      peakRate: 5,
       durationSeconds: 3600,
       maxVUs: 1,
+      startVUs: 1,
+    })
+  })
+
+  it('describes scenario-specific real backend controls without reusing browser load-test semantics', () => {
+    expect(describeRealBackendExecutionProfile({
+      ...DEFAULT_REAL_BACKEND_TEST_CONFIG,
+      scenario: 'public-api-spike',
+      rate: 20,
+      peakRate: 75,
+      maxVUs: 40,
+      durationSeconds: 60,
+    })).toMatchObject({
+      modeLabel: 'Spike arrival rate',
+      rateLabel: 'Base RPS',
+      showRate: true,
+      showPeakRate: true,
+      showStartVUs: false,
+      maxVUsLabel: 'Max VUs cap',
+      summary: expect.stringContaining('20 rps -> 75 rps'),
+    })
+
+    expect(describeRealBackendExecutionProfile({
+      ...DEFAULT_REAL_BACKEND_TEST_CONFIG,
+      scenario: 'public-api-soak',
+      maxVUs: 25,
+      durationSeconds: 300,
+    })).toMatchObject({
+      modeLabel: 'Soak VUs',
+      showRate: false,
+      showPeakRate: false,
+      showStartVUs: false,
+      maxVUsLabel: 'VUs',
+      summary: expect.stringContaining('25 VUs'),
+    })
+
+    expect(describeRealBackendExecutionProfile({
+      ...DEFAULT_REAL_BACKEND_TEST_CONFIG,
+      scenario: 'public-api-stress',
+      startVUs: 5,
+      maxVUs: 80,
+      durationSeconds: 120,
+    })).toMatchObject({
+      modeLabel: 'Stress VUs',
+      showRate: false,
+      showPeakRate: false,
+      showStartVUs: true,
+      maxVUsLabel: 'Max VUs',
+      summary: expect.stringContaining('5 VUs -> 80 VUs'),
+    })
+  })
+
+  it('builds real backend start payload from the selected editable Work and Study URLs', () => {
+    const targets = buildLoadTestTargets({
+      workSlugs: ['portfolio-api'],
+      blogSlugs: ['nextjs-study'],
+    }).map((target) => target.id === 'study-read'
+      ? { ...target, path: ' /api/public/blogs/custom-study-target ' }
+      : target)
+
+    expect(buildRealBackendStartPayload({
+      ...DEFAULT_REAL_BACKEND_TEST_CONFIG,
+      scenario: 'public-api-spike',
+      target: 'public-blogs-only',
+      runner: 'k6',
+      rate: 10,
+      peakRate: 55,
+      durationSeconds: 30,
+      maxVUs: 10,
+      startVUs: 2,
+    }, targets)).toEqual({
+      scenario: 'public-api-spike',
+      target: 'public-blogs-only',
+      runner: 'k6',
+      rate: 10,
+      peakRate: 55,
+      durationSeconds: 30,
+      maxVUs: 10,
+      startVUs: 2,
+      targets: [
+        { id: 'study-list', label: 'Study list', path: '/api/public/blogs?page=1&pageSize=12', group: 'study' },
+        { id: 'study-read', label: 'Study read', path: '/api/public/blogs/custom-study-target', group: 'study' },
+      ],
+    })
+
+    expect(buildRealBackendStartPayload({
+      ...DEFAULT_REAL_BACKEND_TEST_CONFIG,
+      target: 'public-api-mix',
+    }, targets).targets.map((target) => target.label)).toEqual([
+      'Work list',
+      'Work read',
+      'Study list',
+      'Study read',
+    ])
+  })
+
+  it('marks a running real backend run as pending before k6 summary metrics are available', () => {
+    expect(summarizeRealBackendRunSnapshot(
+      'run-pending',
+      {
+        runId: 'run-pending',
+        status: 'running',
+        totalRequests: 0,
+        currentRps: 0,
+        p95Ms: 0,
+        latencyBreakdown: {
+          minMs: 0,
+          p50Ms: 0,
+          p95Ms: 0,
+          p99Ms: 0,
+          maxMs: 0,
+          appElapsedP95Ms: 0,
+        },
+        statusCounts: {
+          '2xx': 0,
+          '3xx': 0,
+          '4xx': 0,
+          '5xx': 0,
+        },
+        targetMetrics: [],
+      },
+      {
+        runId: 'run-pending',
+        status: 'running',
+        metrics: [],
+        targetMetrics: [],
+      },
+    )).toMatchObject({
+      status: 'running',
+      requests: 0,
+      metricsPending: true,
+      latencyBreakdown: {
+        available: false,
+        reason: expect.stringContaining('pending'),
+        p95Ms: null,
+        appElapsedP95Ms: null,
+      },
+      targetMetrics: [],
     })
   })
 
@@ -430,7 +573,26 @@ describe('load test dashboard planning', () => {
           p95Ms: 140,
           p99Ms: 210,
           maxMs: 340,
+          appElapsedP95Ms: 96,
+          nginxRequestTimeP95Ms: 145,
+          nginxUpstreamP95Ms: 121,
         },
+        targetMetrics: [
+          {
+            targetId: 'work-read',
+            targetLabel: 'Work read',
+            targetPath: '/api/public/works/portfolio-api',
+            group: 'work',
+            requestCount: 30,
+            successCount: 29,
+            failureCount: 1,
+            p95Ms: 155.5,
+            statusCounts: {
+              '2xx': 29,
+              '5xx': 1,
+            },
+          },
+        ],
       },
     )
 
@@ -447,6 +609,9 @@ describe('load test dashboard planning', () => {
         p95Ms: 140,
         p99Ms: 210,
         maxMs: 340,
+        appElapsedP95Ms: 96,
+        nginxRequestTimeP95Ms: 145,
+        nginxUpstreamP95Ms: 121,
       },
       httpCounts: {
         total: 50,
@@ -455,18 +620,109 @@ describe('load test dashboard planning', () => {
         status2xx: 49,
         status5xx: 1,
       },
+      targetMetrics: [
+        {
+          targetId: 'work-read',
+          targetLabel: 'Work read',
+          targetPath: '/api/public/works/portfolio-api',
+          group: 'work',
+          requestCount: 30,
+          successCount: 29,
+          failureCount: 1,
+          p95Ms: 155.5,
+        },
+      ],
     })
   })
 
   it('returns an unavailable latency breakdown fallback when metrics are missing', () => {
-    expect(extractRealBackendLatencyBreakdown({ status: 'running' })).toEqual({
+    expect(extractRealBackendLatencyBreakdown({ status: 'running' })).toMatchObject({
       available: false,
-      reason: 'Latency breakdown is unavailable for this run.',
+      reason: 'Latency breakdown is unavailable for this run. Current status: running.',
       minMs: null,
       p50Ms: null,
       p95Ms: null,
       p99Ms: null,
       maxMs: null,
+      appElapsedReason: 'ASP.NET app elapsed p95 is unavailable for status running.',
+      nginxRequestTimeP95Ms: null,
+      nginxUpstreamP95Ms: null,
+      appElapsedP95Ms: null,
+    })
+  })
+
+  it('extracts ASP.NET app elapsed metrics with status and latencyBreakdown priority', () => {
+    const snapshot = extractRealBackendLatencyBreakdown(
+      {
+        status: {
+          status: 'queued',
+          metrics: {
+            latencyBreakdown: {
+              appElapsedMs: 250.8,
+            },
+          },
+        },
+        latencyBreakdown: {
+          p50Ms: 22,
+          p95Ms: 55.1,
+          p99Ms: 84.2,
+        },
+      },
+      {
+        status: {
+          status: 'running',
+          metrics: {
+            latencyBreakdown: {
+              appElapsedMs: 321.6,
+            },
+          },
+        },
+        metrics: {
+          appElapsedP95Ms: 555.1,
+        },
+        p95Ms: 66.6,
+      },
+    )
+
+    expect(snapshot).toMatchObject({
+      available: true,
+      p95Ms: 55.1,
+      appElapsedP95Ms: 250.8,
+      appElapsedSource: 'status.metrics.latencyBreakdown',
+      appElapsedReason: null,
+      nginxRequestTimeP95Ms: null,
+      nginxUpstreamP95Ms: null,
+    })
+  })
+
+  it('normalizes real backend snapshot status for queued/running/completed/failed/stopped', () => {
+    const cases = [
+      { input: 'queued', expected: 'queued' },
+      { input: 'running', expected: 'running' },
+      { input: 'completed', expected: 'completed' },
+      { input: 'failed', expected: 'failed' },
+      { input: 'stopped', expected: 'stopped' },
+      { input: 'COMPLETED', expected: 'completed' },
+    ]
+
+    for (const { input, expected } of cases) {
+      const summary = summarizeRealBackendRunSnapshot(
+        'run-status',
+        { status: input },
+        { status: input },
+      )
+
+      expect(summary.status).toBe(expected)
+      expect(summary.runId).toBe('run-status')
+      expect(summary.requests).toBeGreaterThanOrEqual(0)
+    }
+  })
+
+  it('returns app elapsed unavailable reason for non-running statuses', () => {
+    expect(extractRealBackendLatencyBreakdown({ status: 'failed' })).toMatchObject({
+      available: false,
+      reason: 'Latency breakdown is unavailable for this run. Current status: failed.',
+      appElapsedReason: 'ASP.NET app elapsed p95 is unavailable for status failed.',
     })
   })
 })

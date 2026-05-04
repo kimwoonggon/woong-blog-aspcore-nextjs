@@ -245,7 +245,7 @@ export function AIFixDialog({
                         </DialogTitle>
                         <div className="flex items-center gap-2">
                             {!fixedContent ? (
-                                <Button size="sm" onClick={handleFix} disabled={loading} className="gap-2">
+                                <Button size="sm" onClick={handleFix} disabled={loading} className="gap-2" data-testid="start-ai-fix-button">
                                     {loading ? <Loader2 size={16} className="animate-spin" /> : <Wand2 size={16} />}
                                     {loading ? 'Processing...' : actionLabel}
                                 </Button>
@@ -398,8 +398,8 @@ export function AIFixDialog({
                                             Compare the original content on the left and apply the generated revision only when it looks right.
                                         </p>
                                     </div>
-                                    <Button onClick={handleFix} disabled={loading} aria-label="Start AI Fix from preview">
-                                        {actionLabel}
+                                    <Button onClick={handleFix} disabled={loading} aria-label="Preview AI Fix">
+                                        Preview AI Fix
                                     </Button>
                                 </div>
                             )}
