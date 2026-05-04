@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using WoongBlog.Infrastructure.Persistence.Diagnostics;
 
 namespace WoongBlog.Infrastructure.Persistence;
 
@@ -9,9 +10,25 @@ public static class PersistenceServiceCollectionExtensions
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.AddDbContext<WoongBlogDbContext>(options =>
+        services
+            .AddOptions<DatabaseDiagnosticsOptions>()
+            .Bind(configuration.GetSection(DatabaseDiagnosticsOptions.SectionName))
+            .Validate(
+                options => options.LatencySampleCapacity > 0
+                    && options.SlowQuerySampleCapacity > 0
+                    && options.SlowQueryThresholdMs > 0,
+                "Load test database diagnostics options must use positive values.");
+
+        services.AddSingleton<IDatabaseDiagnosticsCollector, DatabaseDiagnosticsCollector>();
+        services.AddSingleton<LoadTestDbCommandDiagnosticsInterceptor>();
+        services.AddSingleton<LoadTestDbConnectionDiagnosticsInterceptor>();
+
+        services.AddDbContext<WoongBlogDbContext>((serviceProvider, options) =>
         {
             var databaseProvider = configuration["DatabaseProvider"];
+            var commandDiagnosticsInterceptor = serviceProvider.GetRequiredService<LoadTestDbCommandDiagnosticsInterceptor>();
+            var connectionDiagnosticsInterceptor = serviceProvider.GetRequiredService<LoadTestDbConnectionDiagnosticsInterceptor>();
+            options.AddInterceptors(commandDiagnosticsInterceptor, connectionDiagnosticsInterceptor);
 
             if (string.Equals(databaseProvider, "InMemory", StringComparison.OrdinalIgnoreCase))
             {

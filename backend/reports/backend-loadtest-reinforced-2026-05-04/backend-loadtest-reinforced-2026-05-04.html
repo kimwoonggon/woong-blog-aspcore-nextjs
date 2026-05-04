@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>backend-loadtest-reinforced-2026-05-04 audit</title>
+    <style>
+      body { font-family: Arial, sans-serif; max-width: 980px; margin: 32px auto; line-height: 1.5; color: #111; }
+      h1, h2 { margin: 0.9rem 0 0.4rem; }
+      ul { margin-top: 0.3rem; }
+      code { background: #f3f4f6; padding: 0.1rem 0.3rem; border-radius: 4px; }
+      .ok { color: #0a7d33; font-weight: 700; }
+      .warn { color: #8a6700; font-weight: 700; }
+    </style>
+  </head>
+  <body>
+    <h1>Backend Load-Test Reinforced Pass Audit</h1>
+    <p><strong>Task:</strong> <code>backend-loadtest-reinforced-2026-05-04</code> · <strong>Date:</strong> 2026-05-04</p>
+
+    <h2>Scope</h2>
+    <p>Expanded existing <code>/admin/load-test</code> observability in current Next.js + ASP.NET Core + nginx/compose architecture (no SignalR/k8s/NBomber additions).</p>
+
+    <h2>Implemented</h2>
+    <ul>
+      <li>Time-based <code>soak</code> and ramp-based <code>spike</code> execution.</li>
+      <li><code>concurrency</code> max raised to 1000 and clarified as in-flight HTTP requests.</li>
+      <li>Run status now shows current/peak in-flight and elapsed time.</li>
+      <li>HTTP failure breakdown includes 5xx/429/503/timeout/abort.</li>
+      <li>Backend diagnostics endpoint added at <code>/api/admin/load-test/diagnostics</code> (admin-only).</li>
+      <li>DB command/connection latency percentiles, slow query samples, timeout/error counts, and <code>pg_stat_activity</code> connection states.</li>
+      <li>Resilient fallback: diagnostics collector failures return <code>database.status=error</code> without endpoint crash.</li>
+    </ul>
+
+    <h2>Validation</h2>
+    <ul>
+      <li class="ok">Passed: typecheck, focused Vitest (15/15), lint (0 errors), build, focused Playwright (1/1), backend integration diagnostics tests (9/9), full backend tests, backend build, compose up, git diff check.</li>
+      <li class="warn">Not fully completed: <code>npm test -- --run</code> hung in this environment and was terminated.</li>
+      <li class="warn">Unavailable: <code>pnpm quality-gate</code> (<code>pnpm: command not found</code>).</li>
+    </ul>
+
+    <h2>Known Limits</h2>
+    <ul>
+      <li>Browser-driven load is not equivalent to real distributed load generation.</li>
+      <li><code>pg_stat_activity</code> is server-view state, not exact internal Npgsql pool busy/idle counts.</li>
+      <li>In-memory ring-buffer diagnostics reset on process restart.</li>
+    </ul>
+
+    <h2>Recommendation</h2>
+    <p>Adopt this reinforced dashboard as the default HTTP-load observability surface. Next step: optional bounded backend limiter metrics or external load-runner path for higher-fidelity scale tests.</p>
+  </body>
+</html>
