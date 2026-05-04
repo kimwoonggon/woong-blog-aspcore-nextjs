@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
   DEFAULT_LOAD_TEST_CONFIG,
+  DEFAULT_REAL_BACKEND_TEST_CONFIG,
   appendLoadTestCacheBust,
   buildDiagnosticsSnapshotSummary,
   buildSoakUserTimeline,
@@ -20,13 +21,17 @@ import {
   MAX_CONCURRENCY,
   MAX_USERS,
   runWithConcurrency,
+  sanitizeRealBackendTestConfig,
   sanitizeLoadTestConfig,
+  summarizeRealBackendRunSnapshot,
   summarizeLoadTestSamples,
   type LoadTestConfig,
   type LoadTestHealthStatus,
   type LoadTestSample,
   type LoadTestScenarioResult,
   type LoadTestTarget,
+  type RealBackendRunSnapshot,
+  type RealBackendTestConfig,
   type RuntimeDiagnosticsPayload,
   type RuntimeMetricTrend,
 } from '@/lib/load-test-dashboard'
@@ -51,6 +56,8 @@ type RuntimeMetricRow = {
   trend: RuntimeMetricTrend
   metric: 'bytes' | 'number' | 'ms' | 'percent'
 }
+
+type RealBackendRunPhase = 'idle' | 'starting' | 'running' | 'stopping' | 'completed' | 'stopped' | 'failed'
 
 const numberFormatter = new Intl.NumberFormat('en-US')
 
@@ -103,6 +110,56 @@ function formatScenarioState(state: LoadTestScenarioResult['state']) {
   }
 
   return 'Completed'
+}
+
+function formatRealBackendPhase(phase: RealBackendRunPhase) {
+  if (phase === 'starting') {
+    return 'Starting'
+  }
+
+  if (phase === 'running') {
+    return 'Running'
+  }
+
+  if (phase === 'stopping') {
+    return 'Stopping'
+  }
+
+  if (phase === 'completed') {
+    return 'Completed'
+  }
+
+  if (phase === 'stopped') {
+    return 'Stopped'
+  }
+
+  if (phase === 'failed') {
+    return 'Failed'
+  }
+
+  return 'Idle'
+}
+
+function normalizeRealBackendPhase(rawStatus: string, fallback: RealBackendRunPhase): RealBackendRunPhase {
+  const normalized = rawStatus.trim().toLowerCase()
+
+  if (normalized.includes('fail') || normalized.includes('error')) {
+    return 'failed'
+  }
+
+  if (normalized.includes('stop') || normalized.includes('cancel')) {
+    return 'stopped'
+  }
+
+  if (normalized.includes('complete') || normalized.includes('success') || normalized.includes('finish')) {
+    return 'completed'
+  }
+
+  if (normalized.includes('run') || normalized.includes('queue') || normalized.includes('start') || normalized.includes('progress')) {
+    return 'running'
+  }
+
+  return fallback
 }
 
 function inputNumberValue(value: string) {
@@ -158,6 +215,22 @@ function statusClassName(status: LoadTestHealthStatus) {
   return 'border-border bg-muted/40 text-muted-foreground'
 }
 
+function realBackendPhaseClassName(phase: RealBackendRunPhase) {
+  if (phase === 'failed') {
+    return statusClassName('red')
+  }
+
+  if (phase === 'running' || phase === 'starting' || phase === 'stopping') {
+    return statusClassName('yellow')
+  }
+
+  if (phase === 'completed') {
+    return statusClassName('green')
+  }
+
+  return statusClassName('unavailable')
+}
+
 async function measureLoadTestRequest(
   target: LoadTestTarget,
   runId: string,
@@ -199,6 +272,11 @@ async function measureLoadTestRequest(
 
 export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashboardProps) {
   const [config, setConfig] = useState<LoadTestConfig>(DEFAULT_LOAD_TEST_CONFIG)
+  const [realBackendConfig, setRealBackendConfig] = useState<RealBackendTestConfig>(DEFAULT_REAL_BACKEND_TEST_CONFIG)
+  const [realBackendRunId, setRealBackendRunId] = useState<string | null>(null)
+  const [realBackendPhase, setRealBackendPhase] = useState<RealBackendRunPhase>('idle')
+  const [realBackendSnapshot, setRealBackendSnapshot] = useState<RealBackendRunSnapshot | null>(null)
+  const [realBackendError, setRealBackendError] = useState<string | null>(null)
   const [editableTargets, setEditableTargets] = useState<LoadTestTarget[]>(targets)
   const [results, setResults] = useState<LoadTestScenarioResult[]>([])
   const [diagnosticsSamples, setDiagnosticsSamples] = useState<RuntimeDiagnosticsPayload[]>([])
@@ -214,11 +292,13 @@ export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashbo
   })
   const cancelledRef = useRef(false)
   const controllersRef = useRef(new Set<AbortController>())
+  const realBackendPollTimerRef = useRef<number | null>(null)
   const runStartedAtRef = useRef<number | null>(null)
   const inFlightRef = useRef(0)
   const peakInFlightRef = useRef(0)
 
   const safeConfig = useMemo(() => sanitizeLoadTestConfig(config), [config])
+  const safeRealBackendConfig = useMemo(() => sanitizeRealBackendTestConfig(realBackendConfig), [realBackendConfig])
   const userSteps = useMemo(() => buildUserSteps(safeConfig), [safeConfig])
   const runnableTargets = useMemo(
     () => editableTargets
@@ -269,6 +349,9 @@ export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashbo
   const totalTimeouts = results.reduce((sum, result) => sum + result.timeoutCount, 0)
   const totalAborts = results.reduce((sum, result) => sum + result.abortedCount, 0)
   const latestDatabaseStatus = latestDiagnosticsSample?.database.status ?? 'unavailable'
+  const realBackendStatusText = realBackendSnapshot?.status ?? formatRealBackendPhase(realBackendPhase)
+  const realBackendLatencyBreakdown = realBackendSnapshot?.latencyBreakdown
+  const realBackendHttpCounts = realBackendSnapshot?.httpCounts
 
   function updateNumberField(field: keyof LoadTestConfig, value: string) {
     setConfig((current) => sanitizeLoadTestConfig({
@@ -286,6 +369,27 @@ export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashbo
 
   function updateTargetPath(targetId: string, value: string) {
     setEditableTargets((current) => current.map((target) => target.id === targetId ? { ...target, path: value } : target))
+  }
+
+  function updateRealBackendTextField(field: 'scenario' | 'target' | 'runner', value: string) {
+    setRealBackendConfig((current) => sanitizeRealBackendTestConfig({
+      ...current,
+      [field]: value,
+    }))
+  }
+
+  function updateRealBackendNumberField(field: 'rate' | 'durationSeconds' | 'maxVUs', value: string) {
+    setRealBackendConfig((current) => sanitizeRealBackendTestConfig({
+      ...current,
+      [field]: inputNumberValue(value),
+    }))
+  }
+
+  function clearRealBackendPollingTimer() {
+    if (realBackendPollTimerRef.current !== null) {
+      window.clearTimeout(realBackendPollTimerRef.current)
+      realBackendPollTimerRef.current = null
+    }
   }
 
   function registerController(controller: AbortController) {
@@ -315,6 +419,147 @@ export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashbo
         elapsedMs,
       }
     })
+  }
+
+  function resolveRealBackendRunId(payload: unknown) {
+    if (!payload || typeof payload !== 'object') {
+      return null
+    }
+
+    const asRunId = (value: unknown) => {
+      if (typeof value === 'string' && value.trim().length) {
+        return value
+      }
+      if (typeof value === 'number' && Number.isFinite(value)) {
+        return String(value)
+      }
+      return null
+    }
+
+    const record = payload as Record<string, unknown>
+    const directRunId = asRunId(record.runId) ?? asRunId(record.id)
+    if (directRunId) {
+      return directRunId
+    }
+    if (record.run && typeof record.run === 'object' && record.run !== null) {
+      const nested = record.run as Record<string, unknown>
+      const nestedRunId = asRunId(nested.id) ?? asRunId(nested.runId)
+      if (nestedRunId) {
+        return nestedRunId
+      }
+    }
+
+    return null
+  }
+
+  async function pollRealBackendRun(currentRunId: string) {
+    try {
+      const [statusResponse, metricsResponse] = await Promise.all([
+        fetch(`/api/admin/load-tests/real/${encodeURIComponent(currentRunId)}`, {
+          cache: 'no-store',
+          credentials: 'same-origin',
+        }),
+        fetch(`/api/admin/load-tests/real/${encodeURIComponent(currentRunId)}/metrics`, {
+          cache: 'no-store',
+          credentials: 'same-origin',
+        }),
+      ])
+
+      const statusPayload: unknown = statusResponse.ok ? await statusResponse.json() : null
+      const metricsPayload: unknown = metricsResponse.ok ? await metricsResponse.json() : null
+
+      if (!statusResponse.ok && !metricsResponse.ok) {
+        throw new Error(`Real backend run poll failed (${statusResponse.status}/${metricsResponse.status})`)
+      }
+
+      const snapshot = summarizeRealBackendRunSnapshot(currentRunId, statusPayload, metricsPayload)
+      setRealBackendSnapshot(snapshot)
+      setRealBackendError(null)
+
+      const nextPhase = normalizeRealBackendPhase(snapshot.status, 'running')
+      setRealBackendPhase(nextPhase)
+      if (nextPhase === 'completed' || nextPhase === 'stopped' || nextPhase === 'failed') {
+        clearRealBackendPollingTimer()
+        return
+      }
+
+      clearRealBackendPollingTimer()
+      realBackendPollTimerRef.current = window.setTimeout(() => {
+        void pollRealBackendRun(currentRunId)
+      }, 1500)
+    } catch (error) {
+      clearRealBackendPollingTimer()
+      setRealBackendPhase('failed')
+      setRealBackendError(error instanceof Error ? error.message : 'Real backend run polling failed')
+    }
+  }
+
+  async function startRealBackendTest() {
+    if (realBackendPhase === 'starting' || realBackendPhase === 'running' || realBackendPhase === 'stopping') {
+      return
+    }
+
+    const nextConfig = safeRealBackendConfig
+    setRealBackendConfig(nextConfig)
+    setRealBackendError(null)
+    setRealBackendPhase('starting')
+    setRealBackendSnapshot(null)
+    setRealBackendRunId(null)
+    clearRealBackendPollingTimer()
+
+    try {
+      const response = await fetch('/api/admin/load-tests/real/start', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify(nextConfig),
+      })
+
+      if (!response.ok) {
+        throw new Error(`Real backend start failed with ${response.status}`)
+      }
+
+      const payload: unknown = await response.json()
+      const runId = resolveRealBackendRunId(payload)
+      if (!runId) {
+        throw new Error('Real backend start response did not include runId')
+      }
+
+      setRealBackendRunId(runId)
+      setRealBackendPhase('running')
+      void pollRealBackendRun(runId)
+    } catch (error) {
+      setRealBackendPhase('failed')
+      setRealBackendError(error instanceof Error ? error.message : 'Real backend test start failed')
+    }
+  }
+
+  async function stopRealBackendTest() {
+    if (!realBackendRunId || (realBackendPhase !== 'running' && realBackendPhase !== 'starting')) {
+      return
+    }
+
+    setRealBackendPhase('stopping')
+    setRealBackendError(null)
+    clearRealBackendPollingTimer()
+
+    try {
+      const response = await fetch(`/api/admin/load-tests/real/${encodeURIComponent(realBackendRunId)}/stop`, {
+        method: 'POST',
+        credentials: 'same-origin',
+      })
+
+      if (!response.ok) {
+        throw new Error(`Real backend stop failed with ${response.status}`)
+      }
+
+      void pollRealBackendRun(realBackendRunId)
+    } catch (error) {
+      setRealBackendPhase('failed')
+      setRealBackendError(error instanceof Error ? error.message : 'Real backend test stop failed')
+    }
   }
 
   async function collectDiagnosticsSample() {
@@ -352,6 +597,13 @@ export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashbo
 
     return () => window.clearInterval(interval)
   }, [status.phase])
+
+  useEffect(() => () => {
+    if (realBackendPollTimerRef.current !== null) {
+      window.clearTimeout(realBackendPollTimerRef.current)
+      realBackendPollTimerRef.current = null
+    }
+  }, [])
 
   useEffect(() => {
     if (status.phase !== 'running') {
@@ -770,6 +1022,209 @@ export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashbo
           </CardContent>
         </Card>
       </div>
+
+      <Card data-testid="real-backend-test-panel">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Gauge aria-hidden="true" size={18} />
+            Real Backend Test
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+            Browser Test uses browser-generated fetch load.
+            Real Backend Test runs an external load runner and only displays its results in this UI.
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="space-y-2">
+              <Label htmlFor="real-backend-scenario">Scenario</Label>
+              <select
+                id="real-backend-scenario"
+                aria-label="Real backend scenario"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                value={safeRealBackendConfig.scenario}
+                onChange={(event) => updateRealBackendTextField('scenario', event.target.value)}
+              >
+                <option value="public-api-rps">public-api-rps</option>
+                <option value="public-api-spike">public-api-spike</option>
+                <option value="public-api-soak">public-api-soak</option>
+                <option value="public-api-stress">public-api-stress</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="real-backend-target">Target</Label>
+              <select
+                id="real-backend-target"
+                aria-label="Real backend target"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                value={safeRealBackendConfig.target}
+                onChange={(event) => updateRealBackendTextField('target', event.target.value)}
+              >
+                <option value="public-api-mix">public-api-mix</option>
+                <option value="public-works-only">public-works-only</option>
+                <option value="public-blogs-only">public-blogs-only</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="real-backend-runner">Runner</Label>
+              <select
+                id="real-backend-runner"
+                aria-label="Real backend runner"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                value={safeRealBackendConfig.runner}
+                onChange={(event) => updateRealBackendTextField('runner', event.target.value)}
+              >
+                <option value="k6">k6</option>
+                <option value="nbomber">nbomber</option>
+                <option value="wrk">wrk</option>
+                <option value="autocannon">autocannon</option>
+                <option value="fake">fake</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="real-backend-rate">Rate</Label>
+              <Input
+                id="real-backend-rate"
+                type="number"
+                min={1}
+                max={100000}
+                value={safeRealBackendConfig.rate}
+                onChange={(event) => updateRealBackendNumberField('rate', event.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="real-backend-duration">Duration seconds</Label>
+              <Input
+                id="real-backend-duration"
+                type="number"
+                min={1}
+                max={3600}
+                value={safeRealBackendConfig.durationSeconds}
+                onChange={(event) => updateRealBackendNumberField('durationSeconds', event.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="real-backend-max-vus">Max VUs</Label>
+              <Input
+                id="real-backend-max-vus"
+                type="number"
+                min={1}
+                max={10000}
+                value={safeRealBackendConfig.maxVUs}
+                onChange={(event) => updateRealBackendNumberField('maxVUs', event.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              className="gap-2"
+              disabled={realBackendPhase === 'starting' || realBackendPhase === 'running' || realBackendPhase === 'stopping'}
+              onClick={() => void startRealBackendTest()}
+            >
+              <Play aria-hidden="true" size={16} />
+              Start real backend test
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="gap-2"
+              disabled={!realBackendRunId || (realBackendPhase !== 'starting' && realBackendPhase !== 'running')}
+              onClick={() => void stopRealBackendTest()}
+            >
+              <Square aria-hidden="true" size={16} />
+              Stop real backend test
+            </Button>
+          </div>
+
+          <div className={`rounded-lg border p-3 text-sm ${realBackendPhaseClassName(realBackendPhase)}`} data-testid="real-backend-live-status">
+            <p className="font-medium">
+              {formatRealBackendPhase(realBackendPhase)} · {realBackendStatusText}
+            </p>
+            <p className="mt-1 text-xs">
+              Run ID {realBackendRunId ?? 'not started'}
+            </p>
+            {realBackendError ? (
+              <p className="mt-1 text-xs">{realBackendError}</p>
+            ) : null}
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+            <div className="rounded-lg border border-border bg-muted/30 p-3">
+              <p className="text-xs font-medium uppercase text-muted-foreground">Status</p>
+              <p className="mt-2 text-lg font-semibold text-foreground">{realBackendStatusText}</p>
+            </div>
+            <div className="rounded-lg border border-border bg-muted/30 p-3">
+              <p className="text-xs font-medium uppercase text-muted-foreground">Requests</p>
+              <p className="mt-2 text-lg font-semibold text-foreground">{numberFormatter.format(realBackendSnapshot?.requests ?? 0)}</p>
+            </div>
+            <div className="rounded-lg border border-border bg-muted/30 p-3">
+              <p className="text-xs font-medium uppercase text-muted-foreground">Latency</p>
+              <p className="mt-2 text-lg font-semibold text-foreground">{formatMs(realBackendSnapshot?.latencyMs ?? 0)}</p>
+            </div>
+            <div className="rounded-lg border border-border bg-muted/30 p-3">
+              <p className="text-xs font-medium uppercase text-muted-foreground">Throughput</p>
+              <p className="mt-2 text-lg font-semibold text-foreground">
+                {numberFormatter.format(realBackendSnapshot?.throughputRps ?? 0)} rps
+              </p>
+            </div>
+            <div className="rounded-lg border border-border bg-muted/30 p-3">
+              <p className="text-xs font-medium uppercase text-muted-foreground">HTTP counts</p>
+              <p className="mt-2 text-sm font-semibold text-foreground">
+                total {numberFormatter.format(realBackendHttpCounts?.total ?? 0)} · ok {numberFormatter.format(realBackendHttpCounts?.success ?? 0)} · failed {numberFormatter.format(realBackendHttpCounts?.failed ?? 0)}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                2xx {numberFormatter.format(realBackendHttpCounts?.status2xx ?? 0)} · 3xx {numberFormatter.format(realBackendHttpCounts?.status3xx ?? 0)} · 4xx {numberFormatter.format(realBackendHttpCounts?.status4xx ?? 0)} · 5xx {numberFormatter.format(realBackendHttpCounts?.status5xx ?? 0)}
+              </p>
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-border bg-muted/20 p-4" data-testid="real-backend-latency-breakdown">
+            <p className="text-sm font-medium text-foreground">Latency breakdown</p>
+            {realBackendLatencyBreakdown?.available ? (
+              <div className="mt-2 grid gap-2 text-sm text-foreground sm:grid-cols-2 xl:grid-cols-5">
+                <p>min {realBackendLatencyBreakdown.minMs === null ? '—' : formatMs(realBackendLatencyBreakdown.minMs)}</p>
+                <p>p50 {realBackendLatencyBreakdown.p50Ms === null ? '—' : formatMs(realBackendLatencyBreakdown.p50Ms)}</p>
+                <p>p95 {realBackendLatencyBreakdown.p95Ms === null ? '—' : formatMs(realBackendLatencyBreakdown.p95Ms)}</p>
+                <p>p99 {realBackendLatencyBreakdown.p99Ms === null ? '—' : formatMs(realBackendLatencyBreakdown.p99Ms)}</p>
+                <p>max {realBackendLatencyBreakdown.maxMs === null ? '—' : formatMs(realBackendLatencyBreakdown.maxMs)}</p>
+              </div>
+            ) : (
+              <p className="mt-2 text-sm text-muted-foreground">
+                {realBackendLatencyBreakdown?.reason ?? 'Latency breakdown is unavailable for this run.'}
+              </p>
+            )}
+          </div>
+
+          <div className="rounded-lg border border-border bg-muted/20 p-4" data-testid="real-backend-component-breakdown">
+            <p className="text-sm font-medium text-foreground">Client · nginx · app · db</p>
+            <div className="mt-2 grid gap-2 text-sm text-foreground sm:grid-cols-2">
+              <p>
+                client p95:{' '}
+                {realBackendLatencyBreakdown?.p95Ms !== null && realBackendLatencyBreakdown?.p95Ms !== undefined
+                  ? formatMs(realBackendLatencyBreakdown.p95Ms)
+                  : realBackendSnapshot?.latencyMs
+                    ? formatMs(realBackendSnapshot.latencyMs)
+                    : 'unavailable'}
+              </p>
+              <p>nginx request_time p95: unavailable</p>
+              <p>nginx upstream p95: unavailable</p>
+              <p>ASP.NET app elapsed p95: unavailable</p>
+              <p>
+                db command p95:{' '}
+                {latestDiagnosticsSample?.database.commandLatency?.p95Ms !== null
+                  && latestDiagnosticsSample?.database.commandLatency?.p95Ms !== undefined
+                  ? formatMs(latestDiagnosticsSample.database.commandLatency.p95Ms)
+                  : 'unavailable'}
+              </p>
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Nginx/app elapsed ingestion is not configured in this environment, so those values are reported as unavailable.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card>

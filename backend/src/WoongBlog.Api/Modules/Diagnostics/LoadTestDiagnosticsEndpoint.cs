@@ -12,6 +12,8 @@ internal static class LoadTestDiagnosticsEndpoint
 
     internal static void MapLoadTestDiagnostics(this IEndpointRouteBuilder app)
     {
+        app.MapRealBackendLoadTests();
+
         app.MapGet(
                 Path,
                 async (WoongBlogDbContext dbContext, IDatabaseDiagnosticsCollector collector, CancellationToken cancellationToken) =>

@@ -1,4 +1,5 @@
 using WoongBlog.Infrastructure.Persistence;
+using WoongBlog.Infrastructure.LoadTesting;
 using WoongBlog.Infrastructure.Proxy;
 using WoongBlog.Infrastructure.Security;
 
@@ -14,6 +15,7 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddProxyInfrastructure(configuration);
         services.AddSecurityInfrastructure(configuration, environment);
         services.AddPersistenceInfrastructure(configuration);
+        services.AddLoadTestingInfrastructure(configuration, environment);
 
         return services;
     }

@@ -21,6 +21,15 @@ export type LoadTestConfig = {
   spikeRampSeconds: number
 }
 
+export type RealBackendTestConfig = {
+  scenario: string
+  target: string
+  runner: string
+  rate: number
+  durationSeconds: number
+  maxVUs: number
+}
+
 export type LoadTestSample = {
   ok: boolean
   durationMs: number
@@ -152,6 +161,36 @@ export type RuntimeDiagnosticsSummary = {
   dbIdleInTransactionConnections: RuntimeMetricTrend
 }
 
+export type RealBackendLatencyBreakdown = {
+  available: boolean
+  reason: string | null
+  minMs: number | null
+  p50Ms: number | null
+  p95Ms: number | null
+  p99Ms: number | null
+  maxMs: number | null
+}
+
+export type RealBackendHttpCounts = {
+  total: number
+  success: number
+  failed: number
+  status2xx: number
+  status3xx: number
+  status4xx: number
+  status5xx: number
+}
+
+export type RealBackendRunSnapshot = {
+  runId: string
+  status: string
+  requests: number
+  throughputRps: number
+  latencyMs: number
+  latencyBreakdown: RealBackendLatencyBreakdown
+  httpCounts: RealBackendHttpCounts
+}
+
 export const DEFAULT_LOAD_TEST_CONFIG: LoadTestConfig = {
   pattern: 'step',
   startUsers: 100,
@@ -164,6 +203,15 @@ export const DEFAULT_LOAD_TEST_CONFIG: LoadTestConfig = {
   spikeRampSeconds: 60,
 }
 
+export const DEFAULT_REAL_BACKEND_TEST_CONFIG: RealBackendTestConfig = {
+  scenario: 'public-api-rps',
+  target: 'public-api-mix',
+  runner: 'k6',
+  rate: 10,
+  durationSeconds: 30,
+  maxVUs: 10,
+}
+
 const MIN_USERS = 1
 export const MAX_USERS = 10_000
 const MIN_TIMEOUT_MS = 1000
@@ -172,6 +220,9 @@ export const MAX_CONCURRENCY = 1_000
 const MAX_REQUESTS_PER_USER = 5
 const MIN_PATTERN_SECONDS = 10
 const MAX_PATTERN_SECONDS = 60 * 60
+const MAX_REAL_BACKEND_RATE = 100_000
+const MAX_REAL_BACKEND_DURATION_SECONDS = 60 * 60
+const MAX_REAL_BACKEND_VUS = 10_000
 
 export const LOAD_TEST_THRESHOLDS = {
   http: {
@@ -255,6 +306,262 @@ export function sanitizeLoadTestConfig(config: Partial<LoadTestConfig>): LoadTes
     timeoutMs: clamp(toInteger(config.timeoutMs, DEFAULT_LOAD_TEST_CONFIG.timeoutMs), MIN_TIMEOUT_MS, MAX_TIMEOUT_MS),
     soakDurationSeconds: clamp(toInteger(config.soakDurationSeconds, DEFAULT_LOAD_TEST_CONFIG.soakDurationSeconds), MIN_PATTERN_SECONDS, MAX_PATTERN_SECONDS),
     spikeRampSeconds: clamp(toInteger(config.spikeRampSeconds, DEFAULT_LOAD_TEST_CONFIG.spikeRampSeconds), MIN_PATTERN_SECONDS, MAX_PATTERN_SECONDS),
+  }
+}
+
+function trimString(value: unknown, fallback: string) {
+  if (typeof value !== 'string') {
+    return fallback
+  }
+
+  const trimmed = value.trim()
+  return trimmed.length ? trimmed : fallback
+}
+
+export function sanitizeRealBackendTestConfig(config: Partial<RealBackendTestConfig>): RealBackendTestConfig {
+  return {
+    scenario: trimString(config.scenario, DEFAULT_REAL_BACKEND_TEST_CONFIG.scenario),
+    target: trimString(config.target, DEFAULT_REAL_BACKEND_TEST_CONFIG.target),
+    runner: trimString(config.runner, DEFAULT_REAL_BACKEND_TEST_CONFIG.runner),
+    rate: clamp(toInteger(config.rate, DEFAULT_REAL_BACKEND_TEST_CONFIG.rate), 1, MAX_REAL_BACKEND_RATE),
+    durationSeconds: clamp(
+      toInteger(config.durationSeconds, DEFAULT_REAL_BACKEND_TEST_CONFIG.durationSeconds),
+      1,
+      MAX_REAL_BACKEND_DURATION_SECONDS,
+    ),
+    maxVUs: clamp(toInteger(config.maxVUs, DEFAULT_REAL_BACKEND_TEST_CONFIG.maxVUs), 1, MAX_REAL_BACKEND_VUS),
+  }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
+function readNumberFromRecord(record: Record<string, unknown>, keys: string[]): number | null {
+  for (const key of keys) {
+    const value = record[key]
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return value
+    }
+  }
+
+  return null
+}
+
+function readStringFromRecord(record: Record<string, unknown>, keys: string[]): string | null {
+  for (const key of keys) {
+    const value = record[key]
+    if (typeof value === 'string' && value.trim().length) {
+      return value
+    }
+  }
+
+  return null
+}
+
+function resolveLatencyRecord(payloads: unknown[]) {
+  for (const payload of payloads) {
+    if (!isRecord(payload)) {
+      continue
+    }
+
+    const candidates = [
+      payload.latencyBreakdown,
+      payload.latency,
+      payload.latencies,
+      payload.metrics,
+      isRecord(payload.metrics) ? payload.metrics.latencyBreakdown : null,
+      isRecord(payload.metrics) ? payload.metrics.latency : null,
+      isRecord(payload.result) ? payload.result.latencyBreakdown : null,
+      isRecord(payload.result) ? payload.result.latency : null,
+    ]
+
+    for (const candidate of candidates) {
+      if (isRecord(candidate)) {
+        return candidate
+      }
+    }
+  }
+
+  return null
+}
+
+function mergeHttpCounts(payloads: unknown[]) {
+  const summary: RealBackendHttpCounts = {
+    total: 0,
+    success: 0,
+    failed: 0,
+    status2xx: 0,
+    status3xx: 0,
+    status4xx: 0,
+    status5xx: 0,
+  }
+
+  for (const payload of payloads) {
+    if (!isRecord(payload)) {
+      continue
+    }
+
+    const record = (isRecord(payload.httpCounts) ? payload.httpCounts : null)
+      ?? (isRecord(payload.http) ? payload.http : null)
+      ?? (isRecord(payload.counts) ? payload.counts : null)
+      ?? (isRecord(payload.statusCounts) ? payload.statusCounts : null)
+
+    if (!record) {
+      continue
+    }
+
+    summary.total = readNumberFromRecord(record, ['total', 'requests', 'requestCount']) ?? summary.total
+    summary.success = readNumberFromRecord(record, ['success', 'ok', 'status2xx', '2xx']) ?? summary.success
+    summary.failed = readNumberFromRecord(record, ['failed', 'errors']) ?? summary.failed
+    summary.status2xx = readNumberFromRecord(record, ['status2xx', 'ok', '2xx']) ?? summary.status2xx
+    summary.status3xx = readNumberFromRecord(record, ['status3xx', '3xx']) ?? summary.status3xx
+    summary.status4xx = readNumberFromRecord(record, ['status4xx', '4xx']) ?? summary.status4xx
+    summary.status5xx = readNumberFromRecord(record, ['status5xx', 'http5xx', '5xx']) ?? summary.status5xx
+  }
+
+  if (!summary.failed) {
+    summary.failed = summary.status4xx + summary.status5xx
+  }
+
+  if (!summary.success) {
+    summary.success = summary.status2xx + summary.status3xx
+  }
+
+  if (!summary.total) {
+    summary.total = summary.success + summary.failed
+  }
+
+  return summary
+}
+
+function inferRequests(payloads: unknown[]) {
+  for (const payload of payloads) {
+    if (!isRecord(payload)) {
+      continue
+    }
+
+    const requests = readNumberFromRecord(payload, ['requests', 'requestCount', 'totalRequests', 'completedRequests'])
+    if (requests !== null) {
+      return requests
+    }
+  }
+
+  return 0
+}
+
+function inferThroughput(payloads: unknown[]) {
+  for (const payload of payloads) {
+    if (!isRecord(payload)) {
+      continue
+    }
+
+    const throughput = readNumberFromRecord(payload, [
+      'throughputRps',
+      'currentRps',
+      'averageRps',
+      'rps',
+      'requestsPerSecond',
+      'throughput',
+    ])
+    if (throughput !== null) {
+      return roundMetric(throughput)
+    }
+  }
+
+  return 0
+}
+
+function inferLatency(payloads: unknown[]) {
+  for (const payload of payloads) {
+    if (!isRecord(payload)) {
+      continue
+    }
+
+    const latency = readNumberFromRecord(payload, [
+      'latencyMs',
+      'avgLatencyMs',
+      'averageLatencyMs',
+      'latency',
+      'p95Ms',
+      'p50Ms',
+    ])
+    if (latency !== null) {
+      return roundMetric(latency)
+    }
+  }
+
+  return 0
+}
+
+export function extractRealBackendLatencyBreakdown(...payloads: unknown[]): RealBackendLatencyBreakdown {
+  const latency = resolveLatencyRecord(payloads)
+  if (!latency) {
+    return {
+      available: false,
+      reason: 'Latency breakdown is unavailable for this run.',
+      minMs: null,
+      p50Ms: null,
+      p95Ms: null,
+      p99Ms: null,
+      maxMs: null,
+    }
+  }
+
+  const minMs = readNumberFromRecord(latency, ['minMs', 'min'])
+  const p50Ms = readNumberFromRecord(latency, ['p50Ms', 'p50'])
+  const p95Ms = readNumberFromRecord(latency, ['p95Ms', 'p95'])
+  const p99Ms = readNumberFromRecord(latency, ['p99Ms', 'p99'])
+  const maxMs = readNumberFromRecord(latency, ['maxMs', 'max'])
+  const hasValues = [minMs, p50Ms, p95Ms, p99Ms, maxMs].some((value) => value !== null)
+
+  if (!hasValues) {
+    return {
+      available: false,
+      reason: 'Latency breakdown is unavailable for this run.',
+      minMs: null,
+      p50Ms: null,
+      p95Ms: null,
+      p99Ms: null,
+      maxMs: null,
+    }
+  }
+
+  return {
+    available: true,
+    reason: null,
+    minMs: minMs === null ? null : roundMetric(minMs),
+    p50Ms: p50Ms === null ? null : roundMetric(p50Ms),
+    p95Ms: p95Ms === null ? null : roundMetric(p95Ms),
+    p99Ms: p99Ms === null ? null : roundMetric(p99Ms),
+    maxMs: maxMs === null ? null : roundMetric(maxMs),
+  }
+}
+
+export function summarizeRealBackendRunSnapshot(runId: string, statusPayload: unknown, metricsPayload: unknown): RealBackendRunSnapshot {
+  const statusRecord = isRecord(statusPayload) ? statusPayload : {}
+  const metricsRecord = isRecord(metricsPayload) ? metricsPayload : {}
+  const metricPoints = Array.isArray(metricsRecord.metrics)
+    ? metricsRecord.metrics.filter(isRecord)
+    : []
+  const latestMetricPoint = metricPoints.at(-1) ?? null
+  const status = readStringFromRecord(statusRecord, ['status', 'state', 'phase'])
+    ?? readStringFromRecord(metricsRecord, ['status', 'state', 'phase'])
+    ?? 'unknown'
+  const payloads = latestMetricPoint
+    ? [latestMetricPoint, metricsRecord, statusRecord]
+    : [metricsRecord, statusRecord]
+  const httpCounts = mergeHttpCounts(payloads)
+  const requests = inferRequests(payloads) || httpCounts.total
+
+  return {
+    runId,
+    status,
+    requests,
+    throughputRps: inferThroughput(payloads),
+    latencyMs: inferLatency(payloads),
+    latencyBreakdown: extractRealBackendLatencyBreakdown(metricsRecord, statusRecord),
+    httpCounts,
   }
 }
 
