@@ -68,7 +68,9 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IDisp
                 ["Auth:SecureCookies"] = "false",
                 ["Security:UseHttpsRedirection"] = "false",
                 ["Security:UseHsts"] = "false",
-                ["Proxy:KnownProxies:0"] = "127.0.0.1"
+                ["Proxy:KnownProxies:0"] = "127.0.0.1",
+                ["LoadTesting:UseFakeRunnerForTests"] = "true",
+                ["LoadTesting:ReportsRelativeRoot"] = Path.Combine(_mediaRoot, "loadtest-reports")
             });
         });
 
