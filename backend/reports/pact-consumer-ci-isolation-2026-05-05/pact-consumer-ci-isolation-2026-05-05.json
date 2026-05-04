@@ -1,0 +1,47 @@
+{
+  "task": "pact-consumer-ci-isolation",
+  "date": "2026-05-05",
+  "summary": "Fixed Pact consumer test isolation so unrelated Vitest module mocks cannot prevent expected Pact mock-server requests.",
+  "changed": [
+    "src/test/pact/public-api-consumer.pact.test.ts",
+    "todolist-2026-05-05.md"
+  ],
+  "intentionallyNotChanged": [
+    "Production code",
+    "Existing unrelated lint warnings",
+    "Existing local .agent-backups directories",
+    "Pact contract payload shape and provider verification flow"
+  ],
+  "validations": [
+    {
+      "command": "npx vitest run src/test/pact/public-api-consumer.pact.test.ts --pool=threads --maxWorkers=1",
+      "result": "passed",
+      "details": "6/6 tests passed"
+    },
+    {
+      "command": "npx vitest run src/test/resume-server-render.test.tsx src/test/admin-page-success-states.test.tsx src/test/pact/public-api-consumer.pact.test.ts --pool=threads --maxWorkers=1",
+      "result": "passed",
+      "details": "32/32 tests passed"
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "passed"
+    },
+    {
+      "command": "npm run lint",
+      "result": "passed",
+      "details": "Existing six unrelated warnings remain"
+    },
+    {
+      "command": "npm test -- --run",
+      "result": "passed",
+      "details": "82/82 test files and 586/586 tests passed"
+    }
+  ],
+  "risks": [
+    "Remote CI must still be watched after the dev push",
+    "Existing lint warnings remain outside this fix",
+    "Local full unit execution is slow on WSL"
+  ],
+  "recommendation": "Push to dev, wait for CI Dev to pass, then promote dev to main only after the dev run is green."
+}

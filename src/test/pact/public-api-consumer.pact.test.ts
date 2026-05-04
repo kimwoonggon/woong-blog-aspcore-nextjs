@@ -5,6 +5,15 @@ import { Matchers, PactV3, SpecificationVersion } from '@pact-foundation/pact'
 const pactDirectory = path.resolve('tests/contracts/pacts')
 const { atLeastLike, boolean, integer, like } = Matchers
 const nativeFetch = globalThis.fetch
+const publicApiModules = [
+  '@/lib/api/base',
+  '@/lib/api/blogs',
+  '@/lib/api/home',
+  '@/lib/api/pages',
+  '@/lib/api/public-server',
+  '@/lib/api/site-settings',
+  '@/lib/api/works',
+]
 
 function pact() {
   return new PactV3({
@@ -23,8 +32,15 @@ function restorePactTestGlobals() {
   globalThis.fetch = nativeFetch
 }
 
+function restorePactTestModules() {
+  for (const modulePath of publicApiModules) {
+    vi.doUnmock(modulePath)
+  }
+}
+
 async function withServerApi<T>(baseUrl: string, callback: () => Promise<T>) {
   restorePactTestGlobals()
+  restorePactTestModules()
   vi.resetModules()
   vi.stubEnv('INTERNAL_API_ORIGIN', baseUrl)
 
@@ -32,16 +48,19 @@ async function withServerApi<T>(baseUrl: string, callback: () => Promise<T>) {
     return await callback()
   } finally {
     restorePactTestGlobals()
+    restorePactTestModules()
   }
 }
 
 describe('public API consumer Pact contracts', () => {
   beforeEach(() => {
     restorePactTestGlobals()
+    restorePactTestModules()
   })
 
   afterEach(() => {
     restorePactTestGlobals()
+    restorePactTestModules()
   })
 
   it('contracts public home payload', async () => {
