@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   DEFAULT_LOAD_TEST_CONFIG,
+  DEFAULT_REAL_BACKEND_TEST_CONFIG,
   MAX_CONCURRENCY,
   MAX_USERS,
   buildDiagnosticsSnapshotSummary,
@@ -11,9 +12,12 @@ import {
   estimatePatternRequestCount,
   evaluateHttpScenarioHealth,
   evaluateRuntimeDiagnosticsHealth,
+  extractRealBackendLatencyBreakdown,
   isRuntimeDiagnosticsPayload,
   runWithConcurrency,
+  sanitizeRealBackendTestConfig,
   sanitizeLoadTestConfig,
+  summarizeRealBackendRunSnapshot,
   summarizeLoadTestSamples,
 } from '@/lib/load-test-dashboard'
 
@@ -367,6 +371,102 @@ describe('load test dashboard planning', () => {
 
     expect(evaluateRuntimeDiagnosticsHealth(summary)).toMatchObject({
       status: 'red',
+    })
+  })
+
+  it('sanitizes real backend test config values to safe defaults and bounds', () => {
+    expect(sanitizeRealBackendTestConfig({
+      scenario: '   ',
+      target: '',
+      runner: '',
+      rate: -10,
+      durationSeconds: 999999,
+      maxVUs: 0,
+    })).toEqual({
+      ...DEFAULT_REAL_BACKEND_TEST_CONFIG,
+      rate: 1,
+      durationSeconds: 3600,
+      maxVUs: 1,
+    })
+  })
+
+  it('summarizes real backend run status and metrics with latency breakdown + http counts', () => {
+    const snapshot = summarizeRealBackendRunSnapshot(
+      'run-42',
+      {
+        runId: 'run-42',
+        status: 'running',
+        totalRequests: 50,
+        currentRps: 119.8,
+        p95Ms: 88.8,
+        statusCounts: {
+          '2xx': 49,
+          '3xx': 0,
+          '4xx': 0,
+          '5xx': 1,
+        },
+      },
+      {
+        runId: 'run-42',
+        metrics: [
+          {
+            elapsedSeconds: 1.2,
+            totalRequests: 50,
+            currentRps: 120.45,
+            p95Ms: 140,
+            p99Ms: 210,
+            maxMs: 340,
+            statusCounts: {
+              '2xx': 49,
+              '3xx': 0,
+              '4xx': 0,
+              '5xx': 1,
+            },
+          },
+        ],
+        latencyBreakdown: {
+          minMs: 10,
+          p50Ms: 80,
+          p95Ms: 140,
+          p99Ms: 210,
+          maxMs: 340,
+        },
+      },
+    )
+
+    expect(snapshot).toMatchObject({
+      runId: 'run-42',
+      status: 'running',
+      requests: 50,
+      throughputRps: 120.5,
+      latencyMs: 140,
+      latencyBreakdown: {
+        available: true,
+        minMs: 10,
+        p50Ms: 80,
+        p95Ms: 140,
+        p99Ms: 210,
+        maxMs: 340,
+      },
+      httpCounts: {
+        total: 50,
+        success: 49,
+        failed: 1,
+        status2xx: 49,
+        status5xx: 1,
+      },
+    })
+  })
+
+  it('returns an unavailable latency breakdown fallback when metrics are missing', () => {
+    expect(extractRealBackendLatencyBreakdown({ status: 'running' })).toEqual({
+      available: false,
+      reason: 'Latency breakdown is unavailable for this run.',
+      minMs: null,
+      p50Ms: null,
+      p95Ms: null,
+      p99Ms: null,
+      maxMs: null,
     })
   })
 })

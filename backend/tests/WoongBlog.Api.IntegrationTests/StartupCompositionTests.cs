@@ -16,6 +16,7 @@ using WoongBlog.Infrastructure.Proxy;
 using WoongBlog.Infrastructure.Security;
 using WoongBlog.Infrastructure.Storage;
 using WoongBlog.Infrastructure.Ai;
+using WoongBlog.Infrastructure.LoadTesting;
 using WoongBlog.Infrastructure.Persistence.Diagnostics;
 using WoongBlog.Infrastructure.Modules.Content.Works.WorkVideos;
 using WoongBlog.Infrastructure.Modules.Identity.Services;
@@ -132,6 +133,8 @@ public class StartupCompositionTests : IClassFixture<CustomWebApplicationFactory
         AssertResolvable<IWorkVideoHlsOutputPublisher>(services);
         AssertResolvable<IVideoTranscoder>(services);
         AssertResolvable<IWorkVideoPlaybackUrlBuilder>(services);
+        AssertResolvable<IRealLoadTestControlPlane>(services);
+        AssertResolvable<IRealLoadTestRunRegistry>(services);
 
         var videoStorageServices = services.GetServices<IVideoObjectStorage>().Select(service => service.StorageType).ToArray();
         Assert.Contains(WorkVideoSourceTypes.Local, videoStorageServices);
@@ -308,6 +311,113 @@ public class StartupCompositionTests : IClassFixture<CustomWebApplicationFactory
     }
 
     [Fact]
+    public async Task RealLoadTestControlPlane_EndpointsRequireAdminAuthorization()
+    {
+        var client = _factory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            BaseAddress = new Uri("https://localhost")
+        });
+
+        var csrfResponse = await client.GetAsync("/api/auth/csrf", TestContext.Current.CancellationToken);
+        csrfResponse.EnsureSuccessStatusCode();
+        using var csrfJson = await JsonDocument.ParseAsync(
+            await csrfResponse.Content.ReadAsStreamAsync(TestContext.Current.CancellationToken),
+            cancellationToken: TestContext.Current.CancellationToken);
+        var csrfToken = csrfJson.RootElement.GetProperty("requestToken").GetString();
+        Assert.False(string.IsNullOrWhiteSpace(csrfToken));
+        client.DefaultRequestHeaders.Add("X-CSRF-TOKEN", csrfToken);
+
+        var startResponse = await client.PostAsJsonAsync(
+            "/api/admin/load-tests/real/start",
+            new
+            {
+                scenario = "public-api-rps",
+                runner = "k6",
+                target = "public-api-mix",
+                rate = 120,
+                durationSeconds = 30,
+                maxVus = 100
+            },
+            TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.Unauthorized, startResponse.StatusCode);
+
+        var statusResponse = await client.GetAsync("/api/admin/load-tests/real/non-existent-run", TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.Unauthorized, statusResponse.StatusCode);
+
+        var metricsResponse = await client.GetAsync("/api/admin/load-tests/real/non-existent-run/metrics", TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.Unauthorized, metricsResponse.StatusCode);
+
+        var stopResponse = await client.PostAsync(
+            "/api/admin/load-tests/real/non-existent-run/stop",
+            content: null,
+            TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.Unauthorized, stopResponse.StatusCode);
+    }
+
+    [Fact]
+    public async Task RealLoadTestControlPlane_StartStatusMetricsAndStop_HappyPath()
+    {
+        var client = _factory.CreateAuthenticatedClient();
+        var startResponse = await client.PostAsJsonAsync(
+            "/api/admin/load-tests/real/start",
+            new
+            {
+                scenario = "public-api-rps",
+                runner = "k6",
+                target = "public-api-mix",
+                rate = 120,
+                durationSeconds = 120,
+                maxVus = 1000
+            },
+            TestContext.Current.CancellationToken);
+
+        startResponse.EnsureSuccessStatusCode();
+        var startPayload = await startResponse.Content.ReadFromJsonAsync<RealLoadTestStartResponse>(TestContext.Current.CancellationToken);
+        Assert.NotNull(startPayload);
+        Assert.False(string.IsNullOrWhiteSpace(startPayload!.RunId));
+        Assert.Equal("running", startPayload.Status);
+        Assert.Equal("k6", startPayload.Runner);
+        Assert.Equal("public-api-rps", startPayload.Scenario);
+        Assert.NotEqual(default, startPayload.StartedAtUtc);
+
+        var statusResponse = await client.GetAsync($"/api/admin/load-tests/real/{startPayload.RunId}", TestContext.Current.CancellationToken);
+        statusResponse.EnsureSuccessStatusCode();
+        var statusPayload = await statusResponse.Content.ReadFromJsonAsync<RealLoadTestStatusResponse>(TestContext.Current.CancellationToken);
+        Assert.NotNull(statusPayload);
+        Assert.Equal(startPayload.RunId, statusPayload!.RunId);
+        Assert.Equal("running", statusPayload.Status);
+        Assert.Equal("k6", statusPayload.Runner);
+        Assert.Equal("public-api-rps", statusPayload.Scenario);
+        Assert.True(statusPayload.ElapsedSeconds >= 0);
+        Assert.True(statusPayload.TotalRequests >= 0);
+        Assert.True(statusPayload.FailedRequests >= 0);
+
+        await Task.Delay(TimeSpan.FromMilliseconds(700), TestContext.Current.CancellationToken);
+        var metricsResponse = await client.GetAsync($"/api/admin/load-tests/real/{startPayload.RunId}/metrics", TestContext.Current.CancellationToken);
+        metricsResponse.EnsureSuccessStatusCode();
+        var metricsPayload = await metricsResponse.Content.ReadFromJsonAsync<RealLoadTestMetricsResponse>(TestContext.Current.CancellationToken);
+        Assert.NotNull(metricsPayload);
+        Assert.Equal(startPayload.RunId, metricsPayload!.RunId);
+        Assert.Equal("running", metricsPayload.Status);
+        Assert.True(metricsPayload.TotalRequests >= 0);
+        Assert.True(metricsPayload.CurrentRps >= 0);
+        Assert.NotNull(metricsPayload.StatusCounts);
+        Assert.NotNull(metricsPayload.Metrics);
+        Assert.NotEmpty(metricsPayload.Metrics);
+
+        var stopResponse = await client.PostAsync(
+            $"/api/admin/load-tests/real/{startPayload.RunId}/stop",
+            content: null,
+            TestContext.Current.CancellationToken);
+        stopResponse.EnsureSuccessStatusCode();
+        var stopPayload = await stopResponse.Content.ReadFromJsonAsync<RealLoadTestStopResponse>(TestContext.Current.CancellationToken);
+        Assert.NotNull(stopPayload);
+        Assert.Equal(startPayload.RunId, stopPayload!.RunId);
+        Assert.Equal("stopped", stopPayload.Status);
+        Assert.NotNull(stopPayload.StoppedAtUtc);
+    }
+
+    [Fact]
     public async Task LoadTestDiagnostics_WhenDbCollectorThrows_ReturnsErrorDatabasePayload()
     {
         await using var throwingFactory = _factory.WithWebHostBuilder(builder =>
@@ -360,6 +470,62 @@ public class StartupCompositionTests : IClassFixture<CustomWebApplicationFactory
     }
 
     private sealed record HealthPayload(string Status, string Service, DateTimeOffset Timestamp);
+
+    private sealed record RealLoadTestStartResponse(
+        string RunId,
+        string Status,
+        string Runner,
+        string Scenario,
+        DateTimeOffset StartedAtUtc);
+
+    private sealed record RealLoadTestStatusResponse(
+        string RunId,
+        string Status,
+        string Runner,
+        string Scenario,
+        DateTimeOffset StartedAtUtc,
+        DateTimeOffset? EndedAtUtc,
+        double ElapsedSeconds,
+        long TotalRequests,
+        long FailedRequests,
+        double ErrorRate,
+        double CurrentRps,
+        double AverageRps,
+        double P50Ms,
+        double P95Ms,
+        double P99Ms,
+        double MaxMs,
+        IReadOnlyDictionary<string, long> StatusCounts);
+
+    private sealed record RealLoadTestMetricPoint(
+        DateTimeOffset TimestampUtc,
+        double ElapsedSeconds,
+        long TotalRequests,
+        long FailedRequests,
+        double CurrentRps,
+        double AverageRps,
+        double P95Ms,
+        double P99Ms,
+        double MaxMs,
+        IReadOnlyDictionary<string, long> StatusCounts);
+
+    private sealed record RealLoadTestMetricsResponse(
+        string RunId,
+        string Status,
+        long TotalRequests,
+        long FailedRequests,
+        double CurrentRps,
+        double AverageRps,
+        double P95Ms,
+        double P99Ms,
+        double MaxMs,
+        IReadOnlyDictionary<string, long> StatusCounts,
+        IReadOnlyList<RealLoadTestMetricPoint> Metrics);
+
+    private sealed record RealLoadTestStopResponse(
+        string RunId,
+        string Status,
+        DateTimeOffset? StoppedAtUtc);
 
     private sealed class ThrowingDatabaseDiagnosticsCollector : IDatabaseDiagnosticsCollector
     {

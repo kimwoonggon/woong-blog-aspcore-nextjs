@@ -104,7 +104,7 @@ test('admin can run a small Work and Study read load test', async ({ page, reque
   await expect(page.getByTestId('load-test-summary-table')).toContainText('Study list')
   await expect(page.getByTestId('load-test-result-count')).toContainText(/4 scenarios/)
   await expect(page.getByText(/configured 2 · observed peak/i)).toBeVisible()
-  await expect(page.getByText('Elapsed')).toBeVisible()
+  await expect(page.getByText(/^Elapsed$/)).toBeVisible()
   await expect(page.getByTestId('load-test-runtime-panel')).toContainText(/Memory/)
   await expect(page.getByTestId('load-test-runtime-panel')).toContainText(/ThreadPool workers/)
   await expect(page.getByTestId('load-test-runtime-panel')).toContainText(/ThreadPool queue/)
@@ -118,4 +118,108 @@ test('admin can run a small Work and Study read load test', async ({ page, reque
   expect(loadRequestUrls.some((url) => url.includes('__loadTestUser=1'))).toBe(true)
   expect(loadRequestUrls.some((url) => url.includes('__loadTestUser=2'))).toBe(true)
   expect(loadRequestCookies.every((cookie) => !cookie)).toBe(true)
+})
+
+test('admin can run and stop a real backend test with polling + metrics fallback', async ({ page }) => {
+  let startCallCount = 0
+  let stopCallCount = 0
+  let statusCallCount = 0
+  let metricsCallCount = 0
+  let stopRequested = false
+  let postedStartPayload: Record<string, unknown> | null = null
+
+  await page.route(/\/api\/admin\/load-tests\/real\/start(?:\?[^#]*)?$/, async (route) => {
+    startCallCount += 1
+    const requestBody = route.request().postDataJSON()
+    postedStartPayload = requestBody && typeof requestBody === 'object'
+      ? requestBody as Record<string, unknown>
+      : null
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ runId: 'real-run-1' }),
+    })
+  })
+
+  await page.route(/\/api\/admin\/load-tests\/real\/real-run-1(?:\?[^#]*)?$/, async (route) => {
+    statusCallCount += 1
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        runId: 'real-run-1',
+        status: stopRequested ? 'stopped' : 'running',
+        requests: stopRequested ? 12 : 10,
+      }),
+    })
+  })
+
+  await page.route(/\/api\/admin\/load-tests\/real\/real-run-1\/metrics(?:\?[^#]*)?$/, async (route) => {
+    metricsCallCount += 1
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        throughputRps: 123.4,
+        latencyMs: 45.6,
+        httpCounts: {
+          total: stopRequested ? 12 : 10,
+          success: stopRequested ? 11 : 9,
+          failed: 1,
+          status2xx: stopRequested ? 11 : 9,
+          status3xx: 0,
+          status4xx: 0,
+          status5xx: 1,
+        },
+      }),
+    })
+  })
+
+  await page.route(/\/api\/admin\/load-tests\/real\/real-run-1\/stop(?:\?[^#]*)?$/, async (route) => {
+    stopCallCount += 1
+    stopRequested = true
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ status: 'stopping' }),
+    })
+  })
+
+  await page.goto('/admin/load-test')
+
+  const panel = page.getByTestId('real-backend-test-panel')
+  await expect(panel).toBeVisible()
+  await expect(panel.getByText('Browser Test uses browser-generated fetch load.')).toBeVisible()
+  await expect(panel.getByText('Latency breakdown is unavailable for this run.')).toBeVisible()
+
+  await panel.getByLabel('Real backend scenario').selectOption('public-api-stress')
+  await panel.getByLabel('Real backend target').selectOption('public-blogs-only')
+  await panel.getByLabel('Real backend runner').selectOption('k6')
+  await panel.getByLabel('Rate').fill('25')
+  await panel.getByLabel('Duration seconds').fill('45')
+  await panel.getByLabel('Max VUs').fill('40')
+
+  await panel.getByRole('button', { name: 'Start real backend test' }).click()
+
+  await expect.poll(() => startCallCount).toBe(1)
+  expect(postedStartPayload).toMatchObject({
+    scenario: 'public-api-stress',
+    target: 'public-blogs-only',
+    runner: 'k6',
+    rate: 25,
+    durationSeconds: 45,
+    maxVUs: 40,
+  })
+  await expect.poll(() => statusCallCount).toBeGreaterThan(0)
+  await expect.poll(() => metricsCallCount).toBeGreaterThan(0)
+  await expect(panel.getByTestId('real-backend-live-status')).toContainText(/running/i)
+  await expect(panel.getByText('123.4 rps')).toBeVisible()
+  await expect(panel.getByText('45.6 ms', { exact: true })).toBeVisible()
+  await expect(panel.getByText(/total 10 · ok 9 · failed 1/i)).toBeVisible()
+  await expect(panel.getByText('Latency breakdown is unavailable for this run.')).toBeVisible()
+
+  await panel.getByRole('button', { name: 'Stop real backend test' }).click()
+  await expect.poll(() => stopCallCount).toBe(1)
+  await expect(panel.getByTestId('real-backend-live-status')).toContainText(/stopped/i)
+  await expect(panel.getByText(/total 12 · ok 11 · failed 1/i)).toBeVisible()
 })
