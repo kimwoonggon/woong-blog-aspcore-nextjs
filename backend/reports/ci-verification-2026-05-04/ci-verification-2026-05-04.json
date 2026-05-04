@@ -1,0 +1,93 @@
+{
+  "date": "2026-05-04",
+  "repo": "kimwoonggon/woong-blog-aspcore-nextjs",
+  "requested_checks": [
+    "CI Dev on dev",
+    "Promote Main Runtime runs triggered by CI Dev",
+    "release/main-promote -> main PR state",
+    "CI Main Runtime success"
+  ],
+  "commands": [
+    {
+      "command": "gh run list --workflow \"CI Dev\" --branch dev --limit 3 --json number,status,conclusion,url,createdAt,updatedAt,headSha,databaseId",
+      "result": "latest run 25322888983"
+    },
+    {
+      "command": "gh run list --workflow \"Promote Main Runtime\" --limit 6 --json number,status,conclusion,event,url,headBranch,headSha,databaseId",
+      "result": "latest workflow_run run 25323185860"
+    },
+    {
+      "command": "gh run view 25323185860 --log | rg -n \"SOURCE_BRANCH|SOURCE_REF|Created promotion PR #\"",
+      "result": "SOURCE_BRANCH: dev, SOURCE_REF: 1fd143f35bb5a6a4a67f46b7ad94f9ecafa4befe, Created promotion PR #35"
+    },
+    {
+      "command": "gh pr list --base main --head release/main-promote --state open --json number,title,state,url,mergeable,createdAt,author",
+      "result": "[]"
+    },
+    {
+      "command": "gh pr list --base main --head release/main-promote --limit 5 --state all --json number,title,state,url,mergedAt,closedAt,mergedBy,createdAt,headRefName",
+      "result": "latest: #35 state MERGED"
+    },
+    {
+      "command": "gh run list --workflow \"CI Main Runtime\" --limit 8 --json number,event,status,conclusion,url,headBranch,headSha,createdAt,databaseId,displayTitle",
+      "result": "latest runs 25323508573 (push, success), 25323196924 (pull_request, success)"
+    }
+  ],
+  "evidence": {
+    "ci_dev": {
+      "id": 25322888983,
+      "number": 109,
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "1fd143f35bb5a6a4a67f46b7ad94f9ecafa4befe",
+      "url": "https://github.com/kimwoonggon/woong-blog-aspcore-nextjs/actions/runs/25322888983"
+    },
+    "promote_main_runtime": {
+      "id": 25323185860,
+      "number": 12,
+      "event": "workflow_run",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/kimwoonggon/woong-blog-aspcore-nextjs/actions/runs/25323185860"
+    },
+    "promotion_pr": {
+      "number": 35,
+      "state": "MERGED",
+      "url": "https://github.com/kimwoonggon/woong-blog-aspcore-nextjs/pull/35",
+      "head_ref": "release/main-promote",
+      "base_ref": "main",
+      "mergedAt": "2026-05-04T14:03:11Z",
+      "closedAt": "2026-05-04T14:03:11Z"
+    },
+    "ci_main_runtime": [
+      {
+        "id": 25323196924,
+        "number": 69,
+        "event": "pull_request",
+        "status": "completed",
+        "conclusion": "success",
+        "head_branch": "release/main-promote",
+        "url": "https://github.com/kimwoonggon/woong-blog-aspcore-nextjs/actions/runs/25323196924"
+      },
+      {
+        "id": 25323508573,
+        "number": 70,
+        "event": "push",
+        "status": "completed",
+        "conclusion": "success",
+        "head_branch": "main",
+        "url": "https://github.com/kimwoonggon/woong-blog-aspcore-nextjs/actions/runs/25323508573"
+      }
+    ]
+  },
+  "open_prs": [],
+  "assessment": {
+    "chain_succeeds": true,
+    "summary": "CI Dev success on dev propagated to workflow_run promotion run and to merged PR #35 with successful CI Main Runtime PR checks plus successful main push checks."
+  },
+  "artifacts": {
+    "markdown": "backend/reports/ci-verification-2026-05-04/ci-verification-2026-05-04.md",
+    "html": "backend/reports/ci-verification-2026-05-04/ci-verification-2026-05-04.html",
+    "json": "backend/reports/ci-verification-2026-05-04/ci-verification-2026-05-04.json"
+  }
+}

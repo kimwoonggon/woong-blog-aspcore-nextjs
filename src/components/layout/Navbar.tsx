@@ -285,7 +285,7 @@ export function Navbar({ ownerName = "John Doe" }: NavbarProps) {
 
                         <div ref={brandRef} className="flex min-w-0 flex-1 items-center justify-center lg:flex-none lg:justify-start">
                             <Link href="/" data-testid="navbar-brand" className="min-w-0 rounded-2xl px-1 py-1 transition-colors hover:text-primary">
-                                <span className="max-w-[10.5rem] truncate text-lg font-semibold text-foreground sm:max-w-[13.5rem] sm:text-xl md:max-w-[16rem] md:text-2xl xl:max-w-[14rem] 2xl:max-w-[18rem]">
+                                <span className="inline-block w-full min-w-0 max-w-[10.5rem] truncate text-lg font-semibold text-foreground sm:max-w-[13.5rem] sm:text-xl md:max-w-[16rem] md:text-2xl xl:max-w-[14rem] 2xl:max-w-[18rem]">
                                     {ownerName}
                                 </span>
                             </Link>

@@ -12,6 +12,8 @@ WORKDIR /src/backend/src/WoongBlog.Api
 RUN dotnet restore ../../WoongBlog.sln
 RUN dotnet publish -c Release -o /app/publish /p:UseAppHost=false
 
+FROM grafana/k6:1.0.0 AS k6
+
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS runtime
 WORKDIR /app
 ENV CODEX_HOME=/root/.codex
@@ -20,6 +22,7 @@ RUN apk add --no-cache bubblewrap ffmpeg nodejs npm \
     && mkdir -p "$CODEX_HOME" \
     && chmod 700 "$CODEX_HOME"
 COPY --from=build /app/publish .
+COPY --from=k6 /usr/bin/k6 /usr/local/bin/k6
 
 ENV ASPNETCORE_URLS=http://0.0.0.0:8080
 EXPOSE 8080

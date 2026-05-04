@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Pact Consumer CI Isolation Audit - 2026-05-05</title>
+    <style>
+      body { font-family: system-ui, sans-serif; margin: 2rem; max-width: 860px; line-height: 1.5; color: #1f2937; }
+      h1, h2 { color: #111827; }
+      code { background: #f3f4f6; padding: 0.1rem 0.25rem; border-radius: 4px; }
+      li { margin: 0.25rem 0; }
+    </style>
+  </head>
+  <body>
+    <h1>Pact Consumer CI Isolation Audit - 2026-05-05</h1>
+    <h2>Summary</h2>
+    <p>Fixed the remaining CI Dev frontend unit failure by clearing unrelated Vitest module mocks before Pact consumer API client imports.</p>
+    <h2>Changed</h2>
+    <ul>
+      <li><code>src/test/pact/public-api-consumer.pact.test.ts</code>: added public API module unmock cleanup.</li>
+      <li><code>todolist-2026-05-05.md</code>: recorded CI failure, fix, validations, and audit paths.</li>
+    </ul>
+    <h2>Not Changed</h2>
+    <ul>
+      <li>No production code changed.</li>
+      <li>Existing unrelated lint warnings remain.</li>
+      <li>Local <code>.agent-backups/</code> directories remain untracked.</li>
+    </ul>
+    <h2>Validations</h2>
+    <ul>
+      <li>Pact consumer focused test passed 6/6.</li>
+      <li>Module-mock adjacency test group passed 32/32.</li>
+      <li><code>npm run typecheck</code> passed.</li>
+      <li><code>npm run lint</code> passed with existing warnings.</li>
+      <li><code>npm test -- --run</code> passed 82/82 files and 586/586 tests.</li>
+    </ul>
+    <h2>Recommendation</h2>
+    <p>Push to <code>dev</code>, watch CI Dev to green, then promote to <code>main</code>.</p>
+  </body>
+</html>

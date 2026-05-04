@@ -1,0 +1,93 @@
+{
+  "report": "real-backend-loadtest-gap-2026-05-05",
+  "date": "2026-05-05",
+  "scope": "Fix Real Backend Test start and metrics gaps for k6-backed Work/Study public target load testing.",
+  "changed": [
+    "Frontend real backend start payload now includes editable Work/Study target URLs.",
+    "Backend real load test contracts now include targets, latency breakdown, and per-target metrics.",
+    "K6RealLoadTestRunner and RealLoadTestRunnerDispatcher were added.",
+    "Fake runner now cycles targets and produces target metrics.",
+    "Supported runner list is limited to k6 and fake.",
+    "Backend Docker runtime includes k6 from grafana/k6:1.0.0.",
+    "Dev compose points backend k6 base URL at http://nginx.",
+    "Nginx API locations emit request/upstream timing headers where available.",
+    "Dashboard renders real target URLs, per-target summaries, and source-aware component timing.",
+    "Real backend start/stop UI mutations use the shared CSRF helper."
+  ],
+  "intentionallyNotChanged": [
+    "No fabricated DB timing.",
+    "No forced nginx upstream timing when nginx does not provide a parseable value.",
+    "No unrelated dirty worktree changes reverted.",
+    "No full Playwright suite rerun."
+  ],
+  "goalVerification": {
+    "start400Fixed": true,
+    "runIdAvailable": true,
+    "nonZeroMetrics": true,
+    "workStudyTargetModel": true,
+    "similarMetricsAvailable": true,
+    "latencyBreakdownSourceAware": true,
+    "uiMutationCsrfFixed": true
+  },
+  "validations": [
+    {
+      "command": "npx vitest run src/test/load-test-dashboard.test.ts",
+      "result": "passed 22/22"
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter \"FullyQualifiedName~StartupCompositionTests.RealLoadTestControlPlane\" --no-restore",
+      "result": "passed 3/3"
+    },
+    {
+      "command": "dotnet build backend/WoongBlog.sln --no-restore",
+      "result": "succeeded with existing AWSSDK.Core NU1901 warnings"
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "passed"
+    },
+    {
+      "command": "npm run lint",
+      "result": "passed with existing warnings outside task scope"
+    },
+    {
+      "command": "BACKEND_PUBLISH_PORT=18080 NGINX_HTTPS_PORT=3002 docker compose -f docker-compose.dev.yml up -d --build backend frontend nginx",
+      "result": "dev stack built and started"
+    },
+    {
+      "command": "docker compose -f docker-compose.dev.yml exec -T backend k6 version",
+      "result": "k6 v1.0.0"
+    },
+    {
+      "command": "curl -fsS http://127.0.0.1:3000/api/health",
+      "result": "healthy API JSON"
+    },
+    {
+      "command": "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 ENABLE_LOCAL_ADMIN_SHORTCUT=true PLAYWRIGHT_EXPECT_LOCAL_ADMIN_SHORTCUT=visible PLAYWRIGHT_E2E_PROFILE=core npx playwright test tests/admin-load-test-dashboard.spec.ts --workers=1",
+      "result": "passed 2/2"
+    },
+    {
+      "command": "live exact-shape k6 smoke public-api-spike/public-blogs-only/k6/10/30/10",
+      "result": "HTTP 200 start, completed, totalRequests=402, failedRequests=0, p95Ms=5.5, p99Ms=5.5, appElapsedP95Ms=5.2, nginxRequestTimeP95Ms=6, two Study targets with 201 requests each"
+    },
+    {
+      "command": "actual UI click smoke public-api-spike/public-blogs-only/k6/10/30/10 after CSRF helper fix",
+      "result": "HTTP 200 start and Study list/read target metrics rendered instead of Run ID not started"
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "passed after CSRF helper fix"
+    },
+    {
+      "command": "npm run lint",
+      "result": "passed after CSRF helper fix with existing unrelated warnings"
+    }
+  ],
+  "risks": [
+    "LoadTesting__BaseUrl must be configured correctly outside dev compose.",
+    "Cold Docker builds need access to grafana/k6:1.0.0.",
+    "AWSSDK.Core NU1901 warnings remain unrelated.",
+    "Current k6 runner ingests completion summary rather than streaming in-run metrics."
+  ],
+  "recommendation": "Use the fixed Real Backend Test path; treat DB timing and streaming k6 progress as separate follow-ups if required."
+}

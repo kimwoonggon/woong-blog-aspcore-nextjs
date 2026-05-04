@@ -4,7 +4,13 @@ public sealed class LoadTestingOptions
 {
     public const string SectionName = "LoadTesting";
 
-    public bool UseFakeRunnerForTests { get; set; } = true;
+    public bool UseFakeRunnerForTests { get; set; }
+
+    public bool RealRunnerEnabled { get; set; } = true;
+
+    public string BaseUrl { get; set; } = "http://127.0.0.1:3000";
+
+    public string K6ExecutablePath { get; set; } = "k6";
 
     public string ReportsRelativeRoot { get; set; } = Path.Combine("reports", "loadtest");
 

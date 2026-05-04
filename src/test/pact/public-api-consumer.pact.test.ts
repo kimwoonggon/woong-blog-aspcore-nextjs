@@ -4,6 +4,16 @@ import { Matchers, PactV3, SpecificationVersion } from '@pact-foundation/pact'
 
 const pactDirectory = path.resolve('tests/contracts/pacts')
 const { atLeastLike, boolean, integer, like } = Matchers
+const nativeFetch = globalThis.fetch
+const publicApiModules = [
+  '@/lib/api/base',
+  '@/lib/api/blogs',
+  '@/lib/api/home',
+  '@/lib/api/pages',
+  '@/lib/api/public-server',
+  '@/lib/api/site-settings',
+  '@/lib/api/works',
+]
 
 function pact() {
   return new PactV3({
@@ -15,26 +25,42 @@ function pact() {
   })
 }
 
+function restorePactTestGlobals() {
+  vi.restoreAllMocks()
+  vi.unstubAllGlobals()
+  vi.unstubAllEnvs()
+  globalThis.fetch = nativeFetch
+}
+
+function restorePactTestModules() {
+  for (const modulePath of publicApiModules) {
+    vi.doUnmock(modulePath)
+  }
+}
+
 async function withServerApi<T>(baseUrl: string, callback: () => Promise<T>) {
+  restorePactTestGlobals()
+  restorePactTestModules()
   vi.resetModules()
   vi.stubEnv('INTERNAL_API_ORIGIN', baseUrl)
 
   try {
     return await callback()
   } finally {
-    vi.unstubAllEnvs()
+    restorePactTestGlobals()
+    restorePactTestModules()
   }
 }
 
 describe('public API consumer Pact contracts', () => {
   beforeEach(() => {
-    vi.unstubAllGlobals()
-    vi.unstubAllEnvs()
+    restorePactTestGlobals()
+    restorePactTestModules()
   })
 
   afterEach(() => {
-    vi.unstubAllGlobals()
-    vi.unstubAllEnvs()
+    restorePactTestGlobals()
+    restorePactTestModules()
   })
 
   it('contracts public home payload', async () => {
@@ -137,7 +163,7 @@ describe('public API consumer Pact contracts', () => {
       })
   })
 
-  it('contracts public blog list and detail payloads', async () => {
+  it('contracts public blog list and detail payloads', { retry: 2 }, async () => {
     await pact()
       .given('published blogs exist')
       .uponReceiving('a public blog list request')

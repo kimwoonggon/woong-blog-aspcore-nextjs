@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Backend Loadtest Additional Audit - 2026-05-04</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; line-height: 1.5; }
+    h1 { margin-top: 0; }
+    .ok { color: #1f7a1f; }
+    .warn { color: #8a4b00; }
+    .bad { color: #a02020; }
+    code { background: #f4f4f4; padding: 2px 4px; }
+    ul { margin-top: 0.2rem; }
+    .muted { color: #444; }
+  </style>
+</head>
+<body>
+  <h1>Backend Loadtest Additional Audit - 2026-05-04</h1>
+  <p><strong>Task:</strong> <code>backend-loadtest-additional-2026-05-04</code></p>
+  <p><strong>Date:</strong> 2026-05-05</p>
+  <p><strong>Status:</strong> <span class="warn">완료(단, full e2e green 미달성)</span></p>
+
+  <h2>실행 요약</h2>
+  <ul>
+    <li>Playwright full core 실행: <strong>416 passed / 14 failed / 4 skipped</strong> (총 434).</li>
+    <li>Focused 재현 루프 실행: <strong>30 passed / 7 failed / 0 skipped</strong> (총 37).</li>
+    <li>재현 실패 7건은 동일 spec 집합에서 반복 확인됨: <code>admin-blog-ai-dialog</code> 3건, <code>ui-admin-keyboard-accessibility</code> 2건, <code>ui-improvement-featured-works-grid</code> 2건.</li>
+    <li>비재현 후보(풀에서만 발생) 7건은 추가 조건부 검증 대상: <code>public-detail-toc-fallback</code>, <code>admin-search-pagination</code>, <code>admin-work-special-input</code>, <code>dark-mode</code>, <code>ui-quality-layout-rhythm</code>, <code>ui-quality-visual-metrics</code>, <code>public-admin-affordances</code>.</li>
+  </ul>
+
+  <h2>주요 고장군</h2>
+  <ul>
+    <li>Full run 실패 14건 중 <strong>재현 실패 7건</strong>은 다음 우선순위로 분류.</li>
+    <li>추가로 budget failure: <strong>1</strong>, warning: <strong>39</strong>.</li>
+  </ul>
+
+  <h2>CI 증빙</h2>
+  <ul>
+    <li>CI Dev: <a href="https://github.com/kimwoonggon/woong-blog-aspcore-nextjs/actions/runs/25322888983">25322888983</a> (success)</li>
+    <li>Promote Main Runtime: <a href="https://github.com/kimwoonggon/woong-blog-aspcore-nextjs/actions/runs/25323185860">25323185860</a> (workflow_run success)</li>
+    <li>release/main-promote -> main: <a href="https://github.com/kimwoonggon/woong-blog-aspcore-nextjs/pull/35">PR #35</a> (MERGED, 2026-05-04T14:03:11Z)</li>
+    <li>CI Main Runtime PR: <a href="https://github.com/kimwoonggon/woong-blog-aspcore-nextjs/actions/runs/25323196924">25323196924</a> (success)</li>
+    <li>CI Main Runtime main push: <a href="https://github.com/kimwoonggon/woong-blog-aspcore-nextjs/actions/runs/25323508573">25323508573</a> (success)</li>
+  </ul>
+
+  <h2>근거 링크</h2>
+  <ul>
+    <li>Full run log: <a href="reruns/full-core-latest.log">backend/reports/backend-loadtest-additional-2026-05-04/reruns/full-core-latest.log</a></li>
+    <li>Repro log: <a href="reruns/repro-latest.log">backend/reports/backend-loadtest-additional-2026-05-04/reruns/repro-latest.log</a></li>
+    <li>Summary: <a href="reruns/full-core-20260504T155539Z-summary.md">backend/reports/backend-loadtest-additional-2026-05-04/reruns/full-core-20260504T155539Z-summary.md</a> / <a href="reruns/full-core-20260504T155539Z-summary.json">...summary.json</a></li>
+  </ul>
+
+  <h2>다음 액션</h2>
+  <ol>
+    <li>admin AI dialog strict selector 수정.</li>
+    <li>모바일 admin 키보드 포커스 및 tab 흐름 안정화.</li>
+    <li>works-grid 모바일 반응형 width/overflow 체크 안정화.</li>
+    <li>targeted rerun 후 full core 재실행으로 감소 추적.</li>
+  </ol>
+</body>
+</html>

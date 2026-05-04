@@ -91,6 +91,13 @@ public sealed class FakeRealLoadTestRunner(RealLoadTestReportStore reportStore, 
         var requestsForTick = Math.Max(1, run.Rate / 4);
         var simulatedFailures = tick % 11 == 0 ? 1 : 0;
         var successfulRequests = Math.Max(0, requestsForTick - simulatedFailures);
+        var target = run.Targets.Count == 0
+            ? new RealLoadTestTargetSpec("public-api", "Public API", "/api/public/works?page=1&pageSize=12", "work")
+            : run.Targets[(tick - 1) % run.Targets.Count];
+        var p50Ms = 55 + (tick % 7);
+        var p95Ms = 120 + (tick % 11) * 3;
+        var p99Ms = p95Ms + 35 + (tick % 5);
+        var maxMs = p99Ms + 40 + (tick % 9);
 
         run.TotalRequests += requestsForTick;
         run.FailedRequests += simulatedFailures;
@@ -100,10 +107,53 @@ public sealed class FakeRealLoadTestRunner(RealLoadTestReportStore reportStore, 
         var elapsedSeconds = Math.Max(0.001, (DateTimeOffset.UtcNow - run.StartedAtUtc).TotalSeconds);
         run.CurrentRps = Math.Max(0, successfulRequests / TickInterval.TotalSeconds);
         run.AverageRps = Math.Round(run.TotalRequests / elapsedSeconds, 2);
-        run.P50Ms = 55 + (tick % 7);
-        run.P95Ms = 120 + (tick % 11) * 3;
-        run.P99Ms = run.P95Ms + 35 + (tick % 5);
-        run.MaxMs = run.P99Ms + 40 + (tick % 9);
+        run.P50Ms = p50Ms;
+        run.P95Ms = p95Ms;
+        run.P99Ms = p99Ms;
+        run.MaxMs = maxMs;
+        run.LatencyBreakdown = new RealLoadTestLatencyBreakdown(
+            Math.Max(1, p50Ms - 35),
+            p50Ms,
+            p95Ms,
+            p99Ms,
+            maxMs,
+            Math.Max(1, p95Ms - 18),
+            p95Ms + 6,
+            Math.Max(1, p95Ms - 8));
+        ApplyTargetMetrics(run, target, requestsForTick, successfulRequests, simulatedFailures, p95Ms);
+    }
+
+    private static void ApplyTargetMetrics(
+        RealLoadTestRunEntry run,
+        RealLoadTestTargetSpec target,
+        int requestCount,
+        int successCount,
+        int failureCount,
+        double p95Ms)
+    {
+        run.TargetMetrics.TryGetValue(target.Id, out var existing);
+        var statusCounts = existing is null
+            ? RealLoadTestRunEntry.CreateStatusCounts()
+            : new Dictionary<string, long>(existing.StatusCounts, StringComparer.OrdinalIgnoreCase);
+
+        statusCounts["2xx"] += successCount;
+        statusCounts["5xx"] += failureCount;
+
+        var nextRequestCount = (existing?.RequestCount ?? 0) + requestCount;
+        var nextFailureCount = (existing?.FailureCount ?? 0) + failureCount;
+        var nextSuccessCount = (existing?.SuccessCount ?? 0) + successCount;
+        var nextP95 = existing is null ? p95Ms : Math.Max(existing.P95Ms, p95Ms);
+
+        run.TargetMetrics[target.Id] = new RealLoadTestTargetMetrics(
+            target.Id,
+            target.Label,
+            target.Path,
+            target.Group,
+            nextRequestCount,
+            nextSuccessCount,
+            nextFailureCount,
+            nextP95,
+            statusCounts);
     }
 
     private static RealLoadTestStatusResponse CaptureSummary(RealLoadTestRunEntry run)
@@ -127,6 +177,8 @@ public sealed class FakeRealLoadTestRunner(RealLoadTestReportStore reportStore, 
             snapshot.P95Ms,
             snapshot.P99Ms,
             snapshot.MaxMs,
-            snapshot.StatusCounts);
+            snapshot.StatusCounts,
+            run.LatencyBreakdown,
+            snapshot.TargetMetrics);
     }
 }

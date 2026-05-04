@@ -14,14 +14,18 @@ public sealed record RealLoadTestStartRequest(
     string Runner,
     string Target,
     int Rate,
+    int? PeakRate,
     int DurationSeconds,
-    int MaxVus);
+    int MaxVus,
+    int? StartVus,
+    IReadOnlyList<RealLoadTestTargetSpec> Targets);
 
 public sealed record RealLoadTestStartResponse(
     string RunId,
     string Status,
     string Runner,
     string Scenario,
+    IReadOnlyList<RealLoadTestTargetSpec> Targets,
     DateTimeOffset StartedAtUtc);
 
 public sealed record RealLoadTestStatusResponse(
@@ -41,7 +45,9 @@ public sealed record RealLoadTestStatusResponse(
     double P95Ms,
     double P99Ms,
     double MaxMs,
-    IReadOnlyDictionary<string, long> StatusCounts);
+    IReadOnlyDictionary<string, long> StatusCounts,
+    IReadOnlyList<RealLoadTestTargetSpec> Targets,
+    IReadOnlyList<RealLoadTestTargetMetrics> TargetMetrics);
 
 public sealed record RealLoadTestMetricsResponse(
     string RunId,
@@ -54,6 +60,8 @@ public sealed record RealLoadTestMetricsResponse(
     double P99Ms,
     double MaxMs,
     IReadOnlyDictionary<string, long> StatusCounts,
+    RealLoadTestLatencyBreakdown LatencyBreakdown,
+    IReadOnlyList<RealLoadTestTargetMetrics> TargetMetrics,
     IReadOnlyList<RealLoadTestMetricPoint> Metrics);
 
 public sealed record RealLoadTestMetricPoint(
@@ -66,12 +74,41 @@ public sealed record RealLoadTestMetricPoint(
     double P95Ms,
     double P99Ms,
     double MaxMs,
-    IReadOnlyDictionary<string, long> StatusCounts);
+    IReadOnlyDictionary<string, long> StatusCounts,
+    RealLoadTestLatencyBreakdown LatencyBreakdown,
+    IReadOnlyList<RealLoadTestTargetMetrics> TargetMetrics);
 
 public sealed record RealLoadTestStopResponse(
     string RunId,
     string Status,
     DateTimeOffset? StoppedAtUtc);
+
+public sealed record RealLoadTestTargetSpec(
+    string Id,
+    string Label,
+    string Path,
+    string Group);
+
+public sealed record RealLoadTestLatencyBreakdown(
+    double MinMs,
+    double P50Ms,
+    double P95Ms,
+    double P99Ms,
+    double MaxMs,
+    double AppElapsedP95Ms,
+    double? NginxRequestTimeP95Ms,
+    double? NginxUpstreamP95Ms);
+
+public sealed record RealLoadTestTargetMetrics(
+    string TargetId,
+    string TargetLabel,
+    string TargetPath,
+    string Group,
+    long RequestCount,
+    long SuccessCount,
+    long FailureCount,
+    double P95Ms,
+    IReadOnlyDictionary<string, long> StatusCounts);
 
 public sealed class RealLoadTestRunEntry
 {
@@ -81,8 +118,11 @@ public sealed class RealLoadTestRunEntry
         string scenario,
         string target,
         int rate,
+        int peakRate,
         int durationSeconds,
         int maxVus,
+        int startVus,
+        IReadOnlyList<RealLoadTestTargetSpec> targets,
         DateTimeOffset startedAtUtc)
     {
         RunId = runId;
@@ -90,8 +130,11 @@ public sealed class RealLoadTestRunEntry
         Scenario = scenario;
         Target = target;
         Rate = rate;
+        PeakRate = peakRate;
         DurationSeconds = durationSeconds;
         MaxVus = maxVus;
+        StartVus = startVus;
+        Targets = targets;
         StartedAtUtc = startedAtUtc;
         Status = RealLoadTestRunStates.Queued;
         CancellationTokenSource = new CancellationTokenSource();
@@ -109,9 +152,15 @@ public sealed class RealLoadTestRunEntry
 
     public int Rate { get; }
 
+    public int PeakRate { get; }
+
     public int DurationSeconds { get; }
 
     public int MaxVus { get; }
+
+    public int StartVus { get; }
+
+    public IReadOnlyList<RealLoadTestTargetSpec> Targets { get; }
 
     public DateTimeOffset StartedAtUtc { get; }
 
@@ -136,6 +185,10 @@ public sealed class RealLoadTestRunEntry
     public double MaxMs { get; set; }
 
     public Dictionary<string, long> StatusCounts { get; } = CreateStatusCounts();
+
+    public RealLoadTestLatencyBreakdown LatencyBreakdown { get; set; } = new(0, 0, 0, 0, 0, 0, null, null);
+
+    public Dictionary<string, RealLoadTestTargetMetrics> TargetMetrics { get; } = new(StringComparer.OrdinalIgnoreCase);
 
     public CancellationTokenSource CancellationTokenSource { get; }
 
@@ -162,7 +215,9 @@ public sealed class RealLoadTestRunEntry
             P95Ms,
             P99Ms,
             MaxMs,
-            new Dictionary<string, long>(StatusCounts, StringComparer.OrdinalIgnoreCase));
+            new Dictionary<string, long>(StatusCounts, StringComparer.OrdinalIgnoreCase),
+            Targets,
+            TargetMetrics.Values.ToArray());
     }
 
     public static Dictionary<string, long> CreateStatusCounts()

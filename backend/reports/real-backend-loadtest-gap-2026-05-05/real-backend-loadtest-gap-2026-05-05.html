@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Real Backend Load Test Gap Audit - 2026-05-05</title>
+  <style>
+    body { font-family: system-ui, sans-serif; line-height: 1.5; margin: 2rem; max-width: 960px; color: #1f2937; }
+    h1, h2 { line-height: 1.2; }
+    code { background: #f3f4f6; padding: 0.1rem 0.25rem; border-radius: 4px; }
+    li { margin: 0.25rem 0; }
+  </style>
+</head>
+<body>
+  <h1>Real Backend Load Test Gap Audit - 2026-05-05</h1>
+  <h2>Scope</h2>
+  <p>Fixed the Real Backend Test path that returned 400 for <code>public-api-spike</code> / <code>public-blogs-only</code> / <code>k6</code> / <code>10</code> / <code>30</code> / <code>10</code> and left run IDs and metrics empty.</p>
+  <h2>Changed</h2>
+  <ul>
+    <li>Real backend start payload now carries editable Work/Study target URLs.</li>
+    <li>Backend contracts now include targets, latency breakdown, and per-target metrics.</li>
+    <li>Added k6 runner dispatch, Docker k6 installation, dev compose nginx base URL, and nginx timing headers.</li>
+    <li>Dashboard now renders real target URLs, per-target summaries, and source-aware component timing.</li>
+    <li>Dashboard start/stop mutations now use the shared CSRF helper.</li>
+  </ul>
+  <h2>Validation</h2>
+  <ul>
+    <li>Vitest load-test dashboard suite passed 22/22.</li>
+    <li>Backend RealLoadTestControlPlane integration tests passed 3/3.</li>
+    <li>Backend build, TypeScript typecheck, and lint passed; lint/build warnings are existing and unrelated.</li>
+    <li>Docker dev stack built and started with backend, frontend, and nginx.</li>
+    <li>Playwright admin load-test dashboard spec passed 2/2 against <code>http://127.0.0.1:3000</code>.</li>
+    <li>Live k6 smoke completed with 402 requests, 0 failures, nonzero p95/p99, app elapsed p95, nginx request-time p95, and two Study target metrics.</li>
+    <li>Actual UI click smoke for the failing shape started with HTTP 200 after the CSRF fix and rendered Study list/read metrics.</li>
+  </ul>
+  <h2>Risks</h2>
+  <ul>
+    <li><code>LoadTesting__BaseUrl</code> must be configured correctly outside dev compose.</li>
+    <li>DB timing and nginx upstream timing remain unavailable unless their sources emit usable data.</li>
+    <li>The current k6 runner records completion summaries rather than streaming in-run metrics.</li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Use the fixed Real Backend Test path. Treat DB timing and streaming k6 progress as separate follow-up work if required.</p>
+</body>
+</html>

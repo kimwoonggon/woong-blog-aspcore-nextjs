@@ -20,7 +20,9 @@ public static class LoadTestingServiceCollectionExtensions
 
         services.AddSingleton<IRealLoadTestRunRegistry, InMemoryRealLoadTestRunRegistry>();
         services.AddSingleton<RealLoadTestReportStore>();
-        services.AddSingleton<IRealLoadTestRunner, FakeRealLoadTestRunner>();
+        services.AddSingleton<FakeRealLoadTestRunner>();
+        services.AddSingleton<K6RealLoadTestRunner>();
+        services.AddSingleton<IRealLoadTestRunner, RealLoadTestRunnerDispatcher>();
         services.AddSingleton<IRealLoadTestControlPlane, RealLoadTestControlPlane>();
 
         return services;

@@ -1,0 +1,54 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Audit Report: Real Backend Dashboard Additions</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 20px; color: #111827; background: #ffffff; }
+      h1, h2 { margin-bottom: 0.25rem; }
+      ul { margin-top: 0.25rem; }
+      section { margin-bottom: 1.5rem; }
+      .risk { color: #92400e; }
+      .ok { color: #065f46; }
+      .warn { color: #9f1239; }
+    </style>
+  </head>
+  <body>
+    <h1>Audit Report: Real Backend Dashboard Additions</h1>
+    <p>Date: 2026-05-04</p>
+
+    <section>
+      <h2>Summary</h2>
+      <ul>
+        <li>Updated real backend parsing and UI handling in the requested scope.</li>
+        <li>Added app-elapsed extraction with status-based fallback reason text.</li>
+        <li>Added status normalization for queued/running/completed/failed/stopped in snapshot summary.</li>
+        <li>Updated real backend component breakdown row behavior for client/nginx/app/db fields.</li>
+        <li>Adjusted start/poll lifecycle to tolerate queued/non-running start responses.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Validation</h2>
+      <ul>
+        <li>Unit tests: <code>npx vitest run src/test/load-test-dashboard.test.ts</code> (pass)</li>
+        <li>Playwright: <code>PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 npx playwright test tests/admin-load-test-dashboard.spec.ts --workers=1</code> (pass)</li>
+        <li>Typecheck: <code>npm run typecheck</code> (pass)</li>
+        <li>Lint: <code>npm run lint</code> (pass, existing warnings only)</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Risks</h2>
+      <ul>
+        <li class="risk">Backend payload shape changes may still return fallback reason text for some fields.</li>
+        <li class="risk">Nginx metrics remain unavailable until ingestion provides matching keys.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Recommendation</h2>
+      <p class="ok">Proceed with this patch and add a focused payload contract test if backend starts emitting app elapsed consistently.</p>
+    </section>
+  </body>
+</html>
