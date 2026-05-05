@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Public Work Thumbnail Read Path Audit</title></head>
+<body>
+  <h1>Public Work Thumbnail Read Path Audit - 2026-05-06</h1>
+  <p>Public Work list/home now resolve thumbnails only from explicit thumbnail assets. Public detail keeps videos but does not derive thumbnails from video rows.</p>
+  <h2>Validations</h2>
+  <ul>
+    <li>Focused component tests: 39 passed after RED failure.</li>
+    <li>Component tests: 121 passed.</li>
+    <li>Unit tests: 56 passed.</li>
+    <li>Architecture tests: 35 passed.</li>
+    <li>Relevant integration tests: 45 passed.</li>
+    <li>Backend solution: component 121, unit 56, architecture 35, integration 202 passed; contract provider skipped without pact files.</li>
+    <li>git diff --check passed.</li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Merge after CI, then continue with public/admin content DTO separation and DB command timing instrumentation.</p>
+  <p>Generated: 2026-05-06T07:19:38+09:00</p>
+</body>
+</html>
