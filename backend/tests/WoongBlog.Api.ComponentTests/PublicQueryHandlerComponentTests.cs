@@ -797,6 +797,37 @@ public class PublicQueryHandlerComponentTests
     }
 
     [Fact]
+    public async Task GetWorkBySlugQueryHandler_DoesNotUseBodyImageAsPublicThumbnailFallback()
+    {
+        await using var dbContext = CreateDbContext();
+        var now = new DateTimeOffset(2026, 4, 25, 12, 0, 0, TimeSpan.Zero);
+        dbContext.Works.Add(new Work
+        {
+            Id = Guid.NewGuid(),
+            Title = "Body Image Detail",
+            Slug = "body-image-detail",
+            Excerpt = "detail excerpt",
+            Category = "detail",
+            Tags = ["detail", "public"],
+            ContentJson = """{"html":"<p><img src=\"/media/detail-body-inline.png\" alt=\"body\"></p>"}""",
+            AllPropertiesJson = "{}",
+            Published = true,
+            PublishedAt = now,
+            CreatedAt = now,
+            UpdatedAt = now
+        });
+        await dbContext.SaveChangesAsync();
+
+        var handler = new GetWorkBySlugQueryHandler(CreateWorkQueryStore(dbContext));
+
+        var result = await handler.Handle(new GetWorkBySlugQuery("body-image-detail"), CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Contains("detail-body-inline.png", result!.ContentJson, StringComparison.Ordinal);
+        Assert.Equal(string.Empty, result.ThumbnailUrl);
+    }
+
+    [Fact]
     public async Task GetWorkBySlugQueryHandler_ReturnsNull_ForDraftOrMissingSlug()
     {
         await using var dbContext = CreateDbContext();

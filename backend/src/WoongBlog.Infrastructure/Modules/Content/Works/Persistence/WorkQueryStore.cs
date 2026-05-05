@@ -141,7 +141,30 @@ public sealed class WorkQueryStore(
     public async Task<WorkDetailDto?> GetPublishedDetailBySlugAsync(string slug, CancellationToken cancellationToken)
     {
         var work = await dbContext.Works.AsNoTracking()
-            .SingleOrDefaultAsync(x => x.Slug == slug && x.Published, cancellationToken);
+            .Where(x => x.Slug == slug && x.Published)
+            .Select(work => new PublicWorkDetailRow(
+                work.Id,
+                work.Slug,
+                work.Title,
+                work.Excerpt,
+                work.ContentJson,
+                work.Category,
+                work.Period,
+                work.Tags,
+                work.ThumbnailAssetId,
+                dbContext.Assets
+                    .Where(asset => asset.Id == work.ThumbnailAssetId)
+                    .Select(asset => asset.PublicUrl)
+                    .SingleOrDefault() ?? string.Empty,
+                work.IconAssetId,
+                dbContext.Assets
+                    .Where(asset => asset.Id == work.IconAssetId)
+                    .Select(asset => asset.PublicUrl)
+                    .SingleOrDefault() ?? string.Empty,
+                work.PublishedAt,
+                work.AllPropertiesJson,
+                work.VideosVersion))
+            .SingleOrDefaultAsync(cancellationToken);
 
         return work is null
             ? null
@@ -180,14 +203,14 @@ public sealed class WorkQueryStore(
             videos);
     }
 
-    private async Task<WorkDetailDto> BuildPublicDetailAsync(Work work, CancellationToken cancellationToken)
+    private async Task<WorkDetailDto> BuildPublicDetailAsync(PublicWorkDetailRow work, CancellationToken cancellationToken)
     {
-        var assets = await GetAssetLookupAsync(work.ThumbnailAssetId, work.IconAssetId, cancellationToken);
+        var assets = BuildProjectedAssetLookup(work);
         var videoRows = await GetVideosAsync(work.Id, cancellationToken);
         var videos = await BuildVideoDtosAsync(videoRows, verifyPreviewAssets: false, cancellationToken);
         var thumbnailUrl = WorkThumbnailUrlResolver.ResolveThumbnailUrl(
             work.ThumbnailAssetId,
-            work.ContentJson,
+            contentJson: null,
             videoRows,
             assets);
 
@@ -342,6 +365,22 @@ public sealed class WorkQueryStore(
             : string.Empty;
     }
 
+    private static IReadOnlyDictionary<Guid, string> BuildProjectedAssetLookup(PublicWorkDetailRow work)
+    {
+        var assets = new Dictionary<Guid, string>(capacity: 2);
+        AddProjectedAssetUrl(assets, work.ThumbnailAssetId, work.ThumbnailUrl);
+        AddProjectedAssetUrl(assets, work.IconAssetId, work.IconUrl);
+        return assets;
+    }
+
+    private static void AddProjectedAssetUrl(Dictionary<Guid, string> assets, Guid? assetId, string publicUrl)
+    {
+        if (assetId is not null && !string.IsNullOrEmpty(publicUrl))
+        {
+            assets[assetId.Value] = publicUrl;
+        }
+    }
+
     private static string? ResolveSocialShareMessage(string allPropertiesJson)
     {
         try
@@ -383,4 +422,21 @@ public sealed class WorkQueryStore(
         Guid? ThumbnailAssetId,
         Guid? IconAssetId,
         DateTimeOffset? PublishedAt);
+
+    private sealed record PublicWorkDetailRow(
+        Guid Id,
+        string Slug,
+        string Title,
+        string Excerpt,
+        string ContentJson,
+        string Category,
+        string? Period,
+        string[] Tags,
+        Guid? ThumbnailAssetId,
+        string ThumbnailUrl,
+        Guid? IconAssetId,
+        string IconUrl,
+        DateTimeOffset? PublishedAt,
+        string AllPropertiesJson,
+        int VideosVersion);
 }

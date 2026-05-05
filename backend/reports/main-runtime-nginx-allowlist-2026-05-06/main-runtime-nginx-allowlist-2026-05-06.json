@@ -1,0 +1,44 @@
+{
+  "task": "main-runtime-nginx-allowlist-2026-05-06",
+  "changed": [
+    "scripts/main-runtime-allowlist.txt"
+  ],
+  "intentionallyNotChanged": [
+    "backend application behavior",
+    "public load-test target semantics",
+    "pageSize=12 behavior",
+    "cache policy",
+    "nginx and Npgsql runtime values"
+  ],
+  "validations": [
+    {
+      "command": "grep -Fx 'nginx/nginx.conf' scripts/main-runtime-allowlist.txt",
+      "result": "failed before edit, passed after edit"
+    },
+    {
+      "command": "git archive --format=tar HEAD $(grep -vE '^\\\\s*(#|$)' scripts/main-runtime-allowlist.txt) | tar -tf - | rg '^nginx/nginx\\\\.conf$'",
+      "result": "passed"
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    },
+    {
+      "command": "SOURCE_REF=HEAD AUTO_COMMIT=false AUTO_PUSH=false WORKTREE_DIR=../woong-blog-main-runtime-verify PROMOTION_BRANCH=verify/main-runtime-nginx-conf ./scripts/promote-main-runtime.sh",
+      "result": "passed"
+    },
+    {
+      "command": "test -f ../woong-blog-main-runtime-verify/nginx/nginx.conf",
+      "result": "passed"
+    },
+    {
+      "command": "docker compose --env-file .env.prod -f docker-compose.prod.yml config",
+      "result": "passed in verification runtime tree after copying .env.prod.example to .env.prod"
+    }
+  ],
+  "risks": [
+    "The fix must still pass GitHub Actions after merge to dev and runtime-only promotion regeneration.",
+    "This is a promotion artifact fix, not a backend throughput improvement."
+  ],
+  "recommendation": "Merge to dev, regenerate runtime-only main promotion PR, and verify main runtime CI."
+}
