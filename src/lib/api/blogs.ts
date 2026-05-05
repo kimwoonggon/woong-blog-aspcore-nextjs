@@ -2,6 +2,7 @@ import { getServerApiBaseUrl, getServerCookieHeader } from '@/lib/api/server'
 import { getPublicServerApiBaseUrl } from '@/lib/api/public-server'
 import { throwPublicApiError } from '@/lib/api/public-errors'
 import { PUBLIC_CONTENT_TAGS, publicContentFetchInit } from '@/lib/api/public-cache'
+import type { BlogContentPayload } from '@/lib/content/blog-content'
 
 export interface BlogListItem {
   id: string
@@ -28,7 +29,8 @@ export interface BlogAdminItem extends BlogListItem {
 }
 
 export interface BlogDetail extends BlogListItem {
-  contentJson: string
+  content?: BlogContentPayload
+  contentJson?: string
 }
 
 export interface PublicBlogSearchOptions {

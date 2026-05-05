@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using WoongBlog.Application.Modules.Content.Common;
 using WoongBlog.Application.Modules.Content.Works.WorkVideos;
 
 namespace WoongBlog.Application.Modules.Content.Works.GetWorkBySlug;
@@ -8,7 +9,7 @@ public sealed record WorkDetailDto(
     string Slug,
     string Title,
     string Excerpt,
-    string ContentJson,
+    PublicContentBodyDto Content,
     string Category,
     string? Period,
     string[] Tags,

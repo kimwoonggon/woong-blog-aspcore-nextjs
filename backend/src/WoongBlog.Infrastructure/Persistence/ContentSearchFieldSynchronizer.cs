@@ -13,10 +13,13 @@ internal static class ContentSearchFieldSynchronizer
         {
             if (entry.State is EntityState.Added or EntityState.Modified)
             {
+                var publicBody = AdminContentJson.ExtractPublicBodyFields(entry.Entity.ContentJson);
                 entry.Entity.SearchTitle = ContentSearchText.Normalize(entry.Entity.Title);
                 entry.Entity.SearchText = ContentSearchText.BuildIndex(
                     entry.Entity.Excerpt,
                     AdminContentJson.ExtractExcerptText(entry.Entity.ContentJson));
+                entry.Entity.PublicContentHtml = publicBody.Html;
+                entry.Entity.PublicContentMarkdown = publicBody.Markdown;
             }
         }
 
@@ -24,10 +27,13 @@ internal static class ContentSearchFieldSynchronizer
         {
             if (entry.State is EntityState.Added or EntityState.Modified)
             {
+                var publicBody = AdminContentJson.ExtractPublicBodyFields(entry.Entity.ContentJson);
                 entry.Entity.SearchTitle = ContentSearchText.Normalize(entry.Entity.Title);
                 entry.Entity.SearchText = ContentSearchText.BuildIndex(
                     entry.Entity.Excerpt,
                     AdminContentJson.ExtractExcerptText(entry.Entity.ContentJson));
+                entry.Entity.PublicContentHtml = publicBody.Html;
+                entry.Entity.PublicContentMarkdown = publicBody.Markdown;
             }
         }
     }

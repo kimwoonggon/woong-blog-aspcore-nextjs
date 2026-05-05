@@ -3,6 +3,7 @@ using System.Text.Json;
 using WoongBlog.Api.Domain.Entities;
 using WoongBlog.Infrastructure.Persistence;
 using WoongBlog.Application.Modules.Composition.GetHome;
+using WoongBlog.Application.Modules.Content.Common;
 using WoongBlog.Application.Modules.Content.Common.Support;
 using WoongBlog.Application.Modules.Content.Works.Abstractions;
 using WoongBlog.Application.Modules.Content.Works.GetAdminWorkById;
@@ -138,7 +139,8 @@ public sealed class WorkQueryStore(
                 work.Slug,
                 work.Title,
                 work.Excerpt,
-                work.ContentJson,
+                work.PublicContentHtml,
+                work.PublicContentMarkdown,
                 work.Category,
                 work.Period,
                 work.Tags,
@@ -205,7 +207,7 @@ public sealed class WorkQueryStore(
             work.Slug,
             work.Title,
             work.Excerpt,
-            work.ContentJson,
+            PublicContentBodyDto.FromStoredFields(work.PublicContentHtml, work.PublicContentMarkdown),
             work.Category,
             work.Period,
             work.Tags,
@@ -414,7 +416,8 @@ public sealed class WorkQueryStore(
         string Slug,
         string Title,
         string Excerpt,
-        string ContentJson,
+        string PublicContentHtml,
+        string PublicContentMarkdown,
         string Category,
         string? Period,
         string[] Tags,

@@ -7,7 +7,7 @@ import { TableOfContents } from '@/components/content/TableOfContents'
 import { Badge } from '@/components/ui/badge'
 import { Metadata } from 'next'
 import { Suspense } from 'react'
-import { resolveBlogRenderableHtml } from '@/lib/content/blog-content'
+import { resolveBlogRenderableContent } from '@/lib/content/blog-content'
 import { fetchAllPublicBlogs, fetchPublicBlogBySlug } from '@/lib/api/blogs'
 import { createPublicMetadata } from '@/lib/seo'
 import { formatDetailPublishDate } from './blog-detail-helpers'
@@ -90,7 +90,7 @@ export default async function BlogDetailPage({ params }: PageProps) {
         notFound()
     }
 
-    const renderedContent = resolveBlogRenderableHtml(blog.contentJson)
+    const renderedContent = resolveBlogRenderableContent(blog.content, blog.contentJson)
 
     const publishDate = formatDetailPublishDate(blog.publishedAt)
     const sortedBlogs = [...allBlogs].sort((left, right) => {

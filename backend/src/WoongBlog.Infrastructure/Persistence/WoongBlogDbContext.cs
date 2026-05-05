@@ -76,6 +76,8 @@ public class WoongBlogDbContext : DbContext
             entity.HasIndex(x => new { x.Published, x.PublishedAt });
             entity.HasIndex(x => x.SearchTitle);
             entity.Property(x => x.ContentJson).HasColumnType("jsonb");
+            entity.Property(x => x.PublicContentHtml).HasDefaultValue(string.Empty);
+            entity.Property(x => x.PublicContentMarkdown).HasDefaultValue(string.Empty);
             entity.Property(x => x.AllPropertiesJson).HasColumnType("jsonb");
         });
 
@@ -110,6 +112,8 @@ public class WoongBlogDbContext : DbContext
             entity.HasIndex(x => new { x.Published, x.PublishedAt });
             entity.HasIndex(x => x.SearchTitle);
             entity.Property(x => x.ContentJson).HasColumnType("jsonb");
+            entity.Property(x => x.PublicContentHtml).HasDefaultValue(string.Empty);
+            entity.Property(x => x.PublicContentMarkdown).HasDefaultValue(string.Empty);
         });
 
         modelBuilder.Entity<PageView>(entity =>

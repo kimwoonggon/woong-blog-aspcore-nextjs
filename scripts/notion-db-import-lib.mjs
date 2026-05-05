@@ -68,6 +68,15 @@ export function generateExcerpt(html) {
   return text.length <= 160 ? text : `${text.slice(0, 160).trim()}...`
 }
 
+export function buildBlogContentSqlExpressions(html) {
+  const publicContentHtmlExpr = sqlText(html)
+  return {
+    contentJsonExpr: `jsonb_build_object('html', ${publicContentHtmlExpr})`,
+    publicContentHtmlExpr,
+    publicContentMarkdownExpr: sqlText(''),
+  }
+}
+
 export function extractTitle(page) {
   if (!page || typeof page !== 'object') {
     return 'Untitled'
@@ -345,7 +354,7 @@ export async function upsertBlogRow({ page, html, slug, tags, coverAssetId, mark
   const createdAt = page.created_time
   const excerpt = generateExcerpt(html)
   const tagArrayExpr = sqlTextArray(tags.length ? tags : ['notion-import'])
-  const contentJsonExpr = `jsonb_build_object('html', ${sqlText(html)})`
+  const { contentJsonExpr, publicContentHtmlExpr, publicContentMarkdownExpr } = buildBlogContentSqlExpressions(html)
   const finalSlug = await generateUniqueBlogSlug(slug, blogId)
 
   if (blogId) {
@@ -356,6 +365,8 @@ export async function upsertBlogRow({ page, html, slug, tags, coverAssetId, mark
         "Slug" = ${sqlText(finalSlug)},
         "Excerpt" = ${sqlText(excerpt)},
         "ContentJson" = ${contentJsonExpr},
+        "PublicContentHtml" = ${publicContentHtmlExpr},
+        "PublicContentMarkdown" = ${publicContentMarkdownExpr},
         "CoverAssetId" = ${coverAssetId ? `'${coverAssetId}'` : 'NULL'},
         "Tags" = ${tagArrayExpr},
         "Published" = TRUE,
@@ -370,13 +381,15 @@ export async function upsertBlogRow({ page, html, slug, tags, coverAssetId, mark
 
   const newId = randomUUID()
   const sql = `
-    INSERT INTO "Blogs" ("Id","Slug","Title","Excerpt","ContentJson","CoverAssetId","Tags","Published","PublishedAt","CreatedAt","UpdatedAt")
+    INSERT INTO "Blogs" ("Id","Slug","Title","Excerpt","ContentJson","PublicContentHtml","PublicContentMarkdown","CoverAssetId","Tags","Published","PublishedAt","CreatedAt","UpdatedAt")
     VALUES (
       '${newId}',
       ${sqlText(finalSlug)},
       ${sqlText(title)},
       ${sqlText(excerpt)},
       ${contentJsonExpr},
+      ${publicContentHtmlExpr},
+      ${publicContentMarkdownExpr},
       ${coverAssetId ? `'${coverAssetId}'` : 'NULL'},
       ${tagArrayExpr},
       TRUE,

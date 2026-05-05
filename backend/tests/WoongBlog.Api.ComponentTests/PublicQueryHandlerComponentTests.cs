@@ -883,7 +883,7 @@ public class PublicQueryHandlerComponentTests
         Assert.Equal("detail", result.Category);
         Assert.Equal("2026", result.Period);
         Assert.Equal(new[] { "detail", "public" }, result.Tags);
-        Assert.Contains("Public work detail body", result.ContentJson, StringComparison.Ordinal);
+        Assert.Contains("Public work detail body", result.Content.Html, StringComparison.Ordinal);
         Assert.Equal("/media/detail-thumb.png", result.ThumbnailUrl);
         Assert.Equal("/media/detail-icon.png", result.IconUrl);
         Assert.Equal(now, result.PublishedAt);
@@ -965,7 +965,7 @@ public class PublicQueryHandlerComponentTests
         var result = await handler.Handle(new GetWorkBySlugQuery("body-image-detail"), CancellationToken.None);
 
         Assert.NotNull(result);
-        Assert.Contains("detail-body-inline.png", result!.ContentJson, StringComparison.Ordinal);
+        Assert.Contains("detail-body-inline.png", result!.Content.Html, StringComparison.Ordinal);
         Assert.Equal(string.Empty, result.ThumbnailUrl);
     }
 
@@ -1177,7 +1177,7 @@ public class PublicQueryHandlerComponentTests
         Assert.Equal("public-blog-detail", result!.Slug);
         Assert.Equal("Public Blog Detail", result.Title);
         Assert.Equal("Excerpt for Public Blog Detail", result.Excerpt);
-        Assert.Contains("Public Blog Detail body", result.ContentJson, StringComparison.Ordinal);
+        Assert.Contains("Public Blog Detail body", result.Content.Html, StringComparison.Ordinal);
         Assert.Equal(new[] { "public", "test" }, result.Tags);
         Assert.Equal("/media/detail-cover.png", result.CoverUrl);
         Assert.Equal(publishedAt, result.PublishedAt);
