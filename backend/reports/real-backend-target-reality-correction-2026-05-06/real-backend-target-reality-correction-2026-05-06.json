@@ -1,0 +1,47 @@
+{
+  "task": "real-backend-target-reality-correction-2026-05-06",
+  "cache_used": false,
+  "goals": [
+    "do_not_force_seeded_real_backend_read_targets",
+    "restore_real_backend_list_page_size_12",
+    "keep_public_list_dtos_visible_fields_only",
+    "allow_heavy_detail_read_targets_as_realistic_load",
+    "promote_through_dev_and_main_ci"
+  ],
+  "changes": [
+    "removed_seeded_slug_priority_from_admin_load_test_page",
+    "restored_real_backend_list_targets_page_size_12",
+    "removed_content_json_from_public_work_list_projection",
+    "asserted_public_lists_omit_content_json_and_details_include_content_json",
+    "superseded_invalid_seed_page_size_1_report_evidence",
+    "removed_tracked_invalid_k6_summary_json_artifacts"
+  ],
+  "intentionally_not_changed": [
+    "no_cache_added",
+    "no_heavy_detail_content_normalization",
+    "blog_list_query_already_card_projection",
+    "public_work_list_inline_body_thumbnail_fallback_not_preserved"
+  ],
+  "validations": [
+    { "command": "npm test -- --run src/test/load-test-dashboard.test.ts", "status": "passed", "tests": 27 },
+    { "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~PublicEndpointsTests --no-restore", "status": "passed", "tests": 27, "warnings": ["AWSSDK.Core NU1901 existing"] },
+    { "command": "dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj --filter FullyQualifiedName~PublicQueryHandlerComponentTests --no-restore", "status": "passed", "tests": 34, "warnings": ["AWSSDK.Core NU1901 existing"] },
+    { "command": "npm run typecheck", "status": "passed" },
+    { "command": "npm run lint", "status": "passed_with_existing_unrelated_warnings", "warnings": 6 },
+    { "command": "git diff --check", "status": "passed" },
+    { "command": "BACKEND_PUBLISH_PORT=18080 ./scripts/dev-up.sh", "status": "passed" },
+    { "command": "curl http://127.0.0.1:3000/api/health", "status": "passed", "http_status": 200 },
+    { "command": "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 ENABLE_LOCAL_ADMIN_SHORTCUT=true PLAYWRIGHT_EXPECT_LOCAL_ADMIN_SHORTCUT=visible PLAYWRIGHT_E2E_PROFILE=core npx playwright test tests/admin-load-test-dashboard.spec.ts --project=chromium-authenticated --workers=1", "status": "passed", "tests": 2 }
+  ],
+  "ci_promotion_status": {
+    "feature_pr_to_dev": "pending_at_report_creation",
+    "dev_ci_after_merge": "pending_at_report_creation",
+    "main_promotion_and_ci": "pending_at_report_creation"
+  },
+  "risks": [
+    "public_work_list_no_longer_uses_inline_content_image_thumbnail_fallback",
+    "AWSSDK.Core_NU1901_existing_warning",
+    "old_seed_page_size_1_k6_numbers_invalid_for_realistic_load"
+  ],
+  "recommendation": "Use Real Backend Test with pageSize=12 lists and current public-content read targets; do not use seeded defaults as realistic capacity proof."
+}

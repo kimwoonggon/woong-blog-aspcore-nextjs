@@ -179,10 +179,22 @@ describe('load test dashboard planning', () => {
       workSlugs: ['portfolio-api'],
       blogSlugs: ['nextjs-study'],
     })).toEqual([
-      { id: 'works-list', label: 'Work list', path: '/api/public/works?page=1&pageSize=1', group: 'work' },
+      { id: 'works-list', label: 'Work list', path: '/api/public/works?page=1&pageSize=12', group: 'work' },
       { id: 'work-read', label: 'Work read', path: '/api/public/works/portfolio-api', group: 'work' },
-      { id: 'study-list', label: 'Study list', path: '/api/public/blogs?page=1&pageSize=1', group: 'study' },
+      { id: 'study-list', label: 'Study list', path: '/api/public/blogs?page=1&pageSize=12', group: 'study' },
       { id: 'study-read', label: 'Study read', path: '/api/public/blogs/nextjs-study', group: 'study' },
+    ])
+  })
+
+  it('keeps fetched public slug order instead of forcing seeded fixtures', () => {
+    expect(buildLoadTestTargets({
+      workSlugs: ['latest-heavy-work', 'seeded-work'],
+      blogSlugs: ['latest-heavy-study', 'seeded-blog'],
+    })).toEqual([
+      { id: 'works-list', label: 'Work list', path: '/api/public/works?page=1&pageSize=12', group: 'work' },
+      { id: 'work-read', label: 'Work read', path: '/api/public/works/latest-heavy-work', group: 'work' },
+      { id: 'study-list', label: 'Study list', path: '/api/public/blogs?page=1&pageSize=12', group: 'study' },
+      { id: 'study-read', label: 'Study read', path: '/api/public/blogs/latest-heavy-study', group: 'study' },
     ])
   })
 
@@ -561,7 +573,7 @@ describe('load test dashboard planning', () => {
       maxVUs: 10,
       startVUs: 2,
       targets: [
-        { id: 'study-list', label: 'Study list', path: '/api/public/blogs?page=1&pageSize=1', group: 'study' },
+        { id: 'study-list', label: 'Study list', path: '/api/public/blogs?page=1&pageSize=12', group: 'study' },
         { id: 'study-read', label: 'Study read', path: '/api/public/blogs/custom-study-target', group: 'study' },
       ],
     })

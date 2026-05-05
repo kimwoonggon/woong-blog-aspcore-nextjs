@@ -229,7 +229,7 @@ test('admin can run and stop a real backend test with polling + metrics fallback
           {
             targetId: 'study-list',
             targetLabel: 'Study list',
-            targetPath: '/api/public/blogs?page=1&pageSize=1',
+            targetPath: '/api/public/blogs?page=1&pageSize=12',
             group: 'study',
             requestCount: stopRequested ? 6 : 5,
             successCount: stopRequested ? 6 : 5,
@@ -341,7 +341,7 @@ test('admin can run and stop a real backend test with polling + metrics fallback
     maxVUs: 40,
     startVUs: 5,
     targets: [
-      { id: 'study-list', label: 'Study list', path: '/api/public/blogs?page=1&pageSize=1', group: 'study' },
+      { id: 'study-list', label: 'Study list', path: '/api/public/blogs?page=1&pageSize=12', group: 'study' },
       { id: 'study-read', label: 'Study read', path: '/api/public/blogs/custom-real-study', group: 'study' },
     ],
   })

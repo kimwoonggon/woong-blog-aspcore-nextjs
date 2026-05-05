@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Real Backend Target Reality Correction - 2026-05-06</title>
+  <style>body{font-family:Arial,sans-serif;max-width:960px;margin:32px auto;line-height:1.5}code{background:#f3f3f3;padding:1px 4px}li{margin:4px 0}</style>
+</head>
+<body>
+  <h1>Real Backend Target Reality Correction - 2026-05-06</h1>
+  <p>Corrected Real Backend Test to use current public-content read targets and realistic <code>pageSize=12</code> list targets. Public list DTOs are verified to omit <code>contentJson</code>; detail DTOs keep it.</p>
+  <h2>Changed</h2>
+  <ul>
+    <li>Removed forced <code>seeded-work</code>/<code>seeded-blog</code> priority.</li>
+    <li>Restored Work/Blog list target paths to <code>pageSize=12</code>.</li>
+    <li>Removed <code>ContentJson</code> from public Work list projection.</li>
+    <li>Marked old seed/pageSize=1 k6 evidence as superseded.</li>
+  </ul>
+  <h2>Validation</h2>
+  <ul>
+    <li>Vitest load-test dashboard: 27/27 passed.</li>
+    <li>Public endpoint integration tests: 27/27 passed.</li>
+    <li>Public query component tests: 34/34 passed.</li>
+    <li>Typecheck, lint, diff check, dev compose build, health check, and focused Playwright all passed.</li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Use Real Backend Test with current public-content read targets and <code>pageSize=12</code> list targets. Do not treat seeded defaults as realistic capacity proof.</p>
+</body>
+</html>
