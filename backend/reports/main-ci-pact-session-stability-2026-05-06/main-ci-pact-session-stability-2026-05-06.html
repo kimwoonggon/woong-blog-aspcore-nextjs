@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Main CI Pact Session Stability - 2026-05-06</title>
+  <style>body{font-family:system-ui,sans-serif;max-width:900px;margin:2rem auto;line-height:1.5}code{background:#f4f4f4;padding:.1rem .25rem}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ddd;padding:.4rem;text-align:left}</style>
+</head>
+<body>
+  <h1>Main CI Pact Session Stability - 2026-05-06</h1>
+  <p>Main push CI failed in the frontend Pact consumer session interaction. This report documents the focused test-harness stability fix.</p>
+  <h2>Changed</h2>
+  <ul>
+    <li>Applied <code>retry: 2</code> to every Pact consumer interaction.</li>
+    <li>Added <code>withBrowserApi()</code> for browser-facing Pact calls.</li>
+    <li>Added an explicit <code>response.ok</code> assertion for the unauthenticated session request.</li>
+  </ul>
+  <h2>Validation</h2>
+  <ul>
+    <li><code>npm run test -- --run src/test/pact/public-api-consumer.pact.test.ts</code> passed.</li>
+    <li>Related frontend API/admin tests passed.</li>
+    <li><code>npm run typecheck</code>, <code>npm run lint</code>, and <code>git diff --check</code> passed.</li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Promote through dev CI, then regenerate the runtime-only main promotion and verify main CI.</p>
+</body>
+</html>
