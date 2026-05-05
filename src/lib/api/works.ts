@@ -1,6 +1,7 @@
 import { getPublicServerApiBaseUrl } from '@/lib/api/public-server'
 import { throwPublicApiError } from '@/lib/api/public-errors'
 import { PUBLIC_CONTENT_TAGS, publicContentFetchInit } from '@/lib/api/public-cache'
+import type { BlogContentPayload } from '@/lib/content/blog-content'
 
 export interface WorkVideo {
   id: string
@@ -52,7 +53,8 @@ export interface WorkAdminItem extends WorkListItem {
 }
 
 export interface WorkDetail extends WorkListItem {
-  contentJson: string
+  content?: BlogContentPayload
+  contentJson?: string
   socialShareMessage?: string | null
   videosVersion: number
   videos: WorkVideo[]
@@ -151,13 +153,20 @@ function parseVideosVersion(record: Record<string, unknown>): number {
 
 function parseWorkDetailPayload(payload: unknown): WorkDetail {
   const record = ensureRecord(payload, 'Work detail payload is malformed.')
+  const content = record.content && typeof record.content === 'object' && !Array.isArray(record.content)
+    ? record.content as Record<string, unknown>
+    : {}
 
   return {
     id: String(record.id ?? ''),
     slug: String(record.slug ?? ''),
     title: String(record.title ?? ''),
     excerpt: String(record.excerpt ?? ''),
-    contentJson: String(record.contentJson ?? ''),
+    content: {
+      html: typeof content.html === 'string' ? content.html : undefined,
+      markdown: typeof content.markdown === 'string' ? content.markdown : undefined,
+    },
+    contentJson: typeof record.contentJson === 'string' ? record.contentJson : undefined,
     socialShareMessage: typeof record.socialShareMessage === 'string' || record.socialShareMessage === null
       ? record.socialShareMessage
       : typeof record.social_share_message === 'string' || record.social_share_message === null

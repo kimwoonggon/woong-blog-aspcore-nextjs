@@ -50,12 +50,16 @@ public sealed class DbContextModelContractComponentTests
         AssertPropertyRequired(blogs, nameof(Blog.Slug));
         AssertPropertyRequired(blogs, nameof(Blog.Title));
         AssertPropertyRequired(blogs, nameof(Blog.ContentJson));
+        AssertPropertyRequired(blogs, nameof(Blog.PublicContentHtml));
+        AssertPropertyRequired(blogs, nameof(Blog.PublicContentMarkdown));
         AssertPropertyRequired(blogs, nameof(Blog.SearchTitle));
         AssertPropertyRequired(blogs, nameof(Blog.SearchText));
         AssertPropertyRequired(works, nameof(Work.Slug));
         AssertPropertyRequired(works, nameof(Work.Title));
         AssertPropertyRequired(works, nameof(Work.Category));
         AssertPropertyRequired(works, nameof(Work.ContentJson));
+        AssertPropertyRequired(works, nameof(Work.PublicContentHtml));
+        AssertPropertyRequired(works, nameof(Work.PublicContentMarkdown));
         AssertPropertyRequired(works, nameof(Work.AllPropertiesJson));
         AssertPropertyRequired(works, nameof(Work.SearchTitle));
         AssertPropertyRequired(works, nameof(Work.SearchText));
@@ -131,9 +135,13 @@ public sealed class DbContextModelContractComponentTests
         Assert.Equal("updatedblogsearch", blog.SearchTitle);
         Assert.Contains("updatedblogexcerpt", blog.SearchText, StringComparison.Ordinal);
         Assert.Contains("updatedblogbody", blog.SearchText, StringComparison.Ordinal);
+        Assert.Equal(string.Empty, blog.PublicContentHtml);
+        Assert.Equal("Updated blog body", blog.PublicContentMarkdown);
         Assert.Equal("updatedworksearch", work.SearchTitle);
         Assert.Contains("updatedworkexcerpt", work.SearchText, StringComparison.Ordinal);
         Assert.Contains("updatedworkbody", work.SearchText, StringComparison.Ordinal);
+        Assert.Equal("<p>Updated work body</p>", work.PublicContentHtml);
+        Assert.Equal(string.Empty, work.PublicContentMarkdown);
     }
 
     private static WoongBlogDbContext CreateDbContext()

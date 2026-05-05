@@ -32,6 +32,28 @@ public static class AdminContentJson
         return string.Empty;
     }
 
+    public static PublicContentBodyFields ExtractPublicBodyFields(string contentJson)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(contentJson);
+            var markdown = TryGetString(document.RootElement, "markdown");
+            if (!string.IsNullOrWhiteSpace(markdown))
+            {
+                return new PublicContentBodyFields(string.Empty, markdown);
+            }
+
+            var html = TryGetString(document.RootElement, "html");
+            return string.IsNullOrEmpty(html)
+                ? PublicContentBodyFields.Empty
+                : new PublicContentBodyFields(html, string.Empty);
+        }
+        catch
+        {
+            return PublicContentBodyFields.Empty;
+        }
+    }
+
     public static string ExtractExcerptText(string contentJson)
     {
         try
@@ -144,4 +166,9 @@ public static class AdminContentJson
 
         return LooksLikeMarkdown(text) ? text : null;
     }
+}
+
+public readonly record struct PublicContentBodyFields(string Html, string Markdown)
+{
+    public static PublicContentBodyFields Empty { get; } = new(string.Empty, string.Empty);
 }

@@ -18,7 +18,9 @@
       "response": {
         "body": {
           "content": {
-            "contentJson": "{\"html\":\"<p>Hello</p>\"}",
+            "content": {
+              "html": "<p>Hello</p>"
+            },
             "coverUrl": "/media/cover.png",
             "excerpt": "Excerpt",
             "id": "44444444-4444-4444-4444-444444444444",
@@ -364,7 +366,9 @@
         "body": {
           "content": {
             "category": "platform",
-            "contentJson": "{\"html\":\"<p>Hello</p>\"}",
+            "content": {
+              "html": "<p>Hello</p>"
+            },
             "excerpt": "Excerpt",
             "iconUrl": "/media/icon.png",
             "id": "55555555-5555-5555-5555-555555555555",

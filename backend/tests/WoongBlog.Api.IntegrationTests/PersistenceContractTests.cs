@@ -44,8 +44,12 @@ public class PersistenceContractTests
 
         Assert.NotNull(worksEntity.FindProperty(nameof(Work.SearchTitle)));
         Assert.NotNull(worksEntity.FindProperty(nameof(Work.SearchText)));
+        Assert.NotNull(worksEntity.FindProperty(nameof(Work.PublicContentHtml)));
+        Assert.NotNull(worksEntity.FindProperty(nameof(Work.PublicContentMarkdown)));
         Assert.NotNull(blogsEntity.FindProperty(nameof(Blog.SearchTitle)));
         Assert.NotNull(blogsEntity.FindProperty(nameof(Blog.SearchText)));
+        Assert.NotNull(blogsEntity.FindProperty(nameof(Blog.PublicContentHtml)));
+        Assert.NotNull(blogsEntity.FindProperty(nameof(Blog.PublicContentMarkdown)));
 
         Assert.Contains(worksEntity.GetIndexes(), index =>
             index.Properties.Select(property => property.Name).SequenceEqual([nameof(Work.Published), nameof(Work.PublishedAt)]));
@@ -114,9 +118,13 @@ public class PersistenceContractTests
         Assert.Equal("tbn안녕하세요", blog.SearchTitle);
         Assert.Contains("blogexcerpt", blog.SearchText, StringComparison.Ordinal);
         Assert.Contains("searchmarkdown", blog.SearchText, StringComparison.Ordinal);
+        Assert.Equal(string.Empty, blog.PublicContentHtml);
+        Assert.Equal("## Search Markdown", blog.PublicContentMarkdown);
         Assert.Equal("worksearchtitle", work.SearchTitle);
         Assert.Contains("workexcerpt", work.SearchText, StringComparison.Ordinal);
         Assert.Contains("searchhtml", work.SearchText, StringComparison.Ordinal);
+        Assert.Equal("<p>Search HTML</p>", work.PublicContentHtml);
+        Assert.Equal(string.Empty, work.PublicContentMarkdown);
     }
 
     [Fact]

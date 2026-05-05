@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  buildBlogContentSqlExpressions,
   blocksToHtml,
   generateExcerpt,
   normalizeTitle,
@@ -15,6 +16,14 @@ describe('notion db import helpers', () => {
 
   it('generates excerpts from html', () => {
     expect(generateExcerpt('<p>Hello</p><p>World</p>')).toBe('Hello World')
+  })
+
+  it('builds public body sql fields for direct blog imports', () => {
+    const expressions = buildBlogContentSqlExpressions("<p>Reader body's text</p>")
+
+    expect(expressions.contentJsonExpr).toBe("jsonb_build_object('html', '<p>Reader body''s text</p>')")
+    expect(expressions.publicContentHtmlExpr).toBe("'<p>Reader body''s text</p>'")
+    expect(expressions.publicContentMarkdownExpr).toBe("''")
   })
 
   it('normalizes titles for duplicate-title lookup', () => {

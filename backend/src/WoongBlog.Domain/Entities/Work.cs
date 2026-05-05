@@ -7,6 +7,8 @@ public class Work
     public string Title { get; set; } = string.Empty;
     public string Excerpt { get; set; } = string.Empty;
     public string ContentJson { get; set; } = "{}";
+    public string PublicContentHtml { get; set; } = string.Empty;
+    public string PublicContentMarkdown { get; set; } = string.Empty;
     public string SearchTitle { get; set; } = string.Empty;
     public string SearchText { get; set; } = string.Empty;
     public Guid? ThumbnailAssetId { get; set; }

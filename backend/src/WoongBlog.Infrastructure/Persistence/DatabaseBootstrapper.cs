@@ -34,6 +34,11 @@ public static class DatabaseBootstrapper
                     "20260424_work_video_metadata",
                     WorkVideoMetadataSchemaPatchSql,
                     cancellationToken);
+                await ApplySchemaPatchAsync(
+                    dbContext,
+                    "20260506_public_content_body_fields",
+                    PublicContentBodyFieldsSchemaPatchSql,
+                    cancellationToken);
                 await SeedData.InitializeAsync(dbContext);
                 return;
             }
@@ -284,5 +289,38 @@ CREATE INDEX IF NOT EXISTS "IX_Works_SearchTitle_Trgm" ON "Works" USING gin ("Se
 CREATE INDEX IF NOT EXISTS "IX_Works_SearchText_Trgm" ON "Works" USING gin ("SearchText" gin_trgm_ops);
 
 DROP FUNCTION IF EXISTS public.__woongblog_content_search_normalize(text);
+""";
+
+    private const string PublicContentBodyFieldsSchemaPatchSql = """
+ALTER TABLE "Blogs" ADD COLUMN IF NOT EXISTS "PublicContentHtml" text NOT NULL DEFAULT '';
+ALTER TABLE "Blogs" ADD COLUMN IF NOT EXISTS "PublicContentMarkdown" text NOT NULL DEFAULT '';
+ALTER TABLE "Works" ADD COLUMN IF NOT EXISTS "PublicContentHtml" text NOT NULL DEFAULT '';
+ALTER TABLE "Works" ADD COLUMN IF NOT EXISTS "PublicContentMarkdown" text NOT NULL DEFAULT '';
+
+UPDATE "Blogs"
+SET
+  "PublicContentMarkdown" = CASE
+    WHEN COALESCE("ContentJson" ->> 'markdown', '') <> '' THEN COALESCE("ContentJson" ->> 'markdown', '')
+    ELSE ''
+  END,
+  "PublicContentHtml" = CASE
+    WHEN COALESCE("ContentJson" ->> 'markdown', '') <> '' THEN ''
+    ELSE COALESCE("ContentJson" ->> 'html', '')
+  END
+WHERE "PublicContentHtml" = ''
+  AND "PublicContentMarkdown" = '';
+
+UPDATE "Works"
+SET
+  "PublicContentMarkdown" = CASE
+    WHEN COALESCE("ContentJson" ->> 'markdown', '') <> '' THEN COALESCE("ContentJson" ->> 'markdown', '')
+    ELSE ''
+  END,
+  "PublicContentHtml" = CASE
+    WHEN COALESCE("ContentJson" ->> 'markdown', '') <> '' THEN ''
+    ELSE COALESCE("ContentJson" ->> 'html', '')
+  END
+WHERE "PublicContentHtml" = ''
+  AND "PublicContentMarkdown" = '';
 """;
 }

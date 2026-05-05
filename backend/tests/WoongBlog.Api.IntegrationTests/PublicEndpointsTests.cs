@@ -165,11 +165,56 @@ public class PublicEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         Assert.Equal("/media/works/seeded-work-icon.png", work.IconUrl);
         Assert.NotEmpty(work.Videos);
         Assert.Equal(new[] { "Seed Overview", "Seed Demo" }, work.Videos.Select(x => x.OriginalFileName).ToArray());
-        Assert.True(root.TryGetProperty("contentJson", out _));
+        Assert.False(root.TryGetProperty("contentJson", out _));
+        Assert.True(root.TryGetProperty("content", out _));
         Assert.True(root.TryGetProperty("thumbnailUrl", out _));
         Assert.True(root.TryGetProperty("iconUrl", out _));
         Assert.True(root.TryGetProperty("videos", out _));
         Assert.True(root.TryGetProperty("videos_version", out _));
+    }
+
+    [Fact]
+    public async Task GetWorkBySlug_ReturnsPublicContentBodyWithoutAdminContentJson()
+    {
+        var client = _factory.CreateClient();
+        var slug = $"public-body-work-{Guid.NewGuid():N}";
+        var publicToken = $"public-work-body-{Guid.NewGuid():N}";
+        var adminOnlyToken = $"admin-only-work-{Guid.NewGuid():N}";
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
+            dbContext.Works.Add(new Work
+            {
+                Id = Guid.NewGuid(),
+                Title = "Public Body Work",
+                Slug = slug,
+                Excerpt = "public body",
+                Category = "public",
+                Tags = ["body"],
+                ContentJson = JsonSerializer.Serialize(new
+                {
+                    html = $"<p>{publicToken}</p>",
+                    editorState = adminOnlyToken
+                }),
+                AllPropertiesJson = "{}",
+                Published = true,
+                PublishedAt = DateTimeOffset.UtcNow,
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
+            await dbContext.SaveChangesAsync();
+        }
+
+        var response = await client.GetAsync($"/api/public/works/{slug}");
+
+        response.EnsureSuccessStatusCode();
+        var body = await response.Content.ReadAsStringAsync();
+        using var document = JsonDocument.Parse(body);
+        Assert.False(document.RootElement.TryGetProperty("contentJson", out _));
+        Assert.True(document.RootElement.TryGetProperty("content", out var content));
+        Assert.Equal($"<p>{publicToken}</p>", content.GetProperty("html").GetString());
+        Assert.DoesNotContain(adminOnlyToken, body, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -594,10 +639,53 @@ public class PublicEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         Assert.Equal("Designing a Seed-First Migration Strategy", blog.Title);
         Assert.Contains("architecture", blog.Tags, StringComparer.OrdinalIgnoreCase);
         Assert.Equal("/media/blogs/seeded-blog-cover.png", blog.CoverUrl);
-        Assert.Contains("Seed data", blog.ContentJson, StringComparison.OrdinalIgnoreCase);
-        Assert.True(root.TryGetProperty("contentJson", out _));
+        Assert.Contains("Seed data", blog.Content.Html, StringComparison.OrdinalIgnoreCase);
+        Assert.False(root.TryGetProperty("contentJson", out _));
+        Assert.True(root.TryGetProperty("content", out _));
         Assert.True(root.TryGetProperty("coverUrl", out _));
         Assert.True(root.TryGetProperty("publishedAt", out _));
+    }
+
+    [Fact]
+    public async Task GetBlogBySlug_ReturnsPublicContentBodyWithoutAdminContentJson()
+    {
+        var client = _factory.CreateClient();
+        var slug = $"public-body-blog-{Guid.NewGuid():N}";
+        var publicToken = $"public-blog-body-{Guid.NewGuid():N}";
+        var adminOnlyToken = $"admin-only-blog-{Guid.NewGuid():N}";
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
+            dbContext.Blogs.Add(new Blog
+            {
+                Id = Guid.NewGuid(),
+                Title = "Public Body Blog",
+                Slug = slug,
+                Excerpt = "public body",
+                Tags = ["body"],
+                ContentJson = JsonSerializer.Serialize(new
+                {
+                    html = $"<p>{publicToken}</p>",
+                    editorState = adminOnlyToken
+                }),
+                Published = true,
+                PublishedAt = DateTimeOffset.UtcNow,
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
+            await dbContext.SaveChangesAsync();
+        }
+
+        var response = await client.GetAsync($"/api/public/blogs/{slug}");
+
+        response.EnsureSuccessStatusCode();
+        var body = await response.Content.ReadAsStringAsync();
+        using var document = JsonDocument.Parse(body);
+        Assert.False(document.RootElement.TryGetProperty("contentJson", out _));
+        Assert.True(document.RootElement.TryGetProperty("content", out var content));
+        Assert.Equal($"<p>{publicToken}</p>", content.GetProperty("html").GetString());
+        Assert.DoesNotContain(adminOnlyToken, body, StringComparison.Ordinal);
     }
 
     [Fact]
