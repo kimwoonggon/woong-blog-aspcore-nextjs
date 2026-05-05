@@ -1,0 +1,36 @@
+{
+  "slug": "prod-loadtesting-baseurl-2026-05-05",
+  "date": "2026-05-05",
+  "scope": "Prod Real Backend LoadTesting BaseUrl configuration",
+  "changed": [
+    "Added LoadTesting__BaseUrl environment mapping to docker-compose.prod.yml backend service",
+    "Added LoadTesting__BaseUrl guidance/default to .env.prod.example",
+    "Added LoadTesting__BaseUrl to scripts/main-up.sh generated .env.prod.local defaults",
+    "Recorded TODO progress in todolist-2026-05-05.md"
+  ],
+  "notChanged": [
+    "No real .env.prod or .env.prod.local file was created or committed",
+    "No application code default was changed",
+    "No nginx routing or load-test scenario logic was changed"
+  ],
+  "validations": [
+    {
+      "command": "env APP_ENV_FILE=.env.prod.example docker compose --env-file .env.prod.example -f docker-compose.prod.yml config",
+      "result": "Rendered backend LoadTesting__BaseUrl=https://woonglab.com"
+    },
+    {
+      "command": "docker compose --env-file .agent-backups/prod-loadtesting-baseurl-2026-05-05/compose-no-loadtesting.env -f docker-compose.prod.yml config | rg LoadTesting__BaseUrl",
+      "result": "Rendered backend LoadTesting__BaseUrl=http://127.0.0.1:8080 fallback"
+    },
+    {
+      "command": "rg -n \"LoadTesting__BaseUrl\" docker-compose.prod.yml .env.prod.example scripts/main-up.sh todolist-2026-05-05.md",
+      "result": "Confirmed intended references"
+    }
+  ],
+  "risks": [
+    "The server's actual prod env file still needs to be updated and backend restarted",
+    "Public HTTPS measurement depends on the backend container being able to reach https://woonglab.com",
+    "Direct backend measurement bypasses nginx/TLS"
+  ],
+  "recommendation": "Set LoadTesting__BaseUrl=https://woonglab.com in the actual server prod env file for public HTTPS Real Backend Test, restart backend, then verify with printenv and curl."
+}
