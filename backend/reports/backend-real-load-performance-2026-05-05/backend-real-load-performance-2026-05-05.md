@@ -1,5 +1,7 @@
 # Backend Real Load Performance Audit - 2026-05-05
 
+> Correction 2026-05-06: the Real Backend target-selection and k6 evidence in this report used forced `seeded-work`/`seeded-blog` read targets and `pageSize=1` list targets. That workload is not valid as realistic production-load evidence. Treat the load-test evidence and recommendations in this report as superseded by `backend/reports/real-backend-target-reality-correction-2026-05-06/real-backend-target-reality-correction-2026-05-06.md`.
+
 ## Goal
 Improve public backend real load-test performance without using server-side response/output caching, and validate under a Docker condition close to the production server: total server capacity of 2 CPUs and about 8 GiB memory shared by backend, nginx, DB, and frontend.
 
@@ -7,7 +9,7 @@ Improve public backend real load-test performance without using server-side resp
 - Optimized public Blog list reads to project only card fields before materialization, excluding full `ContentJson` from list responses.
 - Optimized public Work list reads to project only card fields and fetch work videos only for rows that require video thumbnail fallback.
 - Optimized public Work detail reads to trust persisted timeline preview metadata and skip per-request storage/object existence checks. Admin Work detail still verifies preview objects.
-- Changed Real Backend Test default target selection to deterministic seeded content and `pageSize=1` list targets to avoid benchmarking arbitrary large uploaded video or unusually long editorial pages by default.
+- Superseded 2026-05-06: the Real Backend Test default target change to deterministic seeded content and `pageSize=1` list targets was incorrect for realistic load testing and has been reverted.
 - Added/updated tests for public/admin preview verification behavior and deterministic load-test target paths.
 - Created a Docker load-test override for a dedicated `wb-perf` stack with all app services pinned to CPU set `0,1`, Production backend environment, Warning-level EF logs, and memory limits whose sum is below 8 GiB.
 
@@ -27,7 +29,7 @@ Total configured service memory is about 7.5 GiB, leaving headroom for runtime/c
 - No output cache, response cache, CDN cache, or server-side response memoization was added.
 - No database schema/index changes were added; existing published/date and search indexes are already present.
 - No production compose or env deployment changes were made in this performance slice.
-- No attempt was made to make large user-generated content and seed test content identical; default load-test targets are intentionally deterministic and lightweight.
+- Superseded 2026-05-06: default load-test targets must not be intentionally deterministic/lightweight by forcing seed content. Real Backend Test now keeps fetched public-content order and list `pageSize=12`.
 
 ## Validation
 - `dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj --filter "FullyQualifiedName~PublicQueryHandlerComponentTests" --no-restore` passed 34/34. Existing `AWSSDK.Core` NU1901 warning remains.
@@ -41,6 +43,8 @@ Total configured service memory is about 7.5 GiB, leaving headroom for runtime/c
 - PR #39 CI passed on GitHub Actions runs `25382579122` and `25382588680`: backend architecture/component/integration/unit, frontend lint/types/unit, compose dev verification, pact provider verification, and browser smoke.
 
 ## Load Test Evidence
+Superseded 2026-05-06: these measurements used forced seeded read targets and `pageSize=1` list targets. They are retained only as historical evidence of the invalid workload shape and must not be used as current realistic backend capacity proof.
+
 External k6 was run in a separate container on the same Docker network so the load generator did not consume the backend service's pinned 2 CPUs.
 
 | Scenario | Result | Interpretation |
@@ -52,8 +56,8 @@ External k6 was run in a separate container on the same Docker network so the lo
 | 100 -> 1000 -> 100 spike, pre-final memory split check | 26,826 requests, 447.11 rps, failed 0, dropped 1,173, p95 1,460.44 ms | Red/capacity test |
 
 ## Interpretation
-- The original production symptom mixed two issues: arbitrary heavy content targets and server capacity limits.
-- Heavy content sensitivity is reduced by deterministic seeded read targets and smaller list targets.
+- Superseded 2026-05-06: the previous interpretation incorrectly treated arbitrary heavy content targets as something to avoid. Heavy Work/Study detail pages are realistic read targets; the fix is to keep list DTOs light while allowing detail targets to remain realistic.
+- Superseded 2026-05-06: deterministic seeded read targets and smaller list targets are not valid proof for realistic public API load.
 - Public Work read avoids repeated preview object existence checks, removing a risky per-request external/object-storage dependency from the public hot path.
 - Under the corrected total-server Docker model, the deterministic public API workload is low-latency green through 450 rps.
 - 500 rps now sustains throughput but has a large p95 jump, so it should be treated as a stress/yellow boundary rather than a green target.

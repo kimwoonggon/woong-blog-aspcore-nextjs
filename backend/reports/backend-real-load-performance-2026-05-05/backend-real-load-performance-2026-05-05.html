@@ -3,6 +3,7 @@
 <head><meta charset="utf-8"><title>Backend Real Load Performance Audit</title><style>body{font-family:Arial,sans-serif;max-width:960px;margin:32px auto;line-height:1.5}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccc;padding:6px 8px;text-align:left}code{background:#f3f3f3;padding:1px 4px}</style></head>
 <body>
 <h1>Backend Real Load Performance Audit - 2026-05-05</h1>
+<p><strong>Correction 2026-05-06:</strong> this report's Real Backend target evidence used forced <code>seeded-work</code>/<code>seeded-blog</code> read targets and <code>pageSize=1</code> list targets. That workload is not valid realistic production-load evidence. See <code>backend/reports/real-backend-target-reality-correction-2026-05-06/real-backend-target-reality-correction-2026-05-06.md</code>.</p>
 <p>No output/response cache was used. The tested stack used <code>cpuset=0,1</code> for backend, DB, frontend, and nginx. Memory was split as backend 3 GiB, DB 3 GiB, frontend 1 GiB, nginx 512 MiB to approximate a total 8 GiB server.</p>
 <table><thead><tr><th>Scenario</th><th>Result</th><th>Interpretation</th></tr></thead><tbody>
 <tr><td>300 rps constant</td><td>9,001 requests, failed 0, dropped 0, p95 4.67 ms</td><td>Green</td></tr>
@@ -11,6 +12,6 @@
 <tr><td>500 rps constant</td><td>15,001 requests, failed 0, dropped 0, p95 338.33 ms</td><td>Yellow latency boundary</td></tr>
 <tr><td>100 to 1000 spike</td><td>26,826 requests, failed 0, dropped 1,173, p95 1,460.44 ms</td><td>Red/capacity test</td></tr>
 </tbody></table>
-<p>Recommendation: use 300-450 rps as the current green zone, 500 rps as the first yellow stress boundary, and 1000 rps spike as a red/capacity test.</p>
+<p><strong>Superseded recommendation:</strong> the table above is retained only as historical invalid-workload evidence, not current realistic backend capacity proof.</p>
 </body>
 </html>
