@@ -1,0 +1,67 @@
+{
+  "task": "db-command-diagnostics-async-2026-05-06",
+  "date": "2026-05-06",
+  "goal": "Record EF Core async command timings so load-test DB command p95/p99 metrics are available for async public read paths.",
+  "changed": [
+    "Added ReaderExecutedAsync, ScalarExecutedAsync, NonQueryExecutedAsync, and CommandFailedAsync overrides to LoadTestDbCommandDiagnosticsInterceptor.",
+    "Added Postgres integration coverage proving async EF commands increment diagnostics command latency samples.",
+    "Fixed standalone k6 maxVUs assignment in public-api-rps.js and public-api-spike.js.",
+    "Captured scoped k6 smoke summary."
+  ],
+  "intentionallyNotChanged": [
+    "No cache added.",
+    "No seed-only target priority added.",
+    "No pageSize=12 reduction.",
+    "No public DTO shape or content model change in this slice.",
+    "No DB roundtrip or Npgsql pool reduction in this slice."
+  ],
+  "validations": [
+    {
+      "status": "red_then_green",
+      "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~CommandDiagnosticsInterceptor_RecordsAsyncEfCommands_WithPostgres --no-restore",
+      "evidence": "Failed before async overrides because CommandLatency.SampleCount did not increment; passed after implementation."
+    },
+    {
+      "status": "pass",
+      "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~PostgresPersistenceContractTests|FullyQualifiedName~StartupCompositionTests --no-restore",
+      "evidence": "17/17 passed."
+    },
+    {
+      "status": "pass",
+      "command": "dotnet test backend/WoongBlog.sln --no-restore",
+      "evidence": "Component 121/121, Unit 56/56, Architecture 35/35, Integration 205/205, Contract skipped due no pact files."
+    },
+    {
+      "status": "pass",
+      "command": "npm run lint",
+      "evidence": "0 errors; same 6 pre-existing warnings."
+    },
+    {
+      "status": "pass",
+      "command": "git diff --check",
+      "evidence": "No whitespace errors."
+    },
+    {
+      "status": "pass",
+      "command": "k6 public-api-rps smoke",
+      "evidence": "1,501 requests, 100.05 rps, failure rate 0, p95 4.16 ms."
+    },
+    {
+      "status": "blocked",
+      "command": "GET /api/admin/load-test/diagnostics in local runtime",
+      "evidence": "Returned 401; test-login returned 404, so endpoint readback was not verified locally."
+    }
+  ],
+  "artifacts": [
+    "backend/reports/db-command-diagnostics-async-2026-05-06/db-command-diagnostics-async-2026-05-06.md",
+    "backend/reports/db-command-diagnostics-async-2026-05-06/db-command-diagnostics-async-2026-05-06.html",
+    "backend/reports/db-command-diagnostics-async-2026-05-06/db-command-diagnostics-async-2026-05-06.json",
+    "backend/reports/db-command-diagnostics-async-2026-05-06/loadtest/k6-public-works-100rps-15s.json"
+  ],
+  "risks": [
+    "End-to-end UI diagnostics readback still needs an authenticated deployed Real Backend Test run.",
+    "This slice improves observability, not DB/query/serialization capacity directly.",
+    "The local k6 smoke is not a 1000 rps proof."
+  ],
+  "recommendation": "Merge this instrumentation first, then continue with stored representative image metadata and detail-query roundtrip reduction."
+}
