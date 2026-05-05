@@ -1,0 +1,25 @@
+services:
+  frontend:
+    cpuset: "0,1"
+    mem_limit: 1g
+  backend:
+    cpuset: "0,1"
+    mem_limit: 3g
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      Auth__Enabled: "false"
+      LoadTesting__BaseUrl: http://nginx
+      Logging__LogLevel__Default: Warning
+      Logging__LogLevel__Microsoft.AspNetCore: Warning
+      Logging__LogLevel__Microsoft.EntityFrameworkCore: Warning
+  db:
+    cpuset: "0,1"
+    mem_limit: 3g
+    volumes:
+      - perf-postgres-data:/var/lib/postgresql/data
+  nginx:
+    cpuset: "0,1"
+    mem_limit: 512m
+
+volumes:
+  perf-postgres-data:

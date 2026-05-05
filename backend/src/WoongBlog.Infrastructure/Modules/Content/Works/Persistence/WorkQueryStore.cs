@@ -91,9 +91,24 @@ public sealed class WorkQueryStore(
         var works = await query
             .Skip((resolvedPage - 1) * pageSize)
             .Take(pageSize)
+            .Select(work => new WorkCardRow(
+                work.Id,
+                work.Slug,
+                work.Title,
+                work.Excerpt,
+                work.Category,
+                work.Period,
+                work.Tags,
+                work.ThumbnailAssetId,
+                work.IconAssetId,
+                work.ThumbnailAssetId == null ? work.ContentJson : null,
+                work.PublishedAt))
             .ToListAsync(cancellationToken);
 
-        var workIds = works.Select(work => work.Id).ToArray();
+        var workIds = works
+            .Where(work => work.ThumbnailAssetId is null)
+            .Select(work => work.Id)
+            .ToArray();
         var workVideos = await GetVideoLookupAsync(workIds, cancellationToken);
         var assetIds = works
             .SelectMany(work => new[] { work.ThumbnailAssetId, work.IconAssetId })
@@ -138,7 +153,7 @@ public sealed class WorkQueryStore(
     {
         var assetLookup = await GetAssetLookupAsync(work.ThumbnailAssetId, work.IconAssetId, cancellationToken);
         var videoRows = await GetVideosAsync(work.Id, cancellationToken);
-        var videos = await BuildVideoDtosAsync(videoRows, cancellationToken);
+        var videos = await BuildVideoDtosAsync(videoRows, verifyPreviewAssets: true, cancellationToken);
         var thumbnailUrl = WorkThumbnailUrlResolver.ResolveThumbnailUrl(
             work.ThumbnailAssetId,
             work.ContentJson,
@@ -170,7 +185,7 @@ public sealed class WorkQueryStore(
     {
         var assets = await GetAssetLookupAsync(work.ThumbnailAssetId, work.IconAssetId, cancellationToken);
         var videoRows = await GetVideosAsync(work.Id, cancellationToken);
-        var videos = await BuildVideoDtosAsync(videoRows, cancellationToken);
+        var videos = await BuildVideoDtosAsync(videoRows, verifyPreviewAssets: false, cancellationToken);
         var thumbnailUrl = WorkThumbnailUrlResolver.ResolveThumbnailUrl(
             work.ThumbnailAssetId,
             work.ContentJson,
@@ -198,6 +213,11 @@ public sealed class WorkQueryStore(
         IReadOnlyCollection<Guid> workIds,
         CancellationToken cancellationToken)
     {
+        if (workIds.Count == 0)
+        {
+            return new Dictionary<Guid, IReadOnlyList<WorkVideo>>();
+        }
+
         var videoRows = await dbContext.WorkVideos
             .AsNoTracking()
             .Where(x => workIds.Contains(x.WorkId))
@@ -232,6 +252,7 @@ public sealed class WorkQueryStore(
 
     private async Task<List<WorkVideoDto>> BuildVideoDtosAsync(
         IEnumerable<WorkVideo> videoRows,
+        bool verifyPreviewAssets,
         CancellationToken cancellationToken)
     {
         var results = new List<WorkVideoDto>();
@@ -242,8 +263,12 @@ public sealed class WorkQueryStore(
             var hasPreviewAssets = hasPreviewStorageType
                 && !string.IsNullOrWhiteSpace(video.TimelinePreviewVttStorageKey)
                 && !string.IsNullOrWhiteSpace(video.TimelinePreviewSpriteStorageKey)
-                && await playbackUrlBuilder.StorageObjectExistsAsync(previewStorageType, video.TimelinePreviewVttStorageKey!, cancellationToken)
-                && await playbackUrlBuilder.StorageObjectExistsAsync(previewStorageType, video.TimelinePreviewSpriteStorageKey!, cancellationToken);
+                && (!verifyPreviewAssets
+                    || await PreviewAssetsExistAsync(
+                        previewStorageType,
+                        video.TimelinePreviewVttStorageKey!,
+                        video.TimelinePreviewSpriteStorageKey!,
+                        cancellationToken));
 
             results.Add(new WorkVideoDto(
                 video.Id,
@@ -263,6 +288,21 @@ public sealed class WorkQueryStore(
         }
 
         return results;
+    }
+
+    private async Task<bool> PreviewAssetsExistAsync(
+        string previewStorageType,
+        string vttStorageKey,
+        string spriteStorageKey,
+        CancellationToken cancellationToken)
+    {
+        var vttExistsTask = playbackUrlBuilder.StorageObjectExistsAsync(previewStorageType, vttStorageKey, cancellationToken);
+        var spriteExistsTask = playbackUrlBuilder.StorageObjectExistsAsync(previewStorageType, spriteStorageKey, cancellationToken);
+
+        var vttExists = await vttExistsTask;
+        var spriteExists = await spriteExistsTask;
+
+        return vttExists && spriteExists;
     }
 
     private static (string StorageType, bool IsResolved) ResolvePreviewStorageType(WorkVideo video)
@@ -332,4 +372,17 @@ public sealed class WorkQueryStore(
             return null;
         }
     }
+
+    private sealed record WorkCardRow(
+        Guid Id,
+        string Slug,
+        string Title,
+        string Excerpt,
+        string Category,
+        string? Period,
+        string[] Tags,
+        Guid? ThumbnailAssetId,
+        Guid? IconAssetId,
+        string? ContentJson,
+        DateTimeOffset? PublishedAt);
 }

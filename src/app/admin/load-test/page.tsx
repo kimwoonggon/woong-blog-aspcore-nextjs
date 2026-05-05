@@ -30,7 +30,10 @@ async function loadTargetSlugs() {
   }
 
   return {
-    targets: buildLoadTestTargets({ workSlugs, blogSlugs }),
+    targets: buildLoadTestTargets({
+      workSlugs: ['seeded-work', ...workSlugs.filter((slug) => slug !== 'seeded-work')],
+      blogSlugs: ['seeded-blog', ...blogSlugs.filter((slug) => slug !== 'seeded-blog')],
+    }),
     targetLoadWarning,
   }
 }
