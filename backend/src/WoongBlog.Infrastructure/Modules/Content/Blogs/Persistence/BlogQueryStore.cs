@@ -7,6 +7,7 @@ using WoongBlog.Application.Modules.Content.Blogs.GetAdminBlogById;
 using WoongBlog.Application.Modules.Content.Blogs.GetAdminBlogs;
 using WoongBlog.Application.Modules.Content.Blogs.GetBlogBySlug;
 using WoongBlog.Application.Modules.Content.Blogs.GetBlogs;
+using WoongBlog.Application.Modules.Content.Common;
 using WoongBlog.Application.Modules.Content.Common.Support;
 
 namespace WoongBlog.Infrastructure.Modules.Content.Blogs.Persistence;
@@ -119,7 +120,7 @@ public sealed class BlogQueryStore(WoongBlogDbContext dbContext) : IBlogQuerySto
                 blog.Slug,
                 blog.Title,
                 blog.Excerpt,
-                blog.ContentJson,
+                PublicContentBodyDto.FromStoredFields(blog.PublicContentHtml, blog.PublicContentMarkdown),
                 blog.Tags,
                 dbContext.Assets
                     .Where(asset => asset.Id == blog.CoverAssetId)

@@ -11,7 +11,7 @@ import { Suspense } from 'react'
 import { fetchAllPublicWorks, fetchPublicWorkBySlug } from '@/lib/api/works'
 import { hasWorkVideoEmbeds } from '@/lib/content/work-video-embeds'
 import { buildWorkDetailMetadata } from './work-detail-metadata'
-import { formatDetailPublishDate, parseWorkContentHtml } from './work-detail-helpers'
+import { formatDetailPublishDate, resolveWorkContentHtml } from './work-detail-helpers'
 
 export const revalidate = 60
 
@@ -81,7 +81,7 @@ export default async function WorkDetailPage({ params }: PageProps) {
         notFound()
     }
 
-    const contentHtml = parseWorkContentHtml(work.contentJson)
+    const contentHtml = resolveWorkContentHtml(work.content, work.contentJson)
     const orderedVideos = [...work.videos].sort((left, right) => left.sortOrder - right.sortOrder)
     const hasInlineVideoEmbeds = hasWorkVideoEmbeds(contentHtml)
 

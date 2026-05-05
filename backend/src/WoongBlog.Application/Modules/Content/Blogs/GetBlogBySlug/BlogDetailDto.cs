@@ -1,3 +1,5 @@
+using WoongBlog.Application.Modules.Content.Common;
+
 namespace WoongBlog.Application.Modules.Content.Blogs.GetBlogBySlug;
 
 public sealed record BlogDetailDto(
@@ -5,7 +7,7 @@ public sealed record BlogDetailDto(
     string Slug,
     string Title,
     string Excerpt,
-    string ContentJson,
+    PublicContentBodyDto Content,
     string[] Tags,
     string CoverUrl,
     DateTimeOffset? PublishedAt
