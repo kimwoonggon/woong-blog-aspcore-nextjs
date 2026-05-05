@@ -58,6 +58,7 @@ type RuntimeMetricRow = {
   label: string
   trend: RuntimeMetricTrend
   metric: 'bytes' | 'number' | 'ms' | 'percent'
+  available?: boolean
 }
 
 type RealBackendRunPhase = 'idle' | 'starting' | 'running' | 'stopping' | 'completed' | 'stopped' | 'failed'
@@ -206,6 +207,22 @@ function formatTrendValue(metric: 'bytes' | 'number' | 'ms' | 'percent', value: 
   return numberFormatter.format(value)
 }
 
+function formatMetricRowValue(row: RuntimeMetricRow, value: number) {
+  return row.available === false ? 'unavailable' : formatTrendValue(row.metric, value)
+}
+
+function formatMetricRowTrend(row: RuntimeMetricRow) {
+  if (row.available === false) {
+    return 'peak unavailable · delta unavailable'
+  }
+
+  return `peak ${formatTrendValue(row.metric, row.trend.peak)} · delta ${formatTrendValue(row.metric, row.trend.delta)}`
+}
+
+function formatTimingSource(source?: string | null) {
+  return source ? ` · ${source}` : ''
+}
+
 function statusClassName(status: LoadTestHealthStatus) {
   if (status === 'green') {
     return 'border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-100'
@@ -340,9 +357,9 @@ export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashbo
     { label: 'DB timeouts', trend: diagnosticsSummary.databaseTimeoutCount, metric: 'number' },
   ], [diagnosticsSummary])
   const databaseMetricRows: RuntimeMetricRow[] = useMemo(() => [
-    { label: 'DB command P95', trend: diagnosticsSummary.dbCommandP95Ms, metric: 'ms' },
-    { label: 'DB command P99', trend: diagnosticsSummary.dbCommandP99Ms, metric: 'ms' },
-    { label: 'DB connection open P95', trend: diagnosticsSummary.dbConnectionOpenP95Ms, metric: 'ms' },
+    { label: 'DB command P95', trend: diagnosticsSummary.dbCommandP95Ms, metric: 'ms', available: diagnosticsSummary.dbCommandP95Available },
+    { label: 'DB command P99', trend: diagnosticsSummary.dbCommandP99Ms, metric: 'ms', available: diagnosticsSummary.dbCommandP99Available },
+    { label: 'DB connection open P95', trend: diagnosticsSummary.dbConnectionOpenP95Ms, metric: 'ms', available: diagnosticsSummary.dbConnectionOpenP95Available },
     { label: 'Slow queries', trend: diagnosticsSummary.dbSlowQueryCount, metric: 'number' },
     { label: 'DB errors', trend: diagnosticsSummary.dbErrorCount, metric: 'number' },
     { label: 'Open connections', trend: diagnosticsSummary.dbOpenConnections, metric: 'number' },
@@ -366,6 +383,10 @@ export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashbo
   const realBackendTargetMetrics = realBackendSnapshot?.targetMetrics ?? []
   const realBackendMetricsPending = realBackendSnapshot?.metricsPending
     ?? (!!realBackendRunId && (realBackendPhase === 'starting' || realBackendPhase === 'running'))
+  const diagnosticsSamplingActive = status.phase === 'running'
+    || realBackendPhase === 'starting'
+    || realBackendPhase === 'running'
+    || realBackendPhase === 'stopping'
   const realBackendPayload = useMemo(
     () => buildRealBackendStartPayload(safeRealBackendConfig, runnableTargets),
     [runnableTargets, safeRealBackendConfig],
@@ -543,6 +564,8 @@ export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashbo
     setRealBackendPhase('starting')
     setRealBackendSnapshot(null)
     setRealBackendRunId(null)
+    setDiagnosticsSamples([])
+    setDiagnosticsError(null)
     clearRealBackendPollingTimer()
 
     try {
@@ -629,7 +652,7 @@ export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashbo
   }
 
   useEffect(() => {
-    if (status.phase !== 'running') {
+    if (!diagnosticsSamplingActive) {
       return undefined
     }
 
@@ -639,7 +662,7 @@ export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashbo
     }, 1000)
 
     return () => window.clearInterval(interval)
-  }, [status.phase])
+  }, [diagnosticsSamplingActive])
 
   useEffect(() => () => {
     if (realBackendPollTimerRef.current !== null) {
@@ -1364,7 +1387,7 @@ export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashbo
                 {realBackendMetricsPending
                   ? 'summary pending'
                   : realBackendLatencyBreakdown?.nginxUpstreamP95Ms !== null && realBackendLatencyBreakdown?.nginxUpstreamP95Ms !== undefined
-                  ? formatMs(realBackendLatencyBreakdown.nginxUpstreamP95Ms)
+                  ? `${formatMs(realBackendLatencyBreakdown.nginxUpstreamP95Ms)}${formatTimingSource(realBackendLatencyBreakdown.nginxUpstreamSource)}`
                   : 'unavailable'}
               </p>
               <p>
@@ -1481,12 +1504,12 @@ export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashbo
             </p>
           </div>
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            {databaseMetricRows.map(({ label, trend, metric }) => (
-              <div key={label} className="rounded-lg border border-border bg-muted/30 p-3">
-                <p className="text-xs font-medium uppercase text-muted-foreground">{label}</p>
-                <p className="mt-2 text-lg font-semibold text-foreground">{formatTrendValue(metric, trend.current)}</p>
+            {databaseMetricRows.map((row) => (
+              <div key={row.label} className="rounded-lg border border-border bg-muted/30 p-3">
+                <p className="text-xs font-medium uppercase text-muted-foreground">{row.label}</p>
+                <p className="mt-2 text-lg font-semibold text-foreground">{formatMetricRowValue(row, row.trend.current)}</p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  peak {formatTrendValue(metric, trend.peak)} · delta {formatTrendValue(metric, trend.delta)}
+                  {formatMetricRowTrend(row)}
                 </p>
               </div>
             ))}

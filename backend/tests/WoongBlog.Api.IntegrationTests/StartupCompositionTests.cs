@@ -394,6 +394,7 @@ public class StartupCompositionTests : IClassFixture<CustomWebApplicationFactory
         var startPayload = await startResponse.Content.ReadFromJsonAsync<RealLoadTestStartResponse>(TestContext.Current.CancellationToken);
         Assert.NotNull(startPayload);
         Assert.False(string.IsNullOrWhiteSpace(startPayload!.RunId));
+        Assert.Matches(@"^\d{8}-\d{6}-public-api-rps-[0-9a-f]{8}$", startPayload.RunId);
         Assert.Equal("running", startPayload.Status);
         Assert.Equal("fake", startPayload.Runner);
         Assert.Equal("public-api-rps", startPayload.Scenario);

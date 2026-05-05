@@ -97,7 +97,8 @@ public sealed record RealLoadTestLatencyBreakdown(
     double MaxMs,
     double AppElapsedP95Ms,
     double? NginxRequestTimeP95Ms,
-    double? NginxUpstreamP95Ms);
+    double? NginxUpstreamP95Ms,
+    string? NginxUpstreamP95Source);
 
 public sealed record RealLoadTestTargetMetrics(
     string TargetId,
@@ -186,7 +187,7 @@ public sealed class RealLoadTestRunEntry
 
     public Dictionary<string, long> StatusCounts { get; } = CreateStatusCounts();
 
-    public RealLoadTestLatencyBreakdown LatencyBreakdown { get; set; } = new(0, 0, 0, 0, 0, 0, null, null);
+    public RealLoadTestLatencyBreakdown LatencyBreakdown { get; set; } = new(0, 0, 0, 0, 0, 0, null, null, null);
 
     public Dictionary<string, RealLoadTestTargetMetrics> TargetMetrics { get; } = new(StringComparer.OrdinalIgnoreCase);
 

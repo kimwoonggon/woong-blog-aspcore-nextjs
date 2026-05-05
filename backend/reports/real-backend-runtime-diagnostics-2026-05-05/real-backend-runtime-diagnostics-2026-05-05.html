@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Real Backend Runtime Diagnostics Audit - 2026-05-05</title>
+  <style>
+    body { font-family: sans-serif; max-width: 960px; margin: 32px auto; padding: 0 20px; line-height: 1.5; }
+    code { background: #f2f2f2; padding: 2px 4px; border-radius: 4px; }
+    li { margin: 6px 0; }
+  </style>
+</head>
+<body>
+  <h1>Real Backend Runtime Diagnostics Audit - 2026-05-05</h1>
+  <h2>Objective</h2>
+  <p>Real Backend/k6 load tests now activate diagnostics polling for memory, GC, ThreadPool, and database pressure while keeping scenario-specific controls.</p>
+  <h2>Changed</h2>
+  <ul>
+    <li><code>LoadTestDashboard.tsx</code>: Real Backend starting/running/stopping phases collect diagnostics and clear old samples on start.</li>
+    <li><code>admin-load-test-dashboard.spec.ts</code>: Real Backend E2E checks diagnostics polling and runtime/database rendering.</li>
+    <li><code>todolist-2026-05-05.md</code>: checklist and validation evidence updated.</li>
+  </ul>
+  <h2>Validation</h2>
+  <ul>
+    <li>Vitest load-test dashboard: 24/24 passed.</li>
+    <li>Typecheck: passed.</li>
+    <li>Backend RealLoadTestControlPlane integration tests: 4/4 passed.</li>
+    <li>Lint: passed with six existing unrelated warnings.</li>
+    <li>Playwright admin load-test dashboard: 2/2 passed.</li>
+    <li>Live Docker UI smoke: real k6 run completed and diagnostics endpoint returned HTTP 200 five times.</li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Treat this runtime diagnostics gap as closed. Continue the separate CI stabilization items before promotion.</p>
+</body>
+</html>
