@@ -38,6 +38,7 @@ Total configured service memory is about 7.5 GiB, leaving headroom for runtime/c
 - `rg -n "OutputCache|CacheOutput" backend/src src || true` returned no cache implementation references.
 - Docker health check on the prod-like stack returned HTTP 200.
 - `docker inspect` confirmed backend/db/frontend/nginx `cpuset=0,1` and split memory limits.
+- PR #39 CI passed on GitHub Actions runs `25382579122` and `25382588680`: backend architecture/component/integration/unit, frontend lint/types/unit, compose dev verification, pact provider verification, and browser smoke.
 
 ## Load Test Evidence
 External k6 was run in a separate container on the same Docker network so the load generator did not consume the backend service's pinned 2 CPUs.

@@ -28,7 +28,8 @@
     { "command": "npm run typecheck", "status": "passed" },
     { "command": "npm run lint", "status": "passed_with_existing_unrelated_warnings", "warnings": 6 },
     { "command": "git diff --check", "status": "passed" },
-    { "command": "rg OutputCache|CacheOutput backend/src src", "status": "passed_no_matches" }
+    { "command": "rg OutputCache|CacheOutput backend/src src", "status": "passed_no_matches" },
+    { "command": "gh pr checks 39", "status": "passed", "runs": [25382579122, 25382588680] }
   ],
   "load_tests": [
     { "scenario": "constant", "rate": 300, "duration_seconds": 30, "requests": 9001, "rps": 300.01001328499166, "failed_rate": 0, "dropped_iterations": 0, "p95_ms": 4.665685, "classification": "green" },
