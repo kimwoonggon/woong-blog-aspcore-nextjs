@@ -329,6 +329,20 @@ export function resolveBlogRenderableHtml(raw: string | null | undefined) {
   return renderMarkdownToHtml(html)
 }
 
+export function resolveBlogRenderableContent(
+  content: BlogContentPayload | null | undefined,
+  legacyContentJson?: string | null,
+) {
+  const markdown = content?.markdown?.trim() ?? ''
+  const html = content?.html?.trim() ?? ''
+
+  if (markdown || html) {
+    return resolveBlogRenderableHtml(JSON.stringify({ html: content?.html, markdown: content?.markdown }))
+  }
+
+  return resolveBlogRenderableHtml(legacyContentJson)
+}
+
 export function normalizeBlogHtmlForSave(html: string) {
   const trimmed = html.trim()
   if (!trimmed) {

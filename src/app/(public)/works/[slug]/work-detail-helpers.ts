@@ -1,3 +1,5 @@
+import { resolveBlogRenderableContent, type BlogContentPayload } from '@/lib/content/blog-content'
+
 export function parseWorkContentHtml(contentJson: string) {
   try {
     const parsed = JSON.parse(contentJson) as unknown
@@ -10,6 +12,10 @@ export function parseWorkContentHtml(contentJson: string) {
   } catch {
     return ''
   }
+}
+
+export function resolveWorkContentHtml(content: BlogContentPayload | null | undefined, legacyContentJson?: string | null) {
+  return resolveBlogRenderableContent(content, legacyContentJson)
 }
 
 export function formatDetailPublishDate(value?: string | null) {

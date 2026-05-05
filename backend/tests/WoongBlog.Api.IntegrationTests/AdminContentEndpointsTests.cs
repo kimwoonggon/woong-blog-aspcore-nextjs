@@ -221,7 +221,7 @@ public class AdminContentEndpointsTests : IClassFixture<CustomWebApplicationFact
         publicResponse.EnsureSuccessStatusCode();
         using var publicDocument = JsonDocument.Parse(await publicResponse.Content.ReadAsStringAsync());
         Assert.Equal(string.Empty, publicDocument.RootElement.GetProperty("excerpt").GetString());
-        Assert.Contains("This is a long enough body", publicDocument.RootElement.GetProperty("contentJson").GetString(), StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("This is a long enough body", publicDocument.RootElement.GetProperty("content").GetProperty("html").GetString(), StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -274,7 +274,7 @@ public class AdminContentEndpointsTests : IClassFixture<CustomWebApplicationFact
         publicResponse.EnsureSuccessStatusCode();
         using var publicDocument = JsonDocument.Parse(await publicResponse.Content.ReadAsStringAsync());
         Assert.Equal(string.Empty, publicDocument.RootElement.GetProperty("excerpt").GetString());
-        Assert.Contains(contentToken, publicDocument.RootElement.GetProperty("contentJson").GetString(), StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(contentToken, publicDocument.RootElement.GetProperty("content").GetProperty("html").GetString(), StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -311,7 +311,7 @@ public class AdminContentEndpointsTests : IClassFixture<CustomWebApplicationFact
         publicResponse.EnsureSuccessStatusCode();
         using var publicDocument = JsonDocument.Parse(await publicResponse.Content.ReadAsStringAsync());
         Assert.Equal(string.Empty, publicDocument.RootElement.GetProperty("excerpt").GetString());
-        Assert.Contains(updateToken, publicDocument.RootElement.GetProperty("contentJson").GetString(), StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(updateToken, publicDocument.RootElement.GetProperty("content").GetProperty("html").GetString(), StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

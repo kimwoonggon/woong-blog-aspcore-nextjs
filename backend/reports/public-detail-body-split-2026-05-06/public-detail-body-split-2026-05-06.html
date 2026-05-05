@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Public Detail Body Split Audit - 2026-05-06</title>
+  <style>body{font-family:Arial,sans-serif;max-width:960px;margin:40px auto;line-height:1.5;color:#1f2937}h1,h2{color:#111827}code{background:#f3f4f6;padding:2px 4px;border-radius:4px}li{margin:4px 0}</style>
+</head>
+<body>
+  <h1>Public Detail Body Split Audit - 2026-05-06</h1>
+  <h2>Summary</h2>
+  <p>Public Work/Blog detail reads now use stored public body fields instead of returning admin <code>ContentJson</code>. Cache, seed-only targets, and <code>pageSize=12</code> behavior were not changed.</p>
+  <h2>Validation</h2>
+  <ul>
+    <li>Backend focused red/green integration tests passed after implementation.</li>
+    <li>Backend component/model tests passed 43/43.</li>
+    <li>Backend focused integration tests passed 57/57.</li>
+    <li>Full backend solution tests passed, with the existing no-pact-file skip.</li>
+    <li>Frontend focused/Pact/detail tests passed 9 files, 51 tests.</li>
+    <li>Notion import helper test passed 1 file, 6 tests.</li>
+    <li>Typecheck, lint, and diff whitespace checks passed; lint has 6 pre-existing warnings.</li>
+  </ul>
+  <h2>Follow-Up</h2>
+  <p>Rebuild the current branch in the 2 CPU / 8GB shared compose profile and rerun the realistic load test before claiming measured RPS/latency improvement. Next code target should be Work detail video projection/serialization and DB command timing observability.</p>
+</body>
+</html>

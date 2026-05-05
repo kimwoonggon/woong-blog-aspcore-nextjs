@@ -1,0 +1,45 @@
+{
+  "task": "public-detail-body-split",
+  "date": "2026-05-06",
+  "status": "implemented_validated_needs_load_retest",
+  "goals": [
+    "Preserve realistic load-test targets without cache, seed-only targets, or pageSize reduction",
+    "Stop public detail reads from returning admin ContentJson wholesale",
+    "Project only renderable public body fields on public Work/Blog detail paths"
+  ],
+  "changed": [
+    "Added Blog/Work PublicContentHtml and PublicContentMarkdown fields",
+    "Synchronized public body fields from ContentJson during EF SaveChanges",
+    "Added bootstrap schema patch and backfill",
+    "Changed public detail DTOs and query projections to use content body fields",
+    "Updated frontend clients/pages/tests/Pact contract for content body",
+    "Updated direct SQL Notion import to populate public body fields"
+  ],
+  "not_changed": [
+    "No cache added",
+    "No pageSize=12 reduction",
+    "No seed-only target selection",
+    "Admin payloads still keep admin content JSON",
+    "Work public detail still returns videos"
+  ],
+  "validations": [
+    { "command": "focused backend public detail RED tests", "result": "failed before implementation as expected" },
+    { "command": "focused backend public detail GREEN tests", "result": "passed 2/2" },
+    { "command": "component/model focused tests", "result": "passed 43/43" },
+    { "command": "focused backend integration tests", "result": "passed 57/57" },
+    { "command": "focused frontend/Pact/detail tests", "result": "passed 9 files, 51 tests" },
+    { "command": "dotnet test backend/WoongBlog.sln --no-restore", "result": "passed component 121/121, unit 56/56, architecture 35/35, integration 204/204, contract 1 skipped" },
+    { "command": "npm run test -- --run src/test/notion-db-import-lib.test.ts", "result": "passed 1 file, 6 tests" },
+    { "command": "npm run typecheck", "result": "passed" },
+    { "command": "npm run lint", "result": "passed with 0 errors and 6 pre-existing warnings" },
+    { "command": "git diff --check", "result": "passed" }
+  ],
+  "risks": [
+    "Current branch has not yet been rebuilt and load-tested under the 2 CPU / 8GB shared compose constraint",
+    "Work public detail video query and serialization remain a likely hot-path cost",
+    "Public list still performs CountAsync plus page query",
+    "Search index usage needs EXPLAIN ANALYZE with production-like data",
+    "DB command P95 remains unavailable in reported load-test UI metrics"
+  ],
+  "recommendation": "Merge after CI is green, then rerun realistic 2 CPU / 8GB load tests with pageSize=12. Next optimize Work detail video projection/serialization and DB timing observability before considering cache."
+}

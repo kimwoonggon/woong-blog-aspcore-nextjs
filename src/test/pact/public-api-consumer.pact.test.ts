@@ -224,7 +224,9 @@ describe('public API consumer Pact contracts', () => {
           tags: ['study'],
           coverUrl: '/media/cover.png',
           publishedAt: '2026-04-20T00:00:00Z',
-          contentJson: '{"html":"<p>Hello</p>"}',
+          content: {
+            html: '<p>Hello</p>',
+          },
         }),
       })
       .executeTest(async (mockServer) => {
@@ -283,7 +285,9 @@ describe('public API consumer Pact contracts', () => {
           slug: 'seeded-work',
           title: 'Seeded Work',
           excerpt: 'Excerpt',
-          contentJson: '{"html":"<p>Hello</p>"}',
+          content: {
+            html: '<p>Hello</p>',
+          },
           category: 'platform',
           period: '2026',
           tags: ['platform'],
