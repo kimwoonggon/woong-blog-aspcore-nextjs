@@ -1,0 +1,40 @@
+{
+  "scenario": "constant",
+  "rate": 100,
+  "peakRate": 1000,
+  "duration": "30s",
+  "preAllocatedVUs": 100,
+  "maxVUs": 1000,
+  "listPageSize": 12,
+  "http_reqs": 3001,
+  "rps": 100.02690583109228,
+  "failed_rate": 0,
+  "duration_p50_ms": 2.435817,
+  "duration_p95_ms": 5.275254,
+  "duration_max_ms": 69.993577,
+  "dropped_iterations": 0,
+  "vus_max": 100,
+  "targets": {
+    "work_list": {
+      "label": "Work list",
+      "path": "/api/public/works?page=1&pageSize=12",
+      "p95_ms": 8.738794299999977
+    },
+    "study_list": {
+      "label": "Study list",
+      "path": "/api/public/blogs?page=1&pageSize=12",
+      "p95_ms": 5.1855452999999745
+    },
+    "work_read": {
+      "label": "Work read",
+      "path": "/api/public/works/internal-admin-workbench",
+      "p95_ms": 3.835685
+    },
+    "study_read": {
+      "label": "Study read",
+      "path": "/api/public/blogs/engineering-notes-on-bff-auth",
+      "p95_ms": 2.566883099999998
+    }
+  },
+  "note": "Read targets are intentionally not seeded by default. Provide WORK_READ_PATH and STUDY_READ_PATH from the current public content selected by the Real Backend Test UI when using this standalone script."
+}
