@@ -229,6 +229,51 @@ public class PublicQueryHandlerComponentTests
     }
 
     [Fact]
+    public async Task GetHomeQueryHandler_DoesNotUseWorkBodyImageAsFeaturedThumbnailFallback()
+    {
+        await using var dbContext = CreateDbContext();
+        var now = new DateTimeOffset(2026, 5, 6, 12, 0, 0, TimeSpan.Zero);
+        dbContext.SiteSettings.Add(new SiteSetting
+        {
+            Singleton = true,
+            OwnerName = "Public Owner",
+            Tagline = "Public Tagline"
+        });
+        dbContext.Pages.Add(new PageEntity
+        {
+            Id = Guid.NewGuid(),
+            Slug = "home",
+            Title = "Home",
+            ContentJson = "{}"
+        });
+        dbContext.Works.Add(new Work
+        {
+            Id = Guid.NewGuid(),
+            Title = "Inline Body Image Work",
+            Slug = "inline-body-image-work",
+            Excerpt = "published",
+            Category = "public",
+            Period = "2026",
+            Tags = ["public", "test"],
+            ContentJson = """{"html":"<p><img src=\"/media/body-inline-only.png\" alt=\"body\"></p>"}""",
+            AllPropertiesJson = "{}",
+            Published = true,
+            PublishedAt = now,
+            CreatedAt = now,
+            UpdatedAt = now
+        });
+        await dbContext.SaveChangesAsync();
+
+        var handler = new GetHomeQueryHandler(CreateHomeQueryStore(dbContext));
+
+        var result = await handler.Handle(new GetHomeQuery(), CancellationToken.None);
+
+        Assert.NotNull(result);
+        var featuredWork = Assert.Single(result!.FeaturedWorks);
+        Assert.Equal(string.Empty, featuredWork.ThumbnailUrl);
+    }
+
+    [Fact]
     public async Task GetSiteSettingsQueryHandler_ReturnsAllPublicSocialFields()
     {
         await using var dbContext = CreateDbContext();
