@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Main Runtime Nginx Allowlist Fix - 2026-05-06</title>
+</head>
+<body>
+  <main>
+    <h1>Main Runtime Nginx Allowlist Fix - 2026-05-06</h1>
+    <p>Added <code>nginx/nginx.conf</code> to the main runtime promotion allowlist so the runtime-only tree can satisfy the production compose nginx main config mount.</p>
+    <h2>Validation</h2>
+    <ul>
+      <li>Allowlist RED/GREEN grep check passed.</li>
+      <li>Git archive check confirmed <code>nginx/nginx.conf</code> is exported.</li>
+      <li>Promotion verification worktree was generated successfully.</li>
+      <li>Compose config resolved <code>/etc/nginx/nginx.conf</code> from the runtime tree.</li>
+    </ul>
+    <h2>Recommendation</h2>
+    <p>Merge to dev, regenerate the runtime-only main promotion PR, and verify main runtime CI.</p>
+  </main>
+</body>
+</html>
