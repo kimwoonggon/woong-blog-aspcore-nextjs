@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Prod Real Backend LoadTesting BaseUrl Audit - 2026-05-05</title>
+  <style>
+    body { font-family: sans-serif; max-width: 920px; margin: 2rem auto; line-height: 1.5; color: #1f2937; }
+    code { background: #f3f4f6; padding: 0.1rem 0.25rem; border-radius: 4px; }
+    h1, h2 { color: #111827; }
+  </style>
+</head>
+<body>
+  <h1>Prod Real Backend LoadTesting BaseUrl Audit - 2026-05-05</h1>
+  <h2>Changed</h2>
+  <ul>
+    <li>Added <code>LoadTesting__BaseUrl</code> environment mapping to <code>docker-compose.prod.yml</code>.</li>
+    <li>Documented <code>LoadTesting__BaseUrl=https://woonglab.com</code> in <code>.env.prod.example</code>.</li>
+    <li>Added direct-backend bootstrap default to <code>scripts/main-up.sh</code>.</li>
+  </ul>
+  <h2>Validation</h2>
+  <ul>
+    <li>Prod compose with example env renders <code>LoadTesting__BaseUrl: https://woonglab.com</code>.</li>
+    <li>Prod compose without the env value renders fallback <code>LoadTesting__BaseUrl: http://127.0.0.1:8080</code>.</li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Add <code>LoadTesting__BaseUrl=https://woonglab.com</code> to the actual server prod env file, restart <code>backend</code>, and verify with <code>printenv</code> plus a health curl from inside the backend container.</p>
+</body>
+</html>
