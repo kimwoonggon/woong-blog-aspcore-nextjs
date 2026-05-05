@@ -69,6 +69,14 @@ public sealed class BlogQueryStore(WoongBlogDbContext dbContext) : IBlogQuerySto
         var blogs = await query
             .Skip((resolvedPage - 1) * pageSize)
             .Take(pageSize)
+            .Select(blog => new BlogCardRow(
+                blog.Id,
+                blog.Slug,
+                blog.Title,
+                blog.Excerpt,
+                blog.Tags,
+                blog.CoverAssetId,
+                blog.PublishedAt))
             .ToListAsync(cancellationToken);
 
         var assetIds = blogs
@@ -92,6 +100,15 @@ public sealed class BlogQueryStore(WoongBlogDbContext dbContext) : IBlogQuerySto
 
         return new PagedBlogsDto(items, resolvedPage, pageSize, totalItems, totalPages);
     }
+
+    private sealed record BlogCardRow(
+        Guid Id,
+        string Slug,
+        string Title,
+        string Excerpt,
+        string[] Tags,
+        Guid? CoverAssetId,
+        DateTimeOffset? PublishedAt);
 
     public async Task<BlogDetailDto?> GetPublishedDetailBySlugAsync(string slug, CancellationToken cancellationToken)
     {
