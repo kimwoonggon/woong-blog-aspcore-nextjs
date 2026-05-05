@@ -1,0 +1,36 @@
+{
+  "task": "public-work-thumbnail-read-path-2026-05-06",
+  "generatedAt": "2026-05-06T07:19:38+09:00",
+  "changed": [
+    "Public Work list resolves thumbnails only from explicit ThumbnailAssetId assets",
+    "Home featured Works resolve thumbnails only from explicit ThumbnailAssetId assets",
+    "Public Work detail no longer derives thumbnailUrl from video rows",
+    "Added component tests for video fallback removal while preserving detail video DTOs"
+  ],
+  "intentionallyNotChanged": [
+    "No cache layer",
+    "No load-test target selection changes",
+    "No seed priority changes",
+    "No pageSize=12 changes",
+    "No DB schema changes",
+    "No frontend changes",
+    "Public detail ContentJson remains unchanged"
+  ],
+  "validations": [
+    { "command": "dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj --filter FullyQualifiedName~PublicQueryHandlerComponentTests", "result": "pass", "details": "39 passed after initial RED failure on 3 new tests" },
+    { "command": "dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj", "result": "pass", "details": "121 passed" },
+    { "command": "dotnet test backend/tests/WoongBlog.Api.UnitTests/WoongBlog.Api.UnitTests.csproj", "result": "pass", "details": "56 passed" },
+    { "command": "dotnet test backend/tests/WoongBlog.Api.ArchitectureTests/WoongBlog.Api.ArchitectureTests.csproj", "result": "pass", "details": "35 passed" },
+    { "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~PublicEndpointsTests|FullyQualifiedName~WorkVideoEndpointsTests", "result": "pass", "details": "45 passed" },
+    { "command": "dotnet test backend/WoongBlog.sln", "result": "pass", "details": "Component 121, unit 56, architecture 35, integration 202 passed; contract provider skipped without pact files" },
+    { "command": "git diff --check", "result": "pass", "details": "No whitespace errors" },
+    { "command": "rg HomeQueryStore public video fallback references", "result": "pass", "details": "No WorkVideos/WorkThumbnailUrlResolver fallback references remain in HomeQueryStore" }
+  ],
+  "risks": [
+    "Works without explicit ThumbnailAssetId return empty public thumbnail even if they have YouTube videos",
+    "Public detail ContentJson payload remains large",
+    "DB command timing instrumentation remains incomplete",
+    "Real server load-test rerun still required after deployment"
+  ],
+  "recommendation": "Merge after CI, then implement public/admin content DTO separation and DB command timing instrumentation."
+}
