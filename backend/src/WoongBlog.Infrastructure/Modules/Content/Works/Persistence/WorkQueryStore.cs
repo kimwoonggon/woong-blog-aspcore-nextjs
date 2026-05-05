@@ -101,7 +101,6 @@ public sealed class WorkQueryStore(
                 work.Tags,
                 work.ThumbnailAssetId,
                 work.IconAssetId,
-                work.ThumbnailAssetId == null ? work.ContentJson : null,
                 work.PublishedAt))
             .ToListAsync(cancellationToken);
 
@@ -130,7 +129,7 @@ public sealed class WorkQueryStore(
             work.Tags,
             WorkThumbnailUrlResolver.ResolveThumbnailUrl(
                 work.ThumbnailAssetId,
-                work.ContentJson,
+                contentJson: null,
                 workVideos.TryGetValue(work.Id, out var videos) ? videos : Array.Empty<WorkVideo>(),
                 assets),
             ResolveAssetUrl(work.IconAssetId, assets),
@@ -383,6 +382,5 @@ public sealed class WorkQueryStore(
         string[] Tags,
         Guid? ThumbnailAssetId,
         Guid? IconAssetId,
-        string? ContentJson,
         DateTimeOffset? PublishedAt);
 }

@@ -1,5 +1,10 @@
 {
   "task": "backend-real-load-performance-2026-05-05",
+  "superseded_by": "backend/reports/real-backend-target-reality-correction-2026-05-06/real-backend-target-reality-correction-2026-05-06.md",
+  "correction_2026_05_06": {
+    "real_target_evidence_valid": false,
+    "reason": "The Real Backend target evidence forced seeded read targets and pageSize=1 list targets, which is not a realistic production public API workload."
+  },
   "cache_used": false,
   "environment": {
     "compose_project": "wb-perf",
