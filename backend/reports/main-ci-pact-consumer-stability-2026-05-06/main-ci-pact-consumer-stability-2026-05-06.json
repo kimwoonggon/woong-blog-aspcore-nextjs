@@ -1,0 +1,59 @@
+{
+  "task": "main-ci-pact-consumer-stability-2026-05-06",
+  "status": "locally_validated_with_full_suite_inconclusive",
+  "changed_files": [
+    "src/test/pact/public-api-consumer.pact.test.ts",
+    "todolist-2026-05-06.md"
+  ],
+  "audit_artifacts": [
+    "backend/reports/main-ci-pact-consumer-stability-2026-05-06/main-ci-pact-consumer-stability-2026-05-06.md",
+    "backend/reports/main-ci-pact-consumer-stability-2026-05-06/main-ci-pact-consumer-stability-2026-05-06.html",
+    "backend/reports/main-ci-pact-consumer-stability-2026-05-06/main-ci-pact-consumer-stability-2026-05-06.json"
+  ],
+  "ci_failure_source": {
+    "run_id": "25400980868",
+    "job_id": "74500157533",
+    "workflow": "CI Main Runtime",
+    "failed_test": "src/test/pact/public-api-consumer.pact.test.ts > public API consumer Pact contracts > contracts public work list and detail payloads",
+    "missing_request": "GET /api/public/works?page=1&pageSize=1"
+  },
+  "validations": [
+    {
+      "command": "npm run test -- --run src/test/pact/public-api-consumer.pact.test.ts",
+      "result": "pass",
+      "details": "1 file, 6 tests"
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "pass"
+    },
+    {
+      "command": "npm run lint",
+      "result": "pass",
+      "details": "0 errors, 6 existing warnings"
+    },
+    {
+      "command": "npm run test -- --run src/test/pact/public-api-consumer.pact.test.ts src/test/public-api-clients.test.ts src/test/public-api-contracts.test.ts src/test/public-responsive-feed.test.tsx",
+      "result": "pass",
+      "details": "4 files, 45 tests"
+    },
+    {
+      "command": "git diff --check",
+      "result": "pass"
+    },
+    {
+      "command": "npm run test -- --run",
+      "result": "inconclusive",
+      "details": "Stopped after more than 14 minutes without a failure summary; not counted as green full-suite evidence."
+    }
+  ],
+  "non_goals": [
+    "No backend production behavior change",
+    "No public API payload shape change",
+    "No load-test target semantics change",
+    "No seed-priority change",
+    "No pageSize=1 runtime/load-test shortcut",
+    "No cache workaround"
+  ],
+  "recommendation": "Open a PR to dev and rely on GitHub Actions frontend job as the authoritative full-suite verification before merge and main promotion."
+}

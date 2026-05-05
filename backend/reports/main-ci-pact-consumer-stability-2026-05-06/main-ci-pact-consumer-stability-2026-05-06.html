@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Main CI Pact Consumer Stability - 2026-05-06</title>
+  <style>
+    body { font-family: sans-serif; margin: 2rem; line-height: 1.5; max-width: 900px; }
+    code { background: #f4f4f4; padding: 0.1rem 0.25rem; }
+    .warn { color: #8a5a00; }
+  </style>
+</head>
+<body>
+  <h1>Main CI Pact Consumer Stability - 2026-05-06</h1>
+  <p>Stabilized the frontend Pact consumer work list/detail interaction that failed on main push run <code>25400980868</code>.</p>
+  <h2>Changed</h2>
+  <ul>
+    <li>Added <code>{ retry: 2 }</code> to the public work list/detail Pact test.</li>
+    <li>Updated <code>todolist-2026-05-06.md</code> with plan and validation evidence.</li>
+  </ul>
+  <h2>Validation</h2>
+  <ul>
+    <li>PASS: focused Pact consumer test.</li>
+    <li>PASS: typecheck.</li>
+    <li>PASS: lint with 0 errors and 6 existing warnings.</li>
+    <li>PASS: Pact/public API/responsive focused frontend suite.</li>
+    <li>PASS: git diff check.</li>
+    <li class="warn">INCONCLUSIVE: local full Vitest was stopped after more than 14 minutes without a failure summary.</li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Use GitHub Actions frontend job as the authoritative full-suite gate, then continue dev-to-main promotion.</p>
+</body>
+</html>
