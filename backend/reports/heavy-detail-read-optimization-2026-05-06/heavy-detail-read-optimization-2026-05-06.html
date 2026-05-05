@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Heavy Detail Read Optimization - 2026-05-06</title>
+  <style>
+    body { font-family: sans-serif; max-width: 960px; margin: 32px auto; line-height: 1.5; color: #1f2933; }
+    code { background: #eef2f7; padding: 1px 4px; border-radius: 4px; }
+    table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+    th, td { border: 1px solid #d8dee9; padding: 8px; text-align: left; }
+    th { background: #f6f8fb; }
+  </style>
+</head>
+<body>
+  <h1>Heavy Detail Read Optimization - 2026-05-06</h1>
+  <p>Public detail query shape was narrowed, request-time body-image thumbnail fallback was removed, nginx worker connection capacity was raised, and backend PostgreSQL pool size was capped.</p>
+  <h2>Key Results</h2>
+  <table>
+    <tr><th>Run</th><th>HTTP Failure Rate</th><th>p95</th><th>Dropped</th><th>Exit</th></tr>
+    <tr><td>Before config spike</td><td>1.52%</td><td>1396.1ms</td><td>3725</td><td>99</td></tr>
+    <tr><td>After config spike</td><td>0%</td><td>1502.3ms</td><td>2877</td><td>0</td></tr>
+  </table>
+  <h2>Recommendation</h2>
+  <p>Ship this iteration. The remaining bottleneck is throughput/latency saturation around the 1000rps spike target, so the next slice should split public/admin detail payloads and complete DB/app/k6 timing instrumentation.</p>
+</body>
+</html>

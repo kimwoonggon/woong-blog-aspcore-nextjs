@@ -1,0 +1,81 @@
+{
+  "slug": "heavy-detail-read-optimization-2026-05-06",
+  "status": "local_validated_ci_pending",
+  "changed": [
+    "public_work_detail_projection",
+    "public_work_detail_no_body_image_thumbnail_fallback",
+    "public_blog_detail_projection_with_cover_url_subquery",
+    "repo_managed_nginx_main_config_worker_connections_4096",
+    "compose_npgsql_pool_cap_default_40",
+    "env_examples_for_nginx_main_config_and_pool_cap"
+  ],
+  "not_changed": [
+    "no_cache_added",
+    "no_seed_priority_target_selection",
+    "no_page_size_1_shortcut",
+    "no_representative_image_schema_migration_yet",
+    "no_public_admin_body_model_split_yet",
+    "no_json_source_generation_yet"
+  ],
+  "validations": [
+    { "command": "focused component RED test", "status": "failed_before_fix" },
+    { "command": "focused component GREEN test", "status": "passed" },
+    { "command": "dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj --filter FullyQualifiedName~PublicQueryHandlerComponentTests --no-restore", "status": "passed", "passed": 36 },
+    { "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~PublicEndpointsTests --no-restore", "status": "passed", "passed": 27 },
+    { "command": "dotnet test backend/WoongBlog.sln --no-restore", "status": "passed_after_code_slice" },
+    { "command": "git diff --check", "status": "passed" },
+    { "command": "docker exec nginx nginx -T", "status": "passed", "worker_connections": 4096 },
+    { "command": "dev/staging/prod docker compose config", "status": "passed" },
+    { "command": "dotnet test backend/WoongBlog.sln --no-restore", "status": "passed_after_config_slice" }
+  ],
+  "load_tests": {
+    "targets": {
+      "work_list": "/api/public/works?page=1&pageSize=12",
+      "study_list": "/api/public/blogs?page=1&pageSize=12",
+      "work_read": "/api/public/works/internal-admin-workbench",
+      "study_read": "/api/public/blogs/engineering-notes-on-bff-auth"
+    },
+    "before_config_constant_100rps_30s": {
+      "requests": 3001,
+      "rps": 100.02690583109228,
+      "failed_rate": 0,
+      "p95_ms": 5.275254,
+      "dropped_iterations": 0
+    },
+    "before_config_spike_100_1000_60s": {
+      "exit_code": 99,
+      "requests": 35274,
+      "rps": 440.93608224497626,
+      "failed_rate": 0.015195328003628735,
+      "p95_ms": 1396.0666177999997,
+      "max_ms": 10260.434302,
+      "dropped_iterations": 3725,
+      "diagnosis": ["nginx_worker_connections_1024_exhausted", "postgres_too_many_clients"]
+    },
+    "after_config_constant_100rps_30s": {
+      "requests": 3001,
+      "rps": 100.0288373271791,
+      "failed_rate": 0,
+      "p95_ms": 5.286849,
+      "dropped_iterations": 0
+    },
+    "after_config_spike_100_1000_60s": {
+      "exit_code": 0,
+      "requests": 36122,
+      "rps": 451.5363042226647,
+      "failed_rate": 0,
+      "p95_ms": 1502.3165093999999,
+      "max_ms": 2786.737571,
+      "dropped_iterations": 2877,
+      "diagnosis": ["connection_failures_removed", "remaining_throughput_latency_saturation"]
+    }
+  },
+  "risks": [
+    "local_fresh_database_is_not_full_production_content",
+    "standalone_k6_p99_missing_due_summary_trend_stats",
+    "npgsql_pool_cap_can_shift_pressure_to_app_wait",
+    "1000rps_spike_goal_not_met_yet",
+    "work_detail_still_returns_full_content_json"
+  ],
+  "recommendation": "Ship this iteration, then optimize public detail payload/body split and complete DB/app/k6 timing instrumentation before considering cache."
+}

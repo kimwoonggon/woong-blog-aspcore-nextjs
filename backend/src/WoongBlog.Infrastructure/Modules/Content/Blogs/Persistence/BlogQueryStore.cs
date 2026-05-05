@@ -112,31 +112,21 @@ public sealed class BlogQueryStore(WoongBlogDbContext dbContext) : IBlogQuerySto
 
     public async Task<BlogDetailDto?> GetPublishedDetailBySlugAsync(string slug, CancellationToken cancellationToken)
     {
-        var blog = await dbContext.Blogs.AsNoTracking()
-            .SingleOrDefaultAsync(x => x.Slug == slug && x.Published, cancellationToken);
-
-        if (blog is null)
-        {
-            return null;
-        }
-
-        var coverUrl = blog.CoverAssetId is null
-            ? string.Empty
-            : await dbContext.Assets
-                .AsNoTracking()
-                .Where(x => x.Id == blog.CoverAssetId.Value)
-                .Select(x => x.PublicUrl)
-                .SingleOrDefaultAsync(cancellationToken) ?? string.Empty;
-
-        return new BlogDetailDto(
-            blog.Id,
-            blog.Slug,
-            blog.Title,
-            blog.Excerpt,
-            blog.ContentJson,
-            blog.Tags,
-            coverUrl,
-            blog.PublishedAt);
+        return await dbContext.Blogs.AsNoTracking()
+            .Where(x => x.Slug == slug && x.Published)
+            .Select(blog => new BlogDetailDto(
+                blog.Id,
+                blog.Slug,
+                blog.Title,
+                blog.Excerpt,
+                blog.ContentJson,
+                blog.Tags,
+                dbContext.Assets
+                    .Where(asset => asset.Id == blog.CoverAssetId)
+                    .Select(asset => asset.PublicUrl)
+                    .SingleOrDefault() ?? string.Empty,
+                blog.PublishedAt))
+            .SingleOrDefaultAsync(cancellationToken);
     }
 
     private static IQueryable<Blog> ApplySearch(
