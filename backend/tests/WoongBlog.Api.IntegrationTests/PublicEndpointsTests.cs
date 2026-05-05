@@ -165,6 +165,7 @@ public class PublicEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         Assert.Equal("/media/works/seeded-work-icon.png", work.IconUrl);
         Assert.NotEmpty(work.Videos);
         Assert.Equal(new[] { "Seed Overview", "Seed Demo" }, work.Videos.Select(x => x.OriginalFileName).ToArray());
+        Assert.True(root.TryGetProperty("contentJson", out _));
         Assert.True(root.TryGetProperty("thumbnailUrl", out _));
         Assert.True(root.TryGetProperty("iconUrl", out _));
         Assert.True(root.TryGetProperty("videos", out _));
@@ -298,14 +299,15 @@ public class PublicEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     {
         var client = _factory.CreateClient();
 
-        var response = await client.GetAsync("/api/public/works?page=1&pageSize=1");
+        var response = await client.GetAsync("/api/public/works?page=1&pageSize=12");
 
         response.EnsureSuccessStatusCode();
         var body = await response.Content.ReadAsStringAsync();
 
         Assert.Contains("\"items\"", body, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("\"page\":1", body, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("\"pageSize\":1", body, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("\"pageSize\":12", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("\"contentJson\"", body, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -439,14 +441,15 @@ public class PublicEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     {
         var client = _factory.CreateClient();
 
-        var response = await client.GetAsync("/api/public/blogs?page=1&pageSize=1");
+        var response = await client.GetAsync("/api/public/blogs?page=1&pageSize=12");
 
         response.EnsureSuccessStatusCode();
         var body = await response.Content.ReadAsStringAsync();
 
         Assert.Contains("\"items\"", body, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("\"page\":1", body, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("\"pageSize\":1", body, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("\"pageSize\":12", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("\"contentJson\"", body, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -592,6 +595,7 @@ public class PublicEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         Assert.Contains("architecture", blog.Tags, StringComparer.OrdinalIgnoreCase);
         Assert.Equal("/media/blogs/seeded-blog-cover.png", blog.CoverUrl);
         Assert.Contains("Seed data", blog.ContentJson, StringComparison.OrdinalIgnoreCase);
+        Assert.True(root.TryGetProperty("contentJson", out _));
         Assert.True(root.TryGetProperty("coverUrl", out _));
         Assert.True(root.TryGetProperty("publishedAt", out _));
     }

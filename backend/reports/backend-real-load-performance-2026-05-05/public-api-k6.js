@@ -2,20 +2,28 @@ import http from 'k6/http';
 import { check } from 'k6';
 import { Counter, Rate, Trend } from 'k6/metrics';
 
-const baseUrl = __ENV.BASE_URL || 'http://nginx';
+const baseUrl = (__ENV.BASE_URL || 'http://nginx').replace(/\/+$/, '');
 const scenario = __ENV.SCENARIO || 'constant';
 const rate = Number(__ENV.RATE || '300');
 const peakRate = Number(__ENV.PEAK_RATE || '1000');
 const duration = __ENV.DURATION || '30s';
 const preAllocatedVUs = Number(__ENV.PRE_ALLOCATED_VUS || '300');
 const maxVUs = Number(__ENV.MAX_VUS || '1000');
+const listPageSize = Number(__ENV.LIST_PAGE_SIZE || '12');
+const workReadPath = __ENV.WORK_READ_PATH || '';
+const studyReadPath = __ENV.STUDY_READ_PATH || '';
 
-const targets = [
-  { key: 'work_list', label: 'Work list', path: '/api/public/works?page=1&pageSize=1' },
-  { key: 'work_read', label: 'Work read', path: '/api/public/works/seeded-work' },
-  { key: 'study_list', label: 'Study list', path: '/api/public/blogs?page=1&pageSize=1' },
-  { key: 'study_read', label: 'Study read', path: '/api/public/blogs/seeded-blog' },
+const listTargets = [
+  { key: 'work_list', label: 'Work list', path: `/api/public/works?page=1&pageSize=${listPageSize}` },
+  { key: 'study_list', label: 'Study list', path: `/api/public/blogs?page=1&pageSize=${listPageSize}` },
 ];
+
+const readTargets = [
+  workReadPath ? { key: 'work_read', label: 'Work read', path: workReadPath } : null,
+  studyReadPath ? { key: 'study_read', label: 'Study read', path: studyReadPath } : null,
+].filter(Boolean);
+
+const targets = [...listTargets, ...readTargets];
 
 const failures = new Counter('http_failures_total');
 const successRate = new Rate('http_success_rate');
@@ -86,6 +94,7 @@ export function handleSummary(data) {
     duration,
     preAllocatedVUs,
     maxVUs,
+    listPageSize,
     http_reqs: metricValue(data, 'http_reqs', 'count'),
     rps: metricValue(data, 'http_reqs', 'rate'),
     failed_rate: metricValue(data, 'http_req_failed', 'rate'),
@@ -104,6 +113,7 @@ export function handleSummary(data) {
         p99_ms: metricValue(data, `target_${target.key}_duration`, 'p(99)'),
       },
     ])),
+    note: 'Read targets are intentionally not seeded by default. Provide WORK_READ_PATH and STUDY_READ_PATH from the current public content selected by the Real Backend Test UI when using this standalone script.',
   };
 
   return {
