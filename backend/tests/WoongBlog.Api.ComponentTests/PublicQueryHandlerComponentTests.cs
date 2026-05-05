@@ -12,6 +12,7 @@ using WoongBlog.Application.Modules.Content.Pages.Abstractions;
 using WoongBlog.Application.Modules.Content.Pages.GetPageBySlug;
 using WoongBlog.Infrastructure.Modules.Content.Pages.Persistence;
 using WoongBlog.Application.Modules.Content.Works.Abstractions;
+using WoongBlog.Application.Modules.Content.Works.GetAdminWorkById;
 using WoongBlog.Application.Modules.Content.Works.GetWorkBySlug;
 using WoongBlog.Application.Modules.Content.Works.GetWorks;
 using WoongBlog.Application.Modules.Content.Works.WorkVideos;
@@ -45,6 +46,7 @@ public class PublicQueryHandlerComponentTests
     private sealed class TestPlaybackUrlBuilder : IWorkVideoPlaybackUrlBuilder
     {
         public HashSet<string> ExistingStorageKeys { get; } = [];
+        public int StorageObjectExistsCallCount { get; private set; }
 
         public string? BuildPlaybackUrl(string sourceType, string sourceKey)
         {
@@ -58,6 +60,7 @@ public class PublicQueryHandlerComponentTests
 
         public Task<bool> StorageObjectExistsAsync(string storageType, string storageKey, CancellationToken cancellationToken)
         {
+            StorageObjectExistsCallCount += 1;
             return Task.FromResult(ExistingStorageKeys.Contains(storageKey));
         }
     }
@@ -617,6 +620,58 @@ public class PublicQueryHandlerComponentTests
         var video = Assert.Single(result!.Videos);
         Assert.Equal($"/media/videos/{workId:N}/{videoId:N}/hls/{WorkVideoPolicy.TimelinePreviewVttFileName}", video.TimelinePreviewVttUrl);
         Assert.Equal($"/media/videos/{workId:N}/{videoId:N}/hls/{WorkVideoPolicy.TimelinePreviewSpriteFileName}", video.TimelinePreviewSpriteUrl);
+        Assert.Equal(0, playbackUrlBuilder.StorageObjectExistsCallCount);
+    }
+
+    [Fact]
+    public async Task GetAdminWorkByIdQueryHandler_VerifiesTimelinePreviewAssets()
+    {
+        await using var dbContext = CreateDbContext();
+        var workId = Guid.NewGuid();
+        var videoId = Guid.NewGuid();
+        var previewVttStorageKey = $"videos/{workId:N}/{videoId:N}/hls/{WorkVideoPolicy.TimelinePreviewVttFileName}";
+        var previewSpriteStorageKey = $"videos/{workId:N}/{videoId:N}/hls/{WorkVideoPolicy.TimelinePreviewSpriteFileName}";
+        var now = DateTimeOffset.UtcNow;
+        dbContext.Works.Add(new Work
+        {
+            Id = workId,
+            Title = "Admin Preview Work",
+            Slug = "admin-preview-work",
+            Excerpt = "preview",
+            Category = "cat",
+            ContentJson = "{}",
+            AllPropertiesJson = "{}",
+            Published = true,
+            PublishedAt = now,
+            CreatedAt = now,
+            UpdatedAt = now
+        });
+        dbContext.WorkVideos.Add(new WorkVideo
+        {
+            Id = videoId,
+            WorkId = workId,
+            SourceType = WorkVideoSourceTypes.Hls,
+            SourceKey = $"{WorkVideoSourceTypes.Local}:videos/{workId:N}/{videoId:N}/hls/master.m3u8",
+            MimeType = WorkVideoPolicy.HlsManifestContentType,
+            TimelinePreviewVttStorageKey = previewVttStorageKey,
+            TimelinePreviewSpriteStorageKey = previewSpriteStorageKey,
+            SortOrder = 0,
+            CreatedAt = now
+        });
+        await dbContext.SaveChangesAsync();
+
+        var playbackUrlBuilder = new TestPlaybackUrlBuilder();
+        playbackUrlBuilder.ExistingStorageKeys.Add(previewVttStorageKey);
+        playbackUrlBuilder.ExistingStorageKeys.Add(previewSpriteStorageKey);
+        var handler = new GetAdminWorkByIdQueryHandler(CreateWorkQueryStore(dbContext, playbackUrlBuilder));
+
+        var result = await handler.Handle(new(workId), CancellationToken.None);
+
+        Assert.NotNull(result);
+        var video = Assert.Single(result!.Videos);
+        Assert.NotNull(video.TimelinePreviewVttUrl);
+        Assert.NotNull(video.TimelinePreviewSpriteUrl);
+        Assert.Equal(2, playbackUrlBuilder.StorageObjectExistsCallCount);
     }
 
     [Fact]
@@ -713,7 +768,7 @@ public class PublicQueryHandlerComponentTests
     }
 
     [Fact]
-    public async Task GetWorkBySlugQueryHandler_OmitsTimelinePreviewUrls_WhenPreviewAssetsAreMissing()
+    public async Task GetAdminWorkByIdQueryHandler_OmitsTimelinePreviewUrls_WhenPreviewAssetsAreMissing()
     {
         await using var dbContext = CreateDbContext();
         var workId = Guid.NewGuid();
@@ -752,13 +807,14 @@ public class PublicQueryHandlerComponentTests
         var playbackUrlBuilder = new TestPlaybackUrlBuilder();
         playbackUrlBuilder.ExistingStorageKeys.Add(previewVttStorageKey);
 
-        var handler = new GetWorkBySlugQueryHandler(CreateWorkQueryStore(dbContext, playbackUrlBuilder));
-        var result = await handler.Handle(new GetWorkBySlugQuery("preview-missing-work"), CancellationToken.None);
+        var handler = new GetAdminWorkByIdQueryHandler(CreateWorkQueryStore(dbContext, playbackUrlBuilder));
+        var result = await handler.Handle(new(workId), CancellationToken.None);
 
         Assert.NotNull(result);
         var video = Assert.Single(result!.Videos);
         Assert.Null(video.TimelinePreviewVttUrl);
         Assert.Null(video.TimelinePreviewSpriteUrl);
+        Assert.Equal(2, playbackUrlBuilder.StorageObjectExistsCallCount);
     }
 
     [Fact]
