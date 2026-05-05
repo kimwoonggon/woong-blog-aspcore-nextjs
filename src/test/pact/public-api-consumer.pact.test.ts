@@ -4,7 +4,6 @@ import { Matchers, PactV3, SpecificationVersion } from '@pact-foundation/pact'
 
 const pactDirectory = path.resolve('tests/contracts/pacts')
 const { atLeastLike, boolean, integer, like } = Matchers
-const nativeFetch = globalThis.fetch
 const publicApiModules = [
   '@/lib/api/base',
   '@/lib/api/blogs',
@@ -29,7 +28,6 @@ function restorePactTestGlobals() {
   vi.restoreAllMocks()
   vi.unstubAllGlobals()
   vi.unstubAllEnvs()
-  globalThis.fetch = nativeFetch
 }
 
 function restorePactTestModules() {

@@ -419,6 +419,7 @@ public sealed class RealLoadTestControlPlane(
             slugScenario = "scenario";
         }
 
-        return $"{nowUtc:yyyyMMdd-HHmmss}-{slugScenario}";
+        var uniqueSuffix = Guid.NewGuid().ToString("N")[..8];
+        return $"{nowUtc:yyyyMMdd-HHmmss}-{slugScenario}-{uniqueSuffix}";
     }
 }

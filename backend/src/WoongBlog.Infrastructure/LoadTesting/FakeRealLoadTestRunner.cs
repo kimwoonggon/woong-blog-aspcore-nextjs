@@ -119,7 +119,8 @@ public sealed class FakeRealLoadTestRunner(RealLoadTestReportStore reportStore, 
             maxMs,
             Math.Max(1, p95Ms - 18),
             p95Ms + 6,
-            Math.Max(1, p95Ms - 8));
+            Math.Max(1, p95Ms - 8),
+            "fake.nginx_upstream");
         ApplyTargetMetrics(run, target, requestsForTick, successfulRequests, simulatedFailures, p95Ms);
     }
 
