@@ -1,0 +1,38 @@
+{
+  "scenario": "constant",
+  "rate": 400,
+  "peakRate": 1000,
+  "duration": "30s",
+  "preAllocatedVUs": 400,
+  "maxVUs": 1000,
+  "http_reqs": 12000,
+  "rps": 400.01220453236516,
+  "failed_rate": 0,
+  "duration_p50_ms": 2.0952795,
+  "duration_p95_ms": 5.2922739999999955,
+  "duration_max_ms": 86.687731,
+  "dropped_iterations": 0,
+  "vus_max": 400,
+  "targets": {
+    "work_list": {
+      "label": "Work list",
+      "path": "/api/public/works?page=1&pageSize=1",
+      "p95_ms": 23.195044
+    },
+    "work_read": {
+      "label": "Work read",
+      "path": "/api/public/works/seeded-work",
+      "p95_ms": 4.420937399999999
+    },
+    "study_list": {
+      "label": "Study list",
+      "path": "/api/public/blogs?page=1&pageSize=1",
+      "p95_ms": 4.9210720999999795
+    },
+    "study_read": {
+      "label": "Study read",
+      "path": "/api/public/blogs/seeded-blog",
+      "p95_ms": 2.7940770499999976
+    }
+  }
+}

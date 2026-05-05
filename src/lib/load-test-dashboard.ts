@@ -1183,7 +1183,7 @@ export async function runWithConcurrency<T>(
 
 export function buildLoadTestTargets({ workSlugs = [], blogSlugs = [] }: LoadTestTargetInput): LoadTestTarget[] {
   const targets: LoadTestTarget[] = [
-    { id: 'works-list', label: 'Work list', path: '/api/public/works?page=1&pageSize=12', group: 'work' },
+    { id: 'works-list', label: 'Work list', path: '/api/public/works?page=1&pageSize=1', group: 'work' },
   ]
 
   const firstWorkSlug = workSlugs.find(Boolean)
@@ -1191,7 +1191,7 @@ export function buildLoadTestTargets({ workSlugs = [], blogSlugs = [] }: LoadTes
     targets.push({ id: 'work-read', label: 'Work read', path: `/api/public/works/${encodeURIComponent(firstWorkSlug)}`, group: 'work' })
   }
 
-  targets.push({ id: 'study-list', label: 'Study list', path: '/api/public/blogs?page=1&pageSize=12', group: 'study' })
+  targets.push({ id: 'study-list', label: 'Study list', path: '/api/public/blogs?page=1&pageSize=1', group: 'study' })
 
   const firstBlogSlug = blogSlugs.find(Boolean)
   if (firstBlogSlug) {
