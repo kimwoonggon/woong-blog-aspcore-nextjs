@@ -1,0 +1,30 @@
+{
+  "slug": "pact-responsive-vitest-stability-2026-05-06",
+  "createdAt": "2026-05-06T04:43:08+09:00",
+  "scope": "frontend-ci-stability-for-pr-45",
+  "productionCodeChanged": false,
+  "changes": [
+    "Enabled Vitest unstubGlobals and unstubEnvs",
+    "Waited for both PublicResponsiveFeed scroll restore calls",
+    "Updated todolist-2026-05-06.md with CI blocker and validation evidence"
+  ],
+  "intentionallyNotChanged": [
+    "Backend production code",
+    "Real Backend Test target semantics",
+    "Caching behavior",
+    "Unrelated lint warnings"
+  ],
+  "validations": [
+    { "command": "npm run test -- --run src/test/pact/public-api-consumer.pact.test.ts", "status": "pass", "evidence": "1 file, 6 tests" },
+    { "command": "npm run test -- --run src/test/public-responsive-feed.test.tsx", "status": "pass", "evidence": "1 file, 17 tests" },
+    { "command": "npm run typecheck", "status": "pass" },
+    { "command": "npm run lint", "status": "pass", "evidence": "0 errors, 6 existing warnings" },
+    { "command": "npm run test -- --run", "status": "pass", "evidence": "82 files, 589 tests" },
+    { "command": "git diff --check", "status": "pass" }
+  ],
+  "risks": [
+    "GitHub CI must rerun after push",
+    "Unrelated React act warnings remain in the frontend suite"
+  ],
+  "recommendation": "Commit and push to PR #45, watch CI, then merge to dev if all checks pass."
+}

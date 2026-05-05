@@ -593,7 +593,11 @@ describe('PublicResponsiveFeed', () => {
     await waitFor(() => {
       expect(screen.getAllByTestId('blog-card')).toHaveLength(20)
     })
-    expect(scrollToSpy).toHaveBeenCalledWith(0, 480)
+    await waitFor(() => {
+      expect(scrollToSpy).toHaveBeenCalledTimes(2)
+    })
+    expect(scrollToSpy).toHaveBeenNthCalledWith(1, 0, 480)
+    expect(scrollToSpy).toHaveBeenNthCalledWith(2, 0, 480)
   })
 
   it('keeps desktop Study pagination layout when returning at desktop width with stale mobile restore state', async () => {

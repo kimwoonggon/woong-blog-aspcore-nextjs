@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Pact and Responsive Vitest Stability - 2026-05-06</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2rem; line-height: 1.5; color: #1f2937; }
+    h1, h2 { color: #111827; }
+    code { background: #f3f4f6; padding: 0.1rem 0.25rem; border-radius: 4px; }
+    ul { padding-left: 1.4rem; }
+  </style>
+</head>
+<body>
+  <h1>Pact and Responsive Vitest Stability - 2026-05-06</h1>
+  <h2>Summary</h2>
+  <p>PR #45 frontend CI was blocked by a Pact consumer request-missing failure. This slice stabilizes Vitest global/env cleanup and drains a responsive-feed scroll restore callback without changing production backend behavior.</p>
+  <h2>Changed</h2>
+  <ul>
+    <li>Enabled Vitest <code>unstubGlobals</code> and <code>unstubEnvs</code>.</li>
+    <li>Updated the Study restore test to wait for both scroll restore calls.</li>
+    <li>Updated the dated TODO with blocker and validation evidence.</li>
+  </ul>
+  <h2>Validations</h2>
+  <ul>
+    <li>PASS: focused Pact consumer test.</li>
+    <li>PASS: focused PublicResponsiveFeed test.</li>
+    <li>PASS: typecheck, lint, full Vitest, and diff check.</li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Commit and push to PR #45, watch CI, then merge to dev if all checks pass.</p>
+</body>
+</html>
