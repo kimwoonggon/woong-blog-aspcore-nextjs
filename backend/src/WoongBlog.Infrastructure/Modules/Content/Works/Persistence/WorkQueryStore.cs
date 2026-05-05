@@ -104,11 +104,6 @@ public sealed class WorkQueryStore(
                 work.PublishedAt))
             .ToListAsync(cancellationToken);
 
-        var workIds = works
-            .Where(work => work.ThumbnailAssetId is null)
-            .Select(work => work.Id)
-            .ToArray();
-        var workVideos = await GetVideoLookupAsync(workIds, cancellationToken);
         var assetIds = works
             .SelectMany(work => new[] { work.ThumbnailAssetId, work.IconAssetId })
             .Where(assetId => assetId.HasValue)
@@ -127,11 +122,7 @@ public sealed class WorkQueryStore(
             work.Category,
             work.Period,
             work.Tags,
-            WorkThumbnailUrlResolver.ResolveThumbnailUrl(
-                work.ThumbnailAssetId,
-                contentJson: null,
-                workVideos.TryGetValue(work.Id, out var videos) ? videos : Array.Empty<WorkVideo>(),
-                assets),
+            ResolveAssetUrl(work.ThumbnailAssetId, assets),
             ResolveAssetUrl(work.IconAssetId, assets),
             work.PublishedAt)).ToList();
 
@@ -208,11 +199,6 @@ public sealed class WorkQueryStore(
         var assets = BuildProjectedAssetLookup(work);
         var videoRows = await GetVideosAsync(work.Id, cancellationToken);
         var videos = await BuildVideoDtosAsync(videoRows, verifyPreviewAssets: false, cancellationToken);
-        var thumbnailUrl = WorkThumbnailUrlResolver.ResolveThumbnailUrl(
-            work.ThumbnailAssetId,
-            contentJson: null,
-            videoRows,
-            assets);
 
         return new WorkDetailDto(
             work.Id,
@@ -223,7 +209,7 @@ public sealed class WorkQueryStore(
             work.Category,
             work.Period,
             work.Tags,
-            thumbnailUrl,
+            ResolveAssetUrl(work.ThumbnailAssetId, assets),
             ResolveAssetUrl(work.IconAssetId, assets),
             work.PublishedAt,
             ResolveSocialShareMessage(work.AllPropertiesJson),

@@ -1,11 +1,9 @@
 using Microsoft.EntityFrameworkCore;
-using WoongBlog.Api.Domain.Entities;
 using WoongBlog.Infrastructure.Persistence;
 using WoongBlog.Application.Modules.Composition.Abstractions;
 using WoongBlog.Application.Modules.Composition.GetHome;
 using WoongBlog.Application.Modules.Content.Blogs.GetBlogs;
 using WoongBlog.Application.Modules.Content.Works.GetWorks;
-using WoongBlog.Application.Modules.Content.Works.Support;
 
 namespace WoongBlog.Infrastructure.Modules.Composition.Persistence;
 
@@ -60,11 +58,6 @@ public sealed class HomeQueryStore(WoongBlogDbContext dbContext) : IHomeQuerySto
                 work.PublishedAt))
             .ToListAsync(cancellationToken);
 
-        var featuredWorkIds = featuredWorks
-            .Where(work => work.ThumbnailAssetId is null)
-            .Select(work => work.Id)
-            .ToArray();
-        var featuredWorkVideos = await GetWorkVideoLookupAsync(featuredWorkIds, cancellationToken);
         var assetIds = featuredWorks
             .SelectMany(work => new[] { work.ThumbnailAssetId, work.IconAssetId })
             .Where(assetId => assetId.HasValue)
@@ -81,11 +74,7 @@ public sealed class HomeQueryStore(WoongBlogDbContext dbContext) : IHomeQuerySto
             work.Category,
             work.Period,
             work.Tags,
-            WorkThumbnailUrlResolver.ResolveThumbnailUrl(
-                work.ThumbnailAssetId,
-                contentJson: null,
-                featuredWorkVideos.TryGetValue(work.Id, out var workVideos) ? workVideos : Array.Empty<WorkVideo>(),
-                assetPublicUrlById),
+            ResolveAssetUrl(work.ThumbnailAssetId, assetPublicUrlById),
             ResolveAssetUrl(work.IconAssetId, assetPublicUrlById),
             work.PublishedAt
         )).ToList();
@@ -152,27 +141,6 @@ public sealed class HomeQueryStore(WoongBlogDbContext dbContext) : IHomeQuerySto
             .AsNoTracking()
             .Where(x => assetIds.Contains(x.Id))
             .ToDictionaryAsync(x => x.Id, x => x.PublicUrl, cancellationToken);
-    }
-
-    private async Task<IReadOnlyDictionary<Guid, IReadOnlyList<WorkVideo>>> GetWorkVideoLookupAsync(
-        IReadOnlyCollection<Guid> workIds,
-        CancellationToken cancellationToken)
-    {
-        if (workIds.Count == 0)
-        {
-            return new Dictionary<Guid, IReadOnlyList<WorkVideo>>();
-        }
-
-        var videoRows = await dbContext.WorkVideos
-            .AsNoTracking()
-            .Where(x => workIds.Contains(x.WorkId))
-            .OrderBy(x => x.SortOrder)
-            .ThenBy(x => x.CreatedAt)
-            .ToListAsync(cancellationToken);
-
-        return videoRows
-            .GroupBy(x => x.WorkId)
-            .ToDictionary(x => x.Key, x => (IReadOnlyList<WorkVideo>)x.ToList());
     }
 
     private static string ResolveAssetUrl(Guid? assetId, IReadOnlyDictionary<Guid, string> assetPublicUrlById)
