@@ -1,0 +1,74 @@
+{
+  "slug": "real-backend-runtime-diagnostics-2026-05-05",
+  "date": "2026-05-05",
+  "objective": "Real Backend/k6 load tests track backend runtime and database pressure like the browser load test, while retaining detailed scenario options.",
+  "changed": [
+    "src/components/admin/LoadTestDashboard.tsx",
+    "tests/admin-load-test-dashboard.spec.ts",
+    "todolist-2026-05-05.md"
+  ],
+  "intentionallyNotChanged": [
+    "No backend diagnostics endpoint contract change",
+    "No k6 summary contract change",
+    "No unrelated full E2E flake or promotion workflow changes"
+  ],
+  "requirements": [
+    {
+      "requirement": "GC/runtime tracking during Real Backend runs",
+      "evidence": "Real Backend phases activate diagnostics polling; E2E asserts Time in GC and live smoke collected diagnostics during k6 run.",
+      "status": "covered"
+    },
+    {
+      "requirement": "ThreadPool tracking during Real Backend runs",
+      "evidence": "E2E asserts ThreadPool queue in the runtime panel after Real Backend start.",
+      "status": "covered"
+    },
+    {
+      "requirement": "DB pressure tracking during Real Backend runs",
+      "evidence": "E2E asserts DB command P95, Idle in transaction, and component db command p95.",
+      "status": "covered"
+    },
+    {
+      "requirement": "Detailed Real Backend options",
+      "evidence": "Existing E2E verifies scenario-specific controls and payload fields for stress scenario.",
+      "status": "covered"
+    },
+    {
+      "requirement": "Actual k6 path verification",
+      "evidence": "Live Docker UI smoke completed public-api-rps k6 run and captured five diagnostics 200 responses.",
+      "status": "covered"
+    }
+  ],
+  "validations": [
+    {
+      "command": "npx vitest run src/test/load-test-dashboard.test.ts --pool=threads --maxWorkers=1",
+      "result": "passed 24/24"
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "passed"
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter \"FullyQualifiedName~StartupCompositionTests.RealLoadTestControlPlane\" --no-restore",
+      "result": "passed 4/4"
+    },
+    {
+      "command": "npm run lint",
+      "result": "passed with six existing unrelated warnings"
+    },
+    {
+      "command": "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 ENABLE_LOCAL_ADMIN_SHORTCUT=true PLAYWRIGHT_EXPECT_LOCAL_ADMIN_SHORTCUT=visible PLAYWRIGHT_E2E_PROFILE=core npx playwright test tests/admin-load-test-dashboard.spec.ts --project=chromium-authenticated --workers=1",
+      "result": "passed 2/2"
+    },
+    {
+      "command": "Live Docker UI smoke",
+      "result": "real k6 public-api-rps completed; diagnostics endpoint returned 200 five times"
+    }
+  ],
+  "risks": [
+    "Runtime diagnostics are retained in UI memory like the browser load test path, not persisted into real-run report storage.",
+    "Six lint warnings remain from unrelated existing files.",
+    "Full E2E and CI promotion stabilization remain separate pending work."
+  ],
+  "recommendation": "Real Backend runtime diagnostics gap is closed; continue post-promotion CI stabilization next."
+}

@@ -167,6 +167,9 @@ export type RuntimeDiagnosticsSummary = {
   dbCommandP95Ms: RuntimeMetricTrend
   dbCommandP99Ms: RuntimeMetricTrend
   dbConnectionOpenP95Ms: RuntimeMetricTrend
+  dbCommandP95Available: boolean
+  dbCommandP99Available: boolean
+  dbConnectionOpenP95Available: boolean
   dbSlowQueryCount: RuntimeMetricTrend
   dbErrorCount: RuntimeMetricTrend
   dbOpenConnections: RuntimeMetricTrend
@@ -285,6 +288,7 @@ export const LOAD_TEST_THRESHOLDS = {
   database: {
     yellowLatencyMs: 100,
     redLatencyMs: 250,
+    redErrorCount: 1,
   },
 } as const
 
@@ -576,9 +580,10 @@ function readNginxRequestTimeSourceFromRecord(record: Record<string, unknown>) {
 function readNginxUpstreamSourceFromRecord(record: Record<string, unknown>) {
   const sourceValues = readNumberFromRecord(record, ['nginxUpstreamP95Ms', 'upstreamResponseTimeP95Ms', 'upstream_response_time_p95', 'upstreamP95'])
   if (sourceValues !== null) {
+    const source = readStringFromRecord(record, ['nginxUpstreamP95Source', 'nginxUpstreamSource', 'upstreamResponseTimeP95Source'])
     return {
       value: roundMetric(sourceValues),
-      source: 'nginx.upstream',
+      source: source ?? 'nginx.upstream',
     }
   }
 
@@ -1371,6 +1376,35 @@ function summarizeTrend(values: number[]): RuntimeMetricTrend {
   }
 }
 
+function readDatabaseLatencyValue(
+  snapshot: RuntimeDiagnosticsPayload,
+  latencyKey: 'commandLatency' | 'connectionOpenLatency',
+  valueKey: 'p95Ms' | 'p99Ms',
+) {
+  const latency = snapshot.database[latencyKey]
+  if (!latency || latency.sampleCount <= 0) {
+    return null
+  }
+
+  const value = latency[valueKey]
+  return typeof value === 'number' && Number.isFinite(value) ? value : null
+}
+
+function summarizeAvailableTrend(
+  snapshots: RuntimeDiagnosticsPayload[],
+  latencyKey: 'commandLatency' | 'connectionOpenLatency',
+  valueKey: 'p95Ms' | 'p99Ms',
+) {
+  const values = snapshots
+    .map((snapshot) => readDatabaseLatencyValue(snapshot, latencyKey, valueKey))
+    .filter((value): value is number => value !== null)
+
+  return {
+    trend: summarizeTrend(values),
+    available: values.length > 0,
+  }
+}
+
 export function buildDiagnosticsSnapshotSummary(snapshots: RuntimeDiagnosticsPayload[]): RuntimeDiagnosticsSummary {
   if (!snapshots.length) {
     return {
@@ -1388,6 +1422,9 @@ export function buildDiagnosticsSnapshotSummary(snapshots: RuntimeDiagnosticsPay
       dbCommandP95Ms: emptyTrend(),
       dbCommandP99Ms: emptyTrend(),
       dbConnectionOpenP95Ms: emptyTrend(),
+      dbCommandP95Available: false,
+      dbCommandP99Available: false,
+      dbConnectionOpenP95Available: false,
       dbSlowQueryCount: emptyTrend(),
       dbErrorCount: emptyTrend(),
       dbOpenConnections: emptyTrend(),
@@ -1396,6 +1433,10 @@ export function buildDiagnosticsSnapshotSummary(snapshots: RuntimeDiagnosticsPay
       dbIdleInTransactionConnections: emptyTrend(),
     }
   }
+
+  const dbCommandP95 = summarizeAvailableTrend(snapshots, 'commandLatency', 'p95Ms')
+  const dbCommandP99 = summarizeAvailableTrend(snapshots, 'commandLatency', 'p99Ms')
+  const dbConnectionOpenP95 = summarizeAvailableTrend(snapshots, 'connectionOpenLatency', 'p95Ms')
 
   return {
     sampleCount: snapshots.length,
@@ -1409,9 +1450,12 @@ export function buildDiagnosticsSnapshotSummary(snapshots: RuntimeDiagnosticsPay
     threadPoolCompletedWorkItemCount: summarizeTrend(snapshots.map((snapshot) => snapshot.threadPool.completedWorkItemCount ?? 0)),
     databaseLatencyMs: summarizeTrend(snapshots.map((snapshot) => snapshot.database.latencyMs ?? 0)),
     databaseTimeoutCount: summarizeTrend(snapshots.map((snapshot) => snapshot.database.timeoutCount)),
-    dbCommandP95Ms: summarizeTrend(snapshots.map((snapshot) => snapshot.database.commandLatency?.p95Ms ?? 0)),
-    dbCommandP99Ms: summarizeTrend(snapshots.map((snapshot) => snapshot.database.commandLatency?.p99Ms ?? 0)),
-    dbConnectionOpenP95Ms: summarizeTrend(snapshots.map((snapshot) => snapshot.database.connectionOpenLatency?.p95Ms ?? 0)),
+    dbCommandP95Ms: dbCommandP95.trend,
+    dbCommandP99Ms: dbCommandP99.trend,
+    dbConnectionOpenP95Ms: dbConnectionOpenP95.trend,
+    dbCommandP95Available: dbCommandP95.available,
+    dbCommandP99Available: dbCommandP99.available,
+    dbConnectionOpenP95Available: dbConnectionOpenP95.available,
     dbSlowQueryCount: summarizeTrend(snapshots.map((snapshot) => snapshot.database.slowQueryCount ?? 0)),
     dbErrorCount: summarizeTrend(snapshots.map((snapshot) => snapshot.database.errorCount ?? 0)),
     dbOpenConnections: summarizeTrend(snapshots.map((snapshot) => snapshot.database.openConnections ?? 0)),
@@ -1432,6 +1476,7 @@ export function evaluateRuntimeDiagnosticsHealth(summaryOrSnapshots: RuntimeDiag
 
   if (
     summary.databaseTimeoutCount.current > 0
+    || summary.dbErrorCount.current >= LOAD_TEST_THRESHOLDS.database.redErrorCount
     || summary.threadPoolQueueLength.delta >= LOAD_TEST_THRESHOLDS.runtime.redThreadPoolQueueDelta
     || summary.gen2Collections.delta >= LOAD_TEST_THRESHOLDS.runtime.redGen2Delta
     || summary.timeInGcPercent.current >= LOAD_TEST_THRESHOLDS.runtime.redTimeInGcPercent

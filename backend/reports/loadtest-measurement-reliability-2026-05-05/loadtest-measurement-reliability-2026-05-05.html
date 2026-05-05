@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Real Backend Measurement Reliability Audit</title></head>
+<body>
+  <h1>Real Backend Measurement Reliability Audit - 2026-05-05</h1>
+  <p>Status: local validated, remote CI pending.</p>
+  <h2>Changed</h2>
+  <ul>
+    <li>DB errors now mark runtime health red.</li>
+    <li>Missing DB timing samples render as unavailable.</li>
+    <li>k6 exports true p99 and thresholds.</li>
+    <li>nginx upstream timing has alias header plus k6 waiting fallback source.</li>
+  </ul>
+  <h2>Validations</h2>
+  <ul>
+    <li>Vitest load-test dashboard: 26/26 passed.</li>
+    <li>Backend component k6 script test: 1/1 passed.</li>
+    <li>Backend integration RealLoadTestControlPlane: 4/4 passed.</li>
+    <li>Typecheck passed.</li>
+    <li>Lint passed with six existing unrelated warnings.</li>
+    <li>Playwright admin load-test dashboard: 2/2 passed.</li>
+    <li>Live k6 smoke completed: p95 9.6 ms, p99 13.4 ms, upstream fallback p95 9.3 ms.</li>
+    <li>Backend solution tests passed: component 115, unit 56, architecture 35, integration 202; contract provider verification skipped by suite policy.</li>
+    <li>Frontend unit tests passed: 82 files, 588 tests.</li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Proceed to dev push, dev CI verification, main promotion, and main CI verification.</p>
+</body>
+</html>

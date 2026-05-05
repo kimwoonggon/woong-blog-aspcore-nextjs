@@ -323,8 +323,12 @@ describe('load test dashboard planning', () => {
       threadPoolCompletedWorkItemCount: { current: 120, peak: 120, delta: 100 },
       databaseLatencyMs: { current: 260, peak: 260, delta: 250 },
       databaseTimeoutCount: { current: 1, peak: 1, delta: 1 },
-      dbCommandP95Ms: { current: 45, peak: 45, delta: 45 },
-      dbConnectionOpenP95Ms: { current: 30, peak: 30, delta: 30 },
+      dbCommandP95Ms: { current: 45, peak: 45, delta: 0 },
+      dbCommandP99Ms: { current: 90, peak: 90, delta: 0 },
+      dbConnectionOpenP95Ms: { current: 30, peak: 30, delta: 0 },
+      dbCommandP95Available: true,
+      dbCommandP99Available: true,
+      dbConnectionOpenP95Available: true,
       dbSlowQueryCount: { current: 2, peak: 2, delta: 2 },
       dbIdleConnections: { current: 4, peak: 4, delta: 2 },
       dbIdleInTransactionConnections: { current: 2, peak: 2, delta: 2 },
@@ -373,6 +377,91 @@ describe('load test dashboard planning', () => {
 
     expect(evaluateRuntimeDiagnosticsHealth(summary)).toMatchObject({
       status: 'red',
+    })
+  })
+
+  it('flags DB diagnostic errors as red even when other runtime metrics are healthy', () => {
+    const summary = buildDiagnosticsSnapshotSummary([
+      {
+        timestamp: '2026-05-05T00:00:00Z',
+        process: { memoryBytes: 1000, processorCount: 8 },
+        gc: { heapSizeBytes: 500, gen0Collections: 1, gen1Collections: 0, gen2Collections: 0, timeInGcPercent: 0.1 },
+        threadPool: { workerThreads: 2, pendingWorkItemCount: 0, completedWorkItemCount: 20, availableWorkerThreads: 98, maxWorkerThreads: 100 },
+        database: {
+          status: 'available',
+          latencyMs: 1,
+          openConnections: 4,
+          activeConnections: 1,
+          idleConnections: 3,
+          idleInTransactionConnections: 0,
+          commandLatency: { sampleCount: 0, p50Ms: null, p95Ms: null, p99Ms: null },
+          connectionOpenLatency: { sampleCount: 0, p50Ms: null, p95Ms: null, p99Ms: null },
+          timeoutCount: 0,
+          errorCount: 5,
+        },
+      },
+    ])
+
+    expect(evaluateRuntimeDiagnosticsHealth(summary)).toMatchObject({
+      status: 'red',
+      reason: expect.stringContaining('DB'),
+    })
+  })
+
+  it('tracks DB latency metric availability instead of treating missing samples as zero latency', () => {
+    const unavailableSummary = buildDiagnosticsSnapshotSummary([
+      {
+        timestamp: '2026-05-05T00:00:00Z',
+        process: { memoryBytes: 1000, processorCount: 8 },
+        gc: { heapSizeBytes: 500, gen0Collections: 1, gen1Collections: 0, gen2Collections: 0, timeInGcPercent: 0.1 },
+        threadPool: { workerThreads: 2, pendingWorkItemCount: 0, completedWorkItemCount: 20, availableWorkerThreads: 98, maxWorkerThreads: 100 },
+        database: {
+          status: 'available',
+          latencyMs: 1,
+          openConnections: 4,
+          activeConnections: 1,
+          idleConnections: 3,
+          idleInTransactionConnections: 0,
+          commandLatency: { sampleCount: 0, p50Ms: null, p95Ms: null, p99Ms: null },
+          connectionOpenLatency: { sampleCount: 0, p50Ms: null, p95Ms: null, p99Ms: null },
+          timeoutCount: 0,
+          errorCount: 0,
+        },
+      },
+    ])
+
+    expect(unavailableSummary.dbCommandP95Available).toBe(false)
+    expect(unavailableSummary.dbCommandP99Available).toBe(false)
+    expect(unavailableSummary.dbConnectionOpenP95Available).toBe(false)
+
+    const availableSummary = buildDiagnosticsSnapshotSummary([
+      {
+        timestamp: '2026-05-05T00:00:01Z',
+        process: { memoryBytes: 1000, processorCount: 8 },
+        gc: { heapSizeBytes: 500, gen0Collections: 1, gen1Collections: 0, gen2Collections: 0, timeInGcPercent: 0.1 },
+        threadPool: { workerThreads: 2, pendingWorkItemCount: 0, completedWorkItemCount: 20, availableWorkerThreads: 98, maxWorkerThreads: 100 },
+        database: {
+          status: 'available',
+          latencyMs: 1,
+          openConnections: 4,
+          activeConnections: 1,
+          idleConnections: 3,
+          idleInTransactionConnections: 0,
+          commandLatency: { sampleCount: 4, p50Ms: 3, p95Ms: 7, p99Ms: 9 },
+          connectionOpenLatency: { sampleCount: 4, p50Ms: 1, p95Ms: 2, p99Ms: 4 },
+          timeoutCount: 0,
+          errorCount: 0,
+        },
+      },
+    ])
+
+    expect(availableSummary).toMatchObject({
+      dbCommandP95Available: true,
+      dbCommandP99Available: true,
+      dbConnectionOpenP95Available: true,
+      dbCommandP95Ms: { current: 7 },
+      dbCommandP99Ms: { current: 9 },
+      dbConnectionOpenP95Ms: { current: 2 },
     })
   })
 
@@ -576,6 +665,7 @@ describe('load test dashboard planning', () => {
           appElapsedP95Ms: 96,
           nginxRequestTimeP95Ms: 145,
           nginxUpstreamP95Ms: 121,
+          nginxUpstreamP95Source: 'runner.http_waiting_fallback',
         },
         targetMetrics: [
           {
@@ -612,6 +702,7 @@ describe('load test dashboard planning', () => {
         appElapsedP95Ms: 96,
         nginxRequestTimeP95Ms: 145,
         nginxUpstreamP95Ms: 121,
+        nginxUpstreamSource: 'payload.latencyBreakdown:runner.http_waiting_fallback',
       },
       httpCounts: {
         total: 50,

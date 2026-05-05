@@ -169,7 +169,14 @@ public sealed class K6RealLoadTestRunner(
             .DefaultIfEmpty(0)
             .Max();
         var nginxRequestP95 = MaxNullable(run.Targets.Select(target => ReadOptionalTrendMetric(metrics, $"target_{SanitizeMetricId(target.Id)}_nginx_request", "p(95)")));
-        var nginxUpstreamP95 = MaxNullable(run.Targets.Select(target => ReadOptionalTrendMetric(metrics, $"target_{SanitizeMetricId(target.Id)}_nginx_upstream", "p(95)")));
+        var nginxUpstreamHeaderP95 = MaxNullable(run.Targets.Select(target => ReadOptionalTrendMetric(metrics, $"target_{SanitizeMetricId(target.Id)}_nginx_upstream", "p(95)")));
+        var nginxUpstreamFallbackP95 = MaxNullable(run.Targets.Select(target => ReadOptionalTrendMetric(metrics, $"target_{SanitizeMetricId(target.Id)}_nginx_upstream_waiting_fallback", "p(95)")));
+        var nginxUpstreamP95 = nginxUpstreamHeaderP95 ?? nginxUpstreamFallbackP95;
+        var nginxUpstreamP95Source = nginxUpstreamHeaderP95.HasValue
+            ? "nginx.upstream_response_time.header"
+            : nginxUpstreamFallbackP95.HasValue
+                ? "runner.http_waiting_fallback"
+                : null;
 
         lock (run.SyncRoot)
         {
@@ -194,7 +201,8 @@ public sealed class K6RealLoadTestRunner(
                 duration.MaxMs,
                 appElapsedP95,
                 nginxRequestP95,
-                nginxUpstreamP95);
+                nginxUpstreamP95,
+                nginxUpstreamP95Source);
 
             run.TargetMetrics.Clear();
             foreach (var targetMetric in targetMetrics)
@@ -350,6 +358,11 @@ public sealed class K6RealLoadTestRunner(
         return Math.Round(value, 1);
     }
 
+    internal static string BuildScriptForTests()
+    {
+        return BuildScript();
+    }
+
     private static string BuildScript()
     {
         return """
@@ -365,6 +378,11 @@ public sealed class K6RealLoadTestRunner(
             const maxVus = Number.parseInt(__ENV.MAX_VUS || '10', 10);
             const startVus = Number.parseInt(__ENV.START_VUS || `${Math.max(1, Math.floor(maxVus * 0.1))}`, 10);
             const targets = JSON.parse(__ENV.TARGETS_JSON || '[]');
+            const summaryTrendStats = ['avg', 'min', 'med', 'p(90)', 'p(95)', 'p(99)', 'max', 'count'];
+            const thresholds = {
+              http_req_failed: ['rate<0.01'],
+              http_req_duration: ['p(95)<800', 'p(99)<1500'],
+            };
 
             const status2xx = new Counter('status_2xx');
             const status3xx = new Counter('status_3xx');
@@ -386,6 +404,7 @@ public sealed class K6RealLoadTestRunner(
                 appElapsed: new Trend(`target_${target.metricId}_app_elapsed`),
                 nginxRequest: new Trend(`target_${target.metricId}_nginx_request`),
                 nginxUpstream: new Trend(`target_${target.metricId}_nginx_upstream`),
+                nginxUpstreamWaitingFallback: new Trend(`target_${target.metricId}_nginx_upstream_waiting_fallback`),
               };
             }
 
@@ -393,11 +412,17 @@ public sealed class K6RealLoadTestRunner(
 
             function buildOptions() {
               if (scenario === 'public-api-soak') {
-                return { scenarios: { public_api_soak: { executor: 'constant-vus', vus: maxVus, duration: `${durationSeconds}s` } } };
+                return {
+                  summaryTrendStats,
+                  thresholds,
+                  scenarios: { public_api_soak: { executor: 'constant-vus', vus: maxVus, duration: `${durationSeconds}s` } },
+                };
               }
 
               if (scenario === 'public-api-spike') {
                 return {
+                  summaryTrendStats,
+                  thresholds,
                   scenarios: {
                     public_api_spike: {
                       executor: 'ramping-arrival-rate',
@@ -418,6 +443,8 @@ public sealed class K6RealLoadTestRunner(
 
               if (scenario === 'public-api-stress') {
                 return {
+                  summaryTrendStats,
+                  thresholds,
                   scenarios: {
                     public_api_stress: {
                       executor: 'ramping-vus',
@@ -433,6 +460,8 @@ public sealed class K6RealLoadTestRunner(
               }
 
               return {
+                summaryTrendStats,
+                thresholds,
                 scenarios: {
                   public_api_rps: {
                     executor: 'constant-arrival-rate',
@@ -460,7 +489,10 @@ public sealed class K6RealLoadTestRunner(
               recordStatus(response.status, metrics);
               recordOptionalHeaderMetric(response, 'X-App-Elapsed-Ms', metrics?.appElapsed, 1);
               recordOptionalHeaderMetric(response, 'X-Nginx-Request-Time', metrics?.nginxRequest, 1000);
-              recordOptionalHeaderMetric(response, 'X-Nginx-Upstream-Time', metrics?.nginxUpstream, 1000);
+              const recordedUpstreamHeader = recordOptionalHeaderMetric(response, ['X-Nginx-Upstream-Response-Time', 'X-Nginx-Upstream-Time'], metrics?.nginxUpstream, 1000);
+              if (!recordedUpstreamHeader) {
+                metrics?.nginxUpstreamWaitingFallback.add(response.timings.waiting);
+              }
               check(response, { 'status is < 500': (result) => result.status < 500 });
 
               if (scenario === 'public-api-soak') {
@@ -506,15 +538,30 @@ public sealed class K6RealLoadTestRunner(
               metrics?.failed.add(1);
             }
 
-            function recordOptionalHeaderMetric(response, headerName, trend, multiplier) {
-              if (!trend) return;
-              const raw = response.headers[headerName] || response.headers[headerName.toLowerCase()];
-              if (!raw) return;
-              const first = String(raw).split(',')[0].trim();
-              const value = Number.parseFloat(first);
-              if (Number.isFinite(value)) {
-                trend.add(value * multiplier);
+            function recordOptionalHeaderMetric(response, headerNames, trend, multiplier) {
+              if (!trend) return false;
+              const names = Array.isArray(headerNames) ? headerNames : [headerNames];
+              for (const headerName of names) {
+                const raw = response.headers[headerName] || response.headers[headerName.toLowerCase()];
+                const value = parseTimingHeader(raw, multiplier);
+                if (value !== null) {
+                  trend.add(value);
+                  return true;
+                }
               }
+              return false;
+            }
+
+            function parseTimingHeader(raw, multiplier) {
+              if (!raw) return null;
+              const values = String(raw)
+                .split(/[,:]/)
+                .map((part) => Number.parseFloat(part.trim()))
+                .filter((value) => Number.isFinite(value));
+
+              if (!values.length) return null;
+
+              return values.reduce((sum, value) => sum + value, 0) * multiplier;
             }
             """;
     }

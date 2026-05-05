@@ -1,0 +1,38 @@
+{
+  "task": "loadtest-measurement-reliability-2026-05-05",
+  "status": "local_validated_remote_ci_pending",
+  "changed": [
+    "db_error_health_red_threshold",
+    "db_timing_availability",
+    "k6_summary_p99",
+    "k6_thresholds",
+    "nginx_upstream_alias_header",
+    "k6_upstream_waiting_fallback",
+    "dashboard_upstream_source_display"
+  ],
+  "notChanged": [
+    "docker_dev_runner_base_url_http_nginx",
+    "public_api_query_implementation",
+    "database_pool_sizing",
+    "unrelated_lint_warnings"
+  ],
+  "validations": [
+    { "command": "npx vitest run src/test/load-test-dashboard.test.ts --pool=threads --maxWorkers=1", "result": "passed", "tests": "26/26" },
+    { "command": "dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj --filter FullyQualifiedName~RealLoadTestRunnerComponentTests --no-restore", "result": "passed", "tests": "1/1" },
+    { "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~StartupCompositionTests.RealLoadTestControlPlane --no-restore", "result": "passed", "tests": "4/4" },
+    { "command": "npm run typecheck", "result": "passed" },
+    { "command": "npm run lint", "result": "passed_with_existing_warnings", "warnings": 6 },
+    { "command": "docker compose dev build/start backend frontend nginx", "result": "passed" },
+    { "command": "npx playwright test tests/admin-load-test-dashboard.spec.ts --project=chromium-authenticated --workers=1", "result": "passed", "tests": "2/2" },
+    { "command": "live k6 real backend smoke", "result": "passed", "runId": "20260505-073055-public-api-rps-46e65dd8", "requests": 26, "failed": 0, "p95Ms": 9.6, "p99Ms": 13.4, "nginxUpstreamP95Ms": 9.3, "nginxUpstreamP95Source": "runner.http_waiting_fallback" },
+    { "command": "dotnet test backend/WoongBlog.sln --no-restore", "result": "passed", "componentTests": 115, "unitTests": 56, "architectureTests": 35, "integrationTests": 202, "skippedContractTests": 1 },
+    { "command": "npm test -- --run", "result": "passed", "testFiles": 82, "tests": 588 }
+  ],
+  "risks": [
+    "nginx upstream response time header can remain '-' in response-header phase; fallback is labeled and approximate",
+    "exact Npgsql pool busy idle counts remain unavailable",
+    "k6 thresholds intentionally change failure semantics when SLOs are exceeded",
+    "remote dev/main CI verification pending"
+  ],
+  "recommendation": "Commit and push dev, verify dev CI, then promote main and verify main CI."
+}

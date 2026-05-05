@@ -134,6 +134,7 @@ test('admin can run and stop a real backend test with polling + metrics fallback
   let stopCallCount = 0
   let statusCallCount = 0
   let metricsCallCount = 0
+  let diagnosticsRequestCount = 0
   let stopRequested = false
   let postedStartPayload: Record<string, unknown> | null = null
   let postedStartCsrfHeader: string | undefined
@@ -263,6 +264,46 @@ test('admin can run and stop a real backend test with polling + metrics fallback
     })
   })
 
+  await page.route(/\/api\/admin\/load-test\/diagnostics(?:\?[^#]*)?$/, async (route) => {
+    diagnosticsRequestCount += 1
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        timestamp: new Date().toISOString(),
+        process: { memoryBytes: 200_000_000 + diagnosticsRequestCount, processorCount: 8 },
+        gc: {
+          heapSizeBytes: 75_000_000 + diagnosticsRequestCount,
+          gen0Collections: diagnosticsRequestCount,
+          gen1Collections: 1,
+          gen2Collections: diagnosticsRequestCount > 1 ? 2 : 1,
+          timeInGcPercent: diagnosticsRequestCount > 1 ? 7 : 2,
+        },
+        threadPool: {
+          workerThreads: 6,
+          pendingWorkItemCount: diagnosticsRequestCount > 1 ? 4 : 1,
+          completedWorkItemCount: diagnosticsRequestCount * 20,
+          availableWorkerThreads: 32761,
+          maxWorkerThreads: 32767,
+        },
+        database: {
+          status: 'available',
+          latencyMs: 18 + diagnosticsRequestCount,
+          openConnections: 5,
+          activeConnections: 2,
+          idleConnections: 3,
+          idleInTransactionConnections: 1,
+          commandLatency: { sampleCount: diagnosticsRequestCount, p50Ms: 8, p95Ms: 22, p99Ms: 31 },
+          connectionOpenLatency: { sampleCount: diagnosticsRequestCount, p50Ms: 4, p95Ms: 11, p99Ms: 17 },
+          slowQueryCount: diagnosticsRequestCount > 1 ? 1 : 0,
+          recentSlowQueries: [],
+          timeoutCount: 0,
+          errorCount: diagnosticsRequestCount > 1 ? 2 : 0,
+        },
+      }),
+    })
+  })
+
   await page.goto('/admin/load-test')
 
   const panel = page.getByTestId('real-backend-test-panel')
@@ -311,12 +352,21 @@ test('admin can run and stop a real backend test with polling + metrics fallback
   await expect(panel.getByText(/ASP\.NET app elapsed p95: 35\.4 ms/i)).toBeVisible()
   await expect(panel.getByText(/nginx request_time p95: 48\.2 ms/i)).toBeVisible()
   await expect(panel.getByText(/nginx upstream p95: 39\.1 ms/i)).toBeVisible()
+  await expect(panel.getByText(/db command p95: 22 ms/i)).toBeVisible()
   await expect(panel.getByText('123.4 rps')).toBeVisible()
   await expect(panel.getByRole('paragraph').filter({ hasText: /^45\.6 ms$/ })).toBeVisible()
   await expect(panel.getByText(/total 10 · ok 9 · failed 1/i)).toBeVisible()
   await expect(panel.getByTestId('real-backend-target-summary')).toContainText('Study list')
   await expect(panel.getByTestId('real-backend-target-summary')).toContainText('/api/public/blogs/custom-real-study')
   await expect(panel.getByTestId('real-backend-target-summary')).toContainText('5 / 5')
+  await expect.poll(() => diagnosticsRequestCount).toBeGreaterThan(0)
+  await expect(page.getByTestId('load-test-runtime-panel')).toContainText(/Time in GC/)
+  await expect(page.getByTestId('load-test-runtime-panel')).toContainText(/ThreadPool queue/)
+  await expect(page.getByTestId('load-test-runtime-panel')).toContainText(/Runtime red/)
+  await expect(page.getByTestId('load-test-runtime-panel')).toContainText(/samples collected from the ASP\.NET Core backend/)
+  await expect(page.getByTestId('load-test-database-panel')).toContainText(/DB command P95/)
+  await expect(page.getByTestId('load-test-database-panel')).toContainText(/DB errors/)
+  await expect(page.getByTestId('load-test-database-panel')).toContainText(/Idle in transaction/)
 
   await panel.getByRole('button', { name: 'Stop real backend test' }).click()
   await expect.poll(() => stopCallCount).toBe(1)
