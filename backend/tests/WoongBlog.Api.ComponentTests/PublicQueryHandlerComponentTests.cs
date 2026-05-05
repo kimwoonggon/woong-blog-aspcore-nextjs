@@ -274,6 +274,61 @@ public class PublicQueryHandlerComponentTests
     }
 
     [Fact]
+    public async Task GetHomeQueryHandler_DoesNotUseWorkVideoAsFeaturedThumbnailFallback()
+    {
+        await using var dbContext = CreateDbContext();
+        var now = new DateTimeOffset(2026, 5, 6, 12, 0, 0, TimeSpan.Zero);
+        var workId = Guid.NewGuid();
+        dbContext.SiteSettings.Add(new SiteSetting
+        {
+            Singleton = true,
+            OwnerName = "Public Owner",
+            Tagline = "Public Tagline"
+        });
+        dbContext.Pages.Add(new PageEntity
+        {
+            Id = Guid.NewGuid(),
+            Slug = "home",
+            Title = "Home",
+            ContentJson = "{}"
+        });
+        dbContext.Works.Add(new Work
+        {
+            Id = workId,
+            Title = "Video Thumbnail Work",
+            Slug = "video-thumbnail-work",
+            Excerpt = "published",
+            Category = "public",
+            Period = "2026",
+            Tags = ["public", "test"],
+            ContentJson = "{}",
+            AllPropertiesJson = "{}",
+            Published = true,
+            PublishedAt = now,
+            CreatedAt = now,
+            UpdatedAt = now
+        });
+        dbContext.WorkVideos.Add(new WorkVideo
+        {
+            Id = Guid.NewGuid(),
+            WorkId = workId,
+            SourceType = WorkVideoSourceTypes.YouTube,
+            SourceKey = "home-video-fallback",
+            SortOrder = 0,
+            CreatedAt = now
+        });
+        await dbContext.SaveChangesAsync();
+
+        var handler = new GetHomeQueryHandler(CreateHomeQueryStore(dbContext));
+
+        var result = await handler.Handle(new GetHomeQuery(), CancellationToken.None);
+
+        Assert.NotNull(result);
+        var featuredWork = Assert.Single(result!.FeaturedWorks);
+        Assert.Equal(string.Empty, featuredWork.ThumbnailUrl);
+    }
+
+    [Fact]
     public async Task GetSiteSettingsQueryHandler_ReturnsAllPublicSocialFields()
     {
         await using var dbContext = CreateDbContext();
@@ -359,6 +414,48 @@ public class PublicQueryHandlerComponentTests
 
         Assert.Single(result.Items);
         Assert.Equal("/media/thumb.png", result.Items[0].ThumbnailUrl);
+    }
+
+    [Fact]
+    public async Task GetWorksQueryHandler_DoesNotUseWorkVideoAsPublicThumbnailFallback()
+    {
+        await using var dbContext = CreateDbContext();
+        var now = new DateTimeOffset(2026, 5, 6, 12, 0, 0, TimeSpan.Zero);
+        var workId = Guid.NewGuid();
+        dbContext.Works.Add(new Work
+        {
+            Id = workId,
+            Title = "Video Card Work",
+            Slug = "video-card-work",
+            Excerpt = "published",
+            Category = "public",
+            Period = "2026",
+            Tags = ["public", "test"],
+            ContentJson = "{}",
+            AllPropertiesJson = "{}",
+            Published = true,
+            PublishedAt = now,
+            CreatedAt = now,
+            UpdatedAt = now
+        });
+        dbContext.WorkVideos.Add(new WorkVideo
+        {
+            Id = Guid.NewGuid(),
+            WorkId = workId,
+            SourceType = WorkVideoSourceTypes.YouTube,
+            SourceKey = "list-video-fallback",
+            SortOrder = 0,
+            CreatedAt = now
+        });
+        await dbContext.SaveChangesAsync();
+
+        var handler = new GetWorksQueryHandler(CreateWorkQueryStore(dbContext));
+
+        var result = await handler.Handle(new GetWorksQuery(Page: 1, PageSize: 12), CancellationToken.None);
+
+        var item = Assert.Single(result.Items);
+        Assert.Equal("video-card-work", item.Slug);
+        Assert.Equal(string.Empty, item.ThumbnailUrl);
     }
 
     [Fact]
@@ -794,6 +891,51 @@ public class PublicQueryHandlerComponentTests
         Assert.Equal(2, result.VideosVersion);
         Assert.Equal(new[] { "First", "Second" }, result.Videos.Select(x => x.OriginalFileName).ToArray());
         Assert.Equal("/media/videos/detail-first.mp4", result.Videos[0].PlaybackUrl);
+    }
+
+    [Fact]
+    public async Task GetWorkBySlugQueryHandler_ReturnsVideosButDoesNotUseVideoAsPublicThumbnailFallback()
+    {
+        await using var dbContext = CreateDbContext();
+        var workId = Guid.NewGuid();
+        var now = new DateTimeOffset(2026, 5, 6, 12, 0, 0, TimeSpan.Zero);
+        dbContext.Works.Add(new Work
+        {
+            Id = workId,
+            Title = "Video Detail Work",
+            Slug = "video-detail-work",
+            Excerpt = "detail excerpt",
+            Category = "detail",
+            Tags = ["detail", "public"],
+            ContentJson = "{}",
+            AllPropertiesJson = "{}",
+            VideosVersion = 1,
+            Published = true,
+            PublishedAt = now,
+            CreatedAt = now,
+            UpdatedAt = now
+        });
+        dbContext.WorkVideos.Add(new WorkVideo
+        {
+            Id = Guid.NewGuid(),
+            WorkId = workId,
+            SourceType = WorkVideoSourceTypes.YouTube,
+            SourceKey = "detail-video-fallback",
+            OriginalFileName = "Detail YouTube",
+            SortOrder = 0,
+            CreatedAt = now
+        });
+        await dbContext.SaveChangesAsync();
+
+        var handler = new GetWorkBySlugQueryHandler(CreateWorkQueryStore(dbContext));
+
+        var result = await handler.Handle(new GetWorkBySlugQuery("video-detail-work"), CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Equal(string.Empty, result!.ThumbnailUrl);
+        var video = Assert.Single(result.Videos);
+        Assert.Equal(WorkVideoSourceTypes.YouTube, video.SourceType);
+        Assert.Equal("detail-video-fallback", video.SourceKey);
     }
 
     [Fact]
