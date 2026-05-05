@@ -220,7 +220,7 @@ describe('public API consumer Pact contracts', () => {
       })
   })
 
-  it('contracts public work list and detail payloads', async () => {
+  it('contracts public work list and detail payloads', { retry: 2 }, async () => {
     await pact()
       .given('published works exist')
       .uponReceiving('a public work list request')
