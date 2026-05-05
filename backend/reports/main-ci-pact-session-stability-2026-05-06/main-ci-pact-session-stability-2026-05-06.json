@@ -1,0 +1,49 @@
+{
+  "task": "main-ci-pact-session-stability-2026-05-06",
+  "summary": "Stabilized frontend Pact consumer tests after main push CI missed the unauthenticated session request.",
+  "changed": [
+    "Added shared retry options for all Pact consumer interactions",
+    "Added withBrowserApi helper for NEXT_PUBLIC_API_BASE_URL setup and cleanup",
+    "Asserted response.ok in the unauthenticated session Pact test",
+    "Updated todolist-2026-05-06.md"
+  ],
+  "intentionally_not_changed": [
+    "Production frontend behavior",
+    "Backend production code",
+    "Real Backend Test target semantics",
+    "Seed priority",
+    "pageSize=12 behavior",
+    "Cache behavior",
+    "Docker, nginx, DB pool, or runtime config"
+  ],
+  "validations": [
+    {
+      "command": "npm run test -- --run src/test/pact/public-api-consumer.pact.test.ts",
+      "result": "passed",
+      "tests": "6/6"
+    },
+    {
+      "command": "npm run test -- --run src/test/pact/public-api-consumer.pact.test.ts src/test/public-api-clients.test.ts src/test/public-api-contracts.test.ts src/test/public-admin-client-gate.test.tsx src/test/public-admin-rendering.test.tsx",
+      "result": "passed",
+      "tests": "44/44"
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "passed"
+    },
+    {
+      "command": "npm run lint",
+      "result": "passed_with_existing_warnings",
+      "warnings": 6
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    }
+  ],
+  "risks": [
+    "The original failure was observed in GitHub Actions full-suite execution and did not reproduce in focused local runs.",
+    "If Pact flakes continue, isolate Pact consumer tests into a dedicated serial CI job."
+  ],
+  "recommendation": "Open a PR into dev, verify CI, merge, then promote runtime-only main and verify main CI."
+}

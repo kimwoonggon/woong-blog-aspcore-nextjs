@@ -4,6 +4,7 @@ import { Matchers, PactV3, SpecificationVersion } from '@pact-foundation/pact'
 
 const pactDirectory = path.resolve('tests/contracts/pacts')
 const { atLeastLike, boolean, integer, like } = Matchers
+const pactTestOptions = { retry: 2 } as const
 const publicApiModules = [
   '@/lib/api/base',
   '@/lib/api/blogs',
@@ -50,6 +51,20 @@ async function withServerApi<T>(baseUrl: string, callback: () => Promise<T>) {
   }
 }
 
+async function withBrowserApi<T>(baseUrl: string, callback: () => Promise<T>) {
+  restorePactTestGlobals()
+  restorePactTestModules()
+  vi.resetModules()
+  vi.stubEnv('NEXT_PUBLIC_API_BASE_URL', `${baseUrl}/api`)
+
+  try {
+    return await callback()
+  } finally {
+    restorePactTestGlobals()
+    restorePactTestModules()
+  }
+}
+
 describe('public API consumer Pact contracts', () => {
   beforeEach(() => {
     restorePactTestGlobals()
@@ -61,7 +76,7 @@ describe('public API consumer Pact contracts', () => {
     restorePactTestModules()
   })
 
-  it('contracts public home payload', async () => {
+  it('contracts public home payload', pactTestOptions, async () => {
     await pact()
       .given('public home exists')
       .uponReceiving('a public home request')
@@ -114,7 +129,7 @@ describe('public API consumer Pact contracts', () => {
       })
   })
 
-  it('contracts public site settings payload', async () => {
+  it('contracts public site settings payload', pactTestOptions, async () => {
     await pact()
       .given('public site settings exist')
       .uponReceiving('a public site settings request')
@@ -139,7 +154,7 @@ describe('public API consumer Pact contracts', () => {
       })
   })
 
-  it('contracts public page payload', async () => {
+  it('contracts public page payload', pactTestOptions, async () => {
     await pact()
       .given('public page exists')
       .uponReceiving('a public page request')
@@ -161,7 +176,7 @@ describe('public API consumer Pact contracts', () => {
       })
   })
 
-  it('contracts public blog list and detail payloads', { retry: 2 }, async () => {
+  it('contracts public blog list and detail payloads', pactTestOptions, async () => {
     await pact()
       .given('published blogs exist')
       .uponReceiving('a public blog list request')
@@ -220,7 +235,7 @@ describe('public API consumer Pact contracts', () => {
       })
   })
 
-  it('contracts public work list and detail payloads', { retry: 2 }, async () => {
+  it('contracts public work list and detail payloads', pactTestOptions, async () => {
     await pact()
       .given('published works exist')
       .uponReceiving('a public work list request')
@@ -287,7 +302,7 @@ describe('public API consumer Pact contracts', () => {
       })
   })
 
-  it('contracts unauthenticated session payload', async () => {
+  it('contracts unauthenticated session payload', pactTestOptions, async () => {
     await pact()
       .given('visitor is anonymous')
       .uponReceiving('an auth session request without a session cookie')
@@ -299,14 +314,15 @@ describe('public API consumer Pact contracts', () => {
         }),
       })
       .executeTest(async (mockServer) => {
-        vi.resetModules()
-        vi.stubEnv('NEXT_PUBLIC_API_BASE_URL', `${mockServer.url}/api`)
-        const { getApiBaseUrl } = await import('@/lib/api/base')
-        const response = await fetch(`${getApiBaseUrl()}/auth/session`, {
-          credentials: 'include',
-          cache: 'no-store',
+        await withBrowserApi(mockServer.url, async () => {
+          const { getApiBaseUrl } = await import('@/lib/api/base')
+          const response = await fetch(`${getApiBaseUrl()}/auth/session`, {
+            credentials: 'include',
+            cache: 'no-store',
+          })
+          expect(response.ok).toBe(true)
+          await expect(response.json()).resolves.toMatchObject({ authenticated: false })
         })
-        await expect(response.json()).resolves.toMatchObject({ authenticated: false })
       })
   })
 })
