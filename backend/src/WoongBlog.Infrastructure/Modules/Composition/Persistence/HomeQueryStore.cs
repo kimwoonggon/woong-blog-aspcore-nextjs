@@ -42,26 +42,36 @@ public sealed class HomeQueryStore(WoongBlogDbContext dbContext) : IHomeQuerySto
 
     public async Task<IReadOnlyList<WorkCardDto>> GetFeaturedWorksAsync(CancellationToken cancellationToken)
     {
-        var assets = await dbContext.Assets.AsNoTracking().ToListAsync(cancellationToken);
-        var assetById = assets.ToDictionary(x => x.Id, x => x);
-        var assetPublicUrlById = assets.ToDictionary(x => x.Id, x => x.PublicUrl);
-
         var featuredWorks = await dbContext.Works
             .AsNoTracking()
             .Where(x => x.Published)
             .OrderByDescending(x => x.PublishedAt)
             .Take(3)
+            .Select(work => new FeaturedWorkRow(
+                work.Id,
+                work.Slug,
+                work.Title,
+                work.Excerpt,
+                work.Category,
+                work.Period,
+                work.Tags,
+                work.ThumbnailAssetId,
+                work.IconAssetId,
+                work.PublishedAt))
             .ToListAsync(cancellationToken);
-        var featuredWorkIds = featuredWorks.Select(work => work.Id).ToArray();
-        var featuredWorkVideoRows = await dbContext.WorkVideos
-            .AsNoTracking()
-            .Where(x => featuredWorkIds.Contains(x.WorkId))
-            .OrderBy(x => x.SortOrder)
-            .ThenBy(x => x.CreatedAt)
-            .ToListAsync(cancellationToken);
-        var featuredWorkVideos = featuredWorkVideoRows
-            .GroupBy(x => x.WorkId)
-            .ToDictionary(x => x.Key, x => (IReadOnlyList<WorkVideo>)x.ToList());
+
+        var featuredWorkIds = featuredWorks
+            .Where(work => work.ThumbnailAssetId is null)
+            .Select(work => work.Id)
+            .ToArray();
+        var featuredWorkVideos = await GetWorkVideoLookupAsync(featuredWorkIds, cancellationToken);
+        var assetIds = featuredWorks
+            .SelectMany(work => new[] { work.ThumbnailAssetId, work.IconAssetId })
+            .Where(assetId => assetId.HasValue)
+            .Select(assetId => assetId!.Value)
+            .Distinct()
+            .ToArray();
+        var assetPublicUrlById = await GetAssetPublicUrlLookupAsync(assetIds, cancellationToken);
 
         return featuredWorks.Select(work => new WorkCardDto(
             work.Id,
@@ -73,24 +83,36 @@ public sealed class HomeQueryStore(WoongBlogDbContext dbContext) : IHomeQuerySto
             work.Tags,
             WorkThumbnailUrlResolver.ResolveThumbnailUrl(
                 work.ThumbnailAssetId,
-                work.ContentJson,
+                contentJson: null,
                 featuredWorkVideos.TryGetValue(work.Id, out var workVideos) ? workVideos : Array.Empty<WorkVideo>(),
                 assetPublicUrlById),
-            ResolveAssetUrl(work.IconAssetId, assetById),
+            ResolveAssetUrl(work.IconAssetId, assetPublicUrlById),
             work.PublishedAt
         )).ToList();
     }
 
     public async Task<IReadOnlyList<BlogCardDto>> GetRecentPostsAsync(CancellationToken cancellationToken)
     {
-        var assets = await dbContext.Assets.AsNoTracking().ToListAsync(cancellationToken);
-        var assetById = assets.ToDictionary(x => x.Id, x => x);
         var recentPosts = await dbContext.Blogs
             .AsNoTracking()
             .Where(x => x.Published)
             .OrderByDescending(x => x.PublishedAt)
             .Take(6)
+            .Select(post => new RecentBlogRow(
+                post.Id,
+                post.Slug,
+                post.Title,
+                post.Excerpt,
+                post.Tags,
+                post.CoverAssetId,
+                post.PublishedAt))
             .ToListAsync(cancellationToken);
+        var assetIds = recentPosts
+            .Where(post => post.CoverAssetId.HasValue)
+            .Select(post => post.CoverAssetId!.Value)
+            .Distinct()
+            .ToArray();
+        var assetPublicUrlById = await GetAssetPublicUrlLookupAsync(assetIds, cancellationToken);
 
         return recentPosts.Select(post => new BlogCardDto(
             post.Id,
@@ -98,7 +120,7 @@ public sealed class HomeQueryStore(WoongBlogDbContext dbContext) : IHomeQuerySto
             post.Title,
             post.Excerpt,
             post.Tags,
-            ResolveAssetUrl(post.CoverAssetId, assetById),
+            ResolveAssetUrl(post.CoverAssetId, assetPublicUrlById),
             post.PublishedAt
         )).ToList();
     }
@@ -117,10 +139,67 @@ public sealed class HomeQueryStore(WoongBlogDbContext dbContext) : IHomeQuerySto
             .SingleOrDefaultAsync(cancellationToken) ?? string.Empty;
     }
 
-    private static string ResolveAssetUrl(Guid? assetId, IReadOnlyDictionary<Guid, Asset> assets)
+    private async Task<IReadOnlyDictionary<Guid, string>> GetAssetPublicUrlLookupAsync(
+        IReadOnlyCollection<Guid> assetIds,
+        CancellationToken cancellationToken)
     {
-        return assetId is not null && assets.TryGetValue(assetId.Value, out var asset)
-            ? asset.PublicUrl
+        if (assetIds.Count == 0)
+        {
+            return new Dictionary<Guid, string>();
+        }
+
+        return await dbContext.Assets
+            .AsNoTracking()
+            .Where(x => assetIds.Contains(x.Id))
+            .ToDictionaryAsync(x => x.Id, x => x.PublicUrl, cancellationToken);
+    }
+
+    private async Task<IReadOnlyDictionary<Guid, IReadOnlyList<WorkVideo>>> GetWorkVideoLookupAsync(
+        IReadOnlyCollection<Guid> workIds,
+        CancellationToken cancellationToken)
+    {
+        if (workIds.Count == 0)
+        {
+            return new Dictionary<Guid, IReadOnlyList<WorkVideo>>();
+        }
+
+        var videoRows = await dbContext.WorkVideos
+            .AsNoTracking()
+            .Where(x => workIds.Contains(x.WorkId))
+            .OrderBy(x => x.SortOrder)
+            .ThenBy(x => x.CreatedAt)
+            .ToListAsync(cancellationToken);
+
+        return videoRows
+            .GroupBy(x => x.WorkId)
+            .ToDictionary(x => x.Key, x => (IReadOnlyList<WorkVideo>)x.ToList());
+    }
+
+    private static string ResolveAssetUrl(Guid? assetId, IReadOnlyDictionary<Guid, string> assetPublicUrlById)
+    {
+        return assetId is not null && assetPublicUrlById.TryGetValue(assetId.Value, out var publicUrl)
+            ? publicUrl
             : string.Empty;
     }
+
+    private sealed record FeaturedWorkRow(
+        Guid Id,
+        string Slug,
+        string Title,
+        string Excerpt,
+        string Category,
+        string? Period,
+        string[] Tags,
+        Guid? ThumbnailAssetId,
+        Guid? IconAssetId,
+        DateTimeOffset? PublishedAt);
+
+    private sealed record RecentBlogRow(
+        Guid Id,
+        string Slug,
+        string Title,
+        string Excerpt,
+        string[] Tags,
+        Guid? CoverAssetId,
+        DateTimeOffset? PublishedAt);
 }

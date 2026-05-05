@@ -3,26 +3,63 @@
 <head>
   <meta charset="utf-8">
   <title>Real Backend Target Reality Correction - 2026-05-06</title>
-  <style>body{font-family:Arial,sans-serif;max-width:960px;margin:32px auto;line-height:1.5}code{background:#f3f3f3;padding:1px 4px}li{margin:4px 0}</style>
+  <style>
+    body { font-family: sans-serif; line-height: 1.5; margin: 2rem; max-width: 980px; color: #172033; }
+    h1, h2 { color: #0f2742; }
+    code { background: #eef2f7; padding: 0.1rem 0.25rem; border-radius: 4px; }
+    .status { border-left: 4px solid #0b7a53; padding-left: 1rem; }
+    .warn { border-left: 4px solid #b7791f; padding-left: 1rem; }
+    table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+    th, td { border: 1px solid #d8dee9; padding: 0.5rem; text-align: left; }
+    th { background: #f5f7fb; }
+  </style>
 </head>
 <body>
   <h1>Real Backend Target Reality Correction - 2026-05-06</h1>
-  <p>Corrected Real Backend Test to use current public-content read targets and realistic <code>pageSize=12</code> list targets. Public list DTOs are verified to omit <code>contentJson</code>; detail DTOs keep it.</p>
+  <section class="status">
+    <h2>Goal</h2>
+    <p>Use current public content for Real Backend Test, keep list targets at <code>pageSize=12</code>, and improve backend public hot-path query structure without cache masking.</p>
+  </section>
   <h2>Changed</h2>
   <ul>
-    <li>Removed forced <code>seeded-work</code>/<code>seeded-blog</code> priority.</li>
-    <li>Restored Work/Blog list target paths to <code>pageSize=12</code>.</li>
-    <li>Removed <code>ContentJson</code> from public Work list projection.</li>
-    <li>Marked old seed/pageSize=1 k6 evidence as superseded.</li>
+    <li>Removed seeded slug priority from the admin Real Backend page.</li>
+    <li>Restored Work/Blog list targets to <code>pageSize=12</code>.</li>
+    <li>Removed <code>ContentJson</code> from public Work list card projection.</li>
+    <li>Changed public home featured/recent cards to projection plus targeted asset/video lookups.</li>
+    <li>Added regression coverage for home cards not using body inline images as thumbnail fallback.</li>
+    <li>Superseded old seed/pageSize=1 k6 evidence.</li>
   </ul>
-  <h2>Validation</h2>
+  <h2>Query Structure Audit</h2>
+  <table>
+    <tr><th>Path</th><th>Result</th></tr>
+    <tr><td>Public Work list</td><td>Published filter, count, skip/take, card projection only; no body JSON.</td></tr>
+    <tr><td>Public Blog list</td><td>Published filter, count, skip/take, card projection only; no body JSON.</td></tr>
+    <tr><td>Home featured works</td><td>Take 3, card projection only, targeted asset IDs, targeted video fallback lookup.</td></tr>
+    <tr><td>Home recent posts</td><td>Take 6, card projection only, targeted asset IDs.</td></tr>
+    <tr><td>Details</td><td>Single published slug lookup with content JSON, intentionally required for rendering.</td></tr>
+  </table>
+  <h2>2CPU/8GB Evidence</h2>
+  <table>
+    <tr><th>Scenario</th><th>Requests</th><th>RPS</th><th>Failure Rate</th><th>P95</th><th>Dropped</th></tr>
+    <tr><td>Constant 100rps 30s</td><td>3,001</td><td>100.0</td><td>0%</td><td>11.3 ms</td><td>0</td></tr>
+    <tr><td>Spike 100 -> 1000 -> 100, 60s</td><td>26,403</td><td>330.0 avg</td><td>3.52%</td><td>3,653.5 ms</td><td>12,596</td></tr>
+  </table>
+  <h2>Validations</h2>
   <ul>
-    <li>Vitest load-test dashboard: 27/27 passed.</li>
-    <li>Public endpoint integration tests: 27/27 passed.</li>
-    <li>Public query component tests: 34/34 passed.</li>
-    <li>Typecheck, lint, diff check, dev compose build, health check, and focused Playwright all passed.</li>
+    <li>RED/GREEN focused home regression test completed.</li>
+    <li>PublicQueryHandler component tests: 35/35 passed.</li>
+    <li>PublicEndpoints integration tests: 27/27 passed.</li>
+    <li>Full backend solution tests passed: Component 117, Unit 56, Architecture 35, Integration 202; Contract 1 skipped.</li>
+    <li>Full frontend unit tests passed: 82 files, 589 tests.</li>
+    <li>Frontend load-test dashboard unit tests, typecheck, lint, dev compose health, and focused Playwright passed in the correction flow.</li>
   </ul>
+  <h2>CI Promotion Status</h2>
+  <p>Previous correction reached dev and main successfully. The current home query-shape correction still requires a new PR to dev, dev CI, automatic main promotion, and main CI verification.</p>
+  <section class="warn">
+    <h2>Risks</h2>
+    <p>Public card paths no longer use inline body images as thumbnail fallback. 1000rps spike remains red on the constrained 2CPU/8GB-total profile; maxVUs is not capacity.</p>
+  </section>
   <h2>Recommendation</h2>
-  <p>Use Real Backend Test with current public-content read targets and <code>pageSize=12</code> list targets. Do not treat seeded defaults as realistic capacity proof.</p>
+  <p>Use corrected pageSize=12 current-content Real Backend tests. Public list and home card paths are structurally improved; next performance work should target heavy detail endpoint CPU/allocation/serialization and DB concurrency before cache.</p>
 </body>
 </html>
