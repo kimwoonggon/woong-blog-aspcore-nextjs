@@ -432,6 +432,19 @@ public class StartupCompositionTests : IClassFixture<CustomWebApplicationFactory
         Assert.NotNull(metricsPayload.LatencyBreakdown);
         Assert.True(metricsPayload.LatencyBreakdown.P95Ms >= 0);
         Assert.True(metricsPayload.LatencyBreakdown.AppElapsedP95Ms >= 0);
+        Assert.NotNull(metricsPayload.Diagnostics);
+        Assert.NotEmpty(metricsPayload.Diagnostics);
+        var runDiagnostics = metricsPayload.Diagnostics[^1];
+        Assert.True(runDiagnostics.Process.MemoryBytes > 0);
+        Assert.True(runDiagnostics.Process.ProcessorCount > 0);
+        Assert.True(runDiagnostics.Gc.HeapSizeBytes >= 0);
+        Assert.True(runDiagnostics.ThreadPool.MaxWorkerThreads > 0);
+        Assert.True(runDiagnostics.Database.CommandLatency.SampleCount >= 0);
+        Assert.True(runDiagnostics.Database.ConnectionOpenLatency.SampleCount >= 0);
+        Assert.Contains(metricsPayload.Metrics, metric => metric.Diagnostics is not null);
+        Assert.Equal(
+            metricsPayload.Metrics.Count(static metric => metric.Diagnostics is not null),
+            metricsPayload.Diagnostics.Count);
 
         var stopResponse = await client.PostAsync(
             $"/api/admin/load-tests/real/{startPayload.RunId}/stop",
@@ -619,7 +632,8 @@ public class StartupCompositionTests : IClassFixture<CustomWebApplicationFactory
         double MaxMs,
         IReadOnlyDictionary<string, long> StatusCounts,
         RealLoadTestLatencyBreakdownResponse LatencyBreakdown,
-        IReadOnlyList<RealLoadTestTargetMetricsResponse> TargetMetrics);
+        IReadOnlyList<RealLoadTestTargetMetricsResponse> TargetMetrics,
+        RealLoadTestDiagnosticsResponse? Diagnostics);
 
     private sealed record RealLoadTestMetricsResponse(
         string RunId,
@@ -634,7 +648,8 @@ public class StartupCompositionTests : IClassFixture<CustomWebApplicationFactory
         IReadOnlyDictionary<string, long> StatusCounts,
         RealLoadTestLatencyBreakdownResponse LatencyBreakdown,
         IReadOnlyList<RealLoadTestTargetMetricsResponse> TargetMetrics,
-        IReadOnlyList<RealLoadTestMetricPoint> Metrics);
+        IReadOnlyList<RealLoadTestMetricPoint> Metrics,
+        IReadOnlyList<RealLoadTestDiagnosticsResponse> Diagnostics);
 
     private sealed record RealLoadTestStopResponse(
         string RunId,
@@ -667,6 +682,59 @@ public class StartupCompositionTests : IClassFixture<CustomWebApplicationFactory
         long FailureCount,
         double P95Ms,
         IReadOnlyDictionary<string, long> StatusCounts);
+
+    private sealed record RealLoadTestDiagnosticsResponse(
+        DateTimeOffset Timestamp,
+        RealLoadTestProcessDiagnosticsResponse Process,
+        RealLoadTestGcDiagnosticsResponse Gc,
+        RealLoadTestThreadPoolDiagnosticsResponse ThreadPool,
+        RealLoadTestDatabaseDiagnosticsResponse Database);
+
+    private sealed record RealLoadTestProcessDiagnosticsResponse(
+        long MemoryBytes,
+        int ProcessorCount);
+
+    private sealed record RealLoadTestGcDiagnosticsResponse(
+        long HeapSizeBytes,
+        int Gen0Collections,
+        int Gen1Collections,
+        int Gen2Collections,
+        double TimeInGcPercent);
+
+    private sealed record RealLoadTestThreadPoolDiagnosticsResponse(
+        int WorkerThreads,
+        long PendingWorkItemCount,
+        long CompletedWorkItemCount,
+        int AvailableWorkerThreads,
+        int MaxWorkerThreads);
+
+    private sealed record RealLoadTestDatabaseDiagnosticsResponse(
+        string Status,
+        double? LatencyMs,
+        int? OpenConnections,
+        int? ActiveConnections,
+        int? IdleConnections,
+        int? IdleInTransactionConnections,
+        RealLoadTestDatabaseLatencyResponse CommandLatency,
+        RealLoadTestDatabaseLatencyResponse ConnectionOpenLatency,
+        long SlowQueryCount,
+        IReadOnlyList<RealLoadTestSlowQueryResponse> RecentSlowQueries,
+        long TimeoutCount,
+        long ErrorCount,
+        string? Error,
+        string? ErrorCategory);
+
+    private sealed record RealLoadTestDatabaseLatencyResponse(
+        int SampleCount,
+        double? P50Ms,
+        double? P95Ms,
+        double? P99Ms);
+
+    private sealed record RealLoadTestSlowQueryResponse(
+        DateTimeOffset CapturedAt,
+        double DurationMs,
+        string SqlPreview,
+        string? ErrorCategory);
 
     private sealed class ThrowingDatabaseDiagnosticsCollector : IDatabaseDiagnosticsCollector
     {

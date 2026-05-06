@@ -232,6 +232,7 @@ export type RealBackendRunSnapshot = {
   latencyBreakdown: RealBackendLatencyBreakdown
   httpCounts: RealBackendHttpCounts
   targetMetrics: RealBackendTargetMetric[]
+  diagnostics: RuntimeDiagnosticsPayload[]
 }
 
 export const DEFAULT_LOAD_TEST_CONFIG: LoadTestConfig = {
@@ -1023,6 +1024,7 @@ export function summarizeRealBackendRunSnapshot(runId: string, statusPayload: un
   const metricPoints = Array.isArray(metricsRecord.metrics)
     ? metricsRecord.metrics.filter(isRecord)
     : []
+  const diagnostics = extractRealBackendDiagnostics(metricsRecord, metricPoints)
   const latestMetricPoint = metricPoints.at(-1) ?? null
   const status = readStringFromRecord(statusRecord, ['status', 'state', 'phase'])
     ?? readStringFromRecord(metricsRecord, ['status', 'state', 'phase'])
@@ -1069,7 +1071,25 @@ export function summarizeRealBackendRunSnapshot(runId: string, statusPayload: un
       : extractRealBackendLatencyBreakdown(metricsRecord, statusRecord),
     httpCounts,
     targetMetrics,
+    diagnostics,
   }
+}
+
+function extractRealBackendDiagnostics(
+  metricsRecord: Record<string, unknown>,
+  metricPoints: Record<string, unknown>[],
+): RuntimeDiagnosticsPayload[] {
+  const directDiagnostics = Array.isArray(metricsRecord.diagnostics)
+    ? metricsRecord.diagnostics.filter(isRuntimeDiagnosticsPayload)
+    : []
+
+  if (directDiagnostics.length) {
+    return directDiagnostics
+  }
+
+  return metricPoints
+    .map((metricPoint) => metricPoint.diagnostics)
+    .filter(isRuntimeDiagnosticsPayload)
 }
 
 export function buildUserSteps(config: LoadTestConfig) {

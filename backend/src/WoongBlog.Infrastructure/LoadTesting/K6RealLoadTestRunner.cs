@@ -8,6 +8,7 @@ namespace WoongBlog.Infrastructure.LoadTesting;
 
 public sealed class K6RealLoadTestRunner(
     RealLoadTestReportStore reportStore,
+    ILoadTestDiagnosticsSampler diagnosticsSampler,
     IOptions<LoadTestingOptions> options,
     ILogger<K6RealLoadTestRunner> logger)
     : IRealLoadTestRunner
@@ -211,7 +212,8 @@ public sealed class K6RealLoadTestRunner(
             }
         }
 
-        await reportStore.AppendMetricAsync(run.RunId, CaptureMetric(run), cancellationToken);
+        var diagnostics = await diagnosticsSampler.CaptureAsync(cancellationToken);
+        await reportStore.AppendMetricAsync(run.RunId, CaptureMetric(run, diagnostics), cancellationToken);
         await reportStore.WriteSummaryAsync(CaptureSummary(run), cancellationToken);
     }
 
@@ -328,7 +330,9 @@ public sealed class K6RealLoadTestRunner(
         }
     }
 
-    private static RealLoadTestMetricPoint CaptureMetric(RealLoadTestRunEntry run)
+    private static RealLoadTestMetricPoint CaptureMetric(
+        RealLoadTestRunEntry run,
+        LoadTestDiagnosticsSnapshot diagnostics)
     {
         var snapshot = run.ToStatusResponse(DateTimeOffset.UtcNow);
         return new RealLoadTestMetricPoint(
@@ -343,7 +347,8 @@ public sealed class K6RealLoadTestRunner(
             snapshot.MaxMs,
             snapshot.StatusCounts,
             run.LatencyBreakdown,
-            snapshot.TargetMetrics);
+            snapshot.TargetMetrics,
+            diagnostics);
     }
 
     private static string SanitizeMetricId(string id)

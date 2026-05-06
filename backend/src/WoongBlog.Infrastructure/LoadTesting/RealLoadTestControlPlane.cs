@@ -133,6 +133,12 @@ public sealed class RealLoadTestControlPlane(
         }
 
         var metrics = await reportStore.ReadMetricsAsync(run.RunId, cancellationToken);
+        var diagnostics = metrics
+            .Select(static metric => metric.Diagnostics)
+            .Where(static diagnosticsSnapshot => diagnosticsSnapshot is not null)
+            .Select(static diagnosticsSnapshot => diagnosticsSnapshot!)
+            .ToArray();
+
         return new RealLoadTestMetricsResponse(
             run.RunId,
             summary.Status,
@@ -146,7 +152,8 @@ public sealed class RealLoadTestControlPlane(
             summary.StatusCounts,
             run.LatencyBreakdown,
             summary.TargetMetrics,
-            metrics);
+            metrics,
+            diagnostics);
     }
 
     public async Task<RealLoadTestStopResponse> StopAsync(string runId, CancellationToken cancellationToken)
