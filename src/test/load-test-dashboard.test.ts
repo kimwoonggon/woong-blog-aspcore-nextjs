@@ -288,7 +288,7 @@ describe('load test dashboard planning', () => {
   it('validates runtime diagnostics payloads and summarizes current peak delta values', () => {
     const first = {
       timestamp: '2026-05-04T00:00:00Z',
-      process: { memoryBytes: 1000, processorCount: 8 },
+      process: { memoryBytes: 1000, processorCount: 8, memoryLimitBytes: 8 * 1024, cpuQuotaCores: 2 },
       gc: { heapSizeBytes: 500, gen0Collections: 1, gen1Collections: 0, gen2Collections: 0, timeInGcPercent: 1 },
       threadPool: { workerThreads: 2, pendingWorkItemCount: 0, completedWorkItemCount: 20, availableWorkerThreads: 98, maxWorkerThreads: 100 },
       database: {
@@ -304,7 +304,7 @@ describe('load test dashboard planning', () => {
     const second = {
       ...first,
       timestamp: '2026-05-04T00:01:00Z',
-      process: { memoryBytes: 1800, processorCount: 8 },
+      process: { memoryBytes: 1800, processorCount: 8, memoryLimitBytes: 8 * 1024, cpuQuotaCores: 2 },
       gc: { heapSizeBytes: 900, gen0Collections: 3, gen1Collections: 1, gen2Collections: 2, timeInGcPercent: 12 },
       threadPool: { workerThreads: 8, pendingWorkItemCount: 40, completedWorkItemCount: 120, availableWorkerThreads: 92, maxWorkerThreads: 100 },
       database: {
@@ -320,6 +320,13 @@ describe('load test dashboard planning', () => {
         recentSlowQueries: [{ capturedAt: '2026-05-04T00:01:00Z', durationMs: 355.2, sqlPreview: "select * from works where slug='?'" }],
         timeoutCount: 1,
         errorCount: 1,
+        pool: {
+          databaseProvider: 'Postgres',
+          dbContextPoolSize: 128,
+          npgsqlMinimumPoolSize: 0,
+          npgsqlMaximumPoolSize: 40,
+          npgsqlPoolLimitSource: 'connection-string',
+        },
       },
     }
 
@@ -328,6 +335,9 @@ describe('load test dashboard planning', () => {
     expect(buildDiagnosticsSnapshotSummary([first, second])).toMatchObject({
       sampleCount: 2,
       memoryBytes: { current: 1800, peak: 1800, delta: 800 },
+      memoryLimitBytes: { current: 8192, peak: 8192, delta: 0 },
+      processorCount: { current: 8, peak: 8, delta: 0 },
+      cpuQuotaCores: { current: 2, peak: 2, delta: 0 },
       gcHeapBytes: { current: 900, peak: 900, delta: 400 },
       gen2Collections: { current: 2, peak: 2, delta: 2 },
       threadPoolWorkerThreads: { current: 8, peak: 8, delta: 6 },
@@ -344,6 +354,9 @@ describe('load test dashboard planning', () => {
       dbSlowQueryCount: { current: 2, peak: 2, delta: 2 },
       dbIdleConnections: { current: 4, peak: 4, delta: 2 },
       dbIdleInTransactionConnections: { current: 2, peak: 2, delta: 2 },
+      dbContextPoolSize: { current: 128, peak: 128, delta: 0 },
+      dbNpgsqlMaximumPoolSize: { current: 40, peak: 40, delta: 0 },
+      dbNpgsqlPoolConfigured: true,
     })
   })
 

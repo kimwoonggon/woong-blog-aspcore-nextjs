@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>HLS Upload Limit Fix Audit - 2026-05-07</title>
+  <style>
+    body { font-family: sans-serif; max-width: 920px; margin: 2rem auto; line-height: 1.5; color: #1f2933; }
+    code { background: #eef2f7; padding: 0.1rem 0.25rem; border-radius: 4px; }
+    h1, h2 { color: #102a43; }
+    li { margin: 0.25rem 0; }
+  </style>
+</head>
+<body>
+  <h1>HLS Upload Limit Fix Audit - 2026-05-07</h1>
+  <h2>Summary</h2>
+  <p>Reproduced the admin HLS upload failure as HTTP 413 from Kestrel's default <code>30000000</code> byte request limit. The app policy allows 200 MiB videos and nginx allows 250m, so the backend server limit was the first failing layer.</p>
+  <h2>Changed</h2>
+  <ul>
+    <li>Configured Kestrel max request body size to video policy plus 1 MiB multipart overhead.</li>
+    <li>Configured multipart form body limit to the 200 MiB video policy.</li>
+    <li>Added a startup regression test for upload limit alignment.</li>
+  </ul>
+  <h2>Validation</h2>
+  <ul>
+    <li>RED focused startup test failed before implementation with Kestrel limit <code>30000000</code>.</li>
+    <li>GREEN focused startup test passed after implementation.</li>
+    <li>Focused HLS integration tests passed 2/2.</li>
+    <li>WorkVideo policy unit tests passed 39/39.</li>
+    <li>Dev compose backend rebuild and health check passed.</li>
+    <li>Live 35 MiB repro changed from HTTP 413 to HTTP 400 app-level MP4 validation.</li>
+    <li>Backend solution tests passed: Contract 1 skipped, Component 126, Unit 59, Architecture 35, Integration 230.</li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Ship this fix before continuing performance work if production MP4 uploads larger than about 28.6 MiB are blocked. If failures continue after deployment, capture the exact HLS response body and investigate ffmpeg codec/transcode compatibility next.</p>
+</body>
+</html>

@@ -349,6 +349,9 @@ export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashbo
   const runtimeHealth = useMemo(() => evaluateRuntimeDiagnosticsHealth(diagnosticsSummary), [diagnosticsSummary])
   const runtimeMetricRows: RuntimeMetricRow[] = useMemo(() => [
     { label: 'Memory', trend: diagnosticsSummary.memoryBytes, metric: 'bytes' },
+    { label: 'Memory limit', trend: diagnosticsSummary.memoryLimitBytes, metric: 'bytes', available: diagnosticsSummary.memoryLimitAvailable },
+    { label: 'CPU visible', trend: diagnosticsSummary.processorCount, metric: 'number' },
+    { label: 'CPU quota', trend: diagnosticsSummary.cpuQuotaCores, metric: 'number', available: diagnosticsSummary.cpuQuotaAvailable },
     { label: 'GC heap', trend: diagnosticsSummary.gcHeapBytes, metric: 'bytes' },
     { label: 'Gen2 GC', trend: diagnosticsSummary.gen2Collections, metric: 'number' },
     { label: 'Time in GC', trend: diagnosticsSummary.timeInGcPercent, metric: 'percent' },
@@ -364,6 +367,9 @@ export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashbo
     { label: 'DB connection open P95', trend: diagnosticsSummary.dbConnectionOpenP95Ms, metric: 'ms', available: diagnosticsSummary.dbConnectionOpenP95Available },
     { label: 'Slow queries', trend: diagnosticsSummary.dbSlowQueryCount, metric: 'number' },
     { label: 'DB errors', trend: diagnosticsSummary.dbErrorCount, metric: 'number' },
+    { label: 'DbContext pool', trend: diagnosticsSummary.dbContextPoolSize, metric: 'number', available: diagnosticsSummary.dbContextPoolAvailable },
+    { label: 'Npgsql min pool', trend: diagnosticsSummary.dbNpgsqlMinimumPoolSize, metric: 'number', available: diagnosticsSummary.dbNpgsqlPoolConfigured },
+    { label: 'Npgsql max pool', trend: diagnosticsSummary.dbNpgsqlMaximumPoolSize, metric: 'number', available: diagnosticsSummary.dbNpgsqlPoolConfigured },
     { label: 'Open connections', trend: diagnosticsSummary.dbOpenConnections, metric: 'number' },
     { label: 'Active connections', trend: diagnosticsSummary.dbActiveConnections, metric: 'number' },
     { label: 'Idle connections', trend: diagnosticsSummary.dbIdleConnections, metric: 'number' },
@@ -379,6 +385,10 @@ export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashbo
   const totalTimeouts = results.reduce((sum, result) => sum + result.timeoutCount, 0)
   const totalAborts = results.reduce((sum, result) => sum + result.abortedCount, 0)
   const latestDatabaseStatus = latestDiagnosticsSample?.database.status ?? 'unavailable'
+  const latestDatabasePool = latestDiagnosticsSample?.database.pool
+  const databasePoolSummary = latestDatabasePool
+    ? `DB connection counts are estimated from pg_stat_activity. DbContext pool ${numberFormatter.format(latestDatabasePool.dbContextPoolSize)} · Npgsql max ${latestDatabasePool.npgsqlMaximumPoolSize === null ? 'unavailable' : numberFormatter.format(latestDatabasePool.npgsqlMaximumPoolSize)} · source ${latestDatabasePool.npgsqlPoolLimitSource}.`
+    : 'DB connection counts are estimated from pg_stat_activity. Npgsql pool settings are read from the running backend configuration.'
   const realBackendStatusText = realBackendSnapshot?.status ?? formatRealBackendPhase(realBackendPhase)
   const realBackendLatencyBreakdown = realBackendSnapshot?.latencyBreakdown
   const realBackendHttpCounts = realBackendSnapshot?.httpCounts
@@ -1477,12 +1487,12 @@ export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashbo
             <p className="mt-1 text-xs">{diagnosticsError ?? runtimeHealth.reason}</p>
           </div>
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            {runtimeMetricRows.map(({ label, trend, metric }) => (
-              <div key={label} className="rounded-lg border border-border bg-muted/30 p-3">
-                <p className="text-xs font-medium uppercase text-muted-foreground">{label}</p>
-                <p className="mt-2 text-lg font-semibold text-foreground">{formatTrendValue(metric, trend.current)}</p>
+            {runtimeMetricRows.map((row) => (
+              <div key={row.label} className="rounded-lg border border-border bg-muted/30 p-3">
+                <p className="text-xs font-medium uppercase text-muted-foreground">{row.label}</p>
+                <p className="mt-2 text-lg font-semibold text-foreground">{formatMetricRowValue(row, row.trend.current)}</p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  peak {formatTrendValue(metric, trend.peak)} · delta {formatTrendValue(metric, trend.delta)}
+                  {formatMetricRowTrend(row)}
                 </p>
               </div>
             ))}
@@ -1510,7 +1520,7 @@ export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashbo
           )}`}>
             <p className="font-medium">Database {latestDatabaseStatus}</p>
             <p className="mt-1 text-xs">
-              {diagnosticsError ?? 'DB connection counts are estimated from pg_stat_activity. Exact Npgsql pool busy/idle counts are not exposed.'}
+              {diagnosticsError ?? databasePoolSummary}
             </p>
           </div>
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">

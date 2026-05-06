@@ -1,0 +1,66 @@
+{
+  "taskSlug": "hls-upload-limit-2026-05-07",
+  "date": "2026-05-07",
+  "branch": "perf/runtime-pool-diagnostics-2026-05-07",
+  "baseCommit": "a7c0217",
+  "rootCause": "ASP.NET Core/Kestrel default request body limit was 30000000 bytes, below the 200 MiB WorkVideoPolicy maximum and below nginx 250m.",
+  "changedFiles": [
+    "backend/src/WoongBlog.Api/Common/ApiServiceCollectionExtensions.cs",
+    "backend/tests/WoongBlog.Api.IntegrationTests/StartupCompositionTests.cs",
+    "todolist-2026-05-07.md"
+  ],
+  "notChanged": [
+    "WorkVideoPolicy.MaxVideoBytes remains 200 MiB",
+    "nginx client_max_body_size remains 250m",
+    "ffmpeg/HLS transcoding behavior was not changed",
+    "public load-test target selection was not changed"
+  ],
+  "validations": [
+    {
+      "name": "RED focused startup upload limit test",
+      "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter \"FullyQualifiedName~UploadLimits_AllowConfiguredWorkVideoMaximumBeforeAppValidation\" --no-restore --logger \"console;verbosity=minimal\"",
+      "result": "failed before implementation with Kestrel request limit 30000000"
+    },
+    {
+      "name": "GREEN focused startup upload limit test",
+      "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter \"FullyQualifiedName~UploadLimits_AllowConfiguredWorkVideoMaximumBeforeAppValidation\" --no-restore --logger \"console;verbosity=minimal\"",
+      "result": "passed 1/1"
+    },
+    {
+      "name": "HLS focused integration tests",
+      "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter \"FullyQualifiedName~HlsJob_StoresManifestAndProjectsPlaybackUrl|FullyQualifiedName~UploadLimits_AllowConfiguredWorkVideoMaximumBeforeAppValidation\" --no-restore --logger \"console;verbosity=minimal\"",
+      "result": "passed 2/2"
+    },
+    {
+      "name": "WorkVideo policy unit tests",
+      "command": "dotnet test backend/tests/WoongBlog.Api.UnitTests/WoongBlog.Api.UnitTests.csproj --filter \"FullyQualifiedName~WorkVideoPolicyTests\" --no-restore --logger \"console;verbosity=minimal\"",
+      "result": "passed 39/39"
+    },
+    {
+      "name": "git diff whitespace check",
+      "command": "git diff --check",
+      "result": "passed"
+    },
+    {
+      "name": "dev compose backend rebuild and health",
+      "command": "BACKEND_PUBLISH_PORT=18080 docker compose -f docker-compose.dev.yml up -d --build backend; curl http://127.0.0.1:18080/api/health",
+      "result": "passed; health HTTP 200"
+    },
+    {
+      "name": "live 35 MiB HLS upload-limit repro after rebuild",
+      "command": "authenticated curl multipart POST to /api/admin/works/{id}/videos/hls-job through http://127.0.0.1:3000",
+      "result": "changed from HTTP 413 Kestrel request body limit to HTTP 400 app-level MP4 validation"
+    },
+    {
+      "name": "backend solution tests",
+      "command": "dotnet test backend/WoongBlog.sln --no-restore --logger \"console;verbosity=minimal\"",
+      "result": "passed: Contract 1 skipped, Component 126, Unit 59, Architecture 35, Integration 230"
+    }
+  ],
+  "risks": [
+    "A separate valid large MP4 transcode test is still needed if uploads fail after this fix.",
+    "The request body limit is global for the API; app-level validation and nginx still constrain video uploads.",
+    "Current working tree also includes runtime-pool-diagnostics WIP, so staging must be scoped."
+  ],
+  "recommendation": "Ship this fix before continuing performance work if production HLS uploads larger than about 28.6 MiB are blocked."
+}
