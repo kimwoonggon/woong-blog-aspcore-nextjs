@@ -119,8 +119,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
       - name: Verify provider contracts
-        run: docker run --pull=missing --rm -v "$PWD:/repo" -w /repo mcr.microsoft.com/dotnet/sdk:10.0 bash ./scripts/pact-provider-verify.sh
+        run: bash ./scripts/pact-provider-verify.sh
 
   compose-verify:
     name: Compose Dev Verification
