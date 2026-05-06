@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>DbContext Pooling Audit</title><style>body{font-family:system-ui,sans-serif;max-width:960px;margin:40px auto;padding:0 24px;line-height:1.55;color:#17202a}code{background:#eef2f7;padding:2px 5px;border-radius:4px}pre{background:#0f172a;color:#e2e8f0;padding:16px;border-radius:8px;overflow:auto}h1,h2{line-height:1.2}</style></head>
+<body>
+<h1>DbContext Pooling - 2026-05-06</h1>
+<h2>Status</h2><p>validated-locally-not-yet-promoted</p>
+<h2>Summary</h2><ul><li>Switched backend persistence registration to bounded <code>AddDbContextPool</code>.</li><li>Added integration coverage for context reuse and state reset.</li><li>Kept realistic load semantics: <code>pageSize=12</code>, current public slugs, no cache.</li></ul>
+<h2>Validation</h2><ul><li><strong>PASS</strong>: <code>Focused RED test before implementation</code> - Assert.Same failed because AddDbContext produced different DbContext instances across scopes.</li><li><strong>PASS</strong>: <code>Focused GREEN test after implementation</code> - Pooled context test passed and ChangeTracker state was empty after scope reuse.</li><li><strong>PASS</strong>: <code>dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~StartupCompositionTests --no-restore</code> - 15/15 passed.</li><li><strong>PASS</strong>: <code>dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj --filter FullyQualifiedName~DbContextModelContractComponentTests --no-restore</code> - 4/4 passed.</li><li><strong>PASS</strong>: <code>dotnet test backend/WoongBlog.sln --no-restore</code> - Contract 1 skipped, Component 124, Unit 56, Architecture 35, Integration 225 passed. Existing AWSSDK.Core NU1901 warning remains.</li><li><strong>PASS</strong>: <code>git diff --check</code> - No whitespace errors.</li><li><strong>PASS</strong>: <code>Changed-source diff guard</code> - No added pageSize=1, seeded-work, seeded-blog, cache, or Cache in changed production/test source diff.</li><li><strong>PASS</strong>: <code>BACKEND_PUBLISH_PORT=18080 ./scripts/dev-up.sh</code> - Dev compose stack rebuilt/recreated with updated backend image.</li><li><strong>PASS</strong>: <code>curl /api/health through nginx and backend direct</code> - Both returned HTTP 200.</li><li><strong>PASS</strong>: <code>Real Backend 10rps/10s smoke</code> - 101 requests, 0 failed, p95 6.3ms, p99 24.6ms.</li><li><strong>PASS</strong>: <code>Real Backend 100rps/30s realistic target smoke</code> - 3001 requests, 0 failed, 100rps, p95 5ms, app p95 4.5ms, DB command p95 3.7ms.</li></ul>
+<h2>Load Test Evidence</h2><pre>{
+  "selectedTargets": {
+    "workSlug": "real-load-work-fixture-pw-w0-r0-mou1dtp1-ac9ekh",
+    "blogSlug": "real-load-study-fixture-pw-w0-r0-mou1dttl-q7ukcc",
+    "baseUrl": "http://127.0.0.1:3000",
+    "listPageSize": 12,
+    "targetSelection": "first current public list item"
+  },
+  "smoke10rps10s": {
+    "status": "completed",
+    "runId": "20260506-140829-public-api-rps-190d05a8",
+    "totalRequests": 101,
+    "failedRequests": 0,
+    "averageRps": 10.1,
+    "p95Ms": 6.3,
+    "p99Ms": 24.6,
+    "diagnosticsSamples": 12
+  },
+  "constant100rps30s": {
+    "status": "completed",
+    "runId": "20260506-140925-public-api-rps-36a695ca",
+    "totalRequests": 3001,
+    "failedRequests": 0,
+    "averageRps": 100,
+    "currentRps": 100,
+    "p95Ms": 5,
+    "p99Ms": 5.9,
+    "appElapsedP95Ms": 4.5,
+    "nginxRequestTimeP95Ms": 5,
+    "nginxUpstreamP95Ms": 5.3,
+    "httpCounts": {
+      "429": 0,
+      "503": 0,
+      "2xx": 3001,
+      "3xx": 0,
+      "4xx": 0,
+      "5xx": 0,
+      "timeout": 0
+    },
+    "diagnosticsSamples": 32,
+    "latestRuntime": {
+      "processorCount": 8,
+      "memoryMiB": 216,
+      "gcHeapMiB": 10.3,
+      "gen2Collections": 2,
+      "timeInGcPercent": 0.04,
+      "threadPoolPendingWorkItems": 0,
+      "dbStatus": "available",
+      "dbHealthLatencyMs": 0.3,
+      "dbCommandP95Ms": 3.7,
+      "dbConnectionOpenP95Ms": 0,
+      "dbErrors": 0,
+      "openConnections": 3,
+      "activeConnections": 1
+    },
+    "targetMetrics": [
+      {
+        "targetId": "work-list",
+        "requestCount": 750,
+        "p95Ms": 3.6,
+        "statusCounts": {
+          "2xx": 750,
+          "3xx": 0,
+          "4xx": 0,
+          "5xx": 0
+        }
+      },
+      {
+        "targetId": "work-read",
+        "requestCount": 750,
+        "p95Ms": 2,
+        "statusCounts": {
+          "2xx": 750,
+          "3xx": 0,
+          "4xx": 0,
+          "5xx": 0
+        }
+      },
+      {
+        "targetId": "study-list",
+        "requestCount": 751,
+        "p95Ms": 5.5,
+        "statusCounts": {
+          "2xx": 751,
+          "3xx": 0,
+          "4xx": 0,
+          "5xx": 0
+        }
+      },
+      {
+        "targetId": "study-read",
+        "requestCount": 750,
+        "p95Ms": 2,
+        "statusCounts": {
+          "2xx": 750,
+          "3xx": 0,
+          "4xx": 0,
+          "5xx": 0
+        }
+      }
+    ]
+  },
+  "caveat": "Local dev compose reported processorCount=8, so this is a regression/per-request-cost smoke, not a 2CPU/8GiB production capacity proof."
+}</pre>
+<h2>Risks</h2><ul><li>DbContext pooling requires DbContext instances to remain stateless except for EF-tracked state; the new test covers ChangeTracker reset but not arbitrary future mutable fields.</li><li>The default pool size 128 is intentionally bounded, but production should still align DbContextPoolSize with Npgsql Maximum Pool Size and the 2CPU/8GiB host profile if saturation appears.</li><li>This slice will likely show modest gains, not a step-change in 1000rps spike capacity. Bigger remaining wins are payload/body split, JSON serialization source generation, and write-time representative media read models.</li></ul>
+<h2>Recommendation</h2><p>Promote this low-risk structural optimization through dev CI, then continue with a measurement-heavy slice: verify deployed DB pool settings under real 2CPU/8GiB constraints and target heavy detail payload serialization/body split next.</p>
+</body></html>

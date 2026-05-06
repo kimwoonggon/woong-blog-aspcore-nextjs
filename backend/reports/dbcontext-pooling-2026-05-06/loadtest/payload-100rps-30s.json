@@ -1,0 +1,36 @@
+{
+  "scenario": "public-api-rps",
+  "runner": "k6",
+  "target": "public-api-mix",
+  "rate": 100,
+  "peakRate": 100,
+  "durationSeconds": 30,
+  "maxVus": 100,
+  "startVus": 1,
+  "targets": [
+    {
+      "id": "work-list",
+      "label": "Work list",
+      "path": "/api/public/works?page=1&pageSize=12",
+      "group": "work"
+    },
+    {
+      "id": "work-read",
+      "label": "Work read",
+      "path": "/api/public/works/real-load-work-fixture-pw-w0-r0-mou1dtp1-ac9ekh",
+      "group": "work"
+    },
+    {
+      "id": "study-list",
+      "label": "Study list",
+      "path": "/api/public/blogs?page=1&pageSize=12",
+      "group": "study"
+    },
+    {
+      "id": "study-read",
+      "label": "Study read",
+      "path": "/api/public/blogs/real-load-study-fixture-pw-w0-r0-mou1dttl-q7ukcc",
+      "group": "study"
+    }
+  ]
+}

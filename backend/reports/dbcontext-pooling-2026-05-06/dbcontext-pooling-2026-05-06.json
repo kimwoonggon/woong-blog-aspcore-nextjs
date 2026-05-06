@@ -1,0 +1,206 @@
+{
+  "task": "dbcontext-pooling-2026-05-06",
+  "status": "validated-locally-not-yet-promoted",
+  "changedFiles": [
+    "backend/src/WoongBlog.Infrastructure/Persistence/PersistenceServiceCollectionExtensions.cs",
+    "backend/tests/WoongBlog.Api.IntegrationTests/StartupCompositionTests.cs",
+    "todolist-2026-05-06.md"
+  ],
+  "artifacts": {
+    "markdown": "backend/reports/dbcontext-pooling-2026-05-06/dbcontext-pooling-2026-05-06.md",
+    "html": "backend/reports/dbcontext-pooling-2026-05-06/dbcontext-pooling-2026-05-06.html",
+    "json": "backend/reports/dbcontext-pooling-2026-05-06/dbcontext-pooling-2026-05-06.json",
+    "loadtestDirectory": "backend/reports/dbcontext-pooling-2026-05-06/loadtest"
+  },
+  "goals": [
+    "Improve backend structure rather than weakening load-test targets.",
+    "Reduce per-request EF Core DbContext allocation/setup overhead on public hot paths.",
+    "Keep realistic Real Backend target semantics: pageSize=12 lists and current public list-selected read slugs.",
+    "Do not introduce cache as the optimization."
+  ],
+  "nonGoals": [
+    "No public API response-shape change.",
+    "No seeded target priority or pageSize=1 shortcut.",
+    "No DB schema migration or representative image write model in this slice.",
+    "No claim that this local dev run proves 1000rps capacity on a 2CPU/8GiB production host."
+  ],
+  "implementation": [
+    "Replaced AddDbContext with bounded AddDbContextPool for WoongBlogDbContext.",
+    "Added default DbContext pool size 128 with optional Persistence:DbContextPoolSize override clamped to 16..1024.",
+    "Kept existing load-test DB command and connection diagnostics interceptors registered in the pooled options pipeline.",
+    "Added integration coverage proving a pooled context instance can be reused across scopes and that ChangeTracker state is reset when the scope is disposed."
+  ],
+  "expectedBackendTestImpact": [
+    "Primary expected movement: lower per-request EF service/context allocation and less GC pressure under sustained RPS.",
+    "Secondary expected movement: small improvement or stabilization in ASP.NET app elapsed p95 when hot paths are DB-light but request-rate is high.",
+    "Metrics to watch in Real Backend Test: app elapsed p95, GC heap delta, Gen2 GC delta, ThreadPool queue, DB command/open latency, and HTTP 5xx/timeout counts.",
+    "This does not increase DB connection capacity by itself; Npgsql/Postgres pool sizing remains a separate operational constraint."
+  ],
+  "validations": [
+    {
+      "status": "PASS",
+      "command": "Focused RED test before implementation",
+      "result": "Assert.Same failed because AddDbContext produced different DbContext instances across scopes."
+    },
+    {
+      "status": "PASS",
+      "command": "Focused GREEN test after implementation",
+      "result": "Pooled context test passed and ChangeTracker state was empty after scope reuse."
+    },
+    {
+      "status": "PASS",
+      "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~StartupCompositionTests --no-restore",
+      "result": "15/15 passed."
+    },
+    {
+      "status": "PASS",
+      "command": "dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj --filter FullyQualifiedName~DbContextModelContractComponentTests --no-restore",
+      "result": "4/4 passed."
+    },
+    {
+      "status": "PASS",
+      "command": "dotnet test backend/WoongBlog.sln --no-restore",
+      "result": "Contract 1 skipped, Component 124, Unit 56, Architecture 35, Integration 225 passed. Existing AWSSDK.Core NU1901 warning remains."
+    },
+    {
+      "status": "PASS",
+      "command": "git diff --check",
+      "result": "No whitespace errors."
+    },
+    {
+      "status": "PASS",
+      "command": "Changed-source diff guard",
+      "result": "No added pageSize=1, seeded-work, seeded-blog, cache, or Cache in changed production/test source diff."
+    },
+    {
+      "status": "PASS",
+      "command": "BACKEND_PUBLISH_PORT=18080 ./scripts/dev-up.sh",
+      "result": "Dev compose stack rebuilt/recreated with updated backend image."
+    },
+    {
+      "status": "PASS",
+      "command": "curl /api/health through nginx and backend direct",
+      "result": "Both returned HTTP 200."
+    },
+    {
+      "status": "PASS",
+      "command": "Real Backend 10rps/10s smoke",
+      "result": "101 requests, 0 failed, p95 6.3ms, p99 24.6ms."
+    },
+    {
+      "status": "PASS",
+      "command": "Real Backend 100rps/30s realistic target smoke",
+      "result": "3001 requests, 0 failed, 100rps, p95 5ms, app p95 4.5ms, DB command p95 3.7ms."
+    }
+  ],
+  "loadtest": {
+    "selectedTargets": {
+      "workSlug": "real-load-work-fixture-pw-w0-r0-mou1dtp1-ac9ekh",
+      "blogSlug": "real-load-study-fixture-pw-w0-r0-mou1dttl-q7ukcc",
+      "baseUrl": "http://127.0.0.1:3000",
+      "listPageSize": 12,
+      "targetSelection": "first current public list item"
+    },
+    "smoke10rps10s": {
+      "status": "completed",
+      "runId": "20260506-140829-public-api-rps-190d05a8",
+      "totalRequests": 101,
+      "failedRequests": 0,
+      "averageRps": 10.1,
+      "p95Ms": 6.3,
+      "p99Ms": 24.6,
+      "diagnosticsSamples": 12
+    },
+    "constant100rps30s": {
+      "status": "completed",
+      "runId": "20260506-140925-public-api-rps-36a695ca",
+      "totalRequests": 3001,
+      "failedRequests": 0,
+      "averageRps": 100,
+      "currentRps": 100,
+      "p95Ms": 5,
+      "p99Ms": 5.9,
+      "appElapsedP95Ms": 4.5,
+      "nginxRequestTimeP95Ms": 5,
+      "nginxUpstreamP95Ms": 5.3,
+      "httpCounts": {
+        "429": 0,
+        "503": 0,
+        "2xx": 3001,
+        "3xx": 0,
+        "4xx": 0,
+        "5xx": 0,
+        "timeout": 0
+      },
+      "diagnosticsSamples": 32,
+      "latestRuntime": {
+        "processorCount": 8,
+        "memoryMiB": 216,
+        "gcHeapMiB": 10.3,
+        "gen2Collections": 2,
+        "timeInGcPercent": 0.04,
+        "threadPoolPendingWorkItems": 0,
+        "dbStatus": "available",
+        "dbHealthLatencyMs": 0.3,
+        "dbCommandP95Ms": 3.7,
+        "dbConnectionOpenP95Ms": 0,
+        "dbErrors": 0,
+        "openConnections": 3,
+        "activeConnections": 1
+      },
+      "targetMetrics": [
+        {
+          "targetId": "work-list",
+          "requestCount": 750,
+          "p95Ms": 3.6,
+          "statusCounts": {
+            "2xx": 750,
+            "3xx": 0,
+            "4xx": 0,
+            "5xx": 0
+          }
+        },
+        {
+          "targetId": "work-read",
+          "requestCount": 750,
+          "p95Ms": 2,
+          "statusCounts": {
+            "2xx": 750,
+            "3xx": 0,
+            "4xx": 0,
+            "5xx": 0
+          }
+        },
+        {
+          "targetId": "study-list",
+          "requestCount": 751,
+          "p95Ms": 5.5,
+          "statusCounts": {
+            "2xx": 751,
+            "3xx": 0,
+            "4xx": 0,
+            "5xx": 0
+          }
+        },
+        {
+          "targetId": "study-read",
+          "requestCount": 750,
+          "p95Ms": 2,
+          "statusCounts": {
+            "2xx": 750,
+            "3xx": 0,
+            "4xx": 0,
+            "5xx": 0
+          }
+        }
+      ]
+    },
+    "caveat": "Local dev compose reported processorCount=8, so this is a regression/per-request-cost smoke, not a 2CPU/8GiB production capacity proof."
+  },
+  "risks": [
+    "DbContext pooling requires DbContext instances to remain stateless except for EF-tracked state; the new test covers ChangeTracker reset but not arbitrary future mutable fields.",
+    "The default pool size 128 is intentionally bounded, but production should still align DbContextPoolSize with Npgsql Maximum Pool Size and the 2CPU/8GiB host profile if saturation appears.",
+    "This slice will likely show modest gains, not a step-change in 1000rps spike capacity. Bigger remaining wins are payload/body split, JSON serialization source generation, and write-time representative media read models."
+  ],
+  "recommendation": "Promote this low-risk structural optimization through dev CI, then continue with a measurement-heavy slice: verify deployed DB pool settings under real 2CPU/8GiB constraints and target heavy detail payload serialization/body split next."
+}

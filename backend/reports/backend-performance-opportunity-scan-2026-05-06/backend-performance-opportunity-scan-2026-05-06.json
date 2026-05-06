@@ -1,79 +1,67 @@
 {
-  "task": "backend-performance-opportunity-scan-2026-05-06",
-  "mode": "audit-only",
+  "task": "backend-performance-opportunity-scan",
+  "date": "2026-05-06",
+  "scope": "audit-only",
   "productionCodeChanged": false,
   "testCodeChanged": false,
-  "scope": [
-    "public work/blog list and detail query stores",
-    "public home/site settings query stores",
-    "work/blog write models",
-    "work video mutations",
-    "real load diagnostics contracts"
+  "targets": [
+    "/api/public/works?page=1&pageSize=12",
+    "/api/public/works/{slug}",
+    "/api/public/blogs?page=1&pageSize=12",
+    "/api/public/blogs/{slug}"
   ],
-  "priorities": [
+  "findings": [
     {
       "priority": "P0",
-      "area": "work thumbnail read model correctness",
-      "opportunity": "compute resolver-equivalent PublicThumbnailUrl at write/mutation/bootstrap time for supported fallback cases",
-      "backendTests": [
-        "create/update work without explicit thumbnail but with body image stores resolver-equivalent PublicThumbnailUrl",
-        "add/delete/reorder video updates PublicThumbnailUrl when no explicit thumbnail asset exists",
-        "public list/detail command counts remain optimized"
-      ],
-      "impact": "protects correctness while preserving optimized read path"
+      "title": "Connection pool and DB pressure tuning",
+      "expectedMetrics": ["openConnections", "dbConnectionOpenP95", "dbLatencyPeak", "threadPoolQueue", "http5xx"],
+      "risk": "Too-low pool size can increase latency or reduce throughput."
     },
     {
       "priority": "P1",
-      "area": "real load diagnostics",
-      "opportunity": "include DB command p95/sample count in RealLoadTestLatencyBreakdown",
-      "backendTests": [
-        "metrics response exposes DB command p95 when diagnostics collector has samples"
-      ],
-      "impact": "improves attribution of future load-test results"
+      "title": "Use DbContext pooling for hot API requests",
+      "expectedMetrics": ["appElapsedP95", "gcHeap", "gen2Gc", "memoryPeak", "threadPoolStability"],
+      "risk": "Requires compatibility validation for context state and interceptors."
     },
     {
       "priority": "P1",
-      "area": "public home endpoint",
-      "opportunity": "reduce sequential DB roundtrips, starting with site settings plus resume asset projection",
-      "backendTests": [
-        "public home command count drops by at least one command with resume asset present"
-      ],
-      "impact": "reduces DB roundtrips on public home"
+      "title": "Public detail DTO/payload contract audit",
+      "expectedMetrics": ["detailP95", "detailP99", "responseBytesP95", "receivingP95", "appElapsedP95"],
+      "risk": "Can break public rendering if frontend-visible fields are removed without tests."
     },
     {
       "priority": "P2",
-      "area": "public work detail with videos",
-      "opportunity": "consider denormalized public video read model if video-heavy targets dominate",
-      "backendTests": [
-        "work detail with videos command count remains within 1-2 or drops to 1 if denormalized"
-      ],
-      "impact": "potentially improves video-heavy detail reads"
+      "title": "Public list exact count strategy",
+      "expectedMetrics": ["listP95", "dbCommandP95", "appElapsedP95"],
+      "risk": "Requires API/UI contract changes if exact total pages are removed."
     },
     {
       "priority": "P2",
-      "area": "page/admin content projections",
-      "opportunity": "avoid materializing and parsing full content JSON for list/summary DTOs",
-      "backendTests": [
-        "query shape or command-count contract for DTO-visible columns only"
-      ],
-      "impact": "reduces CPU/allocation outside current load-test hot path"
+      "title": "Work detail with videos query shape",
+      "expectedMetrics": ["workReadP95", "dbCommandCount"],
+      "risk": "Joining videos into detail can duplicate large content and regress performance."
+    },
+    {
+      "priority": "P3",
+      "title": "Response compression",
+      "expectedMetrics": ["receivingP95", "clientDuration", "responseBytes"],
+      "risk": "Compression can consume CPU on a 2 CPU shared host."
     }
   ],
-  "alreadyImproved": [
-    "public work first-page no-search list uses one Postgres command",
-    "public blog first-page no-search list uses one Postgres command",
-    "public blog detail uses one Postgres command and stored public body fields",
-    "public work detail without videos uses one Postgres command and does not reference WorkVideos",
-    "admin work list projects DTO-visible fields including PublicThumbnailUrl"
-  ],
-  "recommendedNext": [
-    "P0 work thumbnail read-model fallback equivalence",
-    "P1 real load DB command p95 metrics",
-    "P1 public home roundtrip reduction"
+  "nonRecommendations": [
+    "Do not reduce pageSize=12 for the load test.",
+    "Do not switch to seeded/light detail targets as a performance fix.",
+    "Do not use cache as the first fix.",
+    "Do not add covering indexes that include large public detail body columns."
   ],
   "validations": [
-    "static code scan of query stores, write handlers, diagnostics, and existing tests",
-    "audit artifacts generated",
-    "no production or test source files changed"
-  ]
+    "git status checked",
+    "skill search performed",
+    "public query stores inspected",
+    "persistence registration inspected",
+    "compose/env pool configuration inspected",
+    "nginx compression/proxy configuration inspected",
+    "frontend public DTO usage inspected"
+  ],
+  "recommendation": "Proceed first with deployed DB pool verification/enforcement and DbContext pooling validation, then rerun the same realistic Real Backend Test matrix."
 }
