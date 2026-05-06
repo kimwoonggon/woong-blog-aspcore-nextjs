@@ -111,6 +111,7 @@ case "${MODE}" in
 FRONTEND_IMAGE=${FRONTEND_IMAGE}
 BACKEND_IMAGE=${BACKEND_IMAGE}
 APP_ENV_FILE=${compose_env_file}
+NEXT_PUBLIC_SITE_URL=${base_url}
 NGINX_DEFAULT_CONF=${NGINX_DEFAULT_CONF:-./nginx/prod-bootstrap.conf}
 CERTBOT_WWW_DIR=./certbot/www
 LETSENCRYPT_DIR=./certbot/conf
@@ -142,7 +143,18 @@ fi
 compose_cmd=("${DOCKER_BIN}" compose --env-file "${compose_env_file}" -f "${compose_file}")
 
 "${compose_cmd[@]}" down --remove-orphans --volumes >/dev/null 2>&1 || true
-"${compose_cmd[@]}" config >/dev/null
+compose_config="$("${compose_cmd[@]}" config)"
+if [[ "${MODE}" == "main" ]]; then
+  if ! grep -Fq "LoadTesting__BaseUrl: ${base_url}" <<<"${compose_config}"; then
+    echo "main compose must default LoadTesting__BaseUrl to the nginx/public base URL (${base_url})" >&2
+    grep -F "LoadTesting__BaseUrl:" <<<"${compose_config}" >&2 || true
+    exit 1
+  fi
+  if grep -Fq "LoadTesting__BaseUrl: http://127.0.0.1:8080" <<<"${compose_config}"; then
+    echo "main compose must not default Real Backend Test to backend-direct http://127.0.0.1:8080" >&2
+    exit 1
+  fi
+fi
 if [[ "${MODE}" == "dev" ]]; then
   "${compose_cmd[@]}" up -d --build db backend frontend nginx
 else
