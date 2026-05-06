@@ -54,6 +54,18 @@ public sealed class PostgresPersistenceContractTests : IClassFixture<PostgresPer
             cancellationToken));
         Assert.True(await ExistsAsync(
             connection,
+            "SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Works' AND column_name = 'PublicThumbnailUrl')",
+            cancellationToken));
+        Assert.True(await ExistsAsync(
+            connection,
+            "SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Works' AND column_name = 'PublicIconUrl')",
+            cancellationToken));
+        Assert.True(await ExistsAsync(
+            connection,
+            "SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Blogs' AND column_name = 'PublicCoverUrl')",
+            cancellationToken));
+        Assert.True(await ExistsAsync(
+            connection,
             "SELECT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'IX_Blogs_SearchTitle_Trgm')",
             cancellationToken));
         Assert.True(await ExistsAsync(
@@ -67,6 +79,10 @@ public sealed class PostgresPersistenceContractTests : IClassFixture<PostgresPer
         Assert.True(await ExistsAsync(
             connection,
             "SELECT EXISTS (SELECT 1 FROM \"SchemaPatches\" WHERE \"Id\" = '20260506_public_content_body_fields')",
+            cancellationToken));
+        Assert.True(await ExistsAsync(
+            connection,
+            "SELECT EXISTS (SELECT 1 FROM \"SchemaPatches\" WHERE \"Id\" = '20260506_public_media_url_fields')",
             cancellationToken));
     }
 

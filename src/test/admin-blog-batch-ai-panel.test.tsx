@@ -186,10 +186,8 @@ describe('AdminBlogBatchAiPanel', () => {
     renderPanel()
 
     await waitFor(() => {
-      expect(mocks.fetchAdminAiRuntimeConfigBrowser).toHaveBeenCalled()
+      expect(screen.getByLabelText('Batch AI system prompt')).toHaveValue('Default blog system prompt')
     })
-
-    expect(screen.getByLabelText('Batch AI system prompt')).toHaveValue('Default blog system prompt')
     fireEvent.change(screen.getByLabelText('Batch AI system prompt'), {
       target: { value: 'Use this batch-specific prompt.' },
     })

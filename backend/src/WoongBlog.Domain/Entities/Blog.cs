@@ -12,6 +12,7 @@ public class Blog
     public string SearchTitle { get; set; } = string.Empty;
     public string SearchText { get; set; } = string.Empty;
     public Guid? CoverAssetId { get; set; }
+    public string PublicCoverUrl { get; set; } = string.Empty;
     public string[] Tags { get; set; } = Array.Empty<string>();
     public bool Published { get; set; }
     public DateTimeOffset? PublishedAt { get; set; }

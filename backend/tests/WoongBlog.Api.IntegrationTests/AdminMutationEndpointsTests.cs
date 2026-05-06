@@ -353,6 +353,16 @@ public class AdminMutationEndpointsTests : IClassFixture<CustomWebApplicationFac
         var client = _factory.CreateAuthenticatedClient();
         var contentJson = JsonSerializer.Serialize(new { html = "<p>Updated work body</p>" });
         var propertiesJson = JsonSerializer.Serialize(new { role = "updated", impact = "admin" });
+        var thumbnailAssetId = Guid.NewGuid();
+        var iconAssetId = Guid.NewGuid();
+        using (var assetScope = _factory.Services.CreateScope())
+        {
+            var assetDbContext = assetScope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
+            assetDbContext.Assets.AddRange(
+                new Asset { Id = thumbnailAssetId, Bucket = "media", Path = "work-update-thumb.png", PublicUrl = "/media/work-update-thumb.png" },
+                new Asset { Id = iconAssetId, Bucket = "media", Path = "work-update-icon.png", PublicUrl = "/media/work-update-icon.png" });
+            await assetDbContext.SaveChangesAsync();
+        }
 
         var response = await client.PutAsJsonAsync($"/api/admin/works/{target.Id}", new
         {
@@ -362,7 +372,9 @@ public class AdminMutationEndpointsTests : IClassFixture<CustomWebApplicationFac
             tags = new[] { "updated", "work" },
             published = false,
             contentJson,
-            allPropertiesJson = propertiesJson
+            allPropertiesJson = propertiesJson,
+            thumbnailAssetId,
+            iconAssetId
         });
 
         response.EnsureSuccessStatusCode();
@@ -382,6 +394,10 @@ public class AdminMutationEndpointsTests : IClassFixture<CustomWebApplicationFac
         Assert.Equal(["updated", "work"], updated.Tags);
         Assert.Equal(contentJson, updated.ContentJson);
         Assert.Equal(propertiesJson, updated.AllPropertiesJson);
+        Assert.Equal(thumbnailAssetId, updated.ThumbnailAssetId);
+        Assert.Equal(iconAssetId, updated.IconAssetId);
+        Assert.Equal("/media/work-update-thumb.png", updated.PublicThumbnailUrl);
+        Assert.Equal("/media/work-update-icon.png", updated.PublicIconUrl);
         Assert.False(updated.Published);
         Assert.Equal(target.CreatedAt, updated.CreatedAt);
         Assert.Equal(unrelated.Title, unrelatedAfter.Title);
