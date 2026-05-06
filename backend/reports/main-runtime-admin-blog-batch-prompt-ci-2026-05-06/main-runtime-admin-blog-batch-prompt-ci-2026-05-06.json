@@ -1,0 +1,36 @@
+{
+  "task": "main-runtime-admin-blog-batch-prompt-ci-2026-05-06",
+  "date": "2026-05-06",
+  "goal": "Unblock dev-to-main runtime promotion by fixing the PR #61 AdminBlogBatchAiPanel Vitest timing failure without changing backend behavior.",
+  "changed": [
+    "Updated src/test/admin-blog-batch-ai-panel.test.tsx to wait for the rendered Batch AI system prompt value.",
+    "Updated todolist-2026-05-06.md with CI failure evidence and validation results."
+  ],
+  "intentionallyNotChanged": [
+    "backend production code",
+    "cache policy",
+    "real backend load-test target semantics",
+    "seed target priority",
+    "pageSize=12 public list behavior",
+    "Docker, nginx, DB pool, EF query, DTO, and load-test behavior"
+  ],
+  "ciFailureEvidence": {
+    "pullRequest": 61,
+    "runId": 25410791523,
+    "jobId": 74531865760,
+    "failedTest": "src/test/admin-blog-batch-ai-panel.test.tsx > AdminBlogBatchAiPanel > sends edited custom prompt when creating a batch job",
+    "rootCause": "The test waited for the runtime-config mock call, but not for the rendered prompt state update."
+  },
+  "validations": [
+    { "command": "npm run test -- --run src/test/admin-blog-batch-ai-panel.test.tsx", "result": "passed", "details": "1 file, 17 tests" },
+    { "command": "npm run typecheck", "result": "passed" },
+    { "command": "npm run lint", "result": "passed", "details": "0 errors, 6 pre-existing warnings" },
+    { "command": "git diff --check", "result": "passed" },
+    { "command": "npm run test -- --run", "result": "passed", "details": "82 files, 590 tests, 1124.48s" }
+  ],
+  "risks": [
+    "This slice only stabilizes a frontend test and does not improve backend throughput.",
+    "GitHub Actions still needs to pass after the branch is pushed."
+  ],
+  "recommendation": "Merge into dev, verify CI Dev, regenerate or update the runtime-only main promotion PR, and verify CI Main Runtime."
+}
