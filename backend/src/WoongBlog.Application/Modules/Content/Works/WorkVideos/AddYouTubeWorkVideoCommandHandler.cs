@@ -24,7 +24,14 @@ public sealed class AddYouTubeWorkVideoCommandHandler(
             return WorkVideoResult<WorkVideosMutationResult>.Conflict("Videos changed. Refresh and retry.");
         }
 
-        if (await commandStore.CountVideosAsync(request.WorkId, cancellationToken) >= WorkVideoPolicy.MaxVideosPerWork)
+        var videoId = WorkVideoPolicy.NormalizeYouTubeVideoId(request.YoutubeUrlOrId);
+        if (videoId is null)
+        {
+            return WorkVideoResult<WorkVideosMutationResult>.BadRequest("Provide a valid YouTube video URL or ID.");
+        }
+
+        var videos = (await commandStore.GetVideosForWorkAsync(request.WorkId, cancellationToken)).ToList();
+        if (videos.Count >= WorkVideoPolicy.MaxVideosPerWork)
         {
             return WorkVideoResult<WorkVideosMutationResult>.BadRequest("Each work supports up to 10 videos.");
         }
@@ -32,17 +39,6 @@ public sealed class AddYouTubeWorkVideoCommandHandler(
         var assetPublicUrls = await commandStore.GetAssetPublicUrlsAsync(
             WorkPublicThumbnailReadModel.GetThumbnailAssetIds(work.ThumbnailAssetId),
             cancellationToken);
-        List<WorkVideo>? videosForThumbnail = WorkPublicThumbnailReadModel.ShouldLoadFallbackVideos(
-            work.ThumbnailAssetId,
-            assetPublicUrls)
-            ? (await commandStore.GetVideosForWorkAsync(request.WorkId, cancellationToken)).ToList()
-            : null;
-
-        var videoId = WorkVideoPolicy.NormalizeYouTubeVideoId(request.YoutubeUrlOrId);
-        if (videoId is null)
-        {
-            return WorkVideoResult<WorkVideosMutationResult>.BadRequest("Provide a valid YouTube video URL or ID.");
-        }
 
         var video = new WorkVideo
         {
@@ -50,16 +46,27 @@ public sealed class AddYouTubeWorkVideoCommandHandler(
             WorkId = request.WorkId,
             SourceType = WorkVideoSourceTypes.YouTube,
             SourceKey = videoId,
-            SortOrder = await commandStore.GetNextSortOrderAsync(request.WorkId, cancellationToken),
+            SortOrder = GetNextSortOrder(videos),
             CreatedAt = DateTimeOffset.UtcNow
         };
         commandStore.AddWorkVideo(video);
-        videosForThumbnail?.Add(video);
-        WorkPublicThumbnailReadModel.Refresh(work, videosForThumbnail ?? (IReadOnlyList<WorkVideo>)Array.Empty<WorkVideo>(), assetPublicUrls);
+        videos.Add(video);
+        WorkPublicThumbnailReadModel.Refresh(
+            work,
+            WorkPublicThumbnailReadModel.ShouldLoadFallbackVideos(work.ThumbnailAssetId, assetPublicUrls)
+                ? videos
+                : Array.Empty<WorkVideo>(),
+            assetPublicUrls);
+        WorkPublicVideosReadModel.Refresh(work, videos);
 
         work.VideosVersion += 1;
         await commandStore.SaveChangesAsync(cancellationToken);
         return WorkVideoResult<WorkVideosMutationResult>.Ok(
             await queryStore.GetMutationResultAsync(request.WorkId, cancellationToken));
+    }
+
+    private static int GetNextSortOrder(IReadOnlyCollection<WorkVideo> videos)
+    {
+        return videos.Count == 0 ? 0 : videos.Max(video => video.SortOrder) + 1;
     }
 }

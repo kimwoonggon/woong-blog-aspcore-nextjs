@@ -73,6 +73,10 @@ public sealed class PostgresPersistenceContractTests : IClassFixture<PostgresPer
             cancellationToken));
         Assert.True(await ExistsAsync(
             connection,
+            "SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Works' AND column_name = 'PublicVideosJson')",
+            cancellationToken));
+        Assert.True(await ExistsAsync(
+            connection,
             "SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Blogs' AND column_name = 'PublicCoverUrl')",
             cancellationToken));
         Assert.True(await ExistsAsync(
@@ -114,6 +118,10 @@ public sealed class PostgresPersistenceContractTests : IClassFixture<PostgresPer
         Assert.True(await ExistsAsync(
             connection,
             "SELECT EXISTS (SELECT 1 FROM \"SchemaPatches\" WHERE \"Id\" = '20260506_work_video_version_backfill')",
+            cancellationToken));
+        Assert.True(await ExistsAsync(
+            connection,
+            "SELECT EXISTS (SELECT 1 FROM \"SchemaPatches\" WHERE \"Id\" = '20260507_public_work_videos_read_model')",
             cancellationToken));
         Assert.True(await ExistsAsync(
             connection,
@@ -160,6 +168,53 @@ public sealed class PostgresPersistenceContractTests : IClassFixture<PostgresPer
         Assert.True(await ExistsAsync(
             connection,
             "SELECT EXISTS (SELECT 1 FROM \"SchemaPatches\" WHERE \"Id\" = '20260506_work_video_version_backfill')",
+            cancellationToken));
+    }
+
+    [Fact]
+    public async Task Bootstrapper_BackfillsPublicVideosJson_ForExistingWorkVideos()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await using var dbContext = CreateDbContext();
+        await ResetDatabaseAsync(dbContext, cancellationToken);
+        await dbContext.Database.EnsureCreatedAsync(cancellationToken);
+
+        var work = CreatePublishedWork(
+            "legacy-public-video-read-model",
+            "Legacy Public Video Read Model",
+            publishedAtOffsetMinutes: -1);
+        work.PublicVideosJson = "[]";
+        var videoId = Guid.NewGuid();
+        dbContext.Works.Add(work);
+        dbContext.WorkVideos.Add(new WorkVideo
+        {
+            Id = videoId,
+            WorkId = work.Id,
+            SourceType = WorkVideoSourceTypes.YouTube,
+            SourceKey = "legacy-public-video",
+            OriginalFileName = "Legacy Public Video",
+            SortOrder = 0,
+            CreatedAt = DateTimeOffset.UtcNow
+        });
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        await DatabaseBootstrapper.InitializeAsync(dbContext, cancellationToken);
+
+        var publicVideosJson = await dbContext.Works
+            .Where(x => x.Id == work.Id)
+            .Select(x => x.PublicVideosJson)
+            .SingleAsync(cancellationToken);
+        var publicVideo = Assert.Single(WorkPublicVideosReadModel.Deserialize(publicVideosJson));
+        Assert.Equal(videoId, publicVideo.Id);
+        Assert.Equal(WorkVideoSourceTypes.YouTube, publicVideo.SourceType);
+        Assert.Equal("legacy-public-video", publicVideo.SourceKey);
+        Assert.Equal("Legacy Public Video", publicVideo.OriginalFileName);
+
+        var connection = dbContext.Database.GetDbConnection();
+        await connection.OpenAsync(cancellationToken);
+        Assert.True(await ExistsAsync(
+            connection,
+            "SELECT EXISTS (SELECT 1 FROM \"SchemaPatches\" WHERE \"Id\" = '20260507_public_work_videos_read_model')",
             cancellationToken));
     }
 
@@ -538,15 +593,17 @@ public sealed class PostgresPersistenceContractTests : IClassFixture<PostgresPer
     }
 
     [Fact]
-    public async Task PublicWorkDetailWithVideos_UsesTwoPostgresCommands_AndStoredPublicColumnsOnly()
+    public async Task PublicWorkDetailWithVideos_UsesSinglePostgresCommand_AndStoredPublicColumnsOnly()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         const string slug = "postgres-public-work-with-videos";
         const string expectedThumbnailUrl = "/media/postgres-public-work-with-videos-thumb.png";
         const string contentJson = """{"html":"<p><img src=\"/media/body-fallback-should-not-win.png\" alt=\"body\"></p>"}""";
         var workId = Guid.NewGuid();
+        var videoId = Guid.NewGuid();
         var thumbnailAssetId = Guid.NewGuid();
         var now = DateTimeOffset.UtcNow;
+        var createdAt = now.AddSeconds(-1);
 
         await using (var setupContext = CreateDbContext())
         {
@@ -579,19 +636,21 @@ public sealed class PostgresPersistenceContractTests : IClassFixture<PostgresPer
                 PublicThumbnailUrl = expectedThumbnailUrl,
                 PublicIconUrl = "/media/postgres-public-work-with-videos-icon.png",
                 VideosVersion = 1,
+                PublicVideosJson =
+                    $$"""
+                    [{
+                      "id": "{{videoId}}",
+                      "sourceType": "{{WorkVideoSourceTypes.YouTube}}",
+                      "sourceKey": "dQw4w9WgXcQ",
+                      "originalFileName": "Postgres public work detail video",
+                      "sortOrder": 0,
+                      "createdAt": "{{createdAt:O}}"
+                    }]
+                    """,
                 Published = true,
                 PublishedAt = now.AddMinutes(-1),
                 CreatedAt = now,
                 UpdatedAt = now
-            });
-            setupContext.WorkVideos.Add(new WorkVideo
-            {
-                WorkId = workId,
-                SourceType = WorkVideoSourceTypes.YouTube,
-                SourceKey = "dQw4w9WgXcQ",
-                OriginalFileName = "Postgres public work detail video",
-                SortOrder = 0,
-                CreatedAt = now
             });
             await setupContext.SaveChangesAsync(cancellationToken);
             await setupContext.Database.ExecuteSqlInterpolatedAsync(
@@ -632,17 +691,15 @@ public sealed class PostgresPersistenceContractTests : IClassFixture<PostgresPer
         Assert.Equal("Stored public video detail", result.Content.Markdown);
         Assert.Equal(1, result.VideosVersion);
         var video = Assert.Single(result.Videos);
+        Assert.Equal(videoId, video.Id);
         Assert.Equal(WorkVideoSourceTypes.YouTube, video.SourceType);
         Assert.Equal("dQw4w9WgXcQ", video.SourceKey);
+        Assert.Equal("Postgres public work detail video", video.OriginalFileName);
 
-        Assert.Equal(2, commandTextCapture.CommandTexts.Count);
+        var commandText = Assert.Single(commandTextCapture.CommandTexts);
         Assert.DoesNotContain(
             "\"WorkVideos\"",
-            commandTextCapture.CommandTexts[0],
-            StringComparison.OrdinalIgnoreCase);
-        Assert.Contains(
-            "\"WorkVideos\"",
-            commandTextCapture.CommandTexts[1],
+            commandText,
             StringComparison.OrdinalIgnoreCase);
 
         var combinedCommandText = string.Join('\n', commandTextCapture.CommandTexts);
