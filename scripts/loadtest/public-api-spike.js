@@ -15,7 +15,7 @@ export const options = {
       startRate: warmupRate,
       timeUnit: '1s',
       preAllocatedVUs: Math.min(200, maxVus),
-      maxVUs,
+      maxVUs: maxVus,
       stages: [
         { duration: `${Math.max(10, Math.floor(durationSeconds * 0.3))}s`, target: warmupRate },
         { duration: `${Math.max(10, Math.floor(durationSeconds * 0.2))}s`, target: spikeRate },
