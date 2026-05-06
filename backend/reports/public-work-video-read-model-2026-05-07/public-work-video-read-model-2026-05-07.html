@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Public Work Video Read Model - 2026-05-07</title>
+  <style>body{font-family:system-ui,sans-serif;max-width:920px;margin:40px auto;line-height:1.5;color:#17202a}code{background:#f4f4f4;padding:2px 4px}section{margin:24px 0}li{margin:6px 0}</style>
+</head>
+<body>
+  <h1>Public Work Video Read Model - 2026-05-07</h1>
+  <section><h2>Objective</h2><p>Reduce public Work detail with videos from two DB commands to one by storing a write-time public video snapshot on <code>Work</code>.</p></section>
+  <section><h2>Changed</h2><ul><li>Added <code>Work.PublicVideosJson</code> jsonb read-model column.</li><li>Public Work detail now reads video DTO data from the stored snapshot.</li><li>Bootstrap backfills legacy <code>WorkVideos</code> into <code>PublicVideosJson</code>.</li><li>Video mutations refresh the stored snapshot.</li></ul></section>
+  <section><h2>Validation</h2><ul><li>Focused PostgreSQL contracts passed 3/3.</li><li>Component tests passed 69/69.</li><li>Endpoint integration tests passed 21/21.</li><li>Full backend solution tests passed with Contract 1 skipped, Component 124, Unit 56, Architecture 35, Integration 228.</li><li>k6 latest-code smoke: 100 rps, 10s, 1,001 requests, 0 failures, p95 3.21 ms.</li></ul></section>
+  <section><h2>Risks</h2><ul><li>Compose rebuild was blocked by external DNS failures, so load smoke used mounted local publish.</li><li>Smoke is not a prod-like 2CPU/8GB benchmark.</li><li>Future video mutations must keep the snapshot refreshed.</li></ul></section>
+  <section><h2>Recommendation</h2><p>Proceed to PR/CI. Next target: large public detail body payload and JSON serialization allocation.</p></section>
+</body>
+</html>
