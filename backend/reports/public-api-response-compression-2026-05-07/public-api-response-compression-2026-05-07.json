@@ -1,0 +1,78 @@
+{
+  "task": "public-api-response-compression-2026-05-07",
+  "date": "2026-05-07",
+  "branch": "perf/public-api-response-compression-2026-05-07",
+  "base": "dev@6a18e20",
+  "primaryGoal": "Reduce public API detail response transfer cost without changing target realism, pageSize, caching behavior, or DTO semantics.",
+  "changedFiles": [
+    "backend/src/WoongBlog.Api/Common/ApiServiceCollectionExtensions.cs",
+    "backend/src/WoongBlog.Api/Program.cs",
+    "backend/tests/WoongBlog.Api.IntegrationTests/PublicEndpointsTests.cs",
+    "backend/tests/WoongBlog.Api.ArchitectureTests/ArchitectureBoundaryTests.cs",
+    "backend/reports/public-api-response-compression-2026-05-07/loadtest/k6-public-work-compression-50rps-10s.json"
+  ],
+  "notChanged": [
+    "No cache introduced",
+    "No seeded-target forcing",
+    "No public list pageSize=12 change",
+    "No public Work/Blog DTO semantic change except HTTP transfer encoding",
+    "No DB query shape, index, pool, or EF projection change",
+    "No nginx timing extraction change"
+  ],
+  "expectedBackendTestImpact": {
+    "clientP95P99": "Lower for large gzip-enabled public detail responses when transfer/receive time is material.",
+    "httpReceiving": "Lower for compressible large JSON payloads.",
+    "dataReceived": "Lower compressed wire bytes in gzip-capable clients.",
+    "httpFailures": "No direct improvement expected.",
+    "dbLatency": "No direct change expected.",
+    "cpuGc": "Possible CPU increase under high RPS; fastest gzip selected to limit this risk."
+  },
+  "validations": [
+    {
+      "name": "RED focused integration test",
+      "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~GetWorkBySlug_CompressesPublicDetailJson_WhenClientAcceptsGzip --no-restore --logger console;verbosity=minimal",
+      "result": "failed before implementation because Content-Encoding gzip was absent"
+    },
+    {
+      "name": "GREEN focused integration test",
+      "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~GetWorkBySlug_CompressesPublicDetailJson_WhenClientAcceptsGzip --no-restore --logger console;verbosity=minimal",
+      "result": "passed 1/1"
+    },
+    {
+      "name": "architecture middleware order",
+      "command": "dotnet test backend/tests/WoongBlog.Api.ArchitectureTests/WoongBlog.Api.ArchitectureTests.csproj --filter FullyQualifiedName~Program_ComposesServicesMiddlewareAndEndpoints_InExpectedBoundaryOrder --no-restore --logger console;verbosity=minimal",
+      "result": "passed 1/1"
+    },
+    {
+      "name": "public endpoints focused suite",
+      "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~PublicEndpointsTests --no-restore --logger console;verbosity=minimal",
+      "result": "passed 31/31"
+    },
+    {
+      "name": "full backend solution",
+      "command": "dotnet test backend/WoongBlog.sln --no-restore --logger console;verbosity=minimal",
+      "result": "passed: Contract 1 skipped, Component 124, Unit 59, Architecture 35, Integration 229"
+    },
+    {
+      "name": "dev compose rebuild",
+      "command": "BACKEND_PUBLISH_PORT=18080 docker compose -f docker-compose.dev.yml up -d --build backend nginx",
+      "result": "succeeded"
+    },
+    {
+      "name": "curl smoke",
+      "result": "plain 1195 B vs gzip 850 B for /api/public/works/seeded-work; gzip response included Content-Encoding and Vary"
+    },
+    {
+      "name": "k6 compression smoke",
+      "artifact": "backend/reports/public-api-response-compression-2026-05-07/loadtest/k6-public-work-compression-50rps-10s.json",
+      "result": "500 requests, check rate 1.0, HTTP failure rate 0, p95 2.415107 ms, http_req_receiving p95 0.170821 ms"
+    }
+  ],
+  "risks": [
+    "Gzip spends backend CPU on the 2 CPU shared production host.",
+    "Local seeded-work smoke proves behavior, not heavy real detail A/B improvement.",
+    "Current byte observability may not fully represent compressed wire bytes when Content-Length is absent.",
+    "This does not fix DB pressure, app elapsed spikes, ThreadPool queue spikes, or 5xx under high max VU pressure."
+  ],
+  "recommendation": "Merge if CI is green, then run production-like A/B on real heavy Work/Study detail URLs over HTTPS comparing p95/p99, receiving time, data_received, CPU/GC, app elapsed, DB pressure, and 5xx."
+}
