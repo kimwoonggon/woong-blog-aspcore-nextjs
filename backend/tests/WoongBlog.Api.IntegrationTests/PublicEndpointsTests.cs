@@ -1,4 +1,6 @@
 using System.Net;
+using System.IO.Compression;
+using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using WoongBlog.Api.Domain.Entities;
@@ -216,6 +218,54 @@ public class PublicEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         Assert.True(document.RootElement.TryGetProperty("content", out var content));
         Assert.Equal($"<p>{publicToken}</p>", content.GetProperty("html").GetString());
         Assert.DoesNotContain(adminOnlyToken, body, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task GetWorkBySlug_CompressesPublicDetailJson_WhenClientAcceptsGzip()
+    {
+        var client = _factory.CreateClient();
+        var slug = $"public-compressed-work-{Guid.NewGuid():N}";
+        var publicToken = $"public-compressed-body-{Guid.NewGuid():N}";
+        var repeatedBody = string.Concat(Enumerable.Repeat($"<p>{publicToken} compression-target body.</p>", 800));
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
+            dbContext.Works.Add(new Work
+            {
+                Id = Guid.NewGuid(),
+                Title = "Public Compressed Work",
+                Slug = slug,
+                Excerpt = "public compressed body",
+                Category = "public",
+                Tags = ["compression"],
+                ContentJson = JsonSerializer.Serialize(new { html = repeatedBody }),
+                AllPropertiesJson = "{}",
+                Published = true,
+                PublishedAt = DateTimeOffset.UtcNow,
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
+            await dbContext.SaveChangesAsync();
+        }
+
+        using var request = new HttpRequestMessage(HttpMethod.Get, $"/api/public/works/{slug}");
+        request.Headers.AcceptEncoding.ParseAdd("gzip");
+
+        var response = await client.SendAsync(request);
+
+        response.EnsureSuccessStatusCode();
+        Assert.Contains("gzip", response.Content.Headers.ContentEncoding);
+        Assert.Contains("Accept-Encoding", response.Headers.Vary);
+
+        var compressedBody = await response.Content.ReadAsByteArrayAsync();
+        await using var compressedStream = new MemoryStream(compressedBody);
+        await using var gzipStream = new GZipStream(compressedStream, CompressionMode.Decompress);
+        using var reader = new StreamReader(gzipStream, Encoding.UTF8);
+        var body = await reader.ReadToEndAsync();
+
+        Assert.Contains(publicToken, body, StringComparison.Ordinal);
+        Assert.True(compressedBody.Length < Encoding.UTF8.GetByteCount(body));
     }
 
     [Fact]
