@@ -1,0 +1,30 @@
+{
+  "task": "admin-work-list-projection-2026-05-06",
+  "date": "2026-05-06",
+  "summary": "Admin Work list now uses a single DTO projection over stored PublicThumbnailUrl instead of loading full Work entities, Assets, and WorkVideos.",
+  "changed": [
+    "backend/src/WoongBlog.Infrastructure/Modules/Content/Works/Persistence/WorkQueryStore.cs",
+    "backend/tests/WoongBlog.Api.IntegrationTests/PostgresPersistenceContractTests.cs",
+    "todolist-2026-05-06.md"
+  ],
+  "notChanged": [
+    "No cache behavior changed",
+    "No Real Backend Test target selection changed",
+    "No seeded target priority added",
+    "No public list pageSize behavior changed",
+    "No public endpoint DTO contract changed"
+  ],
+  "validations": [
+    { "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~PostgresPersistenceContractTests.AdminWorkList_UsesSinglePostgresCommand_AndStoredThumbnail --no-restore", "result": "red_then_green" },
+    { "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~PostgresPersistenceContractTests --no-restore", "result": "passed_10_of_10" },
+    { "command": "dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj --filter FullyQualifiedName~PublicQueryHandlerComponentTests --no-restore", "result": "passed_40_of_40" },
+    { "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~AdminEndpointsTests|FullyQualifiedName~AdminContentEndpointsTests --no-restore", "result": "passed_33_of_33" },
+    { "command": "dotnet test backend/WoongBlog.sln --no-restore", "result": "passed_component_122_unit_56_architecture_35_integration_214_contract_1_skipped" },
+    { "command": "git diff --check", "result": "passed" }
+  ],
+  "risks": [
+    "Admin list relies on PublicThumbnailUrl being populated by existing create/update/bootstrap paths.",
+    "This slice does not directly affect public k6 targets because admin list is not in the real backend load mix."
+  ],
+  "recommendation": "Promote through dev and main, then continue with higher-impact public read-model and diagnostics work."
+}

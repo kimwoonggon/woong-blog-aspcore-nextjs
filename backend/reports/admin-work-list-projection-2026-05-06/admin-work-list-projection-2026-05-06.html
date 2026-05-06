@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Admin Work List Projection Audit - 2026-05-06</title>
+  <style>body{font-family:Arial,sans-serif;max-width:920px;margin:40px auto;line-height:1.55;color:#1f2937}code{background:#f3f4f6;padding:2px 4px;border-radius:4px}h1,h2{color:#111827}</style>
+</head>
+<body>
+  <h1>Admin Work List Projection Audit - 2026-05-06</h1>
+  <h2>Summary</h2>
+  <p><code>GetAdminListAsync</code> now uses a single DTO projection over stored public media columns instead of loading full Work entities, Assets, and WorkVideos.</p>
+  <h2>Not Changed</h2>
+  <p>No cache, seed priority, load-test target change, public DTO contract change, or <code>pageSize=12</code> reduction was introduced.</p>
+  <h2>Validation</h2>
+  <p>Focused RED/GREEN Postgres command-count test passed after implementation. Full backend solution tests passed: Component 122, Unit 56, Architecture 35, Integration 214, Contract 1 skipped.</p>
+  <h2>Recommendation</h2>
+  <p>Promote through dev and main as a low-risk backend read-model correction.</p>
+</body>
+</html>

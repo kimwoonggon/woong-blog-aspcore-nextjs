@@ -418,6 +418,72 @@ public sealed class PostgresPersistenceContractTests : IClassFixture<PostgresPer
         Assert.Equal(1, snapshot.CommandLatency.SampleCount);
     }
 
+    [Fact]
+    public async Task AdminWorkList_UsesSinglePostgresCommand_AndStoredThumbnail()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        const string slug = "admin-work-list-projection";
+        const string storedThumbnailUrl = "/media/admin-work-list-stored-thumb.png";
+        var workId = Guid.NewGuid();
+        var thumbnailAssetId = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+
+        await using (var setupContext = CreateDbContext())
+        {
+            await ResetDatabaseAsync(setupContext, cancellationToken);
+            await DatabaseBootstrapper.InitializeAsync(setupContext, cancellationToken);
+            await ClearPublicContentAsync(setupContext, cancellationToken);
+
+            setupContext.Assets.Add(new Asset
+            {
+                Id = thumbnailAssetId,
+                Bucket = "media",
+                Path = "admin-work-list-asset-thumb.png",
+                PublicUrl = "/media/admin-work-list-asset-thumb.png",
+                MimeType = "image/png",
+                Kind = "work-thumbnail",
+                CreatedAt = now
+            });
+            setupContext.Works.Add(new Work
+            {
+                Id = workId,
+                Slug = slug,
+                Title = "Admin Work List Projection",
+                Excerpt = "List projection should use stored public fields",
+                Category = "case-study",
+                ContentJson = """{"html":"<p>This body must not be needed by the admin list DTO.</p>"}""",
+                AllPropertiesJson = """{"unused":"This metadata must not be needed by the admin list DTO."}""",
+                ThumbnailAssetId = thumbnailAssetId,
+                PublicThumbnailUrl = storedThumbnailUrl,
+                Published = true,
+                PublishedAt = now,
+                CreatedAt = now,
+                UpdatedAt = now
+            });
+            setupContext.WorkVideos.Add(new WorkVideo
+            {
+                WorkId = workId,
+                SourceType = WorkVideoSourceTypes.YouTube,
+                SourceKey = "dQw4w9WgXcQ",
+                OriginalFileName = "Admin list should not need this video",
+                SortOrder = 0,
+                CreatedAt = now
+            });
+            await setupContext.SaveChangesAsync(cancellationToken);
+        }
+
+        var collector = CreateDiagnosticsCollector();
+        await using var dbContext = _fixture.CreateDbContext(new LoadTestDbCommandDiagnosticsInterceptor(collector));
+        var queryStore = new WorkQueryStore(dbContext, new NoopPlaybackUrlBuilder());
+
+        var result = await queryStore.GetAdminListAsync(cancellationToken);
+        var snapshot = collector.CaptureSnapshot();
+
+        var item = Assert.Single(result, work => work.Slug == slug);
+        Assert.Equal(storedThumbnailUrl, item.ThumbnailUrl);
+        Assert.Equal(1, snapshot.CommandLatency.SampleCount);
+    }
+
     private WoongBlogDbContext CreateDbContext()
     {
         return _fixture.CreateDbContext();
