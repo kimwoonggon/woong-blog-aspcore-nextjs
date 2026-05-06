@@ -39,6 +39,11 @@ public static class DatabaseBootstrapper
                     "20260506_public_content_body_fields",
                     PublicContentBodyFieldsSchemaPatchSql,
                     cancellationToken);
+                await ApplySchemaPatchAsync(
+                    dbContext,
+                    "20260506_public_media_url_fields",
+                    PublicMediaUrlFieldsSchemaPatchSql,
+                    cancellationToken);
                 await SeedData.InitializeAsync(dbContext);
                 return;
             }
@@ -322,5 +327,49 @@ SET
   END
 WHERE "PublicContentHtml" = ''
   AND "PublicContentMarkdown" = '';
+""";
+
+    private const string PublicMediaUrlFieldsSchemaPatchSql = """
+ALTER TABLE "Works" ADD COLUMN IF NOT EXISTS "PublicThumbnailUrl" text NOT NULL DEFAULT '';
+ALTER TABLE "Works" ADD COLUMN IF NOT EXISTS "PublicIconUrl" text NOT NULL DEFAULT '';
+ALTER TABLE "Blogs" ADD COLUMN IF NOT EXISTS "PublicCoverUrl" text NOT NULL DEFAULT '';
+
+ALTER TABLE "Works" ALTER COLUMN "PublicThumbnailUrl" SET DEFAULT '';
+ALTER TABLE "Works" ALTER COLUMN "PublicIconUrl" SET DEFAULT '';
+ALTER TABLE "Blogs" ALTER COLUMN "PublicCoverUrl" SET DEFAULT '';
+
+UPDATE "Works"
+SET "PublicThumbnailUrl" = ''
+WHERE "PublicThumbnailUrl" IS NULL;
+
+UPDATE "Works"
+SET "PublicIconUrl" = ''
+WHERE "PublicIconUrl" IS NULL;
+
+UPDATE "Blogs"
+SET "PublicCoverUrl" = ''
+WHERE "PublicCoverUrl" IS NULL;
+
+UPDATE "Works" AS work
+SET "PublicThumbnailUrl" = asset."PublicUrl"
+FROM "Assets" AS asset
+WHERE work."ThumbnailAssetId" = asset."Id"
+  AND work."PublicThumbnailUrl" = '';
+
+UPDATE "Works" AS work
+SET "PublicIconUrl" = asset."PublicUrl"
+FROM "Assets" AS asset
+WHERE work."IconAssetId" = asset."Id"
+  AND work."PublicIconUrl" = '';
+
+UPDATE "Blogs" AS blog
+SET "PublicCoverUrl" = asset."PublicUrl"
+FROM "Assets" AS asset
+WHERE blog."CoverAssetId" = asset."Id"
+  AND blog."PublicCoverUrl" = '';
+
+ALTER TABLE "Works" ALTER COLUMN "PublicThumbnailUrl" SET NOT NULL;
+ALTER TABLE "Works" ALTER COLUMN "PublicIconUrl" SET NOT NULL;
+ALTER TABLE "Blogs" ALTER COLUMN "PublicCoverUrl" SET NOT NULL;
 """;
 }

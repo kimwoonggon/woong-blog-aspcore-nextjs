@@ -348,7 +348,7 @@ export async function upsertAsset(asset) {
   return assetId
 }
 
-export async function upsertBlogRow({ page, html, slug, tags, coverAssetId, marker }) {
+export async function upsertBlogRow({ page, html, slug, tags, coverAssetId, coverPublicUrl = '', marker }) {
   const blogId = await findExistingBlogId(marker, slug)
   const title = extractTitle(page)
   const createdAt = page.created_time
@@ -368,6 +368,7 @@ export async function upsertBlogRow({ page, html, slug, tags, coverAssetId, mark
         "PublicContentHtml" = ${publicContentHtmlExpr},
         "PublicContentMarkdown" = ${publicContentMarkdownExpr},
         "CoverAssetId" = ${coverAssetId ? `'${coverAssetId}'` : 'NULL'},
+        "PublicCoverUrl" = ${sqlText(coverPublicUrl)},
         "Tags" = ${tagArrayExpr},
         "Published" = TRUE,
         "PublishedAt" = ${sqlText(createdAt)}::timestamptz,
@@ -381,7 +382,7 @@ export async function upsertBlogRow({ page, html, slug, tags, coverAssetId, mark
 
   const newId = randomUUID()
   const sql = `
-    INSERT INTO "Blogs" ("Id","Slug","Title","Excerpt","ContentJson","PublicContentHtml","PublicContentMarkdown","CoverAssetId","Tags","Published","PublishedAt","CreatedAt","UpdatedAt")
+    INSERT INTO "Blogs" ("Id","Slug","Title","Excerpt","ContentJson","PublicContentHtml","PublicContentMarkdown","CoverAssetId","PublicCoverUrl","Tags","Published","PublishedAt","CreatedAt","UpdatedAt")
     VALUES (
       '${newId}',
       ${sqlText(finalSlug)},
@@ -391,6 +392,7 @@ export async function upsertBlogRow({ page, html, slug, tags, coverAssetId, mark
       ${publicContentHtmlExpr},
       ${publicContentMarkdownExpr},
       ${coverAssetId ? `'${coverAssetId}'` : 'NULL'},
+      ${sqlText(coverPublicUrl)},
       ${tagArrayExpr},
       TRUE,
       ${sqlText(createdAt)}::timestamptz,
@@ -417,8 +419,10 @@ export async function buildImportPayload(page, blocks, assetsManifest) {
   }
 
   let coverAssetId = null
+  let coverPublicUrl = ''
   if (copiedAssets.length > 0) {
     coverAssetId = await upsertAsset(copiedAssets[0])
+    coverPublicUrl = copiedAssets[0].publicUrl
     for (const extra of copiedAssets.slice(1)) {
       await upsertAsset(extra)
     }
@@ -431,6 +435,7 @@ export async function buildImportPayload(page, blocks, assetsManifest) {
     html: rewritten.html,
     tags: extractTags(page),
     coverAssetId,
+    coverPublicUrl,
   }
 }
 

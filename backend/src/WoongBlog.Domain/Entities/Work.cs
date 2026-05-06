@@ -12,7 +12,9 @@ public class Work
     public string SearchTitle { get; set; } = string.Empty;
     public string SearchText { get; set; } = string.Empty;
     public Guid? ThumbnailAssetId { get; set; }
+    public string PublicThumbnailUrl { get; set; } = string.Empty;
     public Guid? IconAssetId { get; set; }
+    public string PublicIconUrl { get; set; } = string.Empty;
     public string Category { get; set; } = string.Empty;
     public string? Period { get; set; }
     public string AllPropertiesJson { get; set; } = "{}";

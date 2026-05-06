@@ -19,6 +19,21 @@ public sealed class WorkCommandStore(WoongBlogDbContext dbContext) : IWorkComman
         return dbContext.Works.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
 
+    public async Task<IReadOnlyDictionary<Guid, string>> GetAssetPublicUrlsAsync(
+        IReadOnlyCollection<Guid> assetIds,
+        CancellationToken cancellationToken)
+    {
+        if (assetIds.Count == 0)
+        {
+            return new Dictionary<Guid, string>();
+        }
+
+        return await dbContext.Assets
+            .AsNoTracking()
+            .Where(x => assetIds.Contains(x.Id))
+            .ToDictionaryAsync(x => x.Id, x => x.PublicUrl, cancellationToken);
+    }
+
     public async Task<IReadOnlyList<WorkVideo>> GetVideosForWorkAsync(Guid workId, CancellationToken cancellationToken)
     {
         return await dbContext.WorkVideos

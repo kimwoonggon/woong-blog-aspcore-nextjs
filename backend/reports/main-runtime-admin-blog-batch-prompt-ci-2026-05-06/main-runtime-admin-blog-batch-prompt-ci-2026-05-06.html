@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Main Runtime Admin Blog Batch Prompt CI Fix - 2026-05-06</title>
+  <style>body{font-family:system-ui,sans-serif;max-width:880px;margin:40px auto;padding:0 20px;line-height:1.5}code{background:#f3f4f6;padding:2px 4px;border-radius:4px}li{margin:6px 0}</style>
+</head>
+<body>
+  <h1>Main Runtime Admin Blog Batch Prompt CI Fix - 2026-05-06</h1>
+  <h2>Goal</h2>
+  <p>Unblock the dev to main runtime promotion loop by fixing the PR #61 frontend Vitest timing failure without changing backend behavior.</p>
+  <h2>Changed</h2>
+  <ul>
+    <li>Changed the failing AdminBlogBatchAiPanel test to wait for the rendered prompt value.</li>
+    <li>Updated the dated TODO with evidence and verification results.</li>
+  </ul>
+  <h2>Validations</h2>
+  <ul>
+    <li><code>npm run test -- --run src/test/admin-blog-batch-ai-panel.test.tsx</code>: passed, 17 tests.</li>
+    <li><code>npm run typecheck</code>: passed.</li>
+    <li><code>npm run lint</code>: passed with 0 errors and 6 pre-existing warnings.</li>
+    <li><code>git diff --check</code>: passed.</li>
+    <li><code>npm run test -- --run</code>: passed, 82 files and 590 tests.</li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Merge into dev, verify CI Dev, regenerate/update runtime-only main promotion, and verify CI Main Runtime.</p>
+</body>
+</html>
