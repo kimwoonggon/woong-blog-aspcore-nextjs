@@ -1,0 +1,1442 @@
+{
+  "runId": "20260506-130939-public-api-rps-c8aaa852",
+  "status": "completed",
+  "totalRequests": 81,
+  "failedRequests": 0,
+  "currentRps": 10.1,
+  "averageRps": 10.1,
+  "p95Ms": 9.8,
+  "p99Ms": 64.1,
+  "maxMs": 73.9,
+  "statusCounts": {
+    "429": 0,
+    "503": 0,
+    "2xx": 81,
+    "3xx": 0,
+    "4xx": 0,
+    "5xx": 0,
+    "timeout": 0
+  },
+  "latencyBreakdown": {
+    "minMs": 3.8,
+    "p50Ms": 5,
+    "p95Ms": 9.8,
+    "p99Ms": 64.1,
+    "maxMs": 73.9,
+    "appElapsedP95Ms": 15.6,
+    "nginxRequestTimeP95Ms": 16.3,
+    "nginxUpstreamP95Ms": 20.9,
+    "nginxUpstreamP95Source": "runner.http_waiting_fallback"
+  },
+  "targetMetrics": [
+    {
+      "targetId": "works-list",
+      "targetLabel": "Work list",
+      "targetPath": "/api/public/works?page=1&pageSize=12",
+      "group": "work",
+      "requestCount": 21,
+      "successCount": 21,
+      "failureCount": 0,
+      "p95Ms": 5,
+      "responseBytesP95": 4454,
+      "receiveP95Ms": 0.1,
+      "statusCounts": {
+        "2xx": 21,
+        "3xx": 0,
+        "4xx": 0,
+        "5xx": 0
+      }
+    },
+    {
+      "targetId": "work-read",
+      "targetLabel": "Work read",
+      "targetPath": "/api/public/works/real-load-current-heavy-work-20260506",
+      "group": "work",
+      "requestCount": 20,
+      "successCount": 20,
+      "failureCount": 0,
+      "p95Ms": 21.7,
+      "responseBytesP95": 379327,
+      "receiveP95Ms": 2.6,
+      "statusCounts": {
+        "2xx": 20,
+        "3xx": 0,
+        "4xx": 0,
+        "5xx": 0
+      }
+    },
+    {
+      "targetId": "study-list",
+      "targetLabel": "Study list",
+      "targetPath": "/api/public/blogs?page=1&pageSize=12",
+      "group": "study",
+      "requestCount": 20,
+      "successCount": 20,
+      "failureCount": 0,
+      "p95Ms": 6.6,
+      "responseBytesP95": 3887,
+      "receiveP95Ms": 0.1,
+      "statusCounts": {
+        "2xx": 20,
+        "3xx": 0,
+        "4xx": 0,
+        "5xx": 0
+      }
+    },
+    {
+      "targetId": "study-read",
+      "targetLabel": "Study read",
+      "targetPath": "/api/public/blogs/real-load-current-heavy-study-20260506",
+      "group": "study",
+      "requestCount": 20,
+      "successCount": 20,
+      "failureCount": 0,
+      "p95Ms": 11.7,
+      "responseBytesP95": 405983,
+      "receiveP95Ms": 1.7,
+      "statusCounts": {
+        "2xx": 20,
+        "3xx": 0,
+        "4xx": 0,
+        "5xx": 0
+      }
+    }
+  ],
+  "metrics": [
+    {
+      "timestampUtc": "2026-05-06T13:09:39.9297078+00:00",
+      "elapsedSeconds": 0.0494416,
+      "totalRequests": 0,
+      "failedRequests": 0,
+      "currentRps": 0,
+      "averageRps": 0,
+      "p95Ms": 0,
+      "p99Ms": 0,
+      "maxMs": 0,
+      "statusCounts": {
+        "429": 0,
+        "503": 0,
+        "2xx": 0,
+        "3xx": 0,
+        "4xx": 0,
+        "5xx": 0,
+        "timeout": 0
+      },
+      "latencyBreakdown": {
+        "minMs": 0,
+        "p50Ms": 0,
+        "p95Ms": 0,
+        "p99Ms": 0,
+        "maxMs": 0,
+        "appElapsedP95Ms": 0,
+        "nginxRequestTimeP95Ms": null,
+        "nginxUpstreamP95Ms": null,
+        "nginxUpstreamP95Source": null
+      },
+      "targetMetrics": [],
+      "diagnostics": {
+        "timestamp": "2026-05-06T13:09:39.9259179+00:00",
+        "process": {
+          "memoryBytes": 168677376,
+          "processorCount": 8
+        },
+        "gc": {
+          "heapSizeBytes": 7113584,
+          "gen0Collections": 4,
+          "gen1Collections": 1,
+          "gen2Collections": 0,
+          "timeInGcPercent": 1.14
+        },
+        "threadPool": {
+          "workerThreads": 7,
+          "pendingWorkItemCount": 0,
+          "completedWorkItemCount": 450,
+          "availableWorkerThreads": 32765,
+          "maxWorkerThreads": 32767
+        },
+        "database": {
+          "status": "available",
+          "latencyMs": 1.5,
+          "openConnections": 2,
+          "activeConnections": 1,
+          "idleConnections": 1,
+          "idleInTransactionConnections": 0,
+          "commandLatency": {
+            "sampleCount": 81,
+            "p50Ms": 0.5,
+            "p95Ms": 4.2,
+            "p99Ms": 33
+          },
+          "connectionOpenLatency": {
+            "sampleCount": 81,
+            "p50Ms": 0,
+            "p95Ms": 0,
+            "p99Ms": 134.3
+          },
+          "slowQueryCount": 0,
+          "recentSlowQueries": [],
+          "timeoutCount": 0,
+          "errorCount": 0,
+          "error": null,
+          "errorCategory": null
+        }
+      }
+    },
+    {
+      "timestampUtc": "2026-05-06T13:09:40.9413665+00:00",
+      "elapsedSeconds": 1.0611173,
+      "totalRequests": 0,
+      "failedRequests": 0,
+      "currentRps": 0,
+      "averageRps": 0,
+      "p95Ms": 0,
+      "p99Ms": 0,
+      "maxMs": 0,
+      "statusCounts": {
+        "429": 0,
+        "503": 0,
+        "2xx": 0,
+        "3xx": 0,
+        "4xx": 0,
+        "5xx": 0,
+        "timeout": 0
+      },
+      "latencyBreakdown": {
+        "minMs": 0,
+        "p50Ms": 0,
+        "p95Ms": 0,
+        "p99Ms": 0,
+        "maxMs": 0,
+        "appElapsedP95Ms": 0,
+        "nginxRequestTimeP95Ms": null,
+        "nginxUpstreamP95Ms": null,
+        "nginxUpstreamP95Source": null
+      },
+      "targetMetrics": [],
+      "diagnostics": {
+        "timestamp": "2026-05-06T13:09:40.9408884+00:00",
+        "process": {
+          "memoryBytes": 191111168,
+          "processorCount": 8
+        },
+        "gc": {
+          "heapSizeBytes": 17924216,
+          "gen0Collections": 6,
+          "gen1Collections": 3,
+          "gen2Collections": 2,
+          "timeInGcPercent": 0.04
+        },
+        "threadPool": {
+          "workerThreads": 7,
+          "pendingWorkItemCount": 0,
+          "completedWorkItemCount": 626,
+          "availableWorkerThreads": 32765,
+          "maxWorkerThreads": 32767
+        },
+        "database": {
+          "status": "available",
+          "latencyMs": 0.4,
+          "openConnections": 2,
+          "activeConnections": 1,
+          "idleConnections": 1,
+          "idleInTransactionConnections": 0,
+          "commandLatency": {
+            "sampleCount": 94,
+            "p50Ms": 0.5,
+            "p95Ms": 5.7,
+            "p99Ms": 33
+          },
+          "connectionOpenLatency": {
+            "sampleCount": 94,
+            "p50Ms": 0,
+            "p95Ms": 0,
+            "p99Ms": 134.3
+          },
+          "slowQueryCount": 0,
+          "recentSlowQueries": [],
+          "timeoutCount": 0,
+          "errorCount": 0,
+          "error": null,
+          "errorCategory": null
+        }
+      }
+    },
+    {
+      "timestampUtc": "2026-05-06T13:09:41.9441377+00:00",
+      "elapsedSeconds": 2.0638844,
+      "totalRequests": 0,
+      "failedRequests": 0,
+      "currentRps": 0,
+      "averageRps": 0,
+      "p95Ms": 0,
+      "p99Ms": 0,
+      "maxMs": 0,
+      "statusCounts": {
+        "429": 0,
+        "503": 0,
+        "2xx": 0,
+        "3xx": 0,
+        "4xx": 0,
+        "5xx": 0,
+        "timeout": 0
+      },
+      "latencyBreakdown": {
+        "minMs": 0,
+        "p50Ms": 0,
+        "p95Ms": 0,
+        "p99Ms": 0,
+        "maxMs": 0,
+        "appElapsedP95Ms": 0,
+        "nginxRequestTimeP95Ms": null,
+        "nginxUpstreamP95Ms": null,
+        "nginxUpstreamP95Source": null
+      },
+      "targetMetrics": [],
+      "diagnostics": {
+        "timestamp": "2026-05-06T13:09:41.9435895+00:00",
+        "process": {
+          "memoryBytes": 202608640,
+          "processorCount": 8
+        },
+        "gc": {
+          "heapSizeBytes": 28914864,
+          "gen0Collections": 8,
+          "gen1Collections": 5,
+          "gen2Collections": 4,
+          "timeInGcPercent": 0.04
+        },
+        "threadPool": {
+          "workerThreads": 7,
+          "pendingWorkItemCount": 1,
+          "completedWorkItemCount": 894,
+          "availableWorkerThreads": 32764,
+          "maxWorkerThreads": 32767
+        },
+        "database": {
+          "status": "available",
+          "latencyMs": 0.6,
+          "openConnections": 2,
+          "activeConnections": 1,
+          "idleConnections": 1,
+          "idleInTransactionConnections": 0,
+          "commandLatency": {
+            "sampleCount": 106,
+            "p50Ms": 0.6,
+            "p95Ms": 4.2,
+            "p99Ms": 24.4
+          },
+          "connectionOpenLatency": {
+            "sampleCount": 106,
+            "p50Ms": 0,
+            "p95Ms": 0,
+            "p99Ms": 7.7
+          },
+          "slowQueryCount": 0,
+          "recentSlowQueries": [],
+          "timeoutCount": 0,
+          "errorCount": 0,
+          "error": null,
+          "errorCategory": null
+        }
+      }
+    },
+    {
+      "timestampUtc": "2026-05-06T13:09:42.949459+00:00",
+      "elapsedSeconds": 3.069208,
+      "totalRequests": 0,
+      "failedRequests": 0,
+      "currentRps": 0,
+      "averageRps": 0,
+      "p95Ms": 0,
+      "p99Ms": 0,
+      "maxMs": 0,
+      "statusCounts": {
+        "429": 0,
+        "503": 0,
+        "2xx": 0,
+        "3xx": 0,
+        "4xx": 0,
+        "5xx": 0,
+        "timeout": 0
+      },
+      "latencyBreakdown": {
+        "minMs": 0,
+        "p50Ms": 0,
+        "p95Ms": 0,
+        "p99Ms": 0,
+        "maxMs": 0,
+        "appElapsedP95Ms": 0,
+        "nginxRequestTimeP95Ms": null,
+        "nginxUpstreamP95Ms": null,
+        "nginxUpstreamP95Source": null
+      },
+      "targetMetrics": [],
+      "diagnostics": {
+        "timestamp": "2026-05-06T13:09:42.9490401+00:00",
+        "process": {
+          "memoryBytes": 207474688,
+          "processorCount": 8
+        },
+        "gc": {
+          "heapSizeBytes": 28914864,
+          "gen0Collections": 9,
+          "gen1Collections": 6,
+          "gen2Collections": 5,
+          "timeInGcPercent": 0.04
+        },
+        "threadPool": {
+          "workerThreads": 7,
+          "pendingWorkItemCount": 0,
+          "completedWorkItemCount": 1102,
+          "availableWorkerThreads": 32765,
+          "maxWorkerThreads": 32767
+        },
+        "database": {
+          "status": "available",
+          "latencyMs": 0.3,
+          "openConnections": 2,
+          "activeConnections": 1,
+          "idleConnections": 1,
+          "idleInTransactionConnections": 0,
+          "commandLatency": {
+            "sampleCount": 121,
+            "p50Ms": 0.7,
+            "p95Ms": 4.2,
+            "p99Ms": 24.4
+          },
+          "connectionOpenLatency": {
+            "sampleCount": 121,
+            "p50Ms": 0,
+            "p95Ms": 0,
+            "p99Ms": 7.7
+          },
+          "slowQueryCount": 0,
+          "recentSlowQueries": [],
+          "timeoutCount": 0,
+          "errorCount": 0,
+          "error": null,
+          "errorCategory": null
+        }
+      }
+    },
+    {
+      "timestampUtc": "2026-05-06T13:09:43.952762+00:00",
+      "elapsedSeconds": 4.0725082,
+      "totalRequests": 0,
+      "failedRequests": 0,
+      "currentRps": 0,
+      "averageRps": 0,
+      "p95Ms": 0,
+      "p99Ms": 0,
+      "maxMs": 0,
+      "statusCounts": {
+        "429": 0,
+        "503": 0,
+        "2xx": 0,
+        "3xx": 0,
+        "4xx": 0,
+        "5xx": 0,
+        "timeout": 0
+      },
+      "latencyBreakdown": {
+        "minMs": 0,
+        "p50Ms": 0,
+        "p95Ms": 0,
+        "p99Ms": 0,
+        "maxMs": 0,
+        "appElapsedP95Ms": 0,
+        "nginxRequestTimeP95Ms": null,
+        "nginxUpstreamP95Ms": null,
+        "nginxUpstreamP95Source": null
+      },
+      "targetMetrics": [],
+      "diagnostics": {
+        "timestamp": "2026-05-06T13:09:43.951932+00:00",
+        "process": {
+          "memoryBytes": 209584128,
+          "processorCount": 8
+        },
+        "gc": {
+          "heapSizeBytes": 34213960,
+          "gen0Collections": 9,
+          "gen1Collections": 6,
+          "gen2Collections": 5,
+          "timeInGcPercent": 0.04
+        },
+        "threadPool": {
+          "workerThreads": 7,
+          "pendingWorkItemCount": 0,
+          "completedWorkItemCount": 1260,
+          "availableWorkerThreads": 32765,
+          "maxWorkerThreads": 32767
+        },
+        "database": {
+          "status": "available",
+          "latencyMs": 0.4,
+          "openConnections": 2,
+          "activeConnections": 1,
+          "idleConnections": 1,
+          "idleInTransactionConnections": 0,
+          "commandLatency": {
+            "sampleCount": 132,
+            "p50Ms": 0.8,
+            "p95Ms": 4.2,
+            "p99Ms": 24.4
+          },
+          "connectionOpenLatency": {
+            "sampleCount": 132,
+            "p50Ms": 0,
+            "p95Ms": 0,
+            "p99Ms": 7.7
+          },
+          "slowQueryCount": 0,
+          "recentSlowQueries": [],
+          "timeoutCount": 0,
+          "errorCount": 0,
+          "error": null,
+          "errorCategory": null
+        }
+      }
+    },
+    {
+      "timestampUtc": "2026-05-06T13:09:44.9548607+00:00",
+      "elapsedSeconds": 5.0746097,
+      "totalRequests": 0,
+      "failedRequests": 0,
+      "currentRps": 0,
+      "averageRps": 0,
+      "p95Ms": 0,
+      "p99Ms": 0,
+      "maxMs": 0,
+      "statusCounts": {
+        "429": 0,
+        "503": 0,
+        "2xx": 0,
+        "3xx": 0,
+        "4xx": 0,
+        "5xx": 0,
+        "timeout": 0
+      },
+      "latencyBreakdown": {
+        "minMs": 0,
+        "p50Ms": 0,
+        "p95Ms": 0,
+        "p99Ms": 0,
+        "maxMs": 0,
+        "appElapsedP95Ms": 0,
+        "nginxRequestTimeP95Ms": null,
+        "nginxUpstreamP95Ms": null,
+        "nginxUpstreamP95Source": null
+      },
+      "targetMetrics": [],
+      "diagnostics": {
+        "timestamp": "2026-05-06T13:09:44.9543277+00:00",
+        "process": {
+          "memoryBytes": 210300928,
+          "processorCount": 8
+        },
+        "gc": {
+          "heapSizeBytes": 33233128,
+          "gen0Collections": 10,
+          "gen1Collections": 7,
+          "gen2Collections": 6,
+          "timeInGcPercent": 0.04
+        },
+        "threadPool": {
+          "workerThreads": 7,
+          "pendingWorkItemCount": 0,
+          "completedWorkItemCount": 1400,
+          "availableWorkerThreads": 32765,
+          "maxWorkerThreads": 32767
+        },
+        "database": {
+          "status": "available",
+          "latencyMs": 0.4,
+          "openConnections": 2,
+          "activeConnections": 1,
+          "idleConnections": 1,
+          "idleInTransactionConnections": 0,
+          "commandLatency": {
+            "sampleCount": 143,
+            "p50Ms": 1.1,
+            "p95Ms": 4.1,
+            "p99Ms": 24.4
+          },
+          "connectionOpenLatency": {
+            "sampleCount": 143,
+            "p50Ms": 0,
+            "p95Ms": 0,
+            "p99Ms": 7.7
+          },
+          "slowQueryCount": 0,
+          "recentSlowQueries": [],
+          "timeoutCount": 0,
+          "errorCount": 0,
+          "error": null,
+          "errorCategory": null
+        }
+      }
+    },
+    {
+      "timestampUtc": "2026-05-06T13:09:45.9579019+00:00",
+      "elapsedSeconds": 6.0776519,
+      "totalRequests": 0,
+      "failedRequests": 0,
+      "currentRps": 0,
+      "averageRps": 0,
+      "p95Ms": 0,
+      "p99Ms": 0,
+      "maxMs": 0,
+      "statusCounts": {
+        "429": 0,
+        "503": 0,
+        "2xx": 0,
+        "3xx": 0,
+        "4xx": 0,
+        "5xx": 0,
+        "timeout": 0
+      },
+      "latencyBreakdown": {
+        "minMs": 0,
+        "p50Ms": 0,
+        "p95Ms": 0,
+        "p99Ms": 0,
+        "maxMs": 0,
+        "appElapsedP95Ms": 0,
+        "nginxRequestTimeP95Ms": null,
+        "nginxUpstreamP95Ms": null,
+        "nginxUpstreamP95Source": null
+      },
+      "targetMetrics": [],
+      "diagnostics": {
+        "timestamp": "2026-05-06T13:09:45.9569889+00:00",
+        "process": {
+          "memoryBytes": 215199744,
+          "processorCount": 8
+        },
+        "gc": {
+          "heapSizeBytes": 37037896,
+          "gen0Collections": 11,
+          "gen1Collections": 8,
+          "gen2Collections": 7,
+          "timeInGcPercent": 0.05
+        },
+        "threadPool": {
+          "workerThreads": 7,
+          "pendingWorkItemCount": 0,
+          "completedWorkItemCount": 1595,
+          "availableWorkerThreads": 32765,
+          "maxWorkerThreads": 32767
+        },
+        "database": {
+          "status": "available",
+          "latencyMs": 0.4,
+          "openConnections": 2,
+          "activeConnections": 1,
+          "idleConnections": 1,
+          "idleInTransactionConnections": 0,
+          "commandLatency": {
+            "sampleCount": 157,
+            "p50Ms": 1.2,
+            "p95Ms": 4.1,
+            "p99Ms": 24.4
+          },
+          "connectionOpenLatency": {
+            "sampleCount": 157,
+            "p50Ms": 0,
+            "p95Ms": 0,
+            "p99Ms": 7.7
+          },
+          "slowQueryCount": 0,
+          "recentSlowQueries": [],
+          "timeoutCount": 0,
+          "errorCount": 0,
+          "error": null,
+          "errorCategory": null
+        }
+      }
+    },
+    {
+      "timestampUtc": "2026-05-06T13:09:46.9605414+00:00",
+      "elapsedSeconds": 7.0802911,
+      "totalRequests": 0,
+      "failedRequests": 0,
+      "currentRps": 0,
+      "averageRps": 0,
+      "p95Ms": 0,
+      "p99Ms": 0,
+      "maxMs": 0,
+      "statusCounts": {
+        "429": 0,
+        "503": 0,
+        "2xx": 0,
+        "3xx": 0,
+        "4xx": 0,
+        "5xx": 0,
+        "timeout": 0
+      },
+      "latencyBreakdown": {
+        "minMs": 0,
+        "p50Ms": 0,
+        "p95Ms": 0,
+        "p99Ms": 0,
+        "maxMs": 0,
+        "appElapsedP95Ms": 0,
+        "nginxRequestTimeP95Ms": null,
+        "nginxUpstreamP95Ms": null,
+        "nginxUpstreamP95Source": null
+      },
+      "targetMetrics": [],
+      "diagnostics": {
+        "timestamp": "2026-05-06T13:09:46.9601941+00:00",
+        "process": {
+          "memoryBytes": 218365952,
+          "processorCount": 8
+        },
+        "gc": {
+          "heapSizeBytes": 37037896,
+          "gen0Collections": 11,
+          "gen1Collections": 8,
+          "gen2Collections": 7,
+          "timeInGcPercent": 0.05
+        },
+        "threadPool": {
+          "workerThreads": 7,
+          "pendingWorkItemCount": 0,
+          "completedWorkItemCount": 1760,
+          "availableWorkerThreads": 32765,
+          "maxWorkerThreads": 32767
+        },
+        "database": {
+          "status": "available",
+          "latencyMs": 0.4,
+          "openConnections": 2,
+          "activeConnections": 1,
+          "idleConnections": 1,
+          "idleInTransactionConnections": 0,
+          "commandLatency": {
+            "sampleCount": 170,
+            "p50Ms": 1.2,
+            "p95Ms": 3.9,
+            "p99Ms": 24.4
+          },
+          "connectionOpenLatency": {
+            "sampleCount": 170,
+            "p50Ms": 0,
+            "p95Ms": 0,
+            "p99Ms": 7.7
+          },
+          "slowQueryCount": 0,
+          "recentSlowQueries": [],
+          "timeoutCount": 0,
+          "errorCount": 0,
+          "error": null,
+          "errorCategory": null
+        }
+      }
+    },
+    {
+      "timestampUtc": "2026-05-06T13:09:47.963691+00:00",
+      "elapsedSeconds": 8.0834393,
+      "totalRequests": 0,
+      "failedRequests": 0,
+      "currentRps": 0,
+      "averageRps": 0,
+      "p95Ms": 0,
+      "p99Ms": 0,
+      "maxMs": 0,
+      "statusCounts": {
+        "429": 0,
+        "503": 0,
+        "2xx": 0,
+        "3xx": 0,
+        "4xx": 0,
+        "5xx": 0,
+        "timeout": 0
+      },
+      "latencyBreakdown": {
+        "minMs": 0,
+        "p50Ms": 0,
+        "p95Ms": 0,
+        "p99Ms": 0,
+        "maxMs": 0,
+        "appElapsedP95Ms": 0,
+        "nginxRequestTimeP95Ms": null,
+        "nginxUpstreamP95Ms": null,
+        "nginxUpstreamP95Source": null
+      },
+      "targetMetrics": [],
+      "diagnostics": {
+        "timestamp": "2026-05-06T13:09:47.9632488+00:00",
+        "process": {
+          "memoryBytes": 224628736,
+          "processorCount": 8
+        },
+        "gc": {
+          "heapSizeBytes": 40486288,
+          "gen0Collections": 12,
+          "gen1Collections": 9,
+          "gen2Collections": 8,
+          "timeInGcPercent": 0.05
+        },
+        "threadPool": {
+          "workerThreads": 7,
+          "pendingWorkItemCount": 0,
+          "completedWorkItemCount": 1888,
+          "availableWorkerThreads": 32765,
+          "maxWorkerThreads": 32767
+        },
+        "database": {
+          "status": "available",
+          "latencyMs": 0.4,
+          "openConnections": 2,
+          "activeConnections": 1,
+          "idleConnections": 1,
+          "idleInTransactionConnections": 0,
+          "commandLatency": {
+            "sampleCount": 182,
+            "p50Ms": 1.3,
+            "p95Ms": 3.9,
+            "p99Ms": 24.4
+          },
+          "connectionOpenLatency": {
+            "sampleCount": 182,
+            "p50Ms": 0,
+            "p95Ms": 0,
+            "p99Ms": 7.7
+          },
+          "slowQueryCount": 0,
+          "recentSlowQueries": [],
+          "timeoutCount": 0,
+          "errorCount": 0,
+          "error": null,
+          "errorCategory": null
+        }
+      }
+    },
+    {
+      "timestampUtc": "2026-05-06T13:09:48.1610772+00:00",
+      "elapsedSeconds": 8.2807615,
+      "totalRequests": 81,
+      "failedRequests": 0,
+      "currentRps": 10.1,
+      "averageRps": 10.1,
+      "p95Ms": 9.8,
+      "p99Ms": 64.1,
+      "maxMs": 73.9,
+      "statusCounts": {
+        "429": 0,
+        "503": 0,
+        "2xx": 81,
+        "3xx": 0,
+        "4xx": 0,
+        "5xx": 0,
+        "timeout": 0
+      },
+      "latencyBreakdown": {
+        "minMs": 3.8,
+        "p50Ms": 5,
+        "p95Ms": 9.8,
+        "p99Ms": 64.1,
+        "maxMs": 73.9,
+        "appElapsedP95Ms": 15.6,
+        "nginxRequestTimeP95Ms": 16.3,
+        "nginxUpstreamP95Ms": 20.9,
+        "nginxUpstreamP95Source": "runner.http_waiting_fallback"
+      },
+      "targetMetrics": [
+        {
+          "targetId": "works-list",
+          "targetLabel": "Work list",
+          "targetPath": "/api/public/works?page=1&pageSize=12",
+          "group": "work",
+          "requestCount": 21,
+          "successCount": 21,
+          "failureCount": 0,
+          "p95Ms": 5,
+          "responseBytesP95": 4454,
+          "receiveP95Ms": 0.1,
+          "statusCounts": {
+            "2xx": 21,
+            "3xx": 0,
+            "4xx": 0,
+            "5xx": 0
+          }
+        },
+        {
+          "targetId": "work-read",
+          "targetLabel": "Work read",
+          "targetPath": "/api/public/works/real-load-current-heavy-work-20260506",
+          "group": "work",
+          "requestCount": 20,
+          "successCount": 20,
+          "failureCount": 0,
+          "p95Ms": 21.7,
+          "responseBytesP95": 379327,
+          "receiveP95Ms": 2.6,
+          "statusCounts": {
+            "2xx": 20,
+            "3xx": 0,
+            "4xx": 0,
+            "5xx": 0
+          }
+        },
+        {
+          "targetId": "study-list",
+          "targetLabel": "Study list",
+          "targetPath": "/api/public/blogs?page=1&pageSize=12",
+          "group": "study",
+          "requestCount": 20,
+          "successCount": 20,
+          "failureCount": 0,
+          "p95Ms": 6.6,
+          "responseBytesP95": 3887,
+          "receiveP95Ms": 0.1,
+          "statusCounts": {
+            "2xx": 20,
+            "3xx": 0,
+            "4xx": 0,
+            "5xx": 0
+          }
+        },
+        {
+          "targetId": "study-read",
+          "targetLabel": "Study read",
+          "targetPath": "/api/public/blogs/real-load-current-heavy-study-20260506",
+          "group": "study",
+          "requestCount": 20,
+          "successCount": 20,
+          "failureCount": 0,
+          "p95Ms": 11.7,
+          "responseBytesP95": 405983,
+          "receiveP95Ms": 1.7,
+          "statusCounts": {
+            "2xx": 20,
+            "3xx": 0,
+            "4xx": 0,
+            "5xx": 0
+          }
+        }
+      ],
+      "diagnostics": {
+        "timestamp": "2026-05-06T13:09:48.160619+00:00",
+        "process": {
+          "memoryBytes": 225431552,
+          "processorCount": 8
+        },
+        "gc": {
+          "heapSizeBytes": 40486288,
+          "gen0Collections": 12,
+          "gen1Collections": 9,
+          "gen2Collections": 8,
+          "timeInGcPercent": 0.05
+        },
+        "threadPool": {
+          "workerThreads": 9,
+          "pendingWorkItemCount": 0,
+          "completedWorkItemCount": 1914,
+          "availableWorkerThreads": 32765,
+          "maxWorkerThreads": 32767
+        },
+        "database": {
+          "status": "available",
+          "latencyMs": 0.4,
+          "openConnections": 2,
+          "activeConnections": 1,
+          "idleConnections": 1,
+          "idleInTransactionConnections": 0,
+          "commandLatency": {
+            "sampleCount": 182,
+            "p50Ms": 1.3,
+            "p95Ms": 3.9,
+            "p99Ms": 24.4
+          },
+          "connectionOpenLatency": {
+            "sampleCount": 182,
+            "p50Ms": 0,
+            "p95Ms": 0,
+            "p99Ms": 7.7
+          },
+          "slowQueryCount": 0,
+          "recentSlowQueries": [],
+          "timeoutCount": 0,
+          "errorCount": 0,
+          "error": null,
+          "errorCategory": null
+        }
+      }
+    }
+  ],
+  "diagnostics": [
+    {
+      "timestamp": "2026-05-06T13:09:39.9259179+00:00",
+      "process": {
+        "memoryBytes": 168677376,
+        "processorCount": 8
+      },
+      "gc": {
+        "heapSizeBytes": 7113584,
+        "gen0Collections": 4,
+        "gen1Collections": 1,
+        "gen2Collections": 0,
+        "timeInGcPercent": 1.14
+      },
+      "threadPool": {
+        "workerThreads": 7,
+        "pendingWorkItemCount": 0,
+        "completedWorkItemCount": 450,
+        "availableWorkerThreads": 32765,
+        "maxWorkerThreads": 32767
+      },
+      "database": {
+        "status": "available",
+        "latencyMs": 1.5,
+        "openConnections": 2,
+        "activeConnections": 1,
+        "idleConnections": 1,
+        "idleInTransactionConnections": 0,
+        "commandLatency": {
+          "sampleCount": 81,
+          "p50Ms": 0.5,
+          "p95Ms": 4.2,
+          "p99Ms": 33
+        },
+        "connectionOpenLatency": {
+          "sampleCount": 81,
+          "p50Ms": 0,
+          "p95Ms": 0,
+          "p99Ms": 134.3
+        },
+        "slowQueryCount": 0,
+        "recentSlowQueries": [],
+        "timeoutCount": 0,
+        "errorCount": 0,
+        "error": null,
+        "errorCategory": null
+      }
+    },
+    {
+      "timestamp": "2026-05-06T13:09:40.9408884+00:00",
+      "process": {
+        "memoryBytes": 191111168,
+        "processorCount": 8
+      },
+      "gc": {
+        "heapSizeBytes": 17924216,
+        "gen0Collections": 6,
+        "gen1Collections": 3,
+        "gen2Collections": 2,
+        "timeInGcPercent": 0.04
+      },
+      "threadPool": {
+        "workerThreads": 7,
+        "pendingWorkItemCount": 0,
+        "completedWorkItemCount": 626,
+        "availableWorkerThreads": 32765,
+        "maxWorkerThreads": 32767
+      },
+      "database": {
+        "status": "available",
+        "latencyMs": 0.4,
+        "openConnections": 2,
+        "activeConnections": 1,
+        "idleConnections": 1,
+        "idleInTransactionConnections": 0,
+        "commandLatency": {
+          "sampleCount": 94,
+          "p50Ms": 0.5,
+          "p95Ms": 5.7,
+          "p99Ms": 33
+        },
+        "connectionOpenLatency": {
+          "sampleCount": 94,
+          "p50Ms": 0,
+          "p95Ms": 0,
+          "p99Ms": 134.3
+        },
+        "slowQueryCount": 0,
+        "recentSlowQueries": [],
+        "timeoutCount": 0,
+        "errorCount": 0,
+        "error": null,
+        "errorCategory": null
+      }
+    },
+    {
+      "timestamp": "2026-05-06T13:09:41.9435895+00:00",
+      "process": {
+        "memoryBytes": 202608640,
+        "processorCount": 8
+      },
+      "gc": {
+        "heapSizeBytes": 28914864,
+        "gen0Collections": 8,
+        "gen1Collections": 5,
+        "gen2Collections": 4,
+        "timeInGcPercent": 0.04
+      },
+      "threadPool": {
+        "workerThreads": 7,
+        "pendingWorkItemCount": 1,
+        "completedWorkItemCount": 894,
+        "availableWorkerThreads": 32764,
+        "maxWorkerThreads": 32767
+      },
+      "database": {
+        "status": "available",
+        "latencyMs": 0.6,
+        "openConnections": 2,
+        "activeConnections": 1,
+        "idleConnections": 1,
+        "idleInTransactionConnections": 0,
+        "commandLatency": {
+          "sampleCount": 106,
+          "p50Ms": 0.6,
+          "p95Ms": 4.2,
+          "p99Ms": 24.4
+        },
+        "connectionOpenLatency": {
+          "sampleCount": 106,
+          "p50Ms": 0,
+          "p95Ms": 0,
+          "p99Ms": 7.7
+        },
+        "slowQueryCount": 0,
+        "recentSlowQueries": [],
+        "timeoutCount": 0,
+        "errorCount": 0,
+        "error": null,
+        "errorCategory": null
+      }
+    },
+    {
+      "timestamp": "2026-05-06T13:09:42.9490401+00:00",
+      "process": {
+        "memoryBytes": 207474688,
+        "processorCount": 8
+      },
+      "gc": {
+        "heapSizeBytes": 28914864,
+        "gen0Collections": 9,
+        "gen1Collections": 6,
+        "gen2Collections": 5,
+        "timeInGcPercent": 0.04
+      },
+      "threadPool": {
+        "workerThreads": 7,
+        "pendingWorkItemCount": 0,
+        "completedWorkItemCount": 1102,
+        "availableWorkerThreads": 32765,
+        "maxWorkerThreads": 32767
+      },
+      "database": {
+        "status": "available",
+        "latencyMs": 0.3,
+        "openConnections": 2,
+        "activeConnections": 1,
+        "idleConnections": 1,
+        "idleInTransactionConnections": 0,
+        "commandLatency": {
+          "sampleCount": 121,
+          "p50Ms": 0.7,
+          "p95Ms": 4.2,
+          "p99Ms": 24.4
+        },
+        "connectionOpenLatency": {
+          "sampleCount": 121,
+          "p50Ms": 0,
+          "p95Ms": 0,
+          "p99Ms": 7.7
+        },
+        "slowQueryCount": 0,
+        "recentSlowQueries": [],
+        "timeoutCount": 0,
+        "errorCount": 0,
+        "error": null,
+        "errorCategory": null
+      }
+    },
+    {
+      "timestamp": "2026-05-06T13:09:43.951932+00:00",
+      "process": {
+        "memoryBytes": 209584128,
+        "processorCount": 8
+      },
+      "gc": {
+        "heapSizeBytes": 34213960,
+        "gen0Collections": 9,
+        "gen1Collections": 6,
+        "gen2Collections": 5,
+        "timeInGcPercent": 0.04
+      },
+      "threadPool": {
+        "workerThreads": 7,
+        "pendingWorkItemCount": 0,
+        "completedWorkItemCount": 1260,
+        "availableWorkerThreads": 32765,
+        "maxWorkerThreads": 32767
+      },
+      "database": {
+        "status": "available",
+        "latencyMs": 0.4,
+        "openConnections": 2,
+        "activeConnections": 1,
+        "idleConnections": 1,
+        "idleInTransactionConnections": 0,
+        "commandLatency": {
+          "sampleCount": 132,
+          "p50Ms": 0.8,
+          "p95Ms": 4.2,
+          "p99Ms": 24.4
+        },
+        "connectionOpenLatency": {
+          "sampleCount": 132,
+          "p50Ms": 0,
+          "p95Ms": 0,
+          "p99Ms": 7.7
+        },
+        "slowQueryCount": 0,
+        "recentSlowQueries": [],
+        "timeoutCount": 0,
+        "errorCount": 0,
+        "error": null,
+        "errorCategory": null
+      }
+    },
+    {
+      "timestamp": "2026-05-06T13:09:44.9543277+00:00",
+      "process": {
+        "memoryBytes": 210300928,
+        "processorCount": 8
+      },
+      "gc": {
+        "heapSizeBytes": 33233128,
+        "gen0Collections": 10,
+        "gen1Collections": 7,
+        "gen2Collections": 6,
+        "timeInGcPercent": 0.04
+      },
+      "threadPool": {
+        "workerThreads": 7,
+        "pendingWorkItemCount": 0,
+        "completedWorkItemCount": 1400,
+        "availableWorkerThreads": 32765,
+        "maxWorkerThreads": 32767
+      },
+      "database": {
+        "status": "available",
+        "latencyMs": 0.4,
+        "openConnections": 2,
+        "activeConnections": 1,
+        "idleConnections": 1,
+        "idleInTransactionConnections": 0,
+        "commandLatency": {
+          "sampleCount": 143,
+          "p50Ms": 1.1,
+          "p95Ms": 4.1,
+          "p99Ms": 24.4
+        },
+        "connectionOpenLatency": {
+          "sampleCount": 143,
+          "p50Ms": 0,
+          "p95Ms": 0,
+          "p99Ms": 7.7
+        },
+        "slowQueryCount": 0,
+        "recentSlowQueries": [],
+        "timeoutCount": 0,
+        "errorCount": 0,
+        "error": null,
+        "errorCategory": null
+      }
+    },
+    {
+      "timestamp": "2026-05-06T13:09:45.9569889+00:00",
+      "process": {
+        "memoryBytes": 215199744,
+        "processorCount": 8
+      },
+      "gc": {
+        "heapSizeBytes": 37037896,
+        "gen0Collections": 11,
+        "gen1Collections": 8,
+        "gen2Collections": 7,
+        "timeInGcPercent": 0.05
+      },
+      "threadPool": {
+        "workerThreads": 7,
+        "pendingWorkItemCount": 0,
+        "completedWorkItemCount": 1595,
+        "availableWorkerThreads": 32765,
+        "maxWorkerThreads": 32767
+      },
+      "database": {
+        "status": "available",
+        "latencyMs": 0.4,
+        "openConnections": 2,
+        "activeConnections": 1,
+        "idleConnections": 1,
+        "idleInTransactionConnections": 0,
+        "commandLatency": {
+          "sampleCount": 157,
+          "p50Ms": 1.2,
+          "p95Ms": 4.1,
+          "p99Ms": 24.4
+        },
+        "connectionOpenLatency": {
+          "sampleCount": 157,
+          "p50Ms": 0,
+          "p95Ms": 0,
+          "p99Ms": 7.7
+        },
+        "slowQueryCount": 0,
+        "recentSlowQueries": [],
+        "timeoutCount": 0,
+        "errorCount": 0,
+        "error": null,
+        "errorCategory": null
+      }
+    },
+    {
+      "timestamp": "2026-05-06T13:09:46.9601941+00:00",
+      "process": {
+        "memoryBytes": 218365952,
+        "processorCount": 8
+      },
+      "gc": {
+        "heapSizeBytes": 37037896,
+        "gen0Collections": 11,
+        "gen1Collections": 8,
+        "gen2Collections": 7,
+        "timeInGcPercent": 0.05
+      },
+      "threadPool": {
+        "workerThreads": 7,
+        "pendingWorkItemCount": 0,
+        "completedWorkItemCount": 1760,
+        "availableWorkerThreads": 32765,
+        "maxWorkerThreads": 32767
+      },
+      "database": {
+        "status": "available",
+        "latencyMs": 0.4,
+        "openConnections": 2,
+        "activeConnections": 1,
+        "idleConnections": 1,
+        "idleInTransactionConnections": 0,
+        "commandLatency": {
+          "sampleCount": 170,
+          "p50Ms": 1.2,
+          "p95Ms": 3.9,
+          "p99Ms": 24.4
+        },
+        "connectionOpenLatency": {
+          "sampleCount": 170,
+          "p50Ms": 0,
+          "p95Ms": 0,
+          "p99Ms": 7.7
+        },
+        "slowQueryCount": 0,
+        "recentSlowQueries": [],
+        "timeoutCount": 0,
+        "errorCount": 0,
+        "error": null,
+        "errorCategory": null
+      }
+    },
+    {
+      "timestamp": "2026-05-06T13:09:47.9632488+00:00",
+      "process": {
+        "memoryBytes": 224628736,
+        "processorCount": 8
+      },
+      "gc": {
+        "heapSizeBytes": 40486288,
+        "gen0Collections": 12,
+        "gen1Collections": 9,
+        "gen2Collections": 8,
+        "timeInGcPercent": 0.05
+      },
+      "threadPool": {
+        "workerThreads": 7,
+        "pendingWorkItemCount": 0,
+        "completedWorkItemCount": 1888,
+        "availableWorkerThreads": 32765,
+        "maxWorkerThreads": 32767
+      },
+      "database": {
+        "status": "available",
+        "latencyMs": 0.4,
+        "openConnections": 2,
+        "activeConnections": 1,
+        "idleConnections": 1,
+        "idleInTransactionConnections": 0,
+        "commandLatency": {
+          "sampleCount": 182,
+          "p50Ms": 1.3,
+          "p95Ms": 3.9,
+          "p99Ms": 24.4
+        },
+        "connectionOpenLatency": {
+          "sampleCount": 182,
+          "p50Ms": 0,
+          "p95Ms": 0,
+          "p99Ms": 7.7
+        },
+        "slowQueryCount": 0,
+        "recentSlowQueries": [],
+        "timeoutCount": 0,
+        "errorCount": 0,
+        "error": null,
+        "errorCategory": null
+      }
+    },
+    {
+      "timestamp": "2026-05-06T13:09:48.160619+00:00",
+      "process": {
+        "memoryBytes": 225431552,
+        "processorCount": 8
+      },
+      "gc": {
+        "heapSizeBytes": 40486288,
+        "gen0Collections": 12,
+        "gen1Collections": 9,
+        "gen2Collections": 8,
+        "timeInGcPercent": 0.05
+      },
+      "threadPool": {
+        "workerThreads": 9,
+        "pendingWorkItemCount": 0,
+        "completedWorkItemCount": 1914,
+        "availableWorkerThreads": 32765,
+        "maxWorkerThreads": 32767
+      },
+      "database": {
+        "status": "available",
+        "latencyMs": 0.4,
+        "openConnections": 2,
+        "activeConnections": 1,
+        "idleConnections": 1,
+        "idleInTransactionConnections": 0,
+        "commandLatency": {
+          "sampleCount": 182,
+          "p50Ms": 1.3,
+          "p95Ms": 3.9,
+          "p99Ms": 24.4
+        },
+        "connectionOpenLatency": {
+          "sampleCount": 182,
+          "p50Ms": 0,
+          "p95Ms": 0,
+          "p99Ms": 7.7
+        },
+        "slowQueryCount": 0,
+        "recentSlowQueries": [],
+        "timeoutCount": 0,
+        "errorCount": 0,
+        "error": null,
+        "errorCategory": null
+      }
+    }
+  ]
+}
