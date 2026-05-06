@@ -1,9 +1,12 @@
 using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.Options;
 using Npgsql;
 using Testcontainers.PostgreSql;
 using WoongBlog.Api.Domain.Entities;
 using WoongBlog.Infrastructure.Persistence;
+using WoongBlog.Infrastructure.Persistence.Diagnostics;
 
 namespace WoongBlog.Api.Tests;
 
@@ -194,6 +197,42 @@ public sealed class PostgresPersistenceContractTests : IClassFixture<PostgresPer
         }
     }
 
+    [Fact]
+    public async Task CommandDiagnosticsInterceptor_RecordsAsyncEfCommands_WithPostgres()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await using (var setupContext = CreateDbContext())
+        {
+            await ResetDatabaseAsync(setupContext, cancellationToken);
+            await DatabaseBootstrapper.InitializeAsync(setupContext, cancellationToken);
+            setupContext.Blogs.Add(CreateBlog("async-command-diagnostics-blog", "Async Command Diagnostics Blog"));
+            await setupContext.SaveChangesAsync(cancellationToken);
+        }
+
+        var collector = CreateDiagnosticsCollector();
+        await using var dbContext = _fixture.CreateDbContext(new LoadTestDbCommandDiagnosticsInterceptor(collector));
+
+        var before = collector.CaptureSnapshot();
+        Assert.Equal(0, before.CommandLatency.SampleCount);
+
+        var exists = await dbContext.Blogs
+            .AsNoTracking()
+            .AnyAsync(blog => blog.Slug == "async-command-diagnostics-blog", cancellationToken);
+        var updatedRows = await dbContext.Database.ExecuteSqlRawAsync(
+            """
+            UPDATE "Blogs"
+            SET "UpdatedAt" = "UpdatedAt"
+            WHERE "Slug" = 'async-command-diagnostics-blog'
+            """,
+            cancellationToken);
+
+        var snapshot = collector.CaptureSnapshot();
+        Assert.True(exists);
+        Assert.Equal(1, updatedRows);
+        Assert.True(snapshot.CommandLatency.SampleCount >= 2);
+        Assert.NotNull(snapshot.CommandLatency.P95Ms);
+    }
+
     private WoongBlogDbContext CreateDbContext()
     {
         return _fixture.CreateDbContext();
@@ -228,6 +267,16 @@ public sealed class PostgresPersistenceContractTests : IClassFixture<PostgresPer
             Published = true,
             PublishedAt = DateTimeOffset.UtcNow
         };
+    }
+
+    private static DatabaseDiagnosticsCollector CreateDiagnosticsCollector()
+    {
+        return new DatabaseDiagnosticsCollector(Options.Create(new DatabaseDiagnosticsOptions
+        {
+            LatencySampleCapacity = 32,
+            SlowQuerySampleCapacity = 8,
+            SlowQueryThresholdMs = 1_000_000
+        }));
     }
 
     private static Work CreateWork(string slug)
@@ -291,13 +340,17 @@ public sealed class PostgresPersistenceContractTests : IClassFixture<PostgresPer
             await _postgres.DisposeAsync();
         }
 
-        public WoongBlogDbContext CreateDbContext()
+        public WoongBlogDbContext CreateDbContext(DbCommandInterceptor? interceptor = null)
         {
-            var options = new DbContextOptionsBuilder<WoongBlogDbContext>()
-                .UseNpgsql(_postgres.GetConnectionString())
-                .Options;
+            var builder = new DbContextOptionsBuilder<WoongBlogDbContext>()
+                .UseNpgsql(_postgres.GetConnectionString());
 
-            return new WoongBlogDbContext(options);
+            if (interceptor is not null)
+            {
+                builder.AddInterceptors(interceptor);
+            }
+
+            return new WoongBlogDbContext(builder.Options);
         }
     }
 }
