@@ -2,6 +2,7 @@ using MediatR;
 using WoongBlog.Api.Domain.Entities;
 using WoongBlog.Application.Modules.Content.Common.Support;
 using WoongBlog.Application.Modules.Content.Works.Abstractions;
+using WoongBlog.Application.Modules.Content.Works.Support;
 
 namespace WoongBlog.Application.Modules.Content.Works.CreateWork;
 
@@ -38,7 +39,6 @@ public sealed class CreateWorkCommandHandler : IRequestHandler<CreateWorkCommand
             PublishedAt = request.Published ? now : null,
             ContentJson = request.ContentJson,
             AllPropertiesJson = request.AllPropertiesJson,
-            PublicThumbnailUrl = ResolvePublicMediaUrl(request.ThumbnailAssetId, assetPublicUrls),
             PublicIconUrl = ResolvePublicMediaUrl(request.IconAssetId, assetPublicUrls),
             SearchTitle = ContentSearchText.Normalize(request.Title),
             SearchText = ContentSearchText.BuildIndex(excerpt, AdminContentJson.ExtractExcerptText(request.ContentJson)),
@@ -46,6 +46,7 @@ public sealed class CreateWorkCommandHandler : IRequestHandler<CreateWorkCommand
             UpdatedAt = now
         };
 
+        WorkPublicThumbnailReadModel.Refresh(work, Array.Empty<WorkVideo>(), assetPublicUrls);
         _workCommandStore.Add(work);
         await _workCommandStore.SaveChangesAsync(cancellationToken);
         return new AdminMutationResult(work.Id, work.Slug);

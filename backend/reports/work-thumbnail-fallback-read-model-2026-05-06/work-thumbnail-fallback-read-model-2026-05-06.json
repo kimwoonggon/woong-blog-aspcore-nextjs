@@ -1,0 +1,40 @@
+{
+  "task": "work-thumbnail-fallback-read-model",
+  "date": "2026-05-06",
+  "branch": "perf/work-thumbnail-fallback-equivalence-2026-05-06",
+  "goal": "Preserve old Work thumbnail fallback semantics with write-time PublicThumbnailUrl computation while keeping public read paths fast.",
+  "changed": [
+    "Added WorkPublicThumbnailReadModel write-side refresher.",
+    "Refreshed PublicThumbnailUrl on Work create/update.",
+    "Refreshed PublicThumbnailUrl on Work video add/confirm/HLS/delete/reorder mutations.",
+    "Added WorkVideoCommandStore asset URL lookup for strict resolver-equivalence fallback.",
+    "Added Postgres bootstrap backfill patch 20260506_public_work_thumbnail_fallback_backfill.",
+    "Added integration and Postgres contract tests for fallback equivalence and backfill."
+  ],
+  "notChanged": [
+    "No request-time resolver added to public Work query paths.",
+    "No seeded target priority.",
+    "No pageSize=1 shortcut.",
+    "No cache workaround.",
+    "No runtime nginx or DB pool changes."
+  ],
+  "validations": [
+    { "name": "Create body-image fallback RED/GREEN", "status": "pass" },
+    { "name": "Update body-image fallback RED/GREEN", "status": "pass" },
+    { "name": "YouTube video fallback RED/GREEN", "status": "pass" },
+    { "name": "Bootstrap legacy fallback RED/GREEN", "status": "pass" },
+    { "name": "Unresolved explicit asset fallback RED/GREEN", "status": "pass" },
+    { "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~AdminContentEndpointsTests|FullyQualifiedName~WorkVideoEndpointsTests|FullyQualifiedName~PostgresPersistenceContractTests --no-restore", "status": "pass", "passed": 61 },
+    { "command": "dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj --filter FullyQualifiedName~PublicQueryHandlerComponentTests|FullyQualifiedName~WorkVideoComponentTests --no-restore", "status": "pass", "passed": 65 },
+    { "command": "dotnet test backend/WoongBlog.sln --logger console;verbosity=minimal", "status": "pass", "componentPassed": 122, "unitPassed": 56, "architecturePassed": 35, "integrationPassed": 222, "contractSkipped": 1 },
+    { "command": "git diff --check", "status": "pass" },
+    { "name": "diff guard for pageSize=1, seeded targets, cache workaround", "status": "pass" },
+    { "command": "docker compose -f docker-compose.dev.yml ps", "status": "not-run-load-smoke", "reason": "No running compose services were present." }
+  ],
+  "risks": [
+    "Admin video mutations add asset lookup and conditional video loading, intentionally off the public hot path.",
+    "Backfill only covers common quoted img src patterns; future writes use the C# resolver.",
+    "Runtime load test should be rerun after CI/deployment to quantify p95 and GC impact."
+  ],
+  "recommendation": "Push PR to dev, verify CI, deploy/promote, then rerun realistic Real Backend Test with pageSize=12 and current public read targets."
+}

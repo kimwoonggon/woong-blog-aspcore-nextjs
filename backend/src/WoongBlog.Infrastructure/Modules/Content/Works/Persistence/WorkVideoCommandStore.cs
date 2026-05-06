@@ -38,6 +38,21 @@ public sealed class WorkVideoCommandStore(WoongBlogDbContext dbContext) : IWorkV
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyDictionary<Guid, string>> GetAssetPublicUrlsAsync(
+        IReadOnlyCollection<Guid> assetIds,
+        CancellationToken cancellationToken)
+    {
+        if (assetIds.Count == 0)
+        {
+            return new Dictionary<Guid, string>();
+        }
+
+        return await dbContext.Assets
+            .AsNoTracking()
+            .Where(x => assetIds.Contains(x.Id))
+            .ToDictionaryAsync(x => x.Id, x => x.PublicUrl, cancellationToken);
+    }
+
     public Task<int> CountVideosAsync(Guid workId, CancellationToken cancellationToken)
     {
         return dbContext.WorkVideos.CountAsync(x => x.WorkId == workId, cancellationToken);

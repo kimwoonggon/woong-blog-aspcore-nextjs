@@ -15,6 +15,8 @@ public interface IWorkVideoCommandStore
 
     Task<IReadOnlyList<WorkVideo>> GetVideosForWorkAsync(Guid workId, CancellationToken cancellationToken);
 
+    Task<IReadOnlyDictionary<Guid, string>> GetAssetPublicUrlsAsync(IReadOnlyCollection<Guid> assetIds, CancellationToken cancellationToken);
+
     Task<int> CountVideosAsync(Guid workId, CancellationToken cancellationToken);
 
     Task<int> GetNextSortOrderAsync(Guid workId, CancellationToken cancellationToken);

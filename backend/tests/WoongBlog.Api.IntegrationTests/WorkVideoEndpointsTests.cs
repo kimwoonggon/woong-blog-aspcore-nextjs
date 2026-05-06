@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using WoongBlog.Api.Domain.Entities;
+using WoongBlog.Application.Modules.Content.Works.Support;
 using WoongBlog.Infrastructure.Auth;
 using WoongBlog.Infrastructure.Persistence;
 using WoongBlog.Application.Modules.Content.Works.WorkVideos;
@@ -50,9 +51,77 @@ public class WorkVideoEndpointsTests : IClassFixture<CustomWebApplicationFactory
 
         var publicResponse = await client.GetAsync($"/api/public/works/{created.Slug}");
         publicResponse.EnsureSuccessStatusCode();
-        var publicBody = await publicResponse.Content.ReadAsStringAsync();
-        Assert.Contains("\"videos\":[", publicBody, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("dQw4w9WgXcQ", publicBody, StringComparison.OrdinalIgnoreCase);
+        var publicPayload = await publicResponse.Content.ReadFromJsonAsync<PublicWorkDetailPayload>();
+        Assert.NotNull(publicPayload);
+        var publicVideo = Assert.Single(publicPayload!.Videos);
+        Assert.Equal("dQw4w9WgXcQ", publicVideo.SourceKey);
+
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
+        var work = await dbContext.Works.SingleAsync(x => x.Id == created.Id);
+        var videos = await dbContext.WorkVideos
+            .Where(x => x.WorkId == created.Id)
+            .OrderBy(x => x.SortOrder)
+            .ThenBy(x => x.CreatedAt)
+            .ToListAsync();
+        var resolverThumbnailUrl = WorkThumbnailUrlResolver.ResolveThumbnailUrl(
+            work.ThumbnailAssetId,
+            work.ContentJson,
+            videos,
+            new Dictionary<Guid, string>());
+
+        Assert.Equal("https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg", resolverThumbnailUrl);
+        Assert.Equal(resolverThumbnailUrl, work.PublicThumbnailUrl);
+        Assert.Equal(resolverThumbnailUrl, publicPayload.ThumbnailUrl);
+    }
+
+    [Fact]
+    public async Task AddYouTubeVideo_RecomputesFallback_WhenThumbnailAssetDoesNotResolve()
+    {
+        var client = _factory.CreateAuthenticatedClient();
+        var bodyImageUrl = $"/media/work-video-missing-asset-fallback-{Guid.NewGuid():N}.png";
+        var created = await CreateWorkAsync(
+            client,
+            $"Video Missing Asset Fallback Work {Guid.NewGuid():N}",
+            JsonSerializer.Serialize(new { html = $"<p>Body</p><img src=\"{bodyImageUrl}\" alt=\"fallback\">" }),
+            thumbnailAssetId: Guid.NewGuid());
+
+        using (var initialScope = _factory.Services.CreateScope())
+        {
+            var initialDbContext = initialScope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
+            var initialWork = await initialDbContext.Works.SingleAsync(x => x.Id == created.Id);
+            Assert.Equal(bodyImageUrl, initialWork.PublicThumbnailUrl);
+        }
+
+        var response = await client.PostAsJsonAsync($"/api/admin/works/{created.Id}/videos/youtube", new
+        {
+            youtubeUrlOrId = "dQw4w9WgXcQ",
+            expectedVideosVersion = 0
+        });
+        response.EnsureSuccessStatusCode();
+
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
+        var work = await dbContext.Works.SingleAsync(x => x.Id == created.Id);
+        var videos = await dbContext.WorkVideos
+            .Where(x => x.WorkId == created.Id)
+            .OrderBy(x => x.SortOrder)
+            .ThenBy(x => x.CreatedAt)
+            .ToListAsync();
+        var resolverThumbnailUrl = WorkThumbnailUrlResolver.ResolveThumbnailUrl(
+            work.ThumbnailAssetId,
+            work.ContentJson,
+            videos,
+            new Dictionary<Guid, string>());
+
+        Assert.Equal("https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg", resolverThumbnailUrl);
+        Assert.Equal(resolverThumbnailUrl, work.PublicThumbnailUrl);
+
+        var publicResponse = await client.GetAsync($"/api/public/works/{created.Slug}");
+        publicResponse.EnsureSuccessStatusCode();
+        var publicPayload = await publicResponse.Content.ReadFromJsonAsync<PublicWorkDetailPayload>();
+        Assert.NotNull(publicPayload);
+        Assert.Equal(resolverThumbnailUrl, publicPayload!.ThumbnailUrl);
     }
 
     [Theory]
@@ -280,6 +349,49 @@ public class WorkVideoEndpointsTests : IClassFixture<CustomWebApplicationFactory
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         var payload = await response.Content.ReadFromJsonAsync<ErrorPayload>();
         Assert.Equal("Video not found.", payload?.Error);
+    }
+
+    [Fact]
+    public async Task DeleteYouTubeVideo_RecomputesBodyImageThumbnailFallback_ForPublicReadModel()
+    {
+        var client = _factory.CreateAuthenticatedClient();
+        var bodyImageUrl = $"/media/work-video-delete-fallback-{Guid.NewGuid():N}.png";
+        var created = await CreateWorkAsync(
+            client,
+            $"Delete YouTube Fallback Work {Guid.NewGuid():N}",
+            JsonSerializer.Serialize(new { html = $"<p>Body</p><img src=\"{bodyImageUrl}\" alt=\"fallback\">" }));
+
+        var addResponse = await client.PostAsJsonAsync($"/api/admin/works/{created.Id}/videos/youtube", new
+        {
+            youtubeUrlOrId = "dQw4w9WgXcQ",
+            expectedVideosVersion = 0
+        });
+        addResponse.EnsureSuccessStatusCode();
+        var addPayload = await addResponse.Content.ReadFromJsonAsync<MutationPayload>();
+        Assert.NotNull(addPayload);
+        var video = Assert.Single(addPayload!.Videos);
+
+        var deleteResponse = await client.DeleteAsync($"/api/admin/works/{created.Id}/videos/{video.Id}?expectedVideosVersion={addPayload.VideosVersion}");
+        deleteResponse.EnsureSuccessStatusCode();
+
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
+        var work = await dbContext.Works.SingleAsync(x => x.Id == created.Id);
+        var resolverThumbnailUrl = WorkThumbnailUrlResolver.ResolveThumbnailUrl(
+            work.ThumbnailAssetId,
+            work.ContentJson,
+            Array.Empty<WorkVideo>(),
+            new Dictionary<Guid, string>());
+
+        Assert.Equal(bodyImageUrl, resolverThumbnailUrl);
+        Assert.Equal(resolverThumbnailUrl, work.PublicThumbnailUrl);
+
+        var publicResponse = await client.GetAsync($"/api/public/works/{created.Slug}");
+        publicResponse.EnsureSuccessStatusCode();
+        var publicPayload = await publicResponse.Content.ReadFromJsonAsync<PublicWorkDetailPayload>();
+        Assert.NotNull(publicPayload);
+        Assert.Empty(publicPayload!.Videos);
+        Assert.Equal(resolverThumbnailUrl, publicPayload.ThumbnailUrl);
     }
 
     [Fact]
@@ -522,9 +634,15 @@ public class WorkVideoEndpointsTests : IClassFixture<CustomWebApplicationFactory
         var publicFirstIndex = publicBody.IndexOf("9bZkp7q19f0", StringComparison.Ordinal);
         var publicSecondIndex = publicBody.IndexOf("dQw4w9WgXcQ", StringComparison.Ordinal);
         Assert.True(publicFirstIndex >= 0 && publicSecondIndex >= 0 && publicFirstIndex < publicSecondIndex);
+        var expectedThumbnailUrl = "https://img.youtube.com/vi/9bZkp7q19f0/hqdefault.jpg";
+        using var publicDocument = JsonDocument.Parse(publicBody);
+        Assert.Equal(expectedThumbnailUrl, publicDocument.RootElement.GetProperty("thumbnailUrl").GetString());
 
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
+        var work = await dbContext.Works.SingleAsync(x => x.Id == created.Id);
+        Assert.Equal(expectedThumbnailUrl, work.PublicThumbnailUrl);
+
         var persistedOrder = await dbContext.WorkVideos
             .Where(video => video.WorkId == created.Id)
             .OrderBy(video => video.SortOrder)
@@ -691,7 +809,11 @@ public class WorkVideoEndpointsTests : IClassFixture<CustomWebApplicationFactory
         Assert.NotEmpty(dbContext.VideoStorageCleanupJobs.Where(x => x.StorageKey == confirmedTarget.StorageKey));
     }
 
-    private static async Task<CreatedWorkPayload> CreateWorkAsync(HttpClient client, string title)
+    private static async Task<CreatedWorkPayload> CreateWorkAsync(
+        HttpClient client,
+        string title,
+        string? contentJson = null,
+        Guid? thumbnailAssetId = null)
     {
         var response = await client.PostAsJsonAsync("/api/admin/works", new
         {
@@ -700,8 +822,9 @@ public class WorkVideoEndpointsTests : IClassFixture<CustomWebApplicationFactory
             period = "2026.04",
             tags = new[] { "video" },
             published = true,
-            contentJson = "{\"html\":\"<p>Body</p>\"}",
-            allPropertiesJson = "{}"
+            contentJson = contentJson ?? "{\"html\":\"<p>Body</p>\"}",
+            allPropertiesJson = "{}",
+            thumbnailAssetId
         });
 
         response.EnsureSuccessStatusCode();
@@ -892,6 +1015,7 @@ printf '20.0'
 
     private sealed class PublicWorkDetailPayload
     {
+        public string ThumbnailUrl { get; set; } = string.Empty;
         [JsonPropertyName("videos_version")]
         public int VideosVersion { get; set; }
         public VideoPayload[] Videos { get; set; } = [];

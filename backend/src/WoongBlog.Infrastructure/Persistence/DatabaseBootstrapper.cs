@@ -51,6 +51,11 @@ public static class DatabaseBootstrapper
                     cancellationToken);
                 await ApplySchemaPatchAsync(
                     dbContext,
+                    "20260506_public_work_thumbnail_fallback_backfill",
+                    PublicWorkThumbnailFallbackBackfillSchemaPatchSql,
+                    cancellationToken);
+                await ApplySchemaPatchAsync(
+                    dbContext,
                     "20260506_public_work_social_share_message",
                     PublicWorkSocialShareMessageSchemaPatchSql,
                     cancellationToken);
@@ -392,6 +397,58 @@ WHERE blog."CoverAssetId" = asset."Id"
 ALTER TABLE "Works" ALTER COLUMN "PublicThumbnailUrl" SET NOT NULL;
 ALTER TABLE "Works" ALTER COLUMN "PublicIconUrl" SET NOT NULL;
 ALTER TABLE "Blogs" ALTER COLUMN "PublicCoverUrl" SET NOT NULL;
+""";
+
+    private const string PublicWorkThumbnailFallbackBackfillSchemaPatchSql = """
+WITH youtube_fallback AS (
+  SELECT DISTINCT ON (work."Id")
+    work."Id",
+    video."SourceKey"
+  FROM "Works" AS work
+  INNER JOIN "WorkVideos" AS video
+    ON video."WorkId" = work."Id"
+   AND lower(video."SourceType") = 'youtube'
+  WHERE work."ThumbnailAssetId" IS NULL
+    AND work."PublicThumbnailUrl" = ''
+    AND NOT EXISTS (
+    SELECT 1
+    FROM "WorkVideos" AS non_youtube
+    WHERE non_youtube."WorkId" = work."Id"
+      AND lower(non_youtube."SourceType") <> 'youtube'
+    )
+  ORDER BY work."Id", video."SortOrder", video."CreatedAt"
+)
+UPDATE "Works" AS work
+SET "PublicThumbnailUrl" = 'https://img.youtube.com/vi/' || youtube_fallback."SourceKey" || '/hqdefault.jpg'
+FROM youtube_fallback
+WHERE work."Id" = youtube_fallback."Id";
+
+WITH body_images AS (
+  SELECT
+    work."Id",
+    COALESCE(
+      (regexp_match(
+        COALESCE(work."ContentJson" ->> 'html', ''),
+        '<img[^>]*src[[:space:]]*=[[:space:]]*"([^"]*)"',
+        'i'))[1],
+      (regexp_match(
+        COALESCE(work."ContentJson" ->> 'html', ''),
+        '<img[^>]*src[[:space:]]*=[[:space:]]*''([^'']*)''',
+        'i'))[1]) AS "ThumbnailUrl"
+  FROM "Works" AS work
+  WHERE work."ThumbnailAssetId" IS NULL
+    AND work."PublicThumbnailUrl" = ''
+    AND NOT EXISTS (
+      SELECT 1
+      FROM "WorkVideos" AS video
+      WHERE video."WorkId" = work."Id"
+    )
+)
+UPDATE "Works" AS work
+SET "PublicThumbnailUrl" = body_images."ThumbnailUrl"
+FROM body_images
+WHERE work."Id" = body_images."Id"
+  AND COALESCE(body_images."ThumbnailUrl", '') <> '';
 """;
 
     private const string PublicWorkSocialShareMessageSchemaPatchSql = """
