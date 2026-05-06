@@ -6,6 +6,7 @@ namespace WoongBlog.Application.Modules.Composition.Abstractions;
 
 public interface IHomeQueryStore
 {
+    Task<HomeShellDto?> GetHomeShellAsync(CancellationToken cancellationToken);
     Task<PageSummaryDto?> GetHomePageAsync(CancellationToken cancellationToken);
     Task<SiteSettingsSummaryDto?> GetSiteSettingsSummaryAsync(CancellationToken cancellationToken);
     Task<IReadOnlyList<WorkCardDto>> GetFeaturedWorksAsync(CancellationToken cancellationToken);

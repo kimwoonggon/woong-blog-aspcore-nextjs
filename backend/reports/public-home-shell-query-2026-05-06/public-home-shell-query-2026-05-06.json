@@ -1,0 +1,73 @@
+{
+  "task": "public-home-shell-query-2026-05-06",
+  "goal": "Reduce public Home DB roundtrips without cache or load-test target shortcuts.",
+  "changed": [
+    "Added HomeShellDto.",
+    "Added IHomeQueryStore.GetHomeShellAsync.",
+    "Changed GetHomeQueryHandler to use the Home shell projection.",
+    "Implemented HomeQueryStore.GetHomeShellAsync as a single EF projection over home page, singleton site settings, and optional resume asset URL.",
+    "Added a Postgres command-count contract test for public Home.",
+    "Captured a k6 public Home smoke artifact."
+  ],
+  "intentionallyNotChanged": [
+    "No cache added.",
+    "No Real Backend target selection change.",
+    "No seeded target priority.",
+    "No pageSize=1 shortcut.",
+    "No public Work/Blog detail DTO shape change."
+  ],
+  "validations": [
+    {
+      "name": "RED focused Postgres Home command-count test",
+      "result": "failed before implementation: expected 3 commands, actual 5"
+    },
+    {
+      "name": "GREEN focused Postgres Home command-count test",
+      "result": "passed after implementation"
+    },
+    {
+      "name": "PublicQueryHandlerComponentTests",
+      "result": "passed 40/40"
+    },
+    {
+      "name": "PostgresPersistenceContractTests",
+      "result": "passed 14/14"
+    },
+    {
+      "name": "PublicEndpointsTests|StartupCompositionTests",
+      "result": "passed 42/42"
+    },
+    {
+      "name": "dotnet test backend/WoongBlog.sln --no-restore",
+      "result": "passed: Component 122/122, Unit 56/56, Architecture 35/35, Integration 223/223, Contract 1 skipped"
+    },
+    {
+      "name": "git diff --check",
+      "result": "passed"
+    },
+    {
+      "name": "no-target-trick guard",
+      "result": "passed for changed source/test files"
+    },
+    {
+      "name": "2CPU/shared-8GiB compose health",
+      "result": "backend rebuilt and /api/health returned 200 through nginx"
+    },
+    {
+      "name": "k6 public Home smoke",
+      "result": "1500 requests, 99.99 rps, failed rate 0, p95 25.44 ms, max 581.38 ms"
+    }
+  ],
+  "artifacts": [
+    "backend/reports/public-home-shell-query-2026-05-06/public-home-shell-query-2026-05-06.md",
+    "backend/reports/public-home-shell-query-2026-05-06/public-home-shell-query-2026-05-06.html",
+    "backend/reports/public-home-shell-query-2026-05-06/public-home-shell-query-2026-05-06.json",
+    "backend/reports/public-home-shell-query-2026-05-06/loadtest/k6-public-home-100rps-15s.json"
+  ],
+  "risks": [
+    "This improves /api/public/home, not the current four public-api-mix URLs directly.",
+    "Home still returns ContentJson and may need Page public/admin body split later if it becomes large.",
+    "The k6 run is a smoke/regression sanity check, not a 1000 rps capacity proof."
+  ],
+  "recommendation": "Promote through dev CI, then continue with persistent Real Backend diagnostics or measured heavy-detail serialization profiling."
+}
