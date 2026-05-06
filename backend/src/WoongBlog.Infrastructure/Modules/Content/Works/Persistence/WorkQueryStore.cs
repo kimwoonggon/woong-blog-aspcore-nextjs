@@ -18,6 +18,8 @@ public sealed class WorkQueryStore(
     WoongBlogDbContext dbContext,
     IWorkVideoPlaybackUrlBuilder playbackUrlBuilder) : IWorkQueryStore
 {
+    private const string PostgresProviderName = "Npgsql.EntityFrameworkCore.PostgreSQL";
+
     public async Task<IReadOnlyList<AdminWorkListItemDto>> GetAdminListAsync(CancellationToken cancellationToken)
     {
         var works = await dbContext.Works
@@ -76,6 +78,11 @@ public sealed class WorkQueryStore(
         ContentSearchMode searchMode,
         CancellationToken cancellationToken)
     {
+        if (ShouldUsePostgresFirstPageWindowQuery(page, normalizedQuery))
+        {
+            return await GetPublishedFirstPageWithWindowAsync(pageSize, cancellationToken);
+        }
+
         var query = ApplySearch(
                 dbContext.Works.AsNoTracking().Where(x => x.Published),
                 normalizedQuery,
@@ -115,6 +122,56 @@ public sealed class WorkQueryStore(
             work.PublishedAt)).ToList();
 
         return new PagedWorksDto(items, resolvedPage, pageSize, totalItems, totalPages);
+    }
+
+    private bool ShouldUsePostgresFirstPageWindowQuery(int page, string? normalizedQuery)
+    {
+        return page == 1
+            && normalizedQuery is null
+            && string.Equals(dbContext.Database.ProviderName, PostgresProviderName, StringComparison.Ordinal);
+    }
+
+    private async Task<PagedWorksDto> GetPublishedFirstPageWithWindowAsync(
+        int pageSize,
+        CancellationToken cancellationToken)
+    {
+        var rows = await dbContext.Database
+            .SqlQuery<WorkCardWithTotalRow>(
+                $"""
+                SELECT
+                    w."Id",
+                    w."Slug",
+                    w."Title",
+                    w."Excerpt",
+                    w."Category",
+                    w."Period",
+                    w."Tags",
+                    w."PublicThumbnailUrl" AS "ThumbnailUrl",
+                    w."PublicIconUrl" AS "IconUrl",
+                    w."PublishedAt",
+                    COUNT(*) OVER()::integer AS "TotalItems"
+                FROM "Works" AS w
+                WHERE w."Published" = TRUE
+                ORDER BY w."PublishedAt" DESC
+                LIMIT {pageSize}
+                """)
+            .ToListAsync(cancellationToken);
+
+        var totalItems = rows.Count == 0 ? 0 : rows[0].TotalItems;
+        var totalPages = Math.Max(1, (int)Math.Ceiling(totalItems / (double)pageSize));
+        var items = rows.Select(work => new WorkCardDto(
+            work.Id,
+            work.Slug,
+            work.Title,
+            work.Excerpt,
+            work.Category,
+            work.Period,
+            work.Tags,
+            work.ThumbnailUrl,
+            work.IconUrl,
+            work.PublishedAt)).ToList();
+
+        return new PagedWorksDto(items, 1, pageSize, totalItems, totalPages);
     }
 
     public async Task<WorkDetailDto?> GetPublishedDetailBySlugAsync(string slug, CancellationToken cancellationToken)
@@ -347,6 +404,21 @@ public sealed class WorkQueryStore(
         string PublicThumbnailUrl,
         string PublicIconUrl,
         DateTimeOffset? PublishedAt);
+
+    private sealed class WorkCardWithTotalRow
+    {
+        public Guid Id { get; init; }
+        public string Slug { get; init; } = string.Empty;
+        public string Title { get; init; } = string.Empty;
+        public string Excerpt { get; init; } = string.Empty;
+        public string Category { get; init; } = string.Empty;
+        public string? Period { get; init; }
+        public string[] Tags { get; init; } = [];
+        public string ThumbnailUrl { get; init; } = string.Empty;
+        public string IconUrl { get; init; } = string.Empty;
+        public DateTimeOffset? PublishedAt { get; init; }
+        public int TotalItems { get; init; }
+    }
 
     private sealed record PublicWorkDetailRow(
         Guid Id,

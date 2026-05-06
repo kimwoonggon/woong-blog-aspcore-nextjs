@@ -5,9 +5,11 @@ using Microsoft.Extensions.Options;
 using Npgsql;
 using Testcontainers.PostgreSql;
 using WoongBlog.Api.Domain.Entities;
+using WoongBlog.Application.Modules.Content.Common.Support;
 using WoongBlog.Application.Modules.Content.Works.WorkVideos;
 using WoongBlog.Infrastructure.Persistence;
 using WoongBlog.Infrastructure.Persistence.Diagnostics;
+using WoongBlog.Infrastructure.Modules.Content.Blogs.Persistence;
 using WoongBlog.Infrastructure.Modules.Content.Works.Persistence;
 
 namespace WoongBlog.Api.Tests;
@@ -302,6 +304,66 @@ public sealed class PostgresPersistenceContractTests : IClassFixture<PostgresPer
         Assert.Equal("Stored public message", result!.SocialShareMessage);
     }
 
+    [Fact]
+    public async Task PublicWorkFirstPage_UsesSinglePostgresCommand_ForNoSearchList()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await using (var setupContext = CreateDbContext())
+        {
+            await ResetDatabaseAsync(setupContext, cancellationToken);
+            await DatabaseBootstrapper.InitializeAsync(setupContext, cancellationToken);
+            await ClearPublicContentAsync(setupContext, cancellationToken);
+
+            setupContext.Works.AddRange(
+                CreatePublishedWork("public-work-window-1", "Public Work Window 1", publishedAtOffsetMinutes: -1),
+                CreatePublishedWork("public-work-window-2", "Public Work Window 2", publishedAtOffsetMinutes: -2),
+                CreatePublishedWork("public-work-window-3", "Public Work Window 3", publishedAtOffsetMinutes: -3));
+            await setupContext.SaveChangesAsync(cancellationToken);
+        }
+
+        var collector = CreateDiagnosticsCollector();
+        await using var dbContext = _fixture.CreateDbContext(new LoadTestDbCommandDiagnosticsInterceptor(collector));
+        var queryStore = new WorkQueryStore(dbContext, new NoopPlaybackUrlBuilder());
+
+        var result = await queryStore.GetPublishedPageAsync(1, 12, null, ContentSearchMode.Unified, cancellationToken);
+        var snapshot = collector.CaptureSnapshot();
+
+        Assert.Equal(3, result.TotalItems);
+        Assert.Equal(1, result.TotalPages);
+        Assert.Equal(3, result.Items.Count);
+        Assert.Equal(1, snapshot.CommandLatency.SampleCount);
+    }
+
+    [Fact]
+    public async Task PublicBlogFirstPage_UsesSinglePostgresCommand_ForNoSearchList()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await using (var setupContext = CreateDbContext())
+        {
+            await ResetDatabaseAsync(setupContext, cancellationToken);
+            await DatabaseBootstrapper.InitializeAsync(setupContext, cancellationToken);
+            await ClearPublicContentAsync(setupContext, cancellationToken);
+
+            setupContext.Blogs.AddRange(
+                CreatePublishedBlog("public-blog-window-1", "Public Blog Window 1", publishedAtOffsetMinutes: -1),
+                CreatePublishedBlog("public-blog-window-2", "Public Blog Window 2", publishedAtOffsetMinutes: -2),
+                CreatePublishedBlog("public-blog-window-3", "Public Blog Window 3", publishedAtOffsetMinutes: -3));
+            await setupContext.SaveChangesAsync(cancellationToken);
+        }
+
+        var collector = CreateDiagnosticsCollector();
+        await using var dbContext = _fixture.CreateDbContext(new LoadTestDbCommandDiagnosticsInterceptor(collector));
+        var queryStore = new BlogQueryStore(dbContext);
+
+        var result = await queryStore.GetPublishedPageAsync(1, 12, null, ContentSearchMode.Unified, cancellationToken);
+        var snapshot = collector.CaptureSnapshot();
+
+        Assert.Equal(3, result.TotalItems);
+        Assert.Equal(1, result.TotalPages);
+        Assert.Equal(3, result.Items.Count);
+        Assert.Equal(1, snapshot.CommandLatency.SampleCount);
+    }
+
     private WoongBlogDbContext CreateDbContext()
     {
         return _fixture.CreateDbContext();
@@ -325,6 +387,13 @@ public sealed class PostgresPersistenceContractTests : IClassFixture<PostgresPer
             await dbContext.SchemaPatches.CountAsync(cancellationToken));
     }
 
+    private static async Task ClearPublicContentAsync(WoongBlogDbContext dbContext, CancellationToken cancellationToken)
+    {
+        await dbContext.WorkVideos.ExecuteDeleteAsync(cancellationToken);
+        await dbContext.Works.ExecuteDeleteAsync(cancellationToken);
+        await dbContext.Blogs.ExecuteDeleteAsync(cancellationToken);
+    }
+
     private static Blog CreateBlog(string slug, string title)
     {
         return new Blog
@@ -335,6 +404,24 @@ public sealed class PostgresPersistenceContractTests : IClassFixture<PostgresPer
             ContentJson = "{}",
             Published = true,
             PublishedAt = DateTimeOffset.UtcNow
+        };
+    }
+
+    private static Blog CreatePublishedBlog(string slug, string title, int publishedAtOffsetMinutes)
+    {
+        var now = DateTimeOffset.UtcNow;
+        return new Blog
+        {
+            Slug = slug,
+            Title = title,
+            Excerpt = $"{title} excerpt",
+            ContentJson = "{}",
+            PublicContentHtml = $"<p>{title}</p>",
+            PublicCoverUrl = $"/media/{slug}.png",
+            Published = true,
+            PublishedAt = now.AddMinutes(publishedAtOffsetMinutes),
+            CreatedAt = now,
+            UpdatedAt = now
         };
     }
 
@@ -360,6 +447,27 @@ public sealed class PostgresPersistenceContractTests : IClassFixture<PostgresPer
             AllPropertiesJson = "{}",
             Published = true,
             PublishedAt = DateTimeOffset.UtcNow
+        };
+    }
+
+    private static Work CreatePublishedWork(string slug, string title, int publishedAtOffsetMinutes)
+    {
+        var now = DateTimeOffset.UtcNow;
+        return new Work
+        {
+            Slug = slug,
+            Title = title,
+            Excerpt = $"{title} excerpt",
+            Category = "case-study",
+            ContentJson = "{}",
+            AllPropertiesJson = "{}",
+            PublicContentHtml = $"<p>{title}</p>",
+            PublicThumbnailUrl = $"/media/{slug}-thumb.png",
+            PublicIconUrl = $"/media/{slug}-icon.png",
+            Published = true,
+            PublishedAt = now.AddMinutes(publishedAtOffsetMinutes),
+            CreatedAt = now,
+            UpdatedAt = now
         };
     }
 

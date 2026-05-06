@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Public List Window Query Audit - 2026-05-06</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 920px; margin: 32px auto; padding: 0 20px; line-height: 1.55; color: #172033; }
+    h1, h2 { color: #0f172a; }
+    code { background: #eef2f7; padding: 0.1rem 0.25rem; border-radius: 4px; }
+    li { margin: 0.25rem 0; }
+  </style>
+</head>
+<body>
+  <h1>Public List Window Query Audit - 2026-05-06</h1>
+  <h2>Summary</h2>
+  <p>Public Work/Blog first-page no-search list reads now use one PostgreSQL command via <code>COUNT(*) OVER()</code> instead of <code>COUNT(*)</code> plus a page query.</p>
+  <h2>Validations</h2>
+  <ul>
+    <li>Focused Postgres command-count tests: passed 2/2 after RED.</li>
+    <li>PublicQueryHandler component tests: passed 40/40.</li>
+    <li>PostgresPersistenceContract tests: passed 7/7.</li>
+    <li>Full backend solution: Unit 56, Architecture 35, Component 122, Integration 208 passed; Contract 1 skipped.</li>
+    <li>k6 Work list warm 300rps/30s: 0 failures, p95 4.58 ms.</li>
+    <li>k6 Blog list 300rps/30s: 0 failures, p95 2.54 ms.</li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Merge through dev after CI, then continue with Work detail video/read projection and detail serialization pressure.</p>
+</body>
+</html>
