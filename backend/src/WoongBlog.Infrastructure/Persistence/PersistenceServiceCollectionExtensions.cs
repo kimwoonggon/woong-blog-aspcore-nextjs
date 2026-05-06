@@ -27,6 +27,9 @@ public static class PersistenceServiceCollectionExtensions
         services.AddSingleton<LoadTestDbCommandDiagnosticsInterceptor>();
         services.AddSingleton<LoadTestDbConnectionDiagnosticsInterceptor>();
 
+        var dbContextPoolSize = ResolveDbContextPoolSize(configuration);
+        services.AddSingleton(PersistenceRuntimeDiagnostics.FromConfiguration(configuration, dbContextPoolSize));
+
         services.AddDbContextPool<WoongBlogDbContext>(
             (serviceProvider, options) =>
             {
@@ -49,7 +52,7 @@ public static class PersistenceServiceCollectionExtensions
                     npgsql.MigrationsAssembly(typeof(WoongBlogDbContext).Assembly.FullName));
                 options.ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.PendingModelChangesWarning));
             },
-            ResolveDbContextPoolSize(configuration));
+            dbContextPoolSize);
 
         return services;
     }

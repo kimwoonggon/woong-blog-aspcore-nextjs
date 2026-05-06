@@ -46,5 +46,6 @@ namespace WoongBlog.Api.Common.Json;
 [JsonSerializable(typeof(LoadTestThreadPoolDiagnostics))]
 [JsonSerializable(typeof(LoadTestDatabaseDiagnostics))]
 [JsonSerializable(typeof(LoadTestDatabaseLatencyView))]
+[JsonSerializable(typeof(LoadTestDatabasePoolDiagnostics))]
 [JsonSerializable(typeof(LoadTestSlowQueryView))]
 internal sealed partial class WoongBlogApiJsonSerializerContext : JsonSerializerContext;

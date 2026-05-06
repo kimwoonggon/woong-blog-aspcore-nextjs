@@ -98,6 +98,8 @@ export type RuntimeDiagnosticsPayload = {
   process: {
     memoryBytes: number
     processorCount: number
+    memoryLimitBytes?: number | null
+    cpuQuotaCores?: number | null
   }
   gc: {
     heapSizeBytes: number
@@ -143,6 +145,13 @@ export type RuntimeDiagnosticsPayload = {
     errorCount?: number
     errorCategory?: string | null
     error?: string | null
+    pool?: {
+      databaseProvider: string
+      dbContextPoolSize: number
+      npgsqlMinimumPoolSize: number | null
+      npgsqlMaximumPoolSize: number | null
+      npgsqlPoolLimitSource: string
+    }
   }
 }
 
@@ -156,6 +165,11 @@ export type RuntimeDiagnosticsSummary = {
   sampleCount: number
   status: 'available' | 'unavailable'
   memoryBytes: RuntimeMetricTrend
+  memoryLimitBytes: RuntimeMetricTrend
+  processorCount: RuntimeMetricTrend
+  cpuQuotaCores: RuntimeMetricTrend
+  memoryLimitAvailable: boolean
+  cpuQuotaAvailable: boolean
   gcHeapBytes: RuntimeMetricTrend
   gen2Collections: RuntimeMetricTrend
   timeInGcPercent: RuntimeMetricTrend
@@ -176,6 +190,11 @@ export type RuntimeDiagnosticsSummary = {
   dbActiveConnections: RuntimeMetricTrend
   dbIdleConnections: RuntimeMetricTrend
   dbIdleInTransactionConnections: RuntimeMetricTrend
+  dbContextPoolSize: RuntimeMetricTrend
+  dbNpgsqlMinimumPoolSize: RuntimeMetricTrend
+  dbNpgsqlMaximumPoolSize: RuntimeMetricTrend
+  dbContextPoolAvailable: boolean
+  dbNpgsqlPoolConfigured: boolean
 }
 
 export type RealBackendLatencyBreakdown = {
@@ -1325,7 +1344,13 @@ export function isRuntimeDiagnosticsPayload(value: unknown): value is RuntimeDia
   const threadPool = value.threadPool
   const database = value.database
 
-  if (!isObject(process) || !isFiniteNumber(process.memoryBytes) || !isFiniteNumber(process.processorCount)) {
+  if (
+    !isObject(process)
+    || !isFiniteNumber(process.memoryBytes)
+    || !isFiniteNumber(process.processorCount)
+    || (process.memoryLimitBytes !== undefined && !isNullableFiniteNumber(process.memoryLimitBytes))
+    || (process.cpuQuotaCores !== undefined && !isNullableFiniteNumber(process.cpuQuotaCores))
+  ) {
     return false
   }
 
@@ -1360,6 +1385,7 @@ export function isRuntimeDiagnosticsPayload(value: unknown): value is RuntimeDia
   const connectionOpenLatency = database.connectionOpenLatency
   const slowQueryCount = database.slowQueryCount
   const errorCount = database.errorCount
+  const pool = database.pool
 
   const isLatencyShape = (value: unknown) => {
     if (!isObject(value)) {
@@ -1379,6 +1405,13 @@ export function isRuntimeDiagnosticsPayload(value: unknown): value is RuntimeDia
         && isFiniteNumber(sample.durationMs)
         && typeof sample.sqlPreview === 'string'
       ))
+  const isPoolValid = pool === undefined
+    || (isObject(pool)
+      && typeof pool.databaseProvider === 'string'
+      && isFiniteNumber(pool.dbContextPoolSize)
+      && isNullableFiniteNumber(pool.npgsqlMinimumPoolSize)
+      && isNullableFiniteNumber(pool.npgsqlMaximumPoolSize)
+      && typeof pool.npgsqlPoolLimitSource === 'string')
 
   return (databaseStatus === 'available' || databaseStatus === 'unavailable' || databaseStatus === 'error')
     && isNullableFiniteNumber(database.latencyMs)
@@ -1392,6 +1425,7 @@ export function isRuntimeDiagnosticsPayload(value: unknown): value is RuntimeDia
     && (slowQueryCount === undefined || isFiniteNumber(slowQueryCount))
     && (errorCount === undefined || isFiniteNumber(errorCount))
     && areSlowSamplesValid
+    && isPoolValid
 }
 
 function emptyTrend(): RuntimeMetricTrend {
@@ -1409,6 +1443,15 @@ function summarizeTrend(values: number[]): RuntimeMetricTrend {
     current: roundMetric(current),
     peak: roundMetric(Math.max(...values)),
     delta: roundMetric(current - first),
+  }
+}
+
+function summarizeOptionalTrend(values: Array<number | null | undefined>) {
+  const availableValues = values.filter((value): value is number => typeof value === 'number' && Number.isFinite(value))
+
+  return {
+    trend: summarizeTrend(availableValues),
+    available: availableValues.length > 0,
   }
 }
 
@@ -1447,6 +1490,11 @@ export function buildDiagnosticsSnapshotSummary(snapshots: RuntimeDiagnosticsPay
       sampleCount: 0,
       status: 'unavailable',
       memoryBytes: emptyTrend(),
+      memoryLimitBytes: emptyTrend(),
+      processorCount: emptyTrend(),
+      cpuQuotaCores: emptyTrend(),
+      memoryLimitAvailable: false,
+      cpuQuotaAvailable: false,
       gcHeapBytes: emptyTrend(),
       gen2Collections: emptyTrend(),
       timeInGcPercent: emptyTrend(),
@@ -1467,17 +1515,32 @@ export function buildDiagnosticsSnapshotSummary(snapshots: RuntimeDiagnosticsPay
       dbActiveConnections: emptyTrend(),
       dbIdleConnections: emptyTrend(),
       dbIdleInTransactionConnections: emptyTrend(),
+      dbContextPoolSize: emptyTrend(),
+      dbNpgsqlMinimumPoolSize: emptyTrend(),
+      dbNpgsqlMaximumPoolSize: emptyTrend(),
+      dbContextPoolAvailable: false,
+      dbNpgsqlPoolConfigured: false,
     }
   }
 
   const dbCommandP95 = summarizeAvailableTrend(snapshots, 'commandLatency', 'p95Ms')
   const dbCommandP99 = summarizeAvailableTrend(snapshots, 'commandLatency', 'p99Ms')
   const dbConnectionOpenP95 = summarizeAvailableTrend(snapshots, 'connectionOpenLatency', 'p95Ms')
+  const memoryLimit = summarizeOptionalTrend(snapshots.map((snapshot) => snapshot.process.memoryLimitBytes))
+  const cpuQuota = summarizeOptionalTrend(snapshots.map((snapshot) => snapshot.process.cpuQuotaCores))
+  const dbContextPoolSize = summarizeOptionalTrend(snapshots.map((snapshot) => snapshot.database.pool?.dbContextPoolSize))
+  const dbNpgsqlMinimumPoolSize = summarizeOptionalTrend(snapshots.map((snapshot) => snapshot.database.pool?.npgsqlMinimumPoolSize))
+  const dbNpgsqlMaximumPoolSize = summarizeOptionalTrend(snapshots.map((snapshot) => snapshot.database.pool?.npgsqlMaximumPoolSize))
 
   return {
     sampleCount: snapshots.length,
     status: 'available',
     memoryBytes: summarizeTrend(snapshots.map((snapshot) => snapshot.process.memoryBytes)),
+    memoryLimitBytes: memoryLimit.trend,
+    processorCount: summarizeTrend(snapshots.map((snapshot) => snapshot.process.processorCount)),
+    cpuQuotaCores: cpuQuota.trend,
+    memoryLimitAvailable: memoryLimit.available,
+    cpuQuotaAvailable: cpuQuota.available,
     gcHeapBytes: summarizeTrend(snapshots.map((snapshot) => snapshot.gc.heapSizeBytes)),
     gen2Collections: summarizeTrend(snapshots.map((snapshot) => snapshot.gc.gen2Collections)),
     timeInGcPercent: summarizeTrend(snapshots.map((snapshot) => snapshot.gc.timeInGcPercent ?? 0)),
@@ -1498,6 +1561,11 @@ export function buildDiagnosticsSnapshotSummary(snapshots: RuntimeDiagnosticsPay
     dbActiveConnections: summarizeTrend(snapshots.map((snapshot) => snapshot.database.activeConnections ?? 0)),
     dbIdleConnections: summarizeTrend(snapshots.map((snapshot) => snapshot.database.idleConnections ?? 0)),
     dbIdleInTransactionConnections: summarizeTrend(snapshots.map((snapshot) => snapshot.database.idleInTransactionConnections ?? 0)),
+    dbContextPoolSize: dbContextPoolSize.trend,
+    dbNpgsqlMinimumPoolSize: dbNpgsqlMinimumPoolSize.trend,
+    dbNpgsqlMaximumPoolSize: dbNpgsqlMaximumPoolSize.trend,
+    dbContextPoolAvailable: dbContextPoolSize.available,
+    dbNpgsqlPoolConfigured: dbNpgsqlMaximumPoolSize.available,
   }
 }
 
