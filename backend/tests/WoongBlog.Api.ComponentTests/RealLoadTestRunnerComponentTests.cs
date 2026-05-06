@@ -19,4 +19,14 @@ public sealed class RealLoadTestRunnerComponentTests
         Assert.Contains("nginx_upstream_waiting_fallback", script, StringComparison.Ordinal);
         Assert.Contains("response.timings.waiting", script, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void K6Script_RecordsTargetPayloadAndReceiveTimingForHeavyDetailAttribution()
+    {
+        var script = K6RealLoadTestRunner.BuildScriptForTests();
+
+        Assert.Contains("response_bytes", script, StringComparison.Ordinal);
+        Assert.Contains("response.timings.receiving", script, StringComparison.Ordinal);
+        Assert.Contains("resolveResponseBodyBytes(response)", script, StringComparison.Ordinal);
+    }
 }
