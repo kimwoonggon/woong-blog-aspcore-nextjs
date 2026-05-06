@@ -1,0 +1,45 @@
+{
+  "taskSlug": "heavy-detail-payload-attribution-2026-05-06",
+  "goal": "Add Real Backend Test attribution for public heavy detail payload size and receive timing without changing workload realism.",
+  "changed": [
+    "Added k6 target response_bytes trend",
+    "Added k6 target receiving trend from response.timings.receiving",
+    "Extended RealLoadTestTargetMetrics with responseBytesP95 and receiveP95Ms",
+    "Displayed Payload P95 and Receive P95 in the Real Backend target summary",
+    "Added backend and frontend regression tests"
+  ],
+  "notChanged": [
+    "No cache",
+    "No seeded target priority",
+    "No pageSize=1 shortcut",
+    "No public DTO response shape change",
+    "No DB schema or query behavior change"
+  ],
+  "validations": [
+    { "command": "dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj --filter FullyQualifiedName~RealLoadTestRunnerComponentTests --no-restore", "result": "red then pass", "passed": 2 },
+    { "command": "npm test -- --run src/test/load-test-dashboard.test.ts", "result": "red then pass", "passed": 28 },
+    { "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~RealLoadTestControlPlane_StartStatusMetricsAndStop_HappyPath_WhenRealRunnerDisabled_ForcesFakeRunner --no-restore", "result": "passed", "passed": 1 },
+    { "command": "npm run typecheck", "result": "passed" },
+    { "command": "dotnet test backend/WoongBlog.sln --no-restore", "result": "passed", "component": 123, "unit": 56, "architecture": 35, "integration": 224, "contractSkipped": 1 },
+    { "command": "npm run lint", "result": "passed_with_existing_warnings", "errors": 0, "warnings": 6 },
+    { "command": "git diff --check", "result": "passed" },
+    { "command": "diff guard for pageSize=1, seed priority, cache shortcut", "result": "passed" },
+    { "command": "BACKEND_PUBLISH_PORT=18080 ./scripts/dev-up.sh", "result": "passed" },
+    { "command": "health checks", "result": "passed", "nginx": 200, "backendDirect": 200 },
+    { "command": "live Real Backend k6 smoke", "result": "passed", "runId": "20260506-123052-public-api-rps-7e5cdcea", "requests": 26, "failed": 0, "p95Ms": 19.2, "p99Ms": 56.1 },
+    { "command": "Playwright real backend dashboard mock flow", "result": "passed", "passed": 1 }
+  ],
+  "liveSmokeTargetMetrics": [
+    { "targetId": "works-list", "p95Ms": 5.3, "responseBytesP95": 4422, "receiveP95Ms": 0.2 },
+    { "targetId": "work-read", "p95Ms": 18.7, "responseBytesP95": 516, "receiveP95Ms": 0.1 },
+    { "targetId": "study-list", "p95Ms": 6.7, "responseBytesP95": 3869, "receiveP95Ms": 0.1 },
+    { "targetId": "study-read", "p95Ms": 48.2, "responseBytesP95": 423, "receiveP95Ms": 0.1 }
+  ],
+  "risks": [
+    "responseBytesP95 is attribution, not exact wire-byte accounting when compression or chunking is involved",
+    "receiveP95Ms is k6 client receive time and is not standalone server serialization time",
+    "small smoke validates plumbing, not production capacity",
+    "Existing AWSSDK.Core NU1901 warnings remain"
+  ],
+  "recommendation": "Promote this measurement slice, then run realistic 100/300/500 rps public mix tests and choose payload split, DB/pool, or serialization optimization based on the new attribution metrics."
+}

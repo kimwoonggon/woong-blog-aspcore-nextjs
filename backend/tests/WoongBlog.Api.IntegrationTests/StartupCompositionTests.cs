@@ -720,6 +720,8 @@ public class StartupCompositionTests : IClassFixture<CustomWebApplicationFactory
         long SuccessCount,
         long FailureCount,
         double P95Ms,
+        double? ResponseBytesP95,
+        double? ReceiveP95Ms,
         IReadOnlyDictionary<string, long> StatusCounts);
 
     private sealed record RealLoadTestDiagnosticsResponse(

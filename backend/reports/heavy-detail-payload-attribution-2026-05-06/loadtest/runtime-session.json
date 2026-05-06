@@ -1,0 +1,7 @@
+{
+  "authenticated": true,
+  "name": "Admin User",
+  "email": "admin@example.com",
+  "role": "admin",
+  "profileId": "11111111-1111-1111-1111-111111111111"
+}
