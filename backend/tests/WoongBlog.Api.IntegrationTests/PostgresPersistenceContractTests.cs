@@ -85,6 +85,14 @@ public sealed class PostgresPersistenceContractTests : IClassFixture<PostgresPer
             cancellationToken));
         Assert.True(await ExistsAsync(
             connection,
+            "SELECT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'IX_Blogs_PublicList_Covering')",
+            cancellationToken));
+        Assert.True(await ExistsAsync(
+            connection,
+            "SELECT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'IX_Works_PublicList_Covering')",
+            cancellationToken));
+        Assert.True(await ExistsAsync(
+            connection,
             "SELECT EXISTS (SELECT 1 FROM \"SchemaPatches\" WHERE \"Id\" = '20260419_content_search_fields')",
             cancellationToken));
         Assert.True(await ExistsAsync(
@@ -94,6 +102,10 @@ public sealed class PostgresPersistenceContractTests : IClassFixture<PostgresPer
         Assert.True(await ExistsAsync(
             connection,
             "SELECT EXISTS (SELECT 1 FROM \"SchemaPatches\" WHERE \"Id\" = '20260506_public_media_url_fields')",
+            cancellationToken));
+        Assert.True(await ExistsAsync(
+            connection,
+            "SELECT EXISTS (SELECT 1 FROM \"SchemaPatches\" WHERE \"Id\" = '20260506_public_list_covering_indexes')",
             cancellationToken));
         Assert.True(await ExistsAsync(
             connection,

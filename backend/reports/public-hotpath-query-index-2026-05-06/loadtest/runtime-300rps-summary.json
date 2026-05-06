@@ -1,0 +1,78 @@
+{
+  "runId": "20260506-114309-public-api-rps-70eb5ce2",
+  "status": "completed",
+  "totalRequests": 9000,
+  "failedRequests": 0,
+  "averageRps": 300,
+  "p95Ms": 5.2,
+  "p99Ms": 10.5,
+  "dbCommandP95Ms": 3.5,
+  "dbConnectionOpenP95Ms": 0,
+  "diagnosticsSamples": 1,
+  "targetMetrics": [
+    {
+      "targetId": "works-list",
+      "targetLabel": "Work list",
+      "targetPath": "/api/public/works?page=1&pageSize=12",
+      "group": "work",
+      "requestCount": 2250,
+      "successCount": 2250,
+      "failureCount": 0,
+      "p95Ms": 4.3,
+      "statusCounts": {
+        "2xx": 2250,
+        "3xx": 0,
+        "4xx": 0,
+        "5xx": 0
+      }
+    },
+    {
+      "targetId": "work-read",
+      "targetLabel": "Work read",
+      "targetPath": "/api/public/works/real-load-work-fixture-pw-w0-r0-motw6so0-y37u5m",
+      "group": "work",
+      "requestCount": 2251,
+      "successCount": 2251,
+      "failureCount": 0,
+      "p95Ms": 2.7,
+      "statusCounts": {
+        "2xx": 2251,
+        "3xx": 0,
+        "4xx": 0,
+        "5xx": 0
+      }
+    },
+    {
+      "targetId": "study-list",
+      "targetLabel": "Study list",
+      "targetPath": "/api/public/blogs?page=1&pageSize=12",
+      "group": "study",
+      "requestCount": 2250,
+      "successCount": 2250,
+      "failureCount": 0,
+      "p95Ms": 6.3,
+      "statusCounts": {
+        "2xx": 2250,
+        "3xx": 0,
+        "4xx": 0,
+        "5xx": 0
+      }
+    },
+    {
+      "targetId": "study-read",
+      "targetLabel": "Study read",
+      "targetPath": "/api/public/blogs/real-load-study-fixture-pw-w0-r0-motw6sp7-r6azwf",
+      "group": "study",
+      "requestCount": 2249,
+      "successCount": 2249,
+      "failureCount": 0,
+      "p95Ms": 2.5,
+      "statusCounts": {
+        "2xx": 2249,
+        "3xx": 0,
+        "4xx": 0,
+        "5xx": 0
+      }
+    }
+  ]
+}
