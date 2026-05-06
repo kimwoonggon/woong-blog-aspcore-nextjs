@@ -38,6 +38,11 @@ public static class WorkPublicVideosReadModel
             return Array.Empty<WorkPublicVideoSnapshot>();
         }
 
+        if (publicVideosJson.AsSpan().Trim().SequenceEqual("[]"))
+        {
+            return Array.Empty<WorkPublicVideoSnapshot>();
+        }
+
         try
         {
             return JsonSerializer.Deserialize<WorkPublicVideoSnapshot[]>(publicVideosJson, JsonOptions)
