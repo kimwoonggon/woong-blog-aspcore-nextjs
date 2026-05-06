@@ -1,0 +1,34 @@
+{
+  "task": "public-json-sourcegen-2026-05-06",
+  "objective": "Reduce public hot-path JSON serialization metadata/reflection overhead without changing API shape or load-test realism.",
+  "changed": [
+    "Added WoongBlogApiJsonSerializerContext for public hot-path response DTOs.",
+    "Registered the context in Minimal API HttpJsonOptions and MVC JSON options.",
+    "Added startup composition test coverage for source-generated public DTO metadata."
+  ],
+  "notChanged": [
+    "No cache.",
+    "No seeded target priority.",
+    "No pageSize=1 load target shortcut.",
+    "No public API field removal.",
+    "No database schema change."
+  ],
+  "validations": [
+    { "command": "focused startup composition sourcegen test", "result": "red before implementation, green after implementation" },
+    { "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~PublicEndpointsTests --no-restore", "result": "passed 29/29" },
+    { "command": "dotnet test backend/WoongBlog.sln --no-restore", "result": "passed; contract 1 skipped, component 122, unit 56, architecture 35, integration 224" },
+    { "command": "npm run typecheck", "result": "passed" },
+    { "command": "npm run lint", "result": "passed with 0 errors and 6 pre-existing warnings" },
+    { "command": "git diff --check", "result": "passed" },
+    { "command": "BACKEND_PUBLISH_PORT=18080 ./scripts/dev-up.sh", "result": "passed" },
+    { "command": "health checks", "result": "nginx and backend direct HTTP 200" },
+    { "command": "Real Backend k6 10rps 10s", "result": "run 20260506-105311-public-api-rps-3b25399d completed, 101 requests, failed 0, p95 9.2ms" },
+    { "command": "Real Backend k6 100rps 30s", "result": "run 20260506-105431-public-api-rps-264bc24a completed, 3000 requests, failed 0, p95 7.1ms, db command p95 5.5ms" }
+  ],
+  "risks": [
+    "Local load check was not isolated to a dedicated 2CPU/8GiB project for this slice.",
+    "Source generation improves serialization metadata overhead but may not materially lower p95 if DB or payload size dominates.",
+    "Reflection fallback remains for non-hot-path DTOs by design."
+  ],
+  "recommendation": "Promote through dev CI, then continue with measured heavy detail pressure based on app elapsed, DB command/open latency, GC, and ThreadPool diagnostics."
+}
