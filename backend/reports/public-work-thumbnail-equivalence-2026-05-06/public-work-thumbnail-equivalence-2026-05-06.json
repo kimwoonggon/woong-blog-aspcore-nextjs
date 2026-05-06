@@ -1,0 +1,48 @@
+{
+  "task": "public-work-thumbnail-equivalence-guard",
+  "date": "2026-05-06",
+  "changed": [
+    "Added public Work detail resolver-equivalence assertion for explicit thumbnail assets",
+    "Added public Work first-page list resolver-equivalence assertion for explicit thumbnail assets",
+    "Updated TODO with validation evidence"
+  ],
+  "intentionallyNotChanged": [
+    "production code",
+    "cache behavior",
+    "real backend target selection",
+    "seeded target priority",
+    "public list pageSize semantics",
+    "public body/video thumbnail fallback removal"
+  ],
+  "validations": [
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter \"FullyQualifiedName~PostgresPersistenceContractTests.PublicWorkDetailWithoutVideos_UsesSinglePostgresCommand_AndResolverEquivalentStoredThumbnail|FullyQualifiedName~PostgresPersistenceContractTests.PublicWorkFirstPage_UsesSinglePostgresCommand_ForNoSearchList|FullyQualifiedName~PostgresPersistenceContractTests.AdminWorkList_UsesSinglePostgresCommand_AndStoredThumbnail\" --no-restore",
+      "result": "passed",
+      "passed": 3
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter \"FullyQualifiedName~PostgresPersistenceContractTests\" --no-restore",
+      "result": "passed",
+      "passed": 10
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln --no-restore",
+      "result": "passed",
+      "component": 122,
+      "unit": 56,
+      "architecture": 35,
+      "integration": 214,
+      "contractSkipped": 1
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    }
+  ],
+  "risks": [
+    "Removed body/video thumbnail fallback equivalence is intentionally not guaranteed for public hot paths",
+    "Test-only change prevents regression but does not improve runtime performance directly",
+    "Existing AWSSDK.Core NU1901 warnings remain unrelated"
+  ],
+  "recommendation": "Merge the guard, then continue the next backend performance slice."
+}
