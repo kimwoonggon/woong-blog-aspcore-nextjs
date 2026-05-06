@@ -748,10 +748,10 @@ public class PublicQueryHandlerComponentTests
     }
 
     [Fact]
-    public async Task GetWorkBySlugQueryHandler_MapsSocialShareMessage_FromAllProperties()
+    public async Task GetWorkBySlugQueryHandler_MapsSocialShareMessage_FromStoredPublicReadModel()
     {
         await using var dbContext = CreateDbContext();
-        dbContext.Works.Add(new Work
+        var work = new Work
         {
             Id = Guid.NewGuid(),
             Title = "Share-ready Work",
@@ -759,12 +759,13 @@ public class PublicQueryHandlerComponentTests
             Excerpt = "default excerpt",
             Category = "cat",
             ContentJson = "{}",
-            AllPropertiesJson = """{"socialShareMessage":"Custom share message"}""",
+            AllPropertiesJson = """{"socialShareMessage":"Stored public share message"}""",
             Published = true,
             PublishedAt = DateTimeOffset.UtcNow,
             CreatedAt = DateTimeOffset.UtcNow,
             UpdatedAt = DateTimeOffset.UtcNow
-        });
+        };
+        dbContext.Works.Add(work);
         await dbContext.SaveChangesAsync();
 
         var handler = new GetWorkBySlugQueryHandler(CreateWorkQueryStore(dbContext));
@@ -772,7 +773,7 @@ public class PublicQueryHandlerComponentTests
         var result = await handler.Handle(new GetWorkBySlugQuery("share-ready-work"), CancellationToken.None);
 
         Assert.NotNull(result);
-        Assert.Equal("Custom share message", result!.SocialShareMessage);
+        Assert.Equal("Stored public share message", result!.SocialShareMessage);
     }
 
     [Fact]
@@ -912,7 +913,7 @@ public class PublicQueryHandlerComponentTests
         var thumbnailAssetId = Guid.NewGuid();
         var iconAssetId = Guid.NewGuid();
         var now = new DateTimeOffset(2026, 4, 25, 12, 0, 0, TimeSpan.Zero);
-        dbContext.Works.Add(new Work
+        var work = new Work
         {
             Id = workId,
             Title = "Public Work Detail",
@@ -922,7 +923,7 @@ public class PublicQueryHandlerComponentTests
             Period = "2026",
             Tags = ["detail", "public"],
             ContentJson = """{"html":"<p>Public work detail body</p>"}""",
-            AllPropertiesJson = """{"socialShareMessage":"Share detail"}""",
+            AllPropertiesJson = """{"socialShareMessage":"Stored share detail"}""",
             ThumbnailAssetId = thumbnailAssetId,
             IconAssetId = iconAssetId,
             PublicThumbnailUrl = "/media/detail-thumb.png",
@@ -932,7 +933,8 @@ public class PublicQueryHandlerComponentTests
             PublishedAt = now,
             CreatedAt = now,
             UpdatedAt = now
-        });
+        };
+        dbContext.Works.Add(work);
         dbContext.WorkVideos.AddRange(
             new WorkVideo
             {
@@ -974,7 +976,7 @@ public class PublicQueryHandlerComponentTests
         Assert.Equal("/media/detail-thumb.png", result.ThumbnailUrl);
         Assert.Equal("/media/detail-icon.png", result.IconUrl);
         Assert.Equal(now, result.PublishedAt);
-        Assert.Equal("Share detail", result.SocialShareMessage);
+        Assert.Equal("Stored share detail", result.SocialShareMessage);
         Assert.Equal(2, result.VideosVersion);
         Assert.Equal(new[] { "First", "Second" }, result.Videos.Select(x => x.OriginalFileName).ToArray());
         Assert.Equal("/media/videos/detail-first.mp4", result.Videos[0].PlaybackUrl);

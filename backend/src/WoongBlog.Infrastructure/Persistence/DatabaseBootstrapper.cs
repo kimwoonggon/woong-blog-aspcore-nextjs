@@ -44,6 +44,11 @@ public static class DatabaseBootstrapper
                     "20260506_public_media_url_fields",
                     PublicMediaUrlFieldsSchemaPatchSql,
                     cancellationToken);
+                await ApplySchemaPatchAsync(
+                    dbContext,
+                    "20260506_public_work_social_share_message",
+                    PublicWorkSocialShareMessageSchemaPatchSql,
+                    cancellationToken);
                 await SeedData.InitializeAsync(dbContext);
                 return;
             }
@@ -371,5 +376,17 @@ WHERE blog."CoverAssetId" = asset."Id"
 ALTER TABLE "Works" ALTER COLUMN "PublicThumbnailUrl" SET NOT NULL;
 ALTER TABLE "Works" ALTER COLUMN "PublicIconUrl" SET NOT NULL;
 ALTER TABLE "Blogs" ALTER COLUMN "PublicCoverUrl" SET NOT NULL;
+""";
+
+    private const string PublicWorkSocialShareMessageSchemaPatchSql = """
+ALTER TABLE "Works" ADD COLUMN IF NOT EXISTS "PublicSocialShareMessage" text NOT NULL DEFAULT '';
+ALTER TABLE "Works" ALTER COLUMN "PublicSocialShareMessage" SET DEFAULT '';
+
+UPDATE "Works"
+SET "PublicSocialShareMessage" = btrim(COALESCE("AllPropertiesJson" ->> 'socialShareMessage', ''))
+WHERE "PublicSocialShareMessage" = ''
+  AND COALESCE("AllPropertiesJson" ->> 'socialShareMessage', '') <> '';
+
+ALTER TABLE "Works" ALTER COLUMN "PublicSocialShareMessage" SET NOT NULL;
 """;
 }

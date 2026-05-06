@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json;
 using WoongBlog.Api.Domain.Entities;
 using WoongBlog.Infrastructure.Persistence;
 using WoongBlog.Application.Modules.Composition.GetHome;
@@ -19,8 +18,6 @@ public sealed class WorkQueryStore(
     WoongBlogDbContext dbContext,
     IWorkVideoPlaybackUrlBuilder playbackUrlBuilder) : IWorkQueryStore
 {
-    private const string SocialShareMessagePropertyName = "socialShareMessage";
-
     public async Task<IReadOnlyList<AdminWorkListItemDto>> GetAdminListAsync(CancellationToken cancellationToken)
     {
         var works = await dbContext.Works
@@ -137,7 +134,7 @@ public sealed class WorkQueryStore(
                 work.PublicThumbnailUrl,
                 work.PublicIconUrl,
                 work.PublishedAt,
-                work.AllPropertiesJson,
+                work.PublicSocialShareMessage,
                 work.VideosVersion))
             .SingleOrDefaultAsync(cancellationToken);
 
@@ -195,7 +192,7 @@ public sealed class WorkQueryStore(
             work.ThumbnailUrl,
             work.IconUrl,
             work.PublishedAt,
-            ResolveSocialShareMessage(work.AllPropertiesJson),
+            NormalizeOptional(work.PublicSocialShareMessage),
             work.VideosVersion,
             videos);
     }
@@ -334,34 +331,9 @@ public sealed class WorkQueryStore(
             : string.Empty;
     }
 
-    private static string? ResolveSocialShareMessage(string allPropertiesJson)
+    private static string? NormalizeOptional(string value)
     {
-        try
-        {
-            using var document = JsonDocument.Parse(allPropertiesJson);
-            if (document.RootElement.ValueKind != JsonValueKind.Object)
-            {
-                return null;
-            }
-
-            if (!document.RootElement.TryGetProperty(SocialShareMessagePropertyName, out var propertyValue))
-            {
-                return null;
-            }
-
-            var message = propertyValue.ValueKind switch
-            {
-                JsonValueKind.String => propertyValue.GetString(),
-                JsonValueKind.Null => null,
-                _ => propertyValue.ToString()
-            };
-
-            return string.IsNullOrWhiteSpace(message) ? null : message.Trim();
-        }
-        catch
-        {
-            return null;
-        }
+        return string.IsNullOrWhiteSpace(value) ? null : value;
     }
 
     private sealed record WorkCardRow(
@@ -389,6 +361,6 @@ public sealed class WorkQueryStore(
         string ThumbnailUrl,
         string IconUrl,
         DateTimeOffset? PublishedAt,
-        string AllPropertiesJson,
+        string PublicSocialShareMessage,
         int VideosVersion);
 }
