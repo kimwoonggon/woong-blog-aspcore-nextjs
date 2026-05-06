@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Public Media Read Model - 2026-05-06</title>
+  <style>
+    body { font-family: sans-serif; line-height: 1.5; max-width: 920px; margin: 32px auto; padding: 0 20px; color: #1f2933; }
+    h1, h2 { color: #102a43; }
+    code { background: #eef2f7; padding: 1px 4px; border-radius: 4px; }
+    li { margin: 4px 0; }
+  </style>
+</head>
+<body>
+  <h1>Public Media Read Model - 2026-05-06</h1>
+  <h2>Objective</h2>
+  <p>Improve public backend read performance without cache by storing representative media URLs on content rows and projecting them directly.</p>
+  <h2>Changed</h2>
+  <ul>
+    <li>Added <code>Work.PublicThumbnailUrl</code>, <code>Work.PublicIconUrl</code>, and <code>Blog.PublicCoverUrl</code>.</li>
+    <li>Added schema patch/backfill and EF model contracts.</li>
+    <li>Updated Work write paths, seed/bootstrap, and Notion import population.</li>
+    <li>Removed public read-path asset lookup roundtrips from Work, Blog, and Home query stores.</li>
+  </ul>
+  <h2>Validation</h2>
+  <ul>
+    <li>Focused component/model tests: 44/44 passed.</li>
+    <li>Focused integration tests: 103/103 passed.</li>
+    <li>Full backend solution: Unit 56, Architecture 35, Component 122, Integration 205 passed; Contract 1 skipped.</li>
+    <li>Notion import helper tests: 6/6 passed.</li>
+    <li>ESLint: 0 errors, 6 pre-existing warnings.</li>
+    <li>k6 300rps/30s under 2CPU/8GiB split profile: 0 failures on Works list, Blogs list, Work detail, Blog detail.</li>
+  </ul>
+  <h2>Risks</h2>
+  <ul>
+    <li>Stored URLs assume asset public URLs are stable.</li>
+    <li>Local load smoke uses seeded local data, not production article/video distribution.</li>
+    <li>Alpine backend logs still show a separate missing GSSAPI library warning.</li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Promote through dev and main CI, then rerun production Real Backend Test with realistic targets and <code>pageSize=12</code>.</p>
+</body>
+</html>

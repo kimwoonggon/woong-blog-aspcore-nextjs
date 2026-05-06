@@ -76,19 +76,9 @@ public sealed class BlogQueryStore(WoongBlogDbContext dbContext) : IBlogQuerySto
                 blog.Title,
                 blog.Excerpt,
                 blog.Tags,
-                blog.CoverAssetId,
+                blog.PublicCoverUrl,
                 blog.PublishedAt))
             .ToListAsync(cancellationToken);
-
-        var assetIds = blogs
-            .Where(x => x.CoverAssetId.HasValue)
-            .Select(x => x.CoverAssetId!.Value)
-            .Distinct()
-            .ToArray();
-        var assets = await dbContext.Assets
-            .AsNoTracking()
-            .Where(x => assetIds.Contains(x.Id))
-            .ToDictionaryAsync(x => x.Id, x => x.PublicUrl, cancellationToken);
 
         var items = blogs.Select(blog => new BlogCardDto(
             blog.Id,
@@ -96,7 +86,7 @@ public sealed class BlogQueryStore(WoongBlogDbContext dbContext) : IBlogQuerySto
             blog.Title,
             blog.Excerpt,
             blog.Tags,
-            blog.CoverAssetId is not null && assets.TryGetValue(blog.CoverAssetId.Value, out var coverUrl) ? coverUrl : string.Empty,
+            blog.PublicCoverUrl,
             blog.PublishedAt)).ToList();
 
         return new PagedBlogsDto(items, resolvedPage, pageSize, totalItems, totalPages);
@@ -108,7 +98,7 @@ public sealed class BlogQueryStore(WoongBlogDbContext dbContext) : IBlogQuerySto
         string Title,
         string Excerpt,
         string[] Tags,
-        Guid? CoverAssetId,
+        string PublicCoverUrl,
         DateTimeOffset? PublishedAt);
 
     public async Task<BlogDetailDto?> GetPublishedDetailBySlugAsync(string slug, CancellationToken cancellationToken)
@@ -122,10 +112,7 @@ public sealed class BlogQueryStore(WoongBlogDbContext dbContext) : IBlogQuerySto
                 blog.Excerpt,
                 PublicContentBodyDto.FromStoredFields(blog.PublicContentHtml, blog.PublicContentMarkdown),
                 blog.Tags,
-                dbContext.Assets
-                    .Where(asset => asset.Id == blog.CoverAssetId)
-                    .Select(asset => asset.PublicUrl)
-                    .SingleOrDefault() ?? string.Empty,
+                blog.PublicCoverUrl,
                 blog.PublishedAt))
             .SingleOrDefaultAsync(cancellationToken);
     }

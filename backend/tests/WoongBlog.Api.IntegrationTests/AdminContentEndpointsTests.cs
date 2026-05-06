@@ -557,6 +557,8 @@ public class AdminContentEndpointsTests : IClassFixture<CustomWebApplicationFact
         var work = dbContext.Works.Single(x => x.Id == created.Id);
         Assert.Equal(Guid.Parse(thumbnailPayload["id"]), work.ThumbnailAssetId);
         Assert.Equal(Guid.Parse(iconPayload["id"]), work.IconAssetId);
+        Assert.Contains("/media/work-thumbnails/", work.PublicThumbnailUrl, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("/media/work-icons/", work.PublicIconUrl, StringComparison.OrdinalIgnoreCase);
     }
 
     private sealed class CreatedResource

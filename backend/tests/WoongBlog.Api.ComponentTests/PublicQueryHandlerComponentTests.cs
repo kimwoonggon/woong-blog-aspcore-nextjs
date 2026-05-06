@@ -200,11 +200,25 @@ public class PublicQueryHandlerComponentTests
             ContentJson = """{"headline":"Public Headline","introText":"Public intro"}"""
         });
         dbContext.Works.AddRange(
-            CreateWork("Older Work", "older-work", published: true, publishedAt: now.AddDays(-3), thumbnailAssetId, iconAssetId),
+            CreateWork(
+                "Older Work",
+                "older-work",
+                published: true,
+                publishedAt: now.AddDays(-3),
+                thumbnailAssetId,
+                iconAssetId,
+                publicThumbnailUrl: "/media/work-thumb.png",
+                publicIconUrl: "/media/work-icon.png"),
             CreateWork("Newer Work", "newer-work", published: true, publishedAt: now.AddDays(-1)),
             CreateWork("Draft Work", "draft-work", published: false, publishedAt: now));
         dbContext.Blogs.AddRange(
-            CreateBlog("Older Blog", "older-blog", published: true, publishedAt: now.AddDays(-4), coverAssetId),
+            CreateBlog(
+                "Older Blog",
+                "older-blog",
+                published: true,
+                publishedAt: now.AddDays(-4),
+                coverAssetId,
+                publicCoverUrl: "/media/blog-cover.png"),
             CreateBlog("Newer Blog", "newer-blog", published: true, publishedAt: now.AddDays(-2)),
             CreateBlog("Draft Blog", "draft-blog", published: false, publishedAt: now));
         await dbContext.SaveChangesAsync();
@@ -226,6 +240,73 @@ public class PublicQueryHandlerComponentTests
         Assert.Equal("/media/work-thumb.png", result.FeaturedWorks[1].ThumbnailUrl);
         Assert.Equal("/media/work-icon.png", result.FeaturedWorks[1].IconUrl);
         Assert.Equal("/media/blog-cover.png", result.RecentPosts[1].CoverUrl);
+    }
+
+    [Fact]
+    public async Task GetHomeQueryHandler_UsesStoredPublicMediaUrlsWithoutAssetRows()
+    {
+        await using var dbContext = CreateDbContext();
+        var now = new DateTimeOffset(2026, 5, 6, 12, 0, 0, TimeSpan.Zero);
+        dbContext.SiteSettings.Add(new SiteSetting
+        {
+            Singleton = true,
+            OwnerName = "Public Owner",
+            Tagline = "Public Tagline"
+        });
+        dbContext.Pages.Add(new PageEntity
+        {
+            Id = Guid.NewGuid(),
+            Slug = "home",
+            Title = "Home",
+            ContentJson = "{}"
+        });
+        dbContext.Works.Add(new Work
+        {
+            Id = Guid.NewGuid(),
+            Title = "Stored Media Work",
+            Slug = "stored-media-work",
+            Excerpt = "stored media",
+            Category = "public",
+            Period = "2026",
+            Tags = ["public"],
+            ThumbnailAssetId = Guid.NewGuid(),
+            IconAssetId = Guid.NewGuid(),
+            PublicThumbnailUrl = "/media/stored-home-work-thumb.png",
+            PublicIconUrl = "/media/stored-home-work-icon.png",
+            ContentJson = "{}",
+            AllPropertiesJson = "{}",
+            Published = true,
+            PublishedAt = now,
+            CreatedAt = now,
+            UpdatedAt = now
+        });
+        dbContext.Blogs.Add(new Blog
+        {
+            Id = Guid.NewGuid(),
+            Title = "Stored Media Blog",
+            Slug = "stored-media-blog",
+            Excerpt = "stored media",
+            Tags = ["public"],
+            CoverAssetId = Guid.NewGuid(),
+            PublicCoverUrl = "/media/stored-home-blog-cover.png",
+            ContentJson = "{}",
+            Published = true,
+            PublishedAt = now,
+            CreatedAt = now,
+            UpdatedAt = now
+        });
+        await dbContext.SaveChangesAsync();
+
+        var handler = new GetHomeQueryHandler(CreateHomeQueryStore(dbContext));
+
+        var result = await handler.Handle(new GetHomeQuery(), CancellationToken.None);
+
+        Assert.NotNull(result);
+        var work = Assert.Single(result!.FeaturedWorks);
+        var blog = Assert.Single(result.RecentPosts);
+        Assert.Equal("/media/stored-home-work-thumb.png", work.ThumbnailUrl);
+        Assert.Equal("/media/stored-home-work-icon.png", work.IconUrl);
+        Assert.Equal("/media/stored-home-blog-cover.png", blog.CoverUrl);
     }
 
     [Fact]
@@ -397,13 +478,12 @@ public class PublicQueryHandlerComponentTests
     }
 
     [Fact]
-    public async Task GetWorksQueryHandler_SkipsDrafts_AndResolvesAssetUrls()
+    public async Task GetWorksQueryHandler_SkipsDrafts_AndUsesStoredPublicMediaUrlsWithoutAssetRows()
     {
         await using var dbContext = CreateDbContext();
         var thumbnailId = Guid.NewGuid();
-        dbContext.Assets.Add(new Asset { Id = thumbnailId, Bucket = "media", Path = "thumb.png", PublicUrl = "/media/thumb.png" });
         dbContext.Works.AddRange(
-            new Work { Id = Guid.NewGuid(), Title = "Visible", Slug = "visible", Excerpt = "visible", Category = "cat", ContentJson = "{}", AllPropertiesJson = "{}", ThumbnailAssetId = thumbnailId, Published = true, PublishedAt = DateTimeOffset.UtcNow, CreatedAt = DateTimeOffset.UtcNow, UpdatedAt = DateTimeOffset.UtcNow },
+            new Work { Id = Guid.NewGuid(), Title = "Visible", Slug = "visible", Excerpt = "visible", Category = "cat", ContentJson = "{}", AllPropertiesJson = "{}", ThumbnailAssetId = thumbnailId, PublicThumbnailUrl = "/media/thumb.png", Published = true, PublishedAt = DateTimeOffset.UtcNow, CreatedAt = DateTimeOffset.UtcNow, UpdatedAt = DateTimeOffset.UtcNow },
             new Work { Id = Guid.NewGuid(), Title = "Hidden", Slug = "hidden", Excerpt = "hidden", Category = "cat", ContentJson = "{}", AllPropertiesJson = "{}", Published = false, CreatedAt = DateTimeOffset.UtcNow, UpdatedAt = DateTimeOffset.UtcNow }
         );
         await dbContext.SaveChangesAsync();
@@ -497,7 +577,7 @@ public class PublicQueryHandlerComponentTests
     }
 
     [Fact]
-    public async Task GetWorksQueryHandler_FiltersDraftsOrdersByPublishedAtAndMapsAssets()
+    public async Task GetWorksQueryHandler_FiltersDraftsOrdersByPublishedAtAndMapsStoredPublicMediaUrls()
     {
         await using var dbContext = CreateDbContext();
         var now = new DateTimeOffset(2026, 4, 25, 12, 0, 0, TimeSpan.Zero);
@@ -509,7 +589,15 @@ public class PublicQueryHandlerComponentTests
             new Asset { Id = iconAssetId, Bucket = "media", Path = "published-icon.png", PublicUrl = "/media/published-icon.png" },
             new Asset { Id = draftThumbnailAssetId, Bucket = "media", Path = "draft-thumb.png", PublicUrl = "/media/draft-thumb.png" });
         dbContext.Works.AddRange(
-            CreateWork("Older Work", "older-work", published: true, publishedAt: now.AddDays(-3), thumbnailAssetId, iconAssetId),
+            CreateWork(
+                "Older Work",
+                "older-work",
+                published: true,
+                publishedAt: now.AddDays(-3),
+                thumbnailAssetId,
+                iconAssetId,
+                publicThumbnailUrl: "/media/published-thumb.png",
+                publicIconUrl: "/media/published-icon.png"),
             CreateWork("Newer Work", "newer-work", published: true, publishedAt: now.AddDays(-1)),
             CreateWork("Draft Work", "draft-work", published: false, publishedAt: now, draftThumbnailAssetId));
         await dbContext.SaveChangesAsync();
@@ -817,16 +905,13 @@ public class PublicQueryHandlerComponentTests
     }
 
     [Fact]
-    public async Task GetWorkBySlugQueryHandler_ReturnsPublishedDetailWithAssetsAndVideos()
+    public async Task GetWorkBySlugQueryHandler_ReturnsPublishedDetailWithStoredPublicMediaUrlsAndVideos()
     {
         await using var dbContext = CreateDbContext();
         var workId = Guid.NewGuid();
         var thumbnailAssetId = Guid.NewGuid();
         var iconAssetId = Guid.NewGuid();
         var now = new DateTimeOffset(2026, 4, 25, 12, 0, 0, TimeSpan.Zero);
-        dbContext.Assets.AddRange(
-            new Asset { Id = thumbnailAssetId, Bucket = "media", Path = "detail-thumb.png", PublicUrl = "/media/detail-thumb.png" },
-            new Asset { Id = iconAssetId, Bucket = "media", Path = "detail-icon.png", PublicUrl = "/media/detail-icon.png" });
         dbContext.Works.Add(new Work
         {
             Id = workId,
@@ -840,6 +925,8 @@ public class PublicQueryHandlerComponentTests
             AllPropertiesJson = """{"socialShareMessage":"Share detail"}""",
             ThumbnailAssetId = thumbnailAssetId,
             IconAssetId = iconAssetId,
+            PublicThumbnailUrl = "/media/detail-thumb.png",
+            PublicIconUrl = "/media/detail-icon.png",
             VideosVersion = 2,
             Published = true,
             PublishedAt = now,
@@ -1074,7 +1161,7 @@ public class PublicQueryHandlerComponentTests
     }
 
     [Fact]
-    public async Task GetBlogsQueryHandler_FiltersDraftsOrdersByPublishedAtAndMapsCoverAsset()
+    public async Task GetBlogsQueryHandler_FiltersDraftsOrdersByPublishedAtAndMapsStoredCoverUrl()
     {
         await using var dbContext = CreateDbContext();
         var now = new DateTimeOffset(2026, 4, 25, 12, 0, 0, TimeSpan.Zero);
@@ -1084,7 +1171,13 @@ public class PublicQueryHandlerComponentTests
             new Asset { Id = coverAssetId, Bucket = "media", Path = "published-cover.png", PublicUrl = "/media/published-cover.png" },
             new Asset { Id = draftCoverAssetId, Bucket = "media", Path = "draft-cover.png", PublicUrl = "/media/draft-cover.png" });
         dbContext.Blogs.AddRange(
-            CreateBlog("Older Blog", "older-blog", published: true, publishedAt: now.AddDays(-3), coverAssetId),
+            CreateBlog(
+                "Older Blog",
+                "older-blog",
+                published: true,
+                publishedAt: now.AddDays(-3),
+                coverAssetId,
+                publicCoverUrl: "/media/published-cover.png"),
             CreateBlog("Newer Blog", "newer-blog", published: true, publishedAt: now.AddDays(-1)),
             CreateBlog("Draft Blog", "draft-blog", published: false, publishedAt: now, draftCoverAssetId));
         await dbContext.SaveChangesAsync();
@@ -1160,13 +1253,18 @@ public class PublicQueryHandlerComponentTests
     }
 
     [Fact]
-    public async Task GetBlogBySlugQueryHandler_ReturnsPublishedDetailWithCoverAsset()
+    public async Task GetBlogBySlugQueryHandler_ReturnsPublishedDetailWithStoredCoverUrl()
     {
         await using var dbContext = CreateDbContext();
         var coverAssetId = Guid.NewGuid();
         var publishedAt = new DateTimeOffset(2026, 4, 25, 12, 0, 0, TimeSpan.Zero);
-        dbContext.Assets.Add(new Asset { Id = coverAssetId, Bucket = "media", Path = "detail-cover.png", PublicUrl = "/media/detail-cover.png" });
-        dbContext.Blogs.Add(CreateBlog("Public Blog Detail", "public-blog-detail", published: true, publishedAt, coverAssetId));
+        dbContext.Blogs.Add(CreateBlog(
+            "Public Blog Detail",
+            "public-blog-detail",
+            published: true,
+            publishedAt,
+            coverAssetId,
+            publicCoverUrl: "/media/detail-cover.png"));
         await dbContext.SaveChangesAsync();
 
         var handler = new GetBlogBySlugQueryHandler(CreateBlogQueryStore(dbContext));
@@ -1204,7 +1302,8 @@ public class PublicQueryHandlerComponentTests
         string slug,
         bool published,
         DateTimeOffset? publishedAt,
-        Guid? coverAssetId = null)
+        Guid? coverAssetId = null,
+        string publicCoverUrl = "")
     {
         var timestamp = publishedAt ?? new DateTimeOffset(2026, 4, 25, 0, 0, 0, TimeSpan.Zero);
 
@@ -1216,6 +1315,7 @@ public class PublicQueryHandlerComponentTests
             Excerpt = $"Excerpt for {title}",
             Tags = ["public", "test"],
             CoverAssetId = coverAssetId,
+            PublicCoverUrl = publicCoverUrl,
             ContentJson = $$"""{"html":"<p>{{title}} body</p>"}""",
             Published = published,
             PublishedAt = publishedAt,
@@ -1230,7 +1330,9 @@ public class PublicQueryHandlerComponentTests
         bool published,
         DateTimeOffset? publishedAt,
         Guid? thumbnailAssetId = null,
-        Guid? iconAssetId = null)
+        Guid? iconAssetId = null,
+        string publicThumbnailUrl = "",
+        string publicIconUrl = "")
     {
         var timestamp = publishedAt ?? new DateTimeOffset(2026, 4, 25, 0, 0, 0, TimeSpan.Zero);
 
@@ -1245,6 +1347,8 @@ public class PublicQueryHandlerComponentTests
             Tags = ["public", "test"],
             ThumbnailAssetId = thumbnailAssetId,
             IconAssetId = iconAssetId,
+            PublicThumbnailUrl = publicThumbnailUrl,
+            PublicIconUrl = publicIconUrl,
             ContentJson = $$"""{"html":"<p>{{title}} body</p>"}""",
             AllPropertiesJson = "{}",
             Published = published,
