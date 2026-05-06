@@ -10,6 +10,11 @@ public sealed record HomeDto(
     IReadOnlyList<BlogCardDto> RecentPosts
 );
 
+public sealed record HomeShellDto(
+    PageSummaryDto HomePage,
+    SiteSettingsSummaryDto SiteSettings
+);
+
 public sealed record PageSummaryDto(string Title, string ContentJson);
 
 public sealed record SiteSettingsSummaryDto(
