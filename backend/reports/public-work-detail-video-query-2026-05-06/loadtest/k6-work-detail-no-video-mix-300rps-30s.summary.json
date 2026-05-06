@@ -1,0 +1,35 @@
+{
+  "scenario": "constant",
+  "rate": 300,
+  "peakRate": 1000,
+  "duration": "30s",
+  "preAllocatedVUs": 300,
+  "maxVUs": 300,
+  "listPageSize": 12,
+  "http_reqs": 9001,
+  "rps": 300.04808863816265,
+  "failed_rate": 0,
+  "duration_p50_ms": 1.694792,
+  "duration_p95_ms": 7.864186,
+  "duration_max_ms": 502.48037,
+  "dropped_iterations": 0,
+  "vus_max": 300,
+  "targets": {
+    "work_list": {
+      "label": "Work list",
+      "path": "/api/public/works?page=1&pageSize=12",
+      "p95_ms": 5.693117
+    },
+    "study_list": {
+      "label": "Study list",
+      "path": "/api/public/blogs?page=1&pageSize=12",
+      "p95_ms": 80.4405699499998
+    },
+    "work_read": {
+      "label": "Work read",
+      "path": "/api/public/works/internal-admin-workbench",
+      "p95_ms": 5.961982699999967
+    }
+  },
+  "note": "Read targets are intentionally not seeded by default. Provide WORK_READ_PATH and STUDY_READ_PATH from the current public content selected by the Real Backend Test UI when using this standalone script."
+}

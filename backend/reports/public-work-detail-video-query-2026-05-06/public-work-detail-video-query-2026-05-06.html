@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Public Work Detail Video Query Audit - 2026-05-06</title>
+  <style>
+    body { font-family: system-ui, sans-serif; line-height: 1.5; max-width: 960px; margin: 40px auto; padding: 0 20px; color: #17202a; }
+    h1, h2 { color: #0f172a; }
+    code { background: #f1f5f9; padding: 2px 4px; border-radius: 4px; }
+    .pass { color: #047857; font-weight: 700; }
+    .warn { color: #b45309; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <h1>Public Work Detail Video Query Audit - 2026-05-06</h1>
+  <h2>Result</h2>
+  <p class="pass">Ready for PR to dev.</p>
+  <h2>Changed</h2>
+  <p><code>GET /api/public/works/{slug}</code> now skips the <code>WorkVideos</code> query when the public Work has no videos, and projects only public video DTO fields when videos exist.</p>
+  <h2>Not Changed</h2>
+  <p>No cache, no seed-priority target change, no <code>pageSize=12</code> reduction, no Real Backend Test scenario change, no DB schema change.</p>
+  <h2>Validation</h2>
+  <ul>
+    <li class="pass">Focused Postgres no-video command-count test: pass.</li>
+    <li class="pass">Public query component tests: 40 passed.</li>
+    <li class="pass">Postgres persistence contract tests: 8 passed.</li>
+    <li class="pass">Backend solution tests: component 122, unit 56, architecture 35, integration 209, contract 1 skipped.</li>
+    <li class="pass">git diff --check: pass.</li>
+    <li class="pass">k6 300rps/30s local 2 CPU overlay sanity: 9,001 requests, failed rate 0, dropped 0, Work read p95 5.96 ms.</li>
+  </ul>
+  <h2>Risks</h2>
+  <ul>
+    <li class="warn">The new <code>EXISTS</code> check should be watched on large video tables.</li>
+    <li class="warn">Work rows with videos still use a second collection query by design.</li>
+    <li class="warn">Local k6 sanity is not a production capacity claim.</li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Open PR to <code>dev</code>, merge after CI green, verify main promotion, then rerun external Real Backend Test with realistic targets.</p>
+</body>
+</html>
