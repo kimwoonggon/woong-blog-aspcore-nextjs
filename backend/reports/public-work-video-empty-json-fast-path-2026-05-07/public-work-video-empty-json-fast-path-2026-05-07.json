@@ -1,0 +1,44 @@
+{
+  "slug": "public-work-video-empty-json-fast-path-2026-05-07",
+  "date": "2026-05-07",
+  "objective": "Remove avoidable JSON deserialization allocation from no-video public Work detail reads.",
+  "changed": [
+    "Added empty-array fast path in WorkPublicVideosReadModel.Deserialize.",
+    "Added unit contract for shared Array.Empty snapshot on [] inputs."
+  ],
+  "not_changed": [
+    "No public API response shape change.",
+    "No DB schema change.",
+    "No cache.",
+    "No canonical WorkVideos behavior change."
+  ],
+  "expected_backend_test_impact": {
+    "no_video_work_detail": "Avoids one small JSON deserialization allocation per request.",
+    "work_detail_with_videos": "Unchanged; actual snapshots still need deserialization.",
+    "mixed_public_api": "Small positive allocation reduction when no-video Work reads are common."
+  },
+  "validations": [
+    { "name": "RED focused unit test", "result": "failed before implementation", "count": "3/3 failed" },
+    { "name": "GREEN focused unit test", "result": "passed", "count": "3/3" },
+    { "name": "Focused PostgreSQL no-video public Work detail contract", "result": "passed", "count": "1/1" },
+    { "name": "Unit tests", "result": "passed", "count": "59/59" },
+    { "name": "git diff --check", "result": "passed" },
+    { "name": "dotnet test backend/WoongBlog.sln --no-restore", "result": "passed", "count": "Contract 1 skipped, Component 124, Unit 59, Architecture 35, Integration 228" },
+    {
+      "name": "k6 latest-code no-video Work detail smoke",
+      "result": "passed",
+      "target": "/api/public/works/seeded-work-extra-01",
+      "rate_rps": 100,
+      "duration_seconds": 10,
+      "requests": 1001,
+      "failure_rate": 0,
+      "p95_ms": 2.220555,
+      "summary_path": "backend/reports/public-work-video-empty-json-fast-path-2026-05-07/loadtest/k6-public-work-no-video-100rps-10s.json"
+    }
+  ],
+  "risks": [
+    "Small allocation optimization only; not a replacement for body payload/serialization work.",
+    "Load smoke is not prod-like 2CPU/8GB."
+  ],
+  "final_recommendation": "Merge after CI; continue with heavy public detail body payload and response serialization work."
+}

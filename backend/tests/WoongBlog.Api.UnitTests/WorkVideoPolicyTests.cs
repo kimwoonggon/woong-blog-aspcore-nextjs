@@ -115,4 +115,15 @@ public sealed class WorkVideoPolicyTests
 
         Assert.Equal(expected, result);
     }
+
+    [Theory]
+    [InlineData("[]")]
+    [InlineData("  []  ")]
+    [InlineData("\n[]\t")]
+    public void PublicVideosReadModel_Deserialize_ReturnsSharedEmptySnapshot_ForEmptyArray(string publicVideosJson)
+    {
+        var result = WorkPublicVideosReadModel.Deserialize(publicVideosJson);
+
+        Assert.Same(Array.Empty<WorkPublicVideoSnapshot>(), result);
+    }
 }

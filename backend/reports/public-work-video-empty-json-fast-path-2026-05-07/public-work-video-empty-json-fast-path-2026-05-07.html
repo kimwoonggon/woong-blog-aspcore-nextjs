@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Public Work Video Empty JSON Fast Path - 2026-05-07</title>
+  <style>body{font-family:system-ui,sans-serif;max-width:900px;margin:40px auto;line-height:1.5;color:#17202a}code{background:#f4f4f4;padding:2px 4px}li{margin:6px 0}</style>
+</head>
+<body>
+  <h1>Public Work Video Empty JSON Fast Path - 2026-05-07</h1>
+  <h2>Objective</h2><p>Remove avoidable JSON deserialization allocation from no-video public Work detail reads.</p>
+  <h2>Changed</h2><ul><li><code>WorkPublicVideosReadModel.Deserialize</code> now returns <code>Array.Empty</code> directly for normalized <code>[]</code>.</li><li>Added a unit contract for the empty snapshot fast path.</li></ul>
+  <h2>Validation</h2><ul><li>Focused unit test passed 3/3 after RED.</li><li>PostgreSQL no-video public Work detail contract passed 1/1.</li><li>Full backend solution tests passed.</li><li>k6 no-video Work detail smoke: 100 rps, 10s, 1,001 requests, 0 failures, p95 2.22 ms.</li></ul>
+  <h2>Recommendation</h2><p>Merge after CI, then continue with heavier body payload/serialization work.</p>
+</body>
+</html>
