@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Public Detail Roundtrip Guard - 2026-05-06</title>
+  <style>
+    body { font-family: sans-serif; max-width: 920px; margin: 32px auto; line-height: 1.5; color: #1f2933; }
+    h1, h2 { color: #102a43; }
+    code { background: #f0f4f8; padding: 1px 4px; border-radius: 4px; }
+    ul { padding-left: 22px; }
+  </style>
+</head>
+<body>
+  <h1>Public Detail Roundtrip Guard - 2026-05-06</h1>
+  <h2>Changed</h2>
+  <ul>
+    <li>Added a Postgres contract for public Work detail with videos.</li>
+    <li>Verified exactly two reader commands and no <code>ContentJson</code>, <code>AllPropertiesJson</code>, or <code>Assets</code> selection.</li>
+    <li>Updated the dated TODO validation log.</li>
+  </ul>
+  <h2>Not Changed</h2>
+  <ul>
+    <li>No production code, cache policy, target selection, seed priority, page size, or DTO shape changes.</li>
+  </ul>
+  <h2>Validation</h2>
+  <ul>
+    <li>Focused new test passed after fixture correction.</li>
+    <li>Postgres persistence contracts passed 15/15.</li>
+    <li>Backend solution passed: Contract 1 skipped, Component 124, Unit 56, Architecture 35, Integration 226.</li>
+    <li><code>git diff --check</code> passed.</li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Merge through CI, then run the next production optimization from live 2CPU/8GiB evidence.</p>
+</body>
+</html>

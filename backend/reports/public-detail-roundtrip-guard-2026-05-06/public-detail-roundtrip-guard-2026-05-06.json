@@ -1,0 +1,48 @@
+{
+  "task": "public-detail-roundtrip-guard",
+  "date": "2026-05-06",
+  "changed": [
+    "Added a Postgres contract for public Work detail with videos",
+    "Updated the dated TODO validation log"
+  ],
+  "notChanged": [
+    "production code",
+    "cache policy",
+    "real backend target selection",
+    "seed priority",
+    "pageSize=12 behavior",
+    "public API DTO shape"
+  ],
+  "verifiedGoals": {
+    "publicWorkDetailWithVideosMaxCommands": 2,
+    "doesNotSelectContentJson": true,
+    "doesNotSelectAllPropertiesJson": true,
+    "doesNotSelectAssets": true,
+    "usesStoredPublicContentFields": true,
+    "thumbnailResolverEquivalent": true
+  },
+  "validations": [
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~PublicWorkDetailWithVideos_UsesTwoPostgresCommands_AndStoredPublicColumnsOnly --no-restore --logger console;verbosity=minimal",
+      "result": "pass after fixture correction"
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~PostgresPersistenceContractTests --no-restore --logger console;verbosity=minimal",
+      "result": "pass 15/15"
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln --no-restore --logger console;verbosity=minimal",
+      "result": "pass, contract 1 skipped, component 124, unit 56, architecture 35, integration 226"
+    },
+    {
+      "command": "git diff --check",
+      "result": "pass"
+    }
+  ],
+  "risks": [
+    "SQL-shape assertions are deliberate performance contracts and may need deliberate updates if query strategy changes",
+    "No runtime p95 improvement is claimed because this slice changed tests only",
+    "Per-target DB command attribution is still unavailable"
+  ],
+  "recommendation": "Merge through CI, then run the next 2CPU/8GiB evidence-based production optimization slice."
+}
