@@ -149,6 +149,26 @@ public static class SeedData
             }
         );
 
+        var seededWorkVideos = new[]
+        {
+            new WorkVideo
+            {
+                Id = seededWorkVideo1,
+                SourceType = "youtube",
+                SourceKey = "dQw4w9WgXcQ",
+                OriginalFileName = "Seed Overview",
+                SortOrder = 0
+            },
+            new WorkVideo
+            {
+                Id = seededWorkVideo2,
+                SourceType = "youtube",
+                SourceKey = "M7lc1UVf-VE",
+                OriginalFileName = "Seed Demo",
+                SortOrder = 1
+            }
+        };
+
         var seededWork = new Work
         {
             Slug = "seeded-work",
@@ -164,6 +184,7 @@ public static class SeedData
             AllPropertiesJson = """{"teamSize":1,"role":"full-stack","status":"seeded"}""",
             Tags = new[] { "react", "nextjs", "dotnet", "postgres" },
             VideosVersion = 1,
+            PublicVideosJson = WorkPublicVideosReadModel.Serialize(seededWorkVideos),
             Published = true,
             PublishedAt = DateTimeOffset.UtcNow.AddDays(-7)
         };
@@ -185,26 +206,12 @@ public static class SeedData
         dbContext.Works.AddRange(seededWork, internalAdminWorkbench);
         AddSupplementalWorks(dbContext);
 
-        dbContext.WorkVideos.AddRange(
-            new WorkVideo
-            {
-                Id = seededWorkVideo1,
-                WorkId = seededWork.Id,
-                SourceType = "youtube",
-                SourceKey = "dQw4w9WgXcQ",
-                OriginalFileName = "Seed Overview",
-                SortOrder = 0
-            },
-            new WorkVideo
-            {
-                Id = seededWorkVideo2,
-                WorkId = seededWork.Id,
-                SourceType = "youtube",
-                SourceKey = "M7lc1UVf-VE",
-                OriginalFileName = "Seed Demo",
-                SortOrder = 1
-            }
-        );
+        foreach (var video in seededWorkVideos)
+        {
+            video.WorkId = seededWork.Id;
+        }
+
+        dbContext.WorkVideos.AddRange(seededWorkVideos);
 
         dbContext.Blogs.AddRange(
             new Blog
@@ -345,6 +352,19 @@ public static class SeedData
             "M7lc1UVf-VE",
             "Seed Demo",
             1);
+        var persistedSeededWorkVideos = await dbContext.WorkVideos
+            .Where(video => video.WorkId == seededWork.Id)
+            .OrderBy(video => video.SortOrder)
+            .ThenBy(video => video.CreatedAt)
+            .ToListAsync();
+        var seededWorkVideos = persistedSeededWorkVideos
+            .Concat(dbContext.WorkVideos.Local.Where(video =>
+                video.WorkId == seededWork.Id
+                && persistedSeededWorkVideos.All(persisted => persisted.Id != video.Id)))
+            .OrderBy(video => video.SortOrder)
+            .ThenBy(video => video.CreatedAt)
+            .ToList();
+        WorkPublicVideosReadModel.Refresh(seededWork, seededWorkVideos);
         await EnsureSupplementalWorksAsync(dbContext);
 
         var seededBlog = await dbContext.Blogs.SingleOrDefaultAsync(x => x.Slug == "seeded-blog");

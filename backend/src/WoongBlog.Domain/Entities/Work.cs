@@ -21,6 +21,7 @@ public class Work
     public string AllPropertiesJson { get; set; } = "{}";
     public string[] Tags { get; set; } = Array.Empty<string>();
     public int VideosVersion { get; set; }
+    public string PublicVideosJson { get; set; } = "[]";
     public bool Published { get; set; }
     public DateTimeOffset? PublishedAt { get; set; }
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;

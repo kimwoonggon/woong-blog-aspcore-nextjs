@@ -66,7 +66,8 @@ public sealed class ConfirmWorkVideoUploadCommandHandler(
             return WorkVideoResult<WorkVideosMutationResult>.BadRequest("Only valid MP4 files are supported.");
         }
 
-        if (await commandStore.CountVideosAsync(request.WorkId, cancellationToken) >= WorkVideoPolicy.MaxVideosPerWork)
+        var videos = (await commandStore.GetVideosForWorkAsync(request.WorkId, cancellationToken)).ToList();
+        if (videos.Count >= WorkVideoPolicy.MaxVideosPerWork)
         {
             return WorkVideoResult<WorkVideosMutationResult>.BadRequest("Each work supports up to 10 videos.");
         }
@@ -74,11 +75,6 @@ public sealed class ConfirmWorkVideoUploadCommandHandler(
         var assetPublicUrls = await commandStore.GetAssetPublicUrlsAsync(
             WorkPublicThumbnailReadModel.GetThumbnailAssetIds(work.ThumbnailAssetId),
             cancellationToken);
-        List<WorkVideo>? videosForThumbnail = WorkPublicThumbnailReadModel.ShouldLoadFallbackVideos(
-            work.ThumbnailAssetId,
-            assetPublicUrls)
-            ? (await commandStore.GetVideosForWorkAsync(request.WorkId, cancellationToken)).ToList()
-            : null;
 
         var video = new WorkVideo
         {
@@ -89,17 +85,28 @@ public sealed class ConfirmWorkVideoUploadCommandHandler(
             OriginalFileName = session.OriginalFileName,
             MimeType = storedObject.ContentType ?? session.ExpectedMimeType,
             FileSize = storedObject.Size,
-            SortOrder = await commandStore.GetNextSortOrderAsync(request.WorkId, cancellationToken),
+            SortOrder = GetNextSortOrder(videos),
             CreatedAt = DateTimeOffset.UtcNow
         };
         commandStore.AddWorkVideo(video);
-        videosForThumbnail?.Add(video);
-        WorkPublicThumbnailReadModel.Refresh(work, videosForThumbnail ?? (IReadOnlyList<WorkVideo>)Array.Empty<WorkVideo>(), assetPublicUrls);
+        videos.Add(video);
+        WorkPublicThumbnailReadModel.Refresh(
+            work,
+            WorkPublicThumbnailReadModel.ShouldLoadFallbackVideos(work.ThumbnailAssetId, assetPublicUrls)
+                ? videos
+                : Array.Empty<WorkVideo>(),
+            assetPublicUrls);
+        WorkPublicVideosReadModel.Refresh(work, videos);
 
         session.Status = WorkVideoUploadSessionStatuses.Confirmed;
         work.VideosVersion += 1;
         await commandStore.SaveChangesAsync(cancellationToken);
         return WorkVideoResult<WorkVideosMutationResult>.Ok(
             await queryStore.GetMutationResultAsync(request.WorkId, cancellationToken));
+    }
+
+    private static int GetNextSortOrder(IReadOnlyCollection<WorkVideo> videos)
+    {
+        return videos.Count == 0 ? 0 : videos.Max(video => video.SortOrder) + 1;
     }
 }

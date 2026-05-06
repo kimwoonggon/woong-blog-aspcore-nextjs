@@ -520,6 +520,11 @@ public sealed class WorkVideoComponentTests
             .ToListAsync();
         Assert.Equal(new[] { third.Id, first.Id, second.Id }, persisted.Select(video => video.Id).ToArray());
         Assert.Equal(new[] { 0, 1, 2 }, persisted.Select(video => video.SortOrder).ToArray());
+
+        var work = await dbContext.Works.SingleAsync(x => x.Id == workId);
+        var publicVideoSnapshot = WorkPublicVideosReadModel.Deserialize(work.PublicVideosJson);
+        Assert.Equal(new[] { third.Id, first.Id, second.Id }, publicVideoSnapshot.Select(video => video.Id).ToArray());
+        Assert.Equal(new[] { 0, 1, 2 }, publicVideoSnapshot.Select(video => video.SortOrder).ToArray());
     }
 
     [Fact]
@@ -547,6 +552,10 @@ public sealed class WorkVideoComponentTests
         Assert.Equal(new[] { first.Id, third.Id }, result.Value!.Videos.Select(video => video.Id).ToArray());
         Assert.Equal(new[] { 0, 1 }, result.Value.Videos.Select(video => video.SortOrder).ToArray());
         Assert.False(await dbContext.WorkVideos.AnyAsync(video => video.Id == deleted.Id));
+        var work = await dbContext.Works.SingleAsync(x => x.Id == workId);
+        var publicVideoSnapshot = WorkPublicVideosReadModel.Deserialize(work.PublicVideosJson);
+        Assert.Equal(new[] { first.Id, third.Id }, publicVideoSnapshot.Select(video => video.Id).ToArray());
+        Assert.DoesNotContain(publicVideoSnapshot, video => video.Id == deleted.Id);
 
         var cleanupJob = await dbContext.VideoStorageCleanupJobs.SingleAsync();
         Assert.Equal(WorkVideoSourceTypes.Local, cleanupJob.StorageType);

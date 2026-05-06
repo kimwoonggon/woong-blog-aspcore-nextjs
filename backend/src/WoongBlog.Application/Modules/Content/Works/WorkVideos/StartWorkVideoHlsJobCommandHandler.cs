@@ -40,7 +40,8 @@ public sealed class StartWorkVideoHlsJobCommandHandler(
             return WorkVideoResult<WorkVideosMutationResult>.BadRequest(validationError);
         }
 
-        if (await commandStore.CountVideosAsync(request.WorkId, cancellationToken) >= WorkVideoPolicy.MaxVideosPerWork)
+        var videos = (await commandStore.GetVideosForWorkAsync(request.WorkId, cancellationToken)).ToList();
+        if (videos.Count >= WorkVideoPolicy.MaxVideosPerWork)
         {
             return WorkVideoResult<WorkVideosMutationResult>.BadRequest("Each work supports up to 10 videos.");
         }
@@ -48,11 +49,6 @@ public sealed class StartWorkVideoHlsJobCommandHandler(
         var assetPublicUrls = await commandStore.GetAssetPublicUrlsAsync(
             WorkPublicThumbnailReadModel.GetThumbnailAssetIds(work.ThumbnailAssetId),
             cancellationToken);
-        List<WorkVideo>? videosForThumbnail = WorkPublicThumbnailReadModel.ShouldLoadFallbackVideos(
-            work.ThumbnailAssetId,
-            assetPublicUrls)
-            ? (await commandStore.GetVideosForWorkAsync(request.WorkId, cancellationToken)).ToList()
-            : null;
 
         var storageType = storageSelector.ResolveStorageType();
         if (!storageSelector.TryGetStorage(storageType, out var storage))
@@ -88,17 +84,28 @@ public sealed class StartWorkVideoHlsJobCommandHandler(
                 && File.Exists(Path.Combine(workspace.HlsDirectory, WorkVideoPolicy.TimelinePreviewSpriteFileName));
 
             var video = plan.ToWorkVideo(
-                await commandStore.GetNextSortOrderAsync(request.WorkId, cancellationToken),
+                GetNextSortOrder(videos),
                 DateTimeOffset.UtcNow,
                 hasTimelinePreview);
             commandStore.AddWorkVideo(video);
-            videosForThumbnail?.Add(video);
-            WorkPublicThumbnailReadModel.Refresh(work, videosForThumbnail ?? (IReadOnlyList<WorkVideo>)Array.Empty<WorkVideo>(), assetPublicUrls);
+            videos.Add(video);
+            WorkPublicThumbnailReadModel.Refresh(
+                work,
+                WorkPublicThumbnailReadModel.ShouldLoadFallbackVideos(work.ThumbnailAssetId, assetPublicUrls)
+                    ? videos
+                    : Array.Empty<WorkVideo>(),
+                assetPublicUrls);
+            WorkPublicVideosReadModel.Refresh(work, videos);
 
             work.VideosVersion += 1;
             await commandStore.SaveChangesAsync(cancellationToken);
             return WorkVideoResult<WorkVideosMutationResult>.Ok(
                 await queryStore.GetMutationResultAsync(request.WorkId, cancellationToken));
         }
+    }
+
+    private static int GetNextSortOrder(IReadOnlyCollection<WorkVideo> videos)
+    {
+        return videos.Count == 0 ? 0 : videos.Max(video => video.SortOrder) + 1;
     }
 }

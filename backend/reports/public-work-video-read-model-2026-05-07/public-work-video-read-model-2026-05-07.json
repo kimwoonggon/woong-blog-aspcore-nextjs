@@ -1,0 +1,69 @@
+{
+  "slug": "public-work-video-read-model-2026-05-07",
+  "date": "2026-05-07",
+  "objective": "Reduce public Work detail with videos from two DB commands to one by storing a write-time public video snapshot on Work.",
+  "changed": [
+    "Added Work.PublicVideosJson jsonb read-model column.",
+    "Added WorkPublicVideosReadModel serializer/deserializer.",
+    "Changed public Work detail projection to read videos from PublicVideosJson.",
+    "Added bootstrap patch/backfill 20260507_public_work_videos_read_model.",
+    "Refreshed public video snapshot in add, confirm, HLS create, delete, and reorder mutation handlers.",
+    "Updated seed maintenance and behavior tests."
+  ],
+  "not_changed": [
+    "No cache added.",
+    "No load target manipulation or pageSize reduction.",
+    "Canonical WorkVideos table remains source of truth for admin and mutations.",
+    "No Blog detail or body payload split change in this slice.",
+    "No Npgsql pool or nginx timing instrumentation change in this slice."
+  ],
+  "expected_backend_test_impact": {
+    "work_read_with_videos": "DB command count reduced from 2 to 1; should lower app elapsed and DB pressure for this target.",
+    "mixed_public_api": "Overall improvement depends on Work read share and whether video detail was a bottleneck.",
+    "not_expected": "No direct improvement for Study read/list, Work list, large body serialization, or nginx timing availability."
+  },
+  "validations": [
+    {
+      "name": "Focused PostgreSQL contracts",
+      "result": "passed",
+      "count": "3/3"
+    },
+    {
+      "name": "Component tests",
+      "result": "passed",
+      "count": "69/69"
+    },
+    {
+      "name": "Work video endpoint integration tests plus public null-field contract",
+      "result": "passed",
+      "count": "21/21"
+    },
+    {
+      "name": "git diff --check",
+      "result": "passed"
+    },
+    {
+      "name": "dotnet test backend/WoongBlog.sln --no-restore",
+      "result": "passed",
+      "count": "Contract 1 skipped, Component 124, Unit 56, Architecture 35, Integration 228"
+    },
+    {
+      "name": "k6 latest-code smoke",
+      "result": "passed",
+      "target": "/api/public/works/seeded-work",
+      "rate_rps": 100,
+      "duration_seconds": 10,
+      "requests": 1001,
+      "failure_rate": 0,
+      "p95_ms": 3.211971,
+      "summary_path": "backend/reports/public-work-video-read-model-2026-05-07/loadtest/k6-public-work-detail-100rps-10s.json"
+    }
+  ],
+  "risks": [
+    "Docker compose rebuild was blocked by external DNS failures for NuGet and Google Fonts, so load smoke used a mounted local publish instead of a rebuilt compose image.",
+    "Load smoke is not a prod-like 2CPU/8GB benchmark.",
+    "Future video mutation paths must keep PublicVideosJson refreshed.",
+    "Public read still deserializes a small JSON snapshot per request."
+  ],
+  "final_recommendation": "Proceed to PR/CI, then target large public detail body payload and JSON serialization allocation next."
+}
