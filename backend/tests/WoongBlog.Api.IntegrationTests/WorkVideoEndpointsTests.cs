@@ -710,6 +710,26 @@ public class WorkVideoEndpointsTests : IClassFixture<CustomWebApplicationFactory
         using (var scope = _factory.Services.CreateScope())
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
+            var publishedVideo = new WorkVideo
+            {
+                Id = publishedVideoId,
+                WorkId = publishedWorkId,
+                SourceType = WorkVideoSourceTypes.YouTube,
+                SourceKey = "dQw4w9WgXcQ",
+                OriginalFileName = "Published Demo",
+                SortOrder = 0,
+                CreatedAt = now
+            };
+            var draftVideo = new WorkVideo
+            {
+                Id = Guid.NewGuid(),
+                WorkId = draftWorkId,
+                SourceType = WorkVideoSourceTypes.YouTube,
+                SourceKey = "9bZkp7q19f0",
+                OriginalFileName = "Draft Demo",
+                SortOrder = 0,
+                CreatedAt = now
+            };
             dbContext.Works.AddRange(
                 new Work
                 {
@@ -724,7 +744,8 @@ public class WorkVideoEndpointsTests : IClassFixture<CustomWebApplicationFactory
                     PublishedAt = now,
                     CreatedAt = now,
                     UpdatedAt = now,
-                    VideosVersion = 1
+                    VideosVersion = 1,
+                    PublicVideosJson = WorkPublicVideosReadModel.Serialize([publishedVideo])
                 },
                 new Work
                 {
@@ -738,29 +759,10 @@ public class WorkVideoEndpointsTests : IClassFixture<CustomWebApplicationFactory
                     Published = false,
                     CreatedAt = now,
                     UpdatedAt = now,
-                    VideosVersion = 1
+                    VideosVersion = 1,
+                    PublicVideosJson = WorkPublicVideosReadModel.Serialize([draftVideo])
                 });
-            dbContext.WorkVideos.AddRange(
-                new WorkVideo
-                {
-                    Id = publishedVideoId,
-                    WorkId = publishedWorkId,
-                    SourceType = WorkVideoSourceTypes.YouTube,
-                    SourceKey = "dQw4w9WgXcQ",
-                    OriginalFileName = "Published Demo",
-                    SortOrder = 0,
-                    CreatedAt = now
-                },
-                new WorkVideo
-                {
-                    Id = Guid.NewGuid(),
-                    WorkId = draftWorkId,
-                    SourceType = WorkVideoSourceTypes.YouTube,
-                    SourceKey = "9bZkp7q19f0",
-                    OriginalFileName = "Draft Demo",
-                    SortOrder = 0,
-                    CreatedAt = now
-                });
+            dbContext.WorkVideos.AddRange(publishedVideo, draftVideo);
             await dbContext.SaveChangesAsync();
         }
 

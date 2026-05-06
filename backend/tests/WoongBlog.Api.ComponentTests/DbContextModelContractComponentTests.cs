@@ -64,6 +64,7 @@ public sealed class DbContextModelContractComponentTests
         AssertPropertyRequired(works, nameof(Work.PublicThumbnailUrl));
         AssertPropertyRequired(works, nameof(Work.PublicIconUrl));
         AssertPropertyRequired(works, nameof(Work.PublicSocialShareMessage));
+        AssertPropertyRequired(works, nameof(Work.PublicVideosJson));
         AssertPropertyRequired(works, nameof(Work.AllPropertiesJson));
         AssertPropertyRequired(works, nameof(Work.SearchTitle));
         AssertPropertyRequired(works, nameof(Work.SearchText));
@@ -72,6 +73,7 @@ public sealed class DbContextModelContractComponentTests
         Assert.Equal("jsonb", GetColumnType(blogs, nameof(Blog.ContentJson)));
         Assert.Equal("jsonb", GetColumnType(works, nameof(Work.ContentJson)));
         Assert.Equal("jsonb", GetColumnType(works, nameof(Work.AllPropertiesJson)));
+        Assert.Equal("jsonb", GetColumnType(works, nameof(Work.PublicVideosJson)));
 
         AssertHasUniqueIndex(pages, nameof(PageEntity.Slug));
         AssertHasUniqueIndex(blogs, nameof(Blog.Slug));

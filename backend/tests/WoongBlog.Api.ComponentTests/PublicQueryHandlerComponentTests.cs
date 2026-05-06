@@ -812,6 +812,19 @@ public class PublicQueryHandlerComponentTests
         var videoId = Guid.NewGuid();
         var previewVttStorageKey = $"videos/{workId:N}/{videoId:N}/hls/{WorkVideoPolicy.TimelinePreviewVttFileName}";
         var previewSpriteStorageKey = $"videos/{workId:N}/{videoId:N}/hls/{WorkVideoPolicy.TimelinePreviewSpriteFileName}";
+        var now = DateTimeOffset.UtcNow;
+        var storedVideo = new WorkVideo
+        {
+            Id = videoId,
+            WorkId = workId,
+            SourceType = WorkVideoSourceTypes.Hls,
+            SourceKey = $"{WorkVideoSourceTypes.Local}:videos/{workId:N}/{videoId:N}/hls/master.m3u8",
+            MimeType = WorkVideoPolicy.HlsManifestContentType,
+            TimelinePreviewVttStorageKey = previewVttStorageKey,
+            TimelinePreviewSpriteStorageKey = previewSpriteStorageKey,
+            SortOrder = 0,
+            CreatedAt = now
+        };
         dbContext.Works.Add(new Work
         {
             Id = workId,
@@ -822,23 +835,13 @@ public class PublicQueryHandlerComponentTests
             ContentJson = "{}",
             AllPropertiesJson = "{}",
             VideosVersion = 1,
+            PublicVideosJson = WorkPublicVideosReadModel.Serialize([storedVideo]),
             Published = true,
-            PublishedAt = DateTimeOffset.UtcNow,
-            CreatedAt = DateTimeOffset.UtcNow,
-            UpdatedAt = DateTimeOffset.UtcNow
+            PublishedAt = now,
+            CreatedAt = now,
+            UpdatedAt = now
         });
-        dbContext.WorkVideos.Add(new WorkVideo
-        {
-            Id = videoId,
-            WorkId = workId,
-            SourceType = WorkVideoSourceTypes.Hls,
-            SourceKey = $"{WorkVideoSourceTypes.Local}:videos/{workId:N}/{videoId:N}/hls/master.m3u8",
-            MimeType = WorkVideoPolicy.HlsManifestContentType,
-            TimelinePreviewVttStorageKey = previewVttStorageKey,
-            TimelinePreviewSpriteStorageKey = previewSpriteStorageKey,
-            SortOrder = 0,
-            CreatedAt = DateTimeOffset.UtcNow
-        });
+        dbContext.WorkVideos.Add(storedVideo);
         await dbContext.SaveChangesAsync();
 
         var playbackUrlBuilder = new TestPlaybackUrlBuilder();
@@ -914,6 +917,30 @@ public class PublicQueryHandlerComponentTests
         var thumbnailAssetId = Guid.NewGuid();
         var iconAssetId = Guid.NewGuid();
         var now = new DateTimeOffset(2026, 4, 25, 12, 0, 0, TimeSpan.Zero);
+        var secondVideo = new WorkVideo
+        {
+            Id = Guid.NewGuid(),
+            WorkId = workId,
+            SourceType = WorkVideoSourceTypes.Local,
+            SourceKey = "videos/detail-second.mp4",
+            OriginalFileName = "Second",
+            MimeType = "video/mp4",
+            FileSize = 200,
+            SortOrder = 1,
+            CreatedAt = now
+        };
+        var firstVideo = new WorkVideo
+        {
+            Id = Guid.NewGuid(),
+            WorkId = workId,
+            SourceType = WorkVideoSourceTypes.Local,
+            SourceKey = "videos/detail-first.mp4",
+            OriginalFileName = "First",
+            MimeType = "video/mp4",
+            FileSize = 100,
+            SortOrder = 0,
+            CreatedAt = now.AddSeconds(-1)
+        };
         var work = new Work
         {
             Id = workId,
@@ -930,37 +957,14 @@ public class PublicQueryHandlerComponentTests
             PublicThumbnailUrl = "/media/detail-thumb.png",
             PublicIconUrl = "/media/detail-icon.png",
             VideosVersion = 2,
+            PublicVideosJson = WorkPublicVideosReadModel.Serialize([secondVideo, firstVideo]),
             Published = true,
             PublishedAt = now,
             CreatedAt = now,
             UpdatedAt = now
         };
         dbContext.Works.Add(work);
-        dbContext.WorkVideos.AddRange(
-            new WorkVideo
-            {
-                Id = Guid.NewGuid(),
-                WorkId = workId,
-                SourceType = WorkVideoSourceTypes.Local,
-                SourceKey = "videos/detail-second.mp4",
-                OriginalFileName = "Second",
-                MimeType = "video/mp4",
-                FileSize = 200,
-                SortOrder = 1,
-                CreatedAt = now
-            },
-            new WorkVideo
-            {
-                Id = Guid.NewGuid(),
-                WorkId = workId,
-                SourceType = WorkVideoSourceTypes.Local,
-                SourceKey = "videos/detail-first.mp4",
-                OriginalFileName = "First",
-                MimeType = "video/mp4",
-                FileSize = 100,
-                SortOrder = 0,
-                CreatedAt = now.AddSeconds(-1)
-            });
+        dbContext.WorkVideos.AddRange(secondVideo, firstVideo);
         await dbContext.SaveChangesAsync();
 
         var handler = new GetWorkBySlugQueryHandler(CreateWorkQueryStore(dbContext));
@@ -989,6 +993,16 @@ public class PublicQueryHandlerComponentTests
         await using var dbContext = CreateDbContext();
         var workId = Guid.NewGuid();
         var now = new DateTimeOffset(2026, 5, 6, 12, 0, 0, TimeSpan.Zero);
+        var storedVideo = new WorkVideo
+        {
+            Id = Guid.NewGuid(),
+            WorkId = workId,
+            SourceType = WorkVideoSourceTypes.YouTube,
+            SourceKey = "detail-video-fallback",
+            OriginalFileName = "Detail YouTube",
+            SortOrder = 0,
+            CreatedAt = now
+        };
         dbContext.Works.Add(new Work
         {
             Id = workId,
@@ -1000,21 +1014,13 @@ public class PublicQueryHandlerComponentTests
             ContentJson = "{}",
             AllPropertiesJson = "{}",
             VideosVersion = 1,
+            PublicVideosJson = WorkPublicVideosReadModel.Serialize([storedVideo]),
             Published = true,
             PublishedAt = now,
             CreatedAt = now,
             UpdatedAt = now
         });
-        dbContext.WorkVideos.Add(new WorkVideo
-        {
-            Id = Guid.NewGuid(),
-            WorkId = workId,
-            SourceType = WorkVideoSourceTypes.YouTube,
-            SourceKey = "detail-video-fallback",
-            OriginalFileName = "Detail YouTube",
-            SortOrder = 0,
-            CreatedAt = now
-        });
+        dbContext.WorkVideos.Add(storedVideo);
         await dbContext.SaveChangesAsync();
 
         var handler = new GetWorkBySlugQueryHandler(CreateWorkQueryStore(dbContext));

@@ -54,6 +54,7 @@ public sealed class DeleteWorkVideoCommandHandler(
         }
 
         WorkPublicThumbnailReadModel.Refresh(work, remainingVideos, assetPublicUrls);
+        WorkPublicVideosReadModel.Refresh(work, remainingVideos);
         work.VideosVersion += 1;
         await commandStore.SaveChangesAsync(cancellationToken);
         return WorkVideoResult<WorkVideosMutationResult>.Ok(

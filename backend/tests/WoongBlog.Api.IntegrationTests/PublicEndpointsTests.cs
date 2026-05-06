@@ -8,6 +8,7 @@ using WoongBlog.Application.Modules.Content.Blogs.GetBlogs;
 using WoongBlog.Application.Modules.Content.Pages.GetPageBySlug;
 using WoongBlog.Application.Modules.Content.Works.GetWorkBySlug;
 using WoongBlog.Application.Modules.Content.Works.GetWorks;
+using WoongBlog.Application.Modules.Content.Works.WorkVideos;
 using WoongBlog.Application.Modules.Site.GetSiteSettings;
 using WoongBlog.Infrastructure.Persistence;
 
@@ -228,6 +229,14 @@ public class PublicEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         using (var scope = _factory.Services.CreateScope())
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
+            var storedVideo = new WorkVideo
+            {
+                WorkId = workId,
+                SourceType = WorkVideoSourceTypes.YouTube,
+                SourceKey = "dQw4w9WgXcQ",
+                SortOrder = 0,
+                CreatedAt = now
+            };
             dbContext.Works.Add(new Work
             {
                 Id = workId,
@@ -240,19 +249,13 @@ public class PublicEndpointsTests : IClassFixture<CustomWebApplicationFactory>
                 PublicContentHtml = "<p>Video body</p>",
                 AllPropertiesJson = "{}",
                 VideosVersion = 1,
+                PublicVideosJson = WorkPublicVideosReadModel.Serialize([storedVideo]),
                 Published = true,
                 PublishedAt = now,
                 CreatedAt = now,
                 UpdatedAt = now
             });
-            dbContext.WorkVideos.Add(new WorkVideo
-            {
-                WorkId = workId,
-                SourceType = WorkVideoSourceTypes.YouTube,
-                SourceKey = "dQw4w9WgXcQ",
-                SortOrder = 0,
-                CreatedAt = now
-            });
+            dbContext.WorkVideos.Add(storedVideo);
             await dbContext.SaveChangesAsync();
         }
 

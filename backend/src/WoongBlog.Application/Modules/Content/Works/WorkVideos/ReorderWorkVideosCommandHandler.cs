@@ -47,6 +47,7 @@ public sealed class ReorderWorkVideosCommandHandler(
         }
 
         WorkPublicThumbnailReadModel.Refresh(work, videos, assetPublicUrls);
+        WorkPublicVideosReadModel.Refresh(work, videos);
         work.VideosVersion += 1;
         await commandStore.SaveChangesAsync(cancellationToken);
         return WorkVideoResult<WorkVideosMutationResult>.Ok(

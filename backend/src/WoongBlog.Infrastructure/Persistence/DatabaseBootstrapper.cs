@@ -41,6 +41,11 @@ public static class DatabaseBootstrapper
                     cancellationToken);
                 await ApplySchemaPatchAsync(
                     dbContext,
+                    "20260507_public_work_videos_read_model",
+                    PublicWorkVideosReadModelSchemaPatchSql,
+                    cancellationToken);
+                await ApplySchemaPatchAsync(
+                    dbContext,
                     "20260506_public_content_body_fields",
                     PublicContentBodyFieldsSchemaPatchSql,
                     cancellationToken);
@@ -251,6 +256,43 @@ WHERE work."VideosVersion" = 0
     FROM "WorkVideos" AS video
     WHERE video."WorkId" = work."Id"
   );
+""";
+
+    private const string PublicWorkVideosReadModelSchemaPatchSql = """
+ALTER TABLE "Works" ADD COLUMN IF NOT EXISTS "PublicVideosJson" jsonb NOT NULL DEFAULT '[]'::jsonb;
+
+WITH public_videos AS (
+  SELECT
+    video."WorkId",
+    jsonb_agg(
+      jsonb_strip_nulls(jsonb_build_object(
+        'id', video."Id",
+        'sourceType', video."SourceType",
+        'sourceKey', video."SourceKey",
+        'originalFileName', video."OriginalFileName",
+        'mimeType', video."MimeType",
+        'fileSize', video."FileSize",
+        'width', video."Width",
+        'height', video."Height",
+        'durationSeconds', video."DurationSeconds",
+        'timelinePreviewVttStorageKey', video."TimelinePreviewVttStorageKey",
+        'timelinePreviewSpriteStorageKey', video."TimelinePreviewSpriteStorageKey",
+        'sortOrder', video."SortOrder",
+        'createdAt', video."CreatedAt"
+      ))
+      ORDER BY video."SortOrder", video."CreatedAt"
+    ) AS "VideosJson"
+  FROM "WorkVideos" AS video
+  GROUP BY video."WorkId"
+)
+UPDATE "Works" AS work
+SET "PublicVideosJson" = COALESCE(public_videos."VideosJson", '[]'::jsonb)
+FROM public_videos
+WHERE work."Id" = public_videos."WorkId";
+
+UPDATE "Works"
+SET "PublicVideosJson" = '[]'::jsonb
+WHERE "PublicVideosJson" IS NULL;
 """;
 
     private const string ContentSearchSchemaPatchSql = """

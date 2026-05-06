@@ -22,7 +22,6 @@ public sealed class WorkQueryStore(
 {
     private const string PostgresProviderName = "Npgsql.EntityFrameworkCore.PostgreSQL";
     private static readonly ConcurrentDictionary<IModel, Func<WoongBlogDbContext, string, IAsyncEnumerable<PublicWorkDetailRow>>> PublishedDetailBySlugQueries = new();
-    private static readonly ConcurrentDictionary<IModel, Func<WoongBlogDbContext, Guid, IAsyncEnumerable<PublicWorkVideoRow>>> PublicVideosByWorkIdQueries = new();
 
     private static Func<WoongBlogDbContext, string, IAsyncEnumerable<PublicWorkDetailRow>> CreatePublishedDetailBySlugQuery(IModel _)
     {
@@ -44,31 +43,8 @@ public sealed class WorkQueryStore(
                     work.PublishedAt,
                     work.PublicSocialShareMessage,
                     work.VideosVersion,
-                    work.VideosVersion > 0))
+                    work.PublicVideosJson))
                 .Take(1));
-    }
-
-    private static Func<WoongBlogDbContext, Guid, IAsyncEnumerable<PublicWorkVideoRow>> CreatePublicVideosByWorkIdQuery(IModel _)
-    {
-        return EF.CompileAsyncQuery((WoongBlogDbContext context, Guid workId) =>
-            context.WorkVideos.AsNoTracking()
-                .Where(x => x.WorkId == workId)
-                .OrderBy(x => x.SortOrder)
-                .ThenBy(x => x.CreatedAt)
-                .Select(video => new PublicWorkVideoRow(
-                    video.Id,
-                    video.SourceType,
-                    video.SourceKey,
-                    video.OriginalFileName,
-                    video.MimeType,
-                    video.FileSize,
-                    video.Width,
-                    video.Height,
-                    video.DurationSeconds,
-                    video.TimelinePreviewVttStorageKey,
-                    video.TimelinePreviewSpriteStorageKey,
-                    video.SortOrder,
-                    video.CreatedAt)));
     }
 
     public async Task<IReadOnlyList<AdminWorkListItemDto>> GetAdminListAsync(CancellationToken cancellationToken)
@@ -218,7 +194,7 @@ public sealed class WorkQueryStore(
 
         return work is null
             ? null
-            : await BuildPublicDetailAsync(work, cancellationToken);
+            : BuildPublicDetail(work);
     }
 
     private async Task<AdminWorkDetailDto> BuildAdminDetailAsync(Work work, CancellationToken cancellationToken)
@@ -253,11 +229,12 @@ public sealed class WorkQueryStore(
             videos);
     }
 
-    private async Task<WorkDetailDto> BuildPublicDetailAsync(PublicWorkDetailRow work, CancellationToken cancellationToken)
+    private WorkDetailDto BuildPublicDetail(PublicWorkDetailRow work)
     {
-        List<WorkVideoDto> videos = work.HasVideos
-            ? await GetPublicVideoDtosAsync(work.Id, cancellationToken)
-            : [];
+        var videoRows = WorkPublicVideosReadModel.Deserialize(work.PublicVideosJson);
+        var videos = videoRows
+            .Select(BuildPublicVideoDto)
+            .ToList();
 
         return new WorkDetailDto(
             work.Id,
@@ -274,18 +251,6 @@ public sealed class WorkQueryStore(
             NormalizeOptional(work.PublicSocialShareMessage),
             work.VideosVersion,
             videos);
-    }
-
-    private async Task<List<WorkVideoDto>> GetPublicVideoDtosAsync(Guid workId, CancellationToken cancellationToken)
-    {
-        var videos = new List<WorkVideoDto>();
-        var query = PublicVideosByWorkIdQueries.GetOrAdd(dbContext.Model, CreatePublicVideosByWorkIdQuery);
-        await foreach (var video in query(dbContext, workId).WithCancellation(cancellationToken))
-        {
-            videos.Add(BuildPublicVideoDto(video));
-        }
-
-        return videos;
     }
 
     private async Task<IReadOnlyDictionary<Guid, IReadOnlyList<WorkVideo>>> GetVideoLookupAsync(
@@ -369,7 +334,7 @@ public sealed class WorkQueryStore(
         return results;
     }
 
-    private WorkVideoDto BuildPublicVideoDto(PublicWorkVideoRow video)
+    private WorkVideoDto BuildPublicVideoDto(WorkPublicVideoSnapshot video)
     {
         var (previewStorageType, hasPreviewStorageType) = ResolvePreviewStorageType(video.SourceType, video.SourceKey);
         var hasPreviewAssets = hasPreviewStorageType
@@ -493,20 +458,5 @@ public sealed class WorkQueryStore(
         DateTimeOffset? PublishedAt,
         string PublicSocialShareMessage,
         int VideosVersion,
-        bool HasVideos);
-
-    private sealed record PublicWorkVideoRow(
-        Guid Id,
-        string SourceType,
-        string SourceKey,
-        string? OriginalFileName,
-        string? MimeType,
-        long? FileSize,
-        int? Width,
-        int? Height,
-        double? DurationSeconds,
-        string? TimelinePreviewVttStorageKey,
-        string? TimelinePreviewSpriteStorageKey,
-        int SortOrder,
-        DateTimeOffset CreatedAt);
+        string PublicVideosJson);
 }
