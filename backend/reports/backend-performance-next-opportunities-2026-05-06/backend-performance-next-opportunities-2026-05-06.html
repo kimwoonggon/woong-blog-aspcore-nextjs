@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Backend Performance Next Opportunities Scan - 2026-05-06</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 960px; margin: 40px auto; line-height: 1.5; color: #17202a; }
+    h1, h2 { color: #102a43; }
+    table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+    th, td { border: 1px solid #d9e2ec; padding: 8px; vertical-align: top; }
+    th { background: #f0f4f8; }
+    code { background: #f0f4f8; padding: 1px 4px; }
+  </style>
+</head>
+<body>
+  <h1>Backend Performance Next Opportunities Scan - 2026-05-06</h1>
+  <p>Audit-only scan. Production code and tests were not changed.</p>
+  <h2>Top Recommendation</h2>
+  <p>Implement run-scoped Real Backend Test diagnostics first, then use DB/runtime attribution to choose the next structural optimization.</p>
+  <h2>Priorities</h2>
+  <table>
+    <thead><tr><th>Priority</th><th>Opportunity</th><th>Expected backend test improvement</th></tr></thead>
+    <tbody>
+      <tr><td>P0</td><td>Run-scoped Real Backend diagnostics persistence</td><td>DB command/open p95 and runtime samples become available on completed runs.</td></tr>
+      <tr><td>P1</td><td>Heavy detail payload/serialization profiling</td><td>ASP.NET app p95, GC heap, Gen2 GC, memory, and client p95 attribution.</td></tr>
+      <tr><td>P1</td><td>Public Work detail with-video read path</td><td>Work read p95 and DB command count for video detail targets.</td></tr>
+      <tr><td>P2</td><td>Published-list partial descending indexes after EXPLAIN</td><td>Work/Study list p95 and DB command p95 on production-sized data.</td></tr>
+      <tr><td>P2</td><td>Public Home 3-to-1 query read model</td><td><code>/api/public/home</code> p95 and command count, only if Home is targeted.</td></tr>
+      <tr><td>P3</td><td>Search-path tuning</td><td>Search p95 only; no expected change for current no-search mix.</td></tr>
+    </tbody>
+  </table>
+  <p>See the Markdown report in this directory for full details.</p>
+</body>
+</html>

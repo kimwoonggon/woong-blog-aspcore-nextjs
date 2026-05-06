@@ -2,7 +2,10 @@ using Microsoft.Extensions.Logging;
 
 namespace WoongBlog.Infrastructure.LoadTesting;
 
-public sealed class FakeRealLoadTestRunner(RealLoadTestReportStore reportStore, ILogger<FakeRealLoadTestRunner> logger)
+public sealed class FakeRealLoadTestRunner(
+    RealLoadTestReportStore reportStore,
+    ILoadTestDiagnosticsSampler diagnosticsSampler,
+    ILogger<FakeRealLoadTestRunner> logger)
     : IRealLoadTestRunner
 {
     private static readonly TimeSpan TickInterval = TimeSpan.FromMilliseconds(250);
@@ -31,12 +34,13 @@ public sealed class FakeRealLoadTestRunner(RealLoadTestReportStore reportStore, 
                 linkedCancellationToken.ThrowIfCancellationRequested();
                 await Task.Delay(TickInterval, linkedCancellationToken);
 
-                RealLoadTestMetricPoint metric;
                 lock (run.SyncRoot)
                 {
                     ApplyTick(run, tick);
-                    metric = CaptureMetric(run);
                 }
+
+                var diagnostics = await diagnosticsSampler.CaptureAsync(linkedCancellationToken);
+                var metric = CaptureMetric(run, diagnostics);
 
                 await reportStore.AppendMetricAsync(run.RunId, metric, linkedCancellationToken);
                 await reportStore.WriteSummaryAsync(CaptureSummary(run), linkedCancellationToken);
@@ -165,7 +169,9 @@ public sealed class FakeRealLoadTestRunner(RealLoadTestReportStore reportStore, 
         }
     }
 
-    private static RealLoadTestMetricPoint CaptureMetric(RealLoadTestRunEntry run)
+    private static RealLoadTestMetricPoint CaptureMetric(
+        RealLoadTestRunEntry run,
+        LoadTestDiagnosticsSnapshot diagnostics)
     {
         var snapshot = run.ToStatusResponse(DateTimeOffset.UtcNow);
         return new RealLoadTestMetricPoint(
@@ -180,6 +186,7 @@ public sealed class FakeRealLoadTestRunner(RealLoadTestReportStore reportStore, 
             snapshot.MaxMs,
             snapshot.StatusCounts,
             run.LatencyBreakdown,
-            snapshot.TargetMetrics);
+            snapshot.TargetMetrics,
+            diagnostics);
     }
 }

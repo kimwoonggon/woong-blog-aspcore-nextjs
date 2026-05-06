@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Real Load Run Diagnostics Persistence - 2026-05-06</title>
+  <style>body{font-family:Arial,sans-serif;max-width:900px;margin:2rem auto;line-height:1.5;color:#1f2937}code{background:#f3f4f6;padding:.1rem .25rem;border-radius:.25rem}h1,h2{color:#111827}</style>
+</head>
+<body>
+  <h1>Real Load Run Diagnostics Persistence - 2026-05-06</h1>
+  <h2>Summary</h2>
+  <p>Completed Real Backend Test metrics now retain runtime and DB diagnostics. This is measurement and attribution work, not a direct throughput optimization.</p>
+  <h2>Changed</h2>
+  <ul>
+    <li>Added shared <code>LoadTestDiagnosticsSampler</code>.</li>
+    <li>Persisted diagnostics on Real Backend metric points and exposed top-level metrics diagnostics.</li>
+    <li>Updated the dashboard to use persisted diagnostics when live samples are absent.</li>
+  </ul>
+  <h2>Validation</h2>
+  <ul>
+    <li>Backend solution tests passed: Contract 1 skipped, Component 122, Unit 56, Architecture 35, Integration 223.</li>
+    <li>Frontend unit, typecheck, lint, compose rebuild, health checks, and focused Playwright passed.</li>
+    <li>Runtime k6 smoke completed with diagnosticsSamples=1 and DB command samples=192.</li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Use these persisted diagnostics in the next spike comparison to decide whether the next structural fix should target DB/pool/query pressure, payload/serialization cost, or runtime allocation/concurrency pressure.</p>
+</body>
+</html>

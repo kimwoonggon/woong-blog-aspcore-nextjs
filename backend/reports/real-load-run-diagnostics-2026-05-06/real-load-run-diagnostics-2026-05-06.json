@@ -1,0 +1,55 @@
+{
+  "task": "real-load-run-diagnostics-persistence",
+  "date": "2026-05-06",
+  "goal": "Persist runtime and DB diagnostics in completed Real Backend Test metrics so future performance work can be attributed correctly.",
+  "changed": [
+    "Added LoadTestDiagnosticsSampler shared diagnostics capture service",
+    "Refactored LoadTestDiagnosticsEndpoint to use the shared sampler",
+    "Added diagnostics to RealLoadTestMetricPoint and RealLoadTestMetricsResponse",
+    "Persisted diagnostics from fake and k6 Real Backend runners",
+    "Updated dashboard snapshot parsing to expose persisted diagnostics",
+    "Updated dashboard to use persisted diagnostics when live samples are absent",
+    "Added backend and frontend tests for persisted diagnostics"
+  ],
+  "intentionallyNotChanged": [
+    "No cache",
+    "No seeded target priority",
+    "No pageSize=1 shortcut",
+    "No public API query or DTO behavior change",
+    "No claim that this directly improves p95 or throughput"
+  ],
+  "validations": [
+    { "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~StartupCompositionTests.RealLoadTestControlPlane_StartStatusMetricsAndStop_HappyPath_WhenRealRunnerDisabled_ForcesFakeRunner --no-restore", "result": "passed 1/1" },
+    { "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter diagnostics/health focused filter --no-restore", "result": "passed 2/2" },
+    { "command": "dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj --filter FullyQualifiedName~RealLoadTestRunnerComponentTests --no-restore", "result": "passed 1/1" },
+    { "command": "dotnet test backend/WoongBlog.sln --no-restore", "result": "passed: Contract 1 skipped, Component 122, Unit 56, Architecture 35, Integration 223" },
+    { "command": "npm test -- --run src/test/load-test-dashboard.test.ts", "result": "passed 28/28" },
+    { "command": "npm run typecheck", "result": "passed" },
+    { "command": "npm run lint", "result": "passed with 0 errors and 6 pre-existing warnings" },
+    { "command": "BACKEND_PUBLISH_PORT=18080 ./scripts/dev-up.sh", "result": "passed" },
+    { "command": "curl -fsS http://127.0.0.1:3000/api/health and :18080/api/health", "result": "passed" },
+    { "command": "focused Playwright admin-load-test-dashboard against compose", "result": "passed 2/2" },
+    { "command": "runtime Real Backend k6 smoke 5rps 5s maxVUs 20", "result": "completed with diagnosticsSamples=1 and metricPointsWithDiagnostics=1" }
+  ],
+  "runtimeSmoke": {
+    "runId": "20260506-100717-public-api-rps-5c1318b5",
+    "status": "completed",
+    "requests": 26,
+    "p95Ms": 8.4,
+    "diagnosticsSamples": 1,
+    "metricPointsWithDiagnostics": 1,
+    "dbStatus": "available",
+    "dbCommandSamples": 192
+  },
+  "expectedBackendTestImpact": [
+    "Completed Real Backend Test can retain DB command/open latency samples",
+    "Dashboard can distinguish DB pressure from app/runtime pressure after a run completes",
+    "Future p95/throughput optimizations can be compared against DB, app, ThreadPool, and GC movement"
+  ],
+  "risks": [
+    "k6 currently persists a completion snapshot rather than a high-resolution timeline",
+    "DB command sample count depends on diagnostics interceptor registration",
+    "This is attribution work and does not directly improve request throughput"
+  ],
+  "recommendation": "Use persisted diagnostics in the next spike comparison, then choose DB/pool/query, payload/serialization, or runtime allocation work based on which metric is actually red."
+}
