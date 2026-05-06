@@ -1,0 +1,79 @@
+{
+  "task": "backend-performance-opportunity-scan-2026-05-06",
+  "mode": "audit-only",
+  "productionCodeChanged": false,
+  "testCodeChanged": false,
+  "scope": [
+    "public work/blog list and detail query stores",
+    "public home/site settings query stores",
+    "work/blog write models",
+    "work video mutations",
+    "real load diagnostics contracts"
+  ],
+  "priorities": [
+    {
+      "priority": "P0",
+      "area": "work thumbnail read model correctness",
+      "opportunity": "compute resolver-equivalent PublicThumbnailUrl at write/mutation/bootstrap time for supported fallback cases",
+      "backendTests": [
+        "create/update work without explicit thumbnail but with body image stores resolver-equivalent PublicThumbnailUrl",
+        "add/delete/reorder video updates PublicThumbnailUrl when no explicit thumbnail asset exists",
+        "public list/detail command counts remain optimized"
+      ],
+      "impact": "protects correctness while preserving optimized read path"
+    },
+    {
+      "priority": "P1",
+      "area": "real load diagnostics",
+      "opportunity": "include DB command p95/sample count in RealLoadTestLatencyBreakdown",
+      "backendTests": [
+        "metrics response exposes DB command p95 when diagnostics collector has samples"
+      ],
+      "impact": "improves attribution of future load-test results"
+    },
+    {
+      "priority": "P1",
+      "area": "public home endpoint",
+      "opportunity": "reduce sequential DB roundtrips, starting with site settings plus resume asset projection",
+      "backendTests": [
+        "public home command count drops by at least one command with resume asset present"
+      ],
+      "impact": "reduces DB roundtrips on public home"
+    },
+    {
+      "priority": "P2",
+      "area": "public work detail with videos",
+      "opportunity": "consider denormalized public video read model if video-heavy targets dominate",
+      "backendTests": [
+        "work detail with videos command count remains within 1-2 or drops to 1 if denormalized"
+      ],
+      "impact": "potentially improves video-heavy detail reads"
+    },
+    {
+      "priority": "P2",
+      "area": "page/admin content projections",
+      "opportunity": "avoid materializing and parsing full content JSON for list/summary DTOs",
+      "backendTests": [
+        "query shape or command-count contract for DTO-visible columns only"
+      ],
+      "impact": "reduces CPU/allocation outside current load-test hot path"
+    }
+  ],
+  "alreadyImproved": [
+    "public work first-page no-search list uses one Postgres command",
+    "public blog first-page no-search list uses one Postgres command",
+    "public blog detail uses one Postgres command and stored public body fields",
+    "public work detail without videos uses one Postgres command and does not reference WorkVideos",
+    "admin work list projects DTO-visible fields including PublicThumbnailUrl"
+  ],
+  "recommendedNext": [
+    "P0 work thumbnail read-model fallback equivalence",
+    "P1 real load DB command p95 metrics",
+    "P1 public home roundtrip reduction"
+  ],
+  "validations": [
+    "static code scan of query stores, write handlers, diagnostics, and existing tests",
+    "audit artifacts generated",
+    "no production or test source files changed"
+  ]
+}

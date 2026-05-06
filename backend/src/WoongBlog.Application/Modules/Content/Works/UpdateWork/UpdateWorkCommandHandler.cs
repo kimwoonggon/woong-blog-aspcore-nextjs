@@ -1,6 +1,7 @@
 using MediatR;
 using WoongBlog.Application.Modules.Content.Common.Support;
 using WoongBlog.Application.Modules.Content.Works.Abstractions;
+using WoongBlog.Application.Modules.Content.Works.Support;
 
 namespace WoongBlog.Application.Modules.Content.Works.UpdateWork;
 
@@ -26,6 +27,9 @@ public sealed class UpdateWorkCommandHandler : IRequestHandler<UpdateWorkCommand
         var assetPublicUrls = await _workCommandStore.GetAssetPublicUrlsAsync(
             GetPublicMediaAssetIds(request.ThumbnailAssetId, request.IconAssetId),
             cancellationToken);
+        var videos = WorkPublicThumbnailReadModel.ShouldLoadFallbackVideos(request.ThumbnailAssetId, assetPublicUrls)
+            ? await _workCommandStore.GetVideosForWorkAsync(work.Id, cancellationToken)
+            : [];
 
         work.Title = request.Title;
         work.Slug = await GenerateUniqueSlugAsync(request.Title, work.Id, cancellationToken);
@@ -37,7 +41,7 @@ public sealed class UpdateWorkCommandHandler : IRequestHandler<UpdateWorkCommand
         work.Tags = request.Tags;
         work.ContentJson = request.ContentJson;
         work.AllPropertiesJson = request.AllPropertiesJson;
-        work.PublicThumbnailUrl = ResolvePublicMediaUrl(request.ThumbnailAssetId, assetPublicUrls);
+        WorkPublicThumbnailReadModel.Refresh(work, videos, assetPublicUrls);
         work.PublicIconUrl = ResolvePublicMediaUrl(request.IconAssetId, assetPublicUrls);
         work.SearchTitle = ContentSearchText.Normalize(request.Title);
         work.SearchText = ContentSearchText.BuildIndex(excerpt, AdminContentJson.ExtractExcerptText(request.ContentJson));

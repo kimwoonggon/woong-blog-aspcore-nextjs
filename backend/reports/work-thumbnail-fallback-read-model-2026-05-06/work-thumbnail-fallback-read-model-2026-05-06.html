@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Work Thumbnail Fallback Read Model Audit</title>
+  <style>
+    body { font-family: Georgia, 'Times New Roman', serif; margin: 2rem; line-height: 1.5; color: #1f2933; }
+    h1, h2 { font-family: Verdana, sans-serif; }
+    code { background: #eef2f7; padding: 0.1rem 0.25rem; border-radius: 0.2rem; }
+    .pass { color: #0f766e; font-weight: 700; }
+    .warn { color: #b45309; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <h1>Work Thumbnail Fallback Read Model Audit</h1>
+  <p><strong>Date:</strong> 2026-05-06</p>
+  <p><strong>Goal:</strong> preserve old Work thumbnail fallback semantics with write-time <code>PublicThumbnailUrl</code> computation while keeping public read paths fast.</p>
+  <h2>Changed</h2>
+  <ul>
+    <li>Added a shared write-side read-model refresher.</li>
+    <li>Refreshed Work thumbnails on create, update, video mutations, and legacy bootstrap backfill.</li>
+    <li>Added tests for body-image, YouTube, unresolved asset, delete/reorder, and bootstrap fallback equivalence.</li>
+  </ul>
+  <h2>Validation</h2>
+  <ul>
+    <li class="pass">PASS: focused integration 61/61.</li>
+    <li class="pass">PASS: focused component 65/65.</li>
+    <li class="pass">PASS: backend solution, including integration 222/222 and contract 1 skipped.</li>
+    <li class="pass">PASS: git diff whitespace and no target/cache workaround guard.</li>
+    <li class="warn">NOT RUN: local compose load smoke; no running services were present.</li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Push PR to <code>dev</code>, verify CI, deploy/promote, then rerun realistic Real Backend Test with <code>pageSize=12</code> and current public read targets.</p>
+</body>
+</html>

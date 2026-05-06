@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Net.Http.Headers;
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using WoongBlog.Api.Domain.Entities;
 using WoongBlog.Application.Modules.Content.Works.Support;
@@ -639,6 +640,49 @@ public class AdminContentEndpointsTests : IClassFixture<CustomWebApplicationFact
     }
 
     [Fact]
+    public async Task CreateWork_StoresBodyImageThumbnailFallback_ForPublicReadModel()
+    {
+        var client = _factory.CreateAuthenticatedClient();
+        var bodyImageUrl = $"/media/work-body-fallback-{Guid.NewGuid():N}.png";
+        var contentJson = JsonSerializer.Serialize(new
+        {
+            html = $"<p>Body before image</p><img src=\"{bodyImageUrl}\" alt=\"fallback\">"
+        });
+
+        var createResponse = await client.PostAsJsonAsync("/api/admin/works", new
+        {
+            title = $"Body Fallback Work {Guid.NewGuid():N}",
+            category = "platform",
+            period = "2026.05",
+            tags = new[] { "qa", "thumbnail" },
+            published = true,
+            contentJson,
+            allPropertiesJson = "{}"
+        });
+
+        createResponse.EnsureSuccessStatusCode();
+        var created = await createResponse.Content.ReadFromJsonAsync<CreatedResource>();
+        Assert.NotNull(created);
+
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
+        var work = await dbContext.Works.SingleAsync(x => x.Id == created!.Id);
+        var resolverThumbnailUrl = WorkThumbnailUrlResolver.ResolveThumbnailUrl(
+            work.ThumbnailAssetId,
+            work.ContentJson,
+            Array.Empty<WorkVideo>(),
+            new Dictionary<Guid, string>());
+
+        Assert.Equal(bodyImageUrl, resolverThumbnailUrl);
+        Assert.Equal(resolverThumbnailUrl, work.PublicThumbnailUrl);
+
+        var publicResponse = await client.GetAsync($"/api/public/works/{created!.Slug}");
+        publicResponse.EnsureSuccessStatusCode();
+        using var publicDocument = JsonDocument.Parse(await publicResponse.Content.ReadAsStringAsync());
+        Assert.Equal(resolverThumbnailUrl, publicDocument.RootElement.GetProperty("thumbnailUrl").GetString());
+    }
+
+    [Fact]
     public async Task UpdateWork_ReturnsNotFound_WhenWorkMissing()
     {
         var client = _factory.CreateAuthenticatedClient();
@@ -655,6 +699,123 @@ public class AdminContentEndpointsTests : IClassFixture<CustomWebApplicationFact
         });
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task UpdateWork_RecomputesBodyImageThumbnailFallback_ForPublicReadModel()
+    {
+        var client = _factory.CreateAuthenticatedClient();
+        var initialImageUrl = $"/media/work-initial-fallback-{Guid.NewGuid():N}.png";
+        var updatedImageUrl = $"/media/work-updated-fallback-{Guid.NewGuid():N}.png";
+
+        var createResponse = await client.PostAsJsonAsync("/api/admin/works", new
+        {
+            title = $"Update Body Fallback Work {Guid.NewGuid():N}",
+            category = "platform",
+            period = "2026.05",
+            tags = new[] { "qa", "thumbnail" },
+            published = true,
+            contentJson = JsonSerializer.Serialize(new { html = $"<img src=\"{initialImageUrl}\" alt=\"initial\">" }),
+            allPropertiesJson = "{}"
+        });
+        createResponse.EnsureSuccessStatusCode();
+        var created = await createResponse.Content.ReadFromJsonAsync<CreatedResource>();
+        Assert.NotNull(created);
+
+        var updateResponse = await client.PutAsJsonAsync($"/api/admin/works/{created!.Id}", new
+        {
+            title = $"Updated Body Fallback Work {Guid.NewGuid():N}",
+            category = "platform",
+            period = "2026.05",
+            tags = new[] { "qa", "thumbnail" },
+            published = true,
+            contentJson = JsonSerializer.Serialize(new { html = $"<p>Updated</p><img src=\"{updatedImageUrl}\" alt=\"updated\">" }),
+            allPropertiesJson = "{}"
+        });
+        updateResponse.EnsureSuccessStatusCode();
+        var updated = await updateResponse.Content.ReadFromJsonAsync<CreatedResource>();
+        Assert.NotNull(updated);
+
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
+        var work = await dbContext.Works.SingleAsync(x => x.Id == created.Id);
+        var resolverThumbnailUrl = WorkThumbnailUrlResolver.ResolveThumbnailUrl(
+            work.ThumbnailAssetId,
+            work.ContentJson,
+            Array.Empty<WorkVideo>(),
+            new Dictionary<Guid, string>());
+
+        Assert.Equal(updatedImageUrl, resolverThumbnailUrl);
+        Assert.Equal(resolverThumbnailUrl, work.PublicThumbnailUrl);
+
+        var publicResponse = await client.GetAsync($"/api/public/works/{updated!.Slug}");
+        publicResponse.EnsureSuccessStatusCode();
+        using var publicDocument = JsonDocument.Parse(await publicResponse.Content.ReadAsStringAsync());
+        Assert.Equal(resolverThumbnailUrl, publicDocument.RootElement.GetProperty("thumbnailUrl").GetString());
+    }
+
+    [Fact]
+    public async Task UpdateWork_FallsBackToExistingVideo_WhenThumbnailAssetDoesNotResolve()
+    {
+        var client = _factory.CreateAuthenticatedClient();
+        var bodyImageUrl = $"/media/work-update-missing-asset-fallback-{Guid.NewGuid():N}.png";
+        var createResponse = await client.PostAsJsonAsync("/api/admin/works", new
+        {
+            title = $"Missing Asset Fallback Work {Guid.NewGuid():N}",
+            category = "platform",
+            period = "2026.05",
+            tags = new[] { "qa", "thumbnail" },
+            published = true,
+            contentJson = JsonSerializer.Serialize(new { html = $"<p>Body</p><img src=\"{bodyImageUrl}\" alt=\"fallback\">" }),
+            allPropertiesJson = "{}"
+        });
+        createResponse.EnsureSuccessStatusCode();
+        var created = await createResponse.Content.ReadFromJsonAsync<CreatedResource>();
+        Assert.NotNull(created);
+
+        var addVideoResponse = await client.PostAsJsonAsync($"/api/admin/works/{created!.Id}/videos/youtube", new
+        {
+            youtubeUrlOrId = "dQw4w9WgXcQ",
+            expectedVideosVersion = 0
+        });
+        addVideoResponse.EnsureSuccessStatusCode();
+
+        var updateResponse = await client.PutAsJsonAsync($"/api/admin/works/{created.Id}", new
+        {
+            title = $"Updated Missing Asset Fallback Work {Guid.NewGuid():N}",
+            category = "platform",
+            period = "2026.05",
+            tags = new[] { "qa", "thumbnail" },
+            published = true,
+            contentJson = JsonSerializer.Serialize(new { html = $"<p>Updated</p><img src=\"{bodyImageUrl}\" alt=\"fallback\">" }),
+            allPropertiesJson = "{}",
+            thumbnailAssetId = Guid.NewGuid()
+        });
+        updateResponse.EnsureSuccessStatusCode();
+        var updated = await updateResponse.Content.ReadFromJsonAsync<CreatedResource>();
+        Assert.NotNull(updated);
+
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
+        var work = await dbContext.Works.SingleAsync(x => x.Id == created.Id);
+        var videos = await dbContext.WorkVideos
+            .Where(x => x.WorkId == created.Id)
+            .OrderBy(x => x.SortOrder)
+            .ThenBy(x => x.CreatedAt)
+            .ToListAsync();
+        var resolverThumbnailUrl = WorkThumbnailUrlResolver.ResolveThumbnailUrl(
+            work.ThumbnailAssetId,
+            work.ContentJson,
+            videos,
+            new Dictionary<Guid, string>());
+
+        Assert.Equal("https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg", resolverThumbnailUrl);
+        Assert.Equal(resolverThumbnailUrl, work.PublicThumbnailUrl);
+
+        var publicResponse = await client.GetAsync($"/api/public/works/{updated!.Slug}");
+        publicResponse.EnsureSuccessStatusCode();
+        using var publicDocument = JsonDocument.Parse(await publicResponse.Content.ReadAsStringAsync());
+        Assert.Equal(resolverThumbnailUrl, publicDocument.RootElement.GetProperty("thumbnailUrl").GetString());
     }
 
     [Fact]

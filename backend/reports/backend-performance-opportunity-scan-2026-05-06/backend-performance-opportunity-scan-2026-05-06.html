@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <title>Backend Performance Opportunity Scan - 2026-05-06</title>
+  <style>
+    body { font-family: sans-serif; max-width: 960px; margin: 32px auto; line-height: 1.55; color: #18212f; }
+    h1, h2 { color: #0f172a; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #cbd5e1; padding: 8px; vertical-align: top; }
+    th { background: #e2e8f0; }
+    code { background: #f1f5f9; padding: 1px 4px; }
+  </style>
+</head>
+<body>
+  <h1>Backend Performance Opportunity Scan - 2026-05-06</h1>
+  <p>Audit-only scan. No production or test source files were changed.</p>
+  <h2>Recommended Order</h2>
+  <ol>
+    <li>P0 Work thumbnail read-model fallback equivalence.</li>
+    <li>P1 Real load DB command p95 metrics.</li>
+    <li>P1 Public home roundtrip reduction.</li>
+  </ol>
+  <h2>Priority Map</h2>
+  <table>
+    <thead><tr><th>Priority</th><th>Area</th><th>Backend test signal</th><th>Impact</th></tr></thead>
+    <tbody>
+      <tr><td>P0</td><td>Work thumbnail read model</td><td>Stored <code>PublicThumbnailUrl</code> equals resolver output; public reads stay one command.</td><td>Preserves correctness without restoring hot-path resolver work.</td></tr>
+      <tr><td>P1</td><td>Real load diagnostics</td><td>Metrics response exposes DB command p95/sample count.</td><td>Makes future performance changes attributable.</td></tr>
+      <tr><td>P1</td><td>Public home endpoint</td><td>Postgres command count drops by at least one with resume asset present.</td><td>Reduces public home DB roundtrips.</td></tr>
+      <tr><td>P2</td><td>Work detail with videos</td><td>1-2 command contract, or 1 command if denormalized.</td><td>Only useful if video-heavy Work detail targets dominate.</td></tr>
+      <tr><td>P2</td><td>Page/admin projections</td><td>DTO-visible columns only.</td><td>Allocation/CPU reduction outside current load target.</td></tr>
+    </tbody>
+  </table>
+  <p>See the Markdown report for full details.</p>
+</body>
+</html>
