@@ -5,11 +5,13 @@ using Microsoft.Extensions.Options;
 using Npgsql;
 using Testcontainers.PostgreSql;
 using WoongBlog.Api.Domain.Entities;
+using WoongBlog.Application.Modules.Composition.GetHome;
 using WoongBlog.Application.Modules.Content.Common.Support;
 using WoongBlog.Application.Modules.Content.Works.Support;
 using WoongBlog.Application.Modules.Content.Works.WorkVideos;
 using WoongBlog.Infrastructure.Persistence;
 using WoongBlog.Infrastructure.Persistence.Diagnostics;
+using WoongBlog.Infrastructure.Modules.Composition.Persistence;
 using WoongBlog.Infrastructure.Modules.Content.Blogs.Persistence;
 using WoongBlog.Infrastructure.Modules.Content.Works.Persistence;
 
@@ -664,6 +666,69 @@ public sealed class PostgresPersistenceContractTests : IClassFixture<PostgresPer
         Assert.Equal(1, result.TotalPages);
         Assert.Equal(3, result.Items.Count);
         Assert.Equal(1, snapshot.CommandLatency.SampleCount);
+    }
+
+    [Fact]
+    public async Task PublicHome_UsesThreePostgresCommands_ForShellAndSummaryProjections()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var now = DateTimeOffset.UtcNow;
+        var resumeAssetId = Guid.NewGuid();
+
+        await using (var setupContext = CreateDbContext())
+        {
+            await ResetDatabaseAsync(setupContext, cancellationToken);
+            await setupContext.Database.EnsureCreatedAsync(cancellationToken);
+
+            setupContext.Assets.Add(new Asset
+            {
+                Id = resumeAssetId,
+                Bucket = "media",
+                Path = "resume/home-shell.pdf",
+                PublicUrl = "/media/resume/home-shell.pdf",
+                MimeType = "application/pdf",
+                Kind = "resume",
+                CreatedAt = now
+            });
+            setupContext.Pages.Add(new PageEntity
+            {
+                Id = Guid.NewGuid(),
+                Slug = "home",
+                Title = "Home Shell",
+                ContentJson = """{"headline":"Public home shell"}"""
+            });
+            setupContext.SiteSettings.Add(new SiteSetting
+            {
+                Singleton = true,
+                OwnerName = "Home Owner",
+                Tagline = "Home Tagline",
+                GitHubUrl = "https://github.example/home",
+                LinkedInUrl = "https://linkedin.example/home",
+                ResumeAssetId = resumeAssetId
+            });
+            setupContext.Works.AddRange(
+                CreatePublishedWork("public-home-work-1", "Public Home Work 1", publishedAtOffsetMinutes: -1),
+                CreatePublishedWork("public-home-work-2", "Public Home Work 2", publishedAtOffsetMinutes: -2));
+            setupContext.Blogs.AddRange(
+                CreatePublishedBlog("public-home-blog-1", "Public Home Blog 1", publishedAtOffsetMinutes: -1),
+                CreatePublishedBlog("public-home-blog-2", "Public Home Blog 2", publishedAtOffsetMinutes: -2));
+            await setupContext.SaveChangesAsync(cancellationToken);
+        }
+
+        var collector = CreateDiagnosticsCollector();
+        await using var dbContext = _fixture.CreateDbContext(new LoadTestDbCommandDiagnosticsInterceptor(collector));
+        var queryStore = new HomeQueryStore(dbContext);
+        var handler = new GetHomeQueryHandler(queryStore);
+
+        var result = await handler.Handle(new GetHomeQuery(), cancellationToken);
+        var snapshot = collector.CaptureSnapshot();
+
+        Assert.NotNull(result);
+        Assert.Equal("Home Shell", result!.HomePage.Title);
+        Assert.Equal("/media/resume/home-shell.pdf", result.SiteSettings.ResumePublicUrl);
+        Assert.Equal(2, result.FeaturedWorks.Count);
+        Assert.Equal(2, result.RecentPosts.Count);
+        Assert.Equal(3, snapshot.CommandLatency.SampleCount);
     }
 
     [Fact]

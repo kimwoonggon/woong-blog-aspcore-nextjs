@@ -14,10 +14,8 @@ public class GetHomeQueryHandler : IRequestHandler<GetHomeQuery, HomeDto?>
 
     public async Task<HomeDto?> Handle(GetHomeQuery request, CancellationToken cancellationToken)
     {
-        var homePage = await _homeQueryStore.GetHomePageAsync(cancellationToken);
-        var siteSettings = await _homeQueryStore.GetSiteSettingsSummaryAsync(cancellationToken);
-
-        if (homePage is null || siteSettings is null)
+        var shell = await _homeQueryStore.GetHomeShellAsync(cancellationToken);
+        if (shell is null)
         {
             return null;
         }
@@ -25,6 +23,6 @@ public class GetHomeQueryHandler : IRequestHandler<GetHomeQuery, HomeDto?>
         var featuredWorks = await _homeQueryStore.GetFeaturedWorksAsync(cancellationToken);
         var recentPosts = await _homeQueryStore.GetRecentPostsAsync(cancellationToken);
 
-        return new HomeDto(homePage, siteSettings, featuredWorks, recentPosts);
+        return new HomeDto(shell.HomePage, shell.SiteSettings, featuredWorks, recentPosts);
     }
 }

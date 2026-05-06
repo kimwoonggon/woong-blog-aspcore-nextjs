@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Public Home Shell Query Audit - 2026-05-06</title>
+  <style>
+    body { font-family: sans-serif; line-height: 1.5; max-width: 920px; margin: 2rem auto; padding: 0 1rem; }
+    code { background: #f4f4f4; padding: 0.1rem 0.25rem; }
+    li { margin: 0.25rem 0; }
+  </style>
+</head>
+<body>
+  <h1>Public Home Shell Query Audit - 2026-05-06</h1>
+  <p>Reduced public Home DB commands from 5 to 3 by combining home page, site settings, and optional resume asset URL into one shell projection.</p>
+  <h2>Changed</h2>
+  <ul>
+    <li>Added <code>HomeShellDto</code> and <code>IHomeQueryStore.GetHomeShellAsync</code>.</li>
+    <li>Changed <code>GetHomeQueryHandler</code> to use the shell projection.</li>
+    <li>Added a Postgres command-count contract test and k6 smoke artifact.</li>
+  </ul>
+  <h2>Validation</h2>
+  <ul>
+    <li>RED: expected 3 commands, actual 5 before implementation.</li>
+    <li>GREEN: focused test passed after implementation.</li>
+    <li>Backend solution passed: Component 122, Unit 56, Architecture 35, Integration 223, Contract 1 skipped.</li>
+    <li>k6 Home smoke: 1,500 requests, failed rate 0, p95 25.44 ms.</li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Promote through dev CI and continue with persistent Real Backend diagnostics or measured heavy-detail serialization profiling.</p>
+</body>
+</html>
