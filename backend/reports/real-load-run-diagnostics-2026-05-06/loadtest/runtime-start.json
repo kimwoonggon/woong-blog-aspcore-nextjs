@@ -1,0 +1,1 @@
+{"runId":"20260506-100717-public-api-rps-5c1318b5","status":"running","runner":"k6","scenario":"public-api-rps","targets":[{"id":"works-list","label":"Work list","path":"/api/public/works?page=1&pageSize=12","group":"work"},{"id":"study-list","label":"Study list","path":"/api/public/blogs?page=1&pageSize=12","group":"study"}],"startedAtUtc":"2026-05-06T10:07:17.2898291+00:00"}

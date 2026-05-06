@@ -62,7 +62,8 @@ public sealed record RealLoadTestMetricsResponse(
     IReadOnlyDictionary<string, long> StatusCounts,
     RealLoadTestLatencyBreakdown LatencyBreakdown,
     IReadOnlyList<RealLoadTestTargetMetrics> TargetMetrics,
-    IReadOnlyList<RealLoadTestMetricPoint> Metrics);
+    IReadOnlyList<RealLoadTestMetricPoint> Metrics,
+    IReadOnlyList<LoadTestDiagnosticsSnapshot> Diagnostics);
 
 public sealed record RealLoadTestMetricPoint(
     DateTimeOffset TimestampUtc,
@@ -76,7 +77,8 @@ public sealed record RealLoadTestMetricPoint(
     double MaxMs,
     IReadOnlyDictionary<string, long> StatusCounts,
     RealLoadTestLatencyBreakdown LatencyBreakdown,
-    IReadOnlyList<RealLoadTestTargetMetrics> TargetMetrics);
+    IReadOnlyList<RealLoadTestTargetMetrics> TargetMetrics,
+    LoadTestDiagnosticsSnapshot? Diagnostics = null);
 
 public sealed record RealLoadTestStopResponse(
     string RunId,

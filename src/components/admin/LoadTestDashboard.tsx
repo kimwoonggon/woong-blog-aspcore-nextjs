@@ -341,9 +341,11 @@ export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashbo
     [safeConfig.pattern, runnableTargets.length, userSteps.length],
   )
   const latestResult = results.at(-1)
-  const latestDiagnosticsSample = diagnosticsSamples.at(-1)
+  const realBackendDiagnosticsSamples = realBackendSnapshot?.diagnostics ?? []
+  const effectiveDiagnosticsSamples = diagnosticsSamples.length ? diagnosticsSamples : realBackendDiagnosticsSamples
+  const latestDiagnosticsSample = effectiveDiagnosticsSamples.at(-1)
   const latestHttpHealth = latestResult ? evaluateHttpScenarioHealth(latestResult) : { status: 'unavailable' as const, reason: 'No HTTP result yet.' }
-  const diagnosticsSummary = useMemo(() => buildDiagnosticsSnapshotSummary(diagnosticsSamples), [diagnosticsSamples])
+  const diagnosticsSummary = useMemo(() => buildDiagnosticsSnapshotSummary(effectiveDiagnosticsSamples), [effectiveDiagnosticsSamples])
   const runtimeHealth = useMemo(() => evaluateRuntimeDiagnosticsHealth(diagnosticsSummary), [diagnosticsSummary])
   const runtimeMetricRows: RuntimeMetricRow[] = useMemo(() => [
     { label: 'Memory', trend: diagnosticsSummary.memoryBytes, metric: 'bytes' },
