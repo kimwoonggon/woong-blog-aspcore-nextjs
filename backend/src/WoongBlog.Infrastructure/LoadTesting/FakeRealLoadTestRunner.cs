@@ -102,6 +102,10 @@ public sealed class FakeRealLoadTestRunner(
         var p95Ms = 120 + (tick % 11) * 3;
         var p99Ms = p95Ms + 35 + (tick % 5);
         var maxMs = p99Ms + 40 + (tick % 9);
+        var responseBytesP95 = target.Group.Equals("work", StringComparison.OrdinalIgnoreCase)
+            ? 96 * 1024 + tick * 128
+            : 48 * 1024 + tick * 96;
+        var receiveP95Ms = Math.Round(Math.Max(1, p95Ms * 0.06), 1);
 
         run.TotalRequests += requestsForTick;
         run.FailedRequests += simulatedFailures;
@@ -125,7 +129,7 @@ public sealed class FakeRealLoadTestRunner(
             p95Ms + 6,
             Math.Max(1, p95Ms - 8),
             "fake.nginx_upstream");
-        ApplyTargetMetrics(run, target, requestsForTick, successfulRequests, simulatedFailures, p95Ms);
+        ApplyTargetMetrics(run, target, requestsForTick, successfulRequests, simulatedFailures, p95Ms, responseBytesP95, receiveP95Ms);
     }
 
     private static void ApplyTargetMetrics(
@@ -134,7 +138,9 @@ public sealed class FakeRealLoadTestRunner(
         int requestCount,
         int successCount,
         int failureCount,
-        double p95Ms)
+        double p95Ms,
+        double responseBytesP95,
+        double receiveP95Ms)
     {
         run.TargetMetrics.TryGetValue(target.Id, out var existing);
         var statusCounts = existing is null
@@ -148,6 +154,12 @@ public sealed class FakeRealLoadTestRunner(
         var nextFailureCount = (existing?.FailureCount ?? 0) + failureCount;
         var nextSuccessCount = (existing?.SuccessCount ?? 0) + successCount;
         var nextP95 = existing is null ? p95Ms : Math.Max(existing.P95Ms, p95Ms);
+        var nextResponseBytesP95 = existing?.ResponseBytesP95 is null
+            ? responseBytesP95
+            : Math.Max(existing.ResponseBytesP95.Value, responseBytesP95);
+        var nextReceiveP95 = existing?.ReceiveP95Ms is null
+            ? receiveP95Ms
+            : Math.Max(existing.ReceiveP95Ms.Value, receiveP95Ms);
 
         run.TargetMetrics[target.Id] = new RealLoadTestTargetMetrics(
             target.Id,
@@ -158,6 +170,8 @@ public sealed class FakeRealLoadTestRunner(
             nextSuccessCount,
             nextFailureCount,
             nextP95,
+            nextResponseBytesP95,
+            nextReceiveP95,
             statusCounts);
     }
 

@@ -1,0 +1,308 @@
+{
+  "runId": "20260506-123052-public-api-rps-7e5cdcea",
+  "status": "completed",
+  "totalRequests": 26,
+  "failedRequests": 0,
+  "currentRps": 5.2,
+  "averageRps": 5.2,
+  "p95Ms": 19.2,
+  "p99Ms": 56.1,
+  "maxMs": 67,
+  "statusCounts": {
+    "429": 0,
+    "503": 0,
+    "2xx": 26,
+    "3xx": 0,
+    "4xx": 0,
+    "5xx": 0,
+    "timeout": 0
+  },
+  "latencyBreakdown": {
+    "minMs": 2.7,
+    "p50Ms": 4.4,
+    "p95Ms": 19.2,
+    "p99Ms": 56.1,
+    "maxMs": 67,
+    "appElapsedP95Ms": 47,
+    "nginxRequestTimeP95Ms": 47.8,
+    "nginxUpstreamP95Ms": 48.1,
+    "nginxUpstreamP95Source": "runner.http_waiting_fallback"
+  },
+  "targetMetrics": [
+    {
+      "targetId": "works-list",
+      "targetLabel": "Work list",
+      "targetPath": "/api/public/works?page=1&pageSize=12",
+      "group": "work",
+      "requestCount": 7,
+      "successCount": 7,
+      "failureCount": 0,
+      "p95Ms": 5.3,
+      "responseBytesP95": 4422,
+      "receiveP95Ms": 0.2,
+      "statusCounts": {
+        "2xx": 7,
+        "3xx": 0,
+        "4xx": 0,
+        "5xx": 0
+      }
+    },
+    {
+      "targetId": "work-read",
+      "targetLabel": "Work read",
+      "targetPath": "/api/public/works/real-load-work-fixture-pw-w0-r0-motw6so0-y37u5m",
+      "group": "work",
+      "requestCount": 6,
+      "successCount": 6,
+      "failureCount": 0,
+      "p95Ms": 18.7,
+      "responseBytesP95": 516,
+      "receiveP95Ms": 0.1,
+      "statusCounts": {
+        "2xx": 6,
+        "3xx": 0,
+        "4xx": 0,
+        "5xx": 0
+      }
+    },
+    {
+      "targetId": "study-list",
+      "targetLabel": "Study list",
+      "targetPath": "/api/public/blogs?page=1&pageSize=12",
+      "group": "study",
+      "requestCount": 6,
+      "successCount": 6,
+      "failureCount": 0,
+      "p95Ms": 6.7,
+      "responseBytesP95": 3869,
+      "receiveP95Ms": 0.1,
+      "statusCounts": {
+        "2xx": 6,
+        "3xx": 0,
+        "4xx": 0,
+        "5xx": 0
+      }
+    },
+    {
+      "targetId": "study-read",
+      "targetLabel": "Study read",
+      "targetPath": "/api/public/blogs/real-load-study-fixture-pw-w0-r0-motw6sp7-r6azwf",
+      "group": "study",
+      "requestCount": 7,
+      "successCount": 7,
+      "failureCount": 0,
+      "p95Ms": 48.2,
+      "responseBytesP95": 423,
+      "receiveP95Ms": 0.1,
+      "statusCounts": {
+        "2xx": 7,
+        "3xx": 0,
+        "4xx": 0,
+        "5xx": 0
+      }
+    }
+  ],
+  "metrics": [
+    {
+      "timestampUtc": "2026-05-06T12:30:57.8495059+00:00",
+      "elapsedSeconds": 5.291152,
+      "totalRequests": 26,
+      "failedRequests": 0,
+      "currentRps": 5.2,
+      "averageRps": 5.2,
+      "p95Ms": 19.2,
+      "p99Ms": 56.1,
+      "maxMs": 67,
+      "statusCounts": {
+        "429": 0,
+        "503": 0,
+        "2xx": 26,
+        "3xx": 0,
+        "4xx": 0,
+        "5xx": 0,
+        "timeout": 0
+      },
+      "latencyBreakdown": {
+        "minMs": 2.7,
+        "p50Ms": 4.4,
+        "p95Ms": 19.2,
+        "p99Ms": 56.1,
+        "maxMs": 67,
+        "appElapsedP95Ms": 47,
+        "nginxRequestTimeP95Ms": 47.8,
+        "nginxUpstreamP95Ms": 48.1,
+        "nginxUpstreamP95Source": "runner.http_waiting_fallback"
+      },
+      "targetMetrics": [
+        {
+          "targetId": "works-list",
+          "targetLabel": "Work list",
+          "targetPath": "/api/public/works?page=1&pageSize=12",
+          "group": "work",
+          "requestCount": 7,
+          "successCount": 7,
+          "failureCount": 0,
+          "p95Ms": 5.3,
+          "responseBytesP95": 4422,
+          "receiveP95Ms": 0.2,
+          "statusCounts": {
+            "2xx": 7,
+            "3xx": 0,
+            "4xx": 0,
+            "5xx": 0
+          }
+        },
+        {
+          "targetId": "work-read",
+          "targetLabel": "Work read",
+          "targetPath": "/api/public/works/real-load-work-fixture-pw-w0-r0-motw6so0-y37u5m",
+          "group": "work",
+          "requestCount": 6,
+          "successCount": 6,
+          "failureCount": 0,
+          "p95Ms": 18.7,
+          "responseBytesP95": 516,
+          "receiveP95Ms": 0.1,
+          "statusCounts": {
+            "2xx": 6,
+            "3xx": 0,
+            "4xx": 0,
+            "5xx": 0
+          }
+        },
+        {
+          "targetId": "study-list",
+          "targetLabel": "Study list",
+          "targetPath": "/api/public/blogs?page=1&pageSize=12",
+          "group": "study",
+          "requestCount": 6,
+          "successCount": 6,
+          "failureCount": 0,
+          "p95Ms": 6.7,
+          "responseBytesP95": 3869,
+          "receiveP95Ms": 0.1,
+          "statusCounts": {
+            "2xx": 6,
+            "3xx": 0,
+            "4xx": 0,
+            "5xx": 0
+          }
+        },
+        {
+          "targetId": "study-read",
+          "targetLabel": "Study read",
+          "targetPath": "/api/public/blogs/real-load-study-fixture-pw-w0-r0-motw6sp7-r6azwf",
+          "group": "study",
+          "requestCount": 7,
+          "successCount": 7,
+          "failureCount": 0,
+          "p95Ms": 48.2,
+          "responseBytesP95": 423,
+          "receiveP95Ms": 0.1,
+          "statusCounts": {
+            "2xx": 7,
+            "3xx": 0,
+            "4xx": 0,
+            "5xx": 0
+          }
+        }
+      ],
+      "diagnostics": {
+        "timestamp": "2026-05-06T12:30:57.8466632+00:00",
+        "process": {
+          "memoryBytes": 190554112,
+          "processorCount": 8
+        },
+        "gc": {
+          "heapSizeBytes": 7113528,
+          "gen0Collections": 4,
+          "gen1Collections": 1,
+          "gen2Collections": 0,
+          "timeInGcPercent": 0.97
+        },
+        "threadPool": {
+          "workerThreads": 8,
+          "pendingWorkItemCount": 0,
+          "completedWorkItemCount": 827,
+          "availableWorkerThreads": 32765,
+          "maxWorkerThreads": 32767
+        },
+        "database": {
+          "status": "available",
+          "latencyMs": 1.1,
+          "openConnections": 3,
+          "activeConnections": 1,
+          "idleConnections": 2,
+          "idleInTransactionConnections": 0,
+          "commandLatency": {
+            "sampleCount": 123,
+            "p50Ms": 0.6,
+            "p95Ms": 4.3,
+            "p99Ms": 23.3
+          },
+          "connectionOpenLatency": {
+            "sampleCount": 123,
+            "p50Ms": 0,
+            "p95Ms": 0,
+            "p99Ms": 6.9
+          },
+          "slowQueryCount": 0,
+          "recentSlowQueries": [],
+          "timeoutCount": 0,
+          "errorCount": 0,
+          "error": null,
+          "errorCategory": null
+        }
+      }
+    }
+  ],
+  "diagnostics": [
+    {
+      "timestamp": "2026-05-06T12:30:57.8466632+00:00",
+      "process": {
+        "memoryBytes": 190554112,
+        "processorCount": 8
+      },
+      "gc": {
+        "heapSizeBytes": 7113528,
+        "gen0Collections": 4,
+        "gen1Collections": 1,
+        "gen2Collections": 0,
+        "timeInGcPercent": 0.97
+      },
+      "threadPool": {
+        "workerThreads": 8,
+        "pendingWorkItemCount": 0,
+        "completedWorkItemCount": 827,
+        "availableWorkerThreads": 32765,
+        "maxWorkerThreads": 32767
+      },
+      "database": {
+        "status": "available",
+        "latencyMs": 1.1,
+        "openConnections": 3,
+        "activeConnections": 1,
+        "idleConnections": 2,
+        "idleInTransactionConnections": 0,
+        "commandLatency": {
+          "sampleCount": 123,
+          "p50Ms": 0.6,
+          "p95Ms": 4.3,
+          "p99Ms": 23.3
+        },
+        "connectionOpenLatency": {
+          "sampleCount": 123,
+          "p50Ms": 0,
+          "p95Ms": 0,
+          "p99Ms": 6.9
+        },
+        "slowQueryCount": 0,
+        "recentSlowQueries": [],
+        "timeoutCount": 0,
+        "errorCount": 0,
+        "error": null,
+        "errorCategory": null
+      }
+    }
+  ]
+}

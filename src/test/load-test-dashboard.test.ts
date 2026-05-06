@@ -689,6 +689,8 @@ describe('load test dashboard planning', () => {
             successCount: 29,
             failureCount: 1,
             p95Ms: 155.5,
+            responseBytesP95: 131072,
+            receiveP95Ms: 18.4,
             statusCounts: {
               '2xx': 29,
               '5xx': 1,
@@ -733,6 +735,8 @@ describe('load test dashboard planning', () => {
           successCount: 29,
           failureCount: 1,
           p95Ms: 155.5,
+          responseBytesP95: 131072,
+          receiveP95Ms: 18.4,
         },
       ],
     })

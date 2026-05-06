@@ -111,6 +111,8 @@ public sealed record RealLoadTestTargetMetrics(
     long SuccessCount,
     long FailureCount,
     double P95Ms,
+    double? ResponseBytesP95,
+    double? ReceiveP95Ms,
     IReadOnlyDictionary<string, long> StatusCounts);
 
 public sealed class RealLoadTestRunEntry
