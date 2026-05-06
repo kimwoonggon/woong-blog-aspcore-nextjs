@@ -9,6 +9,26 @@ namespace WoongBlog.Infrastructure.Modules.Composition.Persistence;
 
 public sealed class HomeQueryStore(WoongBlogDbContext dbContext) : IHomeQueryStore
 {
+    public async Task<HomeShellDto?> GetHomeShellAsync(CancellationToken cancellationToken)
+    {
+        return await (
+                from page in dbContext.Pages.AsNoTracking()
+                where page.Slug == "home"
+                from settings in dbContext.SiteSettings.AsNoTracking().Where(x => x.Singleton)
+                join resumeAsset in dbContext.Assets.AsNoTracking()
+                    on settings.ResumeAssetId equals (Guid?)resumeAsset.Id into resumeAssets
+                from resumeAsset in resumeAssets.DefaultIfEmpty()
+                select new HomeShellDto(
+                    new PageSummaryDto(page.Title, page.ContentJson),
+                    new SiteSettingsSummaryDto(
+                        settings.OwnerName,
+                        settings.Tagline,
+                        settings.GitHubUrl,
+                        settings.LinkedInUrl,
+                        resumeAsset == null ? string.Empty : resumeAsset.PublicUrl)))
+            .SingleOrDefaultAsync(cancellationToken);
+    }
+
     public async Task<PageSummaryDto?> GetHomePageAsync(CancellationToken cancellationToken)
     {
         return await dbContext.Pages
