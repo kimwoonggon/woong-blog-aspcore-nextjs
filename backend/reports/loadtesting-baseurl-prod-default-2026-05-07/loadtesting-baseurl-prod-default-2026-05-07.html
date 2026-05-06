@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>LoadTesting BaseUrl Prod Default Guard - 2026-05-07</title>
+  <style>
+    body { font-family: sans-serif; margin: 2rem; line-height: 1.5; color: #1f2937; }
+    h1, h2 { color: #111827; }
+    code { background: #f3f4f6; padding: 0.1rem 0.25rem; border-radius: 0.25rem; }
+    li { margin: 0.25rem 0; }
+  </style>
+</head>
+<body>
+  <h1>LoadTesting BaseUrl Prod Default Guard - 2026-05-07</h1>
+  <h2>Scope</h2>
+  <p>Fix production compose drift so Real Backend Test defaults through the public/nginx origin instead of backend-direct.</p>
+  <h2>RED Evidence</h2>
+  <p>Before: <code>LoadTesting__BaseUrl: http://127.0.0.1:8080</code> when <code>NEXT_PUBLIC_SITE_URL</code> was set and <code>LoadTesting__BaseUrl</code> was omitted.</p>
+  <h2>Changes</h2>
+  <ul>
+    <li><code>docker-compose.prod.yml</code>: default to <code>${NEXT_PUBLIC_SITE_URL:-https://woonglab.com}</code>.</li>
+    <li><code>scripts/main-up.sh</code>: local main bootstrap now uses <code>http://localhost</code>.</li>
+    <li><code>scripts/ci-compose-smoke.sh</code>: fails main smoke if Real Backend Test resolves backend-direct.</li>
+  </ul>
+  <h2>Validation</h2>
+  <ul>
+    <li>Compose config with <code>NEXT_PUBLIC_SITE_URL=https://example.test</code>: <code>LoadTesting__BaseUrl: https://example.test</code>.</li>
+    <li>Compose config fallback without <code>NEXT_PUBLIC_SITE_URL</code>: <code>LoadTesting__BaseUrl: https://woonglab.com</code>.</li>
+    <li><code>bash -n scripts/main-up.sh scripts/ci-compose-smoke.sh</code>: pass.</li>
+    <li><code>git diff --check</code>: pass.</li>
+  </ul>
+  <h2>Risks</h2>
+  <p>This does not change nginx upstream timing headers; <code>runner.http_waiting_fallback</code> can still be used when upstream headers are unavailable.</p>
+</body>
+</html>

@@ -1,0 +1,63 @@
+{
+  "slug": "loadtesting-baseurl-prod-default-2026-05-07",
+  "date": "2026-05-07",
+  "scope": [
+    "Real Backend Test timing observability",
+    "production compose LoadTesting__BaseUrl default",
+    "main compose smoke guard"
+  ],
+  "red_evidence": {
+    "condition": "NEXT_PUBLIC_SITE_URL set, LoadTesting__BaseUrl omitted",
+    "before": "LoadTesting__BaseUrl: http://127.0.0.1:8080",
+    "risk": "Real Backend Test bypassed nginx by default, making nginx request timing unavailable"
+  },
+  "changes": [
+    {
+      "file": "docker-compose.prod.yml",
+      "summary": "Default LoadTesting__BaseUrl to NEXT_PUBLIC_SITE_URL with https://woonglab.com fallback"
+    },
+    {
+      "file": "scripts/main-up.sh",
+      "summary": "Set local main NEXT_PUBLIC_SITE_URL and LoadTesting__BaseUrl to http://localhost"
+    },
+    {
+      "file": "scripts/ci-compose-smoke.sh",
+      "summary": "Add main compose config guard against backend-direct Real Backend Test base URL"
+    },
+    {
+      "file": "todolist-2026-05-07.md",
+      "summary": "Record slice plan, red/green evidence, and validations"
+    }
+  ],
+  "validations": [
+    {
+      "command": "APP_ENV_FILE=$tmp docker compose --env-file $tmp -f docker-compose.prod.yml config | rg 'LoadTesting__BaseUrl:'",
+      "result": "LoadTesting__BaseUrl: https://example.test"
+    },
+    {
+      "command": "APP_ENV_FILE=$tmp docker compose --env-file $tmp -f docker-compose.prod.yml config | rg 'LoadTesting__BaseUrl:'",
+      "result": "LoadTesting__BaseUrl: https://woonglab.com"
+    },
+    {
+      "command": "bash -n scripts/main-up.sh scripts/ci-compose-smoke.sh",
+      "result": "pass"
+    },
+    {
+      "command": "git diff --check -- docker-compose.prod.yml scripts/main-up.sh scripts/ci-compose-smoke.sh todolist-2026-05-07.md",
+      "result": "pass"
+    }
+  ],
+  "not_changed": [
+    "backend production code",
+    "frontend UI code",
+    "load-test scenario shape",
+    "target URLs or pageSize",
+    "cache behavior",
+    "nginx upstream timing header implementation"
+  ],
+  "risks": [
+    "X-Nginx-Upstream-Time can still be '-' and use runner.http_waiting_fallback",
+    "full local main compose smoke was not run to avoid port/runtime conflict; CI should exercise it"
+  ],
+  "recommendation": "Push to dev, let CI exercise the main compose smoke guard, then promote to main if green."
+}
