@@ -2,7 +2,9 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using FluentValidation;
+using Microsoft.AspNetCore.Http.Features;
 using MediatR;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -255,6 +257,24 @@ public class StartupCompositionTests : IClassFixture<CustomWebApplicationFactory
     }
 
     [Fact]
+    public void UploadLimits_AllowConfiguredWorkVideoMaximumBeforeAppValidation()
+    {
+        using var scope = _factory.Services.CreateScope();
+        var services = scope.ServiceProvider;
+        var kestrelOptions = services.GetRequiredService<IOptions<KestrelServerOptions>>().Value;
+        var formOptions = services.GetRequiredService<IOptions<FormOptions>>().Value;
+        const long multipartOverheadBytes = 1L * 1024L * 1024L;
+
+        Assert.NotNull(kestrelOptions.Limits.MaxRequestBodySize);
+        Assert.True(
+            kestrelOptions.Limits.MaxRequestBodySize >= WorkVideoPolicy.MaxVideoBytes + multipartOverheadBytes,
+            $"Kestrel request limit {kestrelOptions.Limits.MaxRequestBodySize} must allow the {WorkVideoPolicy.MaxVideoBytes} byte video policy plus multipart overhead.");
+        Assert.True(
+            formOptions.MultipartBodyLengthLimit >= WorkVideoPolicy.MaxVideoBytes,
+            $"Multipart body limit {formOptions.MultipartBodyLengthLimit} must allow the {WorkVideoPolicy.MaxVideoBytes} byte video policy.");
+    }
+
+    [Fact]
     public void AuthOptions_Use300MinuteSlidingExpiration_AndEightHourAbsoluteExpiration()
     {
         using var scope = _factory.Services.CreateScope();
@@ -327,6 +347,10 @@ public class StartupCompositionTests : IClassFixture<CustomWebApplicationFactory
         Assert.True(diagnostics.TryGetProperty("process", out var process));
         Assert.True(process.GetProperty("memoryBytes").GetInt64() > 0);
         Assert.True(process.GetProperty("processorCount").GetInt32() > 0);
+        Assert.True(process.TryGetProperty("memoryLimitBytes", out var memoryLimitBytes));
+        Assert.True(memoryLimitBytes.ValueKind is JsonValueKind.Number or JsonValueKind.Null);
+        Assert.True(process.TryGetProperty("cpuQuotaCores", out var cpuQuotaCores));
+        Assert.True(cpuQuotaCores.ValueKind is JsonValueKind.Number or JsonValueKind.Null);
         Assert.True(diagnostics.TryGetProperty("gc", out var gc));
         Assert.True(gc.GetProperty("heapSizeBytes").GetInt64() >= 0);
         Assert.True(gc.GetProperty("gen0Collections").GetInt32() >= 0);
@@ -354,6 +378,12 @@ public class StartupCompositionTests : IClassFixture<CustomWebApplicationFactory
         Assert.Equal(JsonValueKind.Array, recentSlowQueries.ValueKind);
         Assert.True(database.TryGetProperty("idleInTransactionConnections", out var idleInTransactionConnections));
         Assert.True(idleInTransactionConnections.ValueKind is JsonValueKind.Number or JsonValueKind.Null);
+        Assert.True(database.TryGetProperty("pool", out var pool));
+        Assert.False(string.IsNullOrWhiteSpace(pool.GetProperty("databaseProvider").GetString()));
+        Assert.True(pool.GetProperty("dbContextPoolSize").GetInt32() > 0);
+        Assert.True(pool.GetProperty("npgsqlMinimumPoolSize").ValueKind is JsonValueKind.Number or JsonValueKind.Null);
+        Assert.True(pool.GetProperty("npgsqlMaximumPoolSize").ValueKind is JsonValueKind.Number or JsonValueKind.Null);
+        Assert.False(string.IsNullOrWhiteSpace(pool.GetProperty("npgsqlPoolLimitSource").GetString()));
     }
 
     [Fact]
@@ -662,7 +692,8 @@ public class StartupCompositionTests : IClassFixture<CustomWebApplicationFactory
             typeof(PageDto),
             typeof(SiteSettingsDto),
             typeof(WoongBlog.Infrastructure.LoadTesting.RealLoadTestStatusResponse),
-            typeof(WoongBlog.Infrastructure.LoadTesting.RealLoadTestMetricsResponse)
+            typeof(WoongBlog.Infrastructure.LoadTesting.RealLoadTestMetricsResponse),
+            typeof(WoongBlog.Infrastructure.LoadTesting.LoadTestDatabasePoolDiagnostics)
         };
 
         foreach (var type in publicHotPathTypes)

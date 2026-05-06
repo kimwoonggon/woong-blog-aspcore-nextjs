@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Runtime Pool Diagnostics Audit - 2026-05-07</title>
+  <style>
+    body { font-family: sans-serif; max-width: 920px; margin: 2rem auto; line-height: 1.5; color: #1f2933; }
+    code { background: #eef2f7; padding: 0.1rem 0.25rem; border-radius: 4px; }
+    h1, h2 { color: #102a43; }
+    li { margin: 0.25rem 0; }
+  </style>
+</head>
+<body>
+  <h1>Runtime Pool Diagnostics Audit - 2026-05-07</h1>
+  <h2>Summary</h2>
+  <p>Real Backend Test diagnostics now expose process CPU/memory limit fields and DB pool configuration, and the admin dashboard surfaces those values.</p>
+  <h2>Changed</h2>
+  <ul>
+    <li>Added persistence runtime diagnostics for provider, DbContext pool, and Npgsql min/max pool settings.</li>
+    <li>Added process memory limit and CPU quota detection to load-test diagnostics.</li>
+    <li>Added DB pool diagnostics to database diagnostics payloads.</li>
+    <li>Updated dashboard parsing, summary, UI rows, unit tests, and Playwright coverage.</li>
+  </ul>
+  <h2>Validation</h2>
+  <ul>
+    <li>Backend solution tests passed: Contract 1 skipped, Component 126, Unit 59, Architecture 35, Integration 230.</li>
+    <li>Frontend dashboard unit test passed 28/28.</li>
+    <li>Typecheck passed.</li>
+    <li>Lint passed with 0 errors and 7 existing warnings.</li>
+    <li>Playwright dashboard spec passed 2/2.</li>
+    <li>Live diagnostics endpoint showed Postgres, DbContext pool 128, Npgsql max 40, and process limit fields present.</li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Ship to dev, verify CI, then run the next prod-like spike and use these fields to decide DB pool/resource tuning instead of guessing.</p>
+</body>
+</html>
