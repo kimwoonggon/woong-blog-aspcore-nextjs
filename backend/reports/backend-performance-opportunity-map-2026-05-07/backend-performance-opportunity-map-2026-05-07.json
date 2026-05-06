@@ -1,0 +1,120 @@
+{
+  "slug": "backend-performance-opportunity-map-2026-05-07",
+  "date": "2026-05-07",
+  "baseline": {
+    "branch": "dev",
+    "commit": "6a18e20",
+    "mergedPrs": [
+      { "number": 100, "title": "Add public work video read model", "devCommit": "5e3b898" },
+      { "number": 102, "title": "Fast path empty public work videos", "devCommit": "6a18e20" }
+    ]
+  },
+  "scope": "Audit-only backend performance opportunity mapping for Real Backend Test public hot paths.",
+  "productionCodeChanged": false,
+  "testCodeChanged": false,
+  "currentHotPathState": {
+    "workListFirstPageNoSearch": "1 PostgreSQL command via window query, pageSize=12 retained",
+    "blogListFirstPageNoSearch": "1 PostgreSQL command via window query, pageSize=12 retained",
+    "blogDetail": "1 compiled projection command using stored public body/cover fields",
+    "workDetailWithoutVideos": "1 compiled projection command; does not query WorkVideos; empty PublicVideosJson fast path",
+    "workDetailWithVideos": "1 compiled projection command using Work.PublicVideosJson snapshot; does not query WorkVideos",
+    "publicDetailAvoids": ["request-time body JSON thumbnail scan", "ContentJson projection", "AllPropertiesJson projection", "Assets lookup", "WorkVideos lookup"]
+  },
+  "scanCounts": {
+    "AsNoTracking": 19,
+    "EFCompileAsyncQuery": 2,
+    "SqlQuery": 2,
+    "CountAsync": 2,
+    "ToListAsync": 10,
+    "Include": 0,
+    "JsonSerializer": 3,
+    "JsonDocumentParse": 7,
+    "RegexOptionsCompiled": 4,
+    "BlockingWaits": 0
+  },
+  "alreadyImproved": [
+    {
+      "id": "A1",
+      "title": "Public list first-page window query and covering indexes",
+      "expectedMetricsImproved": ["Work/Study list p95", "DB command count", "DB connection/open pressure"]
+    },
+    {
+      "id": "A2",
+      "title": "Public content/thumbnail/cover read fields",
+      "expectedMetricsImproved": ["Work/Study detail app elapsed", "DB selected payload", "request-time parsing cost"]
+    },
+    {
+      "id": "A3",
+      "title": "Work public video read model",
+      "expectedMetricsImproved": ["Work read with videos DB command count", "DB command/open latency", "app elapsed p95", "5xx if DB pressure was source"]
+    },
+    {
+      "id": "A4",
+      "title": "Empty public video JSON fast path",
+      "expectedMetricsImproved": ["no-video Work read allocation", "GC pressure under high no-video Work detail RPS"]
+    }
+  ],
+  "remainingOpportunities": [
+    {
+      "id": "P1",
+      "title": "Large detail body transfer and serialization cost",
+      "expectedMetricsImproved": ["responseBytesP95", "receiveP95Ms", "data_received", "client p95 for external HTTPS large detail responses"],
+      "expectedMetricsNotDirectlyImproved": ["DB command p95", "DB connection open p95"],
+      "risk": "Compression can increase CPU on a 2 CPU shared host; body split changes API/product behavior."
+    },
+    {
+      "id": "P2",
+      "title": "Search and non-first-page public list queries",
+      "expectedMetricsImproved": ["list p95 for search/page>1", "DB command count for those paths", "DB command/open p95 under search/list traffic"],
+      "expectedMetricsNotDirectlyImproved": ["current default page=1 no-search Real Backend Test"],
+      "risk": "Changing exact total count would alter API semantics."
+    },
+    {
+      "id": "P3",
+      "title": "Public DTO serialization fast-path",
+      "expectedMetricsImproved": ["app elapsed p95", "GC heap", "Gen2 pressure", "CPU-bound throughput"],
+      "expectedMetricsNotDirectlyImproved": ["DB metrics", "payload size unless fields are omitted"],
+      "risk": "ASP.NET execution path must be benchmarked to prove the intended JsonTypeInfo path is used."
+    },
+    {
+      "id": "P4",
+      "title": "Observability completeness and deployment verification",
+      "expectedMetricsImproved": ["diagnosis reliability"],
+      "expectedMetricsNotDirectlyImproved": ["raw latency", "throughput"],
+      "risk": "Low; this is measurement reliability work."
+    },
+    {
+      "id": "P5",
+      "title": "Write-time parsing cost cleanup",
+      "expectedMetricsImproved": ["admin/import/write CPU", "admin/import/write allocations"],
+      "expectedMetricsNotDirectlyImproved": ["current read-only Real Backend Test"],
+      "risk": "Content/search equivalence must be preserved."
+    }
+  ],
+  "doNotDo": [
+    "Do not add cache as next fix.",
+    "Do not reduce pageSize=12.",
+    "Do not force seed targets.",
+    "Do not raise maxVUs as a capacity fix.",
+    "Do not remove public detail body fields without product/API change."
+  ],
+  "validations": [
+    {
+      "command": "gh pr checks 102 --watch --interval 10",
+      "result": "passed: Backend architecture, component, integration, unit, Browser smoke, Compose Dev Verification, Frontend lint/types/unit, Pact provider"
+    },
+    {
+      "command": "gh pr merge 102 --squash",
+      "result": "merged to dev as 6a18e206663ac129afaa4d1ed47ed3467115d592"
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter focused public hot path contracts --no-restore --logger console;verbosity=minimal",
+      "result": "passed: 5/5"
+    },
+    {
+      "command": "hot-path rg scan for AsNoTracking, EF.CompileAsyncQuery, SqlQuery, CountAsync, JsonSerializer, JsonDocument.Parse, Include, blocking waits",
+      "result": "completed; no Include or blocking wait patterns on selected public hot-path files"
+    }
+  ],
+  "recommendation": "Keep real targets and pageSize=12. Use target-level metrics to choose the next slice: compression/body strategy if payload/receive dominates; serialization fast-path if app elapsed/GC dominates; DB/pool inspection only if DB open/command latency rises again."
+}

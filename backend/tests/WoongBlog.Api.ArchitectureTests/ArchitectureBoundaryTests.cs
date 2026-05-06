@@ -276,6 +276,7 @@ public class ArchitectureBoundaryTests
             "app.ValidateStartupOptions();",
             "app.UseForwardedHeaders();",
             "app.UseConfiguredTransportSecurity();",
+            "app.UseResponseCompression();",
             "app.UseMiddleware<SecurityHeadersMiddleware>();",
             "app.EnsureAuthStorageDirectories();",
             "await app.InitializeDatabaseAsync();",

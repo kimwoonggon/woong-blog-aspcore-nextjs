@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Public API Response Compression - Audit Report</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 960px; margin: 40px auto; line-height: 1.55; color: #1f2933; }
+    h1, h2 { color: #102a43; }
+    code { background: #f0f4f8; padding: 2px 4px; border-radius: 4px; }
+    pre { background: #f0f4f8; padding: 12px; overflow-x: auto; }
+    ul { padding-left: 22px; }
+    .status { border-left: 4px solid #2f855a; padding: 8px 12px; background: #f0fff4; }
+    .warn { border-left: 4px solid #b7791f; padding: 8px 12px; background: #fffaf0; }
+  </style>
+</head>
+<body>
+  <h1>Public API Response Compression - Audit Report</h1>
+  <p><strong>Date:</strong> 2026-05-07</p>
+  <p><strong>Branch:</strong> <code>perf/public-api-response-compression-2026-05-07</code></p>
+  <p><strong>Base:</strong> <code>dev@6a18e20</code></p>
+
+  <h2>Summary</h2>
+  <p class="status">ASP.NET Core response compression is enabled for JSON/problem+JSON/text responses. The public Work detail endpoint now honors <code>Accept-Encoding: gzip</code> and returns <code>Content-Encoding: gzip</code> with <code>Vary: Accept-Encoding</code>.</p>
+
+  <h2>Changed</h2>
+  <ul>
+    <li>Registered response compression, gzip provider, HTTPS compression, and JSON MIME types.</li>
+    <li>Added <code>app.UseResponseCompression()</code> to startup order.</li>
+    <li>Added behavior-focused public endpoint compression coverage.</li>
+    <li>Updated middleware architecture guard.</li>
+    <li>Stored k6 compression smoke artifact.</li>
+  </ul>
+
+  <h2>Not Changed</h2>
+  <ul>
+    <li>No cache.</li>
+    <li>No seeded-target forcing.</li>
+    <li>No <code>pageSize=12</code> change.</li>
+    <li>No DB query or DTO semantic change.</li>
+    <li>No nginx timing extraction change.</li>
+  </ul>
+
+  <h2>Validations</h2>
+  <ul>
+    <li>Focused compression test: RED before implementation, GREEN after implementation.</li>
+    <li>Architecture middleware order test: passed 1/1.</li>
+    <li>Public endpoint suite: passed 31/31.</li>
+    <li>Full backend solution: passed; Contract 1 skipped, Component 124, Unit 59, Architecture 35, Integration 229.</li>
+    <li>Dev compose backend/nginx rebuild: succeeded.</li>
+    <li>Curl smoke: plain 1195 B, gzip 850 B, expected gzip headers present.</li>
+    <li>k6 smoke: 500 requests, check rate 1.0, HTTP failure rate 0, p95 2.415107 ms.</li>
+  </ul>
+
+  <h2>Risks</h2>
+  <p class="warn">Gzip can increase CPU on the 2 CPU shared host. The local seeded-work smoke proves behavior but does not replace a production-like A/B on real heavy detail pages.</p>
+
+  <h2>Recommendation</h2>
+  <p>Merge if CI is green. Then run a production-like A/B over HTTPS on real heavy Work/Study detail URLs and compare client p95/p99, receiving time, data_received, app elapsed, CPU/GC, DB pressure, ThreadPool queue, and HTTP 5xx.</p>
+</body>
+</html>
