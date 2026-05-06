@@ -1,0 +1,79 @@
+{
+  "task": "public-work-detail-video-query-2026-05-06",
+  "status": "ready_for_pr",
+  "changed_files": [
+    "backend/src/WoongBlog.Infrastructure/Modules/Content/Works/Persistence/WorkQueryStore.cs",
+    "backend/tests/WoongBlog.Api.IntegrationTests/PostgresPersistenceContractTests.cs",
+    "todolist-2026-05-06.md",
+    "backend/reports/public-work-detail-video-query-2026-05-06/loadtest/k6-work-detail-no-video-mix-300rps-30s.log",
+    "backend/reports/public-work-detail-video-query-2026-05-06/loadtest/k6-work-detail-no-video-mix-300rps-30s.summary.json"
+  ],
+  "goals": [
+    "Avoid needless WorkVideos query for public Work detail rows that have no videos.",
+    "Project only public video DTO fields when videos exist.",
+    "Preserve realistic load-test semantics: no cache, no seed-priority target change, no pageSize reduction."
+  ],
+  "intentionally_not_changed": [
+    "Real Backend Test scenarios",
+    "pageSize=12",
+    "cache policy",
+    "seed target selection",
+    "Blog detail paths",
+    "Docker resource limits",
+    "DB schema and indexes",
+    "admin Work video verification behavior"
+  ],
+  "validations": [
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter \"FullyQualifiedName~PublicWorkDetailWithoutVideos_UsesSinglePostgresCommand\" --no-restore",
+      "result": "pass",
+      "passed": 1,
+      "failed": 0
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj --filter \"FullyQualifiedName~PublicQueryHandlerComponentTests\" --no-restore",
+      "result": "pass",
+      "passed": 40,
+      "failed": 0
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter \"FullyQualifiedName~PostgresPersistenceContractTests\" --no-restore",
+      "result": "pass",
+      "passed": 8,
+      "failed": 0
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln --no-restore",
+      "result": "pass",
+      "component_passed": 122,
+      "unit_passed": 56,
+      "architecture_passed": 35,
+      "integration_passed": 209,
+      "contract_skipped": 1
+    },
+    {
+      "command": "git diff --check",
+      "result": "pass"
+    },
+    {
+      "command": "k6 public API sanity under 2 CPU overlay",
+      "result": "pass",
+      "rate": 300,
+      "duration": "30s",
+      "requests": 9001,
+      "rps": 300.04808863816265,
+      "failed_rate": 0,
+      "dropped_iterations": 0,
+      "aggregate_p95_ms": 7.864186,
+      "work_read_p95_ms": 5.961982699999967,
+      "summary_path": "backend/reports/public-work-detail-video-query-2026-05-06/loadtest/k6-work-detail-no-video-mix-300rps-30s.summary.json"
+    }
+  ],
+  "risks": [
+    "EXISTS check should be watched on a large WorkVideos table.",
+    "Work details with videos still perform a second collection query by design.",
+    "Local k6 sanity is not a production capacity claim.",
+    "Existing backend startup warnings remain: libgssapi_krb5.so.2 and MediatR license."
+  ],
+  "recommendation": "Open PR to dev, merge after CI green, then verify main promotion and rerun external Real Backend Test with realistic targets."
+}

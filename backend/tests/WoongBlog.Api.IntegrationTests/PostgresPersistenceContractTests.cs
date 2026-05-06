@@ -305,6 +305,33 @@ public sealed class PostgresPersistenceContractTests : IClassFixture<PostgresPer
     }
 
     [Fact]
+    public async Task PublicWorkDetailWithoutVideos_UsesSinglePostgresCommand()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        const string slug = "postgres-public-work-no-videos";
+        await using (var setupContext = CreateDbContext())
+        {
+            await ResetDatabaseAsync(setupContext, cancellationToken);
+            await DatabaseBootstrapper.InitializeAsync(setupContext, cancellationToken);
+            await ClearPublicContentAsync(setupContext, cancellationToken);
+
+            setupContext.Works.Add(CreatePublishedWork(slug, "Postgres Public Work No Videos", publishedAtOffsetMinutes: -1));
+            await setupContext.SaveChangesAsync(cancellationToken);
+        }
+
+        var collector = CreateDiagnosticsCollector();
+        await using var dbContext = _fixture.CreateDbContext(new LoadTestDbCommandDiagnosticsInterceptor(collector));
+        var queryStore = new WorkQueryStore(dbContext, new NoopPlaybackUrlBuilder());
+
+        var result = await queryStore.GetPublishedDetailBySlugAsync(slug, cancellationToken);
+        var snapshot = collector.CaptureSnapshot();
+
+        Assert.NotNull(result);
+        Assert.Empty(result!.Videos);
+        Assert.Equal(1, snapshot.CommandLatency.SampleCount);
+    }
+
+    [Fact]
     public async Task PublicWorkFirstPage_UsesSinglePostgresCommand_ForNoSearchList()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
