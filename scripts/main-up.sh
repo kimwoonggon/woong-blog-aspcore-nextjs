@@ -39,13 +39,14 @@ BACKEND_IMAGE=local/woong-blog-backend:main
 APP_ENV_FILE=.env.prod.local
 NGINX_DEFAULT_CONF=./nginx/prod-bootstrap.conf
 NGINX_BIND_HOST=127.0.0.1
+NEXT_PUBLIC_SITE_URL=http://localhost
 CERTBOT_WWW_DIR=./certbot/www
 LETSENCRYPT_DIR=./certbot/conf
 POSTGRES_DB=portfolio
 POSTGRES_USER=portfolio
 POSTGRES_PASSWORD=portfolio
 POSTGRES_DATA_DIR=${DEFAULT_POSTGRES_DATA_DIR}
-LoadTesting__BaseUrl=http://127.0.0.1:8080
+LoadTesting__BaseUrl=http://localhost
 Auth__Enabled=false
 PROXY_KNOWN_NETWORK=172.16.0.0/12
 EOF
