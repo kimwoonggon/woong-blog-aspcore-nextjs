@@ -1,0 +1,53 @@
+{
+  "taskSlug": "runtime-pool-diagnostics-2026-05-07",
+  "date": "2026-05-07",
+  "branch": "perf/runtime-pool-diagnostics-2026-05-07",
+  "baseCommit": "a7c0217",
+  "summary": "Expose process CPU/memory limits and DB pool configuration in Real Backend Test diagnostics and UI.",
+  "changedFiles": [
+    "backend/src/WoongBlog.Infrastructure/Persistence/Diagnostics/PersistenceRuntimeDiagnostics.cs",
+    "backend/src/WoongBlog.Infrastructure/Persistence/PersistenceServiceCollectionExtensions.cs",
+    "backend/src/WoongBlog.Infrastructure/LoadTesting/LoadTestDiagnosticsSampler.cs",
+    "backend/src/WoongBlog.Api/Common/Json/WoongBlogApiJsonSerializerContext.cs",
+    "backend/tests/WoongBlog.Api.ComponentTests/PersistenceRuntimeDiagnosticsComponentTests.cs",
+    "backend/tests/WoongBlog.Api.IntegrationTests/StartupCompositionTests.cs",
+    "src/lib/load-test-dashboard.ts",
+    "src/components/admin/LoadTestDashboard.tsx",
+    "src/test/load-test-dashboard.test.ts",
+    "tests/admin-load-test-dashboard.spec.ts",
+    "todolist-2026-05-07.md"
+  ],
+  "notChanged": [
+    "Npgsql pool cap was not changed",
+    "DbContext pool size was not changed",
+    "Real Backend Test scenarios and target selection were not changed",
+    "No caching was added"
+  ],
+  "liveDiagnosticsEvidence": {
+    "databaseProvider": "Postgres",
+    "dbContextPoolSize": 128,
+    "npgsqlMinimumPoolSize": 0,
+    "npgsqlMaximumPoolSize": 40,
+    "npgsqlPoolLimitSource": "connection-string",
+    "memoryLimitBytesPresent": true,
+    "cpuQuotaCoresPresent": true
+  },
+  "validations": [
+    { "name": "frontend load-test dashboard unit", "command": "npm test -- --run src/test/load-test-dashboard.test.ts", "result": "passed 28/28" },
+    { "name": "backend focused component", "command": "dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj --filter \"FullyQualifiedName~PersistenceRuntimeDiagnosticsComponentTests|FullyQualifiedName~K6Runner_PersistsRunScopedDiagnostics\" --no-restore --logger \"console;verbosity=minimal\"", "result": "passed 3/3" },
+    { "name": "backend focused integration", "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter \"FullyQualifiedName~HealthOpenApiAndRuntimeConfig_StartWithoutExternalServicesInTesting|FullyQualifiedName~LoadTestDiagnostics_WhenDbCollectorThrows_ReturnsErrorDatabasePayload\" --no-restore --logger \"console;verbosity=minimal\"", "result": "passed 2/2" },
+    { "name": "source-generated JSON resolver", "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter \"FullyQualifiedName~JsonOptions_UseSourceGeneratedMetadataForPublicHotPathDtos\" --no-restore --logger \"console;verbosity=minimal\"", "result": "passed 1/1" },
+    { "name": "backend solution", "command": "dotnet test backend/WoongBlog.sln --no-restore --logger \"console;verbosity=minimal\"", "result": "passed: Contract 1 skipped, Component 126, Unit 59, Architecture 35, Integration 230" },
+    { "name": "frontend typecheck", "command": "npm run typecheck", "result": "passed" },
+    { "name": "frontend lint", "command": "npm run lint", "result": "passed with 0 errors and 7 existing warnings" },
+    { "name": "Playwright dashboard", "command": "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://localhost:3000 ENABLE_LOCAL_ADMIN_SHORTCUT=true PLAYWRIGHT_EXPECT_LOCAL_ADMIN_SHORTCUT=visible npx playwright test tests/admin-load-test-dashboard.spec.ts --project=chromium-authenticated --workers=1", "result": "passed 2/2" },
+    { "name": "live diagnostics endpoint", "command": "authenticated curl to /api/admin/load-test/diagnostics", "result": "pool and process limit fields present" },
+    { "name": "git diff whitespace check", "command": "git diff --check", "result": "passed" }
+  ],
+  "risks": [
+    "Production cgroup limits must be verified after deployment because dev reported limit fields as null.",
+    "This observability slice does not reduce pool pressure by itself.",
+    "Current working tree also contains HLS upload-limit fix."
+  ],
+  "recommendation": "Ship diagnostics to dev, verify CI, then use the new fields during the next prod-like spike before pool tuning."
+}

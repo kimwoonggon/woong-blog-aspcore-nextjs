@@ -24,7 +24,12 @@ test('admin can run a small Work and Study read load test', async ({ page, reque
       contentType: 'application/json',
       body: JSON.stringify({
         timestamp: new Date().toISOString(),
-        process: { memoryBytes: 100_000_000 + diagnosticsRequestCount, processorCount: 8 },
+        process: {
+          memoryBytes: 100_000_000 + diagnosticsRequestCount,
+          processorCount: 8,
+          memoryLimitBytes: 8 * 1024 * 1024 * 1024,
+          cpuQuotaCores: 2,
+        },
         gc: {
           heapSizeBytes: 40_000_000 + diagnosticsRequestCount,
           gen0Collections: diagnosticsRequestCount,
@@ -54,6 +59,13 @@ test('admin can run a small Work and Study read load test', async ({ page, reque
             : [],
           timeoutCount: 0,
           errorCount: 0,
+          pool: {
+            databaseProvider: 'Postgres',
+            dbContextPoolSize: 128,
+            npgsqlMinimumPoolSize: 0,
+            npgsqlMaximumPoolSize: 40,
+            npgsqlPoolLimitSource: 'connection-string',
+          },
         },
       }),
     })
@@ -106,11 +118,15 @@ test('admin can run a small Work and Study read load test', async ({ page, reque
   await expect(page.getByText(/configured 2 · observed peak/i)).toBeVisible()
   await expect(page.getByText(/^Elapsed$/)).toBeVisible()
   await expect(page.getByTestId('load-test-runtime-panel')).toContainText(/Memory/)
+  await expect(page.getByTestId('load-test-runtime-panel')).toContainText(/Memory limit/)
+  await expect(page.getByTestId('load-test-runtime-panel')).toContainText(/CPU quota/)
   await expect(page.getByTestId('load-test-runtime-panel')).toContainText(/ThreadPool workers/)
   await expect(page.getByTestId('load-test-runtime-panel')).toContainText(/ThreadPool queue/)
   await expect(page.getByTestId('load-test-runtime-panel')).toContainText(/DB latency/)
   await expect(page.getByTestId('load-test-database-panel')).toContainText(/DB command P95/)
   await expect(page.getByTestId('load-test-database-panel')).toContainText(/DB connection open P95/)
+  await expect(page.getByTestId('load-test-database-panel')).toContainText(/DbContext pool/)
+  await expect(page.getByTestId('load-test-database-panel')).toContainText(/Npgsql max pool/)
   await expect(page.getByTestId('load-test-database-panel')).toContainText(/Idle connections/)
   expect(diagnosticsRequestCount).toBeGreaterThan(0)
   expect(loadRequestUrls.some((url) => url.includes('/api/public/works/custom-work-target?'))).toBe(true)
@@ -271,7 +287,12 @@ test('admin can run and stop a real backend test with polling + metrics fallback
       contentType: 'application/json',
       body: JSON.stringify({
         timestamp: new Date().toISOString(),
-        process: { memoryBytes: 200_000_000 + diagnosticsRequestCount, processorCount: 8 },
+        process: {
+          memoryBytes: 200_000_000 + diagnosticsRequestCount,
+          processorCount: 8,
+          memoryLimitBytes: 8 * 1024 * 1024 * 1024,
+          cpuQuotaCores: 2,
+        },
         gc: {
           heapSizeBytes: 75_000_000 + diagnosticsRequestCount,
           gen0Collections: diagnosticsRequestCount,
@@ -299,6 +320,13 @@ test('admin can run and stop a real backend test with polling + metrics fallback
           recentSlowQueries: [],
           timeoutCount: 0,
           errorCount: diagnosticsRequestCount > 1 ? 2 : 0,
+          pool: {
+            databaseProvider: 'Postgres',
+            dbContextPoolSize: 128,
+            npgsqlMinimumPoolSize: 0,
+            npgsqlMaximumPoolSize: 40,
+            npgsqlPoolLimitSource: 'connection-string',
+          },
         },
       }),
     })
@@ -361,10 +389,12 @@ test('admin can run and stop a real backend test with polling + metrics fallback
   await expect(panel.getByTestId('real-backend-target-summary')).toContainText('5 / 5')
   await expect.poll(() => diagnosticsRequestCount).toBeGreaterThan(0)
   await expect(page.getByTestId('load-test-runtime-panel')).toContainText(/Time in GC/)
+  await expect(page.getByTestId('load-test-runtime-panel')).toContainText(/CPU quota/)
   await expect(page.getByTestId('load-test-runtime-panel')).toContainText(/ThreadPool queue/)
   await expect(page.getByTestId('load-test-runtime-panel')).toContainText(/Runtime red/)
   await expect(page.getByTestId('load-test-runtime-panel')).toContainText(/samples collected from the ASP\.NET Core backend/)
   await expect(page.getByTestId('load-test-database-panel')).toContainText(/DB command P95/)
+  await expect(page.getByTestId('load-test-database-panel')).toContainText(/Npgsql max pool/)
   await expect(page.getByTestId('load-test-database-panel')).toContainText(/DB errors/)
   await expect(page.getByTestId('load-test-database-panel')).toContainText(/Idle in transaction/)
 
