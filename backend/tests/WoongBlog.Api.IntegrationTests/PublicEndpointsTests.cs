@@ -218,6 +218,65 @@ public class PublicEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
+    public async Task GetWorkBySlug_OmitsNullOptionalVideoFields()
+    {
+        var client = _factory.CreateClient();
+        var slug = $"public-video-null-payload-{Guid.NewGuid():N}";
+        var workId = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
+            dbContext.Works.Add(new Work
+            {
+                Id = workId,
+                Title = "Public Video Null Payload Work",
+                Slug = slug,
+                Excerpt = "public video",
+                Category = "public",
+                Tags = ["video"],
+                ContentJson = JsonSerializer.Serialize(new { html = "<p>Video body</p>" }),
+                PublicContentHtml = "<p>Video body</p>",
+                AllPropertiesJson = "{}",
+                VideosVersion = 1,
+                Published = true,
+                PublishedAt = now,
+                CreatedAt = now,
+                UpdatedAt = now
+            });
+            dbContext.WorkVideos.Add(new WorkVideo
+            {
+                WorkId = workId,
+                SourceType = WorkVideoSourceTypes.YouTube,
+                SourceKey = "dQw4w9WgXcQ",
+                SortOrder = 0,
+                CreatedAt = now
+            });
+            await dbContext.SaveChangesAsync();
+        }
+
+        var response = await client.GetAsync($"/api/public/works/{slug}");
+
+        response.EnsureSuccessStatusCode();
+        var body = await response.Content.ReadAsStringAsync();
+        using var document = JsonDocument.Parse(body);
+        var video = document.RootElement.GetProperty("videos")[0];
+        Assert.Equal(WorkVideoSourceTypes.YouTube, video.GetProperty("sourceType").GetString());
+        Assert.Equal("dQw4w9WgXcQ", video.GetProperty("sourceKey").GetString());
+        Assert.True(video.TryGetProperty("sortOrder", out _));
+        Assert.False(video.TryGetProperty("playbackUrl", out _));
+        Assert.False(video.TryGetProperty("originalFileName", out _));
+        Assert.False(video.TryGetProperty("mimeType", out _));
+        Assert.False(video.TryGetProperty("fileSize", out _));
+        Assert.False(video.TryGetProperty("width", out _));
+        Assert.False(video.TryGetProperty("height", out _));
+        Assert.False(video.TryGetProperty("duration_seconds", out _));
+        Assert.False(video.TryGetProperty("timeline_preview_vtt_url", out _));
+        Assert.False(video.TryGetProperty("timeline_preview_sprite_url", out _));
+    }
+
+    [Fact]
     public async Task GetWorkBySlug_ReturnsNotFound_WhenMissing()
     {
         var client = _factory.CreateClient();
