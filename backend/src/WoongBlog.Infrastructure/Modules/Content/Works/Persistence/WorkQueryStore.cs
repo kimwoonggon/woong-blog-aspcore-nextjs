@@ -1,4 +1,6 @@
+using System.Collections.Concurrent;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 using WoongBlog.Api.Domain.Entities;
 using WoongBlog.Infrastructure.Persistence;
 using WoongBlog.Application.Modules.Composition.GetHome;
@@ -19,6 +21,55 @@ public sealed class WorkQueryStore(
     IWorkVideoPlaybackUrlBuilder playbackUrlBuilder) : IWorkQueryStore
 {
     private const string PostgresProviderName = "Npgsql.EntityFrameworkCore.PostgreSQL";
+    private static readonly ConcurrentDictionary<IModel, Func<WoongBlogDbContext, string, IAsyncEnumerable<PublicWorkDetailRow>>> PublishedDetailBySlugQueries = new();
+    private static readonly ConcurrentDictionary<IModel, Func<WoongBlogDbContext, Guid, IAsyncEnumerable<PublicWorkVideoRow>>> PublicVideosByWorkIdQueries = new();
+
+    private static Func<WoongBlogDbContext, string, IAsyncEnumerable<PublicWorkDetailRow>> CreatePublishedDetailBySlugQuery(IModel _)
+    {
+        return EF.CompileAsyncQuery((WoongBlogDbContext context, string slug) =>
+            context.Works.AsNoTracking()
+                .Where(x => x.Slug == slug && x.Published)
+                .Select(work => new PublicWorkDetailRow(
+                    work.Id,
+                    work.Slug,
+                    work.Title,
+                    work.Excerpt,
+                    work.PublicContentHtml,
+                    work.PublicContentMarkdown,
+                    work.Category,
+                    work.Period,
+                    work.Tags,
+                    work.PublicThumbnailUrl,
+                    work.PublicIconUrl,
+                    work.PublishedAt,
+                    work.PublicSocialShareMessage,
+                    work.VideosVersion,
+                    work.VideosVersion > 0))
+                .Take(1));
+    }
+
+    private static Func<WoongBlogDbContext, Guid, IAsyncEnumerable<PublicWorkVideoRow>> CreatePublicVideosByWorkIdQuery(IModel _)
+    {
+        return EF.CompileAsyncQuery((WoongBlogDbContext context, Guid workId) =>
+            context.WorkVideos.AsNoTracking()
+                .Where(x => x.WorkId == workId)
+                .OrderBy(x => x.SortOrder)
+                .ThenBy(x => x.CreatedAt)
+                .Select(video => new PublicWorkVideoRow(
+                    video.Id,
+                    video.SourceType,
+                    video.SourceKey,
+                    video.OriginalFileName,
+                    video.MimeType,
+                    video.FileSize,
+                    video.Width,
+                    video.Height,
+                    video.DurationSeconds,
+                    video.TimelinePreviewVttStorageKey,
+                    video.TimelinePreviewSpriteStorageKey,
+                    video.SortOrder,
+                    video.CreatedAt)));
+    }
 
     public async Task<IReadOnlyList<AdminWorkListItemDto>> GetAdminListAsync(CancellationToken cancellationToken)
     {
@@ -157,25 +208,13 @@ public sealed class WorkQueryStore(
 
     public async Task<WorkDetailDto?> GetPublishedDetailBySlugAsync(string slug, CancellationToken cancellationToken)
     {
-        var work = await dbContext.Works.AsNoTracking()
-            .Where(x => x.Slug == slug && x.Published)
-            .Select(work => new PublicWorkDetailRow(
-                work.Id,
-                work.Slug,
-                work.Title,
-                work.Excerpt,
-                work.PublicContentHtml,
-                work.PublicContentMarkdown,
-                work.Category,
-                work.Period,
-                work.Tags,
-                work.PublicThumbnailUrl,
-                work.PublicIconUrl,
-                work.PublishedAt,
-                work.PublicSocialShareMessage,
-                work.VideosVersion,
-                work.VideosVersion > 0))
-            .SingleOrDefaultAsync(cancellationToken);
+        PublicWorkDetailRow? work = null;
+        var query = PublishedDetailBySlugQueries.GetOrAdd(dbContext.Model, CreatePublishedDetailBySlugQuery);
+        await foreach (var row in query(dbContext, slug).WithCancellation(cancellationToken))
+        {
+            work = row;
+            break;
+        }
 
         return work is null
             ? null
@@ -239,29 +278,9 @@ public sealed class WorkQueryStore(
 
     private async Task<List<WorkVideoDto>> GetPublicVideoDtosAsync(Guid workId, CancellationToken cancellationToken)
     {
-        var videoRows = await dbContext.WorkVideos
-            .AsNoTracking()
-            .Where(x => x.WorkId == workId)
-            .OrderBy(x => x.SortOrder)
-            .ThenBy(x => x.CreatedAt)
-            .Select(video => new PublicWorkVideoRow(
-                video.Id,
-                video.SourceType,
-                video.SourceKey,
-                video.OriginalFileName,
-                video.MimeType,
-                video.FileSize,
-                video.Width,
-                video.Height,
-                video.DurationSeconds,
-                video.TimelinePreviewVttStorageKey,
-                video.TimelinePreviewSpriteStorageKey,
-                video.SortOrder,
-                video.CreatedAt))
-            .ToListAsync(cancellationToken);
-
-        var videos = new List<WorkVideoDto>(videoRows.Count);
-        foreach (var video in videoRows)
+        var videos = new List<WorkVideoDto>();
+        var query = PublicVideosByWorkIdQueries.GetOrAdd(dbContext.Model, CreatePublicVideosByWorkIdQuery);
+        await foreach (var video in query(dbContext, workId).WithCancellation(cancellationToken))
         {
             videos.Add(BuildPublicVideoDto(video));
         }

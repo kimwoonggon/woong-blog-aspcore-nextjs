@@ -1,0 +1,65 @@
+{
+  "task": "public-hotpath-query-index-2026-05-06",
+  "date": "2026-05-06",
+  "branch": "perf/public-hotpath-query-index-2026-05-06",
+  "changes": [
+    "Added public list covering indexes for Blogs and Works",
+    "Added schema patch 20260506_public_list_covering_indexes",
+    "Converted public Blog detail read to EF compiled query cached per IModel",
+    "Converted public Work detail read to EF compiled query cached per IModel",
+    "Converted public Work video read projection to EF compiled query cached per IModel"
+  ],
+  "nonGoals": [
+    "No cache",
+    "No seeded target priority",
+    "No pageSize=1 shortcut",
+    "No public DTO field removal",
+    "No frontend behavior change"
+  ],
+  "validations": [
+    { "name": "RED schema contract", "status": "failed before implementation as expected" },
+    { "name": "Bootstrapper_AppliesPostgresSpecificSearchSchema", "status": "passed" },
+    { "name": "Focused Postgres public detail/list command contracts", "status": "passed" },
+    { "name": "PublicQueryHandlerComponentTests", "status": "passed", "passed": 40 },
+    { "name": "PublicEndpointsTests", "status": "passed", "passed": 29 },
+    { "name": "PostgresPersistenceContractTests", "status": "passed", "passed": 14 },
+    { "name": "backend solution", "status": "passed", "component": 122, "unit": 56, "architecture": 35, "integration": 224, "contractSkipped": 1 },
+    { "name": "git diff --check", "status": "passed" },
+    { "name": "shortcut diff guard", "status": "passed" },
+    { "name": "dev compose rebuild and health", "status": "passed" }
+  ],
+  "loadTests": [
+    {
+      "runId": "20260506-114209-public-api-rps-e40172bb",
+      "rate": 100,
+      "durationSeconds": 30,
+      "maxVus": 100,
+      "requests": 3001,
+      "failedRequests": 0,
+      "averageRps": 100,
+      "p95Ms": 5.4,
+      "p99Ms": 6.5,
+      "dbCommandP95Ms": 3.9,
+      "dbConnectionOpenP95Ms": 0
+    },
+    {
+      "runId": "20260506-114309-public-api-rps-70eb5ce2",
+      "rate": 300,
+      "durationSeconds": 30,
+      "maxVus": 300,
+      "requests": 9000,
+      "failedRequests": 0,
+      "averageRps": 300,
+      "p95Ms": 5.2,
+      "p99Ms": 10.5,
+      "dbCommandP95Ms": 3.5,
+      "dbConnectionOpenP95Ms": 0
+    }
+  ],
+  "risks": [
+    "Covering indexes add write-time maintenance and storage cost",
+    "Index-only scan usage depends on planner and visibility map",
+    "Compiled query cache is per EF model to support test/runtime variants"
+  ],
+  "recommendation": "Merge to dev, verify CI, promote to main, then evaluate public detail payload size reduction with legacy markdown compatibility."
+}

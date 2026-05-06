@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Public Hot Path Query Indexes And Compiled Reads Audit</title>
+  <style>body{font-family:system-ui,sans-serif;max-width:920px;margin:40px auto;padding:0 20px;line-height:1.55;color:#172033}code{background:#eef2f7;padding:2px 5px;border-radius:4px}h1,h2{line-height:1.2}</style>
+</head>
+<body>
+  <h1>Public Hot Path Query Indexes And Compiled Reads Audit</h1>
+  <p><strong>Date:</strong> 2026-05-06</p>
+  <h2>Summary</h2>
+  <p>Added public list covering indexes and EF compiled queries for public Blog/Work detail hot paths without changing cache, target selection, page size, or public DTO shape.</p>
+  <h2>Validation</h2>
+  <ul>
+    <li>Backend solution passed: Contract 1 skipped, Component 122, Unit 56, Architecture 35, Integration 224.</li>
+    <li>Real Backend 100rps/30s: 3,001 requests, 0 failed, p95 5.4ms.</li>
+    <li>Real Backend 300rps/30s: 9,000 requests, 0 failed, p95 5.2ms.</li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Merge to dev and promote to main. Next, evaluate public detail payload size reduction with legacy markdown compatibility.</p>
+</body>
+</html>

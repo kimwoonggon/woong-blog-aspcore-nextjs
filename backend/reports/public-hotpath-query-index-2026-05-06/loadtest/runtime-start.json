@@ -1,0 +1,33 @@
+{
+  "runId": "20260506-114209-public-api-rps-e40172bb",
+  "status": "running",
+  "runner": "k6",
+  "scenario": "public-api-rps",
+  "targets": [
+    {
+      "id": "works-list",
+      "label": "Work list",
+      "path": "/api/public/works?page=1&pageSize=12",
+      "group": "work"
+    },
+    {
+      "id": "work-read",
+      "label": "Work read",
+      "path": "/api/public/works/real-load-work-fixture-pw-w0-r0-motw6so0-y37u5m",
+      "group": "work"
+    },
+    {
+      "id": "study-list",
+      "label": "Study list",
+      "path": "/api/public/blogs?page=1&pageSize=12",
+      "group": "study"
+    },
+    {
+      "id": "study-read",
+      "label": "Study read",
+      "path": "/api/public/blogs/real-load-study-fixture-pw-w0-r0-motw6sp7-r6azwf",
+      "group": "study"
+    }
+  ],
+  "startedAtUtc": "2026-05-06T11:42:09.3787463+00:00"
+}

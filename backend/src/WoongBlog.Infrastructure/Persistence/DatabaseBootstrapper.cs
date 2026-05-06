@@ -51,6 +51,11 @@ public static class DatabaseBootstrapper
                     cancellationToken);
                 await ApplySchemaPatchAsync(
                     dbContext,
+                    "20260506_public_list_covering_indexes",
+                    PublicListCoveringIndexesSchemaPatchSql,
+                    cancellationToken);
+                await ApplySchemaPatchAsync(
+                    dbContext,
                     "20260506_public_work_thumbnail_fallback_backfill",
                     PublicWorkThumbnailFallbackBackfillSchemaPatchSql,
                     cancellationToken);
@@ -320,6 +325,16 @@ CREATE INDEX IF NOT EXISTS "IX_Works_SearchTitle_Trgm" ON "Works" USING gin ("Se
 CREATE INDEX IF NOT EXISTS "IX_Works_SearchText_Trgm" ON "Works" USING gin ("SearchText" gin_trgm_ops);
 
 DROP FUNCTION IF EXISTS public.__woongblog_content_search_normalize(text);
+""";
+
+    private const string PublicListCoveringIndexesSchemaPatchSql = """
+CREATE INDEX IF NOT EXISTS "IX_Blogs_PublicList_Covering"
+ON "Blogs" ("Published", "PublishedAt" DESC)
+INCLUDE ("Id", "Slug", "Title", "Excerpt", "Tags", "PublicCoverUrl");
+
+CREATE INDEX IF NOT EXISTS "IX_Works_PublicList_Covering"
+ON "Works" ("Published", "PublishedAt" DESC)
+INCLUDE ("Id", "Slug", "Title", "Excerpt", "Category", "Period", "Tags", "PublicThumbnailUrl", "PublicIconUrl");
 """;
 
     private const string PublicContentBodyFieldsSchemaPatchSql = """
