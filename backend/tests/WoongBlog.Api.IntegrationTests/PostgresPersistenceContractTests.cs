@@ -5,8 +5,10 @@ using Microsoft.Extensions.Options;
 using Npgsql;
 using Testcontainers.PostgreSql;
 using WoongBlog.Api.Domain.Entities;
+using WoongBlog.Application.Modules.Content.Works.WorkVideos;
 using WoongBlog.Infrastructure.Persistence;
 using WoongBlog.Infrastructure.Persistence.Diagnostics;
+using WoongBlog.Infrastructure.Modules.Content.Works.Persistence;
 
 namespace WoongBlog.Api.Tests;
 
@@ -62,6 +64,10 @@ public sealed class PostgresPersistenceContractTests : IClassFixture<PostgresPer
             cancellationToken));
         Assert.True(await ExistsAsync(
             connection,
+            "SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Works' AND column_name = 'PublicSocialShareMessage')",
+            cancellationToken));
+        Assert.True(await ExistsAsync(
+            connection,
             "SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Blogs' AND column_name = 'PublicCoverUrl')",
             cancellationToken));
         Assert.True(await ExistsAsync(
@@ -83,6 +89,10 @@ public sealed class PostgresPersistenceContractTests : IClassFixture<PostgresPer
         Assert.True(await ExistsAsync(
             connection,
             "SELECT EXISTS (SELECT 1 FROM \"SchemaPatches\" WHERE \"Id\" = '20260506_public_media_url_fields')",
+            cancellationToken));
+        Assert.True(await ExistsAsync(
+            connection,
+            "SELECT EXISTS (SELECT 1 FROM \"SchemaPatches\" WHERE \"Id\" = '20260506_public_work_social_share_message')",
             cancellationToken));
     }
 
@@ -249,6 +259,49 @@ public sealed class PostgresPersistenceContractTests : IClassFixture<PostgresPer
         Assert.NotNull(snapshot.CommandLatency.P95Ms);
     }
 
+    [Fact]
+    public async Task PublicWorkDetail_UsesStoredSocialShareMessage_WithPostgres()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await using var dbContext = CreateDbContext();
+        await ResetDatabaseAsync(dbContext, cancellationToken);
+        await DatabaseBootstrapper.InitializeAsync(dbContext, cancellationToken);
+
+        var workId = Guid.NewGuid();
+        const string slug = "postgres-public-social-share";
+        dbContext.Works.Add(new Work
+        {
+            Id = workId,
+            Slug = slug,
+            Title = "Postgres Public Social Share",
+            Excerpt = "Public detail",
+            Category = "case-study",
+            ContentJson = """{"html":"<p>public body</p>"}""",
+            AllPropertiesJson = """{"socialShareMessage":"Stale admin JSON message"}""",
+            Published = true,
+            PublishedAt = DateTimeOffset.UtcNow,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        });
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        await dbContext.Database.ExecuteSqlInterpolatedAsync(
+            $"""
+            UPDATE "Works"
+            SET "PublicSocialShareMessage" = {"Stored public message"}
+            WHERE "Id" = {workId}
+            """,
+            cancellationToken);
+        dbContext.ChangeTracker.Clear();
+
+        var queryStore = new WorkQueryStore(dbContext, new NoopPlaybackUrlBuilder());
+
+        var result = await queryStore.GetPublishedDetailBySlugAsync(slug, cancellationToken);
+
+        Assert.NotNull(result);
+        Assert.Equal("Stored public message", result!.SocialShareMessage);
+    }
+
     private WoongBlogDbContext CreateDbContext()
     {
         return _fixture.CreateDbContext();
@@ -336,6 +389,21 @@ public sealed class PostgresPersistenceContractTests : IClassFixture<PostgresPer
         int Pages,
         int SiteSettings,
         int SchemaPatches);
+
+    private sealed class NoopPlaybackUrlBuilder : IWorkVideoPlaybackUrlBuilder
+    {
+        public string? BuildPlaybackUrl(string sourceType, string sourceKey) => null;
+
+        public string? BuildStorageObjectUrl(string storageType, string storageKey) => null;
+
+        public Task<bool> StorageObjectExistsAsync(
+            string storageType,
+            string storageKey,
+            CancellationToken cancellationToken)
+        {
+            return Task.FromResult(false);
+        }
+    }
 
     public sealed class PostgresFixture : IAsyncLifetime
     {

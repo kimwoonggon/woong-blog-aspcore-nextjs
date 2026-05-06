@@ -80,6 +80,7 @@ public class WoongBlogDbContext : DbContext
             entity.Property(x => x.PublicContentMarkdown).HasDefaultValue(string.Empty);
             entity.Property(x => x.PublicThumbnailUrl).HasDefaultValue(string.Empty);
             entity.Property(x => x.PublicIconUrl).HasDefaultValue(string.Empty);
+            entity.Property(x => x.PublicSocialShareMessage).HasDefaultValue(string.Empty);
             entity.Property(x => x.AllPropertiesJson).HasColumnType("jsonb");
         });
 

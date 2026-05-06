@@ -288,7 +288,7 @@ public class AdminMutationEndpointsTests : IClassFixture<CustomWebApplicationFac
         var unrelated = await SeedWorkAsync("Unrelated Work Create", published: true);
         var client = _factory.CreateAuthenticatedClient();
         var contentJson = JsonSerializer.Serialize(new { html = "<p>Created work body for admin mutation tests</p>" });
-        var propertiesJson = JsonSerializer.Serialize(new { role = "backend", impact = "coverage" });
+        var propertiesJson = JsonSerializer.Serialize(new { role = "backend", impact = "coverage", socialShareMessage = "Created work share" });
 
         var response = await client.PostAsJsonAsync("/api/admin/works", new
         {
@@ -318,6 +318,7 @@ public class AdminMutationEndpointsTests : IClassFixture<CustomWebApplicationFac
         Assert.Equal(["admin", "work"], created.Tags);
         Assert.Equal(contentJson, created.ContentJson);
         Assert.Equal(propertiesJson, created.AllPropertiesJson);
+        Assert.Equal("Created work share", created.PublicSocialShareMessage);
         Assert.True(created.Published);
         Assert.NotNull(created.PublishedAt);
         Assert.Equal(unrelated.Title, unrelatedAfter.Title);
@@ -352,7 +353,7 @@ public class AdminMutationEndpointsTests : IClassFixture<CustomWebApplicationFac
         var unrelated = await SeedWorkAsync("Unrelated Work Update", published: true);
         var client = _factory.CreateAuthenticatedClient();
         var contentJson = JsonSerializer.Serialize(new { html = "<p>Updated work body</p>" });
-        var propertiesJson = JsonSerializer.Serialize(new { role = "updated", impact = "admin" });
+        var propertiesJson = JsonSerializer.Serialize(new { role = "updated", impact = "admin", socialShareMessage = "Updated work share" });
         var thumbnailAssetId = Guid.NewGuid();
         var iconAssetId = Guid.NewGuid();
         using (var assetScope = _factory.Services.CreateScope())
@@ -394,6 +395,7 @@ public class AdminMutationEndpointsTests : IClassFixture<CustomWebApplicationFac
         Assert.Equal(["updated", "work"], updated.Tags);
         Assert.Equal(contentJson, updated.ContentJson);
         Assert.Equal(propertiesJson, updated.AllPropertiesJson);
+        Assert.Equal("Updated work share", updated.PublicSocialShareMessage);
         Assert.Equal(thumbnailAssetId, updated.ThumbnailAssetId);
         Assert.Equal(iconAssetId, updated.IconAssetId);
         Assert.Equal("/media/work-update-thumb.png", updated.PublicThumbnailUrl);
