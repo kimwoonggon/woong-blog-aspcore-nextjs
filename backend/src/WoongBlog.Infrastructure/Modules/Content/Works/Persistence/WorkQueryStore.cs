@@ -22,24 +22,9 @@ public sealed class WorkQueryStore(
 
     public async Task<IReadOnlyList<AdminWorkListItemDto>> GetAdminListAsync(CancellationToken cancellationToken)
     {
-        var works = await dbContext.Works
+        return await dbContext.Works
             .AsNoTracking()
             .OrderByDescending(x => x.CreatedAt)
-            .ToListAsync(cancellationToken);
-
-        var workIds = works.Select(x => x.Id).ToArray();
-        var assetIds = works
-            .Where(x => x.ThumbnailAssetId.HasValue)
-            .Select(x => x.ThumbnailAssetId!.Value)
-            .Distinct()
-            .ToArray();
-        var assetLookup = await dbContext.Assets
-            .AsNoTracking()
-            .Where(x => assetIds.Contains(x.Id))
-            .ToDictionaryAsync(x => x.Id, x => x.PublicUrl, cancellationToken);
-        var workVideos = await GetVideoLookupAsync(workIds, cancellationToken);
-
-        return works
             .Select(x => new AdminWorkListItemDto(
                 x.Id,
                 x.Title,
@@ -48,16 +33,12 @@ public sealed class WorkQueryStore(
                 x.Category,
                 x.Period,
                 x.Tags,
-                WorkThumbnailUrlResolver.ResolveThumbnailUrl(
-                    x.ThumbnailAssetId,
-                    x.ContentJson,
-                    workVideos.TryGetValue(x.Id, out var videos) ? videos : Array.Empty<WorkVideo>(),
-                    assetLookup),
+                x.PublicThumbnailUrl,
                 x.Published,
                 x.PublishedAt,
                 x.CreatedAt,
                 x.UpdatedAt))
-            .ToList();
+            .ToListAsync(cancellationToken);
     }
 
     public async Task<AdminWorkDetailDto?> GetAdminDetailAsync(Guid id, CancellationToken cancellationToken)
