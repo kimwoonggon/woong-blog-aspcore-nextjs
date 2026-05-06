@@ -192,7 +192,8 @@ public sealed class WorkQueryStore(
                 work.PublicIconUrl,
                 work.PublishedAt,
                 work.PublicSocialShareMessage,
-                work.VideosVersion))
+                work.VideosVersion,
+                dbContext.WorkVideos.Any(video => video.WorkId == work.Id)))
             .SingleOrDefaultAsync(cancellationToken);
 
         return work is null
@@ -234,8 +235,9 @@ public sealed class WorkQueryStore(
 
     private async Task<WorkDetailDto> BuildPublicDetailAsync(PublicWorkDetailRow work, CancellationToken cancellationToken)
     {
-        var videoRows = await GetVideosAsync(work.Id, cancellationToken);
-        var videos = await BuildVideoDtosAsync(videoRows, verifyPreviewAssets: false, cancellationToken);
+        List<WorkVideoDto> videos = work.HasVideos
+            ? await GetPublicVideoDtosAsync(work.Id, cancellationToken)
+            : [];
 
         return new WorkDetailDto(
             work.Id,
@@ -252,6 +254,38 @@ public sealed class WorkQueryStore(
             NormalizeOptional(work.PublicSocialShareMessage),
             work.VideosVersion,
             videos);
+    }
+
+    private async Task<List<WorkVideoDto>> GetPublicVideoDtosAsync(Guid workId, CancellationToken cancellationToken)
+    {
+        var videoRows = await dbContext.WorkVideos
+            .AsNoTracking()
+            .Where(x => x.WorkId == workId)
+            .OrderBy(x => x.SortOrder)
+            .ThenBy(x => x.CreatedAt)
+            .Select(video => new PublicWorkVideoRow(
+                video.Id,
+                video.SourceType,
+                video.SourceKey,
+                video.OriginalFileName,
+                video.MimeType,
+                video.FileSize,
+                video.Width,
+                video.Height,
+                video.DurationSeconds,
+                video.TimelinePreviewVttStorageKey,
+                video.TimelinePreviewSpriteStorageKey,
+                video.SortOrder,
+                video.CreatedAt))
+            .ToListAsync(cancellationToken);
+
+        var videos = new List<WorkVideoDto>(videoRows.Count);
+        foreach (var video in videoRows)
+        {
+            videos.Add(BuildPublicVideoDto(video));
+        }
+
+        return videos;
     }
 
     private async Task<IReadOnlyDictionary<Guid, IReadOnlyList<WorkVideo>>> GetVideoLookupAsync(
@@ -304,7 +338,7 @@ public sealed class WorkQueryStore(
 
         foreach (var video in videoRows)
         {
-            var (previewStorageType, hasPreviewStorageType) = ResolvePreviewStorageType(video);
+            var (previewStorageType, hasPreviewStorageType) = ResolvePreviewStorageType(video.SourceType, video.SourceKey);
             var hasPreviewAssets = hasPreviewStorageType
                 && !string.IsNullOrWhiteSpace(video.TimelinePreviewVttStorageKey)
                 && !string.IsNullOrWhiteSpace(video.TimelinePreviewSpriteStorageKey)
@@ -335,6 +369,30 @@ public sealed class WorkQueryStore(
         return results;
     }
 
+    private WorkVideoDto BuildPublicVideoDto(PublicWorkVideoRow video)
+    {
+        var (previewStorageType, hasPreviewStorageType) = ResolvePreviewStorageType(video.SourceType, video.SourceKey);
+        var hasPreviewAssets = hasPreviewStorageType
+            && !string.IsNullOrWhiteSpace(video.TimelinePreviewVttStorageKey)
+            && !string.IsNullOrWhiteSpace(video.TimelinePreviewSpriteStorageKey);
+
+        return new WorkVideoDto(
+            video.Id,
+            video.SourceType,
+            video.SourceKey,
+            playbackUrlBuilder.BuildPlaybackUrl(video.SourceType, video.SourceKey),
+            video.OriginalFileName,
+            video.MimeType,
+            video.FileSize,
+            video.Width,
+            video.Height,
+            video.DurationSeconds,
+            hasPreviewAssets ? playbackUrlBuilder.BuildStorageObjectUrl(previewStorageType, video.TimelinePreviewVttStorageKey!) : null,
+            hasPreviewAssets ? playbackUrlBuilder.BuildStorageObjectUrl(previewStorageType, video.TimelinePreviewSpriteStorageKey!) : null,
+            video.SortOrder,
+            video.CreatedAt);
+    }
+
     private async Task<bool> PreviewAssetsExistAsync(
         string previewStorageType,
         string vttStorageKey,
@@ -350,17 +408,17 @@ public sealed class WorkQueryStore(
         return vttExists && spriteExists;
     }
 
-    private static (string StorageType, bool IsResolved) ResolvePreviewStorageType(WorkVideo video)
+    private static (string StorageType, bool IsResolved) ResolvePreviewStorageType(string sourceType, string sourceKey)
     {
-        if (string.Equals(video.SourceType, WorkVideoSourceTypes.Hls, StringComparison.OrdinalIgnoreCase)
-            && WorkVideoHlsSourceKey.TryParse(video.SourceKey, out var storageType, out _))
+        if (string.Equals(sourceType, WorkVideoSourceTypes.Hls, StringComparison.OrdinalIgnoreCase)
+            && WorkVideoHlsSourceKey.TryParse(sourceKey, out var storageType, out _))
         {
             return (storageType, true);
         }
 
-        return string.IsNullOrWhiteSpace(video.SourceType)
+        return string.IsNullOrWhiteSpace(sourceType)
             ? (string.Empty, false)
-            : (video.SourceType, true);
+            : (sourceType, true);
     }
 
     private static IQueryable<Work> ApplySearch(
@@ -434,5 +492,21 @@ public sealed class WorkQueryStore(
         string IconUrl,
         DateTimeOffset? PublishedAt,
         string PublicSocialShareMessage,
-        int VideosVersion);
+        int VideosVersion,
+        bool HasVideos);
+
+    private sealed record PublicWorkVideoRow(
+        Guid Id,
+        string SourceType,
+        string SourceKey,
+        string? OriginalFileName,
+        string? MimeType,
+        long? FileSize,
+        int? Width,
+        int? Height,
+        double? DurationSeconds,
+        string? TimelinePreviewVttStorageKey,
+        string? TimelinePreviewSpriteStorageKey,
+        int SortOrder,
+        DateTimeOffset CreatedAt);
 }
