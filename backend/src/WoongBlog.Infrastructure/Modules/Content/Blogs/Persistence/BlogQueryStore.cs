@@ -1,4 +1,6 @@
+using System.Collections.Concurrent;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 using WoongBlog.Api.Domain.Entities;
 using WoongBlog.Infrastructure.Persistence;
 using WoongBlog.Application.Modules.Composition.GetHome;
@@ -15,6 +17,24 @@ namespace WoongBlog.Infrastructure.Modules.Content.Blogs.Persistence;
 public sealed class BlogQueryStore(WoongBlogDbContext dbContext) : IBlogQueryStore
 {
     private const string PostgresProviderName = "Npgsql.EntityFrameworkCore.PostgreSQL";
+    private static readonly ConcurrentDictionary<IModel, Func<WoongBlogDbContext, string, IAsyncEnumerable<BlogDetailDto>>> PublishedDetailBySlugQueries = new();
+
+    private static Func<WoongBlogDbContext, string, IAsyncEnumerable<BlogDetailDto>> CreatePublishedDetailBySlugQuery(IModel _)
+    {
+        return EF.CompileAsyncQuery((WoongBlogDbContext context, string slug) =>
+            context.Blogs.AsNoTracking()
+                .Where(x => x.Slug == slug && x.Published)
+                .Select(blog => new BlogDetailDto(
+                    blog.Id,
+                    blog.Slug,
+                    blog.Title,
+                    blog.Excerpt,
+                    PublicContentBodyDto.FromStoredFields(blog.PublicContentHtml, blog.PublicContentMarkdown),
+                    blog.Tags,
+                    blog.PublicCoverUrl,
+                    blog.PublishedAt))
+                .Take(1));
+    }
 
     public async Task<IReadOnlyList<AdminBlogListItemDto>> GetAdminListAsync(CancellationToken cancellationToken)
     {
@@ -166,18 +186,13 @@ public sealed class BlogQueryStore(WoongBlogDbContext dbContext) : IBlogQuerySto
 
     public async Task<BlogDetailDto?> GetPublishedDetailBySlugAsync(string slug, CancellationToken cancellationToken)
     {
-        return await dbContext.Blogs.AsNoTracking()
-            .Where(x => x.Slug == slug && x.Published)
-            .Select(blog => new BlogDetailDto(
-                blog.Id,
-                blog.Slug,
-                blog.Title,
-                blog.Excerpt,
-                PublicContentBodyDto.FromStoredFields(blog.PublicContentHtml, blog.PublicContentMarkdown),
-                blog.Tags,
-                blog.PublicCoverUrl,
-                blog.PublishedAt))
-            .SingleOrDefaultAsync(cancellationToken);
+        var query = PublishedDetailBySlugQueries.GetOrAdd(dbContext.Model, CreatePublishedDetailBySlugQuery);
+        await foreach (var blog in query(dbContext, slug).WithCancellation(cancellationToken))
+        {
+            return blog;
+        }
+
+        return null;
     }
 
     private static IQueryable<Blog> ApplySearch(
