@@ -6,15 +6,21 @@ public sealed record WorkVideoDto(
     Guid Id,
     string SourceType,
     string SourceKey,
-    string? PlaybackUrl,
-    string? OriginalFileName,
-    string? MimeType,
-    long? FileSize,
-    int? Width,
-    int? Height,
-    [property: JsonPropertyName("duration_seconds")] double? DurationSeconds,
-    [property: JsonPropertyName("timeline_preview_vtt_url")] string? TimelinePreviewVttUrl,
-    [property: JsonPropertyName("timeline_preview_sprite_url")] string? TimelinePreviewSpriteUrl,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? PlaybackUrl,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? OriginalFileName,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? MimeType,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] long? FileSize,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] int? Width,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] int? Height,
+    [property: JsonPropertyName("duration_seconds")]
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    double? DurationSeconds,
+    [property: JsonPropertyName("timeline_preview_vtt_url")]
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    string? TimelinePreviewVttUrl,
+    [property: JsonPropertyName("timeline_preview_sprite_url")]
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    string? TimelinePreviewSpriteUrl,
     int SortOrder,
     DateTimeOffset CreatedAt
 );
