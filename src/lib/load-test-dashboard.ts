@@ -215,6 +215,8 @@ export type RealBackendTargetMetric = {
   successCount: number
   failureCount: number
   p95Ms: number
+  responseBytesP95: number | null
+  receiveP95Ms: number | null
   statusCounts: Record<string, number>
 }
 
@@ -847,6 +849,18 @@ function readTargetMetricsFromRecord(record: Record<string, unknown>) {
     const successCount = readNumberFromRecord(target, ['successCount', 'successfulRequests', 'success'])
       ?? Math.max(0, requestCount - failureCount)
     const p95Ms = readNumberFromRecord(target, ['p95Ms', 'p95', 'latencyMs']) ?? 0
+    const responseBytesP95 = readNumberFromRecord(target, [
+      'responseBytesP95',
+      'responseBodyBytesP95',
+      'payloadBytesP95',
+      'bodyBytesP95',
+    ])
+    const receiveP95Ms = readNumberFromRecord(target, [
+      'receiveP95Ms',
+      'receivingP95Ms',
+      'responseReceiveP95Ms',
+      'receiveMsP95',
+    ])
 
     return {
       targetId,
@@ -857,6 +871,8 @@ function readTargetMetricsFromRecord(record: Record<string, unknown>) {
       successCount,
       failureCount,
       p95Ms: roundMetric(p95Ms),
+      responseBytesP95: responseBytesP95 === null ? null : roundMetric(responseBytesP95),
+      receiveP95Ms: receiveP95Ms === null ? null : roundMetric(receiveP95Ms),
       statusCounts: readStatusCounts(target.statusCounts),
     }
   }).filter((target): target is RealBackendTargetMetric => target !== null)

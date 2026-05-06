@@ -1,0 +1,34 @@
+{
+  "runId": "20260506-123052-public-api-rps-7e5cdcea",
+  "status": "completed",
+  "requests": 26,
+  "failed": 0,
+  "p95Ms": 19.2,
+  "p99Ms": 56.1,
+  "targetMetrics": [
+    {
+      "targetId": "works-list",
+      "p95Ms": 5.3,
+      "responseBytesP95": 4422,
+      "receiveP95Ms": 0.2
+    },
+    {
+      "targetId": "work-read",
+      "p95Ms": 18.7,
+      "responseBytesP95": 516,
+      "receiveP95Ms": 0.1
+    },
+    {
+      "targetId": "study-list",
+      "p95Ms": 6.7,
+      "responseBytesP95": 3869,
+      "receiveP95Ms": 0.1
+    },
+    {
+      "targetId": "study-read",
+      "p95Ms": 48.2,
+      "responseBytesP95": 423,
+      "receiveP95Ms": 0.1
+    }
+  ]
+}

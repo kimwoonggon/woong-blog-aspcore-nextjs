@@ -1,0 +1,110 @@
+{
+  "slug": "backend-performance-impact-map-2026-05-06",
+  "date": "2026-05-06",
+  "scope": "audit-only",
+  "baseline": {
+    "branch": "dev",
+    "head": "c7c38d0",
+    "commit_subject": "Optimize public hot path queries (#88)",
+    "constraints": [
+      "pageSize=12 remains realistic list target",
+      "no seeded target priority",
+      "no cache-first recommendation",
+      "2 CPU and shared 8 GiB production-like runtime assumption"
+    ]
+  },
+  "current_baseline": {
+    "work_list": "one Postgres window query, card projection, covering index",
+    "blog_list": "one Postgres window query, card projection, covering index",
+    "blog_detail": "one compiled EF projection with stored public body and cover URL",
+    "work_detail_without_videos": "one compiled EF projection using stored media URLs and VideosVersion gate",
+    "work_detail_with_videos": "one detail command plus one video-row command",
+    "public_home": "three commands",
+    "json": "source-generated metadata for public hot-path DTOs"
+  },
+  "latest_real_backend_runs": [
+    {
+      "run_id": "20260506-114209-public-api-rps-e40172bb",
+      "rate": 100,
+      "duration_seconds": 30,
+      "requests": 3001,
+      "failed": 0,
+      "average_rps": 100.0,
+      "p95_ms": 5.4,
+      "p99_ms": 6.5,
+      "db_command_p95_ms": 3.9,
+      "db_connection_open_p95_ms": 0
+    },
+    {
+      "run_id": "20260506-114309-public-api-rps-70eb5ce2",
+      "rate": 300,
+      "duration_seconds": 30,
+      "requests": 9000,
+      "failed": 0,
+      "average_rps": 300.0,
+      "p95_ms": 5.2,
+      "p99_ms": 10.5,
+      "db_command_p95_ms": 3.5,
+      "db_connection_open_p95_ms": 0,
+      "target_p95_ms": {
+        "works-list": 4.3,
+        "work-read": 2.7,
+        "study-list": 6.3,
+        "study-read": 2.5
+      }
+    }
+  ],
+  "prioritized_opportunities": [
+    {
+      "priority": "P0",
+      "area": "heavy detail payload and serialization attribution",
+      "expected_metrics": ["app elapsed p95", "client p95", "gc heap", "gen2 gc", "memory peak", "detail target p95", "response bytes"],
+      "raw_throughput_effect": "likely for large real content if DB p95 remains low"
+    },
+    {
+      "priority": "P1",
+      "area": "completed-run diagnostics presentation gap",
+      "expected_metrics": ["db command p95/p99", "db connection-open p95/p99", "threadpool queue peak", "gc/memory peak", "runtime reason"],
+      "raw_throughput_effect": "none directly; diagnostics persistence and async DB timing already exist"
+    },
+    {
+      "priority": "P1",
+      "area": "work detail with videos",
+      "expected_metrics": ["work read p95", "db command count", "active/open connections under spike"],
+      "raw_throughput_effect": "only for video work targets"
+    },
+    {
+      "priority": "P2",
+      "area": "published list index verification",
+      "expected_metrics": ["work list p95", "study list p95", "db command p95", "buffer reads"],
+      "raw_throughput_effect": "production-sized tables only"
+    },
+    {
+      "priority": "P2",
+      "area": "public home collapse/read model",
+      "expected_metrics": ["home p95", "db command count", "db connection-open p95"],
+      "raw_throughput_effect": "only if home is in target mix"
+    }
+  ],
+  "recommendation": "Measure heavy detail response-size and serialization/app-write time next, then choose video read-model, payload trim, or runtime capacity work based on attribution.",
+  "code_changed": false,
+  "ci_observation": {
+    "dev_run_id": 25433589378,
+    "status_at_report_creation": "completed_success",
+    "passed_jobs_observed": ["frontend lint/types/unit", "compose dev verification", "backend architecture", "backend integration", "backend component", "backend unit", "pact provider"],
+    "pending_jobs_observed": []
+  },
+  "promotion_observation": {
+    "publish_ghcr_dev_run_id": 25433858614,
+    "publish_ghcr_dev_status": "success",
+    "promote_main_runtime_run_id": 25433858575,
+    "promote_main_runtime_status": "success",
+    "main_pr": 89,
+    "main_pr_status": "merged",
+    "main_merge_commit": "ea6802e0c3dbd651adf6a392663c4e9a3fbd6543",
+    "main_push_ci_run_id": 25434162908,
+    "main_push_ci_status": "success",
+    "publish_ghcr_main_run_id": 25434455253,
+    "publish_ghcr_main_status": "success"
+  }
+}

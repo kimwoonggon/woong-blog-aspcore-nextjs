@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Heavy Detail Payload Attribution Audit - 2026-05-06</title>
+  <style>
+    body { font-family: sans-serif; max-width: 920px; margin: 40px auto; padding: 0 20px; line-height: 1.55; color: #1f2937; }
+    h1, h2 { color: #111827; }
+    code { background: #f3f4f6; padding: 0.1rem 0.25rem; border-radius: 4px; }
+    table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+    th, td { border: 1px solid #d1d5db; padding: 0.5rem; text-align: left; }
+    th { background: #f9fafb; }
+  </style>
+</head>
+<body>
+  <h1>Heavy Detail Payload Attribution Audit - 2026-05-06</h1>
+  <p>Added Real Backend Test target-level payload and receive timing attribution without changing target realism, cache behavior, seed priority, or pageSize=12 list semantics.</p>
+  <h2>Validation</h2>
+  <ul>
+    <li>Backend solution tests passed: Contract 1 skipped, Component 123, Unit 56, Architecture 35, Integration 224.</li>
+    <li>Frontend parser test passed 28/28, typecheck passed, lint completed with 0 errors and existing 6 warnings.</li>
+    <li>Live k6 smoke <code>20260506-123052-public-api-rps-7e5cdcea</code>: 26 requests, 0 failed, p95 19.2ms.</li>
+    <li>Playwright real backend dashboard mock flow passed 1/1.</li>
+  </ul>
+  <h2>Live Smoke Target Metrics</h2>
+  <table>
+    <thead><tr><th>Target</th><th>P95</th><th>Payload P95</th><th>Receive P95</th></tr></thead>
+    <tbody>
+      <tr><td>works-list</td><td>5.3 ms</td><td>4,422 B</td><td>0.2 ms</td></tr>
+      <tr><td>work-read</td><td>18.7 ms</td><td>516 B</td><td>0.1 ms</td></tr>
+      <tr><td>study-list</td><td>6.7 ms</td><td>3,869 B</td><td>0.1 ms</td></tr>
+      <tr><td>study-read</td><td>48.2 ms</td><td>423 B</td><td>0.1 ms</td></tr>
+    </tbody>
+  </table>
+  <h2>Recommendation</h2>
+  <p>Promote this measurement slice, then use realistic 100/300/500 rps runs to decide whether the next backend optimization should target payload split, DB/pool work, or app serialization/object materialization.</p>
+</body>
+</html>

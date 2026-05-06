@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Backend Performance Impact Map - 2026-05-06</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 2rem; line-height: 1.5; color: #172026; }
+    h1, h2 { color: #0f2f3f; }
+    table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+    th, td { border: 1px solid #d6dde3; padding: .55rem; vertical-align: top; }
+    th { background: #eef4f7; text-align: left; }
+    code { background: #f4f6f8; padding: .1rem .25rem; border-radius: 3px; }
+    .note { background: #f7fbec; border-left: 4px solid #8aa33f; padding: .8rem 1rem; }
+  </style>
+</head>
+<body>
+  <h1>Backend Performance Impact Map - 2026-05-06</h1>
+  <p class="note">Audit-only analysis on <code>dev@c7c38d0</code>. No production/test source code was changed.</p>
+  <h2>Current Baseline</h2>
+  <ul>
+    <li>Work/Blog list: one Postgres window query, card projection, covering indexes.</li>
+    <li>Blog detail: one compiled EF projection with stored public body and cover URL.</li>
+    <li>Work detail without videos: one compiled EF projection using stored media URLs and <code>VideosVersion</code>.</li>
+    <li>Work detail with videos: one detail command plus one video-row command.</li>
+    <li>Public Home: three commands.</li>
+  </ul>
+  <h2>Latest Evidence</h2>
+  <table>
+    <tr><th>Run</th><th>Rate</th><th>Requests</th><th>Failed</th><th>P95</th><th>DB Command P95</th></tr>
+    <tr><td><code>20260506-114209-public-api-rps-e40172bb</code></td><td>100rps</td><td>3,001</td><td>0</td><td>5.4ms</td><td>3.9ms</td></tr>
+    <tr><td><code>20260506-114309-public-api-rps-70eb5ce2</code></td><td>300rps</td><td>9,000</td><td>0</td><td>5.2ms</td><td>3.5ms</td></tr>
+  </table>
+  <h2>Recommended Order</h2>
+  <ol>
+    <li>P0: Heavy detail response-size and serialization/app-write timing.</li>
+    <li>P1: Completed-run diagnostics presentation gaps only if the UI is still ambiguous.</li>
+    <li>P1: Work detail with-video reduction only if a realistic video target is slower.</li>
+    <li>P2: Production-like EXPLAIN for list indexes before adding more indexes.</li>
+  </ol>
+  <h2>Final Recommendation</h2>
+  <p>Stop treating target-selection changes as performance work. The next useful backend step is heavy-content detail response-size and serialization/app-write measurement.</p>
+  <h2>Promotion</h2>
+  <p>Latest performance slice was verified through dev CI, PR #89 runtime-only main promotion, main push CI, and GHCR main publish.</p>
+</body>
+</html>

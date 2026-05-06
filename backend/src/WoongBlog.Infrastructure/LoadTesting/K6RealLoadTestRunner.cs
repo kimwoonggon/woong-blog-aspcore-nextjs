@@ -241,6 +241,8 @@ public sealed class K6RealLoadTestRunner(
                 Math.Max(0, requestCount - failureCount),
                 failureCount,
                 ReadTrendMetric(metrics, $"target_{metricId}_duration", "p(95)"),
+                ReadOptionalRoundedTrendMetric(metrics, $"target_{metricId}_response_bytes", "p(95)"),
+                ReadOptionalRoundedTrendMetric(metrics, $"target_{metricId}_receiving", "p(95)"),
                 statusCounts);
         }).ToArray();
     }
@@ -294,6 +296,12 @@ public sealed class K6RealLoadTestRunner(
         }
 
         return value.GetDouble();
+    }
+
+    private static double? ReadOptionalRoundedTrendMetric(JsonElement metrics, string name, string valueName)
+    {
+        var value = ReadOptionalTrendMetric(metrics, name, valueName);
+        return value.HasValue ? Round(value.Value) : null;
     }
 
     private static double ReadMetricValue(JsonElement metrics, string name, string valueName)
@@ -406,6 +414,8 @@ public sealed class K6RealLoadTestRunner(
                 status4xx: new Counter(`target_${target.metricId}_status_4xx`),
                 status5xx: new Counter(`target_${target.metricId}_status_5xx`),
                 duration: new Trend(`target_${target.metricId}_duration`),
+                responseBytes: new Trend(`target_${target.metricId}_response_bytes`),
+                receiving: new Trend(`target_${target.metricId}_receiving`),
                 appElapsed: new Trend(`target_${target.metricId}_app_elapsed`),
                 nginxRequest: new Trend(`target_${target.metricId}_nginx_request`),
                 nginxUpstream: new Trend(`target_${target.metricId}_nginx_upstream`),
@@ -489,6 +499,8 @@ public sealed class K6RealLoadTestRunner(
               if (metrics) {
                 metrics.requests.add(1);
                 metrics.duration.add(response.timings.duration);
+                metrics.responseBytes.add(resolveResponseBodyBytes(response));
+                metrics.receiving.add(response.timings.receiving);
               }
 
               recordStatus(response.status, metrics);
@@ -555,6 +567,24 @@ public sealed class K6RealLoadTestRunner(
                 }
               }
               return false;
+            }
+
+            function resolveResponseBodyBytes(response) {
+              const headerValue = response.headers['Content-Length'] || response.headers['content-length'];
+              const contentLength = Number.parseInt(headerValue || '', 10);
+              if (Number.isFinite(contentLength) && contentLength >= 0) {
+                return contentLength;
+              }
+
+              if (typeof response.body === 'string') {
+                return response.body.length;
+              }
+
+              if (response.body && Number.isFinite(response.body.byteLength)) {
+                return response.body.byteLength;
+              }
+
+              return 0;
             }
 
             function parseTimingHeader(raw, multiplier) {
