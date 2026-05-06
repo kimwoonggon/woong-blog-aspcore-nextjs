@@ -4,34 +4,33 @@
   <meta charset="utf-8">
   <title>Backend Performance Opportunity Scan - 2026-05-06</title>
   <style>
-    body { font-family: sans-serif; max-width: 960px; margin: 32px auto; line-height: 1.55; color: #18212f; }
-    h1, h2 { color: #0f172a; }
-    table { border-collapse: collapse; width: 100%; }
-    th, td { border: 1px solid #cbd5e1; padding: 8px; vertical-align: top; }
-    th { background: #e2e8f0; }
-    code { background: #f1f5f9; padding: 1px 4px; }
+    body { font-family: sans-serif; max-width: 920px; margin: 40px auto; line-height: 1.55; color: #172033; }
+    h1, h2 { line-height: 1.2; }
+    code { background: #f3f5f7; padding: 0.1rem 0.25rem; border-radius: 4px; }
+    li { margin: 0.35rem 0; }
   </style>
 </head>
 <body>
   <h1>Backend Performance Opportunity Scan - 2026-05-06</h1>
-  <p>Audit-only scan. No production or test source files were changed.</p>
-  <h2>Recommended Order</h2>
+  <p>Audit-only scan. No production or test code was changed.</p>
+  <h2>Top Recommendation</h2>
+  <p>Start with deployed DB pool verification/enforcement and DbContext pooling validation. These target connection pressure, ThreadPool queue, GC/allocation overhead, and app elapsed p95.</p>
+  <h2>Priority Findings</h2>
   <ol>
-    <li>P0 Work thumbnail read-model fallback equivalence.</li>
-    <li>P1 Real load DB command p95 metrics.</li>
-    <li>P1 Public home roundtrip reduction.</li>
+    <li><strong>P0:</strong> Connection pool and DB pressure tuning.</li>
+    <li><strong>P1:</strong> Use DbContext pooling for hot API requests.</li>
+    <li><strong>P1:</strong> Audit public detail DTO/payload fields before reducing payload.</li>
+    <li><strong>P2:</strong> Revisit exact count strategy for public list only if row count grows.</li>
+    <li><strong>P2:</strong> Keep work detail with videos at two commands unless measured otherwise.</li>
+    <li><strong>P3:</strong> Consider response compression after backend structural fixes.</li>
   </ol>
-  <h2>Priority Map</h2>
-  <table>
-    <thead><tr><th>Priority</th><th>Area</th><th>Backend test signal</th><th>Impact</th></tr></thead>
-    <tbody>
-      <tr><td>P0</td><td>Work thumbnail read model</td><td>Stored <code>PublicThumbnailUrl</code> equals resolver output; public reads stay one command.</td><td>Preserves correctness without restoring hot-path resolver work.</td></tr>
-      <tr><td>P1</td><td>Real load diagnostics</td><td>Metrics response exposes DB command p95/sample count.</td><td>Makes future performance changes attributable.</td></tr>
-      <tr><td>P1</td><td>Public home endpoint</td><td>Postgres command count drops by at least one with resume asset present.</td><td>Reduces public home DB roundtrips.</td></tr>
-      <tr><td>P2</td><td>Work detail with videos</td><td>1-2 command contract, or 1 command if denormalized.</td><td>Only useful if video-heavy Work detail targets dominate.</td></tr>
-      <tr><td>P2</td><td>Page/admin projections</td><td>DTO-visible columns only.</td><td>Allocation/CPU reduction outside current load target.</td></tr>
-    </tbody>
-  </table>
-  <p>See the Markdown report for full details.</p>
+  <h2>Non-Recommendations</h2>
+  <ul>
+    <li>Do not reduce <code>pageSize=12</code> for load-test realism.</li>
+    <li>Do not switch to seeded/light targets as a performance fix.</li>
+    <li>Do not use cache as the first fix.</li>
+    <li>Do not add covering indexes that include large public detail body columns.</li>
+  </ul>
+  <p>See the Markdown report for full evidence and metric mapping.</p>
 </body>
 </html>

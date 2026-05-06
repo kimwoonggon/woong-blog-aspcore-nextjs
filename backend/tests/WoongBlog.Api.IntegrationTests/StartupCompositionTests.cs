@@ -4,6 +4,7 @@ using System.Text.Json;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -145,6 +146,47 @@ public class StartupCompositionTests : IClassFixture<CustomWebApplicationFactory
         var hostedServiceTypes = services.GetServices<IHostedService>().Select(service => service.GetType()).ToArray();
         Assert.Contains(typeof(AiBatchJobProcessor), hostedServiceTypes);
         Assert.Contains(typeof(VideoStorageCleanupWorker), hostedServiceTypes);
+    }
+
+    [Fact]
+    public void PersistenceRegistration_PoolsDbContextInstancesAndResetsStateAcrossScopes()
+    {
+        var services = new ServiceCollection();
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["DatabaseProvider"] = "InMemory",
+                ["InMemoryDatabaseName"] = $"pooled-context-{Guid.NewGuid()}"
+            })
+            .Build();
+        services.AddPersistenceInfrastructure(configuration);
+
+        using var provider = services.BuildServiceProvider(new ServiceProviderOptions
+        {
+            ValidateOnBuild = true,
+            ValidateScopes = true
+        });
+
+        WoongBlogDbContext firstContext;
+        using (var firstScope = provider.CreateScope())
+        {
+            firstContext = firstScope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
+            firstContext.Blogs.Add(new Blog
+            {
+                Slug = "pooled-context-tracked-blog",
+                Title = "Pooled Context Tracked Blog",
+                Excerpt = "Tracked only to prove reset behavior.",
+                ContentJson = "{}"
+            });
+
+            Assert.NotEmpty(firstContext.ChangeTracker.Entries());
+        }
+
+        using var secondScope = provider.CreateScope();
+        var secondContext = secondScope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
+
+        Assert.Same(firstContext, secondContext);
+        Assert.Empty(secondContext.ChangeTracker.Entries());
     }
 
     [Fact]
