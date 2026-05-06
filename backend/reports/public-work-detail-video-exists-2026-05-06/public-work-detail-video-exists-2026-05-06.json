@@ -1,0 +1,36 @@
+{
+  "slug": "public-work-detail-video-exists-2026-05-06",
+  "date": "2026-05-06",
+  "summary": "Removed request-time WorkVideos existence subquery from public Work detail no-video projection using stored VideosVersion with a legacy backfill patch.",
+  "changed": [
+    "Added Postgres SQL-shape contract for no-video public Work detail",
+    "Changed public Work detail projection to use VideosVersion > 0",
+    "Added schema patch 20260506_work_video_version_backfill",
+    "Set seeded Work VideosVersion when seeded videos exist",
+    "Aligned public HLS component fixture with VideosVersion = 1"
+  ],
+  "not_changed": [
+    "No cache",
+    "No Real Backend Test target change",
+    "No seeded target priority",
+    "No pageSize=1 shortcut",
+    "No weakening of thumbnail resolver equivalence guards"
+  ],
+  "validations": [
+    { "status": "pass", "command": "RED no-video SQL-shape test", "result": "failed before implementation because SQL contained FROM WorkVideos" },
+    { "status": "pass", "command": "RED backfill test", "result": "failed before implementation because VideosVersion stayed 0" },
+    { "status": "pass", "command": "focused Postgres backfill + SQL-shape tests", "result": "2 passed" },
+    { "status": "pass", "command": "focused public video detail + WorkVideo component tests", "result": "27 passed" },
+    { "status": "pass", "command": "PostgresPersistenceContractTests", "result": "12 passed" },
+    { "status": "pass", "command": "WoongBlog.Api.ComponentTests", "result": "122 passed" },
+    { "status": "pass", "command": "dotnet test backend/WoongBlog.sln --no-restore", "result": "completed successfully; observed Component 122 and Integration 216" },
+    { "status": "pass", "command": "Unit/Architecture/Contract explicit tests", "result": "Unit 56 passed, Architecture 35 passed, Contract 1 skipped" },
+    { "status": "pass", "command": "git diff --check", "result": "no whitespace errors" },
+    { "status": "not_run", "command": "local load smoke", "result": "dev compose had no running services" }
+  ],
+  "risks": [
+    "VideosVersion remains a may-have-videos flag and may cause an empty second query after all videos are deleted.",
+    "Direct DB writes that add videos without incrementing VideosVersion can bypass the stored flag after backfill."
+  ],
+  "recommendation": "Merge before continuing JSON serialization allocation and timing instrumentation work."
+}

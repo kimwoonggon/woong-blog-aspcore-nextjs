@@ -97,6 +97,52 @@ public sealed class PostgresPersistenceContractTests : IClassFixture<PostgresPer
             connection,
             "SELECT EXISTS (SELECT 1 FROM \"SchemaPatches\" WHERE \"Id\" = '20260506_public_work_social_share_message')",
             cancellationToken));
+        Assert.True(await ExistsAsync(
+            connection,
+            "SELECT EXISTS (SELECT 1 FROM \"SchemaPatches\" WHERE \"Id\" = '20260506_work_video_version_backfill')",
+            cancellationToken));
+    }
+
+    [Fact]
+    public async Task Bootstrapper_BackfillsVideosVersion_ForExistingWorkVideos()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await using var dbContext = CreateDbContext();
+        await ResetDatabaseAsync(dbContext, cancellationToken);
+        await dbContext.Database.EnsureCreatedAsync(cancellationToken);
+
+        var work = CreatePublishedWork(
+            "legacy-work-video-version",
+            "Legacy Work Video Version",
+            publishedAtOffsetMinutes: -1);
+        work.VideosVersion = 0;
+        dbContext.Works.Add(work);
+        dbContext.WorkVideos.Add(new WorkVideo
+        {
+            WorkId = work.Id,
+            SourceType = WorkVideoSourceTypes.YouTube,
+            SourceKey = "legacy-video-version",
+            OriginalFileName = "Legacy Video Version",
+            SortOrder = 0,
+            CreatedAt = DateTimeOffset.UtcNow
+        });
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        await DatabaseBootstrapper.InitializeAsync(dbContext, cancellationToken);
+
+        Assert.Equal(
+            1,
+            await dbContext.Works
+                .Where(x => x.Id == work.Id)
+                .Select(x => x.VideosVersion)
+                .SingleAsync(cancellationToken));
+
+        var connection = dbContext.Database.GetDbConnection();
+        await connection.OpenAsync(cancellationToken);
+        Assert.True(await ExistsAsync(
+            connection,
+            "SELECT EXISTS (SELECT 1 FROM \"SchemaPatches\" WHERE \"Id\" = '20260506_work_video_version_backfill')",
+            cancellationToken));
     }
 
     [Fact]
@@ -365,6 +411,33 @@ public sealed class PostgresPersistenceContractTests : IClassFixture<PostgresPer
         Assert.Equal(resolverThumbnailUrl, result!.ThumbnailUrl);
         Assert.Empty(result!.Videos);
         Assert.Equal(1, snapshot.CommandLatency.SampleCount);
+    }
+
+    [Fact]
+    public async Task PublicWorkDetailWithoutVideos_DoesNotReferenceWorkVideosInDetailProjection()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        const string slug = "postgres-public-work-no-video-exists";
+        await using (var setupContext = CreateDbContext())
+        {
+            await ResetDatabaseAsync(setupContext, cancellationToken);
+            await DatabaseBootstrapper.InitializeAsync(setupContext, cancellationToken);
+            await ClearPublicContentAsync(setupContext, cancellationToken);
+
+            setupContext.Works.Add(CreatePublishedWork(slug, "Postgres Public Work No Video Exists", publishedAtOffsetMinutes: -1));
+            await setupContext.SaveChangesAsync(cancellationToken);
+        }
+
+        var commandTextCapture = new CommandTextCaptureInterceptor();
+        await using var dbContext = _fixture.CreateDbContext(commandTextCapture);
+        var queryStore = new WorkQueryStore(dbContext, new NoopPlaybackUrlBuilder());
+
+        var result = await queryStore.GetPublishedDetailBySlugAsync(slug, cancellationToken);
+
+        Assert.NotNull(result);
+        Assert.Empty(result!.Videos);
+        var commandText = Assert.Single(commandTextCapture.CommandTexts);
+        Assert.DoesNotContain("\"WorkVideos\"", commandText, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -716,6 +789,30 @@ public sealed class PostgresPersistenceContractTests : IClassFixture<PostgresPer
         command.CommandText = sql;
         var result = await command.ExecuteScalarAsync(cancellationToken);
         return result is true;
+    }
+
+    private sealed class CommandTextCaptureInterceptor : DbCommandInterceptor
+    {
+        public List<string> CommandTexts { get; } = [];
+
+        public override InterceptionResult<DbDataReader> ReaderExecuting(
+            DbCommand command,
+            CommandEventData eventData,
+            InterceptionResult<DbDataReader> result)
+        {
+            CommandTexts.Add(command.CommandText);
+            return base.ReaderExecuting(command, eventData, result);
+        }
+
+        public override ValueTask<InterceptionResult<DbDataReader>> ReaderExecutingAsync(
+            DbCommand command,
+            CommandEventData eventData,
+            InterceptionResult<DbDataReader> result,
+            CancellationToken cancellationToken = default)
+        {
+            CommandTexts.Add(command.CommandText);
+            return base.ReaderExecutingAsync(command, eventData, result, cancellationToken);
+        }
     }
 
     private sealed record DataCounts(
