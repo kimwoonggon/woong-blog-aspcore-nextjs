@@ -1,0 +1,128 @@
+{
+  "task": "backend-performance-next-opportunities-scan",
+  "date": "2026-05-06",
+  "scope": "audit-only",
+  "productionCodeChanged": false,
+  "testCodeChanged": false,
+  "constraints": [
+    "no cache as primary fix",
+    "no seeded target priority",
+    "no pageSize=1 shortcut",
+    "realistic public Work/Blog list pageSize=12",
+    "current public read targets remain valid"
+  ],
+  "currentBaseline": {
+    "publicWorkListNoSearchFirstPageCommands": 1,
+    "publicBlogListNoSearchFirstPageCommands": 1,
+    "publicBlogDetailCommands": 1,
+    "publicWorkDetailWithoutVideosCommands": 1,
+    "publicWorkDetailWithVideosCommands": 2,
+    "publicHomeCommands": 3
+  },
+  "scanChecklist": {
+    "missingStringComparisonIndexOf": 0,
+    "substringAllocations": 0,
+    "startsEndsContainsCandidates": 11,
+    "toLowerToUpper": 0,
+    "replaceCalls": 23,
+    "paramsCandidates": 2,
+    "linqSelectWhereOrderGroup": 52,
+    "linqAllAny": 5,
+    "newDictionaryList": 4,
+    "staticReadonlyDictionary": 0,
+    "regexOptionsCompiled": 7,
+    "newRegex": 0,
+    "generatedRegex": 0,
+    "nonSealedPublicInternalClasses": 34,
+    "sealedClasses": 114
+  },
+  "representativeLoadEvidence": [
+    {
+      "name": "corrected-heavy-constant-100rps-30s",
+      "requests": 3001,
+      "rps": 100.0167,
+      "failureRate": 0,
+      "p95Ms": 11.2718,
+      "droppedIterations": 0
+    },
+    {
+      "name": "corrected-heavy-spike-100-1000-60s-maxvus1000",
+      "requests": 26403,
+      "rps": 330.0492,
+      "failureRate": 0.035223,
+      "p95Ms": 3653.5216,
+      "droppedIterations": 12596
+    },
+    {
+      "name": "nginx4096-pool40-spike-directional",
+      "requests": 36122,
+      "rps": 451.5363,
+      "failureRate": 0,
+      "p95Ms": 1502.3165,
+      "droppedIterations": 2877
+    },
+    {
+      "name": "public-work-list-warm-300rps-30s",
+      "requests": 9001,
+      "rps": 300.0545,
+      "failureRate": 0,
+      "p95Ms": 4.5803,
+      "droppedIterations": 0
+    },
+    {
+      "name": "public-blog-list-300rps-30s",
+      "requests": 9001,
+      "rps": 300.0418,
+      "failureRate": 0,
+      "p95Ms": 2.5401,
+      "droppedIterations": 0
+    },
+    {
+      "name": "public-home-100rps-15s",
+      "requests": 1500,
+      "rps": 99.9938,
+      "failureRate": 0,
+      "p95Ms": 25.4424,
+      "droppedIterations": 0
+    }
+  ],
+  "opportunities": [
+    {
+      "priority": "P0",
+      "name": "Run-scoped Real Backend diagnostics persistence",
+      "expectedMetrics": ["DB command P95/P99 availability", "DB connection-open P95/P99", "slow query count", "ThreadPool queue", "GC/memory samples"],
+      "reason": "Attribution is required before safely choosing DB, serialization, or runtime changes."
+    },
+    {
+      "priority": "P1",
+      "name": "Heavy public detail payload and serialization profiling",
+      "expectedMetrics": ["ASP.NET app elapsed p95", "GC heap", "Gen2 GC", "Time in GC", "process memory", "client p95"],
+      "reason": "Large real Work/Study bodies can dominate after DB roundtrip reductions."
+    },
+    {
+      "priority": "P1",
+      "name": "Public Work detail with-video read path",
+      "expectedMetrics": ["Work read p95", "DB command count for video detail", "DB connection-open p95", "active/open DB connections"],
+      "reason": "No-video Work detail is one command; video detail is the remaining two-command Work read path."
+    },
+    {
+      "priority": "P2",
+      "name": "Published-list partial descending indexes after EXPLAIN",
+      "expectedMetrics": ["Work list p95", "Study list p95", "DB command p95", "DB CPU/IO pressure"],
+      "reason": "List path is already one command and locally fast; index changes need production-like cardinality."
+    },
+    {
+      "priority": "P2",
+      "name": "Public Home 3-to-1 query read model",
+      "expectedMetrics": ["/api/public/home p95", "DB command count", "DB connection-open p95"],
+      "reason": "Home now uses three commands but is not in the current four-target load mix."
+    },
+    {
+      "priority": "P3",
+      "name": "Search-path tuning",
+      "expectedMetrics": ["search p95", "search DB command p95"],
+      "reason": "Search is not in the current no-search public load mix."
+    }
+  ],
+  "finalRecommendation": "Implement run-scoped Real Backend Test diagnostics next, then use the new metrics to choose between heavy detail serialization/payload, Work-video detail reduction, or list index tuning."
+}

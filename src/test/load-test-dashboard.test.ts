@@ -798,6 +798,46 @@ describe('load test dashboard planning', () => {
     })
   })
 
+  it('extracts persisted diagnostics samples from real backend metrics payload', () => {
+    const diagnostics = {
+      timestamp: '2026-05-06T10:00:00Z',
+      process: { memoryBytes: 2048, processorCount: 2 },
+      gc: { heapSizeBytes: 1024, gen0Collections: 1, gen1Collections: 0, gen2Collections: 0, timeInGcPercent: 0.1 },
+      threadPool: { workerThreads: 8, pendingWorkItemCount: 0, completedWorkItemCount: 200, availableWorkerThreads: 32759, maxWorkerThreads: 32767 },
+      database: {
+        status: 'available',
+        latencyMs: 1.2,
+        openConnections: 12,
+        activeConnections: 2,
+        idleConnections: 10,
+        idleInTransactionConnections: 0,
+        commandLatency: { sampleCount: 20, p50Ms: 1.1, p95Ms: 5.5, p99Ms: 8.8 },
+        connectionOpenLatency: { sampleCount: 4, p50Ms: 0.5, p95Ms: 2.2, p99Ms: 3.3 },
+        slowQueryCount: 0,
+        recentSlowQueries: [],
+        timeoutCount: 0,
+        errorCount: 0,
+      },
+    }
+
+    const snapshot = summarizeRealBackendRunSnapshot(
+      'run-with-diagnostics',
+      { status: 'completed' },
+      {
+        status: 'completed',
+        diagnostics: [diagnostics],
+        metrics: [
+          {
+            diagnostics,
+            latencyBreakdown: { p95Ms: 11 },
+          },
+        ],
+      },
+    ) as unknown as { diagnostics?: unknown[] }
+
+    expect(snapshot.diagnostics).toEqual([diagnostics])
+  })
+
   it('normalizes real backend snapshot status for queued/running/completed/failed/stopped', () => {
     const cases = [
       { input: 'queued', expected: 'queued' },
