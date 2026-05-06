@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Public Work Detail Read Model - 2026-05-06</title>
+  <style>body{font-family:Arial,sans-serif;max-width:900px;margin:2rem auto;line-height:1.5;color:#17202a}code{background:#f3f5f7;padding:.1rem .25rem;border-radius:3px}h1,h2{color:#0b1f33}</style>
+</head>
+<body>
+  <h1>Public Work Detail Read Model - 2026-05-06</h1>
+  <h2>Summary</h2>
+  <p>Added a stored <code>Work.PublicSocialShareMessage</code> public read-model field and changed public Work detail projection to avoid request-time <code>AllPropertiesJson</code> parsing for <code>socialShareMessage</code>.</p>
+  <h2>Validation</h2>
+  <ul>
+    <li>Focused component tests: 4/4 passed.</li>
+    <li>Focused integration/Postgres/admin tests: 5/5 passed.</li>
+    <li><code>dotnet test backend/WoongBlog.sln --no-restore</code>: passed, with contract test skipped due no pact files.</li>
+    <li><code>git diff --check</code>: passed.</li>
+    <li>k6 Work detail 100rps/30s: 3,001 requests, 0 failures, p95 11.49 ms.</li>
+    <li>k6 Work list pageSize=12 100rps/30s: 3,001 requests, 0 failures, p95 3.52 ms.</li>
+  </ul>
+  <h2>Non-Goals</h2>
+  <p>No cache, seed target priority, target URL semantics, or <code>pageSize=12</code> behavior changed.</p>
+  <h2>Next Step</h2>
+  <p>Promote through dev CI, then optimize Work detail video projection and query count.</p>
+</body>
+</html>

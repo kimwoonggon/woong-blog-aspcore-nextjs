@@ -1,0 +1,38 @@
+{
+  "task": "public-work-detail-read-model-2026-05-06",
+  "objective": "Remove request-time admin AllPropertiesJson parsing from public Work detail social-share path without cache or load-test shortcut changes.",
+  "changed": [
+    "Added Work.PublicSocialShareMessage stored read-model field",
+    "Added EF model default and bootstrap schema patch/backfill",
+    "Synchronized public social-share message at save time",
+    "Changed public Work detail projection to read PublicSocialShareMessage",
+    "Removed request-time JsonDocument.Parse from public Work detail social-share path",
+    "Added component, integration, Postgres, and admin mutation tests"
+  ],
+  "not_changed": [
+    "No cache introduced",
+    "No seed priority or target selection change",
+    "No pageSize=12 reduction",
+    "No frontend change",
+    "No Work video payload shape change"
+  ],
+  "validations": [
+    { "command": "focused component tests", "result": "passed 4/4 after RED compile failure" },
+    { "command": "focused integration/Postgres/admin tests", "result": "passed 5/5" },
+    { "command": "dotnet test backend/WoongBlog.sln --no-restore", "result": "passed Unit 56, Architecture 35, Component 122, Integration 206; Contract 1 skipped" },
+    { "command": "git diff --check", "result": "passed" },
+    { "command": "docker compose backend rebuild under 2CPU/8GiB split overlay", "result": "passed" },
+    { "command": "k6 Work detail current slug 100rps 30s", "result": "3001 requests, 100.03 rps, 0 failures, p95 11.49 ms, max 235.50 ms" },
+    { "command": "k6 Work list pageSize=12 100rps 30s", "result": "3001 requests, 100.03 rps, 0 failures, p95 3.52 ms, max 12.52 ms" }
+  ],
+  "loadtest_artifacts": [
+    "backend/reports/public-work-detail-read-model-2026-05-06/loadtest/k6-work-detail-current-100rps-30s.json",
+    "backend/reports/public-work-detail-read-model-2026-05-06/loadtest/k6-work-list-100rps-30s.json"
+  ],
+  "risks": [
+    "Work detail still performs a second DB query for WorkVideos",
+    "Local load smoke validates query shape and stability, not final production 1000rps capacity",
+    "Host k6 unavailable; dockerized grafana/k6 was used"
+  ],
+  "recommendation": "Promote through dev CI, then optimize Work detail video projection and query count."
+}

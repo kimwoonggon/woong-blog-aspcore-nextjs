@@ -46,6 +46,7 @@ public class PersistenceContractTests
         Assert.NotNull(worksEntity.FindProperty(nameof(Work.SearchText)));
         Assert.NotNull(worksEntity.FindProperty(nameof(Work.PublicContentHtml)));
         Assert.NotNull(worksEntity.FindProperty(nameof(Work.PublicContentMarkdown)));
+        Assert.NotNull(worksEntity.FindProperty(nameof(Work.PublicSocialShareMessage)));
         Assert.NotNull(blogsEntity.FindProperty(nameof(Blog.SearchTitle)));
         Assert.NotNull(blogsEntity.FindProperty(nameof(Blog.SearchText)));
         Assert.NotNull(blogsEntity.FindProperty(nameof(Blog.PublicContentHtml)));
@@ -106,7 +107,7 @@ public class PersistenceContractTests
             Excerpt = "Work excerpt",
             Category = "case-study",
             ContentJson = "{\"html\":\"<p>Search HTML</p>\"}",
-            AllPropertiesJson = "{}",
+            AllPropertiesJson = "{\"socialShareMessage\":\"Search share\"}",
             CreatedAt = DateTimeOffset.UtcNow,
             UpdatedAt = DateTimeOffset.UtcNow
         };
@@ -125,6 +126,7 @@ public class PersistenceContractTests
         Assert.Contains("searchhtml", work.SearchText, StringComparison.Ordinal);
         Assert.Equal("<p>Search HTML</p>", work.PublicContentHtml);
         Assert.Equal(string.Empty, work.PublicContentMarkdown);
+        Assert.Equal("Search share", work.PublicSocialShareMessage);
     }
 
     [Fact]

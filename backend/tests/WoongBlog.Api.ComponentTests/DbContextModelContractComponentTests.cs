@@ -63,6 +63,7 @@ public sealed class DbContextModelContractComponentTests
         AssertPropertyRequired(works, nameof(Work.PublicContentMarkdown));
         AssertPropertyRequired(works, nameof(Work.PublicThumbnailUrl));
         AssertPropertyRequired(works, nameof(Work.PublicIconUrl));
+        AssertPropertyRequired(works, nameof(Work.PublicSocialShareMessage));
         AssertPropertyRequired(works, nameof(Work.AllPropertiesJson));
         AssertPropertyRequired(works, nameof(Work.SearchTitle));
         AssertPropertyRequired(works, nameof(Work.SearchText));
@@ -121,7 +122,7 @@ public sealed class DbContextModelContractComponentTests
             Excerpt = "Initial work excerpt",
             Category = "case-study",
             ContentJson = "{\"html\":\"<p>Initial work body</p>\"}",
-            AllPropertiesJson = "{}"
+            AllPropertiesJson = "{\"socialShareMessage\":\"Initial share\"}"
         };
         dbContext.Blogs.Add(blog);
         dbContext.Works.Add(work);
@@ -133,6 +134,7 @@ public sealed class DbContextModelContractComponentTests
         work.Title = "Updated Work Search";
         work.Excerpt = "Updated work excerpt";
         work.ContentJson = "{\"html\":\"<p>Updated work body</p>\"}";
+        work.AllPropertiesJson = "{\"socialShareMessage\":\"Updated share\"}";
         await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal("updatedblogsearch", blog.SearchTitle);
@@ -145,6 +147,7 @@ public sealed class DbContextModelContractComponentTests
         Assert.Contains("updatedworkbody", work.SearchText, StringComparison.Ordinal);
         Assert.Equal("<p>Updated work body</p>", work.PublicContentHtml);
         Assert.Equal(string.Empty, work.PublicContentMarkdown);
+        Assert.Equal("Updated share", work.PublicSocialShareMessage);
     }
 
     private static WoongBlogDbContext CreateDbContext()
