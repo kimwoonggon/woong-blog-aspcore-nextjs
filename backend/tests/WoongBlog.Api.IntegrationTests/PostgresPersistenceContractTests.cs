@@ -6,6 +6,7 @@ using Npgsql;
 using Testcontainers.PostgreSql;
 using WoongBlog.Api.Domain.Entities;
 using WoongBlog.Application.Modules.Content.Common.Support;
+using WoongBlog.Application.Modules.Content.Works.Support;
 using WoongBlog.Application.Modules.Content.Works.WorkVideos;
 using WoongBlog.Infrastructure.Persistence;
 using WoongBlog.Infrastructure.Persistence.Diagnostics;
@@ -415,6 +416,87 @@ public sealed class PostgresPersistenceContractTests : IClassFixture<PostgresPer
         Assert.Equal(3, result.TotalItems);
         Assert.Equal(1, result.TotalPages);
         Assert.Equal(3, result.Items.Count);
+        Assert.Equal(1, snapshot.CommandLatency.SampleCount);
+    }
+
+    [Fact]
+    public async Task AdminWorkList_UsesSinglePostgresCommand_AndStoredThumbnail()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        const string slug = "admin-work-list-projection";
+        const string expectedThumbnailUrl = "/media/admin-work-list-thumb.png";
+        var workId = Guid.NewGuid();
+        var thumbnailAssetId = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+        const string contentJson = """{"html":"<p>This body must not be needed by the admin list DTO.</p>"}""";
+
+        await using (var setupContext = CreateDbContext())
+        {
+            await ResetDatabaseAsync(setupContext, cancellationToken);
+            await DatabaseBootstrapper.InitializeAsync(setupContext, cancellationToken);
+            await ClearPublicContentAsync(setupContext, cancellationToken);
+
+            setupContext.Assets.Add(new Asset
+            {
+                Id = thumbnailAssetId,
+                Bucket = "media",
+                Path = "admin-work-list-asset-thumb.png",
+                PublicUrl = expectedThumbnailUrl,
+                MimeType = "image/png",
+                Kind = "work-thumbnail",
+                CreatedAt = now
+            });
+            setupContext.Works.Add(new Work
+            {
+                Id = workId,
+                Slug = slug,
+                Title = "Admin Work List Projection",
+                Excerpt = "List projection should use stored public fields",
+                Category = "case-study",
+                ContentJson = contentJson,
+                AllPropertiesJson = """{"unused":"This metadata must not be needed by the admin list DTO."}""",
+                ThumbnailAssetId = thumbnailAssetId,
+                PublicThumbnailUrl = expectedThumbnailUrl,
+                Published = true,
+                PublishedAt = now,
+                CreatedAt = now,
+                UpdatedAt = now
+            });
+            setupContext.WorkVideos.Add(new WorkVideo
+            {
+                WorkId = workId,
+                SourceType = WorkVideoSourceTypes.YouTube,
+                SourceKey = "dQw4w9WgXcQ",
+                OriginalFileName = "Admin list should not need this video",
+                SortOrder = 0,
+                CreatedAt = now
+            });
+            await setupContext.SaveChangesAsync(cancellationToken);
+        }
+
+        var resolverThumbnailUrl = WorkThumbnailUrlResolver.ResolveThumbnailUrl(
+            thumbnailAssetId,
+            contentJson,
+            [
+                new WorkVideo
+                {
+                    WorkId = workId,
+                    SourceType = WorkVideoSourceTypes.YouTube,
+                    SourceKey = "dQw4w9WgXcQ",
+                    SortOrder = 0,
+                    CreatedAt = now
+                }
+            ],
+            new Dictionary<Guid, string> { [thumbnailAssetId] = expectedThumbnailUrl });
+        var collector = CreateDiagnosticsCollector();
+        await using var dbContext = _fixture.CreateDbContext(new LoadTestDbCommandDiagnosticsInterceptor(collector));
+        var queryStore = new WorkQueryStore(dbContext, new NoopPlaybackUrlBuilder());
+
+        var result = await queryStore.GetAdminListAsync(cancellationToken);
+        var snapshot = collector.CaptureSnapshot();
+
+        var item = Assert.Single(result, work => work.Slug == slug);
+        Assert.Equal(resolverThumbnailUrl, item.ThumbnailUrl);
         Assert.Equal(1, snapshot.CommandLatency.SampleCount);
     }
 
