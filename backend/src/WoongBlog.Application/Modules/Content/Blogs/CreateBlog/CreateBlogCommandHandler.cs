@@ -20,6 +20,9 @@ public sealed class CreateBlogCommandHandler : IRequestHandler<CreateBlogCommand
         var excerpt = ResolveExcerpt(request.Excerpt);
         var contentText = AdminContentJson.ExtractExcerptText(request.ContentJson);
         var now = DateTimeOffset.UtcNow;
+        var assetPublicUrls = await _blogCommandStore.GetAssetPublicUrlsAsync(
+            GetPublicMediaAssetIds(request.CoverAssetId),
+            cancellationToken);
 
         var blog = new Blog
         {
@@ -27,6 +30,8 @@ public sealed class CreateBlogCommandHandler : IRequestHandler<CreateBlogCommand
             Title = request.Title,
             Slug = slug,
             Excerpt = excerpt,
+            CoverAssetId = request.CoverAssetId,
+            PublicCoverUrl = ResolvePublicMediaUrl(request.CoverAssetId, assetPublicUrls),
             Tags = request.Tags,
             Published = request.Published,
             PublishedAt = request.Published ? now : null,
@@ -46,6 +51,18 @@ public sealed class CreateBlogCommandHandler : IRequestHandler<CreateBlogCommand
     {
         var normalizedManualExcerpt = manualExcerpt?.Trim();
         return string.IsNullOrWhiteSpace(normalizedManualExcerpt) ? string.Empty : normalizedManualExcerpt;
+    }
+
+    private static Guid[] GetPublicMediaAssetIds(Guid? coverAssetId)
+    {
+        return coverAssetId.HasValue ? [coverAssetId.Value] : [];
+    }
+
+    private static string ResolvePublicMediaUrl(Guid? assetId, IReadOnlyDictionary<Guid, string> assetPublicUrls)
+    {
+        return assetId is not null && assetPublicUrls.TryGetValue(assetId.Value, out var publicUrl)
+            ? publicUrl
+            : string.Empty;
     }
 
     private async Task<string> GenerateUniqueSlugAsync(string title, Guid? currentBlogId, CancellationToken cancellationToken)
