@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Public Work Detail Video Existence Query Removal - 2026-05-06</title>
+  <style>body{font-family:system-ui,sans-serif;max-width:900px;margin:40px auto;padding:0 20px;line-height:1.55;color:#1f2937}h1,h2{color:#111827}code{background:#f3f4f6;padding:2px 4px;border-radius:4px}li{margin:4px 0}.pass{color:#047857}.warn{color:#b45309}</style>
+</head>
+<body>
+  <h1>Public Work Detail Video Existence Query Removal - 2026-05-06</h1>
+  <h2>Summary</h2>
+  <p>Removed the request-time <code>WorkVideos</code> existence subquery from the public Work detail no-video hot path by using stored <code>VideosVersion</code>.</p>
+  <h2>Changed</h2>
+  <ul>
+    <li>Added Postgres SQL-shape contract for no-video public Work detail.</li>
+    <li>Changed public detail projection to <code>VideosVersion &gt; 0</code>.</li>
+    <li>Added one-time backfill patch <code>20260506_work_video_version_backfill</code>.</li>
+    <li>Set seeded Work video version when seeded videos exist.</li>
+  </ul>
+  <h2>Validations</h2>
+  <ul>
+    <li class="pass">PASS: focused Postgres tests 2/2.</li>
+    <li class="pass">PASS: PostgresPersistenceContractTests 12/12.</li>
+    <li class="pass">PASS: ComponentTests 122/122.</li>
+    <li class="pass">PASS: backend solution completed successfully; explicit Unit 56/56, Architecture 35/35, Contract 1 skipped.</li>
+    <li class="pass">PASS: git diff --check.</li>
+    <li class="warn">NOT RUN: local load smoke because dev compose had no running services.</li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Merge this slice before continuing JSON serialization allocation and timing instrumentation work.</p>
+</body>
+</html>

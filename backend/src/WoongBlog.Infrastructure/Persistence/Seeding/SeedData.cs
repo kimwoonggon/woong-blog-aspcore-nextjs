@@ -163,6 +163,7 @@ public static class SeedData
             Period = "2025.12 - 2026.03",
             AllPropertiesJson = """{"teamSize":1,"role":"full-stack","status":"seeded"}""",
             Tags = new[] { "react", "nextjs", "dotnet", "postgres" },
+            VideosVersion = 1,
             Published = true,
             PublishedAt = DateTimeOffset.UtcNow.AddDays(-7)
         };
@@ -302,6 +303,7 @@ public static class SeedData
                 Period = "2025.12 - 2026.03",
                 AllPropertiesJson = """{"teamSize":1,"role":"full-stack","status":"seeded"}""",
                 Tags = new[] { "react", "nextjs", "dotnet", "postgres" },
+                VideosVersion = 1,
                 Published = true,
                 PublishedAt = DateTimeOffset.UtcNow.AddDays(-7)
             };
@@ -321,6 +323,7 @@ public static class SeedData
             seededWork.Period = "2025.12 - 2026.03";
             seededWork.AllPropertiesJson = """{"teamSize":1,"role":"full-stack","status":"seeded"}""";
             seededWork.Tags = new[] { "react", "nextjs", "dotnet", "postgres" };
+            seededWork.VideosVersion = Math.Max(seededWork.VideosVersion, 1);
             seededWork.Published = true;
             seededWork.PublishedAt ??= DateTimeOffset.UtcNow.AddDays(-7);
             seededWork.UpdatedAt = DateTimeOffset.UtcNow;
