@@ -14,6 +14,7 @@ public sealed class K6RealLoadTestRunner(
     : IRealLoadTestRunner
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+    private static readonly TimeSpan RunDiagnosticsSampleInterval = TimeSpan.FromSeconds(1);
 
     public async Task RunAsync(RealLoadTestRunEntry run, CancellationToken cancellationToken)
     {
@@ -27,6 +28,7 @@ public sealed class K6RealLoadTestRunner(
         var scriptPath = Path.Combine(runDirectory, "run.js");
         var summaryPath = Path.Combine(runDirectory, "summary.json");
         Process? process = null;
+        Task? runScopedDiagnosticsTask = null;
 
         try
         {
@@ -40,7 +42,9 @@ public sealed class K6RealLoadTestRunner(
             await reportStore.WriteSummaryAsync(CaptureSummary(run), linkedCancellationToken);
 
             process = StartK6Process(run, scriptPath, summaryPath);
+            runScopedDiagnosticsTask = CaptureRunScopedDiagnosticsUntilExitAsync(run, process, linkedCancellationToken);
             await process.WaitForExitAsync(linkedCancellationToken);
+            await ObserveRunScopedDiagnosticsTaskAsync(runScopedDiagnosticsTask);
 
             if (File.Exists(summaryPath))
             {
@@ -70,6 +74,7 @@ public sealed class K6RealLoadTestRunner(
             {
                 process.Kill(entireProcessTree: true);
             }
+            await ObserveRunScopedDiagnosticsTaskAsync(runScopedDiagnosticsTask);
 
             lock (run.SyncRoot)
             {
@@ -82,6 +87,7 @@ public sealed class K6RealLoadTestRunner(
         catch (Exception exception)
         {
             logger.LogError(exception, "k6 real load test runner failed for run {RunId}", run.RunId);
+            await ObserveRunScopedDiagnosticsTaskAsync(runScopedDiagnosticsTask);
 
             lock (run.SyncRoot)
             {
@@ -152,6 +158,64 @@ public sealed class K6RealLoadTestRunner(
         });
 
         return process;
+    }
+
+    private async Task CaptureRunScopedDiagnosticsUntilExitAsync(
+        RealLoadTestRunEntry run,
+        Process process,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var exitTask = process.WaitForExitAsync(cancellationToken);
+            while (!exitTask.IsCompleted && !process.HasExited)
+            {
+                var diagnostics = await diagnosticsSampler.CaptureAsync(cancellationToken);
+                await reportStore.AppendMetricAsync(run.RunId, CaptureMetric(run, diagnostics), cancellationToken);
+
+                var delayTask = Task.Delay(RunDiagnosticsSampleInterval, cancellationToken);
+                var completedTask = await Task.WhenAny(delayTask, exitTask);
+                if (completedTask == exitTask)
+                {
+                    break;
+                }
+
+                await delayTask;
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+        }
+        catch (InvalidOperationException) when (process.HasExited)
+        {
+        }
+        catch (Exception exception)
+        {
+            logger.LogWarning(
+                exception,
+                "Failed to persist run-scoped diagnostics for k6 real load test run {RunId}",
+                run.RunId);
+        }
+    }
+
+    private async Task ObserveRunScopedDiagnosticsTaskAsync(Task? runScopedDiagnosticsTask)
+    {
+        if (runScopedDiagnosticsTask is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await runScopedDiagnosticsTask;
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (Exception exception)
+        {
+            logger.LogWarning(exception, "Run-scoped diagnostics task ended with an unexpected error.");
+        }
     }
 
     private async Task ApplyK6SummaryAsync(RealLoadTestRunEntry run, string summaryPath, CancellationToken cancellationToken)
