@@ -306,20 +306,54 @@ public sealed class PostgresPersistenceContractTests : IClassFixture<PostgresPer
     }
 
     [Fact]
-    public async Task PublicWorkDetailWithoutVideos_UsesSinglePostgresCommand()
+    public async Task PublicWorkDetailWithoutVideos_UsesSinglePostgresCommand_AndResolverEquivalentStoredThumbnail()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         const string slug = "postgres-public-work-no-videos";
+        const string expectedThumbnailUrl = "/media/postgres-public-work-no-videos-thumb.png";
+        const string contentJson = """{"html":"<p><img src=\"/media/body-fallback-should-not-win.png\" alt=\"body\"></p>"}""";
+        var thumbnailAssetId = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
         await using (var setupContext = CreateDbContext())
         {
             await ResetDatabaseAsync(setupContext, cancellationToken);
             await DatabaseBootstrapper.InitializeAsync(setupContext, cancellationToken);
             await ClearPublicContentAsync(setupContext, cancellationToken);
 
-            setupContext.Works.Add(CreatePublishedWork(slug, "Postgres Public Work No Videos", publishedAtOffsetMinutes: -1));
+            setupContext.Assets.Add(new Asset
+            {
+                Id = thumbnailAssetId,
+                Bucket = "media",
+                Path = "postgres-public-work-no-videos-thumb.png",
+                PublicUrl = expectedThumbnailUrl,
+                MimeType = "image/png",
+                Kind = "work-thumbnail",
+                CreatedAt = now
+            });
+            setupContext.Works.Add(new Work
+            {
+                Slug = slug,
+                Title = "Postgres Public Work No Videos",
+                Excerpt = "Postgres Public Work No Videos excerpt",
+                Category = "case-study",
+                ContentJson = contentJson,
+                PublicContentHtml = "<p>Postgres Public Work No Videos</p>",
+                AllPropertiesJson = "{}",
+                ThumbnailAssetId = thumbnailAssetId,
+                PublicThumbnailUrl = expectedThumbnailUrl,
+                Published = true,
+                PublishedAt = now.AddMinutes(-1),
+                CreatedAt = now,
+                UpdatedAt = now
+            });
             await setupContext.SaveChangesAsync(cancellationToken);
         }
 
+        var resolverThumbnailUrl = WorkThumbnailUrlResolver.ResolveThumbnailUrl(
+            thumbnailAssetId,
+            contentJson,
+            Array.Empty<WorkVideo>(),
+            new Dictionary<Guid, string> { [thumbnailAssetId] = expectedThumbnailUrl });
         var collector = CreateDiagnosticsCollector();
         await using var dbContext = _fixture.CreateDbContext(new LoadTestDbCommandDiagnosticsInterceptor(collector));
         var queryStore = new WorkQueryStore(dbContext, new NoopPlaybackUrlBuilder());
@@ -328,6 +362,7 @@ public sealed class PostgresPersistenceContractTests : IClassFixture<PostgresPer
         var snapshot = collector.CaptureSnapshot();
 
         Assert.NotNull(result);
+        Assert.Equal(resolverThumbnailUrl, result!.ThumbnailUrl);
         Assert.Empty(result!.Videos);
         Assert.Equal(1, snapshot.CommandLatency.SampleCount);
     }
@@ -363,19 +398,74 @@ public sealed class PostgresPersistenceContractTests : IClassFixture<PostgresPer
     public async Task PublicWorkFirstPage_UsesSinglePostgresCommand_ForNoSearchList()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
+        const string expectedThumbnailUrl = "/media/public-work-window-1-explicit-thumb.png";
+        const string contentJson = """{"html":"<p><img src=\"/media/list-body-fallback-should-not-win.png\" alt=\"body\"></p>"}""";
+        var workId = Guid.NewGuid();
+        var thumbnailAssetId = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
         await using (var setupContext = CreateDbContext())
         {
             await ResetDatabaseAsync(setupContext, cancellationToken);
             await DatabaseBootstrapper.InitializeAsync(setupContext, cancellationToken);
             await ClearPublicContentAsync(setupContext, cancellationToken);
 
+            setupContext.Assets.Add(new Asset
+            {
+                Id = thumbnailAssetId,
+                Bucket = "media",
+                Path = "public-work-window-1-explicit-thumb.png",
+                PublicUrl = expectedThumbnailUrl,
+                MimeType = "image/png",
+                Kind = "work-thumbnail",
+                CreatedAt = now
+            });
             setupContext.Works.AddRange(
-                CreatePublishedWork("public-work-window-1", "Public Work Window 1", publishedAtOffsetMinutes: -1),
+                new Work
+                {
+                    Id = workId,
+                    Slug = "public-work-window-1",
+                    Title = "Public Work Window 1",
+                    Excerpt = "Public Work Window 1 excerpt",
+                    Category = "case-study",
+                    ContentJson = contentJson,
+                    AllPropertiesJson = "{}",
+                    PublicContentHtml = "<p>Public Work Window 1</p>",
+                    ThumbnailAssetId = thumbnailAssetId,
+                    PublicThumbnailUrl = expectedThumbnailUrl,
+                    PublicIconUrl = "/media/public-work-window-1-icon.png",
+                    Published = true,
+                    PublishedAt = now.AddMinutes(-1),
+                    CreatedAt = now,
+                    UpdatedAt = now
+                },
                 CreatePublishedWork("public-work-window-2", "Public Work Window 2", publishedAtOffsetMinutes: -2),
                 CreatePublishedWork("public-work-window-3", "Public Work Window 3", publishedAtOffsetMinutes: -3));
+            setupContext.WorkVideos.Add(new WorkVideo
+            {
+                WorkId = workId,
+                SourceType = WorkVideoSourceTypes.YouTube,
+                SourceKey = "list-video-fallback-should-not-win",
+                OriginalFileName = "List video fallback should not win",
+                SortOrder = 0,
+                CreatedAt = now
+            });
             await setupContext.SaveChangesAsync(cancellationToken);
         }
 
+        var resolverThumbnailUrl = WorkThumbnailUrlResolver.ResolveThumbnailUrl(
+            thumbnailAssetId,
+            contentJson,
+            [
+                new WorkVideo
+                {
+                    WorkId = workId,
+                    SourceType = WorkVideoSourceTypes.YouTube,
+                    SourceKey = "list-video-fallback-should-not-win",
+                    SortOrder = 0,
+                    CreatedAt = now
+                }
+            ],
+            new Dictionary<Guid, string> { [thumbnailAssetId] = expectedThumbnailUrl });
         var collector = CreateDiagnosticsCollector();
         await using var dbContext = _fixture.CreateDbContext(new LoadTestDbCommandDiagnosticsInterceptor(collector));
         var queryStore = new WorkQueryStore(dbContext, new NoopPlaybackUrlBuilder());
@@ -386,6 +476,7 @@ public sealed class PostgresPersistenceContractTests : IClassFixture<PostgresPer
         Assert.Equal(3, result.TotalItems);
         Assert.Equal(1, result.TotalPages);
         Assert.Equal(3, result.Items.Count);
+        Assert.Equal(resolverThumbnailUrl, result.Items[0].ThumbnailUrl);
         Assert.Equal(1, snapshot.CommandLatency.SampleCount);
     }
 
