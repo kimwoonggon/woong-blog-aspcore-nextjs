@@ -821,6 +821,7 @@ public class PublicQueryHandlerComponentTests
             Category = "cat",
             ContentJson = "{}",
             AllPropertiesJson = "{}",
+            VideosVersion = 1,
             Published = true,
             PublishedAt = DateTimeOffset.UtcNow,
             CreatedAt = DateTimeOffset.UtcNow,

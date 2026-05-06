@@ -36,6 +36,11 @@ public static class DatabaseBootstrapper
                     cancellationToken);
                 await ApplySchemaPatchAsync(
                     dbContext,
+                    "20260506_work_video_version_backfill",
+                    WorkVideoVersionBackfillSchemaPatchSql,
+                    cancellationToken);
+                await ApplySchemaPatchAsync(
+                    dbContext,
                     "20260506_public_content_body_fields",
                     PublicContentBodyFieldsSchemaPatchSql,
                     cancellationToken);
@@ -225,6 +230,17 @@ ALTER TABLE "WorkVideos" ADD COLUMN IF NOT EXISTS "Height" integer;
 ALTER TABLE "WorkVideos" ADD COLUMN IF NOT EXISTS "DurationSeconds" double precision;
 ALTER TABLE "WorkVideos" ADD COLUMN IF NOT EXISTS "TimelinePreviewVttStorageKey" text;
 ALTER TABLE "WorkVideos" ADD COLUMN IF NOT EXISTS "TimelinePreviewSpriteStorageKey" text;
+""";
+
+    private const string WorkVideoVersionBackfillSchemaPatchSql = """
+UPDATE "Works" AS work
+SET "VideosVersion" = 1
+WHERE work."VideosVersion" = 0
+  AND EXISTS (
+    SELECT 1
+    FROM "WorkVideos" AS video
+    WHERE video."WorkId" = work."Id"
+  );
 """;
 
     private const string ContentSearchSchemaPatchSql = """
