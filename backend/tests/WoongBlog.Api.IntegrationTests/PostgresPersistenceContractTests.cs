@@ -101,6 +101,10 @@ public sealed class PostgresPersistenceContractTests : IClassFixture<PostgresPer
             connection,
             "SELECT EXISTS (SELECT 1 FROM \"SchemaPatches\" WHERE \"Id\" = '20260506_work_video_version_backfill')",
             cancellationToken));
+        Assert.True(await ExistsAsync(
+            connection,
+            "SELECT EXISTS (SELECT 1 FROM \"SchemaPatches\" WHERE \"Id\" = '20260506_public_work_thumbnail_fallback_backfill')",
+            cancellationToken));
     }
 
     [Fact]
@@ -142,6 +146,85 @@ public sealed class PostgresPersistenceContractTests : IClassFixture<PostgresPer
         Assert.True(await ExistsAsync(
             connection,
             "SELECT EXISTS (SELECT 1 FROM \"SchemaPatches\" WHERE \"Id\" = '20260506_work_video_version_backfill')",
+            cancellationToken));
+    }
+
+    [Fact]
+    public async Task Bootstrapper_BackfillsPublicThumbnailUrl_FromLegacyFallbacks()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await using var dbContext = CreateDbContext();
+        await ResetDatabaseAsync(dbContext, cancellationToken);
+        await dbContext.Database.EnsureCreatedAsync(cancellationToken);
+
+        var now = DateTimeOffset.UtcNow;
+        var youtubeWork = CreatePublishedWork(
+            "legacy-youtube-thumbnail-fallback",
+            "Legacy YouTube Thumbnail Fallback",
+            publishedAtOffsetMinutes: -1);
+        youtubeWork.ContentJson = """{"html":"<p>youtube fallback</p>"}""";
+        youtubeWork.PublicThumbnailUrl = string.Empty;
+        var bodyWork = CreatePublishedWork(
+            "legacy-body-thumbnail-fallback",
+            "Legacy Body Thumbnail Fallback",
+            publishedAtOffsetMinutes: -2);
+        bodyWork.ContentJson = """{"html":"<p>body fallback</p><img src=\"/media/legacy-body-fallback.png\" alt=\"body\">"}""";
+        bodyWork.PublicThumbnailUrl = string.Empty;
+        var localVideoWork = CreatePublishedWork(
+            "legacy-local-video-thumbnail-fallback",
+            "Legacy Local Video Thumbnail Fallback",
+            publishedAtOffsetMinutes: -3);
+        localVideoWork.ContentJson = """{"html":"<p>local video fallback</p><img src=\"/media/should-not-win.png\" alt=\"body\">"}""";
+        localVideoWork.PublicThumbnailUrl = string.Empty;
+
+        dbContext.Works.AddRange(youtubeWork, bodyWork, localVideoWork);
+        dbContext.WorkVideos.AddRange(
+            new WorkVideo
+            {
+                WorkId = youtubeWork.Id,
+                SourceType = WorkVideoSourceTypes.YouTube,
+                SourceKey = "dQw4w9WgXcQ",
+                OriginalFileName = "Legacy YouTube",
+                SortOrder = 0,
+                CreatedAt = now
+            },
+            new WorkVideo
+            {
+                WorkId = localVideoWork.Id,
+                SourceType = WorkVideoSourceTypes.Local,
+                SourceKey = "videos/local-fallback.mp4",
+                OriginalFileName = "Legacy Local",
+                SortOrder = 0,
+                CreatedAt = now
+            });
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        await DatabaseBootstrapper.InitializeAsync(dbContext, cancellationToken);
+
+        Assert.Equal(
+            "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+            await dbContext.Works
+                .Where(x => x.Id == youtubeWork.Id)
+                .Select(x => x.PublicThumbnailUrl)
+                .SingleAsync(cancellationToken));
+        Assert.Equal(
+            "/media/legacy-body-fallback.png",
+            await dbContext.Works
+                .Where(x => x.Id == bodyWork.Id)
+                .Select(x => x.PublicThumbnailUrl)
+                .SingleAsync(cancellationToken));
+        Assert.Equal(
+            string.Empty,
+            await dbContext.Works
+                .Where(x => x.Id == localVideoWork.Id)
+                .Select(x => x.PublicThumbnailUrl)
+                .SingleAsync(cancellationToken));
+
+        var connection = dbContext.Database.GetDbConnection();
+        await connection.OpenAsync(cancellationToken);
+        Assert.True(await ExistsAsync(
+            connection,
+            "SELECT EXISTS (SELECT 1 FROM \"SchemaPatches\" WHERE \"Id\" = '20260506_public_work_thumbnail_fallback_backfill')",
             cancellationToken));
     }
 

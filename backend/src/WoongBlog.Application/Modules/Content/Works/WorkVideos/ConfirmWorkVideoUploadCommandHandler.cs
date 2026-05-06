@@ -1,5 +1,6 @@
 using MediatR;
 using WoongBlog.Api.Domain.Entities;
+using WoongBlog.Application.Modules.Content.Works.Support;
 
 namespace WoongBlog.Application.Modules.Content.Works.WorkVideos;
 
@@ -70,7 +71,16 @@ public sealed class ConfirmWorkVideoUploadCommandHandler(
             return WorkVideoResult<WorkVideosMutationResult>.BadRequest("Each work supports up to 10 videos.");
         }
 
-        commandStore.AddWorkVideo(new WorkVideo
+        var assetPublicUrls = await commandStore.GetAssetPublicUrlsAsync(
+            WorkPublicThumbnailReadModel.GetThumbnailAssetIds(work.ThumbnailAssetId),
+            cancellationToken);
+        List<WorkVideo>? videosForThumbnail = WorkPublicThumbnailReadModel.ShouldLoadFallbackVideos(
+            work.ThumbnailAssetId,
+            assetPublicUrls)
+            ? (await commandStore.GetVideosForWorkAsync(request.WorkId, cancellationToken)).ToList()
+            : null;
+
+        var video = new WorkVideo
         {
             Id = Guid.NewGuid(),
             WorkId = request.WorkId,
@@ -81,7 +91,10 @@ public sealed class ConfirmWorkVideoUploadCommandHandler(
             FileSize = storedObject.Size,
             SortOrder = await commandStore.GetNextSortOrderAsync(request.WorkId, cancellationToken),
             CreatedAt = DateTimeOffset.UtcNow
-        });
+        };
+        commandStore.AddWorkVideo(video);
+        videosForThumbnail?.Add(video);
+        WorkPublicThumbnailReadModel.Refresh(work, videosForThumbnail ?? (IReadOnlyList<WorkVideo>)Array.Empty<WorkVideo>(), assetPublicUrls);
 
         session.Status = WorkVideoUploadSessionStatuses.Confirmed;
         work.VideosVersion += 1;
