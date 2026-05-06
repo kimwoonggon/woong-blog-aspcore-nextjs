@@ -32,7 +32,7 @@ services:
       Proxy__KnownNetworks__0: ${PROXY_KNOWN_NETWORK:-172.16.0.0/12}
       Security__UseHttpsRedirection: "true"
       Security__UseHsts: "true"
-      LoadTesting__BaseUrl: ${LoadTesting__BaseUrl:-http://127.0.0.1:8080}
+      LoadTesting__BaseUrl: ${LoadTesting__BaseUrl:-${NEXT_PUBLIC_SITE_URL:-https://woonglab.com}}
     expose:
       - "8080"
     depends_on:
