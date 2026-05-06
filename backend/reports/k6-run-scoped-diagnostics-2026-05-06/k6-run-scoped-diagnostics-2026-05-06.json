@@ -1,0 +1,57 @@
+{
+  "taskSlug": "k6-run-scoped-diagnostics-2026-05-06",
+  "date": "2026-05-06",
+  "goal": "Persist runtime and DB diagnostics samples during k6 Real Backend runs, not only at completion.",
+  "changed": [
+    "Added 1-second run-scoped diagnostics sampling while k6 is running.",
+    "Persisted diagnostics snapshots as metrics through the existing report store.",
+    "Added component coverage proving multiple diagnostics samples are retained."
+  ],
+  "intentionallyNotChanged": [
+    "No cache policy changes.",
+    "No seeded target priority.",
+    "No list pageSize=12 reduction.",
+    "No public endpoint DTO changes.",
+    "No database schema or query-shape changes.",
+    "No k6 load-profile semantic changes.",
+    "No direct latency optimization in this slice."
+  ],
+  "validations": [
+    { "command": "dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj --filter FullyQualifiedName~RealLoadTestRunnerComponentTests.K6Runner_PersistsRunScopedDiagnosticsWhileProcessIsRunning --no-restore --logger console;verbosity=minimal", "status": "red_then_green" },
+    { "command": "dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj --filter FullyQualifiedName~RealLoadTestRunnerComponentTests --no-restore --logger console;verbosity=minimal", "status": "passed", "tests": "3/3" },
+    { "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~RealLoadTestControlPlane_StartStatusMetricsAndStop_HappyPath_WhenRealRunnerDisabled_ForcesFakeRunner --no-restore --logger console;verbosity=minimal", "status": "passed", "tests": "1/1" },
+    { "command": "npm test -- --run src/test/load-test-dashboard.test.ts", "status": "passed", "tests": "28/28" },
+    { "command": "dotnet test backend/WoongBlog.sln --no-restore --logger console;verbosity=minimal", "status": "passed", "summary": "Contract 1 skipped, Component 124, Unit 56, Architecture 35, Integration 224" },
+    { "command": "npm run typecheck", "status": "passed" },
+    { "command": "npm run lint", "status": "passed_with_existing_warnings", "warnings": 6 },
+    { "command": "git diff --check", "status": "passed" },
+    { "command": "BACKEND_PUBLISH_PORT=18080 ./scripts/dev-up.sh", "status": "passed" },
+    { "command": "curl health checks for nginx and backend", "status": "passed" }
+  ],
+  "liveSmoke": {
+    "runId": "20260506-130939-public-api-rps-c8aaa852",
+    "status": "completed",
+    "rate": 10,
+    "durationSeconds": 8,
+    "maxVus": 20,
+    "totalRequests": 81,
+    "failedRequests": 0,
+    "p95Ms": 9.8,
+    "p99Ms": 64.1,
+    "diagnosticsEntries": 10,
+    "metricDiagnosticsEntries": 10,
+    "targets": [
+      "/api/public/works?page=1&pageSize=12",
+      "/api/public/works/real-load-current-heavy-work-20260506",
+      "/api/public/blogs?page=1&pageSize=12",
+      "/api/public/blogs/real-load-current-heavy-study-20260506"
+    ]
+  },
+  "risks": [
+    "k6 still exposes request counters from the final summary rather than live streaming counters.",
+    "The 1-second diagnostics capture is low overhead but should remain scoped to admin-triggered real load tests.",
+    "Production capacity assessment still needs cgroup-aware confirmation on the shared 2 CPU / 8 GiB server.",
+    "Existing AWSSDK.Core NU1901 warning remains unrelated."
+  ],
+  "finalRecommendation": "Merge this observability slice, rerun a production-like spike, and choose the next structural backend optimization from retained per-second diagnostics."
+}

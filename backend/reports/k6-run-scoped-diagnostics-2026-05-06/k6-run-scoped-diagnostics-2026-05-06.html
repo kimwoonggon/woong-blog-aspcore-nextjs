@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>K6 Run-Scoped Diagnostics Sampling Audit - 2026-05-06</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 920px; margin: 40px auto; padding: 0 20px; line-height: 1.55; color: #17202a; }
+    h1, h2 { line-height: 1.2; }
+    code { background: #eef2f7; padding: 0.1rem 0.25rem; border-radius: 4px; }
+    li { margin: 0.25rem 0; }
+    .pass { color: #0f766e; font-weight: 700; }
+    .risk { color: #9a3412; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <h1>K6 Run-Scoped Diagnostics Sampling Audit - 2026-05-06</h1>
+  <h2>Goal</h2>
+  <p>Retain runtime and database pressure samples during k6 Real Backend runs so completed results show spike-window diagnostics, not just the final sample.</p>
+  <h2>Changed</h2>
+  <ul>
+    <li>Added 1-second diagnostics sampling while k6 is running.</li>
+    <li>Persisted run-scoped diagnostics as metrics through the existing report store.</li>
+    <li>Added component coverage proving more than the final diagnostics sample is saved.</li>
+  </ul>
+  <h2>Not Changed</h2>
+  <ul>
+    <li>No cache shortcut, seeded priority, <code>pageSize=12</code> reduction, DB schema change, or k6 scenario semantic change.</li>
+    <li>No direct latency optimization in this slice.</li>
+  </ul>
+  <h2>Validation</h2>
+  <ul>
+    <li><span class="pass">PASS</span> focused RED/GREEN component test.</li>
+    <li><span class="pass">PASS</span> RealLoadTestRunner component tests 3/3.</li>
+    <li><span class="pass">PASS</span> focused integration test 1/1.</li>
+    <li><span class="pass">PASS</span> frontend load-test parser tests 28/28.</li>
+    <li><span class="pass">PASS</span> backend solution tests.</li>
+    <li><span class="pass">PASS</span> typecheck, lint, diff check, compose health checks.</li>
+    <li><span class="pass">PASS</span> live Real Backend smoke <code>20260506-130939-public-api-rps-c8aaa852</code>: 81 requests, 0 failures, p95 9.8ms, 10 diagnostics entries.</li>
+  </ul>
+  <h2>Risks</h2>
+  <ul>
+    <li><span class="risk">Yellow flag</span> k6 still reports request counters from the final summary, not live streaming request metrics.</li>
+    <li><span class="risk">Yellow flag</span> production capacity still needs cgroup-aware confirmation for the shared 2 CPU / 8 GiB host.</li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Merge this slice, rerun a production-like spike, and use retained per-second diagnostics to choose the next structural backend optimization.</p>
+</body>
+</html>
