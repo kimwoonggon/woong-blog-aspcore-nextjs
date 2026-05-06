@@ -332,6 +332,33 @@ public sealed class PostgresPersistenceContractTests : IClassFixture<PostgresPer
     }
 
     [Fact]
+    public async Task PublicBlogDetail_UsesSinglePostgresCommand()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        const string slug = "postgres-public-blog-detail";
+        await using (var setupContext = CreateDbContext())
+        {
+            await ResetDatabaseAsync(setupContext, cancellationToken);
+            await DatabaseBootstrapper.InitializeAsync(setupContext, cancellationToken);
+            await ClearPublicContentAsync(setupContext, cancellationToken);
+
+            setupContext.Blogs.Add(CreatePublishedBlog(slug, "Postgres Public Blog Detail", publishedAtOffsetMinutes: -1));
+            await setupContext.SaveChangesAsync(cancellationToken);
+        }
+
+        var collector = CreateDiagnosticsCollector();
+        await using var dbContext = _fixture.CreateDbContext(new LoadTestDbCommandDiagnosticsInterceptor(collector));
+        var queryStore = new BlogQueryStore(dbContext);
+
+        var result = await queryStore.GetPublishedDetailBySlugAsync(slug, cancellationToken);
+        var snapshot = collector.CaptureSnapshot();
+
+        Assert.NotNull(result);
+        Assert.Equal($"/media/{slug}.png", result!.CoverUrl);
+        Assert.Equal(1, snapshot.CommandLatency.SampleCount);
+    }
+
+    [Fact]
     public async Task PublicWorkFirstPage_UsesSinglePostgresCommand_ForNoSearchList()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
