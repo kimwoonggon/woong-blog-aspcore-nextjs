@@ -1,0 +1,76 @@
+{
+  "slug": "public-video-null-payload-2026-05-07",
+  "date": "2026-05-07",
+  "goal": "Reduce public Work detail video response payload by omitting nullable optional WorkVideoDto fields when null, without cache or test target shortcuts.",
+  "changed": [
+    "Annotated nullable WorkVideoDto properties with JsonIgnoreCondition.WhenWritingNull.",
+    "Added public endpoint integration test GetWorkBySlug_OmitsNullOptionalVideoFields.",
+    "Captured rebuilt dev compose payload and k6 smoke artifacts."
+  ],
+  "notChanged": [
+    "No cache added.",
+    "No Real Backend Test target selection change.",
+    "No pageSize change.",
+    "No DB schema, EF query, Npgsql pool, or nginx config change.",
+    "No public body payload behavior change."
+  ],
+  "validations": [
+    {
+      "name": "Focused RED/GREEN integration test",
+      "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~GetWorkBySlug_OmitsNullOptionalVideoFields --no-restore --logger console;verbosity=minimal",
+      "result": "failed before implementation, passed after implementation"
+    },
+    {
+      "name": "Public endpoints and Postgres contracts",
+      "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~PublicEndpointsTests|FullyQualifiedName~PostgresPersistenceContractTests --no-restore --logger console;verbosity=minimal",
+      "result": "passed 45/45"
+    },
+    {
+      "name": "Frontend public API parser compatibility",
+      "command": "npm test -- --run src/test/public-api-clients.test.ts src/test/public-api-contracts.test.ts",
+      "result": "passed 22/22"
+    },
+    {
+      "name": "Full backend solution",
+      "command": "dotnet test backend/WoongBlog.sln --no-restore --logger console;verbosity=minimal",
+      "result": "passed with Contract 1 skipped, Component 124, Unit 56, Architecture 35, Integration 227"
+    },
+    {
+      "name": "TypeScript typecheck",
+      "command": "npm run typecheck",
+      "result": "passed"
+    },
+    {
+      "name": "Whitespace check",
+      "command": "git diff --check",
+      "result": "passed"
+    },
+    {
+      "name": "Dev compose rebuild",
+      "command": "BACKEND_PUBLISH_PORT=18080 docker compose -f docker-compose.dev.yml up -d --build backend nginx",
+      "result": "passed"
+    },
+    {
+      "name": "k6 Work detail smoke",
+      "command": "backend-container k6 run /tmp/public-api-rps.js with BASE_URL=http://nginx TARGET_PATH=/api/public/works/seeded-work RATE=50 DURATION_SECONDS=10 MAX_VUS=100",
+      "result": "500 requests, failureRate 0, p95 3.43ms"
+    }
+  ],
+  "loadSmoke": {
+    "targetPath": "/api/public/works/seeded-work",
+    "rate": 50,
+    "durationSeconds": 10,
+    "maxVUs": 100,
+    "httpRequests": 500,
+    "failureRate": 0,
+    "durationP95Ms": 3.4333399499999997,
+    "payloadBytes": 1195,
+    "firstVideoKeys": ["id", "sourceType", "sourceKey", "originalFileName", "sortOrder", "createdAt"]
+  },
+  "risks": [
+    "Clients that require explicit null keys would need adjustment, but current frontend parser treats missing optional fields as null-equivalent.",
+    "k6 smoke is not a 1000rps capacity proof.",
+    "Seeded Work was used only as deterministic video payload smoke, not as a Real Backend target-selection change."
+  ],
+  "recommendation": "Promote through dev CI, then continue with larger heavy-detail payload/body or Work-video query reduction only if Real Backend target metrics still show that path as material."
+}

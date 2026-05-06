@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Public Video Null Payload Reduction - 2026-05-07</title></head>
+<body>
+  <main>
+    <h1>Public Video Null Payload Reduction - 2026-05-07</h1>
+    <p>Reduced public Work detail video payload by omitting nullable optional WorkVideoDto fields when null.</p>
+    <h2>Validation</h2>
+    <ul>
+      <li>Focused RED/GREEN integration test passed after implementation.</li>
+      <li>Public endpoints + Postgres contracts passed 45/45.</li>
+      <li>Frontend public API parser tests passed 22/22.</li>
+      <li>Full backend solution passed: Contract 1 skipped, Component 124, Unit 56, Architecture 35, Integration 227.</li>
+      <li>k6 smoke: 500 requests, 0 failure rate, p95 3.43ms.</li>
+    </ul>
+    <h2>Recommendation</h2>
+    <p>Promote through dev CI, then continue with measured heavy-detail body or video-query work if Real Backend metrics still show material pressure.</p>
+  </main>
+</body>
+</html>
