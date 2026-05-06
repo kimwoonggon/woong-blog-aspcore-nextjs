@@ -61,6 +61,8 @@ using WoongBlog.Application.Modules.Site.GetAdminSiteSettings;
 using WoongBlog.Application.Modules.Site.GetResume;
 using WoongBlog.Application.Modules.Site.GetSiteSettings;
 using WoongBlog.Application.Modules.Site.UpdateSiteSettings;
+using HttpJsonOptions = Microsoft.AspNetCore.Http.Json.JsonOptions;
+using MvcJsonOptions = Microsoft.AspNetCore.Mvc.JsonOptions;
 
 namespace WoongBlog.Api.Tests;
 
@@ -196,6 +198,18 @@ public class StartupCompositionTests : IClassFixture<CustomWebApplicationFactory
         AssertResolvable<IRequestHandler<ReorderWorkVideosCommand, WorkVideoResult<WorkVideosMutationResult>>>(services);
         AssertResolvable<IRequestHandler<DeleteWorkVideoCommand, WorkVideoResult<WorkVideosMutationResult>>>(services);
         AssertResolvable<IRequestHandler<StartWorkVideoHlsJobCommand, WorkVideoResult<WorkVideosMutationResult>>>(services);
+    }
+
+    [Fact]
+    public void JsonOptions_UseSourceGeneratedMetadataForPublicHotPathDtos()
+    {
+        using var scope = _factory.Services.CreateScope();
+        var services = scope.ServiceProvider;
+        var httpJsonOptions = services.GetRequiredService<IOptions<HttpJsonOptions>>().Value.SerializerOptions;
+        var mvcJsonOptions = services.GetRequiredService<IOptions<MvcJsonOptions>>().Value.JsonSerializerOptions;
+
+        AssertPublicSourceGeneratedJsonResolverConfigured(httpJsonOptions);
+        AssertPublicSourceGeneratedJsonResolverConfigured(mvcJsonOptions);
     }
 
     [Fact]
@@ -588,6 +602,31 @@ public class StartupCompositionTests : IClassFixture<CustomWebApplicationFactory
         where T : notnull
     {
         Assert.NotNull(services.GetRequiredService<T>());
+    }
+
+    private static void AssertPublicSourceGeneratedJsonResolverConfigured(JsonSerializerOptions options)
+    {
+        var resolver = Assert.Single(
+            options.TypeInfoResolverChain,
+            candidate => candidate.GetType().Name == "WoongBlogApiJsonSerializerContext");
+
+        var publicHotPathTypes = new[]
+        {
+            typeof(HomeDto),
+            typeof(PagedBlogsDto),
+            typeof(BlogDetailDto),
+            typeof(PagedWorksDto),
+            typeof(WorkDetailDto),
+            typeof(PageDto),
+            typeof(SiteSettingsDto),
+            typeof(WoongBlog.Infrastructure.LoadTesting.RealLoadTestStatusResponse),
+            typeof(WoongBlog.Infrastructure.LoadTesting.RealLoadTestMetricsResponse)
+        };
+
+        foreach (var type in publicHotPathTypes)
+        {
+            Assert.NotNull(resolver.GetTypeInfo(type, options));
+        }
     }
 
     private sealed record HealthPayload(string Status, string Service, DateTimeOffset Timestamp);

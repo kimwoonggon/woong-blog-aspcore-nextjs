@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Public JSON Source Generation - 2026-05-06</title></head>
+<body>
+  <h1>Public JSON Source Generation - 2026-05-06</h1>
+  <p>Added source-generated System.Text.Json metadata for public backend hot-path DTOs while preserving public API shape and load-test realism.</p>
+  <h2>Validation</h2>
+  <ul>
+    <li>Focused sourcegen test: red then green.</li>
+    <li>Public endpoint integration tests: 29/29 passed.</li>
+    <li>Full backend solution: passed, with existing contract skip.</li>
+    <li>Frontend typecheck/lint: passed, lint has only existing warnings.</li>
+    <li>Real Backend 100rps/30s: 3,000 requests, failed 0, p95 7.1ms.</li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Promote through dev CI, then continue measuring heavy detail app/DB/runtime pressure before the next structural optimization.</p>
+</body>
+</html>
