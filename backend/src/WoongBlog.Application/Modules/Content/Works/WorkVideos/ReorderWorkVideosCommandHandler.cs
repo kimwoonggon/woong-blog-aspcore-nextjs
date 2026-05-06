@@ -1,4 +1,5 @@
 using MediatR;
+using WoongBlog.Application.Modules.Content.Works.Support;
 
 namespace WoongBlog.Application.Modules.Content.Works.WorkVideos;
 
@@ -29,6 +30,10 @@ public sealed class ReorderWorkVideosCommandHandler(
             return WorkVideoResult<WorkVideosMutationResult>.BadRequest("Reorder payload must include every video exactly once.");
         }
 
+        var assetPublicUrls = await commandStore.GetAssetPublicUrlsAsync(
+            WorkPublicThumbnailReadModel.GetThumbnailAssetIds(work.ThumbnailAssetId),
+            cancellationToken);
+
         for (var index = 0; index < videos.Count; index += 1)
         {
             videos[index].SortOrder = request.OrderedVideoIds.Count + index;
@@ -41,6 +46,7 @@ public sealed class ReorderWorkVideosCommandHandler(
             videos.Single(video => video.Id == request.OrderedVideoIds[index]).SortOrder = index;
         }
 
+        WorkPublicThumbnailReadModel.Refresh(work, videos, assetPublicUrls);
         work.VideosVersion += 1;
         await commandStore.SaveChangesAsync(cancellationToken);
         return WorkVideoResult<WorkVideosMutationResult>.Ok(

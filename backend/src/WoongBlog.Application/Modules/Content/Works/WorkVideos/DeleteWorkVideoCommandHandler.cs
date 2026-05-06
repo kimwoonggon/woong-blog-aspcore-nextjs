@@ -1,4 +1,5 @@
 using MediatR;
+using WoongBlog.Application.Modules.Content.Works.Support;
 
 namespace WoongBlog.Application.Modules.Content.Works.WorkVideos;
 
@@ -29,6 +30,9 @@ public sealed class DeleteWorkVideoCommandHandler(
             return WorkVideoResult<WorkVideosMutationResult>.NotFound("Video not found.");
         }
 
+        var assetPublicUrls = await commandStore.GetAssetPublicUrlsAsync(
+            WorkPublicThumbnailReadModel.GetThumbnailAssetIds(work.ThumbnailAssetId),
+            cancellationToken);
         await cleanupStore.EnqueueCleanupAsync(
             request.WorkId,
             video.Id,
@@ -49,6 +53,7 @@ public sealed class DeleteWorkVideoCommandHandler(
             remainingVideos[index].SortOrder = index;
         }
 
+        WorkPublicThumbnailReadModel.Refresh(work, remainingVideos, assetPublicUrls);
         work.VideosVersion += 1;
         await commandStore.SaveChangesAsync(cancellationToken);
         return WorkVideoResult<WorkVideosMutationResult>.Ok(

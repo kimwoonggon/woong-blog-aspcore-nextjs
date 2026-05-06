@@ -1,4 +1,6 @@
 using MediatR;
+using WoongBlog.Api.Domain.Entities;
+using WoongBlog.Application.Modules.Content.Works.Support;
 
 namespace WoongBlog.Application.Modules.Content.Works.WorkVideos;
 
@@ -43,6 +45,15 @@ public sealed class StartWorkVideoHlsJobCommandHandler(
             return WorkVideoResult<WorkVideosMutationResult>.BadRequest("Each work supports up to 10 videos.");
         }
 
+        var assetPublicUrls = await commandStore.GetAssetPublicUrlsAsync(
+            WorkPublicThumbnailReadModel.GetThumbnailAssetIds(work.ThumbnailAssetId),
+            cancellationToken);
+        List<WorkVideo>? videosForThumbnail = WorkPublicThumbnailReadModel.ShouldLoadFallbackVideos(
+            work.ThumbnailAssetId,
+            assetPublicUrls)
+            ? (await commandStore.GetVideosForWorkAsync(request.WorkId, cancellationToken)).ToList()
+            : null;
+
         var storageType = storageSelector.ResolveStorageType();
         if (!storageSelector.TryGetStorage(storageType, out var storage))
         {
@@ -76,10 +87,13 @@ public sealed class StartWorkVideoHlsJobCommandHandler(
             var hasTimelinePreview = File.Exists(Path.Combine(workspace.HlsDirectory, WorkVideoPolicy.TimelinePreviewVttFileName))
                 && File.Exists(Path.Combine(workspace.HlsDirectory, WorkVideoPolicy.TimelinePreviewSpriteFileName));
 
-            commandStore.AddWorkVideo(plan.ToWorkVideo(
+            var video = plan.ToWorkVideo(
                 await commandStore.GetNextSortOrderAsync(request.WorkId, cancellationToken),
                 DateTimeOffset.UtcNow,
-                hasTimelinePreview));
+                hasTimelinePreview);
+            commandStore.AddWorkVideo(video);
+            videosForThumbnail?.Add(video);
+            WorkPublicThumbnailReadModel.Refresh(work, videosForThumbnail ?? (IReadOnlyList<WorkVideo>)Array.Empty<WorkVideo>(), assetPublicUrls);
 
             work.VideosVersion += 1;
             await commandStore.SaveChangesAsync(cancellationToken);
