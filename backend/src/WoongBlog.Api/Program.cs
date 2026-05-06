@@ -45,6 +45,7 @@ var app = builder.Build();
 app.ValidateStartupOptions();
 app.UseForwardedHeaders();
 app.UseConfiguredTransportSecurity();
+app.UseResponseCompression();
 app.Use(async (context, next) =>
 {
     var stopwatch = Stopwatch.StartNew();
