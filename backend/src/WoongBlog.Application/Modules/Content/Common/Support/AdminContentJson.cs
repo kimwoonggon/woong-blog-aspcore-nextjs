@@ -110,6 +110,36 @@ public static class AdminContentJson
         }
     }
 
+    public static string ExtractSocialShareMessage(string allPropertiesJson)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(allPropertiesJson);
+            if (document.RootElement.ValueKind != JsonValueKind.Object)
+            {
+                return string.Empty;
+            }
+
+            if (!document.RootElement.TryGetProperty("socialShareMessage", out var propertyValue))
+            {
+                return string.Empty;
+            }
+
+            var message = propertyValue.ValueKind switch
+            {
+                JsonValueKind.String => propertyValue.GetString(),
+                JsonValueKind.Null => null,
+                _ => propertyValue.ToString()
+            };
+
+            return string.IsNullOrWhiteSpace(message) ? string.Empty : message.Trim();
+        }
+        catch
+        {
+            return string.Empty;
+        }
+    }
+
     private static string TryGetString(JsonElement root, string propertyName)
     {
         return root.TryGetProperty(propertyName, out var value) ? value.GetString() ?? string.Empty : string.Empty;

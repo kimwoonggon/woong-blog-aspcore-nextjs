@@ -15,6 +15,7 @@ public class Work
     public string PublicThumbnailUrl { get; set; } = string.Empty;
     public Guid? IconAssetId { get; set; }
     public string PublicIconUrl { get; set; } = string.Empty;
+    public string PublicSocialShareMessage { get; set; } = string.Empty;
     public string Category { get; set; } = string.Empty;
     public string? Period { get; set; }
     public string AllPropertiesJson { get; set; } = "{}";

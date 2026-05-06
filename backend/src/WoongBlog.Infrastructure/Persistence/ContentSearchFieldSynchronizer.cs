@@ -34,6 +34,8 @@ internal static class ContentSearchFieldSynchronizer
                     AdminContentJson.ExtractExcerptText(entry.Entity.ContentJson));
                 entry.Entity.PublicContentHtml = publicBody.Html;
                 entry.Entity.PublicContentMarkdown = publicBody.Markdown;
+                entry.Entity.PublicSocialShareMessage = AdminContentJson.ExtractSocialShareMessage(
+                    entry.Entity.AllPropertiesJson);
             }
         }
     }
