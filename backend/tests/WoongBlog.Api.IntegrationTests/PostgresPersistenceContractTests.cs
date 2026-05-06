@@ -538,6 +538,120 @@ public sealed class PostgresPersistenceContractTests : IClassFixture<PostgresPer
     }
 
     [Fact]
+    public async Task PublicWorkDetailWithVideos_UsesTwoPostgresCommands_AndStoredPublicColumnsOnly()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        const string slug = "postgres-public-work-with-videos";
+        const string expectedThumbnailUrl = "/media/postgres-public-work-with-videos-thumb.png";
+        const string contentJson = """{"html":"<p><img src=\"/media/body-fallback-should-not-win.png\" alt=\"body\"></p>"}""";
+        var workId = Guid.NewGuid();
+        var thumbnailAssetId = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+
+        await using (var setupContext = CreateDbContext())
+        {
+            await ResetDatabaseAsync(setupContext, cancellationToken);
+            await DatabaseBootstrapper.InitializeAsync(setupContext, cancellationToken);
+            await ClearPublicContentAsync(setupContext, cancellationToken);
+
+            setupContext.Assets.Add(new Asset
+            {
+                Id = thumbnailAssetId,
+                Bucket = "media",
+                Path = "postgres-public-work-with-videos-thumb.png",
+                PublicUrl = expectedThumbnailUrl,
+                MimeType = "image/png",
+                Kind = "work-thumbnail",
+                CreatedAt = now
+            });
+            setupContext.Works.Add(new Work
+            {
+                Id = workId,
+                Slug = slug,
+                Title = "Postgres Public Work With Videos",
+                Excerpt = "Postgres Public Work With Videos excerpt",
+                Category = "case-study",
+                ContentJson = contentJson,
+                AllPropertiesJson = """{"adminOnly":"This must not be selected by public detail."}""",
+                PublicContentHtml = "<p>Stored public video detail</p>",
+                PublicContentMarkdown = "Stored public video detail",
+                ThumbnailAssetId = thumbnailAssetId,
+                PublicThumbnailUrl = expectedThumbnailUrl,
+                PublicIconUrl = "/media/postgres-public-work-with-videos-icon.png",
+                VideosVersion = 1,
+                Published = true,
+                PublishedAt = now.AddMinutes(-1),
+                CreatedAt = now,
+                UpdatedAt = now
+            });
+            setupContext.WorkVideos.Add(new WorkVideo
+            {
+                WorkId = workId,
+                SourceType = WorkVideoSourceTypes.YouTube,
+                SourceKey = "dQw4w9WgXcQ",
+                OriginalFileName = "Postgres public work detail video",
+                SortOrder = 0,
+                CreatedAt = now
+            });
+            await setupContext.SaveChangesAsync(cancellationToken);
+            await setupContext.Database.ExecuteSqlInterpolatedAsync(
+                $"""
+                UPDATE "Works"
+                SET
+                    "PublicContentHtml" = {"<p>Stored public video detail</p>"},
+                    "PublicContentMarkdown" = {"Stored public video detail"},
+                    "PublicThumbnailUrl" = {expectedThumbnailUrl}
+                WHERE "Id" = {workId}
+                """,
+                cancellationToken);
+        }
+
+        var resolverThumbnailUrl = WorkThumbnailUrlResolver.ResolveThumbnailUrl(
+            thumbnailAssetId,
+            contentJson,
+            [
+                new WorkVideo
+                {
+                    WorkId = workId,
+                    SourceType = WorkVideoSourceTypes.YouTube,
+                    SourceKey = "dQw4w9WgXcQ",
+                    SortOrder = 0,
+                    CreatedAt = now
+                }
+            ],
+            new Dictionary<Guid, string> { [thumbnailAssetId] = expectedThumbnailUrl });
+        var commandTextCapture = new CommandTextCaptureInterceptor();
+        await using var dbContext = _fixture.CreateDbContext(commandTextCapture);
+        var queryStore = new WorkQueryStore(dbContext, new NoopPlaybackUrlBuilder());
+
+        var result = await queryStore.GetPublishedDetailBySlugAsync(slug, cancellationToken);
+
+        Assert.NotNull(result);
+        Assert.Equal(resolverThumbnailUrl, result!.ThumbnailUrl);
+        Assert.Equal("<p>Stored public video detail</p>", result.Content.Html);
+        Assert.Equal("Stored public video detail", result.Content.Markdown);
+        Assert.Equal(1, result.VideosVersion);
+        var video = Assert.Single(result.Videos);
+        Assert.Equal(WorkVideoSourceTypes.YouTube, video.SourceType);
+        Assert.Equal("dQw4w9WgXcQ", video.SourceKey);
+
+        Assert.Equal(2, commandTextCapture.CommandTexts.Count);
+        Assert.DoesNotContain(
+            "\"WorkVideos\"",
+            commandTextCapture.CommandTexts[0],
+            StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(
+            "\"WorkVideos\"",
+            commandTextCapture.CommandTexts[1],
+            StringComparison.OrdinalIgnoreCase);
+
+        var combinedCommandText = string.Join('\n', commandTextCapture.CommandTexts);
+        Assert.DoesNotContain("\"ContentJson\"", combinedCommandText, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("\"AllPropertiesJson\"", combinedCommandText, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("\"Assets\"", combinedCommandText, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task PublicBlogDetail_UsesSinglePostgresCommand()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
