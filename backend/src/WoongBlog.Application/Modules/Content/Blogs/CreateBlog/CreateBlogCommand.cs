@@ -8,5 +8,6 @@ public sealed record CreateBlogCommand(
     string? Excerpt,
     string[] Tags,
     bool Published,
-    string ContentJson
+    string ContentJson,
+    Guid? CoverAssetId
 ) : IRequest<AdminMutationResult>;

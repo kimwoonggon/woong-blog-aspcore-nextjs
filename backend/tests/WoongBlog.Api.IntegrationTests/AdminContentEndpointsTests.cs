@@ -251,6 +251,43 @@ public class AdminContentEndpointsTests : IClassFixture<CustomWebApplicationFact
     }
 
     [Fact]
+    public async Task CreateAndReadBlog_PersistsUploadedCover()
+    {
+        var client = _factory.CreateAuthenticatedClient();
+        var title = $"Media-backed Blog {Guid.NewGuid():N}";
+
+        using var coverForm = CreateImageUploadForm("blog-covers", "cover.png");
+        var coverUpload = await client.PostAsync("/api/uploads", coverForm);
+        coverUpload.EnsureSuccessStatusCode();
+        var coverPayload = await coverUpload.Content.ReadFromJsonAsync<Dictionary<string, string>>();
+
+        var createResponse = await client.PostAsJsonAsync("/api/admin/blogs", new
+        {
+            title,
+            excerpt = "Cover-backed blog",
+            tags = new[] { "qa", "media" },
+            published = true,
+            contentJson = "{\"html\":\"<p>Body with cover</p>\"}",
+            coverAssetId = coverPayload!["id"]
+        });
+
+        createResponse.EnsureSuccessStatusCode();
+        var created = await createResponse.Content.ReadFromJsonAsync<CreatedResource>();
+        Assert.NotNull(created);
+
+        var publicResponse = await client.GetAsync($"/api/public/blogs/{created!.Slug}");
+        publicResponse.EnsureSuccessStatusCode();
+        var publicBody = await publicResponse.Content.ReadAsStringAsync();
+        Assert.Contains("/media/blog-covers/", publicBody, StringComparison.OrdinalIgnoreCase);
+
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
+        var blog = dbContext.Blogs.Single(x => x.Id == created.Id);
+        Assert.Equal(Guid.Parse(coverPayload["id"]), blog.CoverAssetId);
+        Assert.Contains("/media/blog-covers/", blog.PublicCoverUrl, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task CreateBlog_LeavesExcerptBlank_WhenManualExcerptIsBlank()
     {
         var client = _factory.CreateAuthenticatedClient();
@@ -312,6 +349,127 @@ public class AdminContentEndpointsTests : IClassFixture<CustomWebApplicationFact
         using var publicDocument = JsonDocument.Parse(await publicResponse.Content.ReadAsStringAsync());
         Assert.Equal(string.Empty, publicDocument.RootElement.GetProperty("excerpt").GetString());
         Assert.Contains(updateToken, publicDocument.RootElement.GetProperty("content").GetProperty("html").GetString(), StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task UpdateBlog_PreservesStoredCover_WhenCoverAssetIdIsOmitted()
+    {
+        var client = _factory.CreateAuthenticatedClient();
+
+        using var coverForm = CreateImageUploadForm("blog-covers", "preserve-cover.png");
+        var coverUpload = await client.PostAsync("/api/uploads", coverForm);
+        coverUpload.EnsureSuccessStatusCode();
+        var coverPayload = await coverUpload.Content.ReadFromJsonAsync<Dictionary<string, string>>();
+
+        var createResponse = await client.PostAsJsonAsync("/api/admin/blogs", new
+        {
+            title = $"Preserve Cover Blog {Guid.NewGuid():N}",
+            excerpt = "initial excerpt",
+            tags = new[] { "qa", "media" },
+            published = true,
+            contentJson = "{\"html\":\"<p>Initial body</p>\"}",
+            coverAssetId = coverPayload!["id"]
+        });
+        createResponse.EnsureSuccessStatusCode();
+        var created = await createResponse.Content.ReadFromJsonAsync<CreatedResource>();
+        Assert.NotNull(created);
+
+        var updateResponse = await client.PutAsJsonAsync($"/api/admin/blogs/{created!.Id}", new
+        {
+            title = $"Preserved Cover Blog {Guid.NewGuid():N}",
+            excerpt = "updated excerpt",
+            tags = new[] { "qa", "updated" },
+            published = true,
+            contentJson = "{\"html\":\"<p>Updated body</p>\"}"
+        });
+
+        updateResponse.EnsureSuccessStatusCode();
+        var updated = await updateResponse.Content.ReadFromJsonAsync<CreatedResource>();
+        Assert.NotNull(updated);
+
+        var publicResponse = await client.GetAsync($"/api/public/blogs/{updated!.Slug}");
+        publicResponse.EnsureSuccessStatusCode();
+        var publicBody = await publicResponse.Content.ReadAsStringAsync();
+        Assert.Contains("/media/blog-covers/", publicBody, StringComparison.OrdinalIgnoreCase);
+
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
+        var blog = dbContext.Blogs.Single(x => x.Id == created.Id);
+        Assert.Equal(Guid.Parse(coverPayload["id"]), blog.CoverAssetId);
+        Assert.Contains("/media/blog-covers/", blog.PublicCoverUrl, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task UpdateBlog_ChangesAndClearsStoredCover_WhenCoverAssetIdIsProvided()
+    {
+        var client = _factory.CreateAuthenticatedClient();
+
+        using var firstCoverForm = CreateImageUploadForm("blog-covers", "first-cover.png");
+        var firstCoverUpload = await client.PostAsync("/api/uploads", firstCoverForm);
+        firstCoverUpload.EnsureSuccessStatusCode();
+        var firstCover = await firstCoverUpload.Content.ReadFromJsonAsync<Dictionary<string, string>>();
+
+        using var secondCoverForm = CreateImageUploadForm("blog-covers", "second-cover.png");
+        var secondCoverUpload = await client.PostAsync("/api/uploads", secondCoverForm);
+        secondCoverUpload.EnsureSuccessStatusCode();
+        var secondCover = await secondCoverUpload.Content.ReadFromJsonAsync<Dictionary<string, string>>();
+
+        var createResponse = await client.PostAsJsonAsync("/api/admin/blogs", new
+        {
+            title = $"Change Cover Blog {Guid.NewGuid():N}",
+            excerpt = "initial excerpt",
+            tags = new[] { "qa", "media" },
+            published = true,
+            contentJson = "{\"html\":\"<p>Initial body</p>\"}",
+            coverAssetId = firstCover!["id"]
+        });
+        createResponse.EnsureSuccessStatusCode();
+        var created = await createResponse.Content.ReadFromJsonAsync<CreatedResource>();
+        Assert.NotNull(created);
+
+        var changeResponse = await client.PutAsJsonAsync($"/api/admin/blogs/{created!.Id}", new
+        {
+            title = $"Changed Cover Blog {Guid.NewGuid():N}",
+            excerpt = "changed excerpt",
+            tags = new[] { "qa", "changed" },
+            published = true,
+            contentJson = "{\"html\":\"<p>Changed body</p>\"}",
+            coverAssetId = secondCover!["id"]
+        });
+        changeResponse.EnsureSuccessStatusCode();
+        var changed = await changeResponse.Content.ReadFromJsonAsync<CreatedResource>();
+        Assert.NotNull(changed);
+
+        var changedPublicResponse = await client.GetAsync($"/api/public/blogs/{changed!.Slug}");
+        changedPublicResponse.EnsureSuccessStatusCode();
+        using (var changedDocument = JsonDocument.Parse(await changedPublicResponse.Content.ReadAsStringAsync()))
+        {
+            Assert.Equal(secondCover["url"], changedDocument.RootElement.GetProperty("coverUrl").GetString());
+        }
+
+        var clearResponse = await client.PutAsJsonAsync($"/api/admin/blogs/{created.Id}", new
+        {
+            title = $"Cleared Cover Blog {Guid.NewGuid():N}",
+            excerpt = "cleared excerpt",
+            tags = new[] { "qa", "cleared" },
+            published = true,
+            contentJson = "{\"html\":\"<p>Cleared body</p>\"}",
+            coverAssetId = (Guid?)null
+        });
+        clearResponse.EnsureSuccessStatusCode();
+        var cleared = await clearResponse.Content.ReadFromJsonAsync<CreatedResource>();
+        Assert.NotNull(cleared);
+
+        var clearedPublicResponse = await client.GetAsync($"/api/public/blogs/{cleared!.Slug}");
+        clearedPublicResponse.EnsureSuccessStatusCode();
+        using var clearedDocument = JsonDocument.Parse(await clearedPublicResponse.Content.ReadAsStringAsync());
+        Assert.Equal(string.Empty, clearedDocument.RootElement.GetProperty("coverUrl").GetString());
+
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
+        var blog = dbContext.Blogs.Single(x => x.Id == created.Id);
+        Assert.Null(blog.CoverAssetId);
+        Assert.Equal(string.Empty, blog.PublicCoverUrl);
     }
 
     [Fact]
@@ -559,6 +717,16 @@ public class AdminContentEndpointsTests : IClassFixture<CustomWebApplicationFact
         Assert.Equal(Guid.Parse(iconPayload["id"]), work.IconAssetId);
         Assert.Contains("/media/work-thumbnails/", work.PublicThumbnailUrl, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("/media/work-icons/", work.PublicIconUrl, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static MultipartFormDataContent CreateImageUploadForm(string bucket, string fileName)
+    {
+        var form = new MultipartFormDataContent();
+        var fileContent = new StreamContent(new MemoryStream(new byte[] { 137, 80, 78, 71 }));
+        fileContent.Headers.ContentType = new MediaTypeHeaderValue("image/png");
+        form.Add(fileContent, "file", fileName);
+        form.Add(new StringContent(bucket), "bucket");
+        return form;
     }
 
     private sealed class CreatedResource

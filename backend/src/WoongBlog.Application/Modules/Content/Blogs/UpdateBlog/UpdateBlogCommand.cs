@@ -9,5 +9,7 @@ public sealed record UpdateBlogCommand(
     string? Excerpt,
     string[] Tags,
     bool Published,
-    string ContentJson
+    string ContentJson,
+    Guid? CoverAssetId,
+    bool HasCoverAssetId
 ) : IRequest<AdminMutationResult?>;
