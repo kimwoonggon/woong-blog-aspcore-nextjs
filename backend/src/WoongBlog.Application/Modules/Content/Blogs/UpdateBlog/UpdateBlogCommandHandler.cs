@@ -24,10 +24,21 @@ public sealed class UpdateBlogCommandHandler : IRequestHandler<UpdateBlogCommand
         var excerpt = ResolveExcerpt(request.Excerpt);
         var contentText = AdminContentJson.ExtractExcerptText(request.ContentJson);
         var now = DateTimeOffset.UtcNow;
+        var assetPublicUrls = request.HasCoverAssetId
+            ? await _blogCommandStore.GetAssetPublicUrlsAsync(
+                GetPublicMediaAssetIds(request.CoverAssetId),
+                cancellationToken)
+            : new Dictionary<Guid, string>();
 
         blog.Title = request.Title;
         blog.Slug = await GenerateUniqueSlugAsync(request.Title, blog.Id, cancellationToken);
         blog.Excerpt = excerpt;
+        if (request.HasCoverAssetId)
+        {
+            blog.CoverAssetId = request.CoverAssetId;
+            blog.PublicCoverUrl = ResolvePublicMediaUrl(request.CoverAssetId, assetPublicUrls);
+        }
+
         blog.Tags = request.Tags;
         blog.ContentJson = request.ContentJson;
         blog.SearchTitle = ContentSearchText.Normalize(request.Title);
@@ -47,6 +58,18 @@ public sealed class UpdateBlogCommandHandler : IRequestHandler<UpdateBlogCommand
     {
         var normalizedManualExcerpt = manualExcerpt?.Trim();
         return string.IsNullOrWhiteSpace(normalizedManualExcerpt) ? string.Empty : normalizedManualExcerpt;
+    }
+
+    private static Guid[] GetPublicMediaAssetIds(Guid? coverAssetId)
+    {
+        return coverAssetId.HasValue ? [coverAssetId.Value] : [];
+    }
+
+    private static string ResolvePublicMediaUrl(Guid? assetId, IReadOnlyDictionary<Guid, string> assetPublicUrls)
+    {
+        return assetId is not null && assetPublicUrls.TryGetValue(assetId.Value, out var publicUrl)
+            ? publicUrl
+            : string.Empty;
     }
 
     private async Task<string> GenerateUniqueSlugAsync(string title, Guid? currentBlogId, CancellationToken cancellationToken)

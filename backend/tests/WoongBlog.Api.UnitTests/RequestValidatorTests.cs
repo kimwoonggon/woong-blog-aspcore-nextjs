@@ -41,7 +41,8 @@ public class RequestValidatorTests
             null,
             [new string('x', 51)],
             false,
-            "{\"html\":\"ok\"}"
+            "{\"html\":\"ok\"}",
+            null
         ));
 
         Assert.Contains(result.Errors, error => error.PropertyName == nameof(CreateBlogCommand.Title));

@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Public Blog Cover Write Model - 2026-05-06</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 920px; margin: 40px auto; line-height: 1.55; color: #17202a; }
+    code { background: #f3f5f7; padding: 2px 4px; border-radius: 4px; }
+    .pass { color: #116b2f; }
+    .warn { color: #8a5a00; }
+  </style>
+</head>
+<body>
+  <h1>Public Blog Cover Write Model - 2026-05-06</h1>
+  <p>Persist Blog cover metadata at write time so public Blog reads use stored columns without cache or target shortcuts.</p>
+  <h2>Changed</h2>
+  <ul>
+    <li>Blog create/update accepts <code>coverAssetId</code> and writes <code>CoverAssetId</code>/<code>PublicCoverUrl</code>.</li>
+    <li>Update distinguishes omitted cover from explicit null.</li>
+    <li>Added admin integration and one-command Postgres public Blog detail coverage.</li>
+  </ul>
+  <h2>Validation</h2>
+  <ul>
+    <li class="pass">PASS: focused unit, admin integration, public endpoint, component, and Postgres contract tests.</li>
+    <li class="pass">PASS: full backend solution tests: Component 122, Unit 56, Architecture 35, Integration 213, Contract 1 skipped.</li>
+    <li class="pass">PASS: 2CPU/about 7.5GiB compose rebuild and health probe.</li>
+    <li class="pass">PASS: k6 current public mix 300rps/30s completed 9,001 requests, failed rate 0, p95 4.10ms.</li>
+  </ul>
+  <h2>Not Changed</h2>
+  <p>No cache, no seed-priority target selection, no <code>pageSize=1</code>, no public/admin body split.</p>
+  <h2>Risks</h2>
+  <ul>
+    <li class="warn">300rps k6 is a regression/capacity sanity check, not a 1000rps spike proof.</li>
+    <li class="warn">Large detail payload serialization remains the next likely bottleneck.</li>
+    <li class="warn">Backend Alpine runtime still logs missing <code>libgssapi_krb5.so.2</code> at startup.</li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Ship this slice, then continue public/admin body split, timing instrumentation, and k6 p99 export before considering cache.</p>
+</body>
+</html>

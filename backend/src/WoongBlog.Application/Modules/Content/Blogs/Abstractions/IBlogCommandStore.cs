@@ -6,6 +6,7 @@ public interface IBlogCommandStore
 {
     Task<bool> SlugExistsAsync(string slug, Guid? excludedBlogId, CancellationToken cancellationToken);
     Task<Blog?> GetByIdForUpdateAsync(Guid id, CancellationToken cancellationToken);
+    Task<IReadOnlyDictionary<Guid, string>> GetAssetPublicUrlsAsync(IReadOnlyCollection<Guid> assetIds, CancellationToken cancellationToken);
     void Add(Blog blog);
     void Remove(Blog blog);
     Task SaveChangesAsync(CancellationToken cancellationToken);

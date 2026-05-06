@@ -1,0 +1,116 @@
+{
+  "taskSlug": "public-blog-cover-write-model-2026-05-06",
+  "date": "2026-05-06",
+  "objective": "Persist Blog representative cover metadata at write time so public Blog reads use stored columns without cache or load-test target shortcuts.",
+  "changed": [
+    "Added coverAssetId to Blog create requests and commands.",
+    "Added omitted-vs-explicit-null Blog update semantics for coverAssetId.",
+    "Added IBlogCommandStore.GetAssetPublicUrlsAsync with an Assets.AsNoTracking projection.",
+    "Blog create/update handlers write CoverAssetId and PublicCoverUrl from Assets.PublicUrl at save time.",
+    "Added admin integration coverage for create, preserve-on-omit, change, and clear cover behavior.",
+    "Added a Postgres contract proving public Blog detail uses one measured command and stored PublicCoverUrl."
+  ],
+  "intentionallyNotChanged": [
+    "No cache added.",
+    "No Real Backend target selection change.",
+    "No pageSize reduction; pageSize=12 remains.",
+    "No seeded target priority.",
+    "No public/admin body split in this slice.",
+    "No JSON source-generation change.",
+    "No Docker runtime package change for the pre-existing libgssapi startup log."
+  ],
+  "goalVerification": [
+    "Blog cover resolution is now a write-time operation for admin create/update.",
+    "Public Blog reads continue to project stored PublicCoverUrl.",
+    "Public Blog detail has one-command Postgres contract coverage.",
+    "Omitted coverAssetId preserves existing cover; explicit null clears it.",
+    "Load targets remain current public slugs and pageSize=12."
+  ],
+  "validations": [
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.UnitTests/WoongBlog.Api.UnitTests.csproj --filter FullyQualifiedName~RequestValidatorTests --no-restore",
+      "result": "passed 8/8"
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~AdminContentEndpointsTests --no-restore",
+      "result": "passed 25/25"
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~PostgresPersistenceContractTests --no-restore",
+      "result": "passed 9/9"
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~PublicEndpointsTests --no-restore",
+      "result": "passed 29/29"
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj --filter FullyQualifiedName~PublicQueryHandlerComponentTests --no-restore",
+      "result": "passed 40/40"
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    },
+    {
+      "command": "diff guard for pageSize/seed/load target changes",
+      "result": "passed; no production target semantic change"
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln --no-restore",
+      "result": "passed: Component 122, Unit 56, Architecture 35, Integration 213, Contract 1 skipped"
+    },
+    {
+      "command": "docker compose 2cpu total8gb overlay rebuild and health probe",
+      "result": "passed"
+    },
+    {
+      "command": "k6 current public mix 300rps 30s pageSize=12",
+      "result": "passed: 9001 requests, 300.01 rps, failed_rate 0, dropped_iterations 0, p95 4.10 ms"
+    }
+  ],
+  "loadTest": {
+    "artifact": "backend/reports/public-blog-cover-write-model-2026-05-06/loadtest/k6-2cpu-total8gb-current-public-mix-300rps-30s.json",
+    "scenario": "constant public mix",
+    "rate": 300,
+    "duration": "30s",
+    "requests": 9001,
+    "rps": 300.0118255155633,
+    "failedRate": 0,
+    "droppedIterations": 0,
+    "p50Ms": 1.57832,
+    "p95Ms": 4.099023,
+    "maxMs": 98.183058,
+    "targets": {
+      "workList": {
+        "path": "/api/public/works?page=1&pageSize=12",
+        "p95Ms": 12.212774699999951
+      },
+      "studyList": {
+        "path": "/api/public/blogs?page=1&pageSize=12",
+        "p95Ms": 3.493285599999995
+      },
+      "workRead": {
+        "path": "/api/public/works/internal-admin-workbench",
+        "p95Ms": 3.127444
+      },
+      "studyRead": {
+        "path": "/api/public/blogs/engineering-notes-on-bff-auth",
+        "p95Ms": 2.6747394499999992
+      }
+    }
+  },
+  "risks": [
+    "This is not the body payload split; large detail serialization remains a likely next bottleneck.",
+    "The local k6 run is a 300 rps sanity check, not a 1000 rps spike proof.",
+    "The local database is not the exact production content corpus.",
+    "Backend Alpine runtime still logs missing libgssapi_krb5.so.2 at startup.",
+    "MediatR license warning remains in the production-environment local compose run."
+  ],
+  "recommendation": "Ship this slice, then continue public/admin body model split, app serialization timing, DB command/open p95 availability, and k6 p99 export before considering cache.",
+  "artifacts": {
+    "markdown": "backend/reports/public-blog-cover-write-model-2026-05-06/public-blog-cover-write-model-2026-05-06.md",
+    "html": "backend/reports/public-blog-cover-write-model-2026-05-06/public-blog-cover-write-model-2026-05-06.html",
+    "json": "backend/reports/public-blog-cover-write-model-2026-05-06/public-blog-cover-write-model-2026-05-06.json",
+    "loadTest": "backend/reports/public-blog-cover-write-model-2026-05-06/loadtest/k6-2cpu-total8gb-current-public-mix-300rps-30s.json"
+  }
+}
