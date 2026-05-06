@@ -3,6 +3,8 @@ using System.Net.Http.Json;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
+using WoongBlog.Api.Domain.Entities;
+using WoongBlog.Application.Modules.Content.Works.Support;
 using WoongBlog.Infrastructure.Persistence;
 
 namespace WoongBlog.Api.Tests;
@@ -713,8 +715,21 @@ public class AdminContentEndpointsTests : IClassFixture<CustomWebApplicationFact
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
         var work = dbContext.Works.Single(x => x.Id == created.Id);
-        Assert.Equal(Guid.Parse(thumbnailPayload["id"]), work.ThumbnailAssetId);
-        Assert.Equal(Guid.Parse(iconPayload["id"]), work.IconAssetId);
+        var thumbnailId = Guid.Parse(thumbnailPayload["id"]);
+        var iconId = Guid.Parse(iconPayload["id"]);
+        var thumbnailPublicUrl = dbContext.Assets
+            .Where(asset => asset.Id == thumbnailId)
+            .Select(asset => asset.PublicUrl)
+            .Single();
+        var resolverThumbnailUrl = WorkThumbnailUrlResolver.ResolveThumbnailUrl(
+            thumbnailId,
+            work.ContentJson,
+            Array.Empty<WorkVideo>(),
+            new Dictionary<Guid, string> { [thumbnailId] = thumbnailPublicUrl });
+
+        Assert.Equal(thumbnailId, work.ThumbnailAssetId);
+        Assert.Equal(iconId, work.IconAssetId);
+        Assert.Equal(resolverThumbnailUrl, work.PublicThumbnailUrl);
         Assert.Contains("/media/work-thumbnails/", work.PublicThumbnailUrl, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("/media/work-icons/", work.PublicIconUrl, StringComparison.OrdinalIgnoreCase);
     }
