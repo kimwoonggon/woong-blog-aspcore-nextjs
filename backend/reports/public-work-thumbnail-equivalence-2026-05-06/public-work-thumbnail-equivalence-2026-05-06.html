@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Public Work Thumbnail Equivalence Guard - 2026-05-06</title>
+  <style>body{font-family:Arial,sans-serif;line-height:1.5;max-width:900px;margin:32px auto;padding:0 16px;color:#1f2937}code{background:#f3f4f6;padding:2px 4px;border-radius:4px}h1,h2{color:#111827}</style>
+</head>
+<body>
+  <h1>Public Work Thumbnail Equivalence Guard - 2026-05-06</h1>
+  <h2>Summary</h2>
+  <p>Added Postgres contract coverage proving explicit thumbnail asset resolver output equals public/admin stored projection output.</p>
+  <h2>Changed</h2>
+  <ul>
+    <li>Public Work detail now asserts resolver-equivalent <code>ThumbnailUrl</code> while preserving one Postgres command.</li>
+    <li>Public Work first-page list now asserts resolver-equivalent <code>ThumbnailUrl</code> while preserving one Postgres command.</li>
+    <li>TODO validation evidence was recorded.</li>
+  </ul>
+  <h2>Not Changed</h2>
+  <p>No production code, cache behavior, target selection, seeded priority, or page-size behavior was changed.</p>
+  <h2>Validations</h2>
+  <ul>
+    <li>Focused guard tests: passed 3/3.</li>
+    <li>Postgres persistence contracts: passed 10/10.</li>
+    <li>Backend solution tests: Component 122, Unit 56, Architecture 35, Integration 214 passed; Contract 1 skipped.</li>
+    <li><code>git diff --check</code>: passed.</li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Merge this guard, then continue the next backend performance slice.</p>
+</body>
+</html>
