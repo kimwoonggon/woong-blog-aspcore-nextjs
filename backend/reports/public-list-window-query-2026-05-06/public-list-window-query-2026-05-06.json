@@ -1,0 +1,40 @@
+{
+  "task": "public-list-window-query-2026-05-06",
+  "summary": "Reduce public Work/Blog first-page no-search list reads from two PostgreSQL commands to one using COUNT(*) OVER().",
+  "changed": [
+    "Added PostgreSQL first-page no-search window-query path for public Work list.",
+    "Added PostgreSQL first-page no-search window-query path for public Blog list.",
+    "Added Postgres command-count contract tests.",
+    "Captured scoped k6 smoke artifacts under 2 CPU / 8 GiB split compose profile."
+  ],
+  "intentionallyNotChanged": [
+    "No cache added.",
+    "No seeded target priority changed.",
+    "No pageSize=12 reduction.",
+    "No public DTO contract change.",
+    "Search and page>1 behavior remains on the existing EF path.",
+    "Detail endpoints and Work video loading not changed."
+  ],
+  "validations": [
+    { "name": "RED focused Postgres command count", "result": "failed as expected: Work/Blog list each produced 2 commands before implementation" },
+    { "name": "GREEN focused Postgres command count", "result": "passed 2/2" },
+    { "command": "dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj --filter FullyQualifiedName~PublicQueryHandlerComponentTests --no-restore", "result": "passed 40/40" },
+    { "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~PostgresPersistenceContractTests --no-restore", "result": "passed 7/7" },
+    { "command": "dotnet test backend/WoongBlog.sln --no-restore", "result": "passed Unit 56, Architecture 35, Component 122, Integration 208; Contract 1 skipped" },
+    { "command": "git diff --check", "result": "passed" },
+    { "name": "Docker backend rebuild", "result": "passed under 2 CPU / 8 GiB split compose overlay" },
+    { "name": "HTTP probes", "result": "health 200, work-list 200, blog-list 200" }
+  ],
+  "loadTests": [
+    { "target": "Work list cold", "rateRps": 300, "durationSeconds": 30, "requests": 8987, "observedRps": 299.57, "failureRate": 0, "p95Ms": 222.63, "maxMs": 1582.32, "artifact": "backend/reports/public-list-window-query-2026-05-06/loadtest/k6-work-list-300rps-30s.json" },
+    { "target": "Work list warm", "rateRps": 300, "durationSeconds": 30, "requests": 9001, "observedRps": 300.05, "failureRate": 0, "p95Ms": 4.58, "maxMs": 58.73, "artifact": "backend/reports/public-list-window-query-2026-05-06/loadtest/k6-work-list-300rps-30s-warm.json" },
+    { "target": "Blog list", "rateRps": 300, "durationSeconds": 30, "requests": 9001, "observedRps": 300.04, "failureRate": 0, "p95Ms": 2.54, "maxMs": 23.55, "artifact": "backend/reports/public-list-window-query-2026-05-06/loadtest/k6-blog-list-300rps-30s.json" }
+  ],
+  "risks": [
+    "Optimized path is PostgreSQL-specific; non-PostgreSQL providers use existing EF path.",
+    "Cold-start Work list run had p95 222.63 ms; warm run p95 was 4.58 ms.",
+    "Page>1 still uses two commands to preserve clamping behavior.",
+    "Work detail video/read and large detail serialization costs remain."
+  ],
+  "recommendation": "Merge through dev after CI, then continue with Work detail video/read projection and detail serialization pressure."
+}
