@@ -9,11 +9,13 @@
   <h1>Admin Work List Projection Audit - 2026-05-06</h1>
   <h2>Summary</h2>
   <p><code>GetAdminListAsync</code> now uses a single DTO projection over stored public media columns instead of loading full Work entities, Assets, and WorkVideos.</p>
+  <h2>Correctness Guard</h2>
+  <p>The Postgres projection test now asserts <code>WorkThumbnailUrlResolver.ResolveThumbnailUrl(...)</code> equals the projected admin list thumbnail for explicit thumbnail assets. Create endpoint coverage also asserts the stored value is written as the resolver result.</p>
   <h2>Not Changed</h2>
-  <p>No cache, seed priority, load-test target change, public DTO contract change, or <code>pageSize=12</code> reduction was introduced.</p>
+  <p>No cache, seed priority, load-test target change, public DTO contract change, public video/body thumbnail fallback, or <code>pageSize=12</code> reduction was introduced.</p>
   <h2>Validation</h2>
-  <p>Focused RED/GREEN Postgres command-count test passed after implementation. Full backend solution tests passed: Component 122, Unit 56, Architecture 35, Integration 214, Contract 1 skipped.</p>
+  <p>Focused resolver-equivalence tests passed after correction. Full backend solution tests passed after the correction: Component 122, Unit 56, Architecture 35, Integration 214, Contract 1 skipped.</p>
   <h2>Recommendation</h2>
-  <p>Promote through dev and main as a low-risk backend read-model correction.</p>
+  <p>Promote through dev and main after the corrected equivalence guard is pushed and CI is green.</p>
 </body>
 </html>

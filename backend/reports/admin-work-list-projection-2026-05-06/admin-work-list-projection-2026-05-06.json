@@ -5,26 +5,33 @@
   "changed": [
     "backend/src/WoongBlog.Infrastructure/Modules/Content/Works/Persistence/WorkQueryStore.cs",
     "backend/tests/WoongBlog.Api.IntegrationTests/PostgresPersistenceContractTests.cs",
+    "backend/tests/WoongBlog.Api.IntegrationTests/AdminContentEndpointsTests.cs",
     "todolist-2026-05-06.md"
+  ],
+  "correctnessGuards": [
+    "Admin Work list projection test asserts WorkThumbnailUrlResolver result equals projected ThumbnailUrl for explicit thumbnail assets.",
+    "Create Work endpoint test asserts stored PublicThumbnailUrl equals WorkThumbnailUrlResolver result for the uploaded thumbnail asset."
   ],
   "notChanged": [
     "No cache behavior changed",
     "No Real Backend Test target selection changed",
     "No seeded target priority added",
     "No public list pageSize behavior changed",
-    "No public endpoint DTO contract changed"
+    "No public endpoint DTO contract changed",
+    "No public video/body thumbnail fallback reintroduced"
   ],
   "validations": [
-    { "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~PostgresPersistenceContractTests.AdminWorkList_UsesSinglePostgresCommand_AndStoredThumbnail --no-restore", "result": "red_then_green" },
-    { "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~PostgresPersistenceContractTests --no-restore", "result": "passed_10_of_10" },
+    { "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~PostgresPersistenceContractTests.AdminWorkList_UsesSinglePostgresCommand_AndStoredThumbnail --no-restore", "result": "red_then_green_then_corrected_to_resolver_equivalence" },
+    { "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~PostgresPersistenceContractTests.AdminWorkList_UsesSinglePostgresCommand_AndStoredThumbnail|FullyQualifiedName~AdminContentEndpointsTests.CreateAndReadWork_PersistsUploadedThumbnailAndIcon --no-restore", "result": "passed_2_of_2" },
+    { "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~PostgresPersistenceContractTests --no-restore", "result": "passed_10_of_10_before_equivalence_correction" },
     { "command": "dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj --filter FullyQualifiedName~PublicQueryHandlerComponentTests --no-restore", "result": "passed_40_of_40" },
-    { "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~AdminEndpointsTests|FullyQualifiedName~AdminContentEndpointsTests --no-restore", "result": "passed_33_of_33" },
-    { "command": "dotnet test backend/WoongBlog.sln --no-restore", "result": "passed_component_122_unit_56_architecture_35_integration_214_contract_1_skipped" },
-    { "command": "git diff --check", "result": "passed" }
+    { "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~AdminEndpointsTests|FullyQualifiedName~AdminContentEndpointsTests --no-restore", "result": "passed_33_of_33_before_equivalence_correction" },
+    { "command": "dotnet test backend/WoongBlog.sln --no-restore", "result": "passed_component_122_unit_56_architecture_35_integration_214_contract_1_skipped_after_equivalence_correction" },
+    { "command": "git diff --check", "result": "passed_before_audit_update" }
   ],
   "risks": [
-    "Admin list relies on PublicThumbnailUrl being populated by existing create/update/bootstrap paths.",
+    "Admin list relies on PublicThumbnailUrl being populated by write/bootstrap paths; direct out-of-band DB writes can still create stale stored URLs.",
     "This slice does not directly affect public k6 targets because admin list is not in the real backend load mix."
   ],
-  "recommendation": "Promote through dev and main, then continue with higher-impact public read-model and diagnostics work."
+  "recommendation": "Promote through dev and main after the corrected equivalence guard is pushed and CI is green."
 }
