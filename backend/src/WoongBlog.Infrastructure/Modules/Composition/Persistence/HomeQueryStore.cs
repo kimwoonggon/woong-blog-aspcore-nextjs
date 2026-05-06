@@ -53,18 +53,10 @@ public sealed class HomeQueryStore(WoongBlogDbContext dbContext) : IHomeQuerySto
                 work.Category,
                 work.Period,
                 work.Tags,
-                work.ThumbnailAssetId,
-                work.IconAssetId,
+                work.PublicThumbnailUrl,
+                work.PublicIconUrl,
                 work.PublishedAt))
             .ToListAsync(cancellationToken);
-
-        var assetIds = featuredWorks
-            .SelectMany(work => new[] { work.ThumbnailAssetId, work.IconAssetId })
-            .Where(assetId => assetId.HasValue)
-            .Select(assetId => assetId!.Value)
-            .Distinct()
-            .ToArray();
-        var assetPublicUrlById = await GetAssetPublicUrlLookupAsync(assetIds, cancellationToken);
 
         return featuredWorks.Select(work => new WorkCardDto(
             work.Id,
@@ -74,8 +66,8 @@ public sealed class HomeQueryStore(WoongBlogDbContext dbContext) : IHomeQuerySto
             work.Category,
             work.Period,
             work.Tags,
-            ResolveAssetUrl(work.ThumbnailAssetId, assetPublicUrlById),
-            ResolveAssetUrl(work.IconAssetId, assetPublicUrlById),
+            work.PublicThumbnailUrl,
+            work.PublicIconUrl,
             work.PublishedAt
         )).ToList();
     }
@@ -93,15 +85,9 @@ public sealed class HomeQueryStore(WoongBlogDbContext dbContext) : IHomeQuerySto
                 post.Title,
                 post.Excerpt,
                 post.Tags,
-                post.CoverAssetId,
+                post.PublicCoverUrl,
                 post.PublishedAt))
             .ToListAsync(cancellationToken);
-        var assetIds = recentPosts
-            .Where(post => post.CoverAssetId.HasValue)
-            .Select(post => post.CoverAssetId!.Value)
-            .Distinct()
-            .ToArray();
-        var assetPublicUrlById = await GetAssetPublicUrlLookupAsync(assetIds, cancellationToken);
 
         return recentPosts.Select(post => new BlogCardDto(
             post.Id,
@@ -109,7 +95,7 @@ public sealed class HomeQueryStore(WoongBlogDbContext dbContext) : IHomeQuerySto
             post.Title,
             post.Excerpt,
             post.Tags,
-            ResolveAssetUrl(post.CoverAssetId, assetPublicUrlById),
+            post.PublicCoverUrl,
             post.PublishedAt
         )).ToList();
     }
@@ -128,28 +114,6 @@ public sealed class HomeQueryStore(WoongBlogDbContext dbContext) : IHomeQuerySto
             .SingleOrDefaultAsync(cancellationToken) ?? string.Empty;
     }
 
-    private async Task<IReadOnlyDictionary<Guid, string>> GetAssetPublicUrlLookupAsync(
-        IReadOnlyCollection<Guid> assetIds,
-        CancellationToken cancellationToken)
-    {
-        if (assetIds.Count == 0)
-        {
-            return new Dictionary<Guid, string>();
-        }
-
-        return await dbContext.Assets
-            .AsNoTracking()
-            .Where(x => assetIds.Contains(x.Id))
-            .ToDictionaryAsync(x => x.Id, x => x.PublicUrl, cancellationToken);
-    }
-
-    private static string ResolveAssetUrl(Guid? assetId, IReadOnlyDictionary<Guid, string> assetPublicUrlById)
-    {
-        return assetId is not null && assetPublicUrlById.TryGetValue(assetId.Value, out var publicUrl)
-            ? publicUrl
-            : string.Empty;
-    }
-
     private sealed record FeaturedWorkRow(
         Guid Id,
         string Slug,
@@ -158,8 +122,8 @@ public sealed class HomeQueryStore(WoongBlogDbContext dbContext) : IHomeQuerySto
         string Category,
         string? Period,
         string[] Tags,
-        Guid? ThumbnailAssetId,
-        Guid? IconAssetId,
+        string PublicThumbnailUrl,
+        string PublicIconUrl,
         DateTimeOffset? PublishedAt);
 
     private sealed record RecentBlogRow(
@@ -168,6 +132,6 @@ public sealed class HomeQueryStore(WoongBlogDbContext dbContext) : IHomeQuerySto
         string Title,
         string Excerpt,
         string[] Tags,
-        Guid? CoverAssetId,
+        string PublicCoverUrl,
         DateTimeOffset? PublishedAt);
 }

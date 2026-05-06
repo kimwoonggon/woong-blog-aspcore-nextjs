@@ -1,0 +1,52 @@
+{
+  "task": "public-media-read-model-2026-05-06",
+  "objective": "Remove avoidable request-time public media asset lookups without cache while preserving realistic load-test semantics.",
+  "changed": [
+    "Added stored public media URL fields to Work and Blog entities.",
+    "Added EF model defaults and required contract coverage.",
+    "Added relational schema patch and backfill from existing asset references.",
+    "Populated stored URLs in Work create/update, seed/bootstrap, and Notion import paths.",
+    "Refactored public Work, Blog, and Home query stores to project stored URLs directly.",
+    "Added behavior-focused component and integration coverage."
+  ],
+  "not_changed": [
+    "No server-side response or output cache was added.",
+    "No seed-priority target selection was added.",
+    "Public list pageSize=12 behavior was preserved.",
+    "Blog admin cover asset API shape was not expanded.",
+    "Resume asset lookup remains asset-backed."
+  ],
+  "validations": [
+    { "command": "focused component/model tests", "status": "passed", "passed": 44, "failed": 0 },
+    { "command": "focused integration tests", "status": "passed", "passed": 103, "failed": 0 },
+    { "command": "npm run test -- --run src/test/notion-db-import-lib.test.ts", "status": "passed", "passed": 6, "failed": 0 },
+    { "command": "dotnet test backend/WoongBlog.sln --no-restore", "status": "passed", "unit": 56, "architecture": 35, "component": 122, "integration": 205, "contract_skipped": 1 },
+    { "command": "npm run lint", "status": "passed", "errors": 0, "warnings": 6 },
+    { "command": "git diff --check", "status": "passed" }
+  ],
+  "load_smoke": {
+    "environment": {
+      "cpuset": "0,1",
+      "memory_limits_bytes": {
+        "backend": 3221225472,
+        "db": 3221225472,
+        "frontend": 1073741824,
+        "nginx": 536870912
+      },
+      "cache_added": false,
+      "page_size_reduced": false
+    },
+    "results": [
+      { "target": "works-list", "path": "/api/public/works?page=1&pageSize=12", "requests": 9001, "rps": 300.01, "failure_rate": 0.0, "p95_ms": 7.48 },
+      { "target": "blogs-list", "path": "/api/public/blogs?page=1&pageSize=12", "requests": 9000, "rps": 300.03, "failure_rate": 0.0, "p95_ms": 4.87 },
+      { "target": "work-detail", "path": "/api/public/works/seeded-work", "requests": 9001, "rps": 300.03, "failure_rate": 0.0, "p95_ms": 3.99 },
+      { "target": "blog-detail", "path": "/api/public/blogs/seeded-blog", "requests": 9001, "rps": 300.02, "failure_rate": 0.0, "p95_ms": 2.96 }
+    ]
+  },
+  "risks": [
+    "Stored URL fields can become stale if asset public URLs become mutable.",
+    "Local smoke uses seeded local data and is not a substitute for production Real Backend Test.",
+    "Backend Alpine logs still show a missing libgssapi_krb5.so.2 warning unrelated to this slice."
+  ],
+  "recommendation": "Promote through dev/main CI, then rerun Real Backend Test on production-like host with realistic targets and pageSize=12."
+}

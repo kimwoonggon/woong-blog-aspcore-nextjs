@@ -156,7 +156,9 @@ public static class SeedData
             Excerpt = "Rebuilt the portfolio stack around clearer domain boundaries, richer content modeling, and operational simplicity.",
             ContentJson = """{"html":"<h2>Overview</h2><p>This seeded case study represents a platform rebuild that spans frontend UX, backend APIs, and deployment ergonomics.</p><h2>Highlights</h2><ul><li>React + TypeScript frontend</li><li>ASP.NET Core backend</li><li>PostgreSQL domain model</li></ul>"}""",
             ThumbnailAssetId = workThumb1,
+            PublicThumbnailUrl = "/media/works/seeded-work-thumb.png",
             IconAssetId = workIcon1,
+            PublicIconUrl = "/media/works/seeded-work-icon.png",
             Category = "platform",
             Period = "2025.12 - 2026.03",
             AllPropertiesJson = """{"teamSize":1,"role":"full-stack","status":"seeded"}""",
@@ -171,6 +173,7 @@ public static class SeedData
             Excerpt = "Designed a cleaner admin workflow with shared editor chrome, preview-first ergonomics, and better information architecture.",
             ContentJson = """{"html":"<h2>Problem</h2><p>The admin experience felt like a separate product with weak draft preview.</p><h2>Result</h2><p>The workbench concept unified list, edit, preview, and publishing workflows.</p>"}""",
             ThumbnailAssetId = workThumb2,
+            PublicThumbnailUrl = "/media/works/platform-rebuild-thumb.png",
             Category = "admin",
             Period = "2026.01 - 2026.03",
             AllPropertiesJson = """{"teamSize":1,"role":"ux-engineering","status":"seeded"}""",
@@ -210,6 +213,7 @@ public static class SeedData
                 Excerpt = "Why seed data is often the fastest way to stabilize a new architecture before historical migration work is complete.",
                 ContentJson = """{"html":"<h2>Why Start With Seed Data</h2><p>Seed data gives frontend and backend teams something concrete to build against from day one.</p><h3>Reduce Coordination Cost</h3><p>That reduces ambiguity and improves testability.</p><h2>What To Stabilize First</h2><p>Lock the happy path before historical backfill.</p>"}""",
                 CoverAssetId = blogCover1,
+                PublicCoverUrl = "/media/blogs/seeded-blog-cover.png",
                 Tags = new[] { "seed", "migration", "architecture" },
                 Published = true,
                 PublishedAt = DateTimeOffset.UtcNow.AddDays(-5)
@@ -221,6 +225,7 @@ public static class SeedData
                 Excerpt = "Keeping authentication in the backend simplifies session handling and reduces token sprawl in the browser.",
                 ContentJson = """{"html":"<h2>Why BFF Works</h2><p>BFF auth centralizes session ownership in the backend and keeps the browser thinner.</p>"}""",
                 CoverAssetId = blogCover2,
+                PublicCoverUrl = "/media/blogs/engineering-notes-cover.png",
                 Tags = new[] { "auth", "bff", "security" },
                 Published = true,
                 PublishedAt = DateTimeOffset.UtcNow.AddDays(-1)
@@ -290,7 +295,9 @@ public static class SeedData
                 Excerpt = "Rebuilt the portfolio stack around clearer domain boundaries, richer content modeling, and operational simplicity.",
                 ContentJson = """{"html":"<h2>Overview</h2><p>This seeded case study represents a platform rebuild that spans frontend UX, backend APIs, and deployment ergonomics.</p><h2>Highlights</h2><ul><li>React + TypeScript frontend</li><li>ASP.NET Core backend</li><li>PostgreSQL domain model</li></ul>"}""",
                 ThumbnailAssetId = workThumb1,
+                PublicThumbnailUrl = "/media/works/seeded-work-thumb.png",
                 IconAssetId = workIcon1,
+                PublicIconUrl = "/media/works/seeded-work-icon.png",
                 Category = "platform",
                 Period = "2025.12 - 2026.03",
                 AllPropertiesJson = """{"teamSize":1,"role":"full-stack","status":"seeded"}""",
@@ -307,7 +314,9 @@ public static class SeedData
             seededWork.Excerpt = "Rebuilt the portfolio stack around clearer domain boundaries, richer content modeling, and operational simplicity.";
             seededWork.ContentJson = """{"html":"<h2>Overview</h2><p>This seeded case study represents a platform rebuild that spans frontend UX, backend APIs, and deployment ergonomics.</p><h2>Highlights</h2><ul><li>React + TypeScript frontend</li><li>ASP.NET Core backend</li><li>PostgreSQL domain model</li></ul>"}""";
             seededWork.ThumbnailAssetId = workThumb1;
+            seededWork.PublicThumbnailUrl = "/media/works/seeded-work-thumb.png";
             seededWork.IconAssetId = workIcon1;
+            seededWork.PublicIconUrl = "/media/works/seeded-work-icon.png";
             seededWork.Category = "platform";
             seededWork.Period = "2025.12 - 2026.03";
             seededWork.AllPropertiesJson = """{"teamSize":1,"role":"full-stack","status":"seeded"}""";
@@ -352,6 +361,7 @@ public static class SeedData
                 Excerpt = "Why seed data is often the fastest way to stabilize a new architecture before historical migration work is complete.",
                 ContentJson = """{"html":"<h2>Why Start With Seed Data</h2><p>Seed data gives frontend and backend teams something concrete to build against from day one.</p><h3>Reduce Coordination Cost</h3><p>That reduces ambiguity and improves testability.</p><h2>What To Stabilize First</h2><p>Lock the happy path before historical backfill.</p>"}""",
                 CoverAssetId = blogCover1,
+                PublicCoverUrl = "/media/blogs/seeded-blog-cover.png",
                 Tags = new[] { "seed", "migration", "architecture" },
                 Published = true,
                 PublishedAt = DateTimeOffset.UtcNow.AddDays(-5)
@@ -365,6 +375,7 @@ public static class SeedData
             seededBlog.Excerpt = "Why seed data is often the fastest way to stabilize a new architecture before historical migration work is complete.";
             seededBlog.ContentJson = """{"html":"<h2>Why Start With Seed Data</h2><p>Seed data gives frontend and backend teams something concrete to build against from day one.</p><h3>Reduce Coordination Cost</h3><p>That reduces ambiguity and improves testability.</p><h2>What To Stabilize First</h2><p>Lock the happy path before historical backfill.</p>"}""";
             seededBlog.CoverAssetId = blogCover1;
+            seededBlog.PublicCoverUrl = "/media/blogs/seeded-blog-cover.png";
             seededBlog.Tags = new[] { "seed", "migration", "architecture" };
             seededBlog.Published = true;
             seededBlog.PublishedAt ??= DateTimeOffset.UtcNow.AddDays(-5);

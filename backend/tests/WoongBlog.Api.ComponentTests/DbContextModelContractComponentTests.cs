@@ -52,6 +52,7 @@ public sealed class DbContextModelContractComponentTests
         AssertPropertyRequired(blogs, nameof(Blog.ContentJson));
         AssertPropertyRequired(blogs, nameof(Blog.PublicContentHtml));
         AssertPropertyRequired(blogs, nameof(Blog.PublicContentMarkdown));
+        AssertPropertyRequired(blogs, nameof(Blog.PublicCoverUrl));
         AssertPropertyRequired(blogs, nameof(Blog.SearchTitle));
         AssertPropertyRequired(blogs, nameof(Blog.SearchText));
         AssertPropertyRequired(works, nameof(Work.Slug));
@@ -60,6 +61,8 @@ public sealed class DbContextModelContractComponentTests
         AssertPropertyRequired(works, nameof(Work.ContentJson));
         AssertPropertyRequired(works, nameof(Work.PublicContentHtml));
         AssertPropertyRequired(works, nameof(Work.PublicContentMarkdown));
+        AssertPropertyRequired(works, nameof(Work.PublicThumbnailUrl));
+        AssertPropertyRequired(works, nameof(Work.PublicIconUrl));
         AssertPropertyRequired(works, nameof(Work.AllPropertiesJson));
         AssertPropertyRequired(works, nameof(Work.SearchTitle));
         AssertPropertyRequired(works, nameof(Work.SearchText));

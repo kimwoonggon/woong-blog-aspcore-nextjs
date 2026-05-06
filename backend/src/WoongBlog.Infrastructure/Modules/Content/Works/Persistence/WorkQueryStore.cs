@@ -100,20 +100,10 @@ public sealed class WorkQueryStore(
                 work.Category,
                 work.Period,
                 work.Tags,
-                work.ThumbnailAssetId,
-                work.IconAssetId,
+                work.PublicThumbnailUrl,
+                work.PublicIconUrl,
                 work.PublishedAt))
             .ToListAsync(cancellationToken);
-
-        var assetIds = works
-            .SelectMany(work => new[] { work.ThumbnailAssetId, work.IconAssetId })
-            .Where(assetId => assetId.HasValue)
-            .Select(assetId => assetId!.Value)
-            .Distinct()
-            .ToArray();
-        var assets = await dbContext.Assets.AsNoTracking()
-            .Where(x => assetIds.Contains(x.Id))
-            .ToDictionaryAsync(x => x.Id, x => x.PublicUrl, cancellationToken);
 
         var items = works.Select(work => new WorkCardDto(
             work.Id,
@@ -123,8 +113,8 @@ public sealed class WorkQueryStore(
             work.Category,
             work.Period,
             work.Tags,
-            ResolveAssetUrl(work.ThumbnailAssetId, assets),
-            ResolveAssetUrl(work.IconAssetId, assets),
+            work.PublicThumbnailUrl,
+            work.PublicIconUrl,
             work.PublishedAt)).ToList();
 
         return new PagedWorksDto(items, resolvedPage, pageSize, totalItems, totalPages);
@@ -144,16 +134,8 @@ public sealed class WorkQueryStore(
                 work.Category,
                 work.Period,
                 work.Tags,
-                work.ThumbnailAssetId,
-                dbContext.Assets
-                    .Where(asset => asset.Id == work.ThumbnailAssetId)
-                    .Select(asset => asset.PublicUrl)
-                    .SingleOrDefault() ?? string.Empty,
-                work.IconAssetId,
-                dbContext.Assets
-                    .Where(asset => asset.Id == work.IconAssetId)
-                    .Select(asset => asset.PublicUrl)
-                    .SingleOrDefault() ?? string.Empty,
+                work.PublicThumbnailUrl,
+                work.PublicIconUrl,
                 work.PublishedAt,
                 work.AllPropertiesJson,
                 work.VideosVersion))
@@ -198,7 +180,6 @@ public sealed class WorkQueryStore(
 
     private async Task<WorkDetailDto> BuildPublicDetailAsync(PublicWorkDetailRow work, CancellationToken cancellationToken)
     {
-        var assets = BuildProjectedAssetLookup(work);
         var videoRows = await GetVideosAsync(work.Id, cancellationToken);
         var videos = await BuildVideoDtosAsync(videoRows, verifyPreviewAssets: false, cancellationToken);
 
@@ -211,8 +192,8 @@ public sealed class WorkQueryStore(
             work.Category,
             work.Period,
             work.Tags,
-            ResolveAssetUrl(work.ThumbnailAssetId, assets),
-            ResolveAssetUrl(work.IconAssetId, assets),
+            work.ThumbnailUrl,
+            work.IconUrl,
             work.PublishedAt,
             ResolveSocialShareMessage(work.AllPropertiesJson),
             work.VideosVersion,
@@ -353,22 +334,6 @@ public sealed class WorkQueryStore(
             : string.Empty;
     }
 
-    private static IReadOnlyDictionary<Guid, string> BuildProjectedAssetLookup(PublicWorkDetailRow work)
-    {
-        var assets = new Dictionary<Guid, string>(capacity: 2);
-        AddProjectedAssetUrl(assets, work.ThumbnailAssetId, work.ThumbnailUrl);
-        AddProjectedAssetUrl(assets, work.IconAssetId, work.IconUrl);
-        return assets;
-    }
-
-    private static void AddProjectedAssetUrl(Dictionary<Guid, string> assets, Guid? assetId, string publicUrl)
-    {
-        if (assetId is not null && !string.IsNullOrEmpty(publicUrl))
-        {
-            assets[assetId.Value] = publicUrl;
-        }
-    }
-
     private static string? ResolveSocialShareMessage(string allPropertiesJson)
     {
         try
@@ -407,8 +372,8 @@ public sealed class WorkQueryStore(
         string Category,
         string? Period,
         string[] Tags,
-        Guid? ThumbnailAssetId,
-        Guid? IconAssetId,
+        string PublicThumbnailUrl,
+        string PublicIconUrl,
         DateTimeOffset? PublishedAt);
 
     private sealed record PublicWorkDetailRow(
@@ -421,9 +386,7 @@ public sealed class WorkQueryStore(
         string Category,
         string? Period,
         string[] Tags,
-        Guid? ThumbnailAssetId,
         string ThumbnailUrl,
-        Guid? IconAssetId,
         string IconUrl,
         DateTimeOffset? PublishedAt,
         string AllPropertiesJson,

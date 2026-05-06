@@ -19,6 +19,9 @@ public sealed class CreateWorkCommandHandler : IRequestHandler<CreateWorkCommand
         var slug = await GenerateUniqueSlugAsync(request.Title, null, cancellationToken);
         var excerpt = AdminContentText.GenerateExcerpt(AdminContentJson.ExtractHtml(request.ContentJson));
         var now = DateTimeOffset.UtcNow;
+        var assetPublicUrls = await _workCommandStore.GetAssetPublicUrlsAsync(
+            GetPublicMediaAssetIds(request.ThumbnailAssetId, request.IconAssetId),
+            cancellationToken);
 
         var work = new Work
         {
@@ -35,6 +38,8 @@ public sealed class CreateWorkCommandHandler : IRequestHandler<CreateWorkCommand
             PublishedAt = request.Published ? now : null,
             ContentJson = request.ContentJson,
             AllPropertiesJson = request.AllPropertiesJson,
+            PublicThumbnailUrl = ResolvePublicMediaUrl(request.ThumbnailAssetId, assetPublicUrls),
+            PublicIconUrl = ResolvePublicMediaUrl(request.IconAssetId, assetPublicUrls),
             SearchTitle = ContentSearchText.Normalize(request.Title),
             SearchText = ContentSearchText.BuildIndex(excerpt, AdminContentJson.ExtractExcerptText(request.ContentJson)),
             CreatedAt = now,
@@ -44,6 +49,22 @@ public sealed class CreateWorkCommandHandler : IRequestHandler<CreateWorkCommand
         _workCommandStore.Add(work);
         await _workCommandStore.SaveChangesAsync(cancellationToken);
         return new AdminMutationResult(work.Id, work.Slug);
+    }
+
+    private static Guid[] GetPublicMediaAssetIds(Guid? thumbnailAssetId, Guid? iconAssetId)
+    {
+        return new[] { thumbnailAssetId, iconAssetId }
+            .Where(id => id.HasValue)
+            .Select(id => id!.Value)
+            .Distinct()
+            .ToArray();
+    }
+
+    private static string ResolvePublicMediaUrl(Guid? assetId, IReadOnlyDictionary<Guid, string> assetPublicUrls)
+    {
+        return assetId is not null && assetPublicUrls.TryGetValue(assetId.Value, out var publicUrl)
+            ? publicUrl
+            : string.Empty;
     }
 
     private async Task<string> GenerateUniqueSlugAsync(string title, Guid? currentWorkId, CancellationToken cancellationToken)

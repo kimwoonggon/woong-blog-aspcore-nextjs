@@ -31,6 +31,12 @@ public class DatabaseBootstrapperTests
         Assert.Equal(2, dbContext.WorkVideos.Count());
         Assert.True(dbContext.Blogs.Count() >= 20);
         Assert.Equal(6, dbContext.Assets.Count());
+        Assert.Equal(
+            "/media/works/seeded-work-thumb.png",
+            await dbContext.Works.Where(x => x.Slug == "seeded-work").Select(x => x.PublicThumbnailUrl).SingleAsync());
+        Assert.Equal(
+            "/media/blogs/seeded-blog-cover.png",
+            await dbContext.Blogs.Where(x => x.Slug == "seeded-blog").Select(x => x.PublicCoverUrl).SingleAsync());
     }
 
     [Fact]
@@ -47,9 +53,14 @@ public class DatabaseBootstrapperTests
 
         await DatabaseBootstrapper.InitializeAsync(dbContext);
 
-        Assert.NotNull(await dbContext.Works.SingleOrDefaultAsync(x => x.Slug == "seeded-work"));
+        var seededWork = await dbContext.Works.SingleOrDefaultAsync(x => x.Slug == "seeded-work");
+        Assert.NotNull(seededWork);
+        Assert.Equal("/media/works/seeded-work-thumb.png", seededWork!.PublicThumbnailUrl);
+        Assert.Equal("/media/works/seeded-work-icon.png", seededWork.PublicIconUrl);
         Assert.Equal(2, await dbContext.WorkVideos.CountAsync());
-        Assert.NotNull(await dbContext.Blogs.SingleOrDefaultAsync(x => x.Slug == "seeded-blog"));
+        var seededBlog = await dbContext.Blogs.SingleOrDefaultAsync(x => x.Slug == "seeded-blog");
+        Assert.NotNull(seededBlog);
+        Assert.Equal("/media/blogs/seeded-blog-cover.png", seededBlog!.PublicCoverUrl);
     }
 
     [Fact]
