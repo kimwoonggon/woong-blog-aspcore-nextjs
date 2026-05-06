@@ -174,7 +174,7 @@ public sealed class WorkQueryStore(
                 work.PublishedAt,
                 work.PublicSocialShareMessage,
                 work.VideosVersion,
-                dbContext.WorkVideos.Any(video => video.WorkId == work.Id)))
+                work.VideosVersion > 0))
             .SingleOrDefaultAsync(cancellationToken);
 
         return work is null
