@@ -14,7 +14,7 @@ using WoongBlog.Infrastructure.LoadTesting;
 namespace WoongBlog.Api.Common.Json;
 
 [JsonSourceGenerationOptions(
-    GenerationMode = JsonSourceGenerationMode.Metadata,
+    GenerationMode = JsonSourceGenerationMode.Metadata | JsonSourceGenerationMode.Serialization,
     PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
 [JsonSerializable(typeof(HomeDto))]
 [JsonSerializable(typeof(HomeShellDto))]
