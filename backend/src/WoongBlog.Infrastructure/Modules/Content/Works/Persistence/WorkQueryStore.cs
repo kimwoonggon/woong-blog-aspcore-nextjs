@@ -334,28 +334,25 @@ public sealed class WorkQueryStore(
         return results;
     }
 
-    private WorkVideoDto BuildPublicVideoDto(WorkPublicVideoSnapshot video)
+    private PublicWorkVideoDto BuildPublicVideoDto(WorkPublicVideoSnapshot video)
     {
         var (previewStorageType, hasPreviewStorageType) = ResolvePreviewStorageType(video.SourceType, video.SourceKey);
         var hasPreviewAssets = hasPreviewStorageType
             && !string.IsNullOrWhiteSpace(video.TimelinePreviewVttStorageKey)
             && !string.IsNullOrWhiteSpace(video.TimelinePreviewSpriteStorageKey);
 
-        return new WorkVideoDto(
+        return new PublicWorkVideoDto(
             video.Id,
             video.SourceType,
             video.SourceKey,
             playbackUrlBuilder.BuildPlaybackUrl(video.SourceType, video.SourceKey),
-            video.OriginalFileName,
             video.MimeType,
-            video.FileSize,
             video.Width,
             video.Height,
             video.DurationSeconds,
             hasPreviewAssets ? playbackUrlBuilder.BuildStorageObjectUrl(previewStorageType, video.TimelinePreviewVttStorageKey!) : null,
             hasPreviewAssets ? playbackUrlBuilder.BuildStorageObjectUrl(previewStorageType, video.TimelinePreviewSpriteStorageKey!) : null,
-            video.SortOrder,
-            video.CreatedAt);
+            video.SortOrder);
     }
 
     private async Task<bool> PreviewAssetsExistAsync(

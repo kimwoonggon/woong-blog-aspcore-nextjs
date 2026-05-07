@@ -983,7 +983,7 @@ public class PublicQueryHandlerComponentTests
         Assert.Equal(now, result.PublishedAt);
         Assert.Equal("Stored share detail", result.SocialShareMessage);
         Assert.Equal(2, result.VideosVersion);
-        Assert.Equal(new[] { "First", "Second" }, result.Videos.Select(x => x.OriginalFileName).ToArray());
+        Assert.Equal(new[] { firstVideo.Id, secondVideo.Id }, result.Videos.Select(x => x.Id).ToArray());
         Assert.Equal("/media/videos/detail-first.mp4", result.Videos[0].PlaybackUrl);
     }
 
