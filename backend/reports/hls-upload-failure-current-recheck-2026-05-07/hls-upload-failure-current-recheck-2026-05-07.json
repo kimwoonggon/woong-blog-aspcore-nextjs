@@ -1,0 +1,81 @@
+{
+  "slug": "hls-upload-failure-current-recheck-2026-05-07",
+  "date": "2026-05-07",
+  "mode": "fix-and-audit",
+  "userReportedFailure": "failed to process HLS during video upload",
+  "findings": [
+    {
+      "id": "kestrel-request-body-limit",
+      "status": "already-fixed-in-current-tree",
+      "evidence": "Kestrel MaxRequestBodySize is WorkVideoPolicy.MaxVideoBytes plus multipart overhead; FormOptions.MultipartBodyLengthLimit is WorkVideoPolicy.MaxVideoBytes."
+    },
+    {
+      "id": "nginx-api-proxy-timeout-mismatch",
+      "status": "fixed-in-this-slice",
+      "severity": "critical",
+      "evidence": "HLS endpoint routes through general /api/ but general /api/ blocks lacked 300-second proxy timeouts while backend HLS timeout is 300 seconds."
+    }
+  ],
+  "changedFiles": [
+    "backend/tests/WoongBlog.Api.ArchitectureTests/NginxRuntimeConfigTests.cs",
+    "nginx/default.conf",
+    "nginx/local-https.conf",
+    "nginx/prod-bootstrap.conf",
+    "nginx/prod.conf",
+    "todolist-2026-05-07.md"
+  ],
+  "notChanged": [
+    "ffmpeg arguments",
+    "codec compatibility behavior",
+    "HLS backend timeout value",
+    "video upload size policy",
+    "frontend error copy",
+    "cache behavior",
+    "load-test targets"
+  ],
+  "validations": [
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter \"FullyQualifiedName~HlsJob_StoresManifestAndProjectsPlaybackUrl|FullyQualifiedName~UploadLimits_AllowConfiguredWorkVideoMaximumBeforeAppValidation\" --no-restore --logger \"console;verbosity=minimal\"",
+      "result": "passed",
+      "passed": 2
+    },
+    {
+      "command": "npm test -- --run src/test/work-editor.test.tsx -t \"surfaces HLS processing errors|sanitizes existing-work HLS upload failures\"",
+      "result": "passed",
+      "passed": 2
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.ArchitectureTests/WoongBlog.Api.ArchitectureTests.csproj --filter \"FullyQualifiedName~NginxRuntimeConfigTests\" --no-restore --logger \"console;verbosity=minimal\" before fix",
+      "result": "failed-as-expected",
+      "failed": 4
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.ArchitectureTests/WoongBlog.Api.ArchitectureTests.csproj --filter \"FullyQualifiedName~NginxRuntimeConfigTests\" --no-restore --logger \"console;verbosity=minimal\" after fix",
+      "result": "passed",
+      "passed": 4
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.ArchitectureTests/WoongBlog.Api.ArchitectureTests.csproj --no-restore --logger \"console;verbosity=minimal\"",
+      "result": "passed",
+      "passed": 39
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    }
+  ],
+  "blockedValidations": [
+    {
+      "validation": "nginx -t / compose runtime validation",
+      "reason": "local WSL environment has neither nginx nor docker installed"
+    }
+  ],
+  "runtimeTriage": {
+    "413": "old image/config or another proxy body limit",
+    "504": "nginx or upstream proxy timeout",
+    "onlyValidMp4": "app MP4 validation rejected file header/content",
+    "unableToProcessMp4IntoHls": "ffmpeg ran and rejected source media, likely codec/container compatibility in copy-mode HLS",
+    "hlsProcessingTimedOut": "backend ffmpeg hit 300-second timeout"
+  },
+  "recommendation": "Promote the nginx timeout fix through dev, main, and GHCR, then retest the same failing MP4 and capture exact status/body if it still fails."
+}
