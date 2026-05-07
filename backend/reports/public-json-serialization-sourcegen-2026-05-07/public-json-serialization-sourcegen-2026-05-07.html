@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Public JSON Serialization Source Generation Audit - 2026-05-07</title>
+  <style>body{font-family:Arial,sans-serif;max-width:900px;margin:32px auto;line-height:1.5;color:#222}code{background:#f4f4f4;padding:1px 4px}h1,h2{line-height:1.2}</style>
+</head>
+<body>
+  <h1>Public JSON Serialization Source Generation Audit - 2026-05-07</h1>
+  <h2>Summary</h2>
+  <p>Enabled <code>System.Text.Json</code> source-generated serialization mode for the API JSON context used by public hot-path response DTOs, with startup regression coverage for both Minimal API and MVC JSON options.</p>
+  <h2>Changed</h2>
+  <ul>
+    <li><code>WoongBlogApiJsonSerializerContext</code>: <code>Metadata | Serialization</code>.</li>
+    <li><code>StartupCompositionTests</code>: verifies serialization mode is enabled and metadata mode remains enabled.</li>
+    <li><code>todolist-2026-05-07.md</code>: records TDD slice and validations.</li>
+  </ul>
+  <h2>Not Changed</h2>
+  <p>No public API shape, cache, page size, target selection, DB schema, EF projection, pool, nginx, or Docker configuration changes.</p>
+  <h2>Validation</h2>
+  <ul>
+    <li>RED focused startup serialization test failed before implementation.</li>
+    <li>GREEN focused startup serialization test passed 1/1.</li>
+    <li>Focused startup/public endpoint tests passed 33/33.</li>
+    <li>Backend solution excluding Docker-backed PostgreSQL contracts passed.</li>
+    <li>Frontend public API parser/contracts passed 22/22.</li>
+    <li>Typecheck, lint, and diff whitespace checks passed.</li>
+  </ul>
+  <h2>Risk</h2>
+  <p>Actual latency/GC improvement must be measured on the 2 CPU / total 8 GiB production-like runtime. Local Docker/Testcontainers were unavailable.</p>
+  <h2>Recommendation</h2>
+  <p>Ship through dev CI, promote to main if green, confirm GHCR publish, then rerun Real Backend Test and compare app elapsed plus GC metrics.</p>
+</body>
+</html>

@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>HLS Upload Failure Current Recheck - 2026-05-07</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 900px; margin: 32px auto; line-height: 1.5; color: #17202a; }
+    code { background: #f3f5f7; padding: 0.1rem 0.25rem; border-radius: 4px; }
+    pre { background: #f3f5f7; padding: 1rem; overflow-x: auto; }
+  </style>
+</head>
+<body>
+  <h1>HLS Upload Failure Current Recheck - 2026-05-07</h1>
+  <h2>Finding</h2>
+  <p>The earlier Kestrel 30 MB upload cap is already fixed. A separate critical runtime mismatch was found: HLS jobs use the general <code>/api/</code> nginx route, but that route did not have 300-second proxy timeouts while the backend HLS timeout is 300 seconds.</p>
+  <h2>Change</h2>
+  <p>Added <code>proxy_connect_timeout 300s</code>, <code>proxy_send_timeout 300s</code>, and <code>proxy_read_timeout 300s</code> to general <code>/api/</code> blocks in all runtime nginx configs and added an architecture regression test.</p>
+  <h2>Validation</h2>
+  <pre>Backend HLS focused tests: passed 2/2
+Frontend HLS error tests: passed 2/2
+Nginx config RED: failed 4/4 before fix
+Nginx config GREEN: passed 4/4 after fix
+Architecture suite: passed 39/39
+git diff --check: passed</pre>
+  <h2>Blocked</h2>
+  <p>Local <code>nginx -t</code> and compose validation could not run because this WSL environment does not have nginx or Docker installed.</p>
+  <h2>Recommendation</h2>
+  <p>Ship through dev, main, and GHCR, reload nginx, then retest the same failing MP4. If it still fails, capture exact HTTP status and response body from <code>/api/admin/works/{id}/videos/hls-job</code>.</p>
+</body>
+</html>
