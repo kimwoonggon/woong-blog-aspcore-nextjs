@@ -1,0 +1,49 @@
+{
+  "taskSlug": "main-runtime-nginx-allowlist-2026-05-07",
+  "date": "2026-05-07",
+  "branch": "fix/main-runtime-nginx-allowlist-2026-05-07",
+  "summary": "Fixed main runtime promotion architecture failure by keeping nginx architecture test inputs in the runtime-only allowlist.",
+  "changedFiles": [
+    "backend/tests/WoongBlog.Api.ArchitectureTests/NginxRuntimeConfigTests.cs",
+    "scripts/main-runtime-allowlist.txt",
+    "todolist-2026-05-07.md"
+  ],
+  "rootCause": "NginxRuntimeConfigTests checked nginx/default.conf and nginx/local-https.conf, but scripts/main-runtime-allowlist.txt omitted those files from release/main-promote.",
+  "intentionallyNotChanged": [
+    "backend runtime behavior",
+    "nginx timeout directive values",
+    "Docker compose configuration",
+    "public API behavior",
+    "database behavior",
+    "load-test targets",
+    "direct main push"
+  ],
+  "validations": [
+    {
+      "name": "RED allowlist architecture test",
+      "command": "dotnet test backend/tests/WoongBlog.Api.ArchitectureTests/WoongBlog.Api.ArchitectureTests.csproj --filter \"FullyQualifiedName~MainRuntimeAllowlist_IncludesEveryNginxConfigUnderArchitectureCoverage\" --no-restore --logger \"console;verbosity=minimal\"",
+      "result": "failed before implementation because nginx/default.conf was missing from the allowlist"
+    },
+    {
+      "name": "focused NginxRuntimeConfigTests",
+      "command": "dotnet test backend/tests/WoongBlog.Api.ArchitectureTests/WoongBlog.Api.ArchitectureTests.csproj --filter \"FullyQualifiedName~NginxRuntimeConfigTests\" --no-restore --logger \"console;verbosity=minimal\"",
+      "result": "passed 5/5"
+    },
+    {
+      "name": "full architecture tests",
+      "command": "dotnet test backend/tests/WoongBlog.Api.ArchitectureTests/WoongBlog.Api.ArchitectureTests.csproj --no-restore --logger \"console;verbosity=minimal\"",
+      "result": "passed 40/40"
+    },
+    {
+      "name": "diff whitespace",
+      "command": "git diff --check",
+      "result": "passed"
+    }
+  ],
+  "risks": [
+    "Existing promotion PR #113 needs a refreshed release/main-promote push after this fix lands on dev.",
+    "GHCR publish still depends on main merge and Publish GHCR Main success.",
+    "Existing GitHub Actions Node.js 20 warnings remain unrelated."
+  ],
+  "recommendation": "Merge to dev, refresh release/main-promote, verify CI Main Runtime, merge to main, and confirm GHCR publish."
+}

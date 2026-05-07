@@ -37,6 +37,22 @@ public sealed class NginxRuntimeConfigTests
         }
     }
 
+    [Fact]
+    public void MainRuntimeAllowlist_IncludesEveryNginxConfigUnderArchitectureCoverage()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var allowlistPath = Path.Combine(repositoryRoot, "scripts/main-runtime-allowlist.txt");
+        var allowlistEntries = File.ReadAllLines(allowlistPath)
+            .Select(line => line.Trim())
+            .Where(line => line.Length > 0 && !line.StartsWith('#'))
+            .ToHashSet(StringComparer.Ordinal);
+
+        foreach (var configRelativePath in RuntimeProxyConfigs)
+        {
+            Assert.Contains(configRelativePath, allowlistEntries);
+        }
+    }
+
     private static IReadOnlyList<string> ExtractLocationBlocks(string config, string locationDeclaration)
     {
         var blocks = new List<string>();
