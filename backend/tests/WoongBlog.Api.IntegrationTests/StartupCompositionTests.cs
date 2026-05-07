@@ -1,6 +1,8 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Reflection;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using FluentValidation;
 using Microsoft.AspNetCore.Http.Features;
 using MediatR;
@@ -254,6 +256,18 @@ public class StartupCompositionTests : IClassFixture<CustomWebApplicationFactory
 
         AssertPublicSourceGeneratedJsonResolverConfigured(httpJsonOptions);
         AssertPublicSourceGeneratedJsonResolverConfigured(mvcJsonOptions);
+    }
+
+    [Fact]
+    public void JsonOptions_UseSourceGeneratedSerializationForPublicHotPathDtos()
+    {
+        using var scope = _factory.Services.CreateScope();
+        var services = scope.ServiceProvider;
+        var httpJsonOptions = services.GetRequiredService<IOptions<HttpJsonOptions>>().Value.SerializerOptions;
+        var mvcJsonOptions = services.GetRequiredService<IOptions<MvcJsonOptions>>().Value.JsonSerializerOptions;
+
+        AssertPublicSourceGeneratedJsonSerializationConfigured(httpJsonOptions);
+        AssertPublicSourceGeneratedJsonSerializationConfigured(mvcJsonOptions);
     }
 
     [Fact]
@@ -700,6 +714,23 @@ public class StartupCompositionTests : IClassFixture<CustomWebApplicationFactory
         {
             Assert.NotNull(resolver.GetTypeInfo(type, options));
         }
+    }
+
+    private static void AssertPublicSourceGeneratedJsonSerializationConfigured(JsonSerializerOptions options)
+    {
+        var resolver = Assert.Single(
+            options.TypeInfoResolverChain,
+            candidate => candidate.GetType().Name == "WoongBlogApiJsonSerializerContext");
+        var generationOptions = resolver.GetType().GetCustomAttribute<JsonSourceGenerationOptionsAttribute>();
+
+        Assert.NotNull(generationOptions);
+        Assert.True(
+            (generationOptions.GenerationMode & JsonSourceGenerationMode.Metadata) == JsonSourceGenerationMode.Metadata,
+            "The API JSON context must keep metadata mode so request/long-tail response metadata stays available.");
+        Assert.True(
+            (generationOptions.GenerationMode & JsonSourceGenerationMode.Serialization) == JsonSourceGenerationMode.Serialization,
+            "The API JSON context must enable serialization mode so public hot-path response DTOs get generated writers.");
+        AssertPublicSourceGeneratedJsonResolverConfigured(options);
     }
 
     private sealed record HealthPayload(string Status, string Service, DateTimeOffset Timestamp);

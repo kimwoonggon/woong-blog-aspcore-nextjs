@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Main Runtime Nginx Config Allowlist Audit - 2026-05-07</title>
+  <style>body{font-family:Arial,sans-serif;max-width:900px;margin:32px auto;line-height:1.5;color:#222}code{background:#f4f4f4;padding:1px 4px}h1,h2{line-height:1.2}</style>
+</head>
+<body>
+  <h1>Main Runtime Nginx Config Allowlist Audit - 2026-05-07</h1>
+  <h2>Summary</h2>
+  <p>Fixed the runtime-only main promotion blocker by adding nginx configs required by architecture tests to <code>scripts/main-runtime-allowlist.txt</code>.</p>
+  <h2>Changed</h2>
+  <ul>
+    <li>Added architecture coverage for nginx config allowlist completeness.</li>
+    <li>Added <code>nginx/default.conf</code> and <code>nginx/local-https.conf</code> to the runtime allowlist.</li>
+  </ul>
+  <h2>Validation</h2>
+  <ul>
+    <li>RED allowlist test failed before implementation.</li>
+    <li>Focused <code>NginxRuntimeConfigTests</code> passed 5/5 after implementation.</li>
+    <li>Full architecture tests passed 40/40.</li>
+    <li><code>git diff --check</code> passed.</li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Merge to dev, refresh <code>release/main-promote</code>, verify <code>CI Main Runtime</code>, merge to main, then confirm GHCR publish.</p>
+</body>
+</html>

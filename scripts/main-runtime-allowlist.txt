@@ -13,6 +13,8 @@ backend/Dockerfile
 docker-compose.prod.yml
 eslint.config.mjs
 nginx/nginx.conf
+nginx/default.conf
+nginx/local-https.conf
 nginx/prod-bootstrap.conf
 nginx/prod-acme-only.conf
 nginx/prod.conf
