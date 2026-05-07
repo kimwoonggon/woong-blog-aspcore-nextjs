@@ -1,0 +1,76 @@
+{
+  "slug": "public-work-video-dto-split-2026-05-07",
+  "date": "2026-05-07",
+  "scope": [
+    "heavy public Work detail payload reduction",
+    "public/admin video DTO split",
+    "PublicVideosJson public read-model trimming"
+  ],
+  "goals": [
+    "Omit admin-only video fields from public Work detail JSON",
+    "Keep admin/mutation WorkVideoDto unchanged",
+    "Keep public rendering fields required by frontend playback",
+    "Avoid cache, target changes, pageSize changes, and DB roundtrip changes"
+  ],
+  "changes": [
+    "Added PublicWorkVideoDto",
+    "Changed WorkDetailDto.Videos to PublicWorkVideoDto",
+    "Changed public detail video mapping to PublicWorkVideoDto",
+    "Removed originalFileName, fileSize, and createdAt from PublicVideosJson writes/backfill",
+    "Added schema patch 20260507_public_work_videos_public_dto",
+    "Registered PublicWorkVideoDto in source-generated JSON context",
+    "Updated backend and frontend contract tests"
+  ],
+  "red_evidence": {
+    "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter FullyQualifiedName~GetWorkBySlug_ReturnsSerializedDetailWithMedia_ForAnonymousClient --no-restore --logger console;verbosity=minimal",
+    "result": "failed before implementation because public Work video JSON emitted an admin-only field"
+  },
+  "validations": [
+    {
+      "command": "focused RED public endpoint test",
+      "result": "passed 1/1 after implementation"
+    },
+    {
+      "command": "focused integration subset",
+      "result": "public endpoint and WorkVideo endpoint tests passed 3/3; Postgres contract fixture blocked locally by missing docker"
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj --filter FullyQualifiedName~GetWorkBySlugQueryHandler_ReturnsPublicDetailFromStoredFields|FullyQualifiedName~WorkVideo --no-restore --logger console;verbosity=minimal",
+      "result": "passed 28/28"
+    },
+    {
+      "command": "npm test -- --run src/test/public-api-clients.test.ts src/test/public-api-contracts.test.ts",
+      "result": "passed 22/22"
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln --no-restore --filter FullyQualifiedName!~PostgresPersistenceContractTests --logger console;verbosity=minimal",
+      "result": "passed: Contract 1 skipped, Component 126, Unit 59, Architecture 35, Integration 214"
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "passed"
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    }
+  ],
+  "local_blockers": [
+    "docker command is unavailable in this WSL distro, blocking local Testcontainers/Postgres contracts and compose load smoke",
+    "k6 command is unavailable locally, blocking direct k6 smoke"
+  ],
+  "expected_impact": [
+    "Lower Work read response bytes for video-bearing Work details",
+    "Modestly lower JSON serialization allocation for video-bearing Work details",
+    "No expected change to DB command count because public Work detail remains one DB query",
+    "Smaller PublicVideosJson row payload for new writes and post-patch backfilled rows"
+  ],
+  "not_changed": [
+    "cache behavior",
+    "Real Backend Test targets",
+    "pageSize",
+    "admin/mutation video DTO fields",
+    "video playback or timeline preview behavior"
+  ],
+  "recommendation": "Push to dev and rely on CI for Docker/Postgres and compose gates; merge if green and verify main promotion/GHCR publish."
+}

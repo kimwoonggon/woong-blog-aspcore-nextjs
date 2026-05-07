@@ -208,13 +208,19 @@ public sealed class PostgresPersistenceContractTests : IClassFixture<PostgresPer
         Assert.Equal(videoId, publicVideo.Id);
         Assert.Equal(WorkVideoSourceTypes.YouTube, publicVideo.SourceType);
         Assert.Equal("legacy-public-video", publicVideo.SourceKey);
-        Assert.Equal("Legacy Public Video", publicVideo.OriginalFileName);
+        Assert.DoesNotContain("originalFileName", publicVideosJson, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("fileSize", publicVideosJson, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("createdAt", publicVideosJson, StringComparison.OrdinalIgnoreCase);
 
         var connection = dbContext.Database.GetDbConnection();
         await connection.OpenAsync(cancellationToken);
         Assert.True(await ExistsAsync(
             connection,
             "SELECT EXISTS (SELECT 1 FROM \"SchemaPatches\" WHERE \"Id\" = '20260507_public_work_videos_read_model')",
+            cancellationToken));
+        Assert.True(await ExistsAsync(
+            connection,
+            "SELECT EXISTS (SELECT 1 FROM \"SchemaPatches\" WHERE \"Id\" = '20260507_public_work_videos_public_dto')",
             cancellationToken));
     }
 
@@ -694,7 +700,6 @@ public sealed class PostgresPersistenceContractTests : IClassFixture<PostgresPer
         Assert.Equal(videoId, video.Id);
         Assert.Equal(WorkVideoSourceTypes.YouTube, video.SourceType);
         Assert.Equal("dQw4w9WgXcQ", video.SourceKey);
-        Assert.Equal("Postgres public work detail video", video.OriginalFileName);
 
         var commandText = Assert.Single(commandTextCapture.CommandTexts);
         Assert.DoesNotContain(

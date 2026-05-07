@@ -28,6 +28,7 @@ namespace WoongBlog.Api.Common.Json;
 [JsonSerializable(typeof(WorkDetailDto))]
 [JsonSerializable(typeof(PublicContentBodyDto))]
 [JsonSerializable(typeof(WorkVideoDto))]
+[JsonSerializable(typeof(PublicWorkVideoDto))]
 [JsonSerializable(typeof(WorkPublicVideoSnapshot))]
 [JsonSerializable(typeof(PageDto))]
 [JsonSerializable(typeof(SiteSettingsDto))]

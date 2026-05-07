@@ -18,5 +18,5 @@ public sealed record WorkDetailDto(
     DateTimeOffset? PublishedAt,
     [property: JsonPropertyName("socialShareMessage")] string? SocialShareMessage,
     [property: JsonPropertyName("videos_version")] int VideosVersion,
-    IReadOnlyList<WorkVideoDto> Videos
+    IReadOnlyList<PublicWorkVideoDto> Videos
 );

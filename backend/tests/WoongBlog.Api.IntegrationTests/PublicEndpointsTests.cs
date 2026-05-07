@@ -167,13 +167,18 @@ public class PublicEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         Assert.Equal("/media/works/seeded-work-thumb.png", work.ThumbnailUrl);
         Assert.Equal("/media/works/seeded-work-icon.png", work.IconUrl);
         Assert.NotEmpty(work.Videos);
-        Assert.Equal(new[] { "Seed Overview", "Seed Demo" }, work.Videos.Select(x => x.OriginalFileName).ToArray());
         Assert.False(root.TryGetProperty("contentJson", out _));
         Assert.True(root.TryGetProperty("content", out _));
         Assert.True(root.TryGetProperty("thumbnailUrl", out _));
         Assert.True(root.TryGetProperty("iconUrl", out _));
         Assert.True(root.TryGetProperty("videos", out _));
         Assert.True(root.TryGetProperty("videos_version", out _));
+        foreach (var video in root.GetProperty("videos").EnumerateArray())
+        {
+            Assert.False(video.TryGetProperty("originalFileName", out _));
+            Assert.False(video.TryGetProperty("fileSize", out _));
+            Assert.False(video.TryGetProperty("createdAt", out _));
+        }
     }
 
     [Fact]
