@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Public Work Video DTO Split - 2026-05-07</title>
+  <style>
+    body { font-family: sans-serif; margin: 2rem; line-height: 1.5; color: #1f2937; }
+    h1, h2 { color: #111827; }
+    code { background: #f3f4f6; padding: 0.1rem 0.25rem; border-radius: 0.25rem; }
+    li { margin: 0.25rem 0; }
+  </style>
+</head>
+<body>
+  <h1>Public Work Video DTO Split - 2026-05-07</h1>
+  <h2>Scope</h2>
+  <p>Split public Work video payload from admin/mutation video DTOs to reduce video-bearing Work detail response size.</p>
+  <h2>Changes</h2>
+  <ul>
+    <li>Added <code>PublicWorkVideoDto</code> for public Work detail.</li>
+    <li>Kept admin/mutation <code>WorkVideoDto</code> unchanged.</li>
+    <li>Removed <code>originalFileName</code>, <code>fileSize</code>, and <code>createdAt</code> from public response and new/backfilled <code>PublicVideosJson</code>.</li>
+    <li>Added schema patch <code>20260507_public_work_videos_public_dto</code>.</li>
+  </ul>
+  <h2>Validation</h2>
+  <ul>
+    <li>Focused RED public endpoint test passed after implementation.</li>
+    <li>Component tests passed 28/28.</li>
+    <li>Frontend public API contract tests passed 22/22.</li>
+    <li>Backend solution excluding Docker-required Postgres contracts passed.</li>
+    <li><code>npm run typecheck</code> passed.</li>
+    <li><code>git diff --check</code> passed.</li>
+  </ul>
+  <h2>Local Blockers</h2>
+  <p>Docker and k6 are unavailable in this WSL distro, so Postgres contracts and load smoke must be verified by CI.</p>
+</body>
+</html>

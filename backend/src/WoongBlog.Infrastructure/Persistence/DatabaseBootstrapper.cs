@@ -46,6 +46,11 @@ public static class DatabaseBootstrapper
                     cancellationToken);
                 await ApplySchemaPatchAsync(
                     dbContext,
+                    "20260507_public_work_videos_public_dto",
+                    PublicWorkVideosPublicDtoSchemaPatchSql,
+                    cancellationToken);
+                await ApplySchemaPatchAsync(
+                    dbContext,
                     "20260506_public_content_body_fields",
                     PublicContentBodyFieldsSchemaPatchSql,
                     cancellationToken);
@@ -269,16 +274,45 @@ WITH public_videos AS (
         'id', video."Id",
         'sourceType', video."SourceType",
         'sourceKey', video."SourceKey",
-        'originalFileName', video."OriginalFileName",
         'mimeType', video."MimeType",
-        'fileSize', video."FileSize",
         'width', video."Width",
         'height', video."Height",
         'durationSeconds', video."DurationSeconds",
         'timelinePreviewVttStorageKey', video."TimelinePreviewVttStorageKey",
         'timelinePreviewSpriteStorageKey', video."TimelinePreviewSpriteStorageKey",
-        'sortOrder', video."SortOrder",
-        'createdAt', video."CreatedAt"
+        'sortOrder', video."SortOrder"
+      ))
+      ORDER BY video."SortOrder", video."CreatedAt"
+    ) AS "VideosJson"
+  FROM "WorkVideos" AS video
+  GROUP BY video."WorkId"
+)
+UPDATE "Works" AS work
+SET "PublicVideosJson" = COALESCE(public_videos."VideosJson", '[]'::jsonb)
+FROM public_videos
+WHERE work."Id" = public_videos."WorkId";
+
+UPDATE "Works"
+SET "PublicVideosJson" = '[]'::jsonb
+WHERE "PublicVideosJson" IS NULL;
+""";
+
+    private const string PublicWorkVideosPublicDtoSchemaPatchSql = """
+WITH public_videos AS (
+  SELECT
+    video."WorkId",
+    jsonb_agg(
+      jsonb_strip_nulls(jsonb_build_object(
+        'id', video."Id",
+        'sourceType', video."SourceType",
+        'sourceKey', video."SourceKey",
+        'mimeType', video."MimeType",
+        'width', video."Width",
+        'height', video."Height",
+        'durationSeconds', video."DurationSeconds",
+        'timelinePreviewVttStorageKey', video."TimelinePreviewVttStorageKey",
+        'timelinePreviewSpriteStorageKey', video."TimelinePreviewSpriteStorageKey",
+        'sortOrder', video."SortOrder"
       ))
       ORDER BY video."SortOrder", video."CreatedAt"
     ) AS "VideosJson"
