@@ -25,6 +25,26 @@ public sealed record WorkVideoDto(
     DateTimeOffset CreatedAt
 );
 
+public sealed record PublicWorkVideoDto(
+    Guid Id,
+    string SourceType,
+    string SourceKey,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? PlaybackUrl,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? MimeType,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] int? Width,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] int? Height,
+    [property: JsonPropertyName("duration_seconds")]
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    double? DurationSeconds,
+    [property: JsonPropertyName("timeline_preview_vtt_url")]
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    string? TimelinePreviewVttUrl,
+    [property: JsonPropertyName("timeline_preview_sprite_url")]
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    string? TimelinePreviewSpriteUrl,
+    int SortOrder
+);
+
 public sealed record WorkVideosMutationResult(
     [property: JsonPropertyName("videos_version")] int VideosVersion,
     IReadOnlyList<WorkVideoDto> Videos

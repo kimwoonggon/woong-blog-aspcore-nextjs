@@ -245,7 +245,8 @@ public class WorkVideoEndpointsTests : IClassFixture<CustomWebApplicationFactory
         Assert.Equal(WorkVideoSourceTypes.Local, publicVideo.SourceType);
         Assert.Equal(confirmed.UploadTarget.StorageKey, publicVideo.SourceKey);
         Assert.Equal($"/media/{confirmed.UploadTarget.StorageKey}", publicVideo.PlaybackUrl);
-        Assert.Equal("demo.mp4", publicVideo.OriginalFileName);
+        Assert.Null(publicVideo.OriginalFileName);
+        Assert.Null(publicVideo.FileSize);
     }
 
     [Fact]
