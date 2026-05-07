@@ -1,0 +1,81 @@
+{
+  "taskSlug": "public-json-serialization-sourcegen-2026-05-07",
+  "date": "2026-05-07",
+  "branch": "perf/public-json-serialization-sourcegen-2026-05-07",
+  "summary": "Enabled System.Text.Json source-generated serialization mode for API public hot-path DTOs and added startup regression coverage.",
+  "changedFiles": [
+    "backend/src/WoongBlog.Api/Common/Json/WoongBlogApiJsonSerializerContext.cs",
+    "backend/tests/WoongBlog.Api.IntegrationTests/StartupCompositionTests.cs",
+    "todolist-2026-05-07.md"
+  ],
+  "intentionallyNotChanged": [
+    "public API response shape",
+    "load-test target selection",
+    "pageSize",
+    "cache policy",
+    "database schema",
+    "EF query projections",
+    "Npgsql pool configuration",
+    "nginx configuration"
+  ],
+  "expectedLoadTestImpact": {
+    "aspNetAppElapsedP95": "modest improvement when JSON serialization is material",
+    "gcHeapAndGen2": "lower allocation pressure expected",
+    "clientP95P99": "possible improvement if app serialization contributes to latency",
+    "dbMetrics": "no direct change expected",
+    "throughput": "possible small improvement, not a DB or CPU quota fix"
+  },
+  "validations": [
+    {
+      "name": "RED focused startup serialization test",
+      "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter \"FullyQualifiedName~JsonOptions_UseSourceGeneratedSerializationForPublicHotPathDtos\" --no-restore --logger \"console;verbosity=minimal\"",
+      "result": "failed before implementation because serialization mode was not enabled"
+    },
+    {
+      "name": "GREEN focused startup serialization test",
+      "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter \"FullyQualifiedName~JsonOptions_UseSourceGeneratedSerializationForPublicHotPathDtos\" --no-restore --logger \"console;verbosity=minimal\"",
+      "result": "passed 1/1"
+    },
+    {
+      "name": "focused startup and public endpoint tests",
+      "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter \"FullyQualifiedName~JsonOptions_UseSourceGenerated|FullyQualifiedName~PublicEndpointsTests\" --no-restore --logger \"console;verbosity=minimal\"",
+      "result": "passed 33/33"
+    },
+    {
+      "name": "backend solution without Docker-backed Postgres contracts",
+      "command": "dotnet test backend/WoongBlog.sln --no-restore --filter \"FullyQualifiedName!~PostgresPersistenceContractTests\" --logger \"console;verbosity=minimal\"",
+      "result": "passed: Contract 1 skipped, Component 126, Unit 59, Architecture 39, Integration 215"
+    },
+    {
+      "name": "backend solution full local attempt",
+      "command": "dotnet test backend/WoongBlog.sln --no-restore --logger \"console;verbosity=minimal\"",
+      "result": "failed only because local Docker/Testcontainers is unavailable for PostgresPersistenceContractTests"
+    },
+    {
+      "name": "frontend public API parser/contracts",
+      "command": "npm test -- --run src/test/public-api-clients.test.ts src/test/public-api-contracts.test.ts",
+      "result": "passed 22/22"
+    },
+    {
+      "name": "frontend typecheck",
+      "command": "npm run typecheck",
+      "result": "passed"
+    },
+    {
+      "name": "frontend lint",
+      "command": "npm run lint",
+      "result": "passed with 0 errors and 7 existing warnings"
+    },
+    {
+      "name": "diff whitespace",
+      "command": "git diff --check",
+      "result": "passed"
+    }
+  ],
+  "risks": [
+    "Actual Real Backend Test improvement must be measured on the 2 CPU / total 8 GiB production-like runtime.",
+    "If DB pool pressure, CPU quota, or content size dominates, visible p95 improvement may be small.",
+    "Docker-backed PostgreSQL contracts require CI because Docker is unavailable locally."
+  ],
+  "recommendation": "Ship through dev CI, promote to main if green, confirm GHCR publish, then rerun the same Real Backend Test baseline and compare app elapsed and GC metrics."
+}
