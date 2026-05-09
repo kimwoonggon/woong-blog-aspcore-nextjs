@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Production Runtime Preflight - 2026-05-10</title>
+  <style>body{font-family:Arial,sans-serif;margin:2rem;line-height:1.5;max-width:960px}code{background:#f4f4f4;padding:.1rem .25rem}li{margin:.25rem 0}</style>
+</head>
+<body>
+  <h1>Production Runtime Preflight - 2026-05-10</h1>
+  <p>Added a production runtime preflight script for Real Backend Test observability readiness.</p>
+  <h2>Changed</h2>
+  <ul>
+    <li><code>scripts/prod-runtime-preflight.sh</code></li>
+    <li><code>src/test/prod-runtime-preflight.test.ts</code></li>
+    <li><code>scripts/main-runtime-allowlist.txt</code></li>
+    <li><code>todolist-2026-05-10.md</code></li>
+  </ul>
+  <h2>Validation</h2>
+  <ul>
+    <li>Focused preflight Vitest: passed 4/4.</li>
+    <li>Preflight plus dashboard Vitest: passed 32/32.</li>
+    <li>TypeScript typecheck: passed.</li>
+    <li>Shell syntax checks: passed.</li>
+    <li>Diff whitespace check: passed.</li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Run this script on the server after deployment. Use the next Real Backend Test only after nginx/app/DB diagnostics are confirmed live.</p>
+</body>
+</html>
