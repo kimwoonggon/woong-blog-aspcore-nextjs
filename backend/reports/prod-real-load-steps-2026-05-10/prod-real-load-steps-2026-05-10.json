@@ -1,0 +1,72 @@
+{
+  "task": "prod-real-load-steps",
+  "date": "2026-05-10",
+  "branch": "dev",
+  "goal": "Add a repeatable production real backend load step runner for the public Work/Study API mix before selecting the next heavy-detail optimization.",
+  "changed": [
+    "scripts/prod-real-load-steps.sh",
+    "src/test/prod-real-load-steps.test.ts",
+    "scripts/main-runtime-allowlist.txt",
+    "todolist-2026-05-10.md",
+    "backend/reports/prod-real-load-steps-2026-05-10/"
+  ],
+  "notChanged": [
+    "backend public query code",
+    "public DTO shape",
+    "serialization model",
+    "DB pool settings",
+    "nginx config",
+    "Docker config",
+    "cache behavior",
+    "seeded target fallback",
+    "list pageSize reduction"
+  ],
+  "requirements": {
+    "realPublicMix": "satisfied by four Work/Study public API targets",
+    "pageSize12": "satisfied by default and hard fail for any other LIST_PAGE_SIZE",
+    "noSeedShortcut": "satisfied by requiring WORK_READ_PATH and STUDY_READ_PATH",
+    "observability": "satisfied by latency, failure, payload, receive, app/nginx timing, dropped iteration, and optional DB diagnostics summaries",
+    "nextPlanInput": "satisfied by cleanCeilingRps, firstSaturationRate, and nextFocus aggregate fields",
+    "mainRuntimePromotionCompatibility": "satisfied by scripts/main-runtime-allowlist.txt entry"
+  },
+  "validations": [
+    {
+      "command": "npm test -- --run src/test/prod-real-load-steps.test.ts",
+      "status": "pass",
+      "tests": "3/3",
+      "notes": "failed before implementation because script was missing; passed after implementation"
+    },
+    {
+      "command": "npm test -- --run src/test/prod-real-load-steps.test.ts src/test/prod-runtime-preflight.test.ts src/test/load-test-dashboard.test.ts",
+      "status": "pass",
+      "tests": "35/35"
+    },
+    {
+      "command": "npm run typecheck",
+      "status": "pass"
+    },
+    {
+      "command": "for script in scripts/prod-real-load-steps.sh scripts/prod-runtime-preflight.sh scripts/promote-main-runtime.sh scripts/ci-compose-smoke.sh; do bash -n \"$script\"; done",
+      "status": "pass"
+    },
+    {
+      "command": "git diff --check -- scripts/prod-real-load-steps.sh src/test/prod-real-load-steps.test.ts scripts/main-runtime-allowlist.txt todolist-2026-05-10.md",
+      "status": "pass"
+    },
+    {
+      "command": "python3 -m json.tool backend/reports/prod-real-load-steps-2026-05-10/prod-real-load-steps-2026-05-10.json",
+      "status": "pass"
+    }
+  ],
+  "localLoadTest": {
+    "status": "not_run",
+    "reason": "requires production server context, real current public read targets, k6 runtime, and optional admin cookie"
+  },
+  "risks": [
+    "Production timing headers must be present before interpreting results",
+    "Aggregate nextFocus is a heuristic and must be reviewed with raw per-step summaries",
+    "Actual bottleneck decision remains pending until the runner is executed against production"
+  ],
+  "operatorCommand": "BASE_URL=https://woonglab.com WORK_READ_PATH=/api/public/works/<real-work-slug> STUDY_READ_PATH=/api/public/blogs/<real-study-slug> RATES=\"200 300 400 500\" DURATION_SECONDS=30 MAX_VUS=500 PRE_ALLOCATED_VUS=100 ADMIN_COOKIE_FILE=/tmp/admin.cookies ./scripts/prod-real-load-steps.sh",
+  "recommendation": "Ship through dev CI, promote to main, run production runtime preflight, then run the step runner and choose the next heavy-detail code optimization from the generated aggregate."
+}

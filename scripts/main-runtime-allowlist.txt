@@ -27,6 +27,7 @@ package-lock.json
 playwright.config.ts
 scripts/ci-compose-smoke.sh
 scripts/prod-runtime-preflight.sh
+scripts/prod-real-load-steps.sh
 scripts/main-runtime-allowlist.txt
 scripts/promote-main-runtime.sh
 scripts/check-e2e-readiness.mjs

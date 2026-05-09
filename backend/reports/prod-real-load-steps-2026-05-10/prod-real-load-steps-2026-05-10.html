@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Production Real Load Step Runner Audit - 2026-05-10</title>
+  <style>body{font-family:system-ui,sans-serif;max-width:920px;margin:40px auto;line-height:1.55;color:#172033}code,pre{background:#f4f6f8;padding:.15rem .3rem;border-radius:4px}pre{padding:1rem;overflow:auto}.ok{color:#146b3a}.risk{color:#8a3b00}</style>
+</head>
+<body>
+  <h1>Production Real Load Step Runner Audit</h1>
+  <p>Added <code>scripts/prod-real-load-steps.sh</code> to run real public Work/Study API constant-arrival-rate steps with <code>pageSize=12</code> and caller-provided real read targets.</p>
+  <h2>Validation</h2>
+  <ul>
+    <li class="ok">Focused Vitest passed 3/3.</li>
+    <li class="ok">Related Vitest bundle passed 35/35.</li>
+    <li class="ok">Typecheck passed.</li>
+    <li class="ok">Shell syntax and diff whitespace checks passed.</li>
+    <li class="ok">JSON audit artifact validates with <code>python3 -m json.tool</code>.</li>
+  </ul>
+  <h2>Operator Command</h2>
+  <pre>BASE_URL=https://woonglab.com \
+WORK_READ_PATH=/api/public/works/&lt;real-work-slug&gt; \
+STUDY_READ_PATH=/api/public/blogs/&lt;real-study-slug&gt; \
+RATES="200 300 400 500" \
+DURATION_SECONDS=30 \
+MAX_VUS=500 \
+PRE_ALLOCATED_VUS=100 \
+ADMIN_COOKIE_FILE=/tmp/admin.cookies \
+./scripts/prod-real-load-steps.sh</pre>
+  <h2>Recommendation</h2>
+  <p class="risk">Ship through dev CI, promote to main, run production runtime preflight first, then run this step runner to choose the next heavy-detail optimization from evidence.</p>
+</body>
+</html>
