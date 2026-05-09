@@ -11,6 +11,8 @@ BASE_URL="${BASE_URL:-}"
 REQUIRE_ADMIN_DIAGNOSTICS="${REQUIRE_ADMIN_DIAGNOSTICS:-0}"
 ADMIN_COOKIE_FILE="${ADMIN_COOKIE_FILE:-}"
 CURL_INSECURE="${CURL_INSECURE:-0}"
+REQUIRE_PUBLIC_WORK_VIDEO_CONTRACT="${REQUIRE_PUBLIC_WORK_VIDEO_CONTRACT:-0}"
+WORK_READ_PATH="${WORK_READ_PATH:-}"
 
 compose=("${DOCKER_BIN}" compose --env-file "${APP_ENV_FILE}" -f "${COMPOSE_FILE}")
 tmp_dir="$(mktemp -d)"
@@ -52,6 +54,23 @@ is_backend_direct_url() {
   [[ "${value}" == "http://127.0.0.1:8080"* \
     || "${value}" == "http://localhost:8080"* \
     || "${value}" == "http://backend:8080"* ]]
+}
+
+resolve_public_url() {
+  local value="$1"
+  case "${value}" in
+    http://*|https://*) printf '%s' "${value}" ;;
+    /*) printf '%s%s' "${BASE_URL%/}" "${value}" ;;
+    *) fail "public probe path must be absolute or start with /" ;;
+  esac
+}
+
+validate_public_work_read_path() {
+  local value="$1"
+  case "${value}" in
+    /api/public/works/*|http://*|https://*) ;;
+    *) fail "WORK_READ_PATH must be a public Work detail API path or absolute URL" ;;
+  esac
 }
 
 header_value() {
@@ -208,6 +227,32 @@ else
 fi
 info "app elapsed header: available (${app_elapsed})"
 info "gzip public response: available"
+
+if [[ "${REQUIRE_PUBLIC_WORK_VIDEO_CONTRACT}" == "1" ]]; then
+  if [[ -z "${WORK_READ_PATH}" ]]; then
+    fail "REQUIRE_PUBLIC_WORK_VIDEO_CONTRACT=1 requires WORK_READ_PATH with a real public Work detail that has at least one video"
+  fi
+
+  validate_public_work_read_path "${WORK_READ_PATH}"
+  work_contract_headers="${tmp_dir}/work-contract.headers"
+  work_contract_body="${tmp_dir}/work-contract.body"
+  request "public Work detail contract" \
+    "$(resolve_public_url "${WORK_READ_PATH}")" \
+    "${work_contract_headers}" \
+    "${work_contract_body}"
+
+  if ! grep -Eq '"videos"[[:space:]]*:[[:space:]]*\[[[:space:]]*\{' "${work_contract_body}"; then
+    fail "public Work video contract verification requires a Work detail response with at least one video"
+  fi
+
+  if grep -Eq '"(originalFileName|fileSize|createdAt)"[[:space:]]*:' "${work_contract_body}"; then
+    fail "public Work video payload still exposes stale admin-only fields; deploy the current runtime before load testing"
+  fi
+
+  info "public Work video contract: current"
+else
+  info "public Work video contract: skipped (set REQUIRE_PUBLIC_WORK_VIDEO_CONTRACT=1 with WORK_READ_PATH to require stale-runtime detection)"
+fi
 
 if [[ "${REQUIRE_ADMIN_DIAGNOSTICS}" == "1" ]]; then
   if [[ -z "${ADMIN_COOKIE_FILE}" || ! -f "${ADMIN_COOKIE_FILE}" ]]; then
