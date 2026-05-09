@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Production Public Contract Preflight Guard - 2026-05-10</title>
+  <style>body{font-family:system-ui,sans-serif;line-height:1.5;margin:2rem;max-width:960px}code,pre{background:#f5f5f5;padding:.15rem .3rem;border-radius:4px}pre{padding:1rem;overflow:auto}.pass{color:#116329}.warn{color:#8a5a00}</style>
+</head>
+<body>
+  <h1>Production Public Contract Preflight Guard - 2026-05-10</h1>
+  <p>Added a production preflight guard that fails when a real public Work video response still exposes stale admin-only fields removed from the current public DTO.</p>
+  <h2>Changed</h2>
+  <ul>
+    <li><code>scripts/prod-runtime-preflight.sh</code>: added <code>REQUIRE_PUBLIC_WORK_VIDEO_CONTRACT=1</code> and <code>WORK_READ_PATH</code> checks.</li>
+    <li><code>src/test/prod-runtime-preflight.test.ts</code>: added current, stale, and missing-target coverage.</li>
+    <li><code>todolist-2026-05-10.md</code>: recorded the slice and validation state.</li>
+  </ul>
+  <h2>Validation</h2>
+  <ul>
+    <li class="pass">Focused Vitest passed 6/6.</li>
+    <li class="pass">Related Vitest bundle passed 37/37.</li>
+    <li class="pass">Shell syntax, diff whitespace, and typecheck passed.</li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Deploy/recreate production, run the preflight with a real video-bearing Work detail, then run the real load step ladder. If the preflight fails, fix stale runtime before more backend performance tuning.</p>
+</body>
+</html>

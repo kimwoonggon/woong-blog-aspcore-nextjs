@@ -1,0 +1,47 @@
+{
+  "slug": "prod-runtime-public-contract-preflight-2026-05-10",
+  "date": "2026-05-10",
+  "scope": "production preflight guard for stale public Work video DTO responses before real load testing",
+  "changed": [
+    "scripts/prod-runtime-preflight.sh",
+    "src/test/prod-runtime-preflight.test.ts",
+    "todolist-2026-05-10.md"
+  ],
+  "notChanged": [
+    "backend API implementation",
+    "EF queries",
+    "public DTO definitions",
+    "frontend parser",
+    "DB pool settings",
+    "nginx or Docker config",
+    "cache behavior"
+  ],
+  "validations": [
+    {
+      "command": "npm test -- --run src/test/prod-runtime-preflight.test.ts",
+      "result": "passed 6/6 after RED failure was observed before implementation"
+    },
+    {
+      "command": "npm test -- --run src/test/prod-runtime-preflight.test.ts src/test/prod-real-load-steps.test.ts src/test/load-test-dashboard.test.ts",
+      "result": "passed 37/37"
+    },
+    {
+      "command": "for script in scripts/prod-runtime-preflight.sh scripts/prod-real-load-steps.sh scripts/promote-main-runtime.sh scripts/ci-compose-smoke.sh; do bash -n \"$script\"; done",
+      "result": "passed"
+    },
+    {
+      "command": "git diff --check -- scripts/prod-runtime-preflight.sh src/test/prod-runtime-preflight.test.ts todolist-2026-05-10.md",
+      "result": "passed"
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "passed"
+    }
+  ],
+  "risks": [
+    "The check requires a real public Work detail with at least one video.",
+    "Current public production probes looked stale until the server pulls/recreates the newly published runtime image.",
+    "The guard is an operational preflight, not a full schema validator."
+  ],
+  "recommendation": "Run prod-runtime-preflight.sh with REQUIRE_PUBLIC_WORK_VIDEO_CONTRACT=1 before the real load ladder; if it fails, fix deployment/runtime freshness before more backend performance code changes."
+}
