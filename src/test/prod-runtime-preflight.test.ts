@@ -11,6 +11,7 @@ type FakeRuntimeOptions = {
   loadTestingBaseUrl?: string
   includeNginxRequestTime?: boolean
   diagnosticsSampleCount?: number
+  publicWorkVideoContract?: 'current' | 'stale'
 }
 
 function makeExecutable(filePath: string, content: string) {
@@ -25,6 +26,7 @@ function createFakeRuntime(options: FakeRuntimeOptions = {}) {
   const loadTestingBaseUrl = options.loadTestingBaseUrl ?? 'https://woonglab.test'
   const includeNginxRequestTime = options.includeNginxRequestTime ?? true
   const diagnosticsSampleCount = options.diagnosticsSampleCount ?? 12
+  const publicWorkVideoContract = options.publicWorkVideoContract ?? 'current'
 
   mkdirSync(fakeBin, { recursive: true })
   writeFileSync(adminCookieFile, 'admin-session')
@@ -100,6 +102,14 @@ if [[ -n "$output" ]]; then
     cat > "$output" <<'OUT'
 {"process":{"processorCount":2,"memoryBytes":200000000},"database":{"status":"available","commandLatency":{"sampleCount":${diagnosticsSampleCount},"p95Ms":5.1},"connectionOpenLatency":{"sampleCount":${diagnosticsSampleCount},"p95Ms":0.4},"pool":{"dbContextPoolSize":128,"npgsqlMaximumPoolSize":40,"npgsqlPoolLimitSource":"connection-string"}}}
 OUT
+  elif [[ "$url" == *"/api/public/works/"* ]]; then
+    ${publicWorkVideoContract === 'stale'
+      ? `cat > "$output" <<'OUT'
+{"id":"work-1","slug":"video-work","title":"Video Work","excerpt":"excerpt","content":{"html":"<p>body</p>"},"category":"case-study","tags":[],"thumbnailUrl":"","iconUrl":"","videos_version":1,"videos":[{"id":"video-1","sourceType":"hls","sourceKey":"r2:videos/work/video/hls/master.m3u8","playbackUrl":"https://media.example.test/videos/work/video/hls/master.m3u8","originalFileName":"admin-name.mp4","fileSize":12345,"createdAt":"2026-05-10T00:00:00Z","sortOrder":0}]}
+OUT`
+      : `cat > "$output" <<'OUT'
+{"id":"work-1","slug":"video-work","title":"Video Work","excerpt":"excerpt","content":{"html":"<p>body</p>"},"category":"case-study","tags":[],"thumbnailUrl":"","iconUrl":"","videos_version":1,"videos":[{"id":"video-1","sourceType":"hls","sourceKey":"r2:videos/work/video/hls/master.m3u8","playbackUrl":"https://media.example.test/videos/work/video/hls/master.m3u8","mimeType":"application/vnd.apple.mpegurl","sortOrder":0}]}
+OUT`}
   else
     printf '{"status":"ok"}' > "$output"
   fi
@@ -131,7 +141,11 @@ describe('production runtime preflight script', () => {
   it('probes compose, nginx/app headers, gzip, cgroup resources, and admin diagnostics without leaking secrets', () => {
     const runtime = createFakeRuntime()
 
-    const result = runPreflight(runtime.fakeBin, { ADMIN_COOKIE_FILE: runtime.adminCookieFile })
+    const result = runPreflight(runtime.fakeBin, {
+      ADMIN_COOKIE_FILE: runtime.adminCookieFile,
+      REQUIRE_PUBLIC_WORK_VIDEO_CONTRACT: '1',
+      WORK_READ_PATH: '/api/public/works/video-work',
+    })
 
     expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0)
     expect(result.stdout).toContain('[prod-runtime-preflight] PASS')
@@ -139,6 +153,7 @@ describe('production runtime preflight script', () => {
     expect(result.stdout).toContain('nginx request_time header: available')
     expect(result.stdout).toContain('app elapsed header: available')
     expect(result.stdout).toContain('gzip public response: available')
+    expect(result.stdout).toContain('public Work video contract: current')
     expect(result.stdout).toContain('db command samples: 12')
     expect(result.stdout).toContain('npgsql max pool: 40')
     expect(result.stdout).toContain('processor_count=2')
@@ -176,6 +191,36 @@ describe('production runtime preflight script', () => {
 
     expect(result.status).not.toBe(0)
     expect(result.stderr).toContain('DB command latency samples')
+    expect(result.stdout).not.toContain('super-secret')
+    expect(result.stderr).not.toContain('super-secret')
+  })
+
+  it('fails when required public Work video contract still exposes stale admin-only fields', () => {
+    const runtime = createFakeRuntime({ publicWorkVideoContract: 'stale' })
+
+    const result = runPreflight(runtime.fakeBin, {
+      ADMIN_COOKIE_FILE: runtime.adminCookieFile,
+      REQUIRE_PUBLIC_WORK_VIDEO_CONTRACT: '1',
+      WORK_READ_PATH: '/api/public/works/video-work',
+    })
+
+    expect(result.status).not.toBe(0)
+    expect(result.stderr).toContain('public Work video payload still exposes stale admin-only fields')
+    expect(result.stdout).not.toContain('super-secret')
+    expect(result.stderr).not.toContain('super-secret')
+  })
+
+  it('requires a real Work read path when public Work video contract verification is required', () => {
+    const runtime = createFakeRuntime()
+
+    const result = runPreflight(runtime.fakeBin, {
+      ADMIN_COOKIE_FILE: runtime.adminCookieFile,
+      REQUIRE_PUBLIC_WORK_VIDEO_CONTRACT: '1',
+      WORK_READ_PATH: '',
+    })
+
+    expect(result.status).not.toBe(0)
+    expect(result.stderr).toContain('REQUIRE_PUBLIC_WORK_VIDEO_CONTRACT=1 requires WORK_READ_PATH')
     expect(result.stdout).not.toContain('super-secret')
     expect(result.stderr).not.toContain('super-secret')
   })
