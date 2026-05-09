@@ -1,0 +1,58 @@
+{
+  "taskSlug": "prod-runtime-preflight-2026-05-10",
+  "date": "2026-05-10",
+  "scope": "Production runtime preflight for Real Backend Test observability readiness",
+  "changed": [
+    "scripts/prod-runtime-preflight.sh",
+    "src/test/prod-runtime-preflight.test.ts",
+    "scripts/main-runtime-allowlist.txt",
+    "todolist-2026-05-10.md"
+  ],
+  "intentionallyNotChanged": [
+    "Backend API behavior",
+    "Public DTO schema",
+    "EF query projections",
+    "Npgsql pool defaults",
+    "k6 scenarios or load targets",
+    "Cache behavior"
+  ],
+  "checksImplemented": [
+    "Reject backend-direct LoadTesting__BaseUrl",
+    "Require backend/frontend/nginx/db running services",
+    "Verify backend Production environment",
+    "Report backend-visible cgroup CPU and memory values",
+    "Require public X-Nginx-Request-Time header",
+    "Require public X-App-Elapsed-Ms header",
+    "Require gzip public JSON",
+    "Require DB command diagnostics samples when admin diagnostics are explicitly required",
+    "Avoid printing raw compose config, backend env, connection strings, or response bodies"
+  ],
+  "validation": [
+    {
+      "command": "npm test -- --run src/test/prod-runtime-preflight.test.ts",
+      "result": "passed 4/4 after implementation; failed before implementation because the script did not exist"
+    },
+    {
+      "command": "npm test -- --run src/test/prod-runtime-preflight.test.ts src/test/load-test-dashboard.test.ts",
+      "result": "passed 32/32"
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "passed"
+    },
+    {
+      "command": "for script in scripts/prod-runtime-preflight.sh scripts/promote-main-runtime.sh scripts/ci-compose-smoke.sh; do bash -n \"$script\"; done",
+      "result": "passed"
+    },
+    {
+      "command": "git diff --check -- scripts/prod-runtime-preflight.sh src/test/prod-runtime-preflight.test.ts scripts/main-runtime-allowlist.txt todolist-2026-05-07.md",
+      "result": "passed"
+    }
+  ],
+  "risks": [
+    "Real server execution still required because local Docker is unavailable in this WSL environment.",
+    "Admin diagnostics verification needs an authenticated admin cookie file when REQUIRE_ADMIN_DIAGNOSTICS=1.",
+    "The script is an observability gate and does not directly reduce latency."
+  ],
+  "recommendation": "Run the preflight on the server after deployment, then run the controlled real backend constant-rate ladder only if observability passes."
+}
