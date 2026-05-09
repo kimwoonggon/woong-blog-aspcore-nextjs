@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Staging LoadTesting Base URL CI Fix - 2026-05-10</title></head>
+<body>
+  <h1>Staging LoadTesting Base URL CI Fix - 2026-05-10</h1>
+  <p>Fixed the staging compose contract so Real Backend Test base URL resolves to the public nginx origin.</p>
+  <h2>Changed</h2>
+  <ul>
+    <li>Added LoadTesting__BaseUrl to docker-compose.staging.yml.</li>
+    <li>Documented LoadTesting__BaseUrl in .env.staging.example.</li>
+    <li>Added a Vitest compose contract.</li>
+  </ul>
+  <h2>Validation</h2>
+  <ul>
+    <li>Focused Vitest passed.</li>
+    <li>Staging compose config exposes LoadTesting__BaseUrl: http://localhost under CI-style env.</li>
+    <li>Shell syntax, diff whitespace, related Vitest bundle, and typecheck passed.</li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Merge through dev, confirm Publish GHCR Dev passes, then continue HLS remediation.</p>
+</body>
+</html>
