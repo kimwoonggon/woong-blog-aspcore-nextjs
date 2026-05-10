@@ -1,0 +1,37 @@
+{
+  "task": "public-work-visible-dto-trim-2026-05-10",
+  "date": "2026-05-10",
+  "summary": "Trimmed public Work DTO/projection fields to visible public UI fields and extended preflight stale-runtime detection.",
+  "changed": [
+    "Removed Period/IconUrl from WorkCardDto",
+    "Removed IconUrl from WorkDetailDto",
+    "Stopped selecting Period/PublicIconUrl on public Work card projections",
+    "Stopped selecting PublicIconUrl on public Work detail projection",
+    "Updated frontend public types and Pact contract",
+    "Extended production preflight stale public Work detail detection"
+  ],
+  "notChanged": [
+    "Admin icon DTO/editing behavior",
+    "Database PublicIconUrl column/write model",
+    "Thumbnail resolution/equivalence behavior",
+    "Cache behavior",
+    "Real Backend Test pageSize/target/scenario behavior"
+  ],
+  "validations": [
+    { "name": "RED focused public endpoint contract", "result": "failed before implementation", "count": "3/3 failed" },
+    { "name": "Focused public endpoint contract", "result": "passed", "count": "3/3" },
+    { "name": "Focused component public query contracts", "result": "passed", "count": "3/3" },
+    { "name": "Focused Postgres projection and endpoint contracts", "result": "passed", "count": "5/5" },
+    { "name": "Backend solution", "command": "dotnet test backend/WoongBlog.sln --no-restore --logger console;verbosity=minimal", "result": "passed", "details": "unit 61/61, component 129/129, architecture 40/40, integration 231/231; provider contract skipped by existing pact-file condition" },
+    { "name": "Frontend typecheck", "command": "npm run typecheck", "result": "passed" },
+    { "name": "Frontend public/Pact/preflight tests", "result": "passed", "count": "45/45" },
+    { "name": "Frontend lint", "command": "npm run lint", "result": "passed", "details": "0 errors, 7 existing warnings" },
+    { "name": "Shell syntax", "result": "passed" },
+    { "name": "Diff whitespace", "result": "passed" }
+  ],
+  "risks": [
+    "Public API contract change for external consumers expecting iconUrl or list-card period",
+    "Existing covering index may still include hidden fields until a separate index-maintenance slice"
+  ],
+  "recommendation": "Promote through dev/main, run production preflight with a real video Work detail, rerun Real Backend Test, then choose the next slice from target DB/app/payload metrics."
+}

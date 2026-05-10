@@ -26,10 +26,8 @@ export interface WorkListItem {
   title: string
   excerpt: string
   category: string
-  period?: string | null
   tags: string[]
   thumbnailUrl?: string
-  iconUrl?: string
   publishedAt?: string | null
 }
 
@@ -47,12 +45,14 @@ export interface PublicWorkSearchParams {
 }
 
 export interface WorkAdminItem extends WorkListItem {
+  period?: string | null
   published: boolean
   createdAt?: string
   updatedAt?: string
 }
 
 export interface WorkDetail extends WorkListItem {
+  period?: string | null
   content?: BlogContentPayload
   contentJson?: string
   socialShareMessage?: string | null
@@ -176,7 +176,6 @@ function parseWorkDetailPayload(payload: unknown): WorkDetail {
     period: typeof record.period === 'string' || record.period === null ? record.period : null,
     tags: Array.isArray(record.tags) ? record.tags.map((tag) => String(tag)) : [],
     thumbnailUrl: typeof record.thumbnailUrl === 'string' ? record.thumbnailUrl : undefined,
-    iconUrl: typeof record.iconUrl === 'string' ? record.iconUrl : undefined,
     publishedAt: typeof record.publishedAt === 'string' || record.publishedAt === null ? record.publishedAt : null,
     videosVersion: parseVideosVersion(record),
     videos: parseVideosField(record),

@@ -21,10 +21,8 @@ export interface HomeFeaturedWork {
   title: string
   excerpt: string
   category: string
-  period?: string | null
   tags: string[]
   thumbnailUrl?: string
-  iconUrl?: string
   publishedAt?: string | null
 }
 
