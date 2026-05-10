@@ -6,10 +6,14 @@ namespace WoongBlog.Infrastructure.Persistence.Diagnostics;
 public sealed class LoadTestDbCommandDiagnosticsInterceptor : DbCommandInterceptor
 {
     private readonly IDatabaseDiagnosticsCollector _collector;
+    private readonly IRequestDatabaseDiagnostics? _requestDiagnostics;
 
-    public LoadTestDbCommandDiagnosticsInterceptor(IDatabaseDiagnosticsCollector collector)
+    public LoadTestDbCommandDiagnosticsInterceptor(
+        IDatabaseDiagnosticsCollector collector,
+        IRequestDatabaseDiagnostics? requestDiagnostics = null)
     {
         _collector = collector;
+        _requestDiagnostics = requestDiagnostics;
     }
 
     public override DbDataReader ReaderExecuted(
@@ -17,7 +21,7 @@ public sealed class LoadTestDbCommandDiagnosticsInterceptor : DbCommandIntercept
         CommandExecutedEventData eventData,
         DbDataReader result)
     {
-        _collector.RecordCommand(eventData.Duration, command.CommandText);
+        RecordCommand(eventData.Duration, command.CommandText);
         return result;
     }
 
@@ -27,7 +31,7 @@ public sealed class LoadTestDbCommandDiagnosticsInterceptor : DbCommandIntercept
         DbDataReader result,
         CancellationToken cancellationToken = default)
     {
-        _collector.RecordCommand(eventData.Duration, command.CommandText);
+        RecordCommand(eventData.Duration, command.CommandText);
         return ValueTask.FromResult(result);
     }
 
@@ -36,7 +40,7 @@ public sealed class LoadTestDbCommandDiagnosticsInterceptor : DbCommandIntercept
         CommandExecutedEventData eventData,
         object? result)
     {
-        _collector.RecordCommand(eventData.Duration, command.CommandText);
+        RecordCommand(eventData.Duration, command.CommandText);
         return result;
     }
 
@@ -46,7 +50,7 @@ public sealed class LoadTestDbCommandDiagnosticsInterceptor : DbCommandIntercept
         object? result,
         CancellationToken cancellationToken = default)
     {
-        _collector.RecordCommand(eventData.Duration, command.CommandText);
+        RecordCommand(eventData.Duration, command.CommandText);
         return ValueTask.FromResult(result);
     }
 
@@ -55,7 +59,7 @@ public sealed class LoadTestDbCommandDiagnosticsInterceptor : DbCommandIntercept
         CommandExecutedEventData eventData,
         int result)
     {
-        _collector.RecordCommand(eventData.Duration, command.CommandText);
+        RecordCommand(eventData.Duration, command.CommandText);
         return result;
     }
 
@@ -65,7 +69,7 @@ public sealed class LoadTestDbCommandDiagnosticsInterceptor : DbCommandIntercept
         int result,
         CancellationToken cancellationToken = default)
     {
-        _collector.RecordCommand(eventData.Duration, command.CommandText);
+        RecordCommand(eventData.Duration, command.CommandText);
         return ValueTask.FromResult(result);
     }
 
@@ -73,7 +77,7 @@ public sealed class LoadTestDbCommandDiagnosticsInterceptor : DbCommandIntercept
         DbCommand command,
         CommandErrorEventData eventData)
     {
-        _collector.RecordCommand(eventData.Duration, command.CommandText, eventData.Exception);
+        RecordCommand(eventData.Duration, command.CommandText, eventData.Exception);
     }
 
     public override Task CommandFailedAsync(
@@ -81,7 +85,13 @@ public sealed class LoadTestDbCommandDiagnosticsInterceptor : DbCommandIntercept
         CommandErrorEventData eventData,
         CancellationToken cancellationToken = default)
     {
-        _collector.RecordCommand(eventData.Duration, command.CommandText, eventData.Exception);
+        RecordCommand(eventData.Duration, command.CommandText, eventData.Exception);
         return Task.CompletedTask;
+    }
+
+    private void RecordCommand(TimeSpan duration, string? commandText, Exception? exception = null)
+    {
+        _collector.RecordCommand(duration, commandText, exception);
+        _requestDiagnostics?.RecordCommand(duration);
     }
 }

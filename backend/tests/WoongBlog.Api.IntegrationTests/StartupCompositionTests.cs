@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Globalization;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -337,6 +338,27 @@ public class StartupCompositionTests : IClassFixture<CustomWebApplicationFactory
         openApiResponse.EnsureSuccessStatusCode();
         runtimeConfigResponse.EnsureSuccessStatusCode();
         loadTestDiagnosticsResponse.EnsureSuccessStatusCode();
+        Assert.True(healthResponse.Headers.TryGetValues("X-App-Elapsed-Ms", out var appElapsedHeaders));
+        Assert.True(double.TryParse(
+            appElapsedHeaders.Single(),
+            NumberStyles.Float,
+            CultureInfo.InvariantCulture,
+            out var appElapsedMs));
+        Assert.True(appElapsedMs >= 0);
+        Assert.True(healthResponse.Headers.TryGetValues("X-Db-Command-Elapsed-Ms", out var dbCommandElapsedHeaders));
+        Assert.True(double.TryParse(
+            dbCommandElapsedHeaders.Single(),
+            NumberStyles.Float,
+            CultureInfo.InvariantCulture,
+            out var dbCommandElapsedMs));
+        Assert.True(dbCommandElapsedMs >= 0);
+        Assert.True(healthResponse.Headers.TryGetValues("X-Db-Command-Count", out var dbCommandCountHeaders));
+        Assert.True(long.TryParse(
+            dbCommandCountHeaders.Single(),
+            NumberStyles.Integer,
+            CultureInfo.InvariantCulture,
+            out var dbCommandCount));
+        Assert.True(dbCommandCount >= 0);
 
         var health = await healthResponse.Content.ReadFromJsonAsync<HealthPayload>(TestContext.Current.CancellationToken);
         Assert.NotNull(health);
@@ -528,7 +550,13 @@ public class StartupCompositionTests : IClassFixture<CustomWebApplicationFactory
         Assert.NotNull(metricsPayload.Metrics);
         Assert.NotEmpty(metricsPayload.Metrics);
         Assert.NotEmpty(metricsPayload.TargetMetrics);
-        Assert.Contains(metricsPayload.TargetMetrics, target => target.TargetId == "study-read" && target.RequestCount > 0);
+        var studyReadMetrics = Assert.Single(
+            metricsPayload.TargetMetrics,
+            target => target.TargetId == "study-read" && target.RequestCount > 0);
+        Assert.NotNull(studyReadMetrics.DbCommandElapsedP95Ms);
+        Assert.True(studyReadMetrics.DbCommandElapsedP95Ms >= 0);
+        Assert.NotNull(studyReadMetrics.DbCommandCountP95);
+        Assert.True(studyReadMetrics.DbCommandCountP95 >= 0);
         Assert.NotNull(metricsPayload.LatencyBreakdown);
         Assert.True(metricsPayload.LatencyBreakdown.P95Ms >= 0);
         Assert.True(metricsPayload.LatencyBreakdown.AppElapsedP95Ms >= 0);
@@ -826,6 +854,8 @@ public class StartupCompositionTests : IClassFixture<CustomWebApplicationFactory
         double P95Ms,
         double? ResponseBytesP95,
         double? ReceiveP95Ms,
+        double? DbCommandElapsedP95Ms,
+        double? DbCommandCountP95,
         IReadOnlyDictionary<string, long> StatusCounts);
 
     private sealed record RealLoadTestDiagnosticsResponse(
