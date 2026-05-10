@@ -1,0 +1,148 @@
+{
+  "generatedAt": "2026-05-10T20:13:00+09:00",
+  "status": "blocked_waiting_for_server_deploy",
+  "objectiveComplete": false,
+  "completedEvidence": {
+    "ciMainRuntime": {
+      "runId": 25626902724,
+      "conclusion": "success",
+      "headSha": "3a19dd8bfc2b5b67653acab2a4396fe26d0a66f9"
+    },
+    "publishGhcrMain": {
+      "runId": 25627032158,
+      "conclusion": "success",
+      "headSha": "3a19dd8bfc2b5b67653acab2a4396fe26d0a66f9",
+      "runtimeTags": [
+        "main",
+        "latest",
+        "sha-3a19dd8bfc2b"
+      ]
+    },
+    "ciDev": {
+      "runId": 25626665464,
+      "conclusion": "success",
+      "headSha": "8f02b38cc0286c493065d056161ebc2727967256"
+    },
+    "publishGhcrDevManual": {
+      "runId": 25627146533,
+      "conclusion": "success",
+      "headSha": "8f02b38cc0286c493065d056161ebc2727967256",
+      "runtimeTags": [
+        "dev",
+        "dev-sha-8f02b38cc028"
+      ]
+    }
+  },
+  "productionProbe": {
+    "baseUrl": "https://woonglab.com",
+    "staleFieldsObserved": {
+      "workList": [
+        "period",
+        "iconUrl"
+      ],
+      "workDetail": [
+        "contentJson",
+        "period",
+        "iconUrl"
+      ]
+    }
+  },
+  "blocker": "No SSH authentication or repository deploy workflow is available to run production docker compose pull/up from this environment.",
+  "requiredNextAction": "Run backend/reports/prod-main-runtime-retest-2026-05-10/pasteable-server-commands.md on the production host. Block 1 uses a temporary Docker config for public GHCR runtime pulls; if GHCR still denies access, rerun with GHCR_USER=kimwoonggon and GHCR_TOKEN=<read-packages-token>.",
+  "remainingRequirements": [
+    "production server pull/deploy latest main runtime images",
+    "production preflight pass on server",
+    "Real Backend Test rerun with pageSize=12, no seed, no cache, real Work/Study URLs",
+    "select and implement one next slice based on new result",
+    "full e2e and CI/main promotion after selected slice"
+  ],
+  "lastRecheck": {
+    "at": "2026-05-10T20:19:00+09:00",
+    "productionStale": true,
+    "staleFieldsObserved": {
+      "workList": [
+        "period",
+        "iconUrl"
+      ],
+      "workDetail": [
+        "period",
+        "iconUrl",
+        "contentJson",
+        "originalFileName",
+        "fileSize",
+        "createdAt"
+      ],
+      "blogList": []
+    },
+    "actionsGreen": [
+      "CI Main Runtime",
+      "Publish GHCR Main",
+      "CI Dev",
+      "Publish GHCR Dev"
+    ],
+    "ssh": {
+      "agentAvailable": false,
+      "hostKeyMatchesPreviouslyRecordedFingerprints": true,
+      "batchModeDeniedTargets": [
+        "kimwoonggon@srv1592512.hstgr.cloud",
+        "kimwoonggon@187.127.111.73",
+        "root@srv1592512.hstgr.cloud",
+        "root@187.127.111.73"
+      ]
+    },
+    "ghcrAnonymousManifestAccess": {
+      "defaultDockerConfig": {
+        "backend": "denied",
+        "frontend": "denied"
+      },
+      "cleanTemporaryDockerConfig": {
+        "backend": "ok",
+        "frontend": "ok"
+      },
+      "implication": "server block 1 now uses a temporary Docker config for manifest checks and docker compose pull so stale host credentials should not break public runtime image pulls; GHCR_TOKEN remains an optional fallback"
+    },
+    "ghcrPackageVisibility": {
+      "backend": "public",
+      "frontend": "public"
+    },
+    "githubDeploymentAutomation": {
+      "at": "2026-05-10T20:26:27+09:00",
+      "secrets": [
+        "PROMOTION_TOKEN"
+      ],
+      "variables": [],
+      "productionDeploySecretAvailable": false,
+      "productionDeployWorkflowFound": false,
+      "implication": "there is no existing GitHub Actions path that can deploy the production host without new SSH/server credentials"
+    },
+    "windowsOpenSsh": {
+      "at": "2026-05-10T20:28:08+09:00",
+      "available": true,
+      "batchModeDeniedTargets": [
+        "root@srv1592512.hstgr.cloud",
+        "root@187.127.111.73",
+        "kimwoonggon@srv1592512.hstgr.cloud",
+        "kimwoonggon@187.127.111.73"
+      ],
+      "implication": "Windows OpenSSH does not provide a usable alternate key or agent path from this environment"
+    }
+  },
+  "lastProductionStaleRecheck": {
+    "at": "2026-05-10T20:29:42+09:00",
+    "staleFieldsObserved": {
+      "worksList": [
+        "period",
+        "iconUrl"
+      ],
+      "workDetail": [
+        "period",
+        "iconUrl",
+        "contentJson",
+        "originalFileName",
+        "fileSize",
+        "createdAt"
+      ]
+    },
+    "decision": "do not run or interpret Real Backend Test until server block 1 deploy/preflight passes"
+  }
+}
