@@ -1,0 +1,38 @@
+{
+  "task": "main-runtime-doc-allowlist",
+  "date": "2026-05-11",
+  "status": "pending_ci_and_main_promotion",
+  "changed_files": [
+    "scripts/main-runtime-allowlist.txt",
+    "todolist-2026-05-11.md"
+  ],
+  "new_reports": [
+    "backend/reports/main-runtime-doc-allowlist-2026-05-11/main-runtime-doc-allowlist-2026-05-11.md",
+    "backend/reports/main-runtime-doc-allowlist-2026-05-11/main-runtime-doc-allowlist-2026-05-11.json",
+    "backend/reports/main-runtime-doc-allowlist-2026-05-11/main-runtime-doc-allowlist-2026-05-11.html"
+  ],
+  "backups": [
+    ".agent-backups/main-runtime-doc-allowlist-2026-05-11/main-runtime-allowlist.txt.before",
+    ".agent-backups/main-runtime-doc-allowlist-2026-05-11/todolist-2026-05-11.md.before"
+  ],
+  "evidence": {
+    "missing_from_origin_main_before_fix": "docs/walkthroughs/main-server-setup.md",
+    "present_on_origin_dev_before_fix": "docs/walkthroughs/main-server-setup.md",
+    "allowlist_added_path": "docs/walkthroughs/main-server-setup.md"
+  },
+  "validations": [
+    {
+      "command": "rg -n \"^docs/walkthroughs/main-server-setup\\.md$\" scripts/main-runtime-allowlist.txt",
+      "result": "pending_rerun_after_report"
+    },
+    {
+      "command": "git diff --check -- scripts/main-runtime-allowlist.txt todolist-2026-05-11.md backend/reports/main-runtime-doc-allowlist-2026-05-11",
+      "result": "pending_rerun_after_report"
+    }
+  ],
+  "remaining_items": [
+    "dev CI",
+    "main promotion",
+    "origin/main setup document verification"
+  ]
+}
