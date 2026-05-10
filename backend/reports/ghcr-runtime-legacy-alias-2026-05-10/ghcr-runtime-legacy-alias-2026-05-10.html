@@ -1,0 +1,9 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>GHCR Runtime Legacy Image Alias</title><style>body{font-family:sans-serif;max-width:900px;margin:32px auto;line-height:1.5}code{background:#f4f4f4;padding:2px 4px}</style></head><body>
+<h1>GHCR Runtime Legacy Image Alias</h1>
+<p>Added backward-compatible GHCR aliases so publish workflows emit both <code>repo-runtime-*</code> and legacy <code>repo-*</code> image names.</p>
+<h2>Validation</h2>
+<ul><li>Focused workflow tag test passed.</li><li>Related compose contract test passed.</li><li>Typecheck passed.</li><li>Lint passed with existing warnings only.</li></ul>
+<h2>Recommendation</h2>
+<p>Push through dev/main to republish aliases, then run the server redeploy and load-test scripts.</p>
+</body></html>

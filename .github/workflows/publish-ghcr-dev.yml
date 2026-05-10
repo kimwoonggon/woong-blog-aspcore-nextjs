@@ -82,5 +82,7 @@ jobs:
           tags: |
             ghcr.io/${{ steps.vars.outputs.owner_lc }}/${{ steps.vars.outputs.repo_lc }}-runtime-${{ matrix.image_suffix }}:dev
             ghcr.io/${{ steps.vars.outputs.owner_lc }}/${{ steps.vars.outputs.repo_lc }}-runtime-${{ matrix.image_suffix }}:dev-sha-${{ steps.vars.outputs.sha_short }}
+            ghcr.io/${{ steps.vars.outputs.owner_lc }}/${{ steps.vars.outputs.repo_lc }}-${{ matrix.image_suffix }}:dev
+            ghcr.io/${{ steps.vars.outputs.owner_lc }}/${{ steps.vars.outputs.repo_lc }}-${{ matrix.image_suffix }}:dev-sha-${{ steps.vars.outputs.sha_short }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
