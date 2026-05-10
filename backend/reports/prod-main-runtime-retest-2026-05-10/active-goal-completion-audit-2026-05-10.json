@@ -1,39 +1,175 @@
 {
-  "generatedAt": "2026-05-10T20:31:00+09:00",
+  "generatedAt": "2026-05-10T21:44:56+09:00",
   "goalComplete": false,
   "successCriteria": [
-    "production server pulls and deploys latest main runtime images",
-    "production preflight passes on server after deploy",
-    "Real Backend Test reruns with pageSize=12, no seed, no cache, real Work/Study URLs",
-    "new result drives selection of one next slice",
-    "selected slice is implemented",
-    "full e2e and CI pass after selected slice"
+    "production server pulls and deploys latest main runtime backend/frontend images",
+    "production preflight passes on the server after deploy",
+    "Real Backend Test reruns with pageSize=12, no seed/fixture targets, no cache workaround, and real Work/Study URLs",
+    "new load result drives selection of one next slice: HLS fatal fix, public detail serialization/body optimization, or DB/index optimization",
+    "selected slice is implemented and verified with full e2e coverage where applicable",
+    "CI passes through dev and main after the selected slice"
   ],
-  "satisfied": [
-    "latest main runtime images published",
-    "dev CI/publish healthy",
-    "blocked-state audit artifacts generated"
+  "checklist": [
+    {
+      "requirement": "latest main runtime images published",
+      "status": "satisfied",
+      "evidence": "origin/main is 757ab203e55cadf8f89ee0da42b7ef580deebad3; CI Main Runtime run 25628240637 and Publish GHCR Main run 25628355351 both succeeded for that same SHA; runtime main and sha-757ab203e55c manifests were inspected earlier"
+    },
+    {
+      "requirement": "production deploy workflow exists",
+      "status": "satisfied",
+      "evidence": ".github/workflows/prod-runtime-redeploy.yml exists on main and was dispatched"
+    },
+    {
+      "requirement": "production server deploy executed",
+      "status": "missing",
+      "evidence": "runs 25628508822, 25628614468, and 25628772593 failed in Prepare SSH; server step was skipped"
+    },
+    {
+      "requirement": "production preflight executed and passed",
+      "status": "missing",
+      "evidence": "preflight is inside the skipped server step"
+    },
+    {
+      "requirement": "Real Backend Test rerun with required conditions",
+      "status": "missing",
+      "evidence": "load runner is inside the skipped server step"
+    },
+    {
+      "requirement": "pageSize=12 preserved",
+      "status": "prepared_not_executed",
+      "evidence": "workflow/script/fallback paths are prepared for pageSize=12; no production execution yet"
+    },
+    {
+      "requirement": "no seed/fixture target",
+      "status": "prepared_not_executed",
+      "evidence": "workflow/fallback rejects seed/fixture and uses real public paths; no production execution yet"
+    },
+    {
+      "requirement": "no cache workaround",
+      "status": "prepared_not_executed",
+      "evidence": "no cache behavior was changed; no production result yet"
+    },
+    {
+      "requirement": "next slice selected from new result",
+      "status": "missing",
+      "evidence": "no valid post-deploy result exists"
+    },
+    {
+      "requirement": "selected slice implemented",
+      "status": "missing",
+      "evidence": "cannot select/implement result-driven slice yet"
+    },
+    {
+      "requirement": "full e2e after selected slice",
+      "status": "missing",
+      "evidence": "not applicable until selected slice exists"
+    },
+    {
+      "requirement": "CI main/dev after selected slice",
+      "status": "missing",
+      "evidence": "not applicable until selected slice exists"
+    }
   ],
-  "missing": [
-    "production server deploy output",
-    "production preflight pass output",
-    "post-deploy Real Backend Test artifacts",
-    "result-driven next slice selection",
-    "selected slice implementation",
-    "full e2e after selected slice",
-    "CI main/dev after selected slice"
-  ],
-  "productionRecheck": {
-    "at": "2026-05-10T20:31:00+09:00",
-    "worksListStale": ["period", "iconUrl"],
-    "workDetailStale": ["period", "iconUrl", "contentJson", "originalFileName", "fileSize", "createdAt"]
+  "currentExternalEvidence": {
+    "recheckedAt": "2026-05-10T21:44:56+09:00",
+    "repoSecrets": [
+      "PROMOTION_TOKEN"
+    ],
+    "repoEnvironments": [],
+    "repoVariables": [],
+    "repositoryOwnerType": "User",
+    "organizationSecretsAvailable": false,
+    "workflowEnvironmentDeclared": false,
+    "redeployRuns": [
+      {
+        "runId": 25628508822,
+        "conclusion": "failure",
+        "failedStep": "Prepare SSH",
+        "error": "Missing required secret: PROD_SSH_HOST",
+        "serverExecutionStep": "skipped"
+      },
+      {
+        "runId": 25628614468,
+        "conclusion": "failure",
+        "failedStep": "Prepare SSH",
+        "error": "Missing required secret: PROD_SSH_HOST",
+        "serverExecutionStep": "skipped"
+      },
+      {
+        "runId": 25628772593,
+        "conclusion": "failure",
+        "failedStep": "Prepare SSH",
+        "error": "Missing required secret: PROD_SSH_PRIVATE_KEY",
+        "serverExecutionStep": "skipped"
+      }
+    ],
+    "productionPublicProbe": {
+      "workDetailPath": "/api/public/works/smoke-fluid-simulation",
+      "staleDetailFields": [
+        "period",
+        "iconUrl",
+        "contentJson"
+      ],
+      "staleVideoFields": [
+        "originalFileName",
+        "fileSize",
+        "createdAt"
+      ]
+    },
+    "localDevCompose": {
+      "backend": "up on 127.0.0.1:18080->8080",
+      "nginx": "up on 127.0.0.1:3000->80 and 127.0.0.1:3001->443",
+      "db": "up",
+      "healthChecks": [
+        "HTTP 200 from http://127.0.0.1:3000/api/health",
+        "HTTP 200 from http://127.0.0.1:18080/api/health"
+      ]
+    }
   },
-  "actionsEvidence": [
-    {"workflow": "Publish GHCR Dev", "runId": 25627146533, "conclusion": "success"},
-    {"workflow": "Publish GHCR Main", "runId": 25627032158, "conclusion": "success"},
-    {"workflow": "CI Main Runtime", "runId": 25626902724, "conclusion": "success"},
-    {"workflow": "Promote Main Runtime", "runId": 25626779945, "conclusion": "success"}
+  "manualFallbackValidation": {
+    "syntaxCheck": "bash -n passed for server-main-runtime-redeploy.sh and server-run-real-load-after-preflight.sh",
+    "listTargets": [
+      "/api/public/works?page=1&pageSize=12",
+      "/api/public/blogs?page=1&pageSize=12"
+    ],
+    "seedFixturePolicy": "fallback rejects *seeded* and *fixture* paths",
+    "workReadPath": "/api/public/works/smoke-fluid-simulation",
+    "studyReadPath": "auto-selects a non-seed public Study slug from pageSize=12",
+    "cacheBehaviorChanged": false,
+    "artifactCollection": "fallback verifies prod-real-load-steps-summary.md/json, prints markdown summary, and creates prod-real-load-steps-artifacts.tgz"
+  },
+  "blocker": "Production SSH connection material is absent from GitHub repository secrets. The workflow cannot SSH to the production server, so it cannot pull runtime images, run docker compose up, run preflight, or run the real backend load test.",
+  "requiredSecrets": [
+    "PROD_SSH_HOST",
+    "PROD_SSH_USER",
+    "PROD_SSH_PRIVATE_KEY",
+    "PROD_SSH_KNOWN_HOSTS"
   ],
-  "blocker": "No working SSH/deploy mechanism is available from this environment, and production public API remains stale.",
-  "nextRequiredAction": "Run pasteable-server-commands.md block 1 on the production host or provide working SSH/deploy credentials."
+  "optionalSecrets": [
+    "PROD_SSH_PORT",
+    "PROD_GHCR_TOKEN"
+  ],
+  "nextRequiredAction": "Add the production SSH secrets or provide equivalent production deploy access, then rerun prod-runtime-redeploy.yml on main. If secrets cannot be added, run pasteable-server-commands.md on the production host and provide the output/artifacts.",
+  "productionRedeployPlaceholderSecretGuard": {
+    "status": "prepared_not_executed_on_main",
+    "workflow": ".github/workflows/prod-runtime-redeploy.yml",
+    "test": "src/test/prod-runtime-redeploy-workflow.test.ts",
+    "validatedSecrets": [
+      "PROD_SSH_HOST",
+      "PROD_SSH_USER",
+      "PROD_SSH_PRIVATE_KEY",
+      "PROD_SSH_KNOWN_HOSTS",
+      "PROD_SSH_PORT"
+    ],
+    "secretValueLogging": false,
+    "validation": [
+      "focused workflow Vitest passed",
+      "related workflow/compose Vitest bundle passed 8/8",
+      "extracted shell syntax checks passed",
+      "npm run typecheck passed",
+      "git diff --check passed"
+    ],
+    "objectiveImpact": "safety guard only; production deploy/preflight/load still not executed"
+  }
 }
