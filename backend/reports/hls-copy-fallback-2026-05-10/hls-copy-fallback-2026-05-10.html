@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>HLS Copy-Mode Fallback - 2026-05-10</title></head>
+<body>
+  <h1>HLS Copy-Mode Fallback - 2026-05-10</h1>
+  <p>Implemented copy-mode-first HLS processing with a compatibility transcode fallback for valid MP4 uploads that fail ffmpeg copy packaging.</p>
+  <h2>Validation</h2>
+  <ul>
+    <li>Focused fallback component test passed 1/1.</li>
+    <li>Focused HLS integration tests passed 2/2.</li>
+    <li>Backend solution passed 462 tests with 1 pact-file skip.</li>
+    <li>Typecheck passed.</li>
+    <li>Lint passed with 0 errors and 12 existing warnings outside this slice.</li>
+    <li>Homepage/public Playwright e2e passed 38/38 with 0 latency budget failures.</li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Promote through normal CI, then retest the exact failing video. Remaining 413/504/empty-body failures should be handled as proxy/runtime issues.</p>
+</body>
+</html>

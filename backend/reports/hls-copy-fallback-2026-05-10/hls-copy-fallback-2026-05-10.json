@@ -1,0 +1,76 @@
+{
+  "task": "hls-copy-fallback-2026-05-10",
+  "changed": [
+    "backend/src/WoongBlog.Infrastructure/Modules/Content/Works/WorkVideos/FfmpegVideoTranscoder.cs",
+    "backend/tests/WoongBlog.Api.ComponentTests/FfmpegVideoTranscoderComponentTests.cs",
+    "todolist-2026-05-10.md"
+  ],
+  "intentionallyNotChanged": [
+    "response cache",
+    "public Work/Blog read DTO/query behavior",
+    "production or remote deploy path",
+    "upload size, nginx timeout, Docker runtime config"
+  ],
+  "validations": [
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj --filter FullyQualifiedName~FfmpegVideoTranscoderComponentTests --no-restore",
+      "result": "pass",
+      "passed": 1
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter HLS focused tests --no-restore",
+      "result": "pass",
+      "passed": 2
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj --no-restore",
+      "result": "pass",
+      "passed": 130
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln --no-restore",
+      "result": "pass",
+      "passed": 462,
+      "skipped": 1
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "pass"
+    },
+    {
+      "command": "npm run lint",
+      "result": "pass",
+      "errors": 0,
+      "warnings": 12
+    },
+    {
+      "command": "git diff --check -- changed files",
+      "result": "pass"
+    },
+    {
+      "command": "Playwright homepage/public e2e bundle against http://127.0.0.1:3000",
+      "result": "pass",
+      "passed": 38,
+      "latencyBudgetFailures": 0,
+      "warnings": 1
+    },
+    {
+      "command": "clean origin/dev worktree: dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj --filter FullyQualifiedName~FfmpegVideoTranscoderComponentTests --verbosity minimal",
+      "result": "pass",
+      "passed": 1
+    },
+    {
+      "command": "clean origin/dev worktree: dotnet test backend/WoongBlog.sln --verbosity minimal",
+      "result": "pass",
+      "passed": 462,
+      "skipped": 1
+    }
+  ],
+  "risks": [
+    "Fallback requires ffmpeg build with libx264 and AAC encoder support",
+    "Compatibility transcode is CPU-heavy but only runs after copy-mode failure",
+    "Proxy/runtime 413/504/empty-body failures are not fixed by this backend transcoder slice",
+    "Full optional/exhaustive Playwright suites were not run by user direction"
+  ],
+  "recommendation": "Promote through normal CI, then retest the exact failing video and classify any remaining failure by response status/body."
+}
