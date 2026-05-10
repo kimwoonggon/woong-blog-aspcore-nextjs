@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Main Runtime Compose LoadTesting Test Stability - 2026-05-10</title>
+  <style>body{font-family:Arial,sans-serif;max-width:960px;margin:32px auto;padding:0 16px;line-height:1.5;color:#172033}code{background:#eef2f7;padding:2px 4px;border-radius:4px}.pass{color:#166534;font-weight:700}.risk{color:#991b1b;font-weight:700}</style>
+</head>
+<body>
+  <h1>Main Runtime Compose LoadTesting Test Stability</h1>
+  <p>PR #123 failed because the runtime-only main tree promoted a test that unconditionally read staging-only files absent from that tree.</p>
+  <p>The test now verifies all available compose/env contracts, requires production to be present, and preserves staging coverage on dev.</p>
+  <h2>Validations</h2>
+  <ul>
+    <li class="pass">Focused dev-tree Vitest passed 5/5.</li>
+    <li class="pass">Minimal main-runtime-style Vitest passed 3/3 without staging files.</li>
+    <li class="pass">Related Vitest bundle passed 14/14.</li>
+    <li class="pass">Typecheck and diff whitespace checks passed.</li>
+  </ul>
+  <p class="risk">A refreshed promotion PR run is still required after this fix reaches dev.</p>
+</body>
+</html>

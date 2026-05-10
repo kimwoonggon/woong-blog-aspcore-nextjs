@@ -1,0 +1,31 @@
+{
+  "slug": "staging-loadtesting-baseurl-ci-2026-05-10",
+  "date": "2026-05-10",
+  "scope": "Fix Publish GHCR Dev staging compose LoadTesting__BaseUrl policy failure",
+  "changed": [
+    "docker-compose.staging.yml backend environment now exposes LoadTesting__BaseUrl through public origin defaults",
+    ".env.staging.example documents LoadTesting__BaseUrl=https://staging.example.com",
+    "src/test/compose-loadtesting-baseurl.test.ts locks prod and staging public-origin contracts",
+    "todolist-2026-05-10.md records the RED/GREEN/verification trail"
+  ],
+  "notChanged": [
+    "Backend application code",
+    "HLS transcoder behavior",
+    "Production compose semantics",
+    "Backend-direct load-test routing"
+  ],
+  "validations": [
+    "RED focused Vitest failed before implementation for staging compose/env",
+    "npm test -- --run src/test/compose-loadtesting-baseurl.test.ts",
+    "docker compose --env-file <tmp> -f docker-compose.staging.yml config | grep -F 'LoadTesting__BaseUrl: http://localhost'",
+    "bash -n scripts/ci-compose-smoke.sh scripts/prod-runtime-preflight.sh scripts/prod-real-load-steps.sh",
+    "git diff --check -- docker-compose.staging.yml .env.staging.example src/test/compose-loadtesting-baseurl.test.ts todolist-2026-05-10.md",
+    "npm test -- --run src/test/compose-loadtesting-baseurl.test.ts src/test/prod-runtime-preflight.test.ts src/test/prod-real-load-steps.test.ts",
+    "npm run typecheck"
+  ],
+  "risks": [
+    "The previous Publish GHCR Dev run remains failed until superseded by a new dev run",
+    "HLS upload root cause remains diagnostic-only until exact upload response or logs are captured"
+  ],
+  "recommendation": "Merge through dev, confirm Publish GHCR Dev passes, then continue HLS remediation with exact upload status/body/logs."
+}
