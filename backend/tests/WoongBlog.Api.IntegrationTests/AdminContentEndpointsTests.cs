@@ -871,7 +871,8 @@ public class AdminContentEndpointsTests : IClassFixture<CustomWebApplicationFact
         publicResponse.EnsureSuccessStatusCode();
         var publicBody = await publicResponse.Content.ReadAsStringAsync();
         Assert.Contains("/media/work-thumbnails/", publicBody, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("/media/work-icons/", publicBody, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("/media/work-icons/", publicBody, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("\"iconUrl\"", publicBody, StringComparison.OrdinalIgnoreCase);
 
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();

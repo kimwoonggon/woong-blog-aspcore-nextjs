@@ -104,8 +104,13 @@ public class PublicEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         Assert.All(home.RecentPosts, post => Assert.NotNull(post.PublishedAt));
         Assert.True(root.TryGetProperty("homePage", out _));
         Assert.True(root.TryGetProperty("siteSettings", out _));
-        Assert.True(root.TryGetProperty("featuredWorks", out _));
+        Assert.True(root.TryGetProperty("featuredWorks", out var featuredWorks));
         Assert.True(root.TryGetProperty("recentPosts", out _));
+        foreach (var work in featuredWorks.EnumerateArray())
+        {
+            Assert.False(work.TryGetProperty("iconUrl", out _));
+            Assert.False(work.TryGetProperty("period", out _));
+        }
     }
 
     [Fact]
@@ -165,12 +170,11 @@ public class PublicEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         Assert.Equal("platform", work.Category);
         Assert.Contains("dotnet", work.Tags, StringComparer.OrdinalIgnoreCase);
         Assert.Equal("/media/works/seeded-work-thumb.png", work.ThumbnailUrl);
-        Assert.Equal("/media/works/seeded-work-icon.png", work.IconUrl);
         Assert.NotEmpty(work.Videos);
         Assert.False(root.TryGetProperty("contentJson", out _));
         Assert.True(root.TryGetProperty("content", out _));
         Assert.True(root.TryGetProperty("thumbnailUrl", out _));
-        Assert.True(root.TryGetProperty("iconUrl", out _));
+        Assert.False(root.TryGetProperty("iconUrl", out _));
         Assert.True(root.TryGetProperty("videos", out _));
         Assert.True(root.TryGetProperty("videos_version", out _));
         foreach (var video in root.GetProperty("videos").EnumerateArray())
@@ -456,7 +460,6 @@ public class PublicEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         Assert.Equal(new[] { newerTitle, olderTitle }, page.Items.Select(x => x.Title).ToArray());
         Assert.DoesNotContain(page.Items, x => x.Title == draftTitle);
         Assert.Equal($"/media/{token}-thumb.png", page.Items[1].ThumbnailUrl);
-        Assert.Equal($"/media/{token}-icon.png", page.Items[1].IconUrl);
     }
 
     [Fact]
@@ -473,6 +476,8 @@ public class PublicEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         Assert.Contains("\"page\":1", body, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("\"pageSize\":12", body, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("\"contentJson\"", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("\"iconUrl\"", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("\"period\"", body, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

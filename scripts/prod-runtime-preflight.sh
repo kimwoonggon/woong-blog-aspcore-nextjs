@@ -245,13 +245,13 @@ if [[ "${REQUIRE_PUBLIC_WORK_VIDEO_CONTRACT}" == "1" ]]; then
     fail "public Work video contract verification requires a Work detail response with at least one video"
   fi
 
-  if grep -Eq '"(originalFileName|fileSize|createdAt)"[[:space:]]*:' "${work_contract_body}"; then
-    fail "public Work video payload still exposes stale admin-only fields; deploy the current runtime before load testing"
+  if grep -Eq '"(originalFileName|fileSize|createdAt|iconUrl)"[[:space:]]*:' "${work_contract_body}"; then
+    fail "public Work payload still exposes stale hidden/admin-only fields; deploy the current runtime before load testing"
   fi
 
-  info "public Work video contract: current"
+  info "public Work detail contract: current"
 else
-  info "public Work video contract: skipped (set REQUIRE_PUBLIC_WORK_VIDEO_CONTRACT=1 with WORK_READ_PATH to require stale-runtime detection)"
+  info "public Work detail contract: skipped (set REQUIRE_PUBLIC_WORK_VIDEO_CONTRACT=1 with WORK_READ_PATH to require stale-runtime detection)"
 fi
 
 if [[ "${REQUIRE_ADMIN_DIAGNOSTICS}" == "1" ]]; then

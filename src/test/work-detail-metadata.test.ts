@@ -13,7 +13,6 @@ function workDetail(overrides: Partial<WorkDetail>): WorkDetail {
     period: null,
     tags: [],
     thumbnailUrl: '/media/thumb.jpg',
-    iconUrl: '',
     publishedAt: '2026-04-01T00:00:00.000Z',
     contentJson: JSON.stringify({ html: '<p>body</p>' }),
     videosVersion: 0,

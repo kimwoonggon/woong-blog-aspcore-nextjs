@@ -711,6 +711,7 @@ public sealed class PostgresPersistenceContractTests : IClassFixture<PostgresPer
         Assert.DoesNotContain("\"ContentJson\"", combinedCommandText, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("\"AllPropertiesJson\"", combinedCommandText, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("\"Assets\"", combinedCommandText, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("\"PublicIconUrl\"", combinedCommandText, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -812,18 +813,19 @@ public sealed class PostgresPersistenceContractTests : IClassFixture<PostgresPer
                 }
             ],
             new Dictionary<Guid, string> { [thumbnailAssetId] = expectedThumbnailUrl });
-        var collector = CreateDiagnosticsCollector();
-        await using var dbContext = _fixture.CreateDbContext(new LoadTestDbCommandDiagnosticsInterceptor(collector));
+        var commandTextCapture = new CommandTextCaptureInterceptor();
+        await using var dbContext = _fixture.CreateDbContext(commandTextCapture);
         var queryStore = new WorkQueryStore(dbContext, new NoopPlaybackUrlBuilder());
 
         var result = await queryStore.GetPublishedPageAsync(1, 12, null, ContentSearchMode.Unified, cancellationToken);
-        var snapshot = collector.CaptureSnapshot();
 
         Assert.Equal(3, result.TotalItems);
         Assert.Equal(1, result.TotalPages);
         Assert.Equal(3, result.Items.Count);
         Assert.Equal(resolverThumbnailUrl, result.Items[0].ThumbnailUrl);
-        Assert.Equal(1, snapshot.CommandLatency.SampleCount);
+        var commandText = Assert.Single(commandTextCapture.CommandTexts);
+        Assert.DoesNotContain("\"Period\"", commandText, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("\"PublicIconUrl\"", commandText, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

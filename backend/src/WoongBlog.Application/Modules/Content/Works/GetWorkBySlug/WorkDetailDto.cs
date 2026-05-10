@@ -14,7 +14,6 @@ public sealed record WorkDetailDto(
     string? Period,
     string[] Tags,
     string ThumbnailUrl,
-    string IconUrl,
     DateTimeOffset? PublishedAt,
     [property: JsonPropertyName("socialShareMessage")] string? SocialShareMessage,
     [property: JsonPropertyName("videos_version")] int VideosVersion,

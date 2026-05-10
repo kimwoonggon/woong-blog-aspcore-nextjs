@@ -6,10 +6,8 @@ public sealed record WorkCardDto(
     string Title,
     string Excerpt,
     string Category,
-    string? Period,
     string[] Tags,
     string? ThumbnailUrl,
-    string? IconUrl,
     DateTimeOffset? PublishedAt
 );
 
