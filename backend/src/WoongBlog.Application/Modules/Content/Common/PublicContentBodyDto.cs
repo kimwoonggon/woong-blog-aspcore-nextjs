@@ -8,9 +8,13 @@ public sealed record PublicContentBodyDto(
 {
     public static PublicContentBodyDto FromStoredFields(string publicContentHtml, string publicContentMarkdown)
     {
-        return new PublicContentBodyDto(
-            Normalize(publicContentHtml),
-            Normalize(publicContentMarkdown));
+        var markdown = Normalize(publicContentMarkdown);
+        if (markdown is not null)
+        {
+            return new PublicContentBodyDto(null, markdown);
+        }
+
+        return new PublicContentBodyDto(Normalize(publicContentHtml), null);
     }
 
     private static string? Normalize(string value)
