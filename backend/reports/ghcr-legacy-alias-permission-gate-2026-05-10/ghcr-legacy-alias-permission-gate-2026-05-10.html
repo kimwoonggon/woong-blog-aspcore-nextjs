@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>GHCR Legacy Alias Permission Gate Audit</title></head>
+<body>
+<h1>GHCR Legacy Alias Permission Gate Audit - 2026-05-10</h1>
+<p>Mandatory GHCR publish now targets runtime packages only. Legacy aliases are optional and gated by GHCR_PACKAGES_TOKEN.</p>
+<h2>Reason</h2>
+<p>Publish GHCR Main run 25626302716 failed with GHCR 403 while pushing legacy backend/frontend packages.</p>
+<h2>Validation</h2>
+<ul>
+<li>Focused workflow contract test passed.</li>
+<li>Related compose env test passed.</li>
+<li>Typecheck passed.</li>
+<li>Lint passed with existing warnings only.</li>
+<li>Diff whitespace check passed.</li>
+</ul>
+<h2>Recommendation</h2>
+<p>Promote through dev/main, verify Publish GHCR Main, then deploy production using runtime image names.</p>
+</body>
+</html>

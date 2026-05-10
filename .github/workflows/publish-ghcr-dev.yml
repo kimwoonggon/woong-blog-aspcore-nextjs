@@ -21,6 +21,8 @@ jobs:
        github.event.workflow_run.conclusion == 'success' &&
        github.event.workflow_run.head_branch == 'dev')
     runs-on: ubuntu-latest
+    env:
+      GHCR_PACKAGES_TOKEN: ${{ secrets.GHCR_PACKAGES_TOKEN }}
     strategy:
       fail-fast: false
       matrix:
@@ -82,6 +84,25 @@ jobs:
           tags: |
             ghcr.io/${{ steps.vars.outputs.owner_lc }}/${{ steps.vars.outputs.repo_lc }}-runtime-${{ matrix.image_suffix }}:dev
             ghcr.io/${{ steps.vars.outputs.owner_lc }}/${{ steps.vars.outputs.repo_lc }}-runtime-${{ matrix.image_suffix }}:dev-sha-${{ steps.vars.outputs.sha_short }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Log in to GHCR for legacy aliases
+        if: ${{ env.GHCR_PACKAGES_TOKEN != '' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ env.GHCR_PACKAGES_TOKEN }}
+
+      - name: Build and push legacy aliases
+        if: ${{ env.GHCR_PACKAGES_TOKEN != '' }}
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: |
             ghcr.io/${{ steps.vars.outputs.owner_lc }}/${{ steps.vars.outputs.repo_lc }}-${{ matrix.image_suffix }}:dev
             ghcr.io/${{ steps.vars.outputs.owner_lc }}/${{ steps.vars.outputs.repo_lc }}-${{ matrix.image_suffix }}:dev-sha-${{ steps.vars.outputs.sha_short }}
           cache-from: type=gha
