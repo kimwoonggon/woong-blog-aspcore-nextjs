@@ -1,0 +1,42 @@
+{
+  "task": "real-backend-db-command-breakdown",
+  "date": "2026-05-10",
+  "summary": [
+    "Added DB command p95/source to the real backend latency breakdown model.",
+    "Changed the component timing panel to display run-wide diagnostics aggregate DB command p95 instead of only the latest diagnostics sample."
+  ],
+  "intentionallyNotChanged": [
+    "Backend query shape",
+    "DTO payload shape",
+    "Cache behavior",
+    "Load-test targets and pageSize",
+    "Docker runtime settings"
+  ],
+  "goalVerification": {
+    "observability": "passed",
+    "rawPerformanceImprovement": "not_applicable"
+  },
+  "validations": [
+    {
+      "command": "npm test -- --run src/test/load-test-dashboard.test.ts -t \"keeps DB command p95\"",
+      "result": "red_then_green"
+    },
+    {
+      "command": "npm test -- --run src/test/load-test-dashboard.test.ts",
+      "result": "passed_29_of_29"
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "passed"
+    },
+    {
+      "command": "git diff --check -- src/lib/load-test-dashboard.ts src/components/admin/LoadTestDashboard.tsx src/test/load-test-dashboard.test.ts todolist-2026-05-10.md",
+      "result": "passed"
+    }
+  ],
+  "risks": [
+    "DB command p95 is still run-level, not per-target attribution.",
+    "If diagnostics collection is disabled, the metric remains unavailable by design."
+  ],
+  "recommendation": "Promote through dev/main, rerun real backend load test, then choose the next structural performance slice based on client/app/db timing comparison."
+}

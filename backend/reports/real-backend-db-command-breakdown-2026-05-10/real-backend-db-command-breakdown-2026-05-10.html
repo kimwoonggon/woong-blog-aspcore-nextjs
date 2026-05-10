@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Real Backend DB Command Breakdown Audit - 2026-05-10</title>
+  <style>body{font-family:Arial,sans-serif;max-width:900px;margin:40px auto;line-height:1.5;color:#172033}code{background:#eef2f7;padding:2px 4px;border-radius:4px}section{margin-bottom:24px}</style>
+</head>
+<body>
+  <h1>Real Backend DB Command Breakdown Audit - 2026-05-10</h1>
+  <section><h2>Summary</h2><p>Real Backend Test latency breakdown now retains DB command p95 from run-wide diagnostics and the dashboard displays that aggregate instead of only the latest sample.</p></section>
+  <section><h2>Not Changed</h2><p>No backend query, cache, payload, load target, Docker, or k6 scenario changes were made.</p></section>
+  <section><h2>Validation</h2><ul><li>RED then GREEN focused Vitest for DB command p95 retention.</li><li><code>npm test -- --run src/test/load-test-dashboard.test.ts</code> passed 29/29.</li><li><code>npm run typecheck</code> passed.</li><li><code>git diff --check</code> passed for touched files.</li></ul></section>
+  <section><h2>Recommendation</h2><p>Promote through dev/main, rerun real backend load test, then compare client/app/db timing before the next structural performance slice.</p></section>
+</body>
+</html>
