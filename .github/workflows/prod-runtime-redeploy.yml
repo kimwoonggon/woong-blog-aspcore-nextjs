@@ -250,6 +250,7 @@ jobs:
 
             reject_seed_path WORK_READ_PATH "${WORK_READ_PATH}"
             reject_seed_path STUDY_READ_PATH "${STUDY_READ_PATH}"
+            output_dir="backend/reports/prod-real-load-steps-$(date -u +%Y%m%dT%H%M%SZ)/loadtest"
 
             BASE_URL="${BASE_URL}" \
             WORK_READ_PATH="${WORK_READ_PATH}" \
@@ -258,7 +259,21 @@ jobs:
             DURATION_SECONDS="${DURATION_SECONDS}" \
             MAX_VUS="${MAX_VUS}" \
             PRE_ALLOCATED_VUS="${PRE_ALLOCATED_VUS}" \
+            OUTPUT_DIR="${output_dir}" \
             ./scripts/prod-real-load-steps.sh
+
+            summary_json="${output_dir%/}/prod-real-load-steps-summary.json"
+            summary_md="${output_dir%/}/prod-real-load-steps-summary.md"
+            if [[ ! -s "${summary_json}" || ! -s "${summary_md}" ]]; then
+              echo "missing expected real load summary artifacts under ${output_dir}" >&2
+              exit 5
+            fi
+
+            printf 'Real load artifact paths:\n'
+            printf '  summary markdown: %s\n' "${summary_md}"
+            printf '  summary json: %s\n' "${summary_json}"
+            printf 'Real load summary markdown:\n'
+            cat "${summary_md}"
           else
             echo "RUN_REAL_LOAD=false; production preflight completed without running load steps."
           fi
