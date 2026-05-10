@@ -238,6 +238,8 @@ export type RealBackendTargetMetric = {
   p95Ms: number
   responseBytesP95: number | null
   receiveP95Ms: number | null
+  dbCommandElapsedP95Ms: number | null
+  dbCommandCountP95: number | null
   statusCounts: Record<string, number>
 }
 
@@ -882,6 +884,17 @@ function readTargetMetricsFromRecord(record: Record<string, unknown>) {
       'responseReceiveP95Ms',
       'receiveMsP95',
     ])
+    const dbCommandElapsedP95Ms = readNumberFromRecord(target, [
+      'dbCommandElapsedP95Ms',
+      'dbCommandP95Ms',
+      'databaseCommandElapsedP95Ms',
+      'dbElapsedP95Ms',
+    ])
+    const dbCommandCountP95 = readNumberFromRecord(target, [
+      'dbCommandCountP95',
+      'databaseCommandCountP95',
+      'dbCommandsP95',
+    ])
 
     return {
       targetId,
@@ -894,6 +907,8 @@ function readTargetMetricsFromRecord(record: Record<string, unknown>) {
       p95Ms: roundMetric(p95Ms),
       responseBytesP95: responseBytesP95 === null ? null : roundMetric(responseBytesP95),
       receiveP95Ms: receiveP95Ms === null ? null : roundMetric(receiveP95Ms),
+      dbCommandElapsedP95Ms: dbCommandElapsedP95Ms === null ? null : roundMetric(dbCommandElapsedP95Ms),
+      dbCommandCountP95: dbCommandCountP95 === null ? null : roundMetric(dbCommandCountP95),
       statusCounts: readStatusCounts(target.statusCounts),
     }
   }).filter((target): target is RealBackendTargetMetric => target !== null)

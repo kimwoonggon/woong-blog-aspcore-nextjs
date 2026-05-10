@@ -1,0 +1,43 @@
+{
+  "task": "real-backend-target-db-attribution",
+  "date": "2026-05-10",
+  "status": "ready-for-ci",
+  "changed": [
+    "request-scoped DB command elapsed/count aggregation",
+    "X-Db-Command-Elapsed-Ms and X-Db-Command-Count response headers with direct request-scope snapshot capture",
+    "k6 per-target DB command trends",
+    "RealLoadTestTargetMetrics DB command fields",
+    "dashboard target summary DB P95 and DB Cmds columns",
+    "next plan persisted for after CI"
+  ],
+  "not_changed": [
+    "cache behavior",
+    "load-test target selection",
+    "pageSize=12 behavior",
+    "seed target behavior",
+    "public content query projection"
+  ],
+  "validations": [
+    { "command": "focused k6 script RED test", "result": "failed before implementation as expected" },
+    { "command": "focused dashboard RED test", "result": "failed before implementation as expected" },
+    { "command": "dotnet component focused tests", "result": "passed 6/6" },
+    { "command": "dotnet fake-runner startup integration focused test", "result": "passed 1/1" },
+    { "command": "dotnet health/header startup integration focused test", "result": "passed 1/1" },
+    { "command": "dotnet component tests", "result": "passed 129/129" },
+    { "command": "dotnet StartupCompositionTests subset", "result": "passed 17/17" },
+    { "command": "npm test -- --run src/test/load-test-dashboard.test.ts", "result": "passed 29/29" },
+    { "command": "npm run typecheck", "result": "passed" },
+    { "command": "npm run lint", "result": "passed with 0 errors and 7 existing warnings" },
+    { "command": "dotnet test backend/WoongBlog.sln --no-restore --logger console;verbosity=minimal", "result": "passed backend suites; provider contract skipped by existing pact-file condition" },
+    { "command": "post-hardening focused request diagnostics and startup header tests", "result": "passed 2/2 and 1/1" },
+    { "command": "post-hardening dotnet test backend/WoongBlog.sln --no-restore --logger console;verbosity=minimal", "result": "passed backend suites; provider contract skipped by existing pact-file condition" },
+    { "command": "git diff --check -- changed files", "result": "passed" }
+  ],
+  "risks": [
+    "Production usefulness must be confirmed after deploy with real load test metrics.",
+    "If nginx strips custom response headers, target DB metrics will remain unavailable until proxy config is adjusted.",
+    "AsyncLocal diagnostics must remain diagnostic-only and not enter business logic."
+  ],
+  "next_plan_file": "backend/reports/real-backend-target-db-attribution-2026-05-10/next-plan-after-ci.md",
+  "recommendation": "Push through dev and main, then run production preflight and Real Backend Test before selecting the next heavy detail optimization."
+}

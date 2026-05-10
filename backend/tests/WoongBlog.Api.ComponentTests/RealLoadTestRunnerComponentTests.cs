@@ -35,6 +35,17 @@ public sealed class RealLoadTestRunnerComponentTests
     }
 
     [Fact]
+    public void K6Script_RecordsTargetDbCommandTimingForHeavyDetailAttribution()
+    {
+        var script = K6RealLoadTestRunner.BuildScriptForTests();
+
+        Assert.Contains("target_${target.metricId}_db_command_elapsed", script, StringComparison.Ordinal);
+        Assert.Contains("target_${target.metricId}_db_command_count", script, StringComparison.Ordinal);
+        Assert.Contains("X-Db-Command-Elapsed-Ms", script, StringComparison.Ordinal);
+        Assert.Contains("X-Db-Command-Count", script, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task K6Runner_PersistsRunScopedDiagnosticsWhileProcessIsRunning()
     {
         var tempRoot = CreateTempDirectory();

@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Real Backend Target DB Attribution Audit - 2026-05-10</title>
+  <style>body{font-family:Arial,sans-serif;max-width:960px;margin:40px auto;line-height:1.5;color:#202124}code{background:#f1f3f4;padding:1px 4px;border-radius:4px}h1,h2{line-height:1.2}</style>
+</head>
+<body>
+  <h1>Real Backend Target DB Attribution Audit - 2026-05-10</h1>
+  <h2>Summary</h2>
+  <p>Added target-level DB command elapsed/count attribution for Real Backend Test through request-scoped backend headers, k6 target trends, DTO contracts, and dashboard columns.</p>
+  <h2>Validation</h2>
+  <ul>
+    <li>Focused RED tests failed before implementation and passed after implementation.</li>
+    <li>Component tests passed 129/129.</li>
+    <li>Startup integration subset passed 17/17.</li>
+    <li>Load-test dashboard Vitest passed 29/29.</li>
+    <li>Typecheck passed.</li>
+    <li>Lint passed with 0 errors and 7 existing warnings.</li>
+    <li>Backend solution tests passed; provider contract was skipped by existing pact-file condition.</li>
+  </ul>
+  <h2>Next Plan</h2>
+  <p>After CI and publish, run production preflight and Real Backend Test, then choose the next heavy detail optimization based on target DB P95, DB command count, payload P95, and receive P95.</p>
+</body>
+</html>

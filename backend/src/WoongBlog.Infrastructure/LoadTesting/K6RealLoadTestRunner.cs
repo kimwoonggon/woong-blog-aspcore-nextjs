@@ -307,6 +307,8 @@ public sealed class K6RealLoadTestRunner(
                 ReadTrendMetric(metrics, $"target_{metricId}_duration", "p(95)"),
                 ReadOptionalRoundedTrendMetric(metrics, $"target_{metricId}_response_bytes", "p(95)"),
                 ReadOptionalRoundedTrendMetric(metrics, $"target_{metricId}_receiving", "p(95)"),
+                ReadOptionalRoundedTrendMetric(metrics, $"target_{metricId}_db_command_elapsed", "p(95)"),
+                ReadOptionalRoundedTrendMetric(metrics, $"target_{metricId}_db_command_count", "p(95)"),
                 statusCounts);
         }).ToArray();
     }
@@ -481,6 +483,8 @@ public sealed class K6RealLoadTestRunner(
                 responseBytes: new Trend(`target_${target.metricId}_response_bytes`),
                 receiving: new Trend(`target_${target.metricId}_receiving`),
                 appElapsed: new Trend(`target_${target.metricId}_app_elapsed`),
+                dbCommandElapsed: new Trend(`target_${target.metricId}_db_command_elapsed`),
+                dbCommandCount: new Trend(`target_${target.metricId}_db_command_count`),
                 nginxRequest: new Trend(`target_${target.metricId}_nginx_request`),
                 nginxUpstream: new Trend(`target_${target.metricId}_nginx_upstream`),
                 nginxUpstreamWaitingFallback: new Trend(`target_${target.metricId}_nginx_upstream_waiting_fallback`),
@@ -569,6 +573,8 @@ public sealed class K6RealLoadTestRunner(
 
               recordStatus(response.status, metrics);
               recordOptionalHeaderMetric(response, 'X-App-Elapsed-Ms', metrics?.appElapsed, 1);
+              recordOptionalHeaderMetric(response, 'X-Db-Command-Elapsed-Ms', metrics?.dbCommandElapsed, 1);
+              recordOptionalHeaderMetric(response, 'X-Db-Command-Count', metrics?.dbCommandCount, 1);
               recordOptionalHeaderMetric(response, 'X-Nginx-Request-Time', metrics?.nginxRequest, 1000);
               const recordedUpstreamHeader = recordOptionalHeaderMetric(response, ['X-Nginx-Upstream-Response-Time', 'X-Nginx-Upstream-Time'], metrics?.nginxUpstream, 1000);
               if (!recordedUpstreamHeader) {
