@@ -1,0 +1,263 @@
+{
+  "generatedAt": "2026-05-10T09:31:49.901Z",
+  "objective": [
+    "Pull/deploy latest main runtime image on production server",
+    "Run production preflight",
+    "Rerun Real Backend Test with pageSize=12, no seed, no cache, real Work/Study URLs",
+    "Choose and implement one next performance slice, then verify full e2e and CI/main promotion"
+  ],
+  "currentStatus": "blocked_before_server_deploy",
+  "blocker": "Local environment has no SSH route to production server: srv1592512 does not resolve and woonglab.com points to Cloudflare, not SSH origin.",
+  "publicProbe": {
+    "baseUrl": "https://woonglab.com",
+    "healthHeaders": "HTTP/2 200 \r\ndate: Sun, 10 May 2026 09:30:14 GMT\r\ncontent-type: application/json; charset=utf-8\r\nserver: cloudflare\r\nstrict-transport-security: max-age=31536000; includeSubDomains\r\nx-content-type-options: nosniff\r\nx-content-type-options: nosniff\r\nreferrer-policy: strict-origin-when-cross-origin\r\nreferrer-policy: strict-origin-when-cross-origin\r\nx-frame-options: DENY\r\npermissions-policy: camera=(), microphone=(), geolocation=()\r\npermissions-policy: camera=(), microphone=(), geolocation=()\r\ncontent-security-policy: default-src 'self'; base-uri 'self'; frame-ancestors 'none'; form-action 'self' https://accounts.google.com; img-src 'self' data: https: blob:; object-src 'none'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self' https://accounts.google.com https://www.googleapis.com;\r\ncontent-security-policy: default-src 'self'; base-uri 'self'; frame-ancestors 'none'; form-action 'self' https://accounts.google.com; img-src 'self' data: blob: https:; media-src 'self' blob: https:; frame-src https://www.youtube-nocookie.com; connect-src 'self' https:; object-src 'none'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline';\r\nx-app-elapsed-ms: 6.4889\r\ncf-cache-status: DYNAMIC\r\nnel: {\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}\r\nreport-to: {\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=myNQQxEe3bu2P2EP4aSg6R4dcp7fiBv2JQCA9Ae565AcpGozWvbr6LKadm9u5nzyGLnfSvE3iGvH01wTATV7eVj8HmCW84h5kESIxCPS9xUdgjG5C8qbY%2BMGFOLOj%2BM%3D\"}]}\r\ncf-ray: 9f97ec8c6dbed7ac-LAX\r\nalt-svc: h3=\":443\"; ma=86400\r\n\r\n",
+    "worksHeaders": "HTTP/2 200 \r\ndate: Sun, 10 May 2026 09:30:14 GMT\r\ncontent-type: application/json; charset=utf-8\r\nserver: cloudflare\r\nstrict-transport-security: max-age=31536000; includeSubDomains\r\nx-content-type-options: nosniff\r\nx-content-type-options: nosniff\r\nreferrer-policy: strict-origin-when-cross-origin\r\nreferrer-policy: strict-origin-when-cross-origin\r\nx-frame-options: DENY\r\npermissions-policy: camera=(), microphone=(), geolocation=()\r\npermissions-policy: camera=(), microphone=(), geolocation=()\r\ncontent-security-policy: default-src 'self'; base-uri 'self'; frame-ancestors 'none'; form-action 'self' https://accounts.google.com; img-src 'self' data: https: blob:; object-src 'none'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self' https://accounts.google.com https://www.googleapis.com;\r\ncontent-security-policy: default-src 'self'; base-uri 'self'; frame-ancestors 'none'; form-action 'self' https://accounts.google.com; img-src 'self' data: blob: https:; media-src 'self' blob: https:; frame-src https://www.youtube-nocookie.com; connect-src 'self' https:; object-src 'none'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline';\r\nx-app-elapsed-ms: 18.6954\r\ncf-cache-status: DYNAMIC\r\nnel: {\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}\r\nreport-to: {\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=9RpfK9Ld8q%2F34z4VNKaLmXs3QtsHib5CQ06YFxTYoH3P%2B1OG%2BnRrK9oH7yP8J00pEEedXDWJV%2BXYGlzfCJayrUY2A46nMp629wf59stdXV7e3amAdkMXKnZKt1oQ7BQ%3D\"}]}\r\ncontent-encoding: gzip\r\ncf-ray: 9f97ec8cfc59e9dd-LAX\r\nalt-svc: h3=\":443\"; ma=86400\r\n\r\n",
+    "blogsHeaders": "HTTP/2 200 \r\ndate: Sun, 10 May 2026 09:30:14 GMT\r\ncontent-type: application/json; charset=utf-8\r\nserver: cloudflare\r\nstrict-transport-security: max-age=31536000; includeSubDomains\r\nx-content-type-options: nosniff\r\nx-content-type-options: nosniff\r\nreferrer-policy: strict-origin-when-cross-origin\r\nreferrer-policy: strict-origin-when-cross-origin\r\nx-frame-options: DENY\r\npermissions-policy: camera=(), microphone=(), geolocation=()\r\npermissions-policy: camera=(), microphone=(), geolocation=()\r\ncontent-security-policy: default-src 'self'; base-uri 'self'; frame-ancestors 'none'; form-action 'self' https://accounts.google.com; img-src 'self' data: https: blob:; object-src 'none'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self' https://accounts.google.com https://www.googleapis.com;\r\ncontent-security-policy: default-src 'self'; base-uri 'self'; frame-ancestors 'none'; form-action 'self' https://accounts.google.com; img-src 'self' data: blob: https:; media-src 'self' blob: https:; frame-src https://www.youtube-nocookie.com; connect-src 'self' https:; object-src 'none'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline';\r\nx-app-elapsed-ms: 14.1751\r\ncf-cache-status: DYNAMIC\r\nnel: {\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}\r\nreport-to: {\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=Nb6tBG327cprEJYocu%2BLDlqYzoqIiax%2B4j2r7LkL1CCaOpUBWdD7iLETCHXma9HxpSHUdagVkTL52EUHznRGNlJPd4431cEjwh52ZneQofS2nsBsWwpZCepW484YBoI%3D\"}]}\r\ncontent-encoding: gzip\r\ncf-ray: 9f97ec8d0a5fc961-LAX\r\nalt-svc: h3=\":443\"; ma=86400\r\n\r\n",
+    "workDetailHeaders": "HTTP/2 200 \r\ndate: Sun, 10 May 2026 09:30:39 GMT\r\ncontent-type: application/json; charset=utf-8\r\nserver: cloudflare\r\nstrict-transport-security: max-age=31536000; includeSubDomains\r\nx-content-type-options: nosniff\r\nx-content-type-options: nosniff\r\nreferrer-policy: strict-origin-when-cross-origin\r\nreferrer-policy: strict-origin-when-cross-origin\r\nx-frame-options: DENY\r\npermissions-policy: camera=(), microphone=(), geolocation=()\r\npermissions-policy: camera=(), microphone=(), geolocation=()\r\ncontent-security-policy: default-src 'self'; base-uri 'self'; frame-ancestors 'none'; form-action 'self' https://accounts.google.com; img-src 'self' data: https: blob:; object-src 'none'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self' https://accounts.google.com https://www.googleapis.com;\r\ncontent-security-policy: default-src 'self'; base-uri 'self'; frame-ancestors 'none'; form-action 'self' https://accounts.google.com; img-src 'self' data: blob: https:; media-src 'self' blob: https:; frame-src https://www.youtube-nocookie.com; connect-src 'self' https:; object-src 'none'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline';\r\nx-app-elapsed-ms: 294.4508\r\ncf-cache-status: DYNAMIC\r\nnel: {\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}\r\nreport-to: {\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=oKn5K%2FB53ksGDbWEutGcQsdnI7Ikqof6rnTfVB1%2FK%2FdSS%2Bu4YzcCLC0pdsx9BfMOIqHb0DityyKGdqLY0Gx8tS2RT55U7hHRynqa4kn8ffAIhroOYyqbZYq%2FxxUQ7g0%3D\"}]}\r\ncf-ray: 9f97ed24e9d41d4d-LAX\r\nalt-svc: h3=\":443\"; ma=86400\r\n\r\n",
+    "blogDetailHeaders": "HTTP/2 200 \r\ndate: Sun, 10 May 2026 09:30:38 GMT\r\ncontent-type: application/json; charset=utf-8\r\nserver: cloudflare\r\nstrict-transport-security: max-age=31536000; includeSubDomains\r\nx-content-type-options: nosniff\r\nx-content-type-options: nosniff\r\nreferrer-policy: strict-origin-when-cross-origin\r\nreferrer-policy: strict-origin-when-cross-origin\r\nx-frame-options: DENY\r\npermissions-policy: camera=(), microphone=(), geolocation=()\r\npermissions-policy: camera=(), microphone=(), geolocation=()\r\ncontent-security-policy: default-src 'self'; base-uri 'self'; frame-ancestors 'none'; form-action 'self' https://accounts.google.com; img-src 'self' data: https: blob:; object-src 'none'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self' https://accounts.google.com https://www.googleapis.com;\r\ncontent-security-policy: default-src 'self'; base-uri 'self'; frame-ancestors 'none'; form-action 'self' https://accounts.google.com; img-src 'self' data: blob: https:; media-src 'self' blob: https:; frame-src https://www.youtube-nocookie.com; connect-src 'self' https:; object-src 'none'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline';\r\nx-app-elapsed-ms: 1.7783\r\ncf-cache-status: DYNAMIC\r\nnel: {\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}\r\nreport-to: {\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=%2FKua%2FId1TUXr5VfQfxZhl61XKP312pMEyCj0WRf9tYXy9SPacAoT5nwLtuLXTEqdLo%2BP0lpmH4vFh3CMRFWDGCBe5myXRYQPW1989%2BMZmCy1aCOhcO0ZSFugt37q83E%3D\"}]}\r\ncf-ray: 9f97ed25185983ef-LAX\r\nalt-svc: h3=\":443\"; ma=86400\r\n\r\n",
+    "workListFirstItemKeys": [
+      "id",
+      "slug",
+      "title",
+      "excerpt",
+      "category",
+      "period",
+      "tags",
+      "thumbnailUrl",
+      "iconUrl",
+      "publishedAt"
+    ],
+    "workListFirstSlugs": [
+      "tree-modelling-영상",
+      "smoke-fluid-simulation",
+      "water-fluid-simulation",
+      "seeded-work",
+      "seeded-work-extra-01"
+    ],
+    "blogListFirstItemKeys": [
+      "id",
+      "slug",
+      "title",
+      "excerpt",
+      "tags",
+      "coverUrl",
+      "publishedAt"
+    ],
+    "blogListFirstSlugs": [
+      "directx에서-lod란-무엇인가",
+      "윈도우-레지스트리-개발자-관점에서-정리",
+      "keypoint는-lerp가-가능한데-회전은-slerp",
+      "슬로우모션은-inverse-kinematic-상에서-frame0과-1의-interpolation이다",
+      "forward-kinematics-vs-inverse-kinematics"
+    ],
+    "workReadPath": "/api/public/works/smoke-fluid-simulation",
+    "workDetailKeys": [
+      "id",
+      "slug",
+      "title",
+      "excerpt",
+      "contentJson",
+      "category",
+      "period",
+      "tags",
+      "thumbnailUrl",
+      "iconUrl",
+      "publishedAt",
+      "socialShareMessage",
+      "videos_version",
+      "videos"
+    ],
+    "workDetailVideoKeys": [
+      "id",
+      "sourceType",
+      "sourceKey",
+      "playbackUrl",
+      "originalFileName",
+      "mimeType",
+      "fileSize",
+      "width",
+      "height",
+      "duration_seconds",
+      "timeline_preview_vtt_url",
+      "timeline_preview_sprite_url",
+      "sortOrder",
+      "createdAt"
+    ],
+    "studyReadPath": "/api/public/blogs/directx%EC%97%90%EC%84%9C-lod%EB%9E%80-%EB%AC%B4%EC%97%87%EC%9D%B8%EA%B0%80",
+    "blogDetailKeys": [
+      "id",
+      "slug",
+      "title",
+      "excerpt",
+      "contentJson",
+      "tags",
+      "coverUrl",
+      "publishedAt"
+    ],
+    "blogDetailContentKeys": []
+  },
+  "interpretation": [
+    "Production public Work list still returns period/iconUrl, while origin/main WorkCardDto does not define those fields.",
+    "Production public Work detail still returns contentJson/iconUrl and video originalFileName/fileSize/createdAt, while origin/main uses public Content and trimmed PublicWorkVideoDto.",
+    "Production responses expose X-App-Elapsed-Ms but not X-Nginx-Request-Time through the Cloudflare/public probe, so server-side preflight must be run on the host to verify local nginx headers after deploy.",
+    "Real Backend Test should not be interpreted until server pull/up and preflight pass."
+  ],
+  "serverCommands": [
+    "cd /root/service/woong-blog-aspcore-nextjs",
+    "bash /path/to/server-main-runtime-redeploy.sh",
+    "BASE_URL=https://woonglab.com WORK_READ_PATH=/api/public/works/smoke-fluid-simulation STUDY_READ_PATH=/api/public/blogs/<real-study-slug> RATES=\"100 200 300 400\" DURATION_SECONDS=30 MAX_VUS=500 PRE_ALLOCATED_VUS=100 ./scripts/prod-real-load-steps.sh"
+  ],
+  "nextRequiredInput": "Provide direct SSH host/IP for srv1592512 or run the serverCommands above and paste the outputs/artifacts.",
+  "recheck": {
+    "checkedAt": "2026-05-10T09:34:09.008Z",
+    "workListStatus": "stale",
+    "workListStaleKeys": [
+      "period",
+      "iconUrl"
+    ],
+    "workDetailStatus": "stale",
+    "workDetailStaleKeys": [
+      "contentJson",
+      "iconUrl"
+    ],
+    "workDetailStaleVideoKeys": [
+      "originalFileName",
+      "fileSize",
+      "createdAt"
+    ],
+    "decision": "keep_blocked; do not rerun Real Backend Test until production containers are recreated from latest main runtime image"
+  },
+  "likelyRootCause": "Production .env.prod may still point to legacy GHCR images without the -runtime- suffix. Local /mnt/d/woong-blog/service/.env.prod shows FRONTEND_IMAGE=ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-frontend:main and BACKEND_IMAGE=ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-backend:main, while Publish GHCR Main pushes ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-frontend:main and ...-runtime-backend:main.",
+  "recommendedRedeployScript": "backend/reports/prod-main-runtime-retest-2026-05-10/server-main-runtime-redeploy.sh",
+  "ghcrPackageEvidence": {
+    "checkedWith": "gh api /users/kimwoonggon/packages?package_type=container and package versions endpoints",
+    "legacyPackages": [
+      {
+        "name": "woong-blog-aspcore-nextjs-backend",
+        "mainTagSha": "sha-81d52e48b9be",
+        "updatedAt": "2026-04-15T03:19:20Z"
+      },
+      {
+        "name": "woong-blog-aspcore-nextjs-frontend",
+        "mainTagSha": "sha-81d52e48b9be",
+        "updatedAt": "2026-04-15T03:19:11Z"
+      }
+    ],
+    "runtimePackages": [
+      {
+        "name": "woong-blog-aspcore-nextjs-runtime-backend",
+        "mainTagSha": "sha-1bf8a5dc9d57",
+        "updatedAt": "2026-05-10T08:56:53Z"
+      },
+      {
+        "name": "woong-blog-aspcore-nextjs-runtime-frontend",
+        "mainTagSha": "sha-1bf8a5dc9d57",
+        "updatedAt": "2026-05-10T08:57:22Z"
+      }
+    ],
+    "conclusion": "legacy package main tags are from 2026-04-15 and do not contain the current origin/main merge 1bf8a5dc9d57; runtime package main tags do."
+  },
+  "recommendedLoadScript": "backend/reports/prod-main-runtime-retest-2026-05-10/server-run-real-load-after-preflight.sh",
+  "loadScriptBehavior": [
+    "requires git, docker, curl, node, and k6 on the server",
+    "runs prod-runtime-preflight.sh before load steps",
+    "uses WORK_READ_PATH=/api/public/works/smoke-fluid-simulation by default",
+    "auto-resolves STUDY_READ_PATH from /api/public/blogs?page=1&pageSize=12, excluding seed/fixture slugs and titles",
+    "rejects seed/fixture Work/Study paths",
+    "runs prod-real-load-steps.sh with LIST_PAGE_SIZE fixed by that script at 12"
+  ],
+  "completionAudit": {
+    "status": "not_complete",
+    "artifact": "backend/reports/prod-main-runtime-retest-2026-05-10/completion-audit.md",
+    "missingRequirements": [
+      "server-side latest main runtime pull/deploy evidence",
+      "production preflight pass output",
+      "valid latest-runtime Real Backend Test output",
+      "measured next-slice selection",
+      "selected slice implementation",
+      "full e2e pass after selected slice",
+      "CI/publish/main promotion pass after selected slice"
+    ]
+  },
+  "pasteableServerCommands": "backend/reports/prod-main-runtime-retest-2026-05-10/pasteable-server-commands.md",
+  "sshDiscovery": {
+    "checkedAt": "2026-05-10T09:45:13.846Z",
+    "windowsSshConfig": "/mnt/c/Users/gerard/.ssh/config",
+    "candidates": [
+      {
+        "host": "72.61.118.77",
+        "user": "root",
+        "status": "blocked_host_key_changed",
+        "knownHostsFingerprints": {
+          "ED25519": "SHA256:O/RNinHm6WbOy2nFGzIOQVlu4IRXAdNqHHYl1QFXW9o",
+          "RSA": "SHA256:iIA9rCk0sGhg286ZMYEk+JSVj35nP82wUv1M9423gzU",
+          "ECDSA": "SHA256:rnZ9NNNSqUidkBmsTFbxEjWetxnmTSILgCQ7jywgQF4"
+        },
+        "currentKeyscanFingerprints": {
+          "RSA": "SHA256:KV6A9J1WUpQp1ydE09wh+qgs1gY0zfP6TCYde5O2c6Q",
+          "ED25519": "SHA256:km7oD3HOJGhAOuQ5eJCqWJBZa+YlxAOUZBwjOAKcc3Q",
+          "ECDSA": "SHA256:cJ+6NVraeHU40wLQ/qAwIlmrN5rB1I3w7+Dd6moUkOA"
+        },
+        "requiredUserAction": "Verify the new host fingerprint out-of-band before removing/updating known_hosts or allowing connection."
+      },
+      {
+        "host": "187.127.111.73",
+        "userTried": [
+          "root",
+          "ubuntu",
+          "azureuser",
+          "gerard",
+          "deploy"
+        ],
+        "status": "host_key_valid_but_auth_denied",
+        "note": "Windows my_vm_key.pem was tested through a temporary chmod 600 copy; all tried users denied publickey/password in BatchMode."
+      },
+      {
+        "host": "young-assign-danny-dell.trycloudflare.com",
+        "status": "blocked_missing_cloudflared_binary",
+        "note": "Windows SSH config ProxyCommand references C:\\cloudflared-windows-amd64.exe, which is unavailable from WSL as /mnt/c/cloudflared-windows-amd64.exe."
+      }
+    ],
+    "cloudflaredDockerAttempt": {
+      "checkedAt": "2026-05-10T09:48:07.291Z",
+      "cloudflaredImage": "cloudflare/cloudflared:latest",
+      "version": "2026.3.0",
+      "result": "failed_dns_no_such_host",
+      "output": "lookup young-assign-danny-dell.trycloudflare.com ... no such host",
+      "interpretation": "trycloudflare tunnel alias appears expired/unavailable, so this is not a usable production SSH route right now."
+    },
+    "confirmedProductionHost": {
+      "checkedAt": "2026-05-10T09:51:50.109Z",
+      "ip": "187.127.111.73",
+      "ptr": "srv1592512.hstgr.cloud",
+      "hostKeyFingerprints": {
+        "RSA": "SHA256:04rmd1hSZqxuZ8U1I7p6w9D4h2W+uOtJ3pQLUD9Kpd8",
+        "ECDSA": "SHA256:E0rI2+HYPKa+w0jLKbe0J97edrDF/SeDvN25M+MM2YU",
+        "ED25519": "SHA256:mZoqsWCqQeteV7r0Cj+YzN2zkkgfOllKN2gJWNBzl/g"
+      },
+      "authStatus": "denied for root/ubuntu/deploy with available Windows key and no ssh-agent",
+      "nextRequiredInput": "Provide root password, correct SSH key, or run pasteable-server-commands.md directly on srv1592512.hstgr.cloud."
+    }
+  },
+  "validations": [
+    "Extracted both bash blocks from pasteable-server-commands.md and verified them with bash -n without executing server commands.",
+    "Hardened public stale-key recheck to use curl --compressed, then revalidated server-main-runtime-redeploy.sh and both pasteable bash blocks with bash -n."
+  ],
+  "finalPublicRecheck": {
+    "checkedAt": "2026-05-10T09:48:38.655Z",
+    "workListStaleKeys": [
+      "period",
+      "iconUrl"
+    ],
+    "workDetailStaleKeys": [
+      "contentJson",
+      "iconUrl"
+    ],
+    "workDetailVideoStaleKeys": [
+      "originalFileName",
+      "fileSize",
+      "createdAt"
+    ],
+    "decision": "still blocked before valid Real Backend Test"
+  }
+}

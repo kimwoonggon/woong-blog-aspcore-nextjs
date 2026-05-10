@@ -1,0 +1,38 @@
+{
+  "slug": "ghcr-runtime-legacy-alias-2026-05-10",
+  "status": "local_validation_passed_ci_pending",
+  "changed": [
+    ".github/workflows/publish-ghcr-main.yml",
+    ".github/workflows/publish-ghcr-dev.yml",
+    "src/test/publish-ghcr-tags.test.ts"
+  ],
+  "intentionallyNotChanged": [
+    "No server deployment performed",
+    "No production secrets modified",
+    "No cache behavior changed",
+    "No Real Backend Test interpreted from stale runtime"
+  ],
+  "validations": [
+    {
+      "command": "npm test -- --run src/test/publish-ghcr-tags.test.ts",
+      "result": "RED before implementation, then PASS 2/2 after implementation"
+    },
+    {
+      "command": "npm test -- --run src/test/publish-ghcr-tags.test.ts src/test/compose-loadtesting-baseurl.test.ts",
+      "result": "PASS 7/7"
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "PASS"
+    },
+    {
+      "command": "npm run lint",
+      "result": "PASS with 0 errors and 7 existing warnings"
+    },
+    {
+      "command": "git diff --check",
+      "result": "PASS"
+    }
+  ],
+  "recommendation": "Push through dev/main so Publish GHCR Dev/Main republishes both runtime and legacy image aliases, then redeploy the production server."
+}
