@@ -2,6 +2,7 @@
 .dockerignore
 .github/workflows/ci-main-runtime.yml
 .github/workflows/promote-main-runtime.yml
+.github/workflows/prod-runtime-redeploy.yml
 .github/workflows/publish-ghcr-dev.yml
 .github/workflows/publish-ghcr-main.yml
 LICENSE
