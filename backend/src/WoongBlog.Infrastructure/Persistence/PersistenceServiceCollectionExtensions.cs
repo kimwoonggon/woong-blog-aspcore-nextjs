@@ -24,6 +24,7 @@ public static class PersistenceServiceCollectionExtensions
                 "Load test database diagnostics options must use positive values.");
 
         services.AddSingleton<IDatabaseDiagnosticsCollector, DatabaseDiagnosticsCollector>();
+        services.AddSingleton<IRequestDatabaseDiagnostics, RequestDatabaseDiagnostics>();
         services.AddSingleton<LoadTestDbCommandDiagnosticsInterceptor>();
         services.AddSingleton<LoadTestDbConnectionDiagnosticsInterceptor>();
 

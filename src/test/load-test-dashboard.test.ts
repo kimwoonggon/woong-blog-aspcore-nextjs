@@ -704,6 +704,8 @@ describe('load test dashboard planning', () => {
             p95Ms: 155.5,
             responseBytesP95: 131072,
             receiveP95Ms: 18.4,
+            dbCommandElapsedP95Ms: 6.2,
+            dbCommandCountP95: 2,
             statusCounts: {
               '2xx': 29,
               '5xx': 1,
@@ -750,6 +752,8 @@ describe('load test dashboard planning', () => {
           p95Ms: 155.5,
           responseBytesP95: 131072,
           receiveP95Ms: 18.4,
+          dbCommandElapsedP95Ms: 6.2,
+          dbCommandCountP95: 2,
         },
       ],
     })

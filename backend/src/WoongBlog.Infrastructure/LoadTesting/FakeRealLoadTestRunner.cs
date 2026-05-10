@@ -106,6 +106,10 @@ public sealed class FakeRealLoadTestRunner(
             ? 96 * 1024 + tick * 128
             : 48 * 1024 + tick * 96;
         var receiveP95Ms = Math.Round(Math.Max(1, p95Ms * 0.06), 1);
+        var dbCommandElapsedP95Ms = Math.Round(Math.Max(0.1, p95Ms * 0.04), 1);
+        var dbCommandCountP95 = target.Path.Contains("/api/public/", StringComparison.OrdinalIgnoreCase)
+            ? 1
+            : 0;
 
         run.TotalRequests += requestsForTick;
         run.FailedRequests += simulatedFailures;
@@ -129,7 +133,17 @@ public sealed class FakeRealLoadTestRunner(
             p95Ms + 6,
             Math.Max(1, p95Ms - 8),
             "fake.nginx_upstream");
-        ApplyTargetMetrics(run, target, requestsForTick, successfulRequests, simulatedFailures, p95Ms, responseBytesP95, receiveP95Ms);
+        ApplyTargetMetrics(
+            run,
+            target,
+            requestsForTick,
+            successfulRequests,
+            simulatedFailures,
+            p95Ms,
+            responseBytesP95,
+            receiveP95Ms,
+            dbCommandElapsedP95Ms,
+            dbCommandCountP95);
     }
 
     private static void ApplyTargetMetrics(
@@ -140,7 +154,9 @@ public sealed class FakeRealLoadTestRunner(
         int failureCount,
         double p95Ms,
         double responseBytesP95,
-        double receiveP95Ms)
+        double receiveP95Ms,
+        double dbCommandElapsedP95Ms,
+        double dbCommandCountP95)
     {
         run.TargetMetrics.TryGetValue(target.Id, out var existing);
         var statusCounts = existing is null
@@ -160,6 +176,12 @@ public sealed class FakeRealLoadTestRunner(
         var nextReceiveP95 = existing?.ReceiveP95Ms is null
             ? receiveP95Ms
             : Math.Max(existing.ReceiveP95Ms.Value, receiveP95Ms);
+        var nextDbCommandElapsedP95 = existing?.DbCommandElapsedP95Ms is null
+            ? dbCommandElapsedP95Ms
+            : Math.Max(existing.DbCommandElapsedP95Ms.Value, dbCommandElapsedP95Ms);
+        var nextDbCommandCountP95 = existing?.DbCommandCountP95 is null
+            ? dbCommandCountP95
+            : Math.Max(existing.DbCommandCountP95.Value, dbCommandCountP95);
 
         run.TargetMetrics[target.Id] = new RealLoadTestTargetMetrics(
             target.Id,
@@ -172,6 +194,8 @@ public sealed class FakeRealLoadTestRunner(
             nextP95,
             nextResponseBytesP95,
             nextReceiveP95,
+            nextDbCommandElapsedP95,
+            nextDbCommandCountP95,
             statusCounts);
     }
 

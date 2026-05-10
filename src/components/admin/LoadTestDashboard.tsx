@@ -1341,13 +1341,15 @@ export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashbo
 
           <div className="overflow-x-auto rounded-lg border border-border bg-muted/20 p-4" data-testid="real-backend-target-summary">
             <p className="text-sm font-medium text-foreground">Real backend target summary</p>
-            <table className="mt-3 w-full min-w-[920px] text-sm">
+            <table className="mt-3 w-full min-w-[1040px] text-sm">
               <thead className="text-left text-xs uppercase text-muted-foreground">
                 <tr>
                   <th className="py-2 pr-3">Target</th>
                   <th className="py-2 pr-3">URL</th>
                   <th className="py-2 pr-3">Requests</th>
                   <th className="py-2 pr-3">P95</th>
+                  <th className="py-2 pr-3">DB P95</th>
+                  <th className="py-2 pr-3">DB Cmds</th>
                   <th className="py-2 pr-3">Payload P95</th>
                   <th className="py-2 pr-3">Receive P95</th>
                   <th className="py-2 pr-3">HTTP</th>
@@ -1364,6 +1366,12 @@ export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashbo
                       {numberFormatter.format(target.successCount)} / {numberFormatter.format(target.requestCount)}
                     </td>
                     <td className="py-2 pr-3 text-foreground">{formatMs(target.p95Ms)}</td>
+                    <td className="py-2 pr-3 text-foreground">
+                      {target.dbCommandElapsedP95Ms === null ? '—' : formatMs(target.dbCommandElapsedP95Ms)}
+                    </td>
+                    <td className="py-2 pr-3 text-foreground">
+                      {target.dbCommandCountP95 === null ? '—' : numberFormatter.format(target.dbCommandCountP95)}
+                    </td>
                     <td className="py-2 pr-3 text-foreground">
                       {target.responseBytesP95 === null ? '—' : formatBytes(target.responseBytesP95)}
                     </td>
