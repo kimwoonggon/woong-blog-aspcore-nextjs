@@ -1,0 +1,74 @@
+{
+  "task": "main-runtime-pull-ready",
+  "date": "2026-05-11",
+  "status": "repo_ready_server_action_remaining",
+  "scope": {
+    "included": [
+      "actual GHCR main image values in .env.prod.example",
+      "minimal server pull/up/health documentation",
+      "compose config validation",
+      "GHCR manifest validation"
+    ],
+    "excluded": [
+      "production SSH access",
+      "remote server command execution",
+      "repository secret changes",
+      "backend performance code changes"
+    ]
+  },
+  "changed_files": [
+    ".env.prod.example",
+    "docs/walkthroughs/main-server-setup.md",
+    "todolist-2026-05-11.md"
+  ],
+  "backups": [
+    ".agent-backups/main-runtime-pull-ready-2026-05-11/env.prod.example.before",
+    ".agent-backups/main-runtime-pull-ready-2026-05-11/main-server-setup.md.before",
+    ".agent-backups/main-runtime-pull-ready-2026-05-11/todolist-2026-05-11.md.before"
+  ],
+  "evidence": {
+    "origin_main_sha": "44e93243da153254526f0753e9324d5e9962ab19",
+    "ci_main_runtime_run": {
+      "id": 25634824569,
+      "conclusion": "success",
+      "head_sha": "44e93243da153254526f0753e9324d5e9962ab19"
+    },
+    "publish_ghcr_main_run": {
+      "id": 25634944032,
+      "conclusion": "success",
+      "head_sha": "44e93243da153254526f0753e9324d5e9962ab19"
+    },
+    "images": {
+      "backend": "ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-backend:main",
+      "frontend": "ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-frontend:main"
+    }
+  },
+  "validations": [
+    {
+      "command": "rg -n \"ghcr.io/your-owner\" .env.prod.example docs/walkthroughs/main-server-setup.md",
+      "result": "pass_no_matches_after_change"
+    },
+    {
+      "command": "APP_ENV_FILE=.env.prod.example docker compose --env-file .env.prod.example -f docker-compose.prod.yml config",
+      "result": "pass"
+    },
+    {
+      "command": "docker manifest inspect ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-backend:main",
+      "result": "pass"
+    },
+    {
+      "command": "docker manifest inspect ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-frontend:main",
+      "result": "pass"
+    },
+    {
+      "command": "git diff --check -- .env.prod.example docs/walkthroughs/main-server-setup.md todolist-2026-05-11.md",
+      "result": "pass"
+    }
+  ],
+  "remaining_items": [
+    "server-side pull/up and public health probe",
+    "production Real Backend Test after current main images are running",
+    "next backend performance slice selection from fresh real-load result"
+  ],
+  "recommendation": "Use docs/walkthroughs/main-server-setup.md for the server flow; do not mark the broader active goal complete until server-side preflight and real-load evidence exists."
+}
