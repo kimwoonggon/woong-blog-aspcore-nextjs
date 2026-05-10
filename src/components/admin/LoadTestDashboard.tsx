@@ -391,6 +391,10 @@ export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashbo
     : 'DB connection counts are estimated from pg_stat_activity. Npgsql pool settings are read from the running backend configuration.'
   const realBackendStatusText = realBackendSnapshot?.status ?? formatRealBackendPhase(realBackendPhase)
   const realBackendLatencyBreakdown = realBackendSnapshot?.latencyBreakdown
+  const realBackendDbCommandP95Ms = realBackendLatencyBreakdown?.dbCommandP95Ms
+    ?? (diagnosticsSummary.dbCommandP95Available ? diagnosticsSummary.dbCommandP95Ms.current : null)
+  const realBackendDbCommandP95Source = realBackendLatencyBreakdown?.dbCommandP95Source
+    ?? (diagnosticsSummary.dbCommandP95Available ? 'diagnostics.commandLatency.p95' : null)
   const realBackendHttpCounts = realBackendSnapshot?.httpCounts
   const realBackendTargetMetrics = realBackendSnapshot?.targetMetrics ?? []
   const realBackendMetricsPending = realBackendSnapshot?.metricsPending
@@ -1420,9 +1424,10 @@ export function LoadTestDashboard({ targets, targetLoadWarning }: LoadTestDashbo
               </p>
               <p>
                 db command p95:{' '}
-                {latestDiagnosticsSample?.database.commandLatency?.p95Ms !== null
-                  && latestDiagnosticsSample?.database.commandLatency?.p95Ms !== undefined
-                  ? formatMs(latestDiagnosticsSample.database.commandLatency.p95Ms)
+                {realBackendMetricsPending
+                  ? 'summary pending'
+                  : realBackendDbCommandP95Ms !== null && realBackendDbCommandP95Ms !== undefined
+                  ? `${formatMs(realBackendDbCommandP95Ms)}${formatTimingSource(realBackendDbCommandP95Source)}`
                   : 'unavailable'}
               </p>
             </div>
