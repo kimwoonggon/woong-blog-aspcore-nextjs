@@ -8,6 +8,15 @@ namespace WoongBlog.Infrastructure.Modules.Content.Works.WorkVideos;
 public sealed class FfmpegVideoTranscoder(IOptions<WorkVideoHlsOptions> hlsOptions) : IVideoTranscoder
 {
     private readonly WorkVideoHlsOptions _hlsOptions = hlsOptions.Value;
+    private enum FfmpegProcessStatus
+    {
+        Succeeded,
+        Failed,
+        StartFailed,
+        TimedOut
+    }
+
+    private sealed record FfmpegProcessResult(FfmpegProcessStatus Status, string? ErrorMessage);
 
     public async Task<string?> SegmentHlsAsync(
         string inputPath,
@@ -19,6 +28,46 @@ public sealed class FfmpegVideoTranscoder(IOptions<WorkVideoHlsOptions> hlsOptio
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeout.CancelAfter(TimeSpan.FromSeconds(Math.Max(1, _hlsOptions.TimeoutSeconds)));
 
+        var copyResult = await RunFfmpegProcessAsync(
+            CreateHlsStartInfo(inputPath, hlsDirectory, manifestFileName, segmentDuration, useCompatibilityTranscode: false),
+            timeout.Token,
+            cancellationToken);
+        if (copyResult.Status == FfmpegProcessStatus.Succeeded)
+        {
+            return await FinalizeSuccessfulHlsAsync(inputPath, hlsDirectory, manifestFileName, cancellationToken);
+        }
+
+        if (copyResult.Status is FfmpegProcessStatus.StartFailed or FfmpegProcessStatus.TimedOut)
+        {
+            return copyResult.ErrorMessage;
+        }
+
+        DeletePartialHlsOutputs(hlsDirectory, manifestFileName);
+
+        var compatibilityResult = await RunFfmpegProcessAsync(
+            CreateHlsStartInfo(inputPath, hlsDirectory, manifestFileName, segmentDuration, useCompatibilityTranscode: true),
+            timeout.Token,
+            cancellationToken);
+        if (compatibilityResult.Status == FfmpegProcessStatus.Succeeded)
+        {
+            return await FinalizeSuccessfulHlsAsync(inputPath, hlsDirectory, manifestFileName, cancellationToken);
+        }
+
+        if (compatibilityResult.Status is FfmpegProcessStatus.StartFailed or FfmpegProcessStatus.TimedOut)
+        {
+            return compatibilityResult.ErrorMessage;
+        }
+
+        return BuildHlsProcessingError(copyResult.ErrorMessage, compatibilityResult.ErrorMessage);
+    }
+
+    private ProcessStartInfo CreateHlsStartInfo(
+        string inputPath,
+        string hlsDirectory,
+        string manifestFileName,
+        int segmentDuration,
+        bool useCompatibilityTranscode)
+    {
         var startInfo = new ProcessStartInfo
         {
             FileName = _hlsOptions.FfmpegPath,
@@ -30,24 +79,54 @@ public sealed class FfmpegVideoTranscoder(IOptions<WorkVideoHlsOptions> hlsOptio
         startInfo.ArgumentList.Add("-hide_banner");
         startInfo.ArgumentList.Add("-loglevel");
         startInfo.ArgumentList.Add("error");
+        startInfo.ArgumentList.Add("-y");
         startInfo.ArgumentList.Add("-i");
         startInfo.ArgumentList.Add(inputPath);
         startInfo.ArgumentList.Add("-map");
         startInfo.ArgumentList.Add("0:v:0");
         startInfo.ArgumentList.Add("-map");
         startInfo.ArgumentList.Add("0:a:0?");
-        startInfo.ArgumentList.Add("-c");
-        startInfo.ArgumentList.Add("copy");
+        if (useCompatibilityTranscode)
+        {
+            startInfo.ArgumentList.Add("-c:v");
+            startInfo.ArgumentList.Add("libx264");
+            startInfo.ArgumentList.Add("-preset");
+            startInfo.ArgumentList.Add("veryfast");
+            startInfo.ArgumentList.Add("-profile:v");
+            startInfo.ArgumentList.Add("main");
+            startInfo.ArgumentList.Add("-pix_fmt");
+            startInfo.ArgumentList.Add("yuv420p");
+            startInfo.ArgumentList.Add("-c:a");
+            startInfo.ArgumentList.Add("aac");
+            startInfo.ArgumentList.Add("-b:a");
+            startInfo.ArgumentList.Add("128k");
+            startInfo.ArgumentList.Add("-ac");
+            startInfo.ArgumentList.Add("2");
+        }
+        else
+        {
+            startInfo.ArgumentList.Add("-c");
+            startInfo.ArgumentList.Add("copy");
+        }
+
         startInfo.ArgumentList.Add("-f");
         startInfo.ArgumentList.Add("hls");
         startInfo.ArgumentList.Add("-hls_time");
-        startInfo.ArgumentList.Add(segmentDuration.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        startInfo.ArgumentList.Add(segmentDuration.ToString(CultureInfo.InvariantCulture));
         startInfo.ArgumentList.Add("-hls_playlist_type");
         startInfo.ArgumentList.Add("vod");
         startInfo.ArgumentList.Add("-hls_segment_filename");
         startInfo.ArgumentList.Add("segment_%05d.ts");
         startInfo.ArgumentList.Add(manifestFileName);
 
+        return startInfo;
+    }
+
+    private static async Task<FfmpegProcessResult> RunFfmpegProcessAsync(
+        ProcessStartInfo startInfo,
+        CancellationToken timeoutToken,
+        CancellationToken cancellationToken)
+    {
         using var process = new Process { StartInfo = startInfo };
         var stderr = new StringBuilder();
         process.ErrorDataReceived += (_, args) =>
@@ -62,36 +141,104 @@ public sealed class FfmpegVideoTranscoder(IOptions<WorkVideoHlsOptions> hlsOptio
         {
             if (!process.Start())
             {
-                return "Unable to start HLS processing.";
+                return new FfmpegProcessResult(FfmpegProcessStatus.StartFailed, "Unable to start HLS processing.");
             }
 
             process.BeginErrorReadLine();
-            await process.WaitForExitAsync(timeout.Token);
+            await process.WaitForExitAsync(timeoutToken);
             process.WaitForExit();
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
             TryKillProcess(process);
-            return "HLS processing timed out.";
+            return new FfmpegProcessResult(FfmpegProcessStatus.TimedOut, "HLS processing timed out.");
         }
         catch (Exception exception) when (exception is System.ComponentModel.Win32Exception or InvalidOperationException)
         {
-            return $"Unable to start HLS processing: {exception.Message}";
+            return new FfmpegProcessResult(
+                FfmpegProcessStatus.StartFailed,
+                $"Unable to start HLS processing: {exception.Message}");
         }
 
-        if (process.ExitCode != 0)
-        {
-            var message = stderr.ToString().Trim();
-            return string.IsNullOrWhiteSpace(message)
-                ? "Unable to process MP4 into HLS."
-                : $"Unable to process MP4 into HLS: {message}";
-        }
+        return process.ExitCode == 0
+            ? new FfmpegProcessResult(FfmpegProcessStatus.Succeeded, null)
+            : new FfmpegProcessResult(FfmpegProcessStatus.Failed, stderr.ToString().Trim());
+    }
 
+    private async Task<string?> FinalizeSuccessfulHlsAsync(
+        string inputPath,
+        string hlsDirectory,
+        string manifestFileName,
+        CancellationToken cancellationToken)
+    {
         await TryGenerateTimelinePreviewAsync(inputPath, hlsDirectory, cancellationToken);
 
         return File.Exists(Path.Combine(hlsDirectory, manifestFileName))
             ? null
             : "HLS processing did not produce a manifest.";
+    }
+
+    private static void DeletePartialHlsOutputs(string hlsDirectory, string manifestFileName)
+    {
+        DeleteIfExists(Path.Combine(hlsDirectory, manifestFileName));
+        DeleteIfExists(Path.Combine(hlsDirectory, WorkVideoPolicy.TimelinePreviewVttFileName));
+        DeleteIfExists(Path.Combine(hlsDirectory, WorkVideoPolicy.TimelinePreviewSpriteFileName));
+
+        foreach (var segmentPath in Directory.EnumerateFiles(hlsDirectory, "segment_*.ts"))
+        {
+            DeleteIfExists(segmentPath);
+        }
+    }
+
+    private static void DeleteIfExists(string path)
+    {
+        try
+        {
+            File.Delete(path);
+        }
+        catch (DirectoryNotFoundException)
+        {
+        }
+        catch (IOException)
+        {
+        }
+        catch (UnauthorizedAccessException)
+        {
+        }
+    }
+
+    private static string BuildHlsProcessingError(string? copyError, string? compatibilityError)
+    {
+        var copyMessage = NormalizeProcessError(copyError);
+        var compatibilityMessage = NormalizeProcessError(compatibilityError);
+        if (copyMessage.Length == 0 && compatibilityMessage.Length == 0)
+        {
+            return "Unable to process MP4 into HLS.";
+        }
+
+        if (copyMessage.Length == 0)
+        {
+            return $"Unable to process MP4 into HLS: compatibility transcode failed: {compatibilityMessage}";
+        }
+
+        if (compatibilityMessage.Length == 0)
+        {
+            return $"Unable to process MP4 into HLS: {copyMessage}";
+        }
+
+        return $"Unable to process MP4 into HLS: copy mode failed: {copyMessage}; compatibility transcode failed: {compatibilityMessage}";
+    }
+
+    private static string NormalizeProcessError(string? message)
+    {
+        const int maxLength = 2_000;
+        var trimmed = message?.Trim() ?? string.Empty;
+        if (trimmed.Length <= maxLength)
+        {
+            return trimmed;
+        }
+
+        return string.Concat(trimmed.AsSpan(0, maxLength), "...");
     }
 
     private async Task TryGenerateTimelinePreviewAsync(
