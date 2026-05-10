@@ -693,7 +693,7 @@ public sealed class PostgresPersistenceContractTests : IClassFixture<PostgresPer
 
         Assert.NotNull(result);
         Assert.Equal(resolverThumbnailUrl, result!.ThumbnailUrl);
-        Assert.Equal("<p>Stored public video detail</p>", result.Content.Html);
+        Assert.Null(result.Content.Html);
         Assert.Equal("Stored public video detail", result.Content.Markdown);
         Assert.Equal(1, result.VideosVersion);
         var video = Assert.Single(result.Videos);
