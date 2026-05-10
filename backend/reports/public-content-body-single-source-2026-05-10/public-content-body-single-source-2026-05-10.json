@@ -1,0 +1,64 @@
+{
+  "task": "public-content-body-single-source-2026-05-10",
+  "date": "2026-05-10",
+  "changed": [
+    "PublicContentBodyDto.FromStoredFields now returns markdown only when markdown exists, otherwise html only.",
+    "Added PublicContentBodyDtoTests for both-source and html-fallback behavior.",
+    "Updated Postgres public work detail contract expectation to omit html when markdown is present."
+  ],
+  "notChanged": [
+    "cache behavior",
+    "load-test target selection",
+    "pageSize=12 behavior",
+    "seed fixture behavior",
+    "frontend rendering logic",
+    "public detail query roundtrip shape"
+  ],
+  "goalVerification": {
+    "goal": "Reduce heavy public detail payload and serialization work by returning the minimum public body form.",
+    "result": "Public detail DTO no longer returns both html and markdown when both stored columns contain values.",
+    "expectedLoadTestImpact": "Lower response bytes and JSON serialization/allocation work on markdown-backed detail reads."
+  },
+  "validations": [
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.UnitTests/WoongBlog.Api.UnitTests.csproj --filter \"FullyQualifiedName~PublicContentBodyDtoTests\" --no-restore --logger \"console;verbosity=minimal\"",
+      "status": "red-then-pass",
+      "details": "Failed before implementation because Html was not null; passed 2/2 after implementation."
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.UnitTests/WoongBlog.Api.UnitTests.csproj --no-restore --logger \"console;verbosity=minimal\"",
+      "status": "pass",
+      "details": "61/61 passed."
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter \"FullyQualifiedName~GetWorkBySlug_ReturnsPublicContentBodyWithoutAdminContentJson|FullyQualifiedName~GetBlogBySlug_ReturnsPublicContentBodyWithoutAdminContentJson\" --no-restore --logger \"console;verbosity=minimal\"",
+      "status": "pass",
+      "details": "2/2 passed."
+    },
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.IntegrationTests/WoongBlog.Api.IntegrationTests.csproj --filter \"FullyQualifiedName~PublicWorkDetailWithVideos_UsesSinglePostgresCommand_AndStoredPublicColumnsOnly|FullyQualifiedName~PublicWorkDetailWithoutVideos_UsesSinglePostgresCommand|FullyQualifiedName~PublicBlogDetail_UsesSinglePostgresCommand\" --no-restore --logger \"console;verbosity=minimal\"",
+      "status": "blocked-local",
+      "details": "Docker/Testcontainers endpoint unavailable locally."
+    },
+    {
+      "command": "npm test -- --run src/test/public-api-clients.test.ts src/test/public-api-contracts.test.ts",
+      "status": "pass",
+      "details": "22/22 passed."
+    },
+    {
+      "command": "npm run typecheck",
+      "status": "pass",
+      "details": "TypeScript typecheck passed."
+    },
+    {
+      "command": "git diff --check -- backend/src/WoongBlog.Application/Modules/Content/Common/PublicContentBodyDto.cs backend/tests/WoongBlog.Api.UnitTests/PublicContentBodyDtoTests.cs backend/tests/WoongBlog.Api.IntegrationTests/PostgresPersistenceContractTests.cs todolist-2026-05-10.md",
+      "status": "pass",
+      "details": "Whitespace check passed."
+    }
+  ],
+  "risks": [
+    "Postgres-backed contract assertion was not executed locally because Docker/Testcontainers is unavailable.",
+    "Large markdown payloads remain large; this only removes duplicate body source payload where both fields are present."
+  ],
+  "recommendation": "Open a PR to dev and rely on CI to run Docker-backed Postgres tests before merge, then compare real backend load-test latency, response bytes, and GC metrics."
+}
