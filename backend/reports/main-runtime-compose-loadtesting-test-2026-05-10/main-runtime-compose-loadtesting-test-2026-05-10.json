@@ -1,0 +1,45 @@
+{
+  "task": "main-runtime-compose-loadtesting-test-stability",
+  "date": "2026-05-10",
+  "rootCause": "PR #123 runtime-only main tree included src/test/compose-loadtesting-baseurl.test.ts but omitted staging compose/env files, causing Vitest ENOENT failures.",
+  "changed": [
+    "src/test/compose-loadtesting-baseurl.test.ts",
+    "todolist-2026-05-10.md"
+  ],
+  "intentionallyNotChanged": [
+    "docker-compose.prod.yml",
+    "docker-compose.staging.yml",
+    ".env.prod.example",
+    ".env.staging.example",
+    "scripts/main-runtime-allowlist.txt",
+    "CI workflows",
+    "backend runtime code"
+  ],
+  "validations": [
+    {
+      "command": "npm test -- --run src/test/compose-loadtesting-baseurl.test.ts",
+      "result": "pass 5/5 on dev tree"
+    },
+    {
+      "command": "minimal main-runtime-style tree without staging compose/env files: npm test -- --run src/test/compose-loadtesting-baseurl.test.ts",
+      "result": "pass 3/3"
+    },
+    {
+      "command": "npm test -- --run src/test/compose-loadtesting-baseurl.test.ts src/test/prod-runtime-preflight.test.ts src/test/prod-real-load-steps.test.ts",
+      "result": "pass 14/14"
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "pass"
+    },
+    {
+      "command": "git diff --check -- src/test/compose-loadtesting-baseurl.test.ts todolist-2026-05-10.md",
+      "result": "pass"
+    }
+  ],
+  "risks": [
+    "PR #123 remains blocked until this fix merges into dev and a new promotion refreshes release/main-promote.",
+    "Browser smoke was skipped on the stale PR #123 run and must be rechecked after refresh."
+  ],
+  "recommendation": "Push this fix through dev, verify CI/publish/promotion, then continue the backend heavy detail read performance loop."
+}
