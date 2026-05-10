@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Dev VA-022 Home Rhythm Fix - 2026-05-11</title>
+  <style>body{font-family:Arial,sans-serif;line-height:1.5;max-width:960px;margin:32px auto;padding:0 16px;color:#1f2937}code{background:#f3f4f6;padding:2px 4px;border-radius:4px}.pass{color:#047857}.warn{color:#b45309}pre{background:#111827;color:#f9fafb;padding:12px;border-radius:8px;overflow:auto}</style>
+</head>
+<body>
+  <h1>Dev VA-022 Home Rhythm Fix - 2026-05-11</h1>
+  <p>Reduced <code>fadeInUp</code> initial motion from <code>translateY(20px)</code> to <code>translateY(8px)</code> so staggered home section animations no longer break the visual rhythm measurement.</p>
+  <h2>Validation</h2>
+  <ul>
+    <li class="pass">Dev stack rebuild: passed.</li>
+    <li class="pass">Health checks: <code>/api/health</code> 200 and home 200.</li>
+    <li class="pass">Browser gap probe: diffs <code>7.18px</code>, below the <code>16px</code> contract.</li>
+    <li class="pass">Targeted E2E subset: 6 passed.</li>
+    <li class="pass">Full E2E: 429 passed, 5 skipped, 0 failed.</li>
+    <li class="warn">Latency warnings: 53, budget failures: 0.</li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Accept this minimal CSS fix. If continuing the broader gate, run CI for the branch/PR next.</p>
+</body>
+</html>

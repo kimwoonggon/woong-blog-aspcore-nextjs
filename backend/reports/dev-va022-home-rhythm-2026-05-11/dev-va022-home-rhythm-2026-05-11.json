@@ -1,0 +1,72 @@
+{
+  "task": "dev-va022-home-rhythm-2026-05-11",
+  "scope": "Fix dev full E2E VA-022 home vertical rhythm failure.",
+  "changes": [
+    {
+      "file": "src/app/globals.css",
+      "change": "Reduced fadeInUp initial transform from translateY(20px) to translateY(8px)."
+    },
+    {
+      "file": "todolist-2026-05-11.md",
+      "change": "Recorded VA-022 fix plan, backups, validations, and audit artifacts."
+    }
+  ],
+  "notChanged": [
+    "No test assertion relaxed",
+    "No home section animation class removed",
+    "No animation delay contract changed",
+    "No backend, public API DTO, Real Backend Test target, production, or CI workflow change"
+  ],
+  "backups": [
+    ".agent-backups/dev-va022-home-rhythm-2026-05-11/globals.css.before",
+    ".agent-backups/dev-va022-home-rhythm-2026-05-11/todolist-2026-05-11.md.before"
+  ],
+  "validations": [
+    {
+      "name": "dev stack rebuild",
+      "command": "COMPOSE_PROJECT_NAME=woong-blog-aspcore-nextjs APP_ENV_FILE=.env POSTGRES_DATA_DIR=.docker-data/dev/postgres LOCAL_CERTS_DIR=.local-certs BACKEND_PUBLISH_PORT=18080 NGINX_HTTP_PORT=3000 NGINX_HTTPS_PORT=3001 docker compose --env-file .env -f docker-compose.dev.yml up -d --build",
+      "result": "passed",
+      "notes": [
+        "Next.js production build completed successfully.",
+        "Existing NU1901 AWSSDK.Core warnings emitted.",
+        "Docker build context was about 2.01 GB."
+      ]
+    },
+    {
+      "name": "dev health",
+      "result": "passed",
+      "checks": [
+        { "url": "http://127.0.0.1:3000/api/health", "httpStatus": 200 },
+        { "url": "http://127.0.0.1:3000/", "httpStatus": 200 }
+      ]
+    },
+    {
+      "name": "browser gap probe",
+      "result": "passed",
+      "gaps": [40.816925048828125, 48, 48],
+      "diffsFromFirst": [7.183074951171875, 7.183074951171875],
+      "contractMaxDiff": 16
+    },
+    {
+      "name": "targeted e2e subset",
+      "command": "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 ENABLE_LOCAL_ADMIN_SHORTCUT=true PLAYWRIGHT_EXPECT_LOCAL_ADMIN_SHORTCUT=visible PLAYWRIGHT_E2E_PROFILE=core npx playwright test tests/ui-quality-layout-rhythm.spec.ts tests/ui-quality-motion-access-targets.spec.ts --project=chromium-authenticated --workers=1",
+      "result": "passed",
+      "counts": { "passed": 6, "failed": 0 }
+    },
+    {
+      "name": "full e2e",
+      "command": "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 npm run test:e2e",
+      "result": "passed",
+      "counts": { "passed": 429, "skipped": 5, "failed": 0 },
+      "latency": { "artifacts": 434, "budgetFailures": 0, "warnings": 53 }
+    }
+  ],
+  "risks": [
+    "Root worktree remains dirty with unrelated pre-existing changes.",
+    "CI was not run in this slice.",
+    "Production deployment/preflight remains out of this dev-focused slice.",
+    "Docker context is large due local generated artifacts.",
+    "Full E2E has 53 latency warnings but 0 budget failures."
+  ],
+  "recommendation": "Accept the minimal CSS motion-distance fix, then run CI for the branch/PR if continuing the broader gate objective."
+}
