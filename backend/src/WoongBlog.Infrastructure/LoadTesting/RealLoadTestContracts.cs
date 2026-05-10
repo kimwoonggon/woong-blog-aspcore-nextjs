@@ -113,6 +113,8 @@ public sealed record RealLoadTestTargetMetrics(
     double P95Ms,
     double? ResponseBytesP95,
     double? ReceiveP95Ms,
+    double? DbCommandElapsedP95Ms,
+    double? DbCommandCountP95,
     IReadOnlyDictionary<string, long> StatusCounts);
 
 public sealed class RealLoadTestRunEntry

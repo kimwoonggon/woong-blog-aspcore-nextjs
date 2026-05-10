@@ -25,6 +25,7 @@ using WoongBlog.Infrastructure.Modules.Content.Works;
 using WoongBlog.Infrastructure.Modules.Identity;
 using WoongBlog.Infrastructure.Modules.Media;
 using WoongBlog.Infrastructure.Modules.Site;
+using WoongBlog.Infrastructure.Persistence.Diagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -49,9 +50,16 @@ app.UseResponseCompression();
 app.Use(async (context, next) =>
 {
     var stopwatch = Stopwatch.StartNew();
+    var requestDatabaseDiagnostics = context.RequestServices.GetRequiredService<IRequestDatabaseDiagnostics>();
+    using var requestDatabaseDiagnosticsScope = requestDatabaseDiagnostics.BeginRequest();
     context.Response.OnStarting(() =>
     {
+        var databaseDiagnostics = requestDatabaseDiagnosticsScope.CaptureSnapshot();
         context.Response.Headers["X-App-Elapsed-Ms"] = stopwatch.Elapsed.TotalMilliseconds.ToString(
+            CultureInfo.InvariantCulture);
+        context.Response.Headers["X-Db-Command-Elapsed-Ms"] = databaseDiagnostics.CommandElapsedMs.ToString(
+            CultureInfo.InvariantCulture);
+        context.Response.Headers["X-Db-Command-Count"] = databaseDiagnostics.CommandCount.ToString(
             CultureInfo.InvariantCulture);
         return Task.CompletedTask;
     });
