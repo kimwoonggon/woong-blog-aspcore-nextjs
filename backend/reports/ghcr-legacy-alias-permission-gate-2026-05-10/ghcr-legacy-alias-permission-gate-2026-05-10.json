@@ -1,0 +1,35 @@
+{
+  "task": "ghcr-legacy-alias-permission-gate-2026-05-10",
+  "status": "ci_fix_ready_for_promotion",
+  "correctsRun": "25626302716",
+  "failure": {
+    "system": "GHCR",
+    "reason": "403 Forbidden while pushing legacy package aliases with GITHUB_TOKEN",
+    "legacyPackages": [
+      "ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-backend:main",
+      "ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-frontend:main"
+    ]
+  },
+  "changed": [
+    ".github/workflows/publish-ghcr-main.yml",
+    ".github/workflows/publish-ghcr-dev.yml",
+    "src/test/publish-ghcr-tags.test.ts",
+    "todolist-2026-05-10.md"
+  ],
+  "requiredPublish": "runtime image tags",
+  "optionalPublish": "legacy aliases gated by GHCR_PACKAGES_TOKEN",
+  "validations": [
+    { "command": "npm test -- --run src/test/publish-ghcr-tags.test.ts", "result": "pass" },
+    { "command": "npm test -- --run src/test/publish-ghcr-tags.test.ts src/test/compose-loadtesting-baseurl.test.ts", "result": "pass" },
+    { "command": "npm run typecheck", "result": "pass" },
+    { "command": "npm run lint", "result": "pass_existing_warnings_only" },
+    { "command": "git diff --check", "result": "pass" }
+  ],
+  "remaining": [
+    "push through dev CI/publish",
+    "promote to main",
+    "verify Publish GHCR Main success",
+    "server pull/recreate latest main runtime images",
+    "production preflight and real backend load retest"
+  ]
+}
