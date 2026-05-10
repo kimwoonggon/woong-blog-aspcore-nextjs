@@ -85,6 +85,34 @@ jobs:
             fi
           done
 
+          reject_placeholder_secret() {
+            local name="$1"
+            local value="$2"
+            if [[ -z "${value}" ]]; then
+              return 0
+            fi
+
+            local lowered="${value,,}"
+            case "${value}" in
+              \<*\>|*production-ssh-*|*read-packages-token*|*CHANGE_ME*|*TODO*)
+                echo "${name} contains a placeholder token; replace it with the real production value." >&2
+                exit 3
+                ;;
+            esac
+            case "${lowered}" in
+              *placeholder*|*changeme*|*change-me*|*example.com*|todo)
+                echo "${name} contains a placeholder token; replace it with the real production value." >&2
+                exit 3
+                ;;
+            esac
+          }
+
+          reject_placeholder_secret PROD_SSH_HOST "${PROD_SSH_HOST}"
+          reject_placeholder_secret PROD_SSH_USER "${PROD_SSH_USER}"
+          reject_placeholder_secret PROD_SSH_PRIVATE_KEY "${PROD_SSH_PRIVATE_KEY}"
+          reject_placeholder_secret PROD_SSH_KNOWN_HOSTS "${PROD_SSH_KNOWN_HOSTS}"
+          reject_placeholder_secret PROD_SSH_PORT "${PROD_SSH_PORT}"
+
           install -m 700 -d ~/.ssh
           printf '%s\n' "${PROD_SSH_PRIVATE_KEY}" > ~/.ssh/prod_runtime_redeploy_key
           chmod 600 ~/.ssh/prod_runtime_redeploy_key

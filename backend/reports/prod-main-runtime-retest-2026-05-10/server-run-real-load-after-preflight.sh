@@ -59,6 +59,7 @@ require_command docker
 require_command curl
 require_command node
 require_command k6
+require_command tar
 
 if [[ -z "${STUDY_READ_PATH}" ]]; then
   STUDY_READ_PATH="$(resolve_first_non_seed_public_path '/api/public/blogs?page=1&pageSize=12' '/api/public/blogs/')"
@@ -91,3 +92,22 @@ MAX_VUS="${MAX_VUS}" \
 PRE_ALLOCATED_VUS="${PRE_ALLOCATED_VUS}" \
 OUTPUT_DIR="${OUTPUT_DIR}" \
 ./scripts/prod-real-load-steps.sh
+
+summary_json="${OUTPUT_DIR%/}/prod-real-load-steps-summary.json"
+summary_md="${OUTPUT_DIR%/}/prod-real-load-steps-summary.md"
+if [[ ! -s "${summary_json}" || ! -s "${summary_md}" ]]; then
+  echo "missing expected real load summary artifacts under ${OUTPUT_DIR}" >&2
+  exit 5
+fi
+
+output_parent="$(dirname "${OUTPUT_DIR%/}")"
+output_name="$(basename "${OUTPUT_DIR%/}")"
+artifact_bundle="${ARTIFACT_BUNDLE:-${output_parent}/prod-real-load-steps-artifacts.tgz}"
+tar -czf "${artifact_bundle}" -C "${output_parent}" "${output_name}"
+
+printf 'Real load artifact paths:\n'
+printf '  summary markdown: %s\n' "${summary_md}"
+printf '  summary json: %s\n' "${summary_json}"
+printf '  artifact bundle: %s\n' "${artifact_bundle}"
+printf 'Real load summary markdown:\n'
+cat "${summary_md}"
