@@ -1,0 +1,31 @@
+{
+  "generatedAt": "2026-05-10T20:40:00+09:00",
+  "status": "prepared_not_executed",
+  "changed": [
+    ".github/workflows/prod-runtime-redeploy.yml",
+    "src/test/prod-runtime-redeploy-workflow.test.ts",
+    "scripts/main-runtime-allowlist.txt",
+    "todolist-2026-05-10.md"
+  ],
+  "validations": [
+    {"command": "npm test -- --run src/test/prod-runtime-redeploy-workflow.test.ts", "result": "pass"},
+    {"command": "npm test -- --run src/test/prod-runtime-redeploy-workflow.test.ts src/test/publish-ghcr-tags.test.ts src/test/compose-loadtesting-baseurl.test.ts", "result": "pass"},
+    {"command": "bash -n /tmp/prod-runtime-redeploy-remote.sh", "result": "pass"},
+    {"command": "npm run typecheck", "result": "pass"},
+    {"command": "npm run lint", "result": "pass_with_existing_warnings"},
+    {"command": "git diff --check -- .github/workflows/prod-runtime-redeploy.yml src/test/prod-runtime-redeploy-workflow.test.ts scripts/main-runtime-allowlist.txt todolist-2026-05-10.md", "result": "pass"},
+    {"command": "npx --yes actionlint .github/workflows/prod-runtime-redeploy.yml", "result": "blocked_npx_executable_not_found"}
+  ],
+  "requiredSecrets": [
+    "PROD_SSH_HOST",
+    "PROD_SSH_USER",
+    "PROD_SSH_PRIVATE_KEY",
+    "PROD_SSH_KNOWN_HOSTS"
+  ],
+  "optionalSecrets": [
+    "PROD_SSH_PORT",
+    "PROD_GHCR_TOKEN"
+  ],
+  "activeGoalComplete": false,
+  "remainingBlocker": "Production deploy/preflight/load still require working production SSH credentials or direct server execution."
+}
