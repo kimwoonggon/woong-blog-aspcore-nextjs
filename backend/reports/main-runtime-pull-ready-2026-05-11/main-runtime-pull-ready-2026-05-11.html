@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <title>Main Runtime Pull-Ready Audit - 2026-05-11</title>
+  <style>body{font-family:sans-serif;line-height:1.5;max-width:920px;margin:32px auto;padding:0 16px}code,pre{background:#f4f4f4;padding:2px 4px}pre{padding:12px;overflow:auto}li{margin:4px 0}</style>
+</head>
+<body>
+  <h1>Main Runtime Pull-Ready Audit - 2026-05-11</h1>
+  <h2>Summary</h2>
+  <p>The repository is now aligned with the corrected server workflow: pull the published <code>main</code> runtime images, fill <code>.env.prod</code> secrets/server values, start compose, and probe health. Production SSH and remote execution were intentionally excluded.</p>
+  <h2>Changed</h2>
+  <ul>
+    <li><code>.env.prod.example</code> now contains the actual GHCR frontend/backend <code>:main</code> image paths.</li>
+    <li><code>docs/walkthroughs/main-server-setup.md</code> now documents the minimal server command flow.</li>
+    <li><code>todolist-2026-05-11.md</code> records the corrected scope, validations, and backups.</li>
+  </ul>
+  <h2>Validation</h2>
+  <ul>
+    <li>No <code>ghcr.io/your-owner</code> placeholder remains in the production env example or setup doc.</li>
+    <li><code>APP_ENV_FILE=.env.prod.example docker compose --env-file .env.prod.example -f docker-compose.prod.yml config</code> passed.</li>
+    <li>Resolved compose config uses the actual GHCR <code>:main</code> backend/frontend images.</li>
+    <li>GHCR manifest checks passed for both runtime images.</li>
+    <li><code>git diff --check</code> passed for changed files.</li>
+  </ul>
+  <h2>Remaining</h2>
+  <p>Server-side pull/up, production preflight, and production Real Backend Test remain external actions. The broader active goal is not complete until those results exist.</p>
+</body>
+</html>
