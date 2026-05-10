@@ -238,7 +238,6 @@ public class PublicQueryHandlerComponentTests
         Assert.Equal(new[] { "Newer Work", "Older Work" }, result.FeaturedWorks.Select(x => x.Title).ToArray());
         Assert.Equal(new[] { "Newer Blog", "Older Blog" }, result.RecentPosts.Select(x => x.Title).ToArray());
         Assert.Equal("/media/work-thumb.png", result.FeaturedWorks[1].ThumbnailUrl);
-        Assert.Equal("/media/work-icon.png", result.FeaturedWorks[1].IconUrl);
         Assert.Equal("/media/blog-cover.png", result.RecentPosts[1].CoverUrl);
     }
 
@@ -305,7 +304,6 @@ public class PublicQueryHandlerComponentTests
         var work = Assert.Single(result!.FeaturedWorks);
         var blog = Assert.Single(result.RecentPosts);
         Assert.Equal("/media/stored-home-work-thumb.png", work.ThumbnailUrl);
-        Assert.Equal("/media/stored-home-work-icon.png", work.IconUrl);
         Assert.Equal("/media/stored-home-blog-cover.png", blog.CoverUrl);
     }
 
@@ -610,7 +608,6 @@ public class PublicQueryHandlerComponentTests
         Assert.Equal(new[] { "Newer Work", "Older Work" }, result.Items.Select(x => x.Title).ToArray());
         Assert.DoesNotContain(result.Items, x => x.Slug == "draft-work");
         Assert.Equal("/media/published-thumb.png", result.Items[1].ThumbnailUrl);
-        Assert.Equal("/media/published-icon.png", result.Items[1].IconUrl);
     }
 
     [Fact]
@@ -979,7 +976,6 @@ public class PublicQueryHandlerComponentTests
         Assert.Equal(new[] { "detail", "public" }, result.Tags);
         Assert.Contains("Public work detail body", result.Content.Html, StringComparison.Ordinal);
         Assert.Equal("/media/detail-thumb.png", result.ThumbnailUrl);
-        Assert.Equal("/media/detail-icon.png", result.IconUrl);
         Assert.Equal(now, result.PublishedAt);
         Assert.Equal("Stored share detail", result.SocialShareMessage);
         Assert.Equal(2, result.VideosVersion);

@@ -108,7 +108,7 @@ OUT
 {"id":"work-1","slug":"video-work","title":"Video Work","excerpt":"excerpt","content":{"html":"<p>body</p>"},"category":"case-study","tags":[],"thumbnailUrl":"","iconUrl":"","videos_version":1,"videos":[{"id":"video-1","sourceType":"hls","sourceKey":"r2:videos/work/video/hls/master.m3u8","playbackUrl":"https://media.example.test/videos/work/video/hls/master.m3u8","originalFileName":"admin-name.mp4","fileSize":12345,"createdAt":"2026-05-10T00:00:00Z","sortOrder":0}]}
 OUT`
       : `cat > "$output" <<'OUT'
-{"id":"work-1","slug":"video-work","title":"Video Work","excerpt":"excerpt","content":{"html":"<p>body</p>"},"category":"case-study","tags":[],"thumbnailUrl":"","iconUrl":"","videos_version":1,"videos":[{"id":"video-1","sourceType":"hls","sourceKey":"r2:videos/work/video/hls/master.m3u8","playbackUrl":"https://media.example.test/videos/work/video/hls/master.m3u8","mimeType":"application/vnd.apple.mpegurl","sortOrder":0}]}
+{"id":"work-1","slug":"video-work","title":"Video Work","excerpt":"excerpt","content":{"html":"<p>body</p>"},"category":"case-study","tags":[],"thumbnailUrl":"","videos_version":1,"videos":[{"id":"video-1","sourceType":"hls","sourceKey":"r2:videos/work/video/hls/master.m3u8","playbackUrl":"https://media.example.test/videos/work/video/hls/master.m3u8","mimeType":"application/vnd.apple.mpegurl","sortOrder":0}]}
 OUT`}
   else
     printf '{"status":"ok"}' > "$output"
@@ -153,7 +153,7 @@ describe('production runtime preflight script', () => {
     expect(result.stdout).toContain('nginx request_time header: available')
     expect(result.stdout).toContain('app elapsed header: available')
     expect(result.stdout).toContain('gzip public response: available')
-    expect(result.stdout).toContain('public Work video contract: current')
+    expect(result.stdout).toContain('public Work detail contract: current')
     expect(result.stdout).toContain('db command samples: 12')
     expect(result.stdout).toContain('npgsql max pool: 40')
     expect(result.stdout).toContain('processor_count=2')
@@ -195,7 +195,7 @@ describe('production runtime preflight script', () => {
     expect(result.stderr).not.toContain('super-secret')
   })
 
-  it('fails when required public Work video contract still exposes stale admin-only fields', () => {
+  it('fails when required public Work contract still exposes stale hidden or admin-only fields', () => {
     const runtime = createFakeRuntime({ publicWorkVideoContract: 'stale' })
 
     const result = runPreflight(runtime.fakeBin, {
@@ -205,7 +205,7 @@ describe('production runtime preflight script', () => {
     })
 
     expect(result.status).not.toBe(0)
-    expect(result.stderr).toContain('public Work video payload still exposes stale admin-only fields')
+    expect(result.stderr).toContain('public Work payload still exposes stale hidden/admin-only fields')
     expect(result.stdout).not.toContain('super-secret')
     expect(result.stderr).not.toContain('super-secret')
   })

@@ -39,7 +39,6 @@ public sealed class WorkQueryStore(
                     work.Period,
                     work.Tags,
                     work.PublicThumbnailUrl,
-                    work.PublicIconUrl,
                     work.PublishedAt,
                     work.PublicSocialShareMessage,
                     work.VideosVersion,
@@ -110,10 +109,8 @@ public sealed class WorkQueryStore(
                 work.Title,
                 work.Excerpt,
                 work.Category,
-                work.Period,
                 work.Tags,
                 work.PublicThumbnailUrl,
-                work.PublicIconUrl,
                 work.PublishedAt))
             .ToListAsync(cancellationToken);
 
@@ -123,10 +120,8 @@ public sealed class WorkQueryStore(
             work.Title,
             work.Excerpt,
             work.Category,
-            work.Period,
             work.Tags,
             work.PublicThumbnailUrl,
-            work.PublicIconUrl,
             work.PublishedAt)).ToList();
 
         return new PagedWorksDto(items, resolvedPage, pageSize, totalItems, totalPages);
@@ -152,10 +147,8 @@ public sealed class WorkQueryStore(
                     w."Title",
                     w."Excerpt",
                     w."Category",
-                    w."Period",
                     w."Tags",
                     w."PublicThumbnailUrl" AS "ThumbnailUrl",
-                    w."PublicIconUrl" AS "IconUrl",
                     w."PublishedAt",
                     COUNT(*) OVER()::integer AS "TotalItems"
                 FROM "Works" AS w
@@ -173,10 +166,8 @@ public sealed class WorkQueryStore(
             work.Title,
             work.Excerpt,
             work.Category,
-            work.Period,
             work.Tags,
             work.ThumbnailUrl,
-            work.IconUrl,
             work.PublishedAt)).ToList();
 
         return new PagedWorksDto(items, 1, pageSize, totalItems, totalPages);
@@ -246,7 +237,6 @@ public sealed class WorkQueryStore(
             work.Period,
             work.Tags,
             work.ThumbnailUrl,
-            work.IconUrl,
             work.PublishedAt,
             NormalizeOptional(work.PublicSocialShareMessage),
             work.VideosVersion,
@@ -419,10 +409,8 @@ public sealed class WorkQueryStore(
         string Title,
         string Excerpt,
         string Category,
-        string? Period,
         string[] Tags,
         string PublicThumbnailUrl,
-        string PublicIconUrl,
         DateTimeOffset? PublishedAt);
 
     private sealed class WorkCardWithTotalRow
@@ -432,10 +420,8 @@ public sealed class WorkQueryStore(
         public string Title { get; init; } = string.Empty;
         public string Excerpt { get; init; } = string.Empty;
         public string Category { get; init; } = string.Empty;
-        public string? Period { get; init; }
         public string[] Tags { get; init; } = [];
         public string ThumbnailUrl { get; init; } = string.Empty;
-        public string IconUrl { get; init; } = string.Empty;
         public DateTimeOffset? PublishedAt { get; init; }
         public int TotalItems { get; init; }
     }
@@ -451,7 +437,6 @@ public sealed class WorkQueryStore(
         string? Period,
         string[] Tags,
         string ThumbnailUrl,
-        string IconUrl,
         DateTimeOffset? PublishedAt,
         string PublicSocialShareMessage,
         int VideosVersion,

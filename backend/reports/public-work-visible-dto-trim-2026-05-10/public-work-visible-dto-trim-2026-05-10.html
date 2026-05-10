@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Public Work Visible DTO Trim - 2026-05-10</title></head>
+<body>
+  <h1>Public Work Visible DTO Trim - 2026-05-10</h1>
+  <p>Trimmed public Work list/home/detail payloads to fields rendered by the public UI.</p>
+  <h2>Changed</h2>
+  <ul>
+    <li>Removed hidden Work card fields: period and iconUrl.</li>
+    <li>Removed hidden Work detail field: iconUrl.</li>
+    <li>Stopped selecting hidden fields in public Work/Home projections.</li>
+    <li>Updated frontend types, Pact contract, and production preflight stale-runtime detection.</li>
+  </ul>
+  <h2>Validation</h2>
+  <ul>
+    <li>Backend solution passed.</li>
+    <li>Frontend typecheck passed.</li>
+    <li>Public API/Pact/preflight tests passed 45/45.</li>
+    <li>Lint passed with existing warnings only.</li>
+    <li>Shell syntax and diff whitespace checks passed.</li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Promote through dev/main, run production preflight, then rerun Real Backend Test and select the next performance slice from target metrics.</p>
+</body>
+</html>
