@@ -213,6 +213,8 @@ export type RealBackendLatencyBreakdown = {
   nginxRequestP95Source?: string | null
   nginxUpstreamP95Ms?: number | null
   nginxUpstreamSource?: string | null
+  dbCommandP95Ms?: number | null
+  dbCommandP95Source?: string | null
 }
 
 export type RealBackendHttpCounts = {
@@ -997,6 +999,8 @@ export function extractRealBackendLatencyBreakdown(...payloads: unknown[]): Real
       nginxRequestP95Source: null,
       nginxUpstreamP95Ms: null,
       nginxUpstreamSource: null,
+      dbCommandP95Ms: null,
+      dbCommandP95Source: null,
     }
   }
 
@@ -1031,6 +1035,8 @@ export function extractRealBackendLatencyBreakdown(...payloads: unknown[]): Real
       nginxRequestP95Source: nginxRequestTime ? nginxRequestTime.source : null,
       nginxUpstreamP95Ms: nginxUpstream?.value ?? null,
       nginxUpstreamSource: nginxUpstream ? nginxUpstream.source : null,
+      dbCommandP95Ms: null,
+      dbCommandP95Source: null,
     }
   }
 
@@ -1050,6 +1056,8 @@ export function extractRealBackendLatencyBreakdown(...payloads: unknown[]): Real
     nginxRequestP95Source: nginxRequestTime ? nginxRequestTime.source : null,
     nginxUpstreamP95Ms: nginxUpstream?.value ?? null,
     nginxUpstreamSource: nginxUpstream ? nginxUpstream.source : null,
+    dbCommandP95Ms: null,
+    dbCommandP95Source: null,
   }
 }
 
@@ -1092,7 +1100,15 @@ export function summarizeRealBackendRunSnapshot(runId: string, statusPayload: un
     nginxRequestP95Source: null,
     nginxUpstreamP95Ms: null,
     nginxUpstreamSource: null,
+    dbCommandP95Ms: null,
+    dbCommandP95Source: null,
   }
+  const latencyBreakdown = metricsPending
+    ? pendingLatencyBreakdown
+    : withDiagnosticsDbCommandP95(
+      extractRealBackendLatencyBreakdown(metricsRecord, statusRecord),
+      diagnostics,
+    )
 
   return {
     runId,
@@ -1101,9 +1117,7 @@ export function summarizeRealBackendRunSnapshot(runId: string, statusPayload: un
     requests,
     throughputRps: inferThroughput(payloads),
     latencyMs: inferLatency(payloads),
-    latencyBreakdown: metricsPending
-      ? pendingLatencyBreakdown
-      : extractRealBackendLatencyBreakdown(metricsRecord, statusRecord),
+    latencyBreakdown,
     httpCounts,
     targetMetrics,
     diagnostics,
@@ -1481,6 +1495,26 @@ function summarizeAvailableTrend(
   return {
     trend: summarizeTrend(values),
     available: values.length > 0,
+  }
+}
+
+function withDiagnosticsDbCommandP95(
+  breakdown: RealBackendLatencyBreakdown,
+  diagnostics: RuntimeDiagnosticsPayload[],
+): RealBackendLatencyBreakdown {
+  if (breakdown.dbCommandP95Ms !== null && breakdown.dbCommandP95Ms !== undefined) {
+    return breakdown
+  }
+
+  const summary = buildDiagnosticsSnapshotSummary(diagnostics)
+  if (!summary.dbCommandP95Available) {
+    return breakdown
+  }
+
+  return {
+    ...breakdown,
+    dbCommandP95Ms: summary.dbCommandP95Ms.current,
+    dbCommandP95Source: 'diagnostics.commandLatency.p95',
   }
 }
 

@@ -855,6 +855,59 @@ describe('load test dashboard planning', () => {
     expect(snapshot.diagnostics).toEqual([diagnostics])
   })
 
+  it('keeps DB command p95 in real backend latency breakdown from diagnostics aggregate when the final sample is idle', () => {
+    const activeDiagnostics = {
+      timestamp: '2026-05-06T10:00:00Z',
+      process: { memoryBytes: 2048, processorCount: 2 },
+      gc: { heapSizeBytes: 1024, gen0Collections: 1, gen1Collections: 0, gen2Collections: 0, timeInGcPercent: 0.1 },
+      threadPool: { workerThreads: 8, pendingWorkItemCount: 0, completedWorkItemCount: 200, availableWorkerThreads: 32759, maxWorkerThreads: 32767 },
+      database: {
+        status: 'available' as const,
+        latencyMs: 1.2,
+        openConnections: 12,
+        activeConnections: 2,
+        idleConnections: 10,
+        idleInTransactionConnections: 0,
+        commandLatency: { sampleCount: 20, p50Ms: 1.1, p95Ms: 14.4, p99Ms: 18.8 },
+        connectionOpenLatency: { sampleCount: 4, p50Ms: 0.5, p95Ms: 2.2, p99Ms: 3.3 },
+        slowQueryCount: 0,
+        recentSlowQueries: [],
+        timeoutCount: 0,
+        errorCount: 0,
+      },
+    }
+    const idleDiagnostics = {
+      ...activeDiagnostics,
+      timestamp: '2026-05-06T10:00:01Z',
+      database: {
+        ...activeDiagnostics.database,
+        commandLatency: { sampleCount: 0, p50Ms: null, p95Ms: null, p99Ms: null },
+      },
+    }
+
+    const snapshot = summarizeRealBackendRunSnapshot(
+      'run-db-command-breakdown',
+      { status: 'completed' },
+      {
+        status: 'completed',
+        diagnostics: [activeDiagnostics, idleDiagnostics],
+        latencyBreakdown: {
+          minMs: 10,
+          p50Ms: 20,
+          p95Ms: 30,
+          p99Ms: 40,
+          maxMs: 50,
+          appElapsedP95Ms: 25,
+        },
+      },
+    )
+
+    expect(snapshot.latencyBreakdown).toMatchObject({
+      dbCommandP95Ms: 14.4,
+      dbCommandP95Source: 'diagnostics.commandLatency.p95',
+    })
+  })
+
   it('normalizes real backend snapshot status for queued/running/completed/failed/stopped', () => {
     const cases = [
       { input: 'queued', expected: 'queued' },
