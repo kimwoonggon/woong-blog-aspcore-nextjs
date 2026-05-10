@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Public Content Body Single Render Source Audit</title>
+  <style>
+    body { font-family: system-ui, sans-serif; line-height: 1.5; max-width: 920px; margin: 32px auto; padding: 0 20px; color: #18202a; }
+    code { background: #f4f6f8; padding: 2px 4px; border-radius: 4px; }
+    .status-pass { color: #116329; font-weight: 700; }
+    .status-blocked { color: #9a3412; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <h1>Public Content Body Single Render Source Audit</h1>
+  <p><strong>Date:</strong> 2026-05-10</p>
+  <h2>Summary</h2>
+  <p>Public detail body mapping now emits only one render source: markdown when present, otherwise html.</p>
+  <h2>Changed</h2>
+  <ul>
+    <li><code>PublicContentBodyDto.FromStoredFields</code> omits html when markdown exists.</li>
+    <li>Added unit tests for both-source and html-fallback behavior.</li>
+    <li>Updated the Postgres public work detail contract expectation.</li>
+  </ul>
+  <h2>Not Changed</h2>
+  <ul>
+    <li>No cache, seed target, page size, load-test target, frontend renderer, or query roundtrip change.</li>
+  </ul>
+  <h2>Validation</h2>
+  <ul>
+    <li class="status-pass">PASS: focused DTO test red-then-green, final 2/2 passed.</li>
+    <li class="status-pass">PASS: backend unit tests 61/61 passed.</li>
+    <li class="status-pass">PASS: public endpoint body regression 2/2 passed.</li>
+    <li class="status-blocked">BLOCKED LOCAL: focused Postgres Testcontainers command could not start because Docker endpoint is unavailable.</li>
+    <li class="status-pass">PASS: frontend public API tests 22/22 passed.</li>
+    <li class="status-pass">PASS: <code>npm run typecheck</code>.</li>
+    <li class="status-pass">PASS: whitespace diff check.</li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Push to a PR targeting dev, let CI run the Docker-backed Postgres contract tests, then compare backend load-test response bytes, p95 latency, and GC metrics.</p>
+</body>
+</html>
