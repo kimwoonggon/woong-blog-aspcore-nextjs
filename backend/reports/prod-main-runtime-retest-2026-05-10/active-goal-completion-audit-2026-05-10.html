@@ -1,1 +1,45 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Active Goal Completion Audit</title><style>body{font-family:Arial,sans-serif;max-width:900px;margin:32px auto;line-height:1.5;color:#1f2937}code{background:#f3f4f6;padding:2px 4px;border-radius:4px}.bad{color:#b91c1c;font-weight:700}.ok{color:#047857;font-weight:700}li{margin:6px 0}</style></head><body><h1>Active Goal Completion Audit</h1><p class="bad">Decision: not complete.</p><h2>Satisfied</h2><ul><li class="ok">Main runtime images published.</li><li class="ok">Dev CI/publish healthy.</li><li class="ok">Blocked-state audit artifacts generated.</li></ul><h2>Missing</h2><ul><li>Production server deploy output.</li><li>Production preflight pass output.</li><li>Post-deploy Real Backend Test artifacts.</li><li>Result-driven next slice selection and implementation.</li><li>Full e2e and CI after selected slice.</li></ul><h2>Current Production Evidence</h2><ul><li>Work list stale: <code>period</code>, <code>iconUrl</code>.</li><li>Work detail stale: <code>period</code>, <code>iconUrl</code>, <code>contentJson</code>, <code>originalFileName</code>, <code>fileSize</code>, <code>createdAt</code>.</li></ul><h2>Next Required Action</h2><p>Run <code>pasteable-server-commands.md</code> block 1 on the production host or provide working SSH/deploy credentials.</p></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Active Goal Completion Audit - 2026-05-10</title>
+  <style>
+    body{font-family:system-ui,sans-serif;max-width:980px;margin:32px auto;line-height:1.5;color:#172033}
+    code,pre{background:#f4f6f8;padding:2px 4px;border-radius:4px}
+    table{border-collapse:collapse;width:100%;margin:16px 0}
+    td,th{border:1px solid #d7dde5;padding:8px;text-align:left;vertical-align:top}
+    .bad{color:#9b1c1c;font-weight:700}.ok{color:#047857;font-weight:700}.warn{color:#7a4b00;font-weight:700}
+  </style>
+</head>
+<body>
+  <h1>Active Goal Completion Audit</h1>
+  <p>Generated at: <code>2026-05-10T21:44:56+09:00</code></p>
+  <p class="bad">Decision: not complete.</p>
+  <h2>Checklist</h2>
+  <table>
+    <tr><th>Requirement</th><th>Status</th><th>Evidence</th></tr>
+    <tr><td>Latest main runtime images published</td><td class="ok">Satisfied</td><td><code>origin/main</code> is <code>757ab203e55cadf8f89ee0da42b7ef580deebad3</code>; <code>CI Main Runtime</code> run <code>25628240637</code> and <code>Publish GHCR Main</code> run <code>25628355351</code> succeeded for that SHA.</td></tr>
+    <tr><td>Production deploy workflow exists</td><td class="ok">Satisfied</td><td><code>prod-runtime-redeploy.yml</code> exists on <code>main</code> and was dispatched.</td></tr>
+    <tr><td>Production server deploy executed</td><td class="bad">Missing</td><td>Runs <code>25628508822</code>, <code>25628614468</code>, and <code>25628772593</code> failed in <code>Prepare SSH</code>; server step was skipped.</td></tr>
+    <tr><td>Production preflight passed</td><td class="bad">Missing</td><td>Preflight is inside the skipped server step.</td></tr>
+    <tr><td>Real Backend Test rerun</td><td class="bad">Missing</td><td>Load runner is inside the skipped server step.</td></tr>
+    <tr><td><code>pageSize=12</code>, no seed, no cache, real URLs</td><td class="warn">Prepared, not executed</td><td>Workflow and manual fallback preserve <code>pageSize=12</code>, reject seed/fixture targets, use real public paths, and do not add cache.</td></tr>
+    <tr><td>Next slice selected and implemented</td><td class="bad">Missing</td><td>No valid post-deploy production load result exists.</td></tr>
+    <tr><td>Full e2e and CI after selected slice</td><td class="bad">Missing</td><td>No selected slice exists yet.</td></tr>
+  </table>
+  <h2>Current Evidence</h2>
+  <ul>
+    <li>Repo secrets: <code>PROMOTION_TOKEN</code> only.</li>
+    <li>No GitHub repository environments or variables; owner <code>kimwoonggon</code> is a user account; org secrets check returns HTTP 404.</li>
+    <li>Redeploy runs failed before server execution: <code>25628508822</code>, <code>25628614468</code>, <code>25628772593</code>.</li>
+    <li>Production Work detail still exposes stale fields <code>period</code>, <code>iconUrl</code>, <code>contentJson</code>; video still exposes <code>originalFileName</code>, <code>fileSize</code>, <code>createdAt</code>.</li>
+    <li>Local dev compose is repaired: backend <code>127.0.0.1:18080</code>, nginx <code>127.0.0.1:3000/3001</code>.</li>
+  </ul>
+  <h2>Manual Fallback</h2>
+  <p><code>pasteable-server-commands.md</code> is validated with <code>bash -n</code>. It keeps list targets at <code>pageSize=12</code>, rejects seed/fixture read paths, does not add cache, prints load summaries, and creates <code>prod-real-load-steps-artifacts.tgz</code>.</p>
+  <h2>Placeholder Secret Guard</h2>
+  <p><code>prod-runtime-redeploy.yml</code> now rejects obvious placeholder SSH secret values before writing key material or running SSH host-key checks. The guard does not echo secret values. This is a safety improvement only; it does not complete production deploy/preflight/load.</p>
+  <h2>Next Required Action</h2>
+  <p>Add <code>PROD_SSH_HOST</code>, <code>PROD_SSH_USER</code>, <code>PROD_SSH_PRIVATE_KEY</code>, and <code>PROD_SSH_KNOWN_HOSTS</code>, then rerun <code>prod-runtime-redeploy.yml</code> on <code>main</code>. If secrets cannot be added, run <code>pasteable-server-commands.md</code> on the production host and provide the output/artifacts.</p>
+</body>
+</html>
