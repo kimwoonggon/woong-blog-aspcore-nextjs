@@ -39,6 +39,10 @@ describe('production runtime redeploy workflow', () => {
     expect(workflow).toContain('/api/public/blogs?page=1&pageSize=12')
     expect(workflow).toContain('reject_seed_path WORK_READ_PATH')
     expect(workflow).toContain('reject_seed_path STUDY_READ_PATH')
+    expect(workflow).toContain('prod-real-load-steps-summary.json')
+    expect(workflow).toContain('prod-real-load-steps-summary.md')
+    expect(workflow).toContain('Real load summary markdown:')
+    expect(workflow).toContain('missing expected real load summary artifacts')
     expect(workflow).not.toMatch(/cache/i)
 
     const allowlist = readWorkflow('scripts/main-runtime-allowlist.txt')

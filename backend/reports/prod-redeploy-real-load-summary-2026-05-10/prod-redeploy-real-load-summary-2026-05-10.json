@@ -1,0 +1,36 @@
+{
+  "generatedAt": "2026-05-10T22:44:00+09:00",
+  "status": "implemented_locally",
+  "activeGoalComplete": false,
+  "changed": [
+    ".github/workflows/prod-runtime-redeploy.yml",
+    "src/test/prod-runtime-redeploy-workflow.test.ts",
+    "todolist-2026-05-10.md"
+  ],
+  "behavior": [
+    "The production redeploy workflow sets OUTPUT_DIR for optional real load runs.",
+    "The workflow verifies prod-real-load-steps-summary.json and prod-real-load-steps-summary.md exist and are non-empty.",
+    "The workflow prints real load artifact paths and the markdown summary to the Actions log."
+  ],
+  "notChanged": [
+    "production application code",
+    "Docker compose runtime settings",
+    "cache behavior",
+    "load target semantics",
+    "production deployment state"
+  ],
+  "validation": [
+    "RED: npm test -- --run src/test/prod-runtime-redeploy-workflow.test.ts failed before implementation",
+    "PASS: npm test -- --run src/test/prod-runtime-redeploy-workflow.test.ts",
+    "PASS: npm test -- --run src/test/prod-runtime-redeploy-workflow.test.ts src/test/prod-real-load-steps.test.ts src/test/publish-ghcr-tags.test.ts",
+    "PASS: extracted remote heredoc bash -n /tmp/prod-runtime-redeploy-remote-summary.sh",
+    "PASS: npm run typecheck",
+    "PASS: git diff --check"
+  ],
+  "remainingBlockers": [
+    "Production SSH secrets or direct SSH access are still unavailable.",
+    "Production deploy/preflight/load have not executed.",
+    "CI and main promotion for this branch are still pending."
+  ],
+  "recommendation": "Open a PR into dev, watch CI, promote to main, then run prod-runtime-redeploy.yml after production SSH access exists."
+}
