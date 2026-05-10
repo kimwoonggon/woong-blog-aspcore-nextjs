@@ -94,7 +94,6 @@ describe('public detail route admin boundary', () => {
         period: null,
         tags: [],
         thumbnailUrl: null,
-        iconUrl: null,
         publishedAt: '2026-04-01T00:00:00.000Z',
         contentJson: JSON.stringify({ html: '<h2>Public work content</h2>' }),
         videosVersion: 0,

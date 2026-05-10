@@ -71,10 +71,8 @@ public sealed class HomeQueryStore(WoongBlogDbContext dbContext) : IHomeQuerySto
                 work.Title,
                 work.Excerpt,
                 work.Category,
-                work.Period,
                 work.Tags,
                 work.PublicThumbnailUrl,
-                work.PublicIconUrl,
                 work.PublishedAt))
             .ToListAsync(cancellationToken);
 
@@ -84,10 +82,8 @@ public sealed class HomeQueryStore(WoongBlogDbContext dbContext) : IHomeQuerySto
             work.Title,
             work.Excerpt,
             work.Category,
-            work.Period,
             work.Tags,
             work.PublicThumbnailUrl,
-            work.PublicIconUrl,
             work.PublishedAt
         )).ToList();
     }
@@ -140,10 +136,8 @@ public sealed class HomeQueryStore(WoongBlogDbContext dbContext) : IHomeQuerySto
         string Title,
         string Excerpt,
         string Category,
-        string? Period,
         string[] Tags,
         string PublicThumbnailUrl,
-        string PublicIconUrl,
         DateTimeOffset? PublishedAt);
 
     private sealed record RecentBlogRow(

@@ -49,10 +49,8 @@ describe('public home date fallbacks', () => {
         title: 'Work with malformed date',
         excerpt: 'Work excerpt',
         category: 'Platform',
-        period: null,
         tags: [],
         thumbnailUrl: '',
-        iconUrl: '',
         publishedAt: 'not-a-date',
       }],
       recentPosts: [{

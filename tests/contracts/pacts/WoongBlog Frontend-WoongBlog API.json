@@ -180,9 +180,7 @@
               {
                 "category": "platform",
                 "excerpt": "Excerpt",
-                "iconUrl": "/media/icon.png",
                 "id": "11111111-1111-1111-1111-111111111111",
-                "period": "2026",
                 "publishedAt": "2026-04-20T00:00:00Z",
                 "slug": "seeded-work",
                 "tags": [
@@ -370,7 +368,6 @@
               "html": "<p>Hello</p>"
             },
             "excerpt": "Excerpt",
-            "iconUrl": "/media/icon.png",
             "id": "55555555-5555-5555-5555-555555555555",
             "period": "2026",
             "publishedAt": "2026-04-20T00:00:00Z",
@@ -442,9 +439,7 @@
               {
                 "category": "platform",
                 "excerpt": "Excerpt",
-                "iconUrl": "/media/icon.png",
                 "id": "55555555-5555-5555-5555-555555555555",
-                "period": "2026",
                 "publishedAt": "2026-04-20T00:00:00Z",
                 "slug": "seeded-work",
                 "tags": [
