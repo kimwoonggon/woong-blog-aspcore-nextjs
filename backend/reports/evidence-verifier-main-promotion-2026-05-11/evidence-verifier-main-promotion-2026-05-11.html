@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Evidence Verifier Main Promotion Audit - 2026-05-11</title>
+  <style>body{font-family:Arial,sans-serif;line-height:1.55;max-width:920px;margin:32px auto;padding:0 20px;color:#111827}code{background:#f3f4f6;padding:2px 4px;border-radius:4px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #d1d5db;padding:8px;text-align:left}th{background:#f9fafb}.missing{color:#991b1b}.ok{color:#166534}</style>
+</head>
+<body>
+  <h1>Evidence Verifier Main Promotion Audit - 2026-05-11</h1>
+  <p>The guard improvement was merged to <code>dev</code>, promoted to <code>main</code>, and published as fresh GHCR <code>main</code> runtime images.</p>
+  <p><strong>Active goal status:</strong> <span class="missing">not complete</span>. Production deploy, preflight, Real Backend Test, result-based slice selection, and after-slice validation remain missing.</p>
+  <h2>Completed Evidence</h2>
+  <ul>
+    <li class="ok">PR #171 merged to dev: <code>96f748a2bc32a0ef1ac6cd108c3329157ba86a76</code></li>
+    <li class="ok">PR #172 merged to main: <code>08978b2f8cb472d4c50cf29e165d758cc4ffd382</code></li>
+    <li class="ok">CI Dev, CI Main Runtime PR, CI Main Runtime push, and Publish GHCR Main all succeeded.</li>
+    <li class="ok">Backend main digest: <code>sha256:677068ac570d8550e40b4c9985f606f47d6334f2ee9abbcb4fd0572459e976d8</code></li>
+    <li class="ok">Frontend main digest: <code>sha256:9cf9d1160d7155870a20249a589781439235ace68fdcc40e1393c2a5e93d5088</code></li>
+  </ul>
+  <h2>Missing Active Goal Items</h2>
+  <ul>
+    <li class="missing">Server pull/deploy.</li>
+    <li class="missing">Production preflight.</li>
+    <li class="missing">Production Real Backend Test with pageSize=12, no seed, no cache, real Work/Study URL.</li>
+    <li class="missing">Result-based backend slice selection.</li>
+    <li class="missing">After-slice full E2E and CI.</li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Deploy the published main runtime images, collect a production evidence bundle, verify it, then choose the next backend slice from current load-test results.</p>
+</body>
+</html>

@@ -1,0 +1,37 @@
+{
+  "task": "evidence-verifier-main-promotion",
+  "date": "2026-05-11",
+  "summary": "Guard improvement merged to dev, promoted to main, and published as GHCR main runtime images.",
+  "completed": [
+    "PR #171 merged to dev",
+    "CI Dev success",
+    "PR #172 merged to main",
+    "CI Main Runtime PR success",
+    "CI Main Runtime push success",
+    "Publish GHCR Main success",
+    "GHCR backend and frontend main digests verified"
+  ],
+  "missing": [
+    "server pull/deploy",
+    "production preflight",
+    "production Real Backend Test",
+    "result-based backend slice selection",
+    "after-slice full E2E and CI"
+  ],
+  "evidence": {
+    "devSha": "96f748a2bc32a0ef1ac6cd108c3329157ba86a76",
+    "mainSha": "08978b2f8cb472d4c50cf29e165d758cc4ffd382",
+    "pr171": "https://github.com/kimwoonggon/woong-blog-aspcore-nextjs/pull/171",
+    "pr172": "https://github.com/kimwoonggon/woong-blog-aspcore-nextjs/pull/172",
+    "ciDevRun": "https://github.com/kimwoonggon/woong-blog-aspcore-nextjs/actions/runs/25669251054",
+    "mainPrCiRun": "https://github.com/kimwoonggon/woong-blog-aspcore-nextjs/actions/runs/25669557936",
+    "mainPushCiRun": "https://github.com/kimwoonggon/woong-blog-aspcore-nextjs/actions/runs/25669840505",
+    "ghcrMainPublishRun": "https://github.com/kimwoonggon/woong-blog-aspcore-nextjs/actions/runs/25670130541",
+    "backendMainIndexDigest": "sha256:677068ac570d8550e40b4c9985f606f47d6334f2ee9abbcb4fd0572459e976d8",
+    "backendMainAmd64Manifest": "sha256:d1ef5eb9eeec2597168717b13530afb0030c8747bbcbda54da4c3958709a7282",
+    "frontendMainIndexDigest": "sha256:9cf9d1160d7155870a20249a589781439235ace68fdcc40e1393c2a5e93d5088",
+    "frontendMainAmd64Manifest": "sha256:1851158728ad4d1d7bbbe9182ffb24256b21fe8747ab008865f58d044736d5c7"
+  },
+  "activeGoalComplete": false,
+  "recommendation": "Deploy the published main runtime images, collect a production evidence bundle, verify it, then choose the next backend slice from current load-test results."
+}
