@@ -110,6 +110,32 @@ extract_json_number() {
     | sed -n "s/.*\"${key}\":\\([0-9][0-9.]*\\).*/\\1/p"
 }
 
+compact_json() {
+  tr -d '\n\r\t ' < "$1"
+}
+
+require_json_page_size_12() {
+  local label="$1"
+  local body_file="$2"
+  if ! compact_json "${body_file}" | grep -q '"pageSize":12'; then
+    fail "${label} does not report pageSize=12"
+  fi
+}
+
+reject_json_keys() {
+  local label="$1"
+  local body_file="$2"
+  shift 2
+  local compacted
+  compacted="$(compact_json "${body_file}")"
+  local key
+  for key in "$@"; do
+    if grep -q "\"${key}\":" <<<"${compacted}"; then
+      fail "${label} still exposes stale field: ${key}"
+    fi
+  done
+}
+
 compose_config="$("${compose[@]}" config 2>/dev/null)" \
   || fail "docker compose config failed for ${COMPOSE_FILE}"
 
@@ -227,6 +253,10 @@ else
 fi
 info "app elapsed header: available (${app_elapsed})"
 info "gzip public response: available"
+
+require_json_page_size_12 "public Work list" "${public_body}"
+reject_json_keys "public Work list" "${public_body}" iconUrl period contentJson originalFileName fileSize createdAt
+info "public Work list contract: current"
 
 if [[ "${REQUIRE_PUBLIC_WORK_VIDEO_CONTRACT}" == "1" ]]; then
   if [[ -z "${WORK_READ_PATH}" ]]; then

@@ -30,6 +30,7 @@ function createEvidenceDir() {
     '[prod-runtime-preflight] nginx request_time header: available (0.010)',
     '[prod-runtime-preflight] app elapsed header: available (2.1)',
     '[prod-runtime-preflight] gzip public response: available',
+    '[prod-runtime-preflight] public Work list contract: current',
     '[prod-runtime-preflight] public Work detail contract: current',
     '[prod-runtime-preflight] PASS',
   ].join('\n'))
@@ -136,6 +137,24 @@ describe('production runtime evidence verifier', () => {
 
     expect(result.status).not.toBe(0)
     expect(result.stderr).toContain('main SHA mismatch')
+  })
+
+  it('fails when preflight evidence does not prove the public Work list contract is current', () => {
+    const evidenceDir = createEvidenceDir()
+    writeFileSync(path.join(evidenceDir, 'prod-runtime-preflight.log'), [
+      '[prod-runtime-preflight] required services: backend frontend nginx db',
+      '[prod-runtime-preflight] LoadTesting__BaseUrl=https://woonglab.com',
+      '[prod-runtime-preflight] nginx request_time header: available (0.010)',
+      '[prod-runtime-preflight] app elapsed header: available (2.1)',
+      '[prod-runtime-preflight] gzip public response: available',
+      '[prod-runtime-preflight] public Work detail contract: current',
+      '[prod-runtime-preflight] PASS',
+    ].join('\n'))
+
+    const result = runVerifier(evidenceDir)
+
+    expect(result.status).not.toBe(0)
+    expect(result.stderr).toContain('preflight log is missing public Work list contract')
   })
 
   it('fails when real load evidence bypasses the public nginx origin', () => {

@@ -60,6 +60,7 @@ require_log_line "PASS" '\[prod-runtime-preflight\] PASS'
 require_log_line "nginx timing" 'nginx request_time header: available'
 require_log_line "app timing" 'app elapsed header: available'
 require_log_line "gzip public response" 'gzip public response: available'
+require_log_line "public Work list contract" 'public Work list contract: current'
 require_log_line "public Work detail contract" 'public Work detail contract: current'
 
 if [[ -z "${MAIN_SHA}" ]]; then
