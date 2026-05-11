@@ -1,0 +1,39 @@
+{
+  "baseURL": "http://127.0.0.1:3006",
+  "payload": {
+    "scenario": "public-api-rps",
+    "runner": "k6",
+    "target": "public-api-mix",
+    "rate": 100,
+    "peakRate": 100,
+    "durationSeconds": 20,
+    "maxVus": 100,
+    "startVus": 1,
+    "targets": [
+      {
+        "id": "work-list",
+        "label": "Work list",
+        "path": "/api/public/works?page=1&pageSize=12",
+        "group": "work"
+      },
+      {
+        "id": "work-read",
+        "label": "Work read",
+        "path": "/api/public/works/video-only-refresh-1778472933526",
+        "group": "work"
+      },
+      {
+        "id": "study-list",
+        "label": "Study list",
+        "path": "/api/public/blogs?page=1&pageSize=12",
+        "group": "study"
+      },
+      {
+        "id": "study-read",
+        "label": "Study read",
+        "path": "/api/public/blogs/saved-blog-1778472860213",
+        "group": "study"
+      }
+    ]
+  }
+}

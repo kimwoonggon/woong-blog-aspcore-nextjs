@@ -95,6 +95,13 @@ public sealed class PostgresPersistenceContractTests : IClassFixture<PostgresPer
             connection,
             "SELECT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'IX_Works_PublicList_Covering')",
             cancellationToken));
+        var worksPublicListIndexDefinition = await ScalarStringAsync(
+            connection,
+            "SELECT indexdef FROM pg_indexes WHERE indexname = 'IX_Works_PublicList_Covering'",
+            cancellationToken);
+        Assert.Contains("\"PublicThumbnailUrl\"", worksPublicListIndexDefinition, StringComparison.Ordinal);
+        Assert.DoesNotContain("\"Period\"", worksPublicListIndexDefinition, StringComparison.Ordinal);
+        Assert.DoesNotContain("\"PublicIconUrl\"", worksPublicListIndexDefinition, StringComparison.Ordinal);
         Assert.True(await ExistsAsync(
             connection,
             "SELECT EXISTS (SELECT 1 FROM \"SchemaPatches\" WHERE \"Id\" = '20260419_content_search_fields')",
@@ -113,6 +120,10 @@ public sealed class PostgresPersistenceContractTests : IClassFixture<PostgresPer
             cancellationToken));
         Assert.True(await ExistsAsync(
             connection,
+            "SELECT EXISTS (SELECT 1 FROM \"SchemaPatches\" WHERE \"Id\" = '20260511_public_work_list_covering_index_visible_fields')",
+            cancellationToken));
+        Assert.True(await ExistsAsync(
+            connection,
             "SELECT EXISTS (SELECT 1 FROM \"SchemaPatches\" WHERE \"Id\" = '20260506_public_work_social_share_message')",
             cancellationToken));
         Assert.True(await ExistsAsync(
@@ -126,6 +137,47 @@ public sealed class PostgresPersistenceContractTests : IClassFixture<PostgresPer
         Assert.True(await ExistsAsync(
             connection,
             "SELECT EXISTS (SELECT 1 FROM \"SchemaPatches\" WHERE \"Id\" = '20260506_public_work_thumbnail_fallback_backfill')",
+            cancellationToken));
+    }
+
+    [Fact]
+    public async Task Bootstrapper_RebuildsLegacyWideWorkPublicListCoveringIndex()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await using var dbContext = CreateDbContext();
+        await ResetDatabaseAsync(dbContext, cancellationToken);
+
+        await DatabaseBootstrapper.InitializeAsync(dbContext, cancellationToken);
+
+        await dbContext.Database.ExecuteSqlRawAsync(
+            """
+            DROP INDEX IF EXISTS "IX_Works_PublicList_Covering";
+
+            CREATE INDEX "IX_Works_PublicList_Covering"
+            ON "Works" ("Published", "PublishedAt" DESC)
+            INCLUDE ("Id", "Slug", "Title", "Excerpt", "Category", "Period", "Tags", "PublicThumbnailUrl", "PublicIconUrl");
+
+            DELETE FROM "SchemaPatches"
+            WHERE "Id" = '20260511_public_work_list_covering_index_visible_fields';
+            """,
+            cancellationToken);
+        dbContext.ChangeTracker.Clear();
+
+        await DatabaseBootstrapper.InitializeAsync(dbContext, cancellationToken);
+
+        var connection = dbContext.Database.GetDbConnection();
+        await connection.OpenAsync(cancellationToken);
+
+        var worksPublicListIndexDefinition = await ScalarStringAsync(
+            connection,
+            "SELECT indexdef FROM pg_indexes WHERE indexname = 'IX_Works_PublicList_Covering'",
+            cancellationToken);
+        Assert.Contains("\"PublicThumbnailUrl\"", worksPublicListIndexDefinition, StringComparison.Ordinal);
+        Assert.DoesNotContain("\"Period\"", worksPublicListIndexDefinition, StringComparison.Ordinal);
+        Assert.DoesNotContain("\"PublicIconUrl\"", worksPublicListIndexDefinition, StringComparison.Ordinal);
+        Assert.True(await ExistsAsync(
+            connection,
+            "SELECT EXISTS (SELECT 1 FROM \"SchemaPatches\" WHERE \"Id\" = '20260511_public_work_list_covering_index_visible_fields')",
             cancellationToken));
     }
 
@@ -1127,6 +1179,17 @@ public sealed class PostgresPersistenceContractTests : IClassFixture<PostgresPer
         command.CommandText = sql;
         var result = await command.ExecuteScalarAsync(cancellationToken);
         return result is true;
+    }
+
+    private static async Task<string> ScalarStringAsync(
+        DbConnection connection,
+        string sql,
+        CancellationToken cancellationToken)
+    {
+        await using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        var result = await command.ExecuteScalarAsync(cancellationToken);
+        return Assert.IsType<string>(result);
     }
 
     private sealed class CommandTextCaptureInterceptor : DbCommandInterceptor

@@ -21,10 +21,11 @@ test('home page editor uploads a profile image and public home renders it', asyn
   ])
   await expect(homeSection.getByRole('button', { name: 'Remove Image' })).toBeVisible()
 
-  await Promise.all([
-    page.waitForResponse((res) => res.url().includes('/api/admin/pages') && res.request().method() === 'PUT' && res.ok()),
-    homeSection.getByRole('button', { name: 'Save Changes' }).click(),
-  ])
+  const saveResponse = page.waitForResponse((res) => res.url().includes('/api/admin/pages') && res.request().method() === 'PUT' && res.ok())
+  const revalidateResponse = page.waitForResponse((res) => res.url().includes('/revalidate-public') && res.request().method() === 'POST' && res.ok())
+  await homeSection.getByRole('button', { name: 'Save Changes' }).click()
+  await saveResponse
+  await revalidateResponse
 
   await page.goto('/')
   const profileImage = page.locator('main img').first()
