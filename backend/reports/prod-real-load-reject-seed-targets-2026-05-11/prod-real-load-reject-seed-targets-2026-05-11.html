@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Prod Real Load Reject Seed Targets - 2026-05-11</title>
+  <style>body{font-family:system-ui,sans-serif;max-width:920px;margin:40px auto;line-height:1.5;color:#162033}code{background:#eef2f7;padding:2px 4px;border-radius:4px}.ok{color:#116329;font-weight:700}.warn{color:#8a4b00;font-weight:700}</style>
+</head>
+<body>
+  <h1>Prod Real Load Reject Seed Targets - 2026-05-11</h1>
+  <p class="ok">Local slice complete.</p>
+  <p>The standalone <code>scripts/prod-real-load-steps.sh</code> runner now rejects <code>seed</code> and <code>fixture</code> Work/Study read targets before invoking k6.</p>
+  <ul>
+    <li>List target remains <code>pageSize=12</code>.</li>
+    <li>Read targets must be explicit real public Work/Study API paths.</li>
+    <li>k6 still appends <code>__k6Vu</code> and <code>__k6Iter</code> to avoid same-URL cache shortcut effects.</li>
+    <li>Server setup docs now include preflight and real-load commands.</li>
+  </ul>
+  <h2>Validation</h2>
+  <ul>
+    <li><code>npm test -- src/test/prod-real-load-steps.test.ts</code>: RED failed as expected before implementation, then GREEN passed 4 tests.</li>
+    <li><code>npm test -- src/test/prod-runtime-preflight.test.ts src/test/prod-real-load-steps.test.ts</code>: passed 10 tests.</li>
+    <li><code>git diff --check</code>: passed.</li>
+  </ul>
+  <p class="warn">The broader active goal remains incomplete until the server deploys main, preflight runs, and a fresh Real Backend Test result exists.</p>
+</body>
+</html>
