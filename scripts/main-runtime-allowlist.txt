@@ -8,6 +8,7 @@
 LICENSE
 README.md
 DEPLOYMENT.md
+docs/walkthroughs/main-server-setup.md
 .env.prod.example
 Dockerfile
 backend/Dockerfile

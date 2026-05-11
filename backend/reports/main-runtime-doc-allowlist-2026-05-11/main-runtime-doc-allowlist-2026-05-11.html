@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <title>Main Runtime Setup Doc Allowlist Audit - 2026-05-11</title>
+  <style>body{font-family:sans-serif;line-height:1.5;max-width:920px;margin:32px auto;padding:0 16px}code{background:#f4f4f4;padding:2px 4px}li{margin:4px 0}</style>
+</head>
+<body>
+  <h1>Main Runtime Setup Doc Allowlist Audit - 2026-05-11</h1>
+  <p>The server setup document existed on dev but was not promoted to main because it was missing from <code>scripts/main-runtime-allowlist.txt</code>.</p>
+  <h2>Changed</h2>
+  <ul>
+    <li>Added <code>docs/walkthroughs/main-server-setup.md</code> to the main runtime promotion allowlist.</li>
+    <li>Updated the dated TODO with evidence and remaining gates.</li>
+  </ul>
+  <h2>Remaining</h2>
+  <p>Dev CI, main promotion, and final <code>origin/main</code> document verification must still pass.</p>
+</body>
+</html>
