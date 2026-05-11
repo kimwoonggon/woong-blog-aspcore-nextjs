@@ -31,6 +31,7 @@ scripts/ci-compose-smoke.sh
 scripts/prod-runtime-preflight.sh
 scripts/prod-public-origin-preflight.sh
 scripts/prod-real-load-steps.sh
+scripts/prod-runtime-evidence-bundle.sh
 scripts/main-runtime-allowlist.txt
 scripts/promote-main-runtime.sh
 scripts/check-e2e-readiness.mjs

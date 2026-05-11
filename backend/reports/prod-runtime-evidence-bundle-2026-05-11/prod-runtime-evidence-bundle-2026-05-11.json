@@ -1,0 +1,47 @@
+{
+  "report": "prod-runtime-evidence-bundle-2026-05-11",
+  "date": "2026-05-11",
+  "goal": "Create a production runtime evidence bundle after preflight and Real Backend Test.",
+  "changed_files": [
+    ".github/workflows/prod-runtime-redeploy.yml",
+    "scripts/prod-runtime-evidence-bundle.sh",
+    "scripts/main-runtime-allowlist.txt",
+    "src/test/prod-runtime-evidence-bundle.test.ts",
+    "src/test/prod-runtime-redeploy-workflow.test.ts",
+    "todolist-2026-05-11.md"
+  ],
+  "generated_by_script": [
+    "production-runtime-evidence-manifest.json",
+    "production-runtime-evidence-summary.md",
+    "production-runtime-evidence.tar.gz"
+  ],
+  "bundle_validations": {
+    "preflight_log_required": true,
+    "preflight_pass_required": true,
+    "nginx_timing_required": true,
+    "app_timing_required": true,
+    "gzip_required": true,
+    "public_work_contract_required": true,
+    "real_load_json_required": true,
+    "real_load_markdown_required": true,
+    "list_page_size_12_required": true,
+    "seed_or_fixture_targets_rejected": true,
+    "backend_direct_base_url_rejected": true
+  },
+  "validations": [
+    {
+      "command": "npx vitest run src/test/prod-runtime-evidence-bundle.test.ts --pool=threads --maxWorkers=2",
+      "result": "RED failed before implementation because the script was missing, then GREEN passed with 3 tests"
+    },
+    {
+      "command": "bash -n scripts/prod-runtime-evidence-bundle.sh",
+      "result": "passed"
+    },
+    {
+      "command": "npx vitest run src/test/prod-runtime-evidence-bundle.test.ts src/test/prod-runtime-redeploy-workflow.test.ts src/test/prod-real-load-steps.test.ts --pool=threads --maxWorkers=2",
+      "result": "passed, 8 tests"
+    }
+  ],
+  "objective_status": "not_complete",
+  "reason_objective_not_complete": "The repository now supports evidence collection, but production server pull/deploy, production preflight, production Real Backend Test, result-selected slice implementation, full E2E, and CI evidence are still required."
+}

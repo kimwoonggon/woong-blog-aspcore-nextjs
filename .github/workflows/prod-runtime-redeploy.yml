@@ -205,10 +205,12 @@ jobs:
           docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --remove-orphans
           docker compose --env-file .env.prod -f docker-compose.prod.yml ps
 
+          preflight_log="backend/reports/prod-runtime-preflight-$(date -u +%Y%m%dT%H%M%SZ).log"
+          mkdir -p "$(dirname "${preflight_log}")"
           BASE_URL="${BASE_URL}" \
           REQUIRE_PUBLIC_WORK_VIDEO_CONTRACT=1 \
           WORK_READ_PATH="${WORK_READ_PATH}" \
-          ./scripts/prod-runtime-preflight.sh
+          ./scripts/prod-runtime-preflight.sh 2>&1 | tee "${preflight_log}"
 
           reject_seed_path() {
             local label="$1"
@@ -274,6 +276,11 @@ jobs:
             printf '  summary json: %s\n' "${summary_json}"
             printf 'Real load summary markdown:\n'
             cat "${summary_md}"
+            PREFLIGHT_LOG="${preflight_log}" \
+            REAL_LOAD_DIR="${output_dir}" \
+            OUTPUT_DIR="backend/reports/production-runtime-evidence-$(date -u +%Y%m%dT%H%M%SZ)" \
+            MAIN_SHA="$(git rev-parse HEAD)" \
+            ./scripts/prod-runtime-evidence-bundle.sh
           else
             echo "RUN_REAL_LOAD=false; production preflight completed without running load steps."
           fi
