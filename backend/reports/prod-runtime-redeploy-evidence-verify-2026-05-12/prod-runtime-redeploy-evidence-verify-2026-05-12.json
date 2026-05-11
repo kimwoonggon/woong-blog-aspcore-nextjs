@@ -1,0 +1,56 @@
+{
+  "task": "prod-runtime-redeploy-evidence-verify",
+  "date": "2026-05-12",
+  "status": "implemented_locally",
+  "activeGoalComplete": false,
+  "changed": [
+    ".github/workflows/prod-runtime-redeploy.yml",
+    "src/test/prod-runtime-redeploy-workflow.test.ts"
+  ],
+  "preparedEvidencePath": [
+    "actual checked-out main SHA",
+    "actual pulled backend runtime image digest",
+    "actual pulled frontend runtime image digest",
+    "production runtime evidence bundle",
+    "production runtime evidence verifier"
+  ],
+  "blockedRequirements": [
+    "production SSH secrets or server-side execution",
+    "production preflight success after deploy",
+    "production Real Backend Test result",
+    "result-based next slice",
+    "after-slice full E2E and CI"
+  ],
+  "validation": [
+    {
+      "name": "red-focused-vitest",
+      "command": "vitest --run src/test/prod-runtime-redeploy-workflow.test.ts --pool=threads --maxWorkers=2 --reporter=dot",
+      "result": "failed before implementation because prod-runtime-evidence-verify.sh was missing from workflow"
+    },
+    {
+      "name": "green-focused-vitest",
+      "command": "PATH=/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/node_modules/.bin:$PATH vitest --pool=threads --maxWorkers=2 --reporter=dot --run src/test/prod-runtime-redeploy-workflow.test.ts",
+      "result": "passed"
+    },
+    {
+      "name": "related-regression-vitest",
+      "command": "PATH=/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/node_modules/.bin:$PATH vitest --pool=threads --maxWorkers=2 --reporter=dot --run src/test/prod-runtime-redeploy-workflow.test.ts src/test/prod-runtime-evidence-verify.test.ts src/test/prod-runtime-evidence-bundle.test.ts src/test/prod-real-load-steps.test.ts src/test/prod-runtime-preflight.test.ts src/test/prod-public-origin-preflight.test.ts",
+      "result": "passed, 6 files and 31 tests"
+    },
+    {
+      "name": "shell-syntax",
+      "command": "bash -n scripts/prod-runtime-evidence-verify.sh scripts/prod-runtime-evidence-bundle.sh scripts/prod-real-load-steps.sh scripts/prod-runtime-preflight.sh scripts/prod-public-origin-preflight.sh",
+      "result": "passed"
+    },
+    {
+      "name": "focused-eslint",
+      "command": "eslint src/test/prod-runtime-redeploy-workflow.test.ts",
+      "result": "passed"
+    },
+    {
+      "name": "diff-check",
+      "command": "git diff --check",
+      "result": "passed"
+    }
+  ]
+}
