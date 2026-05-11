@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Main GHCR Next.js SWC Fix Audit - 2026-05-11</title>
+  <style>
+    body { font-family: sans-serif; max-width: 900px; margin: 2rem auto; line-height: 1.5; color: #1f2937; }
+    code { background: #f3f4f6; padding: 0.1rem 0.25rem; border-radius: 0.25rem; }
+    pre { background: #111827; color: #f9fafb; padding: 1rem; overflow: auto; border-radius: 0.5rem; }
+    h1, h2 { color: #111827; }
+  </style>
+</head>
+<body>
+  <h1>Main GHCR Next.js SWC Fix Audit - 2026-05-11</h1>
+  <h2>Summary</h2>
+  <p>Fixed the frontend Dockerfile build-stage SWC compatibility issue that blocked <code>Publish GHCR Main</code> backend matrix smoke builds.</p>
+  <h2>Changed</h2>
+  <ul>
+    <li>Added <code>src/test/frontend-dockerfile-swc.test.ts</code>.</li>
+    <li>Installed <code>libc6-compat</code> in the Dockerfile builder stage before <code>npm run build</code>.</li>
+    <li>Updated <code>todolist-2026-05-11.md</code>.</li>
+  </ul>
+  <h2>Validations</h2>
+  <ul>
+    <li>RED targeted Vitest failed before implementation.</li>
+    <li>GREEN targeted Vitest passed after implementation.</li>
+    <li><code>docker build -f Dockerfile -t local/woong-blog-frontend:swc-fix .</code> passed.</li>
+    <li>Targeted regression Vitest passed.</li>
+  </ul>
+  <h2>Risks</h2>
+  <ul>
+    <li>GitHub Actions hosted runner validation is still required.</li>
+    <li>Existing Node.js 20 action deprecation warnings remain.</li>
+    <li>Existing Dockerfile legacy ENV style warnings remain.</li>
+    <li>Existing npm audit warnings remain.</li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Open a PR to <code>dev</code>, promote to <code>main</code> after CI, and verify <code>Publish GHCR Main</code> succeeds for the latest main SHA.</p>
+</body>
+</html>
