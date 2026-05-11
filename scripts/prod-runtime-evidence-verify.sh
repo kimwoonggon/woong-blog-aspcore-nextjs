@@ -115,6 +115,29 @@ function valuesFromTargets(targets) {
   }))
 }
 
+function isBackendDirectUrl(value) {
+  try {
+    const url = new URL(value)
+    return /^(backend|localhost|127\.0\.0\.1)$/i.test(url.hostname)
+  } catch {
+    return false
+  }
+}
+
+function isPublicDetailTarget(value, kind) {
+  const prefix = kind === 'work' ? '/api/public/works/' : '/api/public/blogs/'
+  if (String(value || '').startsWith(prefix)) {
+    return true
+  }
+
+  try {
+    const url = new URL(value)
+    return url.protocol === 'https:' && !isBackendDirectUrl(value) && url.pathname.startsWith(prefix)
+  } catch {
+    return false
+  }
+}
+
 requireEqual('main SHA', manifest.mainSha, expectedMainSha)
 requireEqual('backend image digest', manifest.images?.backendDigest, expectedBackendDigest)
 requireEqual('frontend image digest', manifest.images?.frontendDigest, expectedFrontendDigest)
@@ -168,11 +191,11 @@ for (const [index, step] of realLoad.steps.entries()) {
   if (studyList !== '/api/public/blogs?page=1&pageSize=12') {
     fail(`step ${index + 1} study_list must be /api/public/blogs?page=1&pageSize=12`)
   }
-  if (!String(workRead || '').startsWith('/api/public/works/')) {
-    fail(`step ${index + 1} work_read must be a public Work detail path`)
+  if (!isPublicDetailTarget(workRead, 'work')) {
+    fail(`step ${index + 1} work_read must be a public Work detail path or HTTPS URL`)
   }
-  if (!String(studyRead || '').startsWith('/api/public/blogs/')) {
-    fail(`step ${index + 1} study_read must be a public Study detail path`)
+  if (!isPublicDetailTarget(studyRead, 'study')) {
+    fail(`step ${index + 1} study_read must be a public Study detail path or HTTPS URL`)
   }
 
   const failedRate = Number(step.http?.failedRate ?? 0)
