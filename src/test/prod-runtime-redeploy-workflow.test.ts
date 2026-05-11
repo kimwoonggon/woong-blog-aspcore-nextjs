@@ -52,5 +52,6 @@ describe('production runtime redeploy workflow', () => {
     const allowlist = readWorkflow('scripts/main-runtime-allowlist.txt')
     expect(allowlist).toContain('.github/workflows/prod-runtime-redeploy.yml')
     expect(allowlist).toContain('scripts/prod-runtime-evidence-bundle.sh')
+    expect(allowlist).toContain('scripts/prod-runtime-evidence-verify.sh')
   })
 })

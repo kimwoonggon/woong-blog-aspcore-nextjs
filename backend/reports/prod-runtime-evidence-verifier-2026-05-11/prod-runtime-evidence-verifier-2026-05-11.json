@@ -1,0 +1,67 @@
+{
+  "task": "prod-runtime-evidence-verifier-2026-05-11",
+  "date": "2026-05-11",
+  "status": "validated-local",
+  "goals": [
+    "Verify returned main runtime evidence without production SSH or remote execution",
+    "Reject stale SHA or image digest evidence when expected values are supplied",
+    "Reject Real Backend Test evidence that bypasses public HTTPS origin",
+    "Reject seed or fixture targets",
+    "Reject weakened list targets that are not pageSize=12"
+  ],
+  "changed": [
+    "scripts/prod-runtime-evidence-verify.sh",
+    "src/test/prod-runtime-evidence-verify.test.ts",
+    "scripts/main-runtime-allowlist.txt",
+    "docs/walkthroughs/main-server-setup.md",
+    "src/test/prod-runtime-redeploy-workflow.test.ts",
+    "todolist-2026-05-11.md"
+  ],
+  "intentionallyNotChanged": [
+    "production SSH and remote execution",
+    "production secrets",
+    "Real Backend Test target policy",
+    "backend performance code",
+    "DTO shape",
+    "database schema",
+    "HLS pipeline",
+    "Docker runtime behavior"
+  ],
+  "validations": [
+    {
+      "command": "npx vitest run src/test/prod-runtime-evidence-verify.test.ts --pool=threads --maxWorkers=2",
+      "result": "RED failed as expected before verifier script existed"
+    },
+    {
+      "command": "npx vitest run src/test/prod-runtime-evidence-verify.test.ts --pool=threads --maxWorkers=2",
+      "result": "PASS, 5 tests"
+    },
+    {
+      "command": "npx vitest run src/test/prod-runtime-evidence-verify.test.ts src/test/prod-runtime-evidence-bundle.test.ts src/test/prod-runtime-redeploy-workflow.test.ts --pool=threads --maxWorkers=2",
+      "result": "PASS, 9 tests"
+    },
+    {
+      "command": "bash -n scripts/prod-runtime-evidence-verify.sh scripts/prod-runtime-evidence-bundle.sh scripts/prod-real-load-steps.sh scripts/prod-runtime-preflight.sh scripts/prod-public-origin-preflight.sh",
+      "result": "PASS"
+    },
+    {
+      "command": "git diff --check -- changed files",
+      "result": "PASS"
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "PASS"
+    },
+    {
+      "command": "npm run lint",
+      "result": "PASS with 0 errors and 5 existing warnings"
+    }
+  ],
+  "risks": [
+    "Actual server-side preflight and Real Backend Test execution are still required before interpreting production numbers.",
+    "SHA and digest checks are optional unless expected values are supplied.",
+    "The verifier validates evidence contract and load hygiene, not performance root cause.",
+    "Full E2E was not rerun because no app runtime behavior changed."
+  ],
+  "recommendation": "Merge through dev and promote to main, then use this verifier on returned production runtime evidence before selecting the next backend performance slice."
+}
