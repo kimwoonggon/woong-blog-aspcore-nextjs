@@ -46,13 +46,25 @@ test('work detail exposes a desktop table of contents that anchors into the arti
   expect(tocBox).toBeTruthy()
   expect(contentLayoutBox).toBeTruthy()
   expect(tocBox!.y + tocBox!.height).toBeLessThanOrEqual(contentLayoutBox!.y + contentLayoutBox!.height + 2)
-  expect(tocBox!.width).toBeGreaterThanOrEqual(280)
+  expect(tocBox!.width).toBeGreaterThanOrEqual(312)
+
+  const titleBox = await toc.getByText('On This Work').boundingBox()
+  const collapseButton = toc.getByRole('button', { name: 'Collapse' })
+  const collapseButtonBox = await collapseButton.boundingBox()
+  expect(titleBox).toBeTruthy()
+  expect(collapseButtonBox).toBeTruthy()
+  expect(titleBox!.width).toBeGreaterThanOrEqual(220)
+  expect(titleBox!.x + titleBox!.width).toBeLessThanOrEqual(collapseButtonBox!.x - 8)
 
   const longHeadingLinkBox = await toc
     .getByRole('link', { name: 'Work Fixture Section With A Long Title That Should Still Have Enough Reading Width' })
     .boundingBox()
   expect(longHeadingLinkBox).toBeTruthy()
-  expect(longHeadingLinkBox!.width).toBeGreaterThanOrEqual(248)
+  expect(longHeadingLinkBox!.width).toBeGreaterThanOrEqual(280)
+
+  await collapseButton.click()
+  await expect(toc.getByRole('button', { name: 'Expand' })).toBeVisible()
+  expect((await toc.boundingBox())!.width).toBeGreaterThanOrEqual(312)
 
   await page.getByTestId('work-related-shell').scrollIntoViewIfNeeded()
   await expect(rail).toHaveAttribute('data-range-state', 'after')
