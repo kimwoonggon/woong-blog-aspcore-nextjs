@@ -49,6 +49,29 @@ PRE_ALLOCATED_VUS=100 \
 ./scripts/prod-real-load-steps.sh
 ```
 
+preflight와 Real Backend Test 결과를 하나의 증거 묶음으로 만들 때:
+
+```bash
+PREFLIGHT_LOG=backend/reports/prod-runtime-preflight.log \
+REAL_LOAD_DIR=backend/reports/prod-real-load-steps-<timestamp> \
+MAIN_SHA="$(git rev-parse HEAD)" \
+BACKEND_IMAGE_DIGEST=<pulled-backend-image-digest> \
+FRONTEND_IMAGE_DIGEST=<pulled-frontend-image-digest> \
+./scripts/prod-runtime-evidence-bundle.sh
+```
+
+반환받은 evidence 디렉터리나 `production-runtime-evidence.tar.gz`는 로컬에서 다시 검증한다:
+
+```bash
+EVIDENCE_DIR=backend/reports/production-runtime-evidence-<timestamp> \
+EXPECTED_MAIN_SHA=<expected-main-sha> \
+EXPECTED_BACKEND_IMAGE_DIGEST=<expected-backend-image-digest> \
+EXPECTED_FRONTEND_IMAGE_DIGEST=<expected-frontend-image-digest> \
+./scripts/prod-runtime-evidence-verify.sh
+```
+
+verifier가 실패하면 해당 Real Backend Test 결과로 다음 성능 slice를 고르지 않는다.
+
 Real Backend Test 조건:
 
 - list target은 `/api/public/works?page=1&pageSize=12`, `/api/public/blogs?page=1&pageSize=12`로 고정한다.
