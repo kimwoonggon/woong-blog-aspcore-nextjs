@@ -101,6 +101,12 @@ require_command node
 require_command k6
 require_command tar
 
+docker_auth_config="$(mktemp -d)"
+cleanup() {
+  rm -rf "${docker_auth_config}"
+}
+trap cleanup EXIT
+
 cd "${REPO_DIR}"
 [[ -f .env.prod ]] || die ".env.prod is required; create it from .env.prod.example and fill server secrets first"
 
@@ -126,17 +132,19 @@ upsert_env APP_ENV_FILE .env.prod
 upsert_env NGINX_DEFAULT_CONF ./nginx/prod.conf
 
 if [[ -n "${GHCR_TOKEN}" ]]; then
-  printf '%s' "${GHCR_TOKEN}" | docker login ghcr.io -u "${GHCR_USER}" --password-stdin >/dev/null
-  info "Logged in to ghcr.io with GHCR_TOKEN."
+  printf '%s' "${GHCR_TOKEN}" | docker --config "${docker_auth_config}" login ghcr.io -u "${GHCR_USER}" --password-stdin >/dev/null
+  info "Logged in to ghcr.io with GHCR_TOKEN using a temporary Docker config."
+else
+  info "Using a temporary anonymous Docker config for public GHCR runtime images."
 fi
 
-docker manifest inspect "${BACKEND_IMAGE}" >/dev/null
-docker manifest inspect "${FRONTEND_IMAGE}" >/dev/null
+docker --config "${docker_auth_config}" manifest inspect "${BACKEND_IMAGE}" >/dev/null
+docker --config "${docker_auth_config}" manifest inspect "${FRONTEND_IMAGE}" >/dev/null
 
-docker compose --env-file .env.prod -f docker-compose.prod.yml config \
+docker --config "${docker_auth_config}" compose --env-file .env.prod -f docker-compose.prod.yml config \
   | grep -E 'image: ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-(frontend|backend):main'
 
-docker compose --env-file .env.prod -f docker-compose.prod.yml pull
+docker --config "${docker_auth_config}" compose --env-file .env.prod -f docker-compose.prod.yml pull
 docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --remove-orphans
 docker compose --env-file .env.prod -f docker-compose.prod.yml ps
 
