@@ -1,0 +1,24 @@
+{
+  "title": "Evidence Verifier Target Contract",
+  "date": "2026-05-11",
+  "status": "ready_for_pr",
+  "changed": [
+    "scripts/prod-runtime-evidence-verify.sh",
+    "scripts/prod-runtime-evidence-bundle.sh",
+    "src/test/prod-runtime-evidence-verify.test.ts",
+    "src/test/prod-runtime-evidence-bundle.test.ts"
+  ],
+  "validations": [
+    {
+      "command": "PATH=/mnt/d/woong-blog/woong-blog-backend-architecture-renovate-0419/woong-blog-aspcore-nextjs/node_modules/.bin:$PATH vitest --pool=threads --maxWorkers=2 --reporter=dot --run src/test/prod-real-load-steps.test.ts src/test/prod-runtime-preflight.test.ts src/test/prod-runtime-evidence-bundle.test.ts src/test/prod-runtime-evidence-verify.test.ts",
+      "result": "4 files passed, 24 tests passed"
+    }
+  ],
+  "nonGoals": [
+    "production SSH",
+    "remote server execution",
+    "production Real Backend Test execution",
+    "performance slice selection without production evidence"
+  ],
+  "recommendation": "Merge through dev, promote to main, then use the verifier on returned production evidence before selecting the next slice."
+}
