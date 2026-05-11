@@ -26,6 +26,7 @@ bash backend/reports/current-main-server-evidence-runbook-2026-05-11/server-curr
 
 이 script는 checkout된 current `main` SHA와 pull된 GHCR digest를 evidence에 기록하고 즉시 verifier에 넘긴다.
 특정 SHA/digest만 허용해야 할 때는 `EXPECTED_MAIN_SHA`, `EXPECTED_BACKEND_IMAGE_DIGEST`, `EXPECTED_FRONTEND_IMAGE_DIGEST`를 명시한다.
+GHCR manifest 확인과 image pull은 임시 Docker config를 사용하므로, 서버에 남아 있는 오래된 GHCR credential 때문에 public image pull이 깨지는 문제를 피한다.
 
 기동 후 production preflight:
 

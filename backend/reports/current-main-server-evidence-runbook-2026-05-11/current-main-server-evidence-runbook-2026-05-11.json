@@ -17,7 +17,8 @@
     "evidence bundle",
     "evidence verifier",
     "server setup doc runbook link",
-    "dynamic main SHA and image digest evidence"
+    "dynamic main SHA and image digest evidence",
+    "temporary Docker config for GHCR manifest and pull"
   ],
   "missing": [
     "server execution",
@@ -29,10 +30,11 @@
     "bashSyntax": "passed",
     "jsonParse": "passed",
     "diffCheck": "passed",
-    "stalePinRemoved": "passed"
+    "stalePinRemoved": "passed",
+    "temporaryDockerConfig": "passed"
   },
   "recommendation": "Run the generated script on the server after .env.prod secrets are present, then return the evidence tarball and summary markdown.",
-  "summary": "Server runbook now records checked-out main SHA and actual pulled digests dynamically to avoid stale self-pinning after promotion.",
+  "summary": "Server runbook records checked-out main SHA and actual pulled digests dynamically, and isolates GHCR manifest/pull operations with a temporary Docker config.",
   "runtimeInputs": {
     "backendImage": "ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-backend:main",
     "frontendImage": "ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-frontend:main",
