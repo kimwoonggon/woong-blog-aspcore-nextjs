@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>TOC Rail Readability And Collapse Audit - 2026-05-12</title>
+  <style>
+    body { font-family: system-ui, sans-serif; line-height: 1.55; max-width: 860px; margin: 40px auto; padding: 0 24px; color: #172033; }
+    h1, h2 { line-height: 1.2; }
+    code { background: #f4f6f8; padding: 2px 5px; border-radius: 5px; }
+    li { margin: 6px 0; }
+  </style>
+</head>
+<body>
+  <h1>TOC Rail Readability And Collapse Audit - 2026-05-12</h1>
+  <h2>Summary</h2>
+  <p>Improved public detail <code>On This Page</code> / <code>On This Work</code> desktop TOC rail readability by widening the rail, preventing collapse button/title squeeze, adding collapse summary copy, and strengthening tests.</p>
+  <h2>Validations</h2>
+  <ul>
+    <li>Red Vitest failed before implementation as expected.</li>
+    <li>Green Vitest passed: 9 tests.</li>
+    <li>Focused ESLint passed.</li>
+    <li>Docker compose build completed frontend Next build and TypeScript stage.</li>
+    <li>Dev health returned HTTP 200 on <code>http://127.0.0.1:13000/api/health</code>.</li>
+    <li>Focused Playwright passed: 2 tests.</li>
+    <li><code>git diff --check</code> passed.</li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Ship this targeted UI slice if the desired behavior is a more readable desktop TOC rail without changing mobile behavior or article body width.</p>
+</body>
+</html>

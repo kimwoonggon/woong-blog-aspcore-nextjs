@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useState } from 'react'
 
 interface TableOfContentsProps {
   contentRootId: string
@@ -60,6 +60,7 @@ export function TableOfContents({
   title = 'On This Page',
   testId = 'blog-toc',
 }: TableOfContentsProps) {
+  const listId = useId()
   const [items, setItems] = useState<HeadingItem[]>([])
   const [activeId, setActiveId] = useState<string>('')
   const [collapsed, setCollapsed] = useState(false)
@@ -111,35 +112,37 @@ export function TableOfContents({
 
   const renderedItems = useMemo(() => items, [items])
   const hasItems = renderedItems.length > 0
+  const hiddenSectionCopy = renderedItems.length === 1 ? '1 section hidden.' : `${renderedItems.length} sections hidden.`
 
   return (
     <nav
       aria-label="Table of contents"
       data-testid={testId}
-      className="min-w-0 rounded-2xl border border-border/80 bg-background/95 p-4 shadow-sm transition-all"
+      className="w-full min-w-0 rounded-2xl border border-border/80 bg-background/95 p-4 shadow-sm transition-all"
     >
-      <div className="mb-3 flex min-w-0 items-center justify-between gap-3">
-        <p className="min-w-0 flex-1 truncate text-xs font-semibold uppercase leading-snug tracking-[0.24em] text-muted-foreground">
+      <div className="mb-3 grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-2">
+        <p className="min-w-0 break-words pt-2 text-xs font-semibold uppercase leading-snug tracking-[0.18em] text-muted-foreground">
           {title}
         </p>
         <button
           type="button"
           onClick={() => setCollapsed((value) => !value)}
           disabled={!hasItems}
-          className="min-w-[4.75rem] shrink-0 whitespace-nowrap rounded-full border border-border/80 px-2 py-1 text-center text-[11px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          className="min-h-10 min-w-[4.75rem] shrink-0 whitespace-nowrap rounded-full border border-border/80 px-3 py-2 text-center text-[11px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
           aria-expanded={!collapsed}
+          aria-controls={hasItems ? listId : undefined}
         >
           {collapsed ? 'Expand' : 'Collapse'}
         </button>
       </div>
       {hasItems && !collapsed ? (
-        <ol className="min-w-0 space-y-2 text-sm">
+        <ol id={listId} className="min-w-0 space-y-2 text-sm">
           {renderedItems.map((item) => (
             <li key={item.id}>
               <a
                 href={`#${item.id}`}
                 className={[
-                  'block rounded-xl px-3 py-2 leading-snug transition-colors [overflow-wrap:anywhere]',
+                  'block w-full min-w-0 rounded-xl px-3 py-2 leading-snug transition-colors [overflow-wrap:anywhere]',
                   item.level === 3 ? 'ml-5 text-muted-foreground' : item.level === 2 ? 'ml-2 font-medium' : 'font-semibold',
                   activeId === item.id
                     ? 'bg-muted text-foreground'
@@ -152,8 +155,13 @@ export function TableOfContents({
           ))}
         </ol>
       ) : null}
+      {hasItems && collapsed ? (
+        <p data-testid={`${testId}-collapsed-summary`} className="min-w-0 rounded-xl border border-dashed border-border/70 px-3 py-2 text-sm text-muted-foreground [overflow-wrap:anywhere]">
+          {hiddenSectionCopy}
+        </p>
+      ) : null}
       {!hasItems ? (
-        <p data-testid="blog-toc-empty" className="rounded-xl border border-dashed border-border/70 px-3 py-2 text-sm text-muted-foreground">
+        <p data-testid="blog-toc-empty" className="min-w-0 rounded-xl border border-dashed border-border/70 px-3 py-2 text-sm text-muted-foreground [overflow-wrap:anywhere]">
           No sections yet. This page does not include headings.
         </p>
       ) : null}

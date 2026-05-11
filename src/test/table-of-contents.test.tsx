@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { TableOfContents, slugifyHeading } from '@/components/content/TableOfContents'
 import { WorkTableOfContentsRail } from '@/components/content/WorkTableOfContentsRail'
@@ -74,6 +74,33 @@ describe('slugifyHeading', () => {
       expect(screen.getByText('On This Work')).toBeInTheDocument()
     })
     expect(screen.getByTestId('work-toc')).toBeInTheDocument()
+  })
+
+  it('keeps collapse controls accessible while leaving summary copy in the rail', async () => {
+    document.body.innerHTML = `
+      <article id="toc-collapsible-content">
+        <h2>First Section</h2>
+        <h2>Second Section</h2>
+      </article>
+    `
+
+    render(<TableOfContents contentRootId="toc-collapsible-content" />)
+
+    await waitFor(() => {
+      expect(screen.getByRole('link', { name: 'First Section' })).toBeInTheDocument()
+    })
+
+    const list = screen.getByRole('list')
+    const collapseButton = screen.getByRole('button', { name: 'Collapse' })
+    expect(list.id).toBeTruthy()
+    expect(collapseButton).toHaveAttribute('aria-controls', list.id)
+
+    fireEvent.click(collapseButton)
+
+    expect(collapseButton).toHaveTextContent('Expand')
+    expect(collapseButton).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.queryByRole('link', { name: 'First Section' })).not.toBeInTheDocument()
+    expect(screen.getByTestId('blog-toc-collapsed-summary')).toHaveTextContent('2 sections hidden')
   })
 
   it('leaves sticky positioning and internal scrolling to page-level wrappers', async () => {
@@ -153,14 +180,18 @@ describe('slugifyHeading', () => {
     })
 
     window.scrollY = 600
-    window.dispatchEvent(new Event('scroll'))
+    act(() => {
+      window.dispatchEvent(new Event('scroll'))
+    })
 
     await waitFor(() => {
       expect(screen.getByTestId('work-toc-rail')).toHaveAttribute('data-range-state', 'active')
     })
 
     window.scrollY = 1400
-    window.dispatchEvent(new Event('scroll'))
+    act(() => {
+      window.dispatchEvent(new Event('scroll'))
+    })
 
     await waitFor(() => {
       expect(screen.getByTestId('work-toc-rail')).toHaveAttribute('data-range-state', 'after')
@@ -259,7 +290,9 @@ describe('slugifyHeading', () => {
       }),
     })
 
-    window.dispatchEvent(new Event('scroll'))
+    act(() => {
+      window.dispatchEvent(new Event('scroll'))
+    })
 
     await waitFor(() => {
       expect(rail).toHaveAttribute('data-video-overlap', 'true')
