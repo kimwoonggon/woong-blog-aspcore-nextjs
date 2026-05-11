@@ -1,0 +1,38 @@
+{
+  "slug": "prod-public-origin-preflight-2026-05-11",
+  "date": "2026-05-11",
+  "status": "implemented",
+  "changed": [
+    "scripts/prod-public-origin-preflight.sh",
+    "src/test/prod-public-origin-preflight.test.ts",
+    "scripts/main-runtime-allowlist.txt",
+    "docs/walkthroughs/main-server-setup.md",
+    "todolist-2026-05-11.md"
+  ],
+  "validations": [
+    {
+      "command": "npm test -- src/test/prod-public-origin-preflight.test.ts",
+      "result": "passed 6/6 after RED failures for missing script and swapped target type"
+    },
+    {
+      "command": "npm test -- src/test/prod-public-origin-preflight.test.ts src/test/prod-runtime-preflight.test.ts src/test/prod-real-load-steps.test.ts",
+      "result": "passed 16/16"
+    },
+    {
+      "command": "bash -n scripts/prod-public-origin-preflight.sh scripts/prod-runtime-preflight.sh scripts/prod-real-load-steps.sh",
+      "result": "passed"
+    },
+    {
+      "command": "BASE_URL=https://woonglab.com WORK_READ_PATH=/api/public/works/smoke-fluid-simulation STUDY_READ_PATH=/api/public/blogs/%EC%96%B4%EC%85%88%EB%B8%94%EB%A6%AC-%EC%83%9D%EA%B8%B0%EC%B4%88-stack-pointer-ebp-esp-eip ./scripts/prod-public-origin-preflight.sh",
+      "result": "failed as expected: public Work list missing X-Nginx-Request-Time"
+    }
+  ],
+  "live_public_origin": {
+    "baseUrl": "https://woonglab.com",
+    "workReadPath": "/api/public/works/smoke-fluid-simulation",
+    "studyReadPath": "/api/public/blogs/%EC%96%B4%EC%85%88%EB%B8%94%EB%A6%AC-%EC%83%9D%EA%B8%B0%EC%B4%88-stack-pointer-ebp-esp-eip",
+    "decision": "blocked_for_real_backend_test_interpretation",
+    "failure": "public Work list missing X-Nginx-Request-Time"
+  },
+  "recommendation": "Run public-origin preflight and compose-based production preflight after server-side main image pull/up; only then run and interpret Real Backend Test."
+}
