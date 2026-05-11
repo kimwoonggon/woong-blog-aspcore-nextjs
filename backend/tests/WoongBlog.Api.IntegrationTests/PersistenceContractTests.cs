@@ -145,10 +145,13 @@ public class PersistenceContractTests
         Assert.Equal(6, dbContext.Assets.Count());
 
         var homePage = dbContext.Pages.Single(page => page.Slug == "home");
+        var contactPage = dbContext.Pages.Single(page => page.Slug == "contact");
         var siteSettings = dbContext.SiteSettings.Single(setting => setting.Singleton);
         var resumeAsset = dbContext.Assets.Single(asset => asset.Id == siteSettings.ResumeAssetId);
 
         Assert.Contains("headline", homePage.ContentJson, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("woong@example.com", contactPage.ContentJson, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("mailto:woong@example.com", contactPage.ContentJson, StringComparison.OrdinalIgnoreCase);
         Assert.Equal("/media/resume/woonggon-kim-resume.pdf", resumeAsset.PublicUrl);
         Assert.NotNull(dbContext.Works.SingleOrDefault(work => work.Slug == "seeded-work"));
         Assert.NotNull(dbContext.Blogs.SingleOrDefault(blog => blog.Slug == "seeded-blog"));

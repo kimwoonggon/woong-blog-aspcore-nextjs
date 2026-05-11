@@ -145,7 +145,7 @@ public static class SeedData
             {
                 Slug = "contact",
                 Title = "Contact",
-                ContentJson = """{"html":"<p>You can reach me at <a href='mailto:woong@example.com'>woong@example.com</a> or through GitHub and LinkedIn.</p>"}"""
+                ContentJson = """{"html":"<p>Use the contact links below or connect through GitHub and LinkedIn.</p>"}"""
             }
         );
 
