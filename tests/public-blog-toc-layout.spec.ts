@@ -30,9 +30,21 @@ test('blog table of contents stays in a right rail instead of covering article c
   expect(contentLayoutBox).toBeTruthy()
   expect(bodyBox!.x + bodyBox!.width).toBeLessThanOrEqual(tocBox!.x - 24)
   expect(tocBox!.y + tocBox!.height).toBeLessThanOrEqual(contentLayoutBox!.y + contentLayoutBox!.height + 2)
-  expect(tocBox!.width).toBeGreaterThanOrEqual(280)
+  expect(tocBox!.width).toBeGreaterThanOrEqual(312)
+
+  const titleBox = await toc.getByText('On This Page').boundingBox()
+  const collapseButton = toc.getByRole('button', { name: 'Collapse' })
+  const collapseButtonBox = await collapseButton.boundingBox()
+  expect(titleBox).toBeTruthy()
+  expect(collapseButtonBox).toBeTruthy()
+  expect(titleBox!.width).toBeGreaterThanOrEqual(220)
+  expect(titleBox!.x + titleBox!.width).toBeLessThanOrEqual(collapseButtonBox!.x - 8)
 
   const longHeadingLinkBox = await toc.getByRole('link', { name: longHeading }).boundingBox()
   expect(longHeadingLinkBox).toBeTruthy()
-  expect(longHeadingLinkBox!.width).toBeGreaterThanOrEqual(248)
+  expect(longHeadingLinkBox!.width).toBeGreaterThanOrEqual(280)
+
+  await collapseButton.click()
+  await expect(toc.getByRole('button', { name: 'Expand' })).toBeVisible()
+  expect((await toc.boundingBox())!.width).toBeGreaterThanOrEqual(312)
 })
