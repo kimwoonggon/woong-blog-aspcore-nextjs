@@ -1,0 +1,57 @@
+{
+  "task": "public-list-covering-index-trim",
+  "date": "2026-05-11",
+  "status": "ready_for_dev_pr_ci",
+  "changed": [
+    "Added schema patch 20260511_public_work_list_covering_index_visible_fields",
+    "Trimmed IX_Works_PublicList_Covering INCLUDE columns to current visible public Work list fields",
+    "Added PostgreSQL contract coverage for fresh and legacy wide-index bootstrap paths",
+    "Stabilized admin home image E2E by waiting for revalidate-public after save",
+    "Recorded dev Real Backend Test artifacts"
+  ],
+  "intentionally_not_changed": [
+    "No cache layer",
+    "No pageSize reduction",
+    "No seed target forcing",
+    "No production SSH or remote deploy",
+    "No HLS code changes",
+    "No public DTO broadening"
+  ],
+  "validations": [
+    { "name": "RED focused integration", "result": "failed before implementation because legacy Period remained in index" },
+    { "name": "Focused PostgreSQL integration tests", "result": "passed 2/2" },
+    { "name": "dotnet test backend/WoongBlog.sln --verbosity minimal", "result": "passed" },
+    { "name": "npm run typecheck", "result": "passed" },
+    { "name": "npm run lint", "result": "passed with 0 errors and 5 existing warnings" },
+    { "name": "dev compose health", "result": "passed with /api/health 200" },
+    { "name": "container DB index inspection", "result": "Period/PublicIconUrl absent and PublicThumbnailUrl present" },
+    { "name": "full Playwright E2E", "result": "passed with 430 passed, 4 skipped" },
+    { "name": "dev Real Backend Test", "result": "completed with 2000 requests, 0 failed, 100 average rps, p95 2.1 ms" }
+  ],
+  "real_backend_test": {
+    "runId": "20260511-042239-public-api-rps-38326f7e",
+    "scenario": "public-api-rps",
+    "runner": "k6",
+    "rate": 100,
+    "durationSeconds": 20,
+    "maxVus": 100,
+    "totalRequests": 2000,
+    "failedRequests": 0,
+    "averageRps": 100,
+    "p95Ms": 2.1,
+    "p99Ms": 2.6,
+    "targets": [
+      { "id": "work-list", "path": "/api/public/works?page=1&pageSize=12", "requests": 500, "p95Ms": 2.1, "dbCommandElapsedP95Ms": 0.8, "status": "2xx 500" },
+      { "id": "work-read", "path": "/api/public/works/video-only-refresh-1778472933526", "requests": 500, "p95Ms": 1.9, "dbCommandElapsedP95Ms": 0.7, "status": "2xx 500" },
+      { "id": "study-list", "path": "/api/public/blogs?page=1&pageSize=12", "requests": 500, "p95Ms": 2.1, "dbCommandElapsedP95Ms": 0.8, "status": "2xx 500" },
+      { "id": "study-read", "path": "/api/public/blogs/saved-blog-1778472860213", "requests": 500, "p95Ms": 1.9, "dbCommandElapsedP95Ms": 0.6, "status": "2xx 500" }
+    ]
+  },
+  "risks": [
+    "DROP/CREATE INDEX is not concurrent and may add startup rebuild time for a very large Works table",
+    "Dev Real Backend Test is not a production-capacity proof",
+    "Existing npm audit vulnerabilities remain out of scope",
+    "Existing lint warnings remain out of scope"
+  ],
+  "recommendation": "Open a dev PR and require CI green before merging to dev. Do not perform production or remote server work in this slice."
+}
