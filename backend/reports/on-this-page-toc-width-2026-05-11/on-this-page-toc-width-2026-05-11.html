@@ -15,15 +15,16 @@
   <p>Fixed the public Blog/Work detail desktop TOC rail so the Collapse/Expand control and TOC text are not squeezed.</p>
   <h2>Changed</h2>
   <ul>
-    <li>Added Playwright width regression coverage.</li>
-    <li>Allocated an explicit <code>20rem</code> desktop right rail.</li>
+    <li>Added Playwright width regression coverage for the rail, title, Collapse/Expand button, and long heading text.</li>
+    <li>Allocated an explicit <code>22rem</code> desktop right rail.</li>
     <li>Removed extra desktop aside padding.</li>
-    <li>Hardened TOC header flex sizing.</li>
+    <li>Hardened TOC header flex sizing and gave the toggle a stable <code>4.75rem</code> minimum width.</li>
   </ul>
   <h2>Validation</h2>
   <ul>
     <li>RED Playwright failed at 144px TOC width.</li>
-    <li>GREEN Playwright passed 2 tests.</li>
+    <li>RED follow-up failed at 209px title width beside the Collapse button.</li>
+    <li>GREEN Playwright passed 2 tests after the 22rem rail and stable toggle fix.</li>
     <li>Vitest TOC unit tests passed 8 tests.</li>
     <li>Typecheck and lint passed; lint has 5 existing warnings.</li>
   </ul>
