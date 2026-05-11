@@ -2,9 +2,10 @@ import { expect, test } from './helpers/performance-test'
 import { createBlogFixture } from './helpers/content-fixtures'
 
 test('blog table of contents stays in a right rail instead of covering article content', async ({ page, request }, testInfo) => {
+  const longHeading = 'Fixture Section With A Long Title That Should Still Have Enough Reading Width'
   const blog = await createBlogFixture(request, testInfo, {
     titlePrefix: 'TOC Layout Blog',
-    html: '<h1>Body H1 Fixture</h1><p>Intro</p><h2>Fixture Section One</h2><p>Body</p><h2>Fixture Section Two</h2>',
+    html: `<h1>Body H1 Fixture</h1><p>Intro</p><h2>Fixture Section One</h2><p>Body</p><h2>${longHeading}</h2>`,
     tags: ['toc-layout', 'blog'],
   })
 
@@ -29,4 +30,9 @@ test('blog table of contents stays in a right rail instead of covering article c
   expect(contentLayoutBox).toBeTruthy()
   expect(bodyBox!.x + bodyBox!.width).toBeLessThanOrEqual(tocBox!.x - 24)
   expect(tocBox!.y + tocBox!.height).toBeLessThanOrEqual(contentLayoutBox!.y + contentLayoutBox!.height + 2)
+  expect(tocBox!.width).toBeGreaterThanOrEqual(280)
+
+  const longHeadingLinkBox = await toc.getByRole('link', { name: longHeading }).boundingBox()
+  expect(longHeadingLinkBox).toBeTruthy()
+  expect(longHeadingLinkBox!.width).toBeGreaterThanOrEqual(248)
 })

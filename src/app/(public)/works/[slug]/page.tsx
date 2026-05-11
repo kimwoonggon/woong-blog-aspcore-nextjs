@@ -102,7 +102,7 @@ export default async function WorkDetailPage({ params }: PageProps) {
     return (
         <article className="mx-auto w-full max-w-7xl px-4 py-8 md:px-6 md:py-12">
             <div id="work-detail-toc-start" aria-hidden="true" className="h-0" />
-            <div data-testid="work-article-content-layout" className="mx-auto w-full min-w-0 xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,48rem)_minmax(0,1fr)] xl:items-start xl:gap-12">
+            <div data-testid="work-article-content-layout" className="mx-auto w-full min-w-0 xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,48rem)_20rem] xl:items-start xl:gap-12">
                 <div data-testid="work-detail-body" className="mx-auto min-w-0 w-full max-w-3xl xl:col-start-2">
                     <header className="mb-8">
                         <h1 className="mb-4 text-3xl font-heading font-bold leading-tight text-foreground text-balance md:text-4xl">
@@ -165,7 +165,7 @@ export default async function WorkDetailPage({ params }: PageProps) {
 
                 </div>
 
-                <aside className="hidden xl:sticky xl:top-28 xl:col-start-3 xl:block xl:w-full xl:max-w-80 xl:justify-self-start xl:self-start xl:pl-10">
+                <aside className="hidden xl:sticky xl:top-28 xl:col-start-3 xl:block xl:w-full xl:max-w-80 xl:justify-self-start xl:self-start">
                     <WorkTableOfContentsRail
                         contentRootId="work-detail-content"
                         title="On This Work"
