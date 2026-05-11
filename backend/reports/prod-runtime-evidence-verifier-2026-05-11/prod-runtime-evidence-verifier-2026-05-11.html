@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Production Runtime Evidence Verifier Audit</title>
+    <style>
+      body { font-family: sans-serif; line-height: 1.5; margin: 2rem; max-width: 960px; }
+      code { background: #f3f4f6; padding: 0.1rem 0.25rem; }
+      h1, h2 { line-height: 1.2; }
+    </style>
+  </head>
+  <body>
+    <h1>Production Runtime Evidence Verifier - Audit</h1>
+    <p><strong>Date:</strong> 2026-05-11</p>
+    <h2>Goal</h2>
+    <p>Add a local verifier for returned <code>main</code> runtime evidence without production SSH or remote execution.</p>
+    <h2>Changed</h2>
+    <ul>
+      <li>Added <code>scripts/prod-runtime-evidence-verify.sh</code>.</li>
+      <li>Added behavior tests for valid evidence, bundle tarball evidence, stale SHA, backend-direct base URL, and weakened list/seed targets.</li>
+      <li>Added the verifier to the main runtime allowlist.</li>
+      <li>Documented evidence bundle and verifier commands.</li>
+    </ul>
+    <h2>Not Changed</h2>
+    <ul>
+      <li>No production SSH, remote execution, or secret handling.</li>
+      <li>No backend runtime, DTO, DB, HLS, Docker, cache, or load target policy changes.</li>
+    </ul>
+    <h2>Validation</h2>
+    <ul>
+      <li>Verifier RED test failed before implementation.</li>
+      <li>Focused verifier tests passed: 5 tests.</li>
+      <li>Related regression tests passed: 9 tests.</li>
+      <li>Shell syntax checks passed.</li>
+      <li>Diff whitespace check passed.</li>
+      <li><code>npm run typecheck</code> passed.</li>
+      <li><code>npm run lint</code> passed with 0 errors and 5 existing warnings.</li>
+    </ul>
+    <h2>Risks</h2>
+    <ul>
+      <li>Actual server-side preflight and Real Backend Test are still required.</li>
+      <li>Expected SHA and digest checks require the caller to pass expected values.</li>
+      <li>The verifier validates evidence contract, not the performance root cause.</li>
+    </ul>
+    <h2>Recommendation</h2>
+    <p>Merge through <code>dev</code> and promote to <code>main</code>, then run the verifier on returned evidence before choosing the next backend performance slice.</p>
+  </body>
+</html>
