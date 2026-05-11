@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Active Goal Current Blocker - 2026-05-11</title>
+  <style>body{font-family:Arial,sans-serif;line-height:1.55;max-width:920px;margin:32px auto;padding:0 20px;color:#111827}code{background:#f3f4f6;padding:2px 4px;border-radius:4px}.missing{color:#991b1b}.ok{color:#166534}</style>
+</head>
+<body>
+  <h1>Active Goal Current Blocker - 2026-05-11</h1>
+  <p class="ok">Current <code>main</code> images are published for <code>08978b2f8cb472d4c50cf29e165d758cc4ffd382</code>.</p>
+  <p class="missing"><strong>Active goal is not complete.</strong> The production server has not been verified as running the current images.</p>
+  <h2>Blocking Evidence</h2>
+  <p class="missing">Public-origin preflight failed: <code>public Work list missing X-Nginx-Request-Time</code>.</p>
+  <ul>
+    <li>Repo secrets currently show only <code>PROMOTION_TOKEN</code>; required <code>PROD_SSH_*</code> secrets are absent.</li>
+    <li>No production redeploy run exists for current main SHA.</li>
+    <li>Public Work list still exposes stale fields <code>period</code> and <code>iconUrl</code>.</li>
+    <li>Public Work detail still exposes stale fields <code>period</code>, <code>iconUrl</code>, and <code>contentJson</code>.</li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Do not interpret Real Backend Test results until the server is confirmed to run current <code>main</code> images and production preflight passes.</p>
+</body>
+</html>

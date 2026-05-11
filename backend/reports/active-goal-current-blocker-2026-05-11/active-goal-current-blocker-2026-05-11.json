@@ -1,0 +1,54 @@
+{
+  "task": "active-goal-current-blocker",
+  "date": "2026-05-11",
+  "activeGoalComplete": false,
+  "currentMainSha": "08978b2f8cb472d4c50cf29e165d758cc4ffd382",
+  "ci": {
+    "mainRuntimePush": {
+      "run": 25669840505,
+      "conclusion": "success"
+    },
+    "publishGhcrMain": {
+      "run": 25670130541,
+      "conclusion": "success"
+    }
+  },
+  "images": {
+    "backendIndexDigest": "sha256:677068ac570d8550e40b4c9985f606f47d6334f2ee9abbcb4fd0572459e976d8",
+    "backendAmd64Manifest": "sha256:d1ef5eb9eeec2597168717b13530afb0030c8747bbcbda54da4c3958709a7282",
+    "frontendIndexDigest": "sha256:9cf9d1160d7155870a20249a589781439235ace68fdcc40e1393c2a5e93d5088",
+    "frontendAmd64Manifest": "sha256:1851158728ad4d1d7bbbe9182ffb24256b21fe8747ab008865f58d044736d5c7"
+  },
+  "repoSecretsObserved": [
+    "PROMOTION_TOKEN"
+  ],
+  "repoVariablesObserved": [],
+  "repoEnvironmentsObserved": [],
+  "publicOriginProbe": {
+    "baseUrl": "https://woonglab.com",
+    "healthHttp": 200,
+    "workListStaleFields": [
+      "period",
+      "iconUrl"
+    ],
+    "workDetailStaleFields": [
+      "period",
+      "iconUrl",
+      "contentJson"
+    ],
+    "blogListStaleFields": []
+  },
+  "missing": [
+    "server pull/deploy for current main",
+    "production preflight for current main",
+    "production Real Backend Test for current main",
+    "result-based slice selection",
+    "after-slice full E2E and CI"
+  ],
+  "recommendation": "Do not interpret Real Backend Test results until production is confirmed to run the current main images and preflight passes.",
+  "publicOriginPreflight": {
+    "command": "BASE_URL=https://woonglab.com WORK_READ_PATH=/api/public/works/smoke-fluid-simulation STUDY_READ_PATH=/api/public/blogs/c-gc%EB%93%B1-%EB%B6%80%ED%95%98%ED%85%8C%EC%8A%A4%ED%8A%B8-%EC%9D%B4%ED%9B%84-%EA%B2%80%EC%A6%9D%ED%95%AD%EB%AA%A9 ./scripts/prod-public-origin-preflight.sh",
+    "passed": false,
+    "failure": "public Work list missing X-Nginx-Request-Time"
+  }
+}

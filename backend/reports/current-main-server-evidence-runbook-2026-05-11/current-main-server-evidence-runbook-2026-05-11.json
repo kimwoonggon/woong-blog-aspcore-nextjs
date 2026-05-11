@@ -1,0 +1,42 @@
+{
+  "task": "current-main-server-evidence-runbook",
+  "date": "2026-05-11",
+  "activeGoalComplete": false,
+  "generatedArtifacts": [
+    "backend/reports/current-main-server-evidence-runbook-2026-05-11/server-current-main-preflight-load-evidence.sh",
+    "backend/reports/current-main-server-evidence-runbook-2026-05-11/current-main-server-evidence-runbook-2026-05-11.md",
+    "backend/reports/current-main-server-evidence-runbook-2026-05-11/current-main-server-evidence-runbook-2026-05-11.json",
+    "backend/reports/current-main-server-evidence-runbook-2026-05-11/current-main-server-evidence-runbook-2026-05-11.html",
+    "docs/walkthroughs/main-server-setup.md"
+  ],
+  "currentMain": {
+    "sha": "08978b2f8cb472d4c50cf29e165d758cc4ffd382",
+    "backendImage": "ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-backend:main",
+    "frontendImage": "ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-frontend:main",
+    "backendIndexDigest": "sha256:677068ac570d8550e40b4c9985f606f47d6334f2ee9abbcb4fd0572459e976d8",
+    "backendAmd64Digest": "sha256:d1ef5eb9eeec2597168717b13530afb0030c8747bbcbda54da4c3958709a7282",
+    "frontendIndexDigest": "sha256:9cf9d1160d7155870a20249a589781439235ace68fdcc40e1393c2a5e93d5088",
+    "frontendAmd64Digest": "sha256:1851158728ad4d1d7bbbe9182ffb24256b21fe8747ab008865f58d044736d5c7"
+  },
+  "prepared": [
+    "server docker compose pull/up",
+    "production preflight",
+    "Real Backend Test with pageSize=12",
+    "seed/fixture rejection",
+    "evidence bundle",
+    "evidence verifier",
+    "server setup doc runbook link"
+  ],
+  "missing": [
+    "server execution",
+    "returned evidence bundle",
+    "result-based slice selection",
+    "after-slice full E2E and CI"
+  ],
+  "validation": {
+    "bashSyntax": "passed",
+    "jsonParse": "passed",
+    "diffCheck": "passed"
+  },
+  "recommendation": "Run the generated script on the server after .env.prod secrets are present, then return the evidence tarball and summary markdown."
+}
