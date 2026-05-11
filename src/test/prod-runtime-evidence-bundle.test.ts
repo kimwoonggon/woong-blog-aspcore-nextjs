@@ -97,6 +97,20 @@ describe('production runtime evidence bundle', () => {
     expect(result.stderr).toContain('real load summary contains seed/fixture target')
   })
 
+  it('fails when real load summary uses backend-direct read targets', () => {
+    const runtime = createRuntime()
+    writeValidEvidence(runtime)
+    const summaryPath = path.join(runtime.loadDir, 'prod-real-load-steps-summary.json')
+    const summary = JSON.parse(readFileSync(summaryPath, 'utf8'))
+    summary.steps[0].targets.work_read.path = 'http://backend:8080/api/public/works/real-work'
+    writeFileSync(summaryPath, JSON.stringify(summary, null, 2))
+
+    const result = runScript(runtime)
+
+    expect(result.status).not.toBe(0)
+    expect(result.stderr).toContain('real load summary contains backend-direct target')
+  })
+
   it('fails when preflight evidence does not prove the public Work list contract is current', () => {
     const runtime = createRuntime()
     writeValidEvidence(runtime)
