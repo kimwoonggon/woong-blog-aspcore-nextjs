@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Production Runtime Preflight Public DTO Gate Audit</title>
+    <style>
+      body { font-family: sans-serif; line-height: 1.5; margin: 2rem; max-width: 960px; }
+      code { background: #f3f4f6; padding: 0.1rem 0.25rem; }
+    </style>
+  </head>
+  <body>
+    <h1>Production Runtime Preflight Public DTO Gate - Audit</h1>
+    <p><strong>Date:</strong> 2026-05-11</p>
+    <h2>Goal</h2>
+    <p>Prevent stale public Work list DTO responses from passing production preflight, evidence bundling, or returned evidence verification.</p>
+    <h2>Changed</h2>
+    <ul>
+      <li><code>prod-runtime-preflight.sh</code> now requires public Work list <code>pageSize=12</code> and rejects stale keys.</li>
+      <li><code>prod-runtime-evidence-bundle.sh</code> requires <code>public Work list contract: current</code>.</li>
+      <li><code>prod-runtime-evidence-verify.sh</code> requires the same returned evidence marker.</li>
+      <li>Behavior tests cover stale list acceptance and missing evidence marker rejection.</li>
+    </ul>
+    <h2>Validation</h2>
+    <ul>
+      <li>RED preflight test failed before implementation.</li>
+      <li>RED bundle/verifier tests failed before implementation.</li>
+      <li>Focused tests passed: 17 tests.</li>
+      <li>Related regression tests passed: 29 tests.</li>
+      <li>Shell syntax, diff check, typecheck, and lint passed.</li>
+    </ul>
+    <h2>Recommendation</h2>
+    <p>Promote this guard to <code>main</code>; do not interpret production Real Backend Test results unless returned evidence passes the strengthened verifier.</p>
+  </body>
+</html>

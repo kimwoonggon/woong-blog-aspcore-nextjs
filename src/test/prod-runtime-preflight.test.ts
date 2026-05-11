@@ -11,6 +11,7 @@ type FakeRuntimeOptions = {
   loadTestingBaseUrl?: string
   includeNginxRequestTime?: boolean
   diagnosticsSampleCount?: number
+  publicWorkListContract?: 'current' | 'stale'
   publicWorkVideoContract?: 'current' | 'stale'
 }
 
@@ -26,6 +27,7 @@ function createFakeRuntime(options: FakeRuntimeOptions = {}) {
   const loadTestingBaseUrl = options.loadTestingBaseUrl ?? 'https://woonglab.test'
   const includeNginxRequestTime = options.includeNginxRequestTime ?? true
   const diagnosticsSampleCount = options.diagnosticsSampleCount ?? 12
+  const publicWorkListContract = options.publicWorkListContract ?? 'current'
   const publicWorkVideoContract = options.publicWorkVideoContract ?? 'current'
 
   mkdirSync(fakeBin, { recursive: true })
@@ -102,6 +104,14 @@ if [[ -n "$output" ]]; then
     cat > "$output" <<'OUT'
 {"process":{"processorCount":2,"memoryBytes":200000000},"database":{"status":"available","commandLatency":{"sampleCount":${diagnosticsSampleCount},"p95Ms":5.1},"connectionOpenLatency":{"sampleCount":${diagnosticsSampleCount},"p95Ms":0.4},"pool":{"dbContextPoolSize":128,"npgsqlMaximumPoolSize":40,"npgsqlPoolLimitSource":"connection-string"}}}
 OUT
+  elif [[ "$url" == *"/api/public/works?page"* ]]; then
+    ${publicWorkListContract === 'stale'
+      ? `cat > "$output" <<'OUT'
+{"items":[{"id":"work-1","slug":"real-work","title":"Real Work","excerpt":"excerpt","category":"Graphics","period":"2026","tags":[],"thumbnailUrl":"/media/t.jpg","iconUrl":""}],"page":1,"pageSize":12,"totalItems":1,"totalPages":1}
+OUT`
+      : `cat > "$output" <<'OUT'
+{"items":[{"id":"work-1","slug":"real-work","title":"Real Work","excerpt":"excerpt","category":"Graphics","tags":[],"thumbnailUrl":"/media/t.jpg"}],"page":1,"pageSize":12,"totalItems":1,"totalPages":1}
+OUT`}
   elif [[ "$url" == *"/api/public/works/"* ]]; then
     ${publicWorkVideoContract === 'stale'
       ? `cat > "$output" <<'OUT'
@@ -191,6 +201,17 @@ describe('production runtime preflight script', () => {
 
     expect(result.status).not.toBe(0)
     expect(result.stderr).toContain('DB command latency samples')
+    expect(result.stdout).not.toContain('super-secret')
+    expect(result.stderr).not.toContain('super-secret')
+  })
+
+  it('fails when the public Work list still exposes stale hidden card fields', () => {
+    const runtime = createFakeRuntime({ publicWorkListContract: 'stale' })
+
+    const result = runPreflight(runtime.fakeBin, { ADMIN_COOKIE_FILE: runtime.adminCookieFile })
+
+    expect(result.status).not.toBe(0)
+    expect(result.stderr).toContain('public Work list still exposes stale field')
     expect(result.stdout).not.toContain('super-secret')
     expect(result.stderr).not.toContain('super-secret')
   })
