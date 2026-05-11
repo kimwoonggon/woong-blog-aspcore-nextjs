@@ -25,6 +25,17 @@ BASE_URL=https://woonglab.com \
 ./scripts/prod-runtime-preflight.sh
 ```
 
+Docker/SSH 없이 public origin만 먼저 확인할 때:
+
+```bash
+BASE_URL=https://woonglab.com \
+WORK_READ_PATH=/api/public/works/<real-work-slug> \
+STUDY_READ_PATH=/api/public/blogs/<real-study-slug> \
+./scripts/prod-public-origin-preflight.sh
+```
+
+이 단계가 `iconUrl`, `contentJson`, `originalFileName`, `fileSize`, missing `X-Nginx-Request-Time` 등으로 실패하면 아직 최신 `main` runtime으로 볼 수 없으므로 Real Backend Test 결과를 해석하지 않는다.
+
 실제 Work/Study read target을 지정한 Real Backend Test:
 
 ```bash
