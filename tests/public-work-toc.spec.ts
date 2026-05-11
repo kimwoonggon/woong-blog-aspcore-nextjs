@@ -6,7 +6,7 @@ const tocFixtureHtml = [
   '<p>Opening body copy for the work fixture.</p>',
   '<h2>Work Fixture Section One</h2>',
   ...Array.from({ length: 8 }, (_, index) => `<p>Work section one filler ${index + 1} keeps scroll positions stable.</p>`),
-  '<h2>Work Fixture Section Two</h2>',
+  '<h2>Work Fixture Section With A Long Title That Should Still Have Enough Reading Width</h2>',
   '<p>Work section two body copy.</p>',
   '<h3>Work Fixture Nested Section</h3>',
 ].join('')
@@ -46,6 +46,13 @@ test('work detail exposes a desktop table of contents that anchors into the arti
   expect(tocBox).toBeTruthy()
   expect(contentLayoutBox).toBeTruthy()
   expect(tocBox!.y + tocBox!.height).toBeLessThanOrEqual(contentLayoutBox!.y + contentLayoutBox!.height + 2)
+  expect(tocBox!.width).toBeGreaterThanOrEqual(280)
+
+  const longHeadingLinkBox = await toc
+    .getByRole('link', { name: 'Work Fixture Section With A Long Title That Should Still Have Enough Reading Width' })
+    .boundingBox()
+  expect(longHeadingLinkBox).toBeTruthy()
+  expect(longHeadingLinkBox!.width).toBeGreaterThanOrEqual(248)
 
   await page.getByTestId('work-related-shell').scrollIntoViewIfNeeded()
   await expect(rail).toHaveAttribute('data-range-state', 'after')
