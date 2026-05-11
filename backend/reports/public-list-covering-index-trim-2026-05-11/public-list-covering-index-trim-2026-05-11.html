@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Public List Covering Index Trim Audit - 2026-05-11</title>
+  <style>
+    body { font-family: ui-sans-serif, system-ui, sans-serif; margin: 2rem; line-height: 1.5; color: #1f2937; }
+    h1, h2 { color: #111827; }
+    code { background: #f3f4f6; padding: 0.1rem 0.25rem; border-radius: 0.25rem; }
+    table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+    th, td { border: 1px solid #d1d5db; padding: 0.5rem; text-align: left; }
+    th { background: #f9fafb; }
+  </style>
+</head>
+<body>
+  <h1>Public List Covering Index Trim Audit - 2026-05-11</h1>
+  <h2>Summary</h2>
+  <p>The public Work list covering index now matches the current visible DTO/read shape: <code>Period</code> and <code>PublicIconUrl</code> are removed, while <code>PublicThumbnailUrl</code> remains covered.</p>
+  <h2>Validation</h2>
+  <ul>
+    <li>Focused PostgreSQL integration tests passed 2/2.</li>
+    <li><code>dotnet test backend/WoongBlog.sln --verbosity minimal</code> passed.</li>
+    <li><code>npm run typecheck</code> passed.</li>
+    <li><code>npm run lint</code> passed with 0 errors and 5 existing warnings.</li>
+    <li>Full Playwright E2E passed with 430 passed and 4 skipped.</li>
+    <li>Dev Real Backend Test completed: 2000 requests, 0 failed, 100 average rps, p95 2.1 ms.</li>
+  </ul>
+  <h2>Real Backend Test</h2>
+  <table>
+    <thead><tr><th>Target</th><th>Path</th><th>Requests</th><th>P95</th><th>DB Command P95</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>Work list</td><td><code>/api/public/works?page=1&amp;pageSize=12</code></td><td>500</td><td>2.1 ms</td><td>0.8 ms</td><td>2xx 500</td></tr>
+      <tr><td>Work read</td><td><code>/api/public/works/video-only-refresh-1778472933526</code></td><td>500</td><td>1.9 ms</td><td>0.7 ms</td><td>2xx 500</td></tr>
+      <tr><td>Study list</td><td><code>/api/public/blogs?page=1&amp;pageSize=12</code></td><td>500</td><td>2.1 ms</td><td>0.8 ms</td><td>2xx 500</td></tr>
+      <tr><td>Study read</td><td><code>/api/public/blogs/saved-blog-1778472860213</code></td><td>500</td><td>1.9 ms</td><td>0.6 ms</td><td>2xx 500</td></tr>
+    </tbody>
+  </table>
+  <h2>Recommendation</h2>
+  <p>Open a dev PR and require CI green before merging. Production and remote server work are intentionally out of scope.</p>
+</body>
+</html>

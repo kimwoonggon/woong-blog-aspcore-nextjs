@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Latest Dev E2E Stability Fix - 2026-05-11</title>
+  <style>
+    body { font-family: sans-serif; line-height: 1.5; margin: 2rem; max-width: 960px; }
+    code { background: #f4f4f4; padding: 0.1rem 0.25rem; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ddd; padding: 0.5rem; text-align: left; }
+    th { background: #f6f6f6; }
+  </style>
+</head>
+<body>
+  <h1>Latest Dev E2E Stability Fix - 2026-05-11</h1>
+  <h2>Summary</h2>
+  <p>Removed the seeded contact fallback email and made blog edge-navigation E2E deterministic with explicit public revalidation.</p>
+  <h2>Validation</h2>
+  <table>
+    <tr><th>Check</th><th>Result</th></tr>
+    <tr><td>Targeted E2E existing dev stack</td><td>4 passed</td></tr>
+    <tr><td>npm run typecheck</td><td>passed</td></tr>
+    <tr><td>dotnet test backend/WoongBlog.sln</td><td>passed</td></tr>
+    <tr><td>Fresh dev stack health</td><td>200 OK</td></tr>
+    <tr><td>Targeted E2E fresh dev stack</td><td>4 passed</td></tr>
+    <tr><td>Full E2E fresh dev stack</td><td>430 passed, 4 skipped</td></tr>
+    <tr><td>Real Backend Test smoke</td><td>completed, 501 requests, 0 failed, p95 2.2 ms</td></tr>
+  </table>
+  <h2>Recommendation</h2>
+  <p>Promote this E2E stability fix through dev CI and then main.</p>
+</body>
+</html>

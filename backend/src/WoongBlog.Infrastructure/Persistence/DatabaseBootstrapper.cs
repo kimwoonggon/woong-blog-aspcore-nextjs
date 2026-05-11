@@ -66,6 +66,11 @@ public static class DatabaseBootstrapper
                     cancellationToken);
                 await ApplySchemaPatchAsync(
                     dbContext,
+                    "20260511_public_work_list_covering_index_visible_fields",
+                    PublicWorkListCoveringIndexVisibleFieldsSchemaPatchSql,
+                    cancellationToken);
+                await ApplySchemaPatchAsync(
+                    dbContext,
                     "20260506_public_work_thumbnail_fallback_backfill",
                     PublicWorkThumbnailFallbackBackfillSchemaPatchSql,
                     cancellationToken);
@@ -410,7 +415,15 @@ INCLUDE ("Id", "Slug", "Title", "Excerpt", "Tags", "PublicCoverUrl");
 
 CREATE INDEX IF NOT EXISTS "IX_Works_PublicList_Covering"
 ON "Works" ("Published", "PublishedAt" DESC)
-INCLUDE ("Id", "Slug", "Title", "Excerpt", "Category", "Period", "Tags", "PublicThumbnailUrl", "PublicIconUrl");
+INCLUDE ("Id", "Slug", "Title", "Excerpt", "Category", "Tags", "PublicThumbnailUrl");
+""";
+
+    private const string PublicWorkListCoveringIndexVisibleFieldsSchemaPatchSql = """
+DROP INDEX IF EXISTS "IX_Works_PublicList_Covering";
+
+CREATE INDEX IF NOT EXISTS "IX_Works_PublicList_Covering"
+ON "Works" ("Published", "PublishedAt" DESC)
+INCLUDE ("Id", "Slug", "Title", "Excerpt", "Category", "Tags", "PublicThumbnailUrl");
 """;
 
     private const string PublicContentBodyFieldsSchemaPatchSql = """
