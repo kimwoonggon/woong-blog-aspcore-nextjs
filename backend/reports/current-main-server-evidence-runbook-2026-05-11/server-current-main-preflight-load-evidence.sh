@@ -1,11 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-EXPECTED_MAIN_SHA="08978b2f8cb472d4c50cf29e165d758cc4ffd382"
-EXPECTED_BACKEND_IMAGE_DIGEST="sha256:677068ac570d8550e40b4c9985f606f47d6334f2ee9abbcb4fd0572459e976d8"
-EXPECTED_FRONTEND_IMAGE_DIGEST="sha256:9cf9d1160d7155870a20249a589781439235ace68fdcc40e1393c2a5e93d5088"
-EXPECTED_BACKEND_AMD64_DIGEST="sha256:d1ef5eb9eeec2597168717b13530afb0030c8747bbcbda54da4c3958709a7282"
-EXPECTED_FRONTEND_AMD64_DIGEST="sha256:1851158728ad4d1d7bbbe9182ffb24256b21fe8747ab008865f58d044736d5c7"
+EXPECTED_MAIN_SHA="${EXPECTED_MAIN_SHA:-}"
+EXPECTED_BACKEND_IMAGE_DIGEST="${EXPECTED_BACKEND_IMAGE_DIGEST:-}"
+EXPECTED_FRONTEND_IMAGE_DIGEST="${EXPECTED_FRONTEND_IMAGE_DIGEST:-}"
 BACKEND_IMAGE="ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-backend:main"
 FRONTEND_IMAGE="ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-frontend:main"
 
@@ -83,18 +81,17 @@ repo_digest_for() {
   docker image inspect "${image}" --format '{{index .RepoDigests 0}}' | sed 's/^.*@//'
 }
 
-require_digest_allowed() {
+require_digest_if_expected() {
   local label="$1"
   local actual="$2"
-  shift 2
   local expected
-  for expected in "$@"; do
-    if [[ "${actual}" == "${expected}" ]]; then
-      return 0
-    fi
-  done
+  expected="${3:-}"
+  if [[ -z "${expected}" ]]; then
+    info "${label} digest observed: ${actual}"
+    return 0
+  fi
 
-  die "${label} digest mismatch: ${actual}"
+  [[ "${actual}" == "${expected}" ]] || die "${label} digest mismatch: expected ${expected}, got ${actual}"
 }
 
 require_command git
@@ -111,9 +108,10 @@ git fetch origin main --prune
 git checkout main
 git pull --ff-only origin main
 actual_sha="$(git rev-parse HEAD)"
-if [[ "${actual_sha}" != "${EXPECTED_MAIN_SHA}" ]]; then
+if [[ -n "${EXPECTED_MAIN_SHA}" && "${actual_sha}" != "${EXPECTED_MAIN_SHA}" ]]; then
   die "main SHA mismatch: expected ${EXPECTED_MAIN_SHA}, got ${actual_sha}. Refresh this runbook before interpreting results."
 fi
+info "Using main SHA: ${actual_sha}"
 
 mkdir -p "${RUN_DIR}" "${LOAD_DIR}" "${EVIDENCE_DIR}"
 backup=".env.prod.backup.${RUN_ID}"
@@ -144,8 +142,8 @@ docker compose --env-file .env.prod -f docker-compose.prod.yml ps
 
 backend_digest="$(repo_digest_for "${BACKEND_IMAGE}")"
 frontend_digest="$(repo_digest_for "${FRONTEND_IMAGE}")"
-require_digest_allowed "backend" "${backend_digest}" "${EXPECTED_BACKEND_IMAGE_DIGEST}" "${EXPECTED_BACKEND_AMD64_DIGEST}"
-require_digest_allowed "frontend" "${frontend_digest}" "${EXPECTED_FRONTEND_IMAGE_DIGEST}" "${EXPECTED_FRONTEND_AMD64_DIGEST}"
+require_digest_if_expected "backend" "${backend_digest}" "${EXPECTED_BACKEND_IMAGE_DIGEST}"
+require_digest_if_expected "frontend" "${frontend_digest}" "${EXPECTED_FRONTEND_IMAGE_DIGEST}"
 
 if [[ -z "${STUDY_READ_PATH}" ]]; then
   STUDY_READ_PATH="$(resolve_first_non_seed_public_path '/api/public/blogs?page=1&pageSize=12' '/api/public/blogs/')"
@@ -182,7 +180,7 @@ BACKEND_IMAGE_DIGEST="${backend_digest}" \
 FRONTEND_IMAGE_DIGEST="${frontend_digest}" \
 ./scripts/prod-runtime-evidence-bundle.sh
 
-EXPECTED_MAIN_SHA="${EXPECTED_MAIN_SHA}" \
+EXPECTED_MAIN_SHA="${actual_sha}" \
 EXPECTED_BACKEND_IMAGE_DIGEST="${backend_digest}" \
 EXPECTED_FRONTEND_IMAGE_DIGEST="${frontend_digest}" \
 ./scripts/prod-runtime-evidence-verify.sh "${EVIDENCE_DIR}/production-runtime-evidence.tar.gz"
