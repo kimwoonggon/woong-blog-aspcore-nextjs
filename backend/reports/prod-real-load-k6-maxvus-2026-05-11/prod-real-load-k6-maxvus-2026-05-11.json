@@ -1,0 +1,60 @@
+{
+  "task": "prod-real-load-k6-maxvus-2026-05-11",
+  "date": "2026-05-11",
+  "problem": "Generated k6 JavaScript referenced maxVUs even though only maxVus was declared, causing ReferenceError before load execution.",
+  "changed": [
+    "scripts/prod-real-load-steps.sh",
+    "src/test/prod-real-load-steps.test.ts"
+  ],
+  "notChanged": [
+    "pageSize=12 enforcement",
+    "seed/fixture target rejection",
+    "k6 identity query cache avoidance",
+    "production server state"
+  ],
+  "validations": [
+    {
+      "name": "RED regression test",
+      "command": "npm test -- src/test/prod-real-load-steps.test.ts",
+      "result": "failed_as_expected",
+      "evidence": "backend/reports/prod-real-load-k6-maxvus-2026-05-11/evidence/red-prod-real-load-steps.log"
+    },
+    {
+      "name": "GREEN focused test",
+      "command": "npm test -- src/test/prod-real-load-steps.test.ts",
+      "result": "pass",
+      "testFiles": 1,
+      "tests": 5,
+      "evidence": "backend/reports/prod-real-load-k6-maxvus-2026-05-11/evidence/green-prod-real-load-steps.log"
+    },
+    {
+      "name": "related prod load/evidence tests",
+      "command": "npm test -- src/test/prod-real-load-steps.test.ts src/test/prod-runtime-evidence-bundle.test.ts src/test/prod-runtime-redeploy-workflow.test.ts",
+      "result": "pass",
+      "testFiles": 3,
+      "tests": 9,
+      "evidence": "backend/reports/prod-real-load-k6-maxvus-2026-05-11/evidence/related-vitest.log"
+    },
+    {
+      "name": "shell syntax",
+      "command": "bash -n scripts/prod-real-load-steps.sh scripts/prod-runtime-evidence-bundle.sh scripts/prod-runtime-preflight.sh scripts/prod-public-origin-preflight.sh",
+      "result": "pass",
+      "evidence": "backend/reports/prod-real-load-k6-maxvus-2026-05-11/evidence/bash-syntax.log"
+    },
+    {
+      "name": "local prod-like real-load smoke after fix",
+      "command": "prod-real-load-steps.sh via backend-container k6 wrapper",
+      "result": "pass",
+      "rate": 20,
+      "durationSeconds": 10,
+      "requests": 201,
+      "failed": 0,
+      "p95Ms": 2.8,
+      "evidence": "backend/reports/main-runtime-local-prodlike-2026-05-11/evidence/local-real-load/prod-real-load-steps-summary.json"
+    }
+  ],
+  "completionDecision": {
+    "activeGoalComplete": false,
+    "reason": "The k6 runner bug is fixed, but actual production pull/deploy/preflight/load evidence remains absent."
+  }
+}

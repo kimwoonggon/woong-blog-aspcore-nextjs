@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Prod Real Load K6 MaxVUs Fix - 2026-05-11</title>
+  <style>
+    body { font-family: sans-serif; margin: 2rem; line-height: 1.5; color: #1f2933; }
+    h1, h2 { color: #102a43; }
+    table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+    th, td { border: 1px solid #d9e2ec; padding: 0.5rem; text-align: left; }
+    th { background: #f0f4f8; }
+    code { background: #f0f4f8; padding: 0.1rem 0.25rem; border-radius: 0.25rem; }
+    .pass { color: #0f5132; font-weight: 700; }
+    .missing { color: #991b1b; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <h1>Prod Real Load K6 MaxVUs Fix - 2026-05-11</h1>
+  <p>Fixed generated k6 JavaScript that referenced <code>maxVUs</code> without declaring it.</p>
+  <table>
+    <tr><th>Validation</th><th>Status</th></tr>
+    <tr><td>RED regression test</td><td class="pass">Failed before fix as expected</td></tr>
+    <tr><td>Focused test</td><td class="pass">Pass: 1 file, 5 tests</td></tr>
+    <tr><td>Related prod load/evidence tests</td><td class="pass">Pass: 3 files, 9 tests</td></tr>
+    <tr><td>Shell syntax</td><td class="pass">Pass</td></tr>
+    <tr><td>Local prod-like real-load smoke after fix</td><td class="pass">Pass: 201 requests, 0 failed, p95 2.8 ms</td></tr>
+    <tr><td>Production server execution</td><td class="missing">Not performed</td></tr>
+  </table>
+</body>
+</html>
