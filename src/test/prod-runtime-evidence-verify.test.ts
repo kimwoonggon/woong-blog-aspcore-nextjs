@@ -107,6 +107,19 @@ describe('production runtime evidence verifier', () => {
     expect(result.stdout).toContain('[prod-runtime-evidence-verify] PASS')
   })
 
+  it('passes when real read targets are absolute public HTTPS URLs', () => {
+    const evidenceDir = createEvidenceDir()
+    updateRealLoadSummary(evidenceDir, (summary) => {
+      summary.steps[0].targets.work_read.path = 'https://woonglab.com/api/public/works/real-work'
+      summary.steps[0].targets.study_read.path = 'https://woonglab.com/api/public/blogs/real-study'
+    })
+
+    const result = runVerifier(evidenceDir)
+
+    expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0)
+    expect(result.stdout).toContain('[prod-runtime-evidence-verify] PASS')
+  })
+
   it('passes for a returned bundle output directory with a compressed evidence tarball', () => {
     const extractedEvidenceDir = createEvidenceDir()
     const bundleOutputDir = mkdtempSync(path.join(os.tmpdir(), 'prod-runtime-evidence-bundle-output-'))

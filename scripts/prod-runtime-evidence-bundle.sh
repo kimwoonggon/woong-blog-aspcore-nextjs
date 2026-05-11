@@ -90,15 +90,44 @@ function fail(message) {
 }
 
 function valuesFromTargets(targets) {
-  return Object.values(targets || {})
-    .map((target) => String(target?.path || ''))
-    .filter(Boolean)
+  return Object.entries(targets || {}).map(([key, target]) => ({
+    key,
+    path: String(target?.path || ''),
+  })).filter((target) => target.path)
 }
 
-const targetPaths = summary.steps.flatMap((step) => valuesFromTargets(step.targets))
-const hasSeedOrFixture = targetPaths.some((target) => /seed|fixture/i.test(target))
+function isBackendDirectUrl(value) {
+  try {
+    const url = new URL(value)
+    return /^(backend|localhost|127\.0\.0\.1)$/i.test(url.hostname)
+  } catch {
+    return false
+  }
+}
+
+function isPublicDetailTarget(value, kind) {
+  const prefix = kind === 'work' ? '/api/public/works/' : '/api/public/blogs/'
+  if (String(value || '').startsWith(prefix)) {
+    return true
+  }
+
+  try {
+    const url = new URL(value)
+    return url.protocol === 'https:' && !isBackendDirectUrl(value) && url.pathname.startsWith(prefix)
+  } catch {
+    return false
+  }
+}
+
+const targets = summary.steps.flatMap((step) => valuesFromTargets(step.targets))
+const targetPaths = targets.map((target) => target.path)
+const hasSeedOrFixture = targetPaths.some((targetPath) => /seed|fixture/i.test(targetPath))
 if (hasSeedOrFixture) {
   fail('real load summary contains seed/fixture target')
+}
+
+if (targetPaths.some((targetPath) => isBackendDirectUrl(targetPath))) {
+  fail('real load summary contains backend-direct target')
 }
 
 const listPageSizes = summary.steps
@@ -114,6 +143,22 @@ if (!summary.steps.length) {
 
 if (String(summary.baseUrl || '').match(/^https?:\/\/(backend|127\.0\.0\.1|localhost):?8080/i)) {
   fail('real load summary baseUrl bypasses public nginx origin')
+}
+
+for (const [index, step] of summary.steps.entries()) {
+  const stepTargets = Object.fromEntries(valuesFromTargets(step.targets).map((target) => [target.key, target.path]))
+  if (stepTargets.work_list !== '/api/public/works?page=1&pageSize=12') {
+    fail(`step ${index + 1} work_list must be /api/public/works?page=1&pageSize=12`)
+  }
+  if (stepTargets.study_list !== '/api/public/blogs?page=1&pageSize=12') {
+    fail(`step ${index + 1} study_list must be /api/public/blogs?page=1&pageSize=12`)
+  }
+  if (!isPublicDetailTarget(stepTargets.work_read, 'work')) {
+    fail(`step ${index + 1} work_read must be a public Work detail path or HTTPS URL`)
+  }
+  if (!isPublicDetailTarget(stepTargets.study_read, 'study')) {
+    fail(`step ${index + 1} study_read must be a public Study detail path or HTTPS URL`)
+  }
 }
 
 const manifest = {
