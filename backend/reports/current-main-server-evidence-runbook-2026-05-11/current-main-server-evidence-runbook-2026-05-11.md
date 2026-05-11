@@ -12,6 +12,7 @@ This does not complete the active goal because the script has not been executed 
 
 - `backend/reports/current-main-server-evidence-runbook-2026-05-11/server-current-main-preflight-load-evidence.sh`
 - `docs/walkthroughs/main-server-setup.md` now links to the current-main script so it is discoverable from the standard server setup flow.
+- GHCR manifest checks and image pulls now use a temporary Docker config so stale server credentials do not break public runtime image pulls.
 
 ## Runtime Inputs
 
@@ -65,15 +66,16 @@ bash backend/reports/current-main-server-evidence-runbook-2026-05-11/server-curr
    - `LoadTesting__BaseUrl`
    - `APP_ENV_FILE`
    - `NGINX_DEFAULT_CONF`
-6. Pulls and starts `docker-compose.prod.yml`.
-7. Records the pulled backend/frontend image digests. If expected digest env vars are supplied, they must match.
-8. Resolves `STUDY_READ_PATH` from `/api/public/blogs?page=1&pageSize=12` if omitted.
-9. Rejects seed/fixture Work/Study read targets.
-10. Runs `scripts/prod-runtime-preflight.sh`.
-11. Runs `scripts/prod-real-load-steps.sh` with list `pageSize=12` and public read targets.
-12. Runs `scripts/prod-runtime-evidence-bundle.sh`.
-13. Runs `scripts/prod-runtime-evidence-verify.sh` against the produced tarball.
-14. Prints the evidence tarball path to return for result-based slice selection.
+6. Uses a temporary Docker config for GHCR manifest inspection and `docker compose pull`.
+7. Starts `docker-compose.prod.yml` with the pulled images.
+8. Records the pulled backend/frontend image digests. If expected digest env vars are supplied, they must match.
+9. Resolves `STUDY_READ_PATH` from `/api/public/blogs?page=1&pageSize=12` if omitted.
+10. Rejects seed/fixture Work/Study read targets.
+11. Runs `scripts/prod-runtime-preflight.sh`.
+12. Runs `scripts/prod-real-load-steps.sh` with list `pageSize=12` and public read targets.
+13. Runs `scripts/prod-runtime-evidence-bundle.sh`.
+14. Runs `scripts/prod-runtime-evidence-verify.sh` against the produced tarball.
+15. Prints the evidence tarball path to return for result-based slice selection.
 
 ## Prompt-To-Artifact Checklist
 
@@ -96,6 +98,7 @@ bash backend/reports/current-main-server-evidence-runbook-2026-05-11/server-curr
 - JSON audit parse: passed.
 - `git diff --check`: passed for generated artifacts and TODO update.
 - `docs/walkthroughs/main-server-setup.md` was updated to reference the generated script.
+- The generated script was checked for temporary Docker config use on `manifest inspect`, `compose config`, and `compose pull`.
 
 ## Risks / Yellow Flags
 
