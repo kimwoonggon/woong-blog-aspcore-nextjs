@@ -1,0 +1,37 @@
+{
+  "task": "toc-rail-readable-collapse",
+  "date": "2026-05-12",
+  "summary": "Improved public detail TOC rail readability and collapse feedback.",
+  "changedFiles": [
+    "src/components/content/TableOfContents.tsx",
+    "src/app/(public)/blog/[slug]/page.tsx",
+    "src/app/(public)/works/[slug]/page.tsx",
+    "src/test/table-of-contents.test.tsx",
+    "tests/public-blog-toc-layout.spec.ts",
+    "tests/public-work-toc.spec.ts",
+    "todolist-2026-05-12.md"
+  ],
+  "intentionallyNotChanged": [
+    "backend",
+    "database",
+    "load tests",
+    "production deploy",
+    "remote server",
+    "mobile TOC behavior",
+    "article body max width"
+  ],
+  "validations": [
+    { "name": "red-vitest", "command": "vitest --pool=threads --maxWorkers=2 --reporter=dot --run src/test/table-of-contents.test.tsx", "result": "failed before implementation as expected" },
+    { "name": "green-vitest", "command": "vitest --pool=threads --maxWorkers=2 --reporter=dot --run src/test/table-of-contents.test.tsx", "result": "passed, 9 tests" },
+    { "name": "eslint-focused", "command": "eslint changed TOC/page/test files", "result": "passed" },
+    { "name": "docker-compose-build", "command": "docker compose -f docker-compose.dev.yml up -d --build", "result": "frontend Next build and TypeScript stage passed" },
+    { "name": "dev-health", "command": "curl http://127.0.0.1:13000/api/health", "result": "HTTP 200" },
+    { "name": "playwright-focused", "command": "playwright test tests/public-blog-toc-layout.spec.ts tests/public-work-toc.spec.ts --workers=1", "result": "passed, 2 tests" },
+    { "name": "diff-check", "command": "git diff --check", "result": "passed" }
+  ],
+  "risks": [
+    "24rem desktop rail shifts article content slightly left at xl.",
+    "Full E2E was not run; focused affected-page Playwright coverage was run."
+  ],
+  "recommendation": "Ship the targeted UI slice if the desired behavior is a more readable desktop TOC rail without mobile/article body width changes."
+}
