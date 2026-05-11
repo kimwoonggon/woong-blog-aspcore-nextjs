@@ -124,6 +124,14 @@ function runScript(runtime: ReturnType<typeof createFakeRuntime>, extraEnv: Reco
 }
 
 describe('production real load step runner', () => {
+  it('generates k6 options with the declared maxVus variable', () => {
+    const script = readFileSync(scriptPath, 'utf8')
+
+    expect(script).toContain('const maxVus = Number.parseInt(__ENV.MAX_VUS')
+    expect(script).toContain('maxVUs: maxVus')
+    expect(script).not.toContain('\n      maxVUs,\n')
+  })
+
   it('requires real read targets instead of silently falling back to seeded slugs', () => {
     const runtime = createFakeRuntime()
 
