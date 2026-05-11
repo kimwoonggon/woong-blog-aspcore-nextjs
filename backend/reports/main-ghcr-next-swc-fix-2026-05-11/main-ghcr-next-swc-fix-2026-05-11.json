@@ -1,0 +1,45 @@
+{
+  "task": "main-ghcr-next-swc-fix",
+  "date": "2026-05-11",
+  "summary": "Fixed the frontend Dockerfile build-stage SWC compatibility issue that blocked Publish GHCR Main backend matrix smoke builds.",
+  "changed": [
+    "Added src/test/frontend-dockerfile-swc.test.ts",
+    "Installed libc6-compat in the Dockerfile builder stage before npm run build",
+    "Updated todolist-2026-05-11.md"
+  ],
+  "notChanged": [
+    "No production SSH or remote server command execution",
+    "No secrets or production environment changes",
+    "No load-test pageSize, seed, cache, or target changes",
+    "No GHCR tag policy changes"
+  ],
+  "validations": [
+    {
+      "name": "RED targeted Vitest",
+      "command": "npx vitest run src/test/frontend-dockerfile-swc.test.ts --pool=threads --maxWorkers=2",
+      "result": "failed before implementation because builder stage lacked libc6-compat"
+    },
+    {
+      "name": "GREEN targeted Vitest",
+      "command": "npx vitest run src/test/frontend-dockerfile-swc.test.ts --pool=threads --maxWorkers=2",
+      "result": "passed"
+    },
+    {
+      "name": "Docker build",
+      "command": "docker build -f Dockerfile -t local/woong-blog-frontend:swc-fix .",
+      "result": "passed"
+    },
+    {
+      "name": "Targeted regression Vitest",
+      "command": "npx vitest run src/test/frontend-dockerfile-swc.test.ts src/test/publish-ghcr-tags.test.ts --pool=threads --maxWorkers=2",
+      "result": "passed"
+    }
+  ],
+  "risks": [
+    "GitHub Actions hosted runner validation is still required",
+    "Existing Node.js 20 action deprecation warnings remain",
+    "Existing Dockerfile legacy ENV style warnings remain",
+    "Existing npm audit warnings remain"
+  ],
+  "recommendation": "Open PR to dev, promote to main after CI, and verify Publish GHCR Main succeeds for the latest main SHA."
+}

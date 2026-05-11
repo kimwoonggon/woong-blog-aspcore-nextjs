@@ -16,6 +16,8 @@ RUN \
 
 # Rebuild the source code only when needed
 FROM base AS builder
+# Keep the glibc compatibility layer available while next build loads native SWC.
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
