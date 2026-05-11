@@ -161,6 +161,8 @@ jobs:
           git fetch origin main --prune
           git checkout main
           git pull --ff-only origin main
+          actual_sha="$(git rev-parse HEAD)"
+          echo "Using main SHA: ${actual_sha}"
 
           docker_auth_config="$(mktemp -d)"
           cleanup() {
@@ -204,6 +206,16 @@ jobs:
           docker --config "${docker_auth_config}" compose --env-file .env.prod -f docker-compose.prod.yml pull
           docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --remove-orphans
           docker compose --env-file .env.prod -f docker-compose.prod.yml ps
+
+          repo_digest_for() {
+            local image="$1"
+            docker image inspect "${image}" --format '{{index .RepoDigests 0}}' | sed 's/^.*@//'
+          }
+
+          backend_digest="$(repo_digest_for ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-backend:main)"
+          frontend_digest="$(repo_digest_for ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-frontend:main)"
+          echo "Backend image digest: ${backend_digest}"
+          echo "Frontend image digest: ${frontend_digest}"
 
           preflight_log="backend/reports/prod-runtime-preflight-$(date -u +%Y%m%dT%H%M%SZ).log"
           mkdir -p "$(dirname "${preflight_log}")"
@@ -276,11 +288,19 @@ jobs:
             printf '  summary json: %s\n' "${summary_json}"
             printf 'Real load summary markdown:\n'
             cat "${summary_md}"
+            evidence_dir="backend/reports/production-runtime-evidence-$(date -u +%Y%m%dT%H%M%SZ)"
             PREFLIGHT_LOG="${preflight_log}" \
             REAL_LOAD_DIR="${output_dir}" \
-            OUTPUT_DIR="backend/reports/production-runtime-evidence-$(date -u +%Y%m%dT%H%M%SZ)" \
-            MAIN_SHA="$(git rev-parse HEAD)" \
+            OUTPUT_DIR="${evidence_dir}" \
+            MAIN_SHA="${actual_sha}" \
+            BACKEND_IMAGE_DIGEST="${backend_digest}" \
+            FRONTEND_IMAGE_DIGEST="${frontend_digest}" \
             ./scripts/prod-runtime-evidence-bundle.sh
+
+            EXPECTED_MAIN_SHA="${actual_sha}" \
+            EXPECTED_BACKEND_IMAGE_DIGEST="${backend_digest}" \
+            EXPECTED_FRONTEND_IMAGE_DIGEST="${frontend_digest}" \
+            ./scripts/prod-runtime-evidence-verify.sh "${evidence_dir}/production-runtime-evidence.tar.gz"
           else
             echo "RUN_REAL_LOAD=false; production preflight completed without running load steps."
           fi

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Production Redeploy Evidence Verification - 2026-05-12</title>
+  <style>
+    body { font-family: ui-sans-serif, system-ui, sans-serif; max-width: 900px; margin: 2rem; line-height: 1.55; color: #1f2933; }
+    code { background: #eef2f7; padding: 0.1rem 0.25rem; border-radius: 0.25rem; }
+    .blocked { color: #b42318; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <h1>Production Redeploy Evidence Verification - 2026-05-12</h1>
+  <p>The production redeploy workflow now verifies its evidence bundle with the checked-out main SHA and actual pulled image digests when real load is enabled.</p>
+  <p class="blocked">Active goal remains incomplete until production deploy, preflight, real load, result-based slice, full E2E, and CI evidence exist.</p>
+  <ul>
+    <li><code>.github/workflows/prod-runtime-redeploy.yml</code></li>
+    <li><code>src/test/prod-runtime-redeploy-workflow.test.ts</code></li>
+  </ul>
+  <h2>Validation</h2>
+  <ul>
+    <li>Focused workflow Vitest: passed.</li>
+    <li>Related production evidence/load Vitest: passed, 6 files and 31 tests.</li>
+    <li>Shell syntax, focused ESLint, audit JSON parse, and diff check: passed.</li>
+  </ul>
+</body>
+</html>
