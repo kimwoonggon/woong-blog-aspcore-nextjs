@@ -1,0 +1,43 @@
+{
+  "slug": "on-this-page-toc-width-2026-05-11",
+  "date": "2026-05-11",
+  "goal": "Fix the public detail On This Page/On This Work TOC rail width so collapse controls and TOC text are not squeezed on desktop.",
+  "changed": [
+    "Added Playwright regression coverage for Blog and Work detail TOC rail width.",
+    "Changed desktop detail grids to allocate an explicit 20rem right rail.",
+    "Removed extra desktop aside padding that consumed TOC text width.",
+    "Hardened TableOfContents header flex sizing for title and Collapse/Expand button."
+  ],
+  "notChanged": [
+    "Mobile TOC visibility behavior.",
+    "Backend, DTO, load-test, HLS, cache, or production server behavior."
+  ],
+  "validations": [
+    {
+      "command": "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3010 ENABLE_LOCAL_ADMIN_SHORTCUT=true PLAYWRIGHT_EXPECT_LOCAL_ADMIN_SHORTCUT=visible npx playwright test tests/public-blog-toc-layout.spec.ts tests/public-work-toc.spec.ts --project=chromium-public --workers=1",
+      "red": "failed as expected with TOC width 144px",
+      "green": "passed 2 tests"
+    },
+    {
+      "command": "npx vitest run src/test/table-of-contents.test.tsx --pool=threads --maxWorkers=2",
+      "result": "passed 8 tests"
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "passed"
+    },
+    {
+      "command": "npm run lint",
+      "result": "passed with 0 errors and 5 existing warnings"
+    }
+  ],
+  "risks": [
+    "The desktop layout is intentionally less symmetrical at xl because the right rail now has explicit width.",
+    "Full core E2E was not rerun for this UI-only slice."
+  ],
+  "recommendation": "Merge to dev after CI, then optionally run full core E2E after merge."
+}

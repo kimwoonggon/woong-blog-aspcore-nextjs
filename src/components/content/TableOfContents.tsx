@@ -116,24 +116,24 @@ export function TableOfContents({
     <nav
       aria-label="Table of contents"
       data-testid={testId}
-      className="rounded-2xl border border-border/80 bg-background/95 p-4 shadow-sm transition-all"
+      className="min-w-0 rounded-2xl border border-border/80 bg-background/95 p-4 shadow-sm transition-all"
     >
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+      <div className="mb-3 flex min-w-0 items-start justify-between gap-3">
+        <p className="min-w-0 flex-1 text-xs font-semibold uppercase leading-snug tracking-[0.24em] text-muted-foreground [overflow-wrap:anywhere]">
           {title}
         </p>
         <button
           type="button"
           onClick={() => setCollapsed((value) => !value)}
           disabled={!hasItems}
-          className="rounded-full border border-border/80 px-2 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          className="shrink-0 whitespace-nowrap rounded-full border border-border/80 px-2 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           aria-expanded={!collapsed}
         >
           {collapsed ? 'Expand' : 'Collapse'}
         </button>
       </div>
       {hasItems && !collapsed ? (
-        <ol className="space-y-2 text-sm">
+        <ol className="min-w-0 space-y-2 text-sm">
           {renderedItems.map((item) => (
             <li key={item.id}>
               <a
