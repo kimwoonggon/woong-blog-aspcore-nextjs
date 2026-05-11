@@ -27,6 +27,7 @@ function writeValidEvidence(runtime: ReturnType<typeof createRuntime>) {
     '[prod-runtime-preflight] nginx request_time header: available (0.010)',
     '[prod-runtime-preflight] app elapsed header: available (2.1)',
     '[prod-runtime-preflight] gzip public response: available',
+    '[prod-runtime-preflight] public Work list contract: current',
     '[prod-runtime-preflight] public Work detail contract: current',
     '[prod-runtime-preflight] PASS',
   ].join('\n'))
@@ -94,6 +95,26 @@ describe('production runtime evidence bundle', () => {
 
     expect(result.status).not.toBe(0)
     expect(result.stderr).toContain('real load summary contains seed/fixture target')
+  })
+
+  it('fails when preflight evidence does not prove the public Work list contract is current', () => {
+    const runtime = createRuntime()
+    writeValidEvidence(runtime)
+    writeFileSync(runtime.preflightLog, [
+      '[prod-runtime-preflight] required services: backend frontend nginx db',
+      '[prod-runtime-preflight] LoadTesting__BaseUrl=https://woonglab.com',
+      '[prod-runtime-preflight] ASPNETCORE_ENVIRONMENT=Production',
+      '[prod-runtime-preflight] nginx request_time header: available (0.010)',
+      '[prod-runtime-preflight] app elapsed header: available (2.1)',
+      '[prod-runtime-preflight] gzip public response: available',
+      '[prod-runtime-preflight] public Work detail contract: current',
+      '[prod-runtime-preflight] PASS',
+    ].join('\n'))
+
+    const result = runScript(runtime)
+
+    expect(result.status).not.toBe(0)
+    expect(result.stderr).toContain('preflight log is missing public Work list contract')
   })
 
   it('writes a manifest and tarball for valid preflight and real load evidence', () => {

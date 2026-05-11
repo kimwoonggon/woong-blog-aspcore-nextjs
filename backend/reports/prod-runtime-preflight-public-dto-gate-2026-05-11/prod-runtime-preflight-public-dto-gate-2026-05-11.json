@@ -1,0 +1,65 @@
+{
+  "task": "prod-runtime-preflight-public-dto-gate-2026-05-11",
+  "date": "2026-05-11",
+  "status": "validated-local",
+  "changed": [
+    "scripts/prod-runtime-preflight.sh",
+    "scripts/prod-runtime-evidence-bundle.sh",
+    "scripts/prod-runtime-evidence-verify.sh",
+    "src/test/prod-runtime-preflight.test.ts",
+    "src/test/prod-runtime-evidence-bundle.test.ts",
+    "src/test/prod-runtime-evidence-verify.test.ts",
+    "todolist-2026-05-11.md"
+  ],
+  "goals": [
+    "Reject stale public Work list DTO fields in production runtime preflight",
+    "Require public Work list contract evidence in evidence bundles",
+    "Require public Work list contract evidence in returned evidence verification"
+  ],
+  "nonGoals": [
+    "Production SSH",
+    "Remote production command execution",
+    "Cache shortcut",
+    "Real Backend Test target weakening",
+    "Backend DTO/query/schema/HLS changes"
+  ],
+  "validations": [
+    {
+      "command": "npx vitest run src/test/prod-runtime-preflight.test.ts --pool=threads --maxWorkers=2",
+      "result": "RED failed before implementation, then PASS with 7 tests"
+    },
+    {
+      "command": "npx vitest run src/test/prod-runtime-evidence-verify.test.ts src/test/prod-runtime-evidence-bundle.test.ts --pool=threads --maxWorkers=2",
+      "result": "RED failed before bundle/verifier implementation"
+    },
+    {
+      "command": "npx vitest run src/test/prod-runtime-preflight.test.ts src/test/prod-runtime-evidence-verify.test.ts src/test/prod-runtime-evidence-bundle.test.ts --pool=threads --maxWorkers=2",
+      "result": "PASS, 17 tests"
+    },
+    {
+      "command": "npx vitest run src/test/prod-runtime-preflight.test.ts src/test/prod-runtime-evidence-verify.test.ts src/test/prod-runtime-evidence-bundle.test.ts src/test/prod-public-origin-preflight.test.ts src/test/prod-real-load-steps.test.ts src/test/prod-runtime-redeploy-workflow.test.ts --pool=threads --maxWorkers=2",
+      "result": "PASS, 29 tests"
+    },
+    {
+      "command": "bash -n scripts/prod-runtime-preflight.sh scripts/prod-runtime-evidence-bundle.sh scripts/prod-runtime-evidence-verify.sh scripts/prod-public-origin-preflight.sh scripts/prod-real-load-steps.sh",
+      "result": "PASS"
+    },
+    {
+      "command": "git diff --check -- changed files",
+      "result": "PASS"
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "PASS"
+    },
+    {
+      "command": "npm run lint",
+      "result": "PASS with 0 errors and 5 existing warnings"
+    }
+  ],
+  "risks": [
+    "This is an evidence gate only; production server deployment is still not proven.",
+    "Fresh server-side evidence is still required before choosing a performance slice."
+  ],
+  "recommendation": "Promote this guard to main and require returned production evidence to pass prod-runtime-evidence-verify.sh before selecting the next performance slice."
+}
