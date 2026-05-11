@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Prod Runtime Evidence Bundle Audit - 2026-05-11</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 900px; margin: 40px auto; padding: 0 24px; line-height: 1.55; color: #1f2933; }
+    h1, h2 { color: #102a43; }
+    code { background: #f3f4f6; padding: 2px 4px; border-radius: 4px; }
+    table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+    th, td { border: 1px solid #d9e2ec; padding: 8px; text-align: left; vertical-align: top; }
+    th { background: #f0f4f8; }
+    .ok { color: #0f766e; font-weight: 700; }
+    .missing { color: #b45309; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <h1>Prod Runtime Evidence Bundle Audit - 2026-05-11</h1>
+  <p>The repo now includes <code>scripts/prod-runtime-evidence-bundle.sh</code> to package production preflight and Real Backend Test evidence.</p>
+  <h2>Validation</h2>
+  <table>
+    <tr><th>Check</th><th>Result</th></tr>
+    <tr><td>Evidence bundle Vitest</td><td class="ok">Passed, 3 tests</td></tr>
+    <tr><td>Workflow/runner targeted Vitest</td><td class="ok">Passed, 8 tests total</td></tr>
+    <tr><td>Shell syntax</td><td class="ok">Passed</td></tr>
+  </table>
+  <h2>Remaining Objective</h2>
+  <p class="missing">Production server pull/deploy, production preflight, production Real Backend Test, result-selected slice, full E2E, and CI evidence are still required before the active goal can be complete.</p>
+</body>
+</html>
