@@ -141,7 +141,7 @@ export const options = {
       timeUnit: '1s',
       duration: `${durationSeconds}s`,
       preAllocatedVUs,
-      maxVUs,
+      maxVUs: maxVus,
     },
   },
 };
@@ -258,7 +258,7 @@ export function handleSummary(data) {
     rate,
     baseUrl,
     durationSeconds,
-    maxVUs,
+    maxVUs: maxVus,
     preAllocatedVUs,
     listPageSize,
     targets: targetsSummary,
