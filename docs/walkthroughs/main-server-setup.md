@@ -18,6 +18,15 @@ docker compose --env-file .env.prod -f docker-compose.prod.yml up -d
 curl -i https://woonglab.com/api/health
 ```
 
+현재 main image pull부터 preflight, Real Backend Test, evidence bundle, verifier까지 한 번에 수행할 때:
+
+```bash
+bash backend/reports/current-main-server-evidence-runbook-2026-05-11/server-current-main-preflight-load-evidence.sh
+```
+
+이 script는 current `main` SHA와 GHCR digest를 고정 검증한다.
+`main`이 새로 promotion되면 이 runbook을 최신 SHA/digest 기준으로 다시 생성한 뒤 사용한다.
+
 기동 후 production preflight:
 
 ```bash
