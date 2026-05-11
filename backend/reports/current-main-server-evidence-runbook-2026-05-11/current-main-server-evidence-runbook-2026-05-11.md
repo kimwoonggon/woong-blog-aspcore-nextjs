@@ -2,9 +2,9 @@
 
 ## Summary
 
-Generated a current-main, digest-aware server handoff script for the active production evidence goal.
+Updated the server handoff script so it records and verifies the current checked-out `main` SHA and actual pulled image digests without becoming stale after each promotion.
 
-The script is intended to be copied or run on the production server after `.env.prod` secrets are already filled. It pulls and starts the current `main` runtime images, runs production preflight, runs Real Backend Test with realistic public targets, creates an evidence bundle, and verifies that bundle against the current `main` SHA and pulled image digests.
+The script is intended to be copied or run on the production server after `.env.prod` secrets are already filled. It pulls and starts the current `main` runtime images, runs production preflight, runs Real Backend Test with realistic public targets, creates an evidence bundle, and verifies that bundle against the checked-out `main` SHA and actual pulled image digests.
 
 This does not complete the active goal because the script has not been executed on the server and no production evidence bundle has been returned.
 
@@ -13,17 +13,15 @@ This does not complete the active goal because the script has not been executed 
 - `backend/reports/current-main-server-evidence-runbook-2026-05-11/server-current-main-preflight-load-evidence.sh`
 - `docs/walkthroughs/main-server-setup.md` now links to the current-main script so it is discoverable from the standard server setup flow.
 
-## Fixed Current Main Inputs
+## Runtime Inputs
 
-- Expected `main` SHA: `08978b2f8cb472d4c50cf29e165d758cc4ffd382`
 - Backend image: `ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-backend:main`
 - Frontend image: `ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-frontend:main`
-- Backend index digest: `sha256:677068ac570d8550e40b4c9985f606f47d6334f2ee9abbcb4fd0572459e976d8`
-- Backend linux/amd64 manifest: `sha256:d1ef5eb9eeec2597168717b13530afb0030c8747bbcbda54da4c3958709a7282`
-- Frontend index digest: `sha256:9cf9d1160d7155870a20249a589781439235ace68fdcc40e1393c2a5e93d5088`
-- Frontend linux/amd64 manifest: `sha256:1851158728ad4d1d7bbbe9182ffb24256b21fe8747ab008865f58d044736d5c7`
+- Optional `EXPECTED_MAIN_SHA`: if supplied, the script fails unless checked-out `main` matches it.
+- Optional `EXPECTED_BACKEND_IMAGE_DIGEST`: if supplied, the script fails unless the pulled backend digest matches it.
+- Optional `EXPECTED_FRONTEND_IMAGE_DIGEST`: if supplied, the script fails unless the pulled frontend digest matches it.
 
-The script accepts either index digest or linux/amd64 manifest digest from local Docker image inspection, then writes the actual pulled digest into the evidence bundle and verifier call.
+When expected values are omitted, the script records the checked-out `main` SHA and actual pulled backend/frontend digests into the evidence bundle, then verifies that same bundle with those observed values. This avoids a self-invalidating runbook after each `main` promotion.
 
 ## Server Usage
 
@@ -58,7 +56,7 @@ bash backend/reports/current-main-server-evidence-runbook-2026-05-11/server-curr
 
 1. Requires `git`, `docker`, `curl`, `node`, `k6`, and `tar`.
 2. Requires existing `.env.prod`; it does not create or fill secrets.
-3. Fetches `origin/main`, checks out `main`, pulls fast-forward only, and fails unless HEAD is `08978b2f8cb472d4c50cf29e165d758cc4ffd382`.
+3. Fetches `origin/main`, checks out `main`, pulls fast-forward only, and records the checked-out SHA. If `EXPECTED_MAIN_SHA` is supplied, it must match.
 4. Backs up `.env.prod` to `.env.prod.backup.<RUN_ID>`.
 5. Upserts non-secret runtime keys:
    - `FRONTEND_IMAGE`
@@ -68,7 +66,7 @@ bash backend/reports/current-main-server-evidence-runbook-2026-05-11/server-curr
    - `APP_ENV_FILE`
    - `NGINX_DEFAULT_CONF`
 6. Pulls and starts `docker-compose.prod.yml`.
-7. Verifies the pulled backend/frontend image digests match the current published main images.
+7. Records the pulled backend/frontend image digests. If expected digest env vars are supplied, they must match.
 8. Resolves `STUDY_READ_PATH` from `/api/public/blogs?page=1&pageSize=12` if omitted.
 9. Rejects seed/fixture Work/Study read targets.
 10. Runs `scripts/prod-runtime-preflight.sh`.
@@ -81,7 +79,7 @@ bash backend/reports/current-main-server-evidence-runbook-2026-05-11/server-curr
 
 | Requirement | Artifact / Evidence | Status |
 | --- | --- | --- |
-| Server pull/deploy current `main` image | Script performs `docker compose pull` and `up -d` after exact SHA check | Prepared, not executed |
+| Server pull/deploy current `main` image | Script performs `docker compose pull` and `up -d` after checking out current `main`; optional exact SHA check is supported | Prepared, not executed |
 | Production preflight | Script runs `prod-runtime-preflight.sh` and captures `prod-runtime-preflight.log` | Prepared, not executed |
 | Real Backend Test with `pageSize=12` | Script calls `prod-real-load-steps.sh`; that script enforces `LIST_PAGE_SIZE=12` | Prepared, not executed |
 | No seed/fixture target | Script rejects `seed`/`fixture`; load and bundle scripts also reject these | Prepared, not executed |
@@ -102,7 +100,7 @@ bash backend/reports/current-main-server-evidence-runbook-2026-05-11/server-curr
 ## Risks / Yellow Flags
 
 - This script intentionally mutates server `.env.prod` non-secret runtime keys and restarts compose; it must only be run by the server operator.
-- If `origin/main` advances, the script fails by design and the runbook must be regenerated for the new SHA/digests.
+- If `origin/main` advances, the script remains usable because it records the checked-out SHA and pulled digests; supply `EXPECTED_*` env vars only when an exact pin is required.
 - Current public-origin probe still shows stale Work DTO fields and missing nginx request timing, so Real Backend Test results remain untrusted until this script or equivalent server deploy/preflight succeeds.
 
 ## Recommendation

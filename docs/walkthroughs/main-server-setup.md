@@ -24,8 +24,8 @@ curl -i https://woonglab.com/api/health
 bash backend/reports/current-main-server-evidence-runbook-2026-05-11/server-current-main-preflight-load-evidence.sh
 ```
 
-이 script는 current `main` SHA와 GHCR digest를 고정 검증한다.
-`main`이 새로 promotion되면 이 runbook을 최신 SHA/digest 기준으로 다시 생성한 뒤 사용한다.
+이 script는 checkout된 current `main` SHA와 pull된 GHCR digest를 evidence에 기록하고 즉시 verifier에 넘긴다.
+특정 SHA/digest만 허용해야 할 때는 `EXPECTED_MAIN_SHA`, `EXPECTED_BACKEND_IMAGE_DIGEST`, `EXPECTED_FRONTEND_IMAGE_DIGEST`를 명시한다.
 
 기동 후 production preflight:
 

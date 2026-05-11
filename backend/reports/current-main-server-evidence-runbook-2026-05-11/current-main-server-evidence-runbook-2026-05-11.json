@@ -9,15 +9,6 @@
     "backend/reports/current-main-server-evidence-runbook-2026-05-11/current-main-server-evidence-runbook-2026-05-11.html",
     "docs/walkthroughs/main-server-setup.md"
   ],
-  "currentMain": {
-    "sha": "08978b2f8cb472d4c50cf29e165d758cc4ffd382",
-    "backendImage": "ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-backend:main",
-    "frontendImage": "ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-frontend:main",
-    "backendIndexDigest": "sha256:677068ac570d8550e40b4c9985f606f47d6334f2ee9abbcb4fd0572459e976d8",
-    "backendAmd64Digest": "sha256:d1ef5eb9eeec2597168717b13530afb0030c8747bbcbda54da4c3958709a7282",
-    "frontendIndexDigest": "sha256:9cf9d1160d7155870a20249a589781439235ace68fdcc40e1393c2a5e93d5088",
-    "frontendAmd64Digest": "sha256:1851158728ad4d1d7bbbe9182ffb24256b21fe8747ab008865f58d044736d5c7"
-  },
   "prepared": [
     "server docker compose pull/up",
     "production preflight",
@@ -25,7 +16,8 @@
     "seed/fixture rejection",
     "evidence bundle",
     "evidence verifier",
-    "server setup doc runbook link"
+    "server setup doc runbook link",
+    "dynamic main SHA and image digest evidence"
   ],
   "missing": [
     "server execution",
@@ -36,7 +28,23 @@
   "validation": {
     "bashSyntax": "passed",
     "jsonParse": "passed",
-    "diffCheck": "passed"
+    "diffCheck": "passed",
+    "stalePinRemoved": "passed"
   },
-  "recommendation": "Run the generated script on the server after .env.prod secrets are present, then return the evidence tarball and summary markdown."
+  "recommendation": "Run the generated script on the server after .env.prod secrets are present, then return the evidence tarball and summary markdown.",
+  "summary": "Server runbook now records checked-out main SHA and actual pulled digests dynamically to avoid stale self-pinning after promotion.",
+  "runtimeInputs": {
+    "backendImage": "ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-backend:main",
+    "frontendImage": "ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-frontend:main",
+    "optionalPins": [
+      "EXPECTED_MAIN_SHA",
+      "EXPECTED_BACKEND_IMAGE_DIGEST",
+      "EXPECTED_FRONTEND_IMAGE_DIGEST"
+    ],
+    "observedValuesUsedForEvidence": [
+      "git rev-parse HEAD",
+      "docker image inspect backend RepoDigests[0]",
+      "docker image inspect frontend RepoDigests[0]"
+    ]
+  }
 }
