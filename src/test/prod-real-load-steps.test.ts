@@ -144,6 +144,30 @@ describe('production real load step runner', () => {
     expect(existsSync(runtime.callLog)).toBe(false)
   })
 
+  it('rejects seeded or fixture read targets before invoking k6', () => {
+    const seededWorkRuntime = createFakeRuntime()
+
+    const seededWorkResult = runScript(seededWorkRuntime, {
+      WORK_READ_PATH: '/api/public/works/seeded-work',
+      STUDY_READ_PATH: '/api/public/blogs/real-study',
+    })
+
+    expect(seededWorkResult.status).not.toBe(0)
+    expect(seededWorkResult.stderr).toContain('WORK_READ_PATH must be a real public target')
+    expect(existsSync(seededWorkRuntime.callLog)).toBe(false)
+
+    const fixtureStudyRuntime = createFakeRuntime()
+
+    const fixtureStudyResult = runScript(fixtureStudyRuntime, {
+      WORK_READ_PATH: '/api/public/works/real-work',
+      STUDY_READ_PATH: '/api/public/blogs/real-load-study-fixture',
+    })
+
+    expect(fixtureStudyResult.status).not.toBe(0)
+    expect(fixtureStudyResult.stderr).toContain('STUDY_READ_PATH must be a real public target')
+    expect(existsSync(fixtureStudyRuntime.callLog)).toBe(false)
+  })
+
   it('runs configured rate steps and writes aggregate json and markdown reports', () => {
     const runtime = createFakeRuntime()
 
