@@ -7,7 +7,7 @@
 </head>
 <body>
   <h1>Current Main Server Evidence Runbook - 2026-05-11</h1>
-  <p class="ok">Generated a digest-aware server handoff script for current main <code>08978b2f8cb472d4c50cf29e165d758cc4ffd382</code>.</p>
+  <p class="ok">Updated the server handoff script to record the checked-out <code>main</code> SHA and actual pulled image digests dynamically.</p>
   <p class="missing"><strong>Active goal is not complete.</strong> The script has not been executed on the server and no evidence bundle has been returned.</p>
   <p>The standard server setup doc now links this script: <code>docs/walkthroughs/main-server-setup.md</code>.</p>
   <h2>Script</h2>
@@ -16,7 +16,7 @@
   <pre><code>bash backend/reports/current-main-server-evidence-runbook-2026-05-11/server-current-main-preflight-load-evidence.sh</code></pre>
   <h2>Prepared Steps</h2>
   <ul>
-    <li>Exact main SHA check.</li>
+    <li>Current main SHA recording, with optional exact SHA pin.</li>
     <li>Docker compose pull/up for backend and frontend runtime images.</li>
     <li>Production preflight.</li>
     <li>Real Backend Test with pageSize=12 and public Work/Study targets.</li>
