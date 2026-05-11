@@ -118,15 +118,15 @@ export function TableOfContents({
       data-testid={testId}
       className="min-w-0 rounded-2xl border border-border/80 bg-background/95 p-4 shadow-sm transition-all"
     >
-      <div className="mb-3 flex min-w-0 items-start justify-between gap-3">
-        <p className="min-w-0 flex-1 text-xs font-semibold uppercase leading-snug tracking-[0.24em] text-muted-foreground [overflow-wrap:anywhere]">
+      <div className="mb-3 flex min-w-0 items-center justify-between gap-3">
+        <p className="min-w-0 flex-1 truncate text-xs font-semibold uppercase leading-snug tracking-[0.24em] text-muted-foreground">
           {title}
         </p>
         <button
           type="button"
           onClick={() => setCollapsed((value) => !value)}
           disabled={!hasItems}
-          className="shrink-0 whitespace-nowrap rounded-full border border-border/80 px-2 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          className="min-w-[4.75rem] shrink-0 whitespace-nowrap rounded-full border border-border/80 px-2 py-1 text-center text-[11px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           aria-expanded={!collapsed}
         >
           {collapsed ? 'Expand' : 'Collapse'}
