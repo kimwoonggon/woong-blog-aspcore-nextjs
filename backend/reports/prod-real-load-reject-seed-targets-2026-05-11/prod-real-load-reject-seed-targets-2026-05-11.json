@@ -1,0 +1,57 @@
+{
+  "task": "prod-real-load-reject-seed-targets",
+  "date": "2026-05-11",
+  "status": "local_slice_complete_active_goal_still_waiting_on_server_run",
+  "changed": [
+    "scripts/prod-real-load-steps.sh",
+    "src/test/prod-real-load-steps.test.ts",
+    "docs/walkthroughs/main-server-setup.md",
+    "todolist-2026-05-11.md"
+  ],
+  "enforced_conditions": {
+    "list_page_size": 12,
+    "rejects_seed_or_fixture_detail_targets": true,
+    "requires_explicit_work_and_study_read_paths": true,
+    "cache_busting_identity_query": "__k6Vu and __k6Iter"
+  },
+  "validations": [
+    {
+      "command": "npm test -- src/test/prod-real-load-steps.test.ts",
+      "phase": "RED",
+      "result": "failed as expected before implementation because seeded Work target was accepted"
+    },
+    {
+      "command": "npm test -- src/test/prod-real-load-steps.test.ts",
+      "phase": "GREEN",
+      "result": "passed: 1 file, 4 tests"
+    },
+    {
+      "command": "npm test -- src/test/prod-runtime-preflight.test.ts src/test/prod-real-load-steps.test.ts",
+      "phase": "related validation",
+      "result": "passed: 2 files, 10 tests"
+    },
+    {
+      "command": "git diff --check -- scripts/prod-real-load-steps.sh src/test/prod-real-load-steps.test.ts docs/walkthroughs/main-server-setup.md todolist-2026-05-11.md",
+      "phase": "hygiene",
+      "result": "passed"
+    }
+  ],
+  "not_changed": [
+    "production SSH or remote server execution",
+    "production secrets",
+    "runtime images",
+    "compose service definitions",
+    "application API behavior",
+    "database schema"
+  ],
+  "remaining_active_goal_items": [
+    "server-side pull/up of main runtime images",
+    "production preflight output after deploy",
+    "Real Backend Test output with pageSize=12, no seed, no cache shortcut, real Work/Study URLs",
+    "result-based backend optimization slice selection",
+    "selected slice implementation",
+    "full E2E after selected slice",
+    "CI after selected slice"
+  ],
+  "recommendation": "Promote the guard to dev/main, then run the documented server-side preflight and real-load commands after deployment."
+}

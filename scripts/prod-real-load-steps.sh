@@ -56,6 +56,17 @@ validate_public_read_path() {
   esac
 }
 
+reject_seed_or_fixture_read_path() {
+  local name="$1"
+  local value="$2"
+  local lowered="${value,,}"
+  case "${lowered}" in
+    *seed*|*fixture*)
+      fail "${name} must be a real public target, not seed/fixture: ${value}"
+      ;;
+  esac
+}
+
 require_positive_int "DURATION_SECONDS" "${DURATION_SECONDS}"
 require_positive_int "MAX_VUS" "${MAX_VUS}"
 require_positive_int "PRE_ALLOCATED_VUS" "${PRE_ALLOCATED_VUS}"
@@ -68,6 +79,8 @@ fi
 BASE_URL="$(normalize_base_url "${BASE_URL}")"
 validate_public_read_path "WORK_READ_PATH" "${WORK_READ_PATH}"
 validate_public_read_path "STUDY_READ_PATH" "${STUDY_READ_PATH}"
+reject_seed_or_fixture_read_path "WORK_READ_PATH" "${WORK_READ_PATH}"
+reject_seed_or_fixture_read_path "STUDY_READ_PATH" "${STUDY_READ_PATH}"
 
 if ! command -v "${K6_BIN}" >/dev/null 2>&1; then
   fail "k6 executable not found: ${K6_BIN}"

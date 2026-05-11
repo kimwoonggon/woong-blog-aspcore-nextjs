@@ -18,6 +18,33 @@ docker compose --env-file .env.prod -f docker-compose.prod.yml up -d
 curl -i https://woonglab.com/api/health
 ```
 
+기동 후 production preflight:
+
+```bash
+BASE_URL=https://woonglab.com \
+./scripts/prod-runtime-preflight.sh
+```
+
+실제 Work/Study read target을 지정한 Real Backend Test:
+
+```bash
+BASE_URL=https://woonglab.com \
+WORK_READ_PATH=/api/public/works/<real-work-slug> \
+STUDY_READ_PATH=/api/public/blogs/<real-study-slug> \
+RATES="100 200 300 400" \
+DURATION_SECONDS=30 \
+MAX_VUS=500 \
+PRE_ALLOCATED_VUS=100 \
+./scripts/prod-real-load-steps.sh
+```
+
+Real Backend Test 조건:
+
+- list target은 `/api/public/works?page=1&pageSize=12`, `/api/public/blogs?page=1&pageSize=12`로 고정한다.
+- `WORK_READ_PATH`, `STUDY_READ_PATH`는 실제 public detail API 경로를 넣는다.
+- `seed`, `seeded`, `fixture` 경로는 script가 실패 처리한다.
+- cache shortcut은 사용하지 않는다. k6 script가 요청마다 `__k6Vu`, `__k6Iter`를 붙여 동일 URL cache 착시를 피한다.
+
 `main` runtime image 값은 `.env.prod.example`에 이미 실제 GHCR 경로로 들어 있다.
 서버에서는 비밀값과 서버별 경로만 채우면 된다.
 
