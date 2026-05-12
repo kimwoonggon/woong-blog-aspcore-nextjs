@@ -242,7 +242,7 @@ public class PublicQueryHandlerComponentTests
     }
 
     [Fact]
-    public async Task GetHomeQueryHandler_ReturnsUpToFourFeaturedWorks_ForBalancedHomeGrid()
+    public async Task GetHomeQueryHandler_ReturnsUpToEightFeaturedWorks_ForBalancedDesktopHomeGrid()
     {
         await using var dbContext = CreateDbContext();
         var now = new DateTimeOffset(2026, 5, 12, 0, 0, 0, TimeSpan.Zero);
@@ -261,11 +261,12 @@ public class PublicQueryHandlerComponentTests
         });
 
         dbContext.Works.AddRange(
-            CreateWork("Featured Work 1", "featured-work-1", published: true, publishedAt: now.AddMinutes(-1)),
-            CreateWork("Featured Work 2", "featured-work-2", published: true, publishedAt: now.AddMinutes(-2)),
-            CreateWork("Featured Work 3", "featured-work-3", published: true, publishedAt: now.AddMinutes(-3)),
-            CreateWork("Featured Work 4", "featured-work-4", published: true, publishedAt: now.AddMinutes(-4)),
-            CreateWork("Featured Work 5", "featured-work-5", published: true, publishedAt: now.AddMinutes(-5)));
+            Enumerable.Range(1, 9)
+                .Select(index => CreateWork(
+                    $"Featured Work {index}",
+                    $"featured-work-{index}",
+                    published: true,
+                    publishedAt: now.AddMinutes(-index))));
         await dbContext.SaveChangesAsync();
 
         var handler = new GetHomeQueryHandler(CreateHomeQueryStore(dbContext));
@@ -274,7 +275,7 @@ public class PublicQueryHandlerComponentTests
 
         Assert.NotNull(result);
         Assert.Equal(
-            new[] { "Featured Work 1", "Featured Work 2", "Featured Work 3", "Featured Work 4" },
+            Enumerable.Range(1, 8).Select(index => $"Featured Work {index}").ToArray(),
             result!.FeaturedWorks.Select(work => work.Title).ToArray());
     }
 
