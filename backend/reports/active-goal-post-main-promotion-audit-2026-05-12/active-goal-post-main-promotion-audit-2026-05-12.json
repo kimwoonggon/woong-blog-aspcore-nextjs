@@ -1,0 +1,58 @@
+{
+  "taskSlug": "active-goal-post-main-promotion-audit-2026-05-12",
+  "date": "2026-05-12",
+  "objectiveRestated": [
+    "Server pulls and deploys current main runtime images",
+    "Production preflight passes on that deployed server runtime",
+    "Real Backend Test reruns with pageSize=12, no seed, no cache workaround, and real Work/Study URLs",
+    "Verified result selects one next backend slice",
+    "Selected slice is implemented and full E2E plus CI are green afterward"
+  ],
+  "currentMain": {
+    "sha": "3885eaeb16266de752fc984258bc30aafd3d7a62",
+    "promotionPr": 193,
+    "ciMainRuntimeRun": 25730480720,
+    "ciMainRuntimeConclusion": "success",
+    "publishGhcrMainRun": 25730793221,
+    "publishGhcrMainConclusion": "success"
+  },
+  "runtimeImages": {
+    "backend": {
+      "image": "ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-backend:sha-3885eaeb1626",
+      "digest": "sha256:112355097189a1f160ca5d4335bd00a95301b82c8c7b9e50408c932ce4eb774b"
+    },
+    "frontend": {
+      "image": "ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-frontend:sha-3885eaeb1626",
+      "digest": "sha256:e43ea1f01e4e9d6bd550ea78c4bf2a13dccdeaad3a499120850040a319518232"
+    }
+  },
+  "publicOriginProxySignals": {
+    "health": "HTTP 200",
+    "workListSample": {
+      "url": "https://woonglab.com/api/public/works?page=1&pageSize=12",
+      "staleKeys": ["iconUrl", "period"],
+      "usableAsDeployProof": false
+    },
+    "blogListSample": {
+      "url": "https://woonglab.com/api/public/blogs?page=1&pageSize=12",
+      "staleKeys": [],
+      "usableAsDeployProof": false
+    }
+  },
+  "checklist": [
+    { "requirement": "current main promoted", "status": "complete", "evidence": "PR #193 merged, origin/main=3885eaeb16266de752fc984258bc30aafd3d7a62" },
+    { "requirement": "main CI green", "status": "complete", "evidence": "CI Main Runtime run 25730480720 success" },
+    { "requirement": "GHCR images published", "status": "complete", "evidence": "Publish GHCR Main run 25730793221 success and immutable digests resolved" },
+    { "requirement": "server pulled/deployed current images", "status": "missing", "evidence": "No returned server-side current-main evidence bundle" },
+    { "requirement": "production preflight passed", "status": "missing", "evidence": "No returned current-main-preflight.log" },
+    { "requirement": "real backend test rerun", "status": "missing", "evidence": "No returned prod-real-load-steps-summary.json" },
+    { "requirement": "pageSize=12 no seed no cache real URLs", "status": "blocked", "evidence": "Verifier can enforce, but no returned evidence exists" },
+    { "requirement": "result-based next slice selected", "status": "missing", "evidence": "No verified real-load result" },
+    { "requirement": "selected slice implemented", "status": "missing", "evidence": "No slice selected" },
+    { "requirement": "full E2E and CI after selected slice", "status": "missing", "evidence": "Not applicable until a slice is selected and implemented" }
+  ],
+  "completionDecision": "not_complete",
+  "nextCommand": "EXPECTED_MAIN_SHA=3885eaeb16266de752fc984258bc30aafd3d7a62 EXPECTED_BACKEND_IMAGE_DIGEST=sha256:112355097189a1f160ca5d4335bd00a95301b82c8c7b9e50408c932ce4eb774b EXPECTED_FRONTEND_IMAGE_DIGEST=sha256:e43ea1f01e4e9d6bd550ea78c4bf2a13dccdeaad3a499120850040a319518232 bash backend/reports/current-main-server-evidence-handoff-2026-05-12/server-current-main-preflight-load-evidence.sh",
+  "verifyReturnedBundleCommand": "EXPECTED_MAIN_SHA=3885eaeb16266de752fc984258bc30aafd3d7a62 EXPECTED_BACKEND_IMAGE_DIGEST=sha256:112355097189a1f160ca5d4335bd00a95301b82c8c7b9e50408c932ce4eb774b EXPECTED_FRONTEND_IMAGE_DIGEST=sha256:e43ea1f01e4e9d6bd550ea78c4bf2a13dccdeaad3a499120850040a319518232 bash scripts/prod-runtime-evidence-verify.sh /path/to/current-main-preflight-load-evidence.tgz",
+  "recommendation": "Do not mark complete. Obtain and verify server-generated current-main-preflight-load-evidence.tgz, then select one backend slice from measured results."
+}

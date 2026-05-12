@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Active Goal Post Main Promotion Audit 2026-05-12</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 980px; margin: 40px auto; line-height: 1.55; color: #1f2937; }
+    h1, h2 { color: #111827; }
+    code { background: #f3f4f6; padding: 0.1rem 0.25rem; border-radius: 0.25rem; }
+    .bad { border-left: 4px solid #dc2626; background: #fef2f2; padding: 0.75rem 1rem; }
+    .ok { border-left: 4px solid #16a34a; background: #f0fdf4; padding: 0.75rem 1rem; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #d1d5db; padding: 0.5rem; vertical-align: top; }
+    th { background: #f9fafb; }
+  </style>
+</head>
+<body>
+  <h1>Active Goal Post Main Promotion Audit 2026-05-12</h1>
+  <p class="bad"><strong>Decision:</strong> active goal is not complete. Server-side deploy, preflight, and Real Backend Test evidence is still missing.</p>
+  <h2>Completed Readiness</h2>
+  <ul>
+    <li><code>origin/main</code>: <code>3885eaeb16266de752fc984258bc30aafd3d7a62</code></li>
+    <li>CI Main Runtime run <code>25730480720</code>: success</li>
+    <li>Publish GHCR Main run <code>25730793221</code>: success</li>
+    <li>Backend digest: <code>sha256:112355097189a1f160ca5d4335bd00a95301b82c8c7b9e50408c932ce4eb774b</code></li>
+    <li>Frontend digest: <code>sha256:e43ea1f01e4e9d6bd550ea78c4bf2a13dccdeaad3a499120850040a319518232</code></li>
+  </ul>
+  <h2>Missing Evidence</h2>
+  <ul>
+    <li>Server output ending with <code>[current-main-evidence] PASS</code></li>
+    <li><code>current-main-preflight.log</code></li>
+    <li><code>current-main-evidence-manifest.json</code></li>
+    <li><code>prod-real-load-steps-summary.json</code></li>
+    <li><code>current-main-preflight-load-evidence.tgz</code></li>
+  </ul>
+  <h2>Public-Origin Signal</h2>
+  <p>Health returned HTTP 200, but the sampled public Work list still exposes stale keys <code>iconUrl</code> and <code>period</code>. This cannot prove current runtime deployment.</p>
+  <h2>Next Command</h2>
+  <pre><code>EXPECTED_MAIN_SHA=3885eaeb16266de752fc984258bc30aafd3d7a62 \
+EXPECTED_BACKEND_IMAGE_DIGEST=sha256:112355097189a1f160ca5d4335bd00a95301b82c8c7b9e50408c932ce4eb774b \
+EXPECTED_FRONTEND_IMAGE_DIGEST=sha256:e43ea1f01e4e9d6bd550ea78c4bf2a13dccdeaad3a499120850040a319518232 \
+bash backend/reports/current-main-server-evidence-handoff-2026-05-12/server-current-main-preflight-load-evidence.sh</code></pre>
+</body>
+</html>

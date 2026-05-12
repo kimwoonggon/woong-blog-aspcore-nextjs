@@ -5,6 +5,8 @@ trap 'echo "[current-main-evidence] failed at line ${LINENO}" >&2' ERR
 REPO_DIR="${REPO_DIR:-/root/service/woong-blog-aspcore-nextjs}"
 BASE_URL="${BASE_URL:-https://woonglab.com}"
 EXPECTED_MAIN_SHA="${EXPECTED_MAIN_SHA:-}"
+EXPECTED_FRONTEND_IMAGE_DIGEST="${EXPECTED_FRONTEND_IMAGE_DIGEST:-}"
+EXPECTED_BACKEND_IMAGE_DIGEST="${EXPECTED_BACKEND_IMAGE_DIGEST:-}"
 FRONTEND_IMAGE="${FRONTEND_IMAGE:-}"
 BACKEND_IMAGE="${BACKEND_IMAGE:-}"
 FRONTEND_DIGEST="${FRONTEND_DIGEST:-}"
@@ -191,6 +193,12 @@ if [[ -z "${FRONTEND_DIGEST}" ]]; then
 fi
 if [[ -z "${BACKEND_DIGEST}" ]]; then
   BACKEND_DIGEST="$(resolve_image_digest "${BACKEND_IMAGE}")"
+fi
+if [[ -n "${EXPECTED_FRONTEND_IMAGE_DIGEST}" && "${FRONTEND_DIGEST}" != "${EXPECTED_FRONTEND_IMAGE_DIGEST}" ]]; then
+  fail "frontend image digest mismatch: expected ${EXPECTED_FRONTEND_IMAGE_DIGEST}, got ${FRONTEND_DIGEST}"
+fi
+if [[ -n "${EXPECTED_BACKEND_IMAGE_DIGEST}" && "${BACKEND_DIGEST}" != "${EXPECTED_BACKEND_IMAGE_DIGEST}" ]]; then
+  fail "backend image digest mismatch: expected ${EXPECTED_BACKEND_IMAGE_DIGEST}, got ${BACKEND_DIGEST}"
 fi
 
 info "runtime image targets:"
