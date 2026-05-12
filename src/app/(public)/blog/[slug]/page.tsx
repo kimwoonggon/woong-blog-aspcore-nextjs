@@ -110,7 +110,7 @@ export default async function BlogDetailPage({ params }: PageProps) {
     return (
         <article className="mx-auto w-full max-w-[100rem] px-4 py-8 md:px-6 md:py-12 min-[1600px]:px-0">
             <div data-testid="blog-article-content-layout" className="mx-auto w-full min-w-0 min-[1600px]:grid min-[1600px]:grid-cols-[minmax(0,1fr)_minmax(0,48rem)_minmax(0,1fr)] min-[1600px]:items-start min-[1600px]:gap-6">
-                <div data-testid="blog-detail-body" className="mx-auto min-w-0 w-full max-w-3xl min-[1600px]:col-start-2">
+                <div data-testid="blog-detail-body" className="mx-auto min-w-0 w-full max-w-3xl rounded-[2rem] border border-border/70 bg-card px-5 py-6 shadow-sm md:px-8 md:py-8 min-[1600px]:col-start-2">
                     <header className="mb-8">
                         <h1 className="mb-4 text-3xl font-heading font-bold leading-tight text-foreground text-balance md:text-4xl">
                             <span data-testid="blog-detail-title">{blog.title}</span>
