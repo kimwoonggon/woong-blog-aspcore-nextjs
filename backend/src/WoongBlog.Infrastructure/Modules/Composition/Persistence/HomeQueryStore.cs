@@ -64,7 +64,7 @@ public sealed class HomeQueryStore(WoongBlogDbContext dbContext) : IHomeQuerySto
             .AsNoTracking()
             .Where(x => x.Published)
             .OrderByDescending(x => x.PublishedAt)
-            .Take(3)
+            .Take(4)
             .Select(work => new FeaturedWorkRow(
                 work.Id,
                 work.Slug,

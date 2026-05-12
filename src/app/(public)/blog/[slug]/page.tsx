@@ -108,9 +108,9 @@ export default async function BlogDetailPage({ params }: PageProps) {
     const olderBlog = currentIndex >= 0 && currentIndex < sortedBlogs.length - 1 ? sortedBlogs[currentIndex + 1] : null
 
     return (
-        <article className="mx-auto w-full max-w-7xl px-4 py-8 md:px-6 md:py-12">
-            <div data-testid="blog-article-content-layout" className="mx-auto w-full min-w-0 xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,48rem)_24rem] xl:items-start xl:gap-10 2xl:gap-12">
-                <div data-testid="blog-detail-body" className="mx-auto min-w-0 w-full max-w-3xl xl:col-start-2">
+        <article className="mx-auto w-full max-w-[100rem] px-4 py-8 md:px-6 md:py-12 min-[1600px]:px-0">
+            <div data-testid="blog-article-content-layout" className="mx-auto w-full min-w-0 min-[1600px]:grid min-[1600px]:grid-cols-[minmax(0,1fr)_minmax(0,48rem)_minmax(0,1fr)] min-[1600px]:items-start min-[1600px]:gap-6">
+                <div data-testid="blog-detail-body" className="mx-auto min-w-0 w-full max-w-3xl min-[1600px]:col-start-2">
                     <header className="mb-8">
                         <h1 className="mb-4 text-3xl font-heading font-bold leading-tight text-foreground text-balance md:text-4xl">
                             <span data-testid="blog-detail-title">{blog.title}</span>
@@ -141,7 +141,7 @@ export default async function BlogDetailPage({ params }: PageProps) {
 
                 </div>
 
-                <aside className="hidden xl:sticky xl:top-28 xl:col-start-3 xl:block xl:w-full xl:max-w-[24rem] xl:justify-self-start xl:self-start">
+                <aside className="hidden min-[1600px]:sticky min-[1600px]:top-28 min-[1600px]:col-start-3 min-[1600px]:block min-[1600px]:w-full min-[1600px]:max-w-[24rem] min-[1600px]:justify-self-start min-[1600px]:self-start">
                     <div className="max-h-[calc(100vh-8rem)] overflow-y-auto">
                         <TableOfContents contentRootId="blog-detail-content" />
                     </div>
