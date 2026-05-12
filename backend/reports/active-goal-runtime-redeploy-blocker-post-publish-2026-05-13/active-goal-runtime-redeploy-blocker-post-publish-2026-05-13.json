@@ -1,0 +1,135 @@
+{
+  "task": "active-goal-runtime-redeploy-blocker-post-publish",
+  "date": "2026-05-13",
+  "recheckedAtUtc": "2026-05-12T17:14:31Z",
+  "completionDecision": "not_complete",
+  "publishedState": {
+    "dev": "e34765ed70b2abba7eb1e14ef963af3cfa8c7a60",
+    "main": "4e50c0f899e2bae8b41238fd737a802ccad91a81",
+    "reportPr": 202,
+    "promotionPr": 203,
+    "ciDevPullRequestRun": 25746491051,
+    "ciDevPushRun": 25746982628,
+    "ciMainPullRequestRun": 25747364772,
+    "ciMainPushRun": 25747743785,
+    "publishGhcrMainRun": 25748067720
+  },
+  "runtimeImages": {
+    "backend": {
+      "tag": "ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-backend:sha-4e50c0f899e2",
+      "digest": "sha256:8701e95460c966cb62a6cbf5df5c7471edceb3d8a3fb10411aa9fced03c4c10b"
+    },
+    "frontend": {
+      "tag": "ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-frontend:sha-4e50c0f899e2",
+      "digest": "sha256:5a9b6e3d07b916bbb07c2744dc303bdc2f785a6ba602b9cd7c9ac9730ebc09bc"
+    }
+  },
+  "presentRepoSecrets": ["PROMOTION_TOKEN"],
+  "missingRepoSecrets": [
+    "PROD_SSH_HOST",
+    "PROD_SSH_USER",
+    "PROD_SSH_PRIVATE_KEY",
+    "PROD_SSH_KNOWN_HOSTS"
+  ],
+  "secretRoutingRecheck": {
+    "repoSecretsCommand": "gh api repos/kimwoonggon/woong-blog-aspcore-nextjs/actions/secrets --jq '.secrets[].name'",
+    "repoSecrets": ["PROMOTION_TOKEN"],
+    "orgSecretsCommand": "gh api orgs/kimwoonggon/actions/secrets --jq '.secrets[].name'",
+    "orgSecretsStatus": "HTTP 404",
+    "repoEnvironmentsCommand": "gh api repos/kimwoonggon/woong-blog-aspcore-nextjs/environments --jq '.environments[].name'",
+    "repoEnvironments": [],
+    "productionRedeployUsesEnvironment": false,
+    "secretsRouteAvailableForProductionRedeploy": false
+  },
+  "localSecretMaterialRecheck": {
+    "valuesPrinted": false,
+    "PROD_SSH_HOST": "missing",
+    "PROD_SSH_USER": "missing",
+    "PROD_SSH_PRIVATE_KEY": "missing",
+    "PROD_SSH_KNOWN_HOSTS": "missing",
+    "PROD_SSH_PORT": "missing",
+    "PROD_GHCR_TOKEN": "missing",
+    "agentCanPopulateGithubSecretsFromLocalEnvironment": false
+  },
+  "latestProductionRedeployRuns": [
+    {"id": 25628772593, "conclusion": "failure", "createdAt": "2026-05-10T12:30:18Z"},
+    {"id": 25628614468, "conclusion": "failure", "createdAt": "2026-05-10T12:22:28Z"},
+    {"id": 25628508822, "conclusion": "failure", "createdAt": "2026-05-10T12:17:16Z"}
+  ],
+  "productionRedeployWorkflow": {
+    "active": true,
+    "path": ".github/workflows/prod-runtime-redeploy.yml",
+    "currentMainRunExists": false,
+    "runRealLoadTrueCovers": [
+      "server pull/deploy",
+      "production preflight",
+      "prod-real-load-steps",
+      "pageSize=12 guard",
+      "seed/fixture target rejection",
+      "prod-runtime-evidence-verify"
+    ],
+    "blockedByMissingSecrets": true
+  },
+  "publicOriginRecheck": {
+    "healthStatus": 200,
+    "worksStatus": 200,
+    "blogsStatus": 200,
+    "worksPageSize": 12,
+    "worksReturnedCount": 7,
+    "blogsPageSize": 12,
+    "blogsReturnedCount": 12,
+    "worksFirstItemKeys": [
+      "category",
+      "excerpt",
+      "iconUrl",
+      "id",
+      "period",
+      "publishedAt",
+      "slug",
+      "tags",
+      "thumbnailUrl",
+      "title"
+    ],
+    "staleWorkListKeysPresent": [
+      "iconUrl",
+      "period"
+    ],
+    "publicOriginProvesCurrentMainRuntime": false
+  },
+  "verifierCoverageRecheck": {
+    "command": "npm test -- --run src/test/prod-runtime-evidence-verify.test.ts",
+    "status": "passed",
+    "testFilesPassed": 1,
+    "testsPassed": 9,
+    "coversEvidenceValidatorOnly": true,
+    "validCurrentProductionEvidenceBundlePresent": false,
+    "currentMainHandoffDigestResolution": {
+      "backendOciIndexDigest": "sha256:8701e95460c966cb62a6cbf5df5c7471edceb3d8a3fb10411aa9fced03c4c10b",
+      "backendLinuxAmd64ManifestDigest": "sha256:52090d120d9c460fc01968a0f4763f82fe3c715a561ecf2d58203d2f5043fa34",
+      "frontendOciIndexDigest": "sha256:5a9b6e3d07b916bbb07c2744dc303bdc2f785a6ba602b9cd7c9ac9730ebc09bc",
+      "frontendLinuxAmd64ManifestDigest": "sha256:e8a44ac671d85ae1a25d9e3a14894c0d7c1aef327ad4ca0fd6349f265aaa5a8b",
+      "handoffScriptPrefersOciIndexDigest": true,
+      "platformDigestFallbackWhenBuildxUnavailable": true
+    },
+    "rootWideEvidenceSearch": {
+      "currentMainPreflightLoadEvidenceTgzFound": false,
+      "productionRuntimeEvidenceTarGzFound": false,
+      "currentMainEvidenceManifestFound": false,
+      "productionRuntimeEvidenceManifestFound": false,
+      "onlyProdRealLoadSummaryFound": ".agent-runtime/dev-full-validation-20260511/backend/reports/main-runtime-local-prodlike-2026-05-11/evidence/local-real-load/prod-real-load-steps-summary.json",
+      "onlySummaryBaseUrl": "http://127.0.0.1:3020",
+      "onlySummaryGeneratedAt": "2026-05-11T07:54:12.698Z",
+      "onlySummaryFirstStepRate": 20,
+      "onlySummaryIsCurrentProductionEvidence": false
+    }
+  },
+  "missingRequirements": [
+    "server-side current-main image pull/deploy evidence",
+    "production preflight result after current-main deploy",
+    "valid Real Backend Test summary after current-main deploy",
+    "proof of pageSize=12/no seed/no fixture/no cache workaround/real Work and Study URLs",
+    "result-based next slice selection",
+    "full E2E after selected slice",
+    "CI green after selected slice"
+  ]
+}

@@ -120,6 +120,20 @@ if (stale.length) {
 
 resolve_image_digest() {
   local image="$1"
+  local index_digest=""
+
+  if docker --config "${DOCKER_CONFIG_DIR}" buildx version >/dev/null 2>&1; then
+    index_digest="$(
+      docker --config "${DOCKER_CONFIG_DIR}" buildx imagetools inspect "${image}" 2>/dev/null \
+        | awk '/^Digest:/ { print $2; exit }'
+    )"
+  fi
+
+  if [[ -n "${index_digest}" ]]; then
+    printf '%s\n' "${index_digest}"
+    return 0
+  fi
+
   docker --config "${DOCKER_CONFIG_DIR}" manifest inspect "${image}" \
     | node -e '
 const fs = require("node:fs");

@@ -1,0 +1,50 @@
+{
+  "task": "current-main-handoff-digest-resolution",
+  "date": "2026-05-13",
+  "summary": "The current-main server evidence handoff now resolves GHCR OCI index digests first and falls back to platform manifest digests only when Docker Buildx is unavailable.",
+  "changed": [
+    "backend/reports/current-main-server-evidence-handoff-2026-05-12/server-current-main-preflight-load-evidence.sh",
+    "backend/reports/current-main-server-evidence-handoff-2026-05-12/current-main-server-evidence-handoff-2026-05-12.md",
+    "backend/reports/current-main-server-evidence-handoff-2026-05-12/current-main-server-evidence-handoff-2026-05-12.json",
+    "backend/reports/active-goal-runtime-redeploy-blocker-post-publish-2026-05-13/",
+    "todolist-2026-05-13.md"
+  ],
+  "intentionallyNotChanged": [
+    "No production SSH was used",
+    "No production server deploy was attempted",
+    "No production preflight or real load was executed",
+    "No runtime image SHA or published digest was changed"
+  ],
+  "evidence": {
+    "originMain": "4e50c0f899e2bae8b41238fd737a802ccad91a81",
+    "backendOciIndexDigest": "sha256:8701e95460c966cb62a6cbf5df5c7471edceb3d8a3fb10411aa9fced03c4c10b",
+    "backendLinuxAmd64ManifestDigest": "sha256:52090d120d9c460fc01968a0f4763f82fe3c715a561ecf2d58203d2f5043fa34",
+    "frontendOciIndexDigest": "sha256:5a9b6e3d07b916bbb07c2744dc303bdc2f785a6ba602b9cd7c9ac9730ebc09bc",
+    "frontendLinuxAmd64ManifestDigest": "sha256:e8a44ac671d85ae1a25d9e3a14894c0d7c1aef327ad4ca0fd6349f265aaa5a8b"
+  },
+  "validations": [
+    {
+      "command": "bash -n backend/reports/current-main-server-evidence-handoff-2026-05-12/server-current-main-preflight-load-evidence.sh",
+      "status": "passed"
+    },
+    {
+      "command": "bash -n backend/reports/active-goal-runtime-redeploy-blocker-post-publish-2026-05-13/server-run-current-main-4e50c0f-preflight-load.sh",
+      "status": "passed"
+    },
+    {
+      "command": "JSON parse for current-main handoff and active-goal blocker JSON artifacts",
+      "status": "passed"
+    },
+    {
+      "command": "docker --config /tmp buildx imagetools inspect ... | awk '/^Digest:/'",
+      "status": "passed"
+    },
+    {
+      "command": "git diff --check for modified handoff, blocker audit, and TODO files",
+      "status": "passed"
+    }
+  ],
+  "activeGoalComplete": false,
+  "remainingBlocker": "Production server pull/deploy, production preflight, and Real Backend Test evidence remain missing because production SSH secrets and local secret material are unavailable.",
+  "recommendation": "Keep this handoff fix and use the fixed script when production SSH secrets or manual server evidence become available."
+}

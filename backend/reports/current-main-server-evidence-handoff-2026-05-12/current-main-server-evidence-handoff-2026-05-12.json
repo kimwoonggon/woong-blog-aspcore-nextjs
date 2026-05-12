@@ -23,7 +23,7 @@
     "Defaults to the latest fetched origin/main instead of a hard-coded commit SHA",
     "Allows EXPECTED_MAIN_SHA=<40-char-sha> when an exact deployment pin is required",
     "Uses immutable sha-${resolvedShaShort} runtime image tags unless image override env vars are set",
-    "Resolves GHCR manifest digests before compose pull",
+    "Resolves GHCR OCI index digests before compose pull, with platform-manifest fallback if Buildx is unavailable",
     "Fails immediately if provided expected image digests do not match the resolved GHCR manifest digests",
     "Runs docker compose pull and up",
     "Runs scripts/prod-runtime-preflight.sh and persists its output as current-main-preflight.log",

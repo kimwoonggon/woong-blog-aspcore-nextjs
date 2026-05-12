@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Current Main Handoff Digest Resolution Audit - 2026-05-13</title>
+  <style>
+    body { color: #1f2937; font-family: system-ui, sans-serif; line-height: 1.55; margin: 2rem; max-width: 960px; }
+    h1, h2 { color: #111827; }
+    code { background: #f3f4f6; border-radius: 0.25rem; padding: 0.1rem 0.3rem; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Current Main Handoff Digest Resolution Audit - 2026-05-13</h1>
+    <h2>Summary</h2>
+    <p>The current-main server evidence handoff now resolves GHCR OCI index digests first, then falls back to platform manifest digests if Docker Buildx is unavailable.</p>
+    <h2>Evidence</h2>
+    <ul>
+      <li><code>origin/main</code>: <code>4e50c0f899e2bae8b41238fd737a802ccad91a81</code></li>
+      <li>Backend index digest: <code>sha256:8701e95460c966cb62a6cbf5df5c7471edceb3d8a3fb10411aa9fced03c4c10b</code></li>
+      <li>Backend linux/amd64 digest: <code>sha256:52090d120d9c460fc01968a0f4763f82fe3c715a561ecf2d58203d2f5043fa34</code></li>
+      <li>Frontend index digest: <code>sha256:5a9b6e3d07b916bbb07c2744dc303bdc2f785a6ba602b9cd7c9ac9730ebc09bc</code></li>
+      <li>Frontend linux/amd64 digest: <code>sha256:e8a44ac671d85ae1a25d9e3a14894c0d7c1aef327ad4ca0fd6349f265aaa5a8b</code></li>
+    </ul>
+    <h2>Validations</h2>
+    <ul>
+      <li><code>bash -n</code> for the handoff scripts: passed.</li>
+      <li>JSON parse for audit artifacts: passed.</li>
+      <li><code>docker buildx imagetools inspect</code> returned expected OCI index digests: passed.</li>
+      <li><code>git diff --check</code>: passed.</li>
+    </ul>
+    <h2>Remaining Blocker</h2>
+    <p>The active goal remains incomplete because production server deploy, preflight, and real load evidence are still unavailable.</p>
+  </main>
+</body>
+</html>
