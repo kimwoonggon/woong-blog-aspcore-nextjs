@@ -50,6 +50,8 @@ Optional exact pin and target overrides:
 
 ```bash
 EXPECTED_MAIN_SHA=<40-char-sha> \
+EXPECTED_BACKEND_IMAGE_DIGEST=sha256:<backend-digest> \
+EXPECTED_FRONTEND_IMAGE_DIGEST=sha256:<frontend-digest> \
 WORK_READ_PATH=/api/public/works/<real-work-slug> \
 STUDY_READ_PATH=/api/public/blogs/<real-study-slug> \
 RATES="100 200 300 400" \
@@ -65,6 +67,7 @@ bash backend/reports/current-main-server-evidence-handoff-2026-05-12/server-curr
 - Preserves explicit `EXPECTED_MAIN_SHA` pinning when a specific main deployment must be enforced.
 - Sets runtime images to immutable `sha-${resolvedShaShort}` tags unless explicit image overrides are provided.
 - Resolves GHCR manifest digests before compose pull.
+- Fails immediately if provided expected image digests do not match the resolved GHCR manifest digests.
 - Backs up `.env.prod` before editing it.
 - Sets:
   - `FRONTEND_IMAGE`

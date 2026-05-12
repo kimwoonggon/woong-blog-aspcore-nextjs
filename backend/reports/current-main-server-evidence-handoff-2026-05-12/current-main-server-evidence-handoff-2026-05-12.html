@@ -24,6 +24,7 @@
   </ul>
   <h2>Script</h2>
   <p><code>backend/reports/current-main-server-evidence-handoff-2026-05-12/server-current-main-preflight-load-evidence.sh</code></p>
+  <p>Optional digest pins: <code>EXPECTED_BACKEND_IMAGE_DIGEST=sha256:&lt;backend-digest&gt;</code> and <code>EXPECTED_FRONTEND_IMAGE_DIGEST=sha256:&lt;frontend-digest&gt;</code>. The script fails immediately if provided expected image digests do not match the resolved GHCR manifest digests.</p>
   <h2>Required Output</h2>
   <ul>
     <li>Terminal output ending with <code>[current-main-evidence] PASS</code></li>
