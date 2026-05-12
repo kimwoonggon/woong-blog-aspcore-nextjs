@@ -1,0 +1,109 @@
+{
+  "task": "active-goal-completion-audit",
+  "date": "2026-05-12",
+  "completionDecision": "not_complete",
+  "objective": [
+    "Server pulls and deploys current main runtime images.",
+    "Production preflight passes after deployment.",
+    "Real Backend Test reruns with pageSize=12, no seed or fixture targets, no cache workaround, and real Work/Study URLs.",
+    "Next slice is selected from the valid Real Backend Test result.",
+    "Full E2E is green after the selected slice.",
+    "CI is green through the branch/PR and main promotion path."
+  ],
+  "evidence": {
+    "mainCi": {
+      "runId": 25717479751,
+      "workflow": "CI Main Runtime",
+      "sha": "389a117ee8cda43e84536c85164bf13afd8e38bf",
+      "conclusion": "success"
+    },
+    "mainGhcrPublish": {
+      "runId": 25717736048,
+      "workflow": "Publish GHCR Main",
+      "sha": "389a117ee8cda43e84536c85164bf13afd8e38bf",
+      "conclusion": "success"
+    },
+    "runtimeImages": {
+      "backendMainDigest": "sha256:ae0679f8166380e0edef07c3d546cc31c9c291380e6f7eccc691c225c44afdf2",
+      "frontendMainDigest": "sha256:8cd7cdea54ad6388bcb34f3b8b694cf87e9721a35273cafd35d0f5fea0bfb5f3"
+    },
+    "secrets": {
+      "repoSecrets": [
+        "PROMOTION_TOKEN"
+      ],
+      "environments": [],
+      "productionSshSecretsPresent": false
+    },
+    "productionRuntimeRedeploy": {
+      "latestRuns": [
+        {
+          "runId": 25628772593,
+          "sha": "757ab203e55cadf8f89ee0da42b7ef580deebad3",
+          "conclusion": "failure"
+        },
+        {
+          "runId": 25628614468,
+          "sha": "757ab203e55cadf8f89ee0da42b7ef580deebad3",
+          "conclusion": "failure"
+        },
+        {
+          "runId": 25628508822,
+          "sha": "757ab203e55cadf8f89ee0da42b7ef580deebad3",
+          "conclusion": "failure"
+        }
+      ],
+      "currentMainDeploySuccessPresent": false
+    },
+    "publicOriginProbe": {
+      "timestampUtc": "2026-05-12T08:26:00Z",
+      "health": {
+        "statusCode": 200,
+        "timeTotalSeconds": 1.119451
+      },
+      "worksList": {
+        "statusCode": 200,
+        "url": "https://woonglab.com/api/public/works?page=1&pageSize=12",
+        "itemCount": 7,
+        "firstItemKeys": [
+          "category",
+          "excerpt",
+          "iconUrl",
+          "id",
+          "period",
+          "publishedAt",
+          "slug",
+          "tags",
+          "thumbnailUrl",
+          "title"
+        ],
+        "staleKeysPresent": [
+          "iconUrl",
+          "period"
+        ]
+      },
+      "blogsList": {
+        "statusCode": 200,
+        "url": "https://woonglab.com/api/public/blogs?page=1&pageSize=12",
+        "itemCount": 12
+      }
+    },
+    "handoffRefresh": {
+      "path": "backend/reports/current-main-server-evidence-handoff-2026-05-12/",
+      "refreshedToSha": "389a117ee8cda43e84536c85164bf13afd8e38bf",
+      "shaShort": "389a117ee8cd",
+      "backendDigest": "sha256:ae0679f8166380e0edef07c3d546cc31c9c291380e6f7eccc691c225c44afdf2",
+      "frontendDigest": "sha256:8cd7cdea54ad6388bcb34f3b8b694cf87e9721a35273cafd35d0f5fea0bfb5f3",
+      "replacesServerEvidence": false
+    }
+  },
+  "missingRequirements": [
+    "Server-side proof that current main runtime images were pulled and deployed.",
+    "Production preflight result from the current deployed runtime.",
+    "Real Backend Test summary from the current deployed runtime.",
+    "Proof that the real-load run used pageSize=12, no seed/fixture targets, no cache workaround, and real Work/Study read URLs.",
+    "Result-based selection of HLS fatal fix, public detail serialization/body optimization, or DB/index optimization.",
+    "Full E2E result after the selected slice.",
+    "CI result after the selected slice and main promotion."
+  ],
+  "recommendation": "Do not mark the goal complete and do not treat public-origin load results as valid until server-side current-main deploy/preflight evidence exists."
+}

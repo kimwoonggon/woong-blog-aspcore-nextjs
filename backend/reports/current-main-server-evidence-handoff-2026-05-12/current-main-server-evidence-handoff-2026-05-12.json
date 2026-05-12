@@ -1,0 +1,45 @@
+{
+  "taskSlug": "current-main-server-evidence-handoff-2026-05-12",
+  "date": "2026-05-12",
+  "purpose": "Provide a current-main server-side evidence script because production SSH is out of scope and the active goal still requires server pull/deploy, production preflight, and realistic Real Backend Test evidence.",
+  "currentMainSha": "389a117ee8cda43e84536c85164bf13afd8e38bf",
+  "shaShort": "389a117ee8cd",
+  "ci": {
+    "ciMainRuntimeRun": 25717479751,
+    "publishGhcrMainRun": 25717736048,
+    "status": "success"
+  },
+  "images": {
+    "frontend": {
+      "main": "ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-frontend:main",
+      "sha": "ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-frontend:sha-389a117ee8cd",
+      "digest": "sha256:8cd7cdea54ad6388bcb34f3b8b694cf87e9721a35273cafd35d0f5fea0bfb5f3"
+    },
+    "backend": {
+      "main": "ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-backend:main",
+      "sha": "ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-backend:sha-389a117ee8cd",
+      "digest": "sha256:ae0679f8166380e0edef07c3d546cc31c9c291380e6f7eccc691c225c44afdf2"
+    }
+  },
+  "script": "backend/reports/current-main-server-evidence-handoff-2026-05-12/server-current-main-preflight-load-evidence.sh",
+  "scriptGuarantees": [
+    "Fails unless checked-out main SHA is 389a117ee8cda43e84536c85164bf13afd8e38bf",
+    "Uses immutable sha-389a117ee8cd runtime image tags",
+    "Runs docker compose pull and up",
+    "Runs scripts/prod-runtime-preflight.sh",
+    "Fails on stale public list DTO keys",
+    "Runs scripts/prod-real-load-steps.sh with LIST_PAGE_SIZE=12",
+    "Rejects seed/fixture read paths",
+    "Verifies k6 identity suffix guard",
+    "Writes current-main-evidence-manifest.json and bundles artifacts"
+  ],
+  "requiredReturnedEvidence": [
+    "terminal output ending with [current-main-evidence] PASS",
+    "current-main-evidence-manifest.json",
+    "prod-real-load-steps-summary.json",
+    "prod-real-load-steps-summary.md",
+    "current-main-preflight-load-evidence.tgz"
+  ],
+  "completionState": "not_complete_until_server_evidence_is_returned"
+}
+
