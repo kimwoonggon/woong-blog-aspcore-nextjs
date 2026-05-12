@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Active Goal Current State Audit 2026-05-12</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 960px; margin: 40px auto; line-height: 1.55; color: #1f2937; }
+    h1, h2 { color: #111827; }
+    code { background: #f3f4f6; padding: 0.1rem 0.25rem; border-radius: 0.25rem; }
+    .warn { border-left: 4px solid #dc2626; padding: 0.75rem 1rem; background: #fef2f2; }
+    .ok { border-left: 4px solid #16a34a; padding: 0.75rem 1rem; background: #f0fdf4; }
+  </style>
+</head>
+<body>
+  <h1>Active Goal Current State Audit 2026-05-12</h1>
+  <p class="warn"><strong>Decision:</strong> do not mark the active goal complete. Server-side deploy/preflight/load evidence is still missing.</p>
+  <h2>Ready Evidence</h2>
+  <p class="ok"><code>main</code> is <code>acdb7ef8e5070d13b3efb711e168c9da50e5db24</code>; <code>CI Main Runtime</code> run <code>25727092625</code> and <code>Publish GHCR Main</code> run <code>25727410166</code> succeeded.</p>
+  <ul>
+    <li>Backend digest: <code>sha256:d546c00a7340c1b5c764004c2d20017364ee57d48e1d415d9330115a88ef3174</code></li>
+    <li>Frontend digest: <code>sha256:554830dcc8c585451d3e94fdcb5add479858b94f4eb3f725cd887a5629f2c04e</code></li>
+  </ul>
+  <h2>Blocking Evidence Gap</h2>
+  <ul>
+    <li>No server-side proof that the current main images were pulled or deployed.</li>
+    <li>No production preflight result from the current deployed runtime.</li>
+    <li>No valid Real Backend Test summary from the current deployed runtime.</li>
+    <li>Public Works list still exposes stale <code>iconUrl</code> and <code>period</code> keys.</li>
+    <li><code>Production Runtime Redeploy</code> cannot run because the latest failed run exits with missing <code>PROD_SSH_PRIVATE_KEY</code>.</li>
+  </ul>
+  <h2>Next Server Command</h2>
+  <pre><code>cd /root/service/woong-blog-aspcore-nextjs
+
+git fetch origin main --prune
+git checkout main
+git pull --ff-only origin main
+
+EXPECTED_MAIN_SHA=acdb7ef8e5070d13b3efb711e168c9da50e5db24 \
+bash backend/reports/current-main-server-evidence-handoff-2026-05-12/server-current-main-preflight-load-evidence.sh</code></pre>
+</body>
+</html>

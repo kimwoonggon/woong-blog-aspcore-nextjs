@@ -35,6 +35,45 @@ require_log_line() {
   fi
 }
 
+find_known_tarball() {
+  local dir="$1"
+  if [[ -f "${dir}/production-runtime-evidence.tar.gz" ]]; then
+    printf '%s\n' "${dir}/production-runtime-evidence.tar.gz"
+    return 0
+  fi
+  if [[ -f "${dir}/current-main-preflight-load-evidence.tgz" ]]; then
+    printf '%s\n' "${dir}/current-main-preflight-load-evidence.tgz"
+    return 0
+  fi
+  return 1
+}
+
+has_preflight_log() {
+  local dir="$1"
+  [[ -f "${dir}/prod-runtime-preflight.log" || -f "${dir}/current-main-preflight.log" ]]
+}
+
+find_evidence_root() {
+  local root="$1"
+  if [[ -f "${root}/production-runtime-evidence-manifest.json" || -f "${root}/current-main-evidence-manifest.json" ]]; then
+    printf '%s\n' "${root}"
+    return 0
+  fi
+
+  local manifest_path
+  manifest_path="$(
+    find "${root}" -maxdepth 3 -type f \
+      \( -name production-runtime-evidence-manifest.json -o -name current-main-evidence-manifest.json \) \
+      -print | head -n 1
+  )"
+
+  if [[ -z "${manifest_path}" ]]; then
+    fail "evidence manifest does not exist under: ${root}"
+  fi
+
+  dirname "${manifest_path}"
+}
+
 if [[ -z "${EVIDENCE_INPUT}" ]]; then
   fail "EVIDENCE_DIR or first argument is required"
 fi
@@ -52,25 +91,40 @@ if [[ -f "${EVIDENCE_INPUT}" ]]; then
   WORK_DIR="$(mktemp -d)"
   tar -xzf "${EVIDENCE_INPUT}" -C "${WORK_DIR}"
   EVIDENCE_DIR="${WORK_DIR}"
-elif [[ -d "${EVIDENCE_DIR}" && ! -f "${EVIDENCE_DIR}/prod-runtime-preflight.log" && -f "${EVIDENCE_DIR}/production-runtime-evidence.tar.gz" ]]; then
+elif [[ -d "${EVIDENCE_DIR}" ]] && ! has_preflight_log "${EVIDENCE_DIR}" && tarball_path="$(find_known_tarball "${EVIDENCE_DIR}")"; then
   WORK_DIR="$(mktemp -d)"
-  tar -xzf "${EVIDENCE_DIR}/production-runtime-evidence.tar.gz" -C "${WORK_DIR}"
+  tar -xzf "${tarball_path}" -C "${WORK_DIR}"
   EVIDENCE_DIR="${WORK_DIR}"
 elif [[ ! -d "${EVIDENCE_DIR}" ]]; then
   fail "EVIDENCE_DIR does not exist: ${EVIDENCE_INPUT}"
 fi
 
-PREFLIGHT_LOG="${EVIDENCE_DIR}/prod-runtime-preflight.log"
+EVIDENCE_DIR="$(find_evidence_root "${EVIDENCE_DIR}")"
+
+if [[ -f "${EVIDENCE_DIR}/production-runtime-evidence-manifest.json" ]]; then
+  EVIDENCE_FORMAT="production-runtime"
+  PREFLIGHT_LOG="${EVIDENCE_DIR}/prod-runtime-preflight.log"
+  MANIFEST_JSON="${EVIDENCE_DIR}/production-runtime-evidence-manifest.json"
+  SUMMARY_MD="${EVIDENCE_DIR}/production-runtime-evidence-summary.md"
+elif [[ -f "${EVIDENCE_DIR}/current-main-evidence-manifest.json" ]]; then
+  EVIDENCE_FORMAT="current-main"
+  PREFLIGHT_LOG="${EVIDENCE_DIR}/current-main-preflight.log"
+  MANIFEST_JSON="${EVIDENCE_DIR}/current-main-evidence-manifest.json"
+  SUMMARY_MD=""
+else
+  fail "unsupported evidence manifest format in: ${EVIDENCE_DIR}"
+fi
+
 REAL_LOAD_JSON="${EVIDENCE_DIR}/prod-real-load-steps-summary.json"
 REAL_LOAD_MD="${EVIDENCE_DIR}/prod-real-load-steps-summary.md"
-MANIFEST_JSON="${EVIDENCE_DIR}/production-runtime-evidence-manifest.json"
-SUMMARY_MD="${EVIDENCE_DIR}/production-runtime-evidence-summary.md"
 
-require_file "prod-runtime-preflight.log" "${PREFLIGHT_LOG}"
+require_file "$(basename "${PREFLIGHT_LOG}")" "${PREFLIGHT_LOG}"
 require_file "prod-real-load-steps-summary.json" "${REAL_LOAD_JSON}"
 require_file "prod-real-load-steps-summary.md" "${REAL_LOAD_MD}"
-require_file "production-runtime-evidence-manifest.json" "${MANIFEST_JSON}"
-require_file "production-runtime-evidence-summary.md" "${SUMMARY_MD}"
+require_file "$(basename "${MANIFEST_JSON}")" "${MANIFEST_JSON}"
+if [[ -n "${SUMMARY_MD}" ]]; then
+  require_file "production-runtime-evidence-summary.md" "${SUMMARY_MD}"
+fi
 
 require_log_line "${PREFLIGHT_LOG}" "PASS" '\[prod-runtime-preflight\] PASS'
 require_log_line "${PREFLIGHT_LOG}" "nginx timing" 'nginx request_time header: available'
@@ -139,11 +193,25 @@ function isPublicDetailTarget(value, kind) {
 }
 
 requireEqual('main SHA', manifest.mainSha, expectedMainSha)
-requireEqual('backend image digest', manifest.images?.backendDigest, expectedBackendDigest)
-requireEqual('frontend image digest', manifest.images?.frontendDigest, expectedFrontendDigest)
+const backendDigest = manifest.images?.backendDigest ?? manifest.backendDigest
+const frontendDigest = manifest.images?.frontendDigest ?? manifest.frontendDigest
+requireEqual('backend image digest', backendDigest, expectedBackendDigest)
+requireEqual('frontend image digest', frontendDigest, expectedFrontendDigest)
 
-if (manifest.preflight?.passed !== true) {
-  fail('manifest preflight.passed must be true')
+const manifestHasLegacyPreflightPass = manifest.preflight?.passed === true
+const manifestHasCurrentMainPreflightLog = typeof manifest.preflightLog === 'string' && manifest.preflightLog.length > 0
+if (!manifestHasLegacyPreflightPass && !manifestHasCurrentMainPreflightLog) {
+  fail('manifest must include preflight.passed=true or preflightLog')
+}
+
+const manifestBaseUrl = manifest.realLoad?.baseUrl ?? manifest.baseUrl
+if (manifestBaseUrl && !String(manifestBaseUrl).match(/^https:\/\//i)) {
+  fail('manifest baseUrl must use public HTTPS origin')
+}
+
+const manifestListPageSize = manifest.realLoad?.listPageSize ?? manifest.listPageSize
+if (manifestListPageSize !== undefined && Number(manifestListPageSize) !== 12) {
+  fail('manifest must use listPageSize=12')
 }
 
 if (!String(realLoad.baseUrl || '').match(/^https:\/\//i)) {
@@ -210,5 +278,6 @@ for (const [index, step] of realLoad.steps.entries()) {
 NODE
 
 info "evidence: ${EVIDENCE_INPUT}"
+info "format: ${EVIDENCE_FORMAT}"
 info "main SHA: ${EXPECTED_MAIN_SHA:-not checked}"
 info "PASS"
