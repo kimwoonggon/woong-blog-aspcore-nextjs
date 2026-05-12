@@ -9,6 +9,7 @@ const scriptPath = path.join(repoRoot, 'scripts/prod-runtime-evidence-verify.sh'
 
 type RealLoadSummaryFixture = {
   baseUrl: string
+  nextFocus?: string
   listPageSize?: number
   steps: Array<{
     listPageSize?: number
@@ -39,7 +40,7 @@ function createEvidenceDir() {
     baseUrl: 'https://woonglab.com',
     cleanCeilingRps: 300,
     firstSaturationRate: 400,
-    nextFocus: 'public-detail-serialization-or-db-index',
+    nextFocus: 'app-cpu-or-serialization',
     listPageSize: 12,
     steps: [
       {
@@ -91,7 +92,7 @@ function writeCurrentMainEvidenceDir(evidenceDir: string) {
     baseUrl: 'https://woonglab.com',
     cleanCeilingRps: 300,
     firstSaturationRate: 400,
-    nextFocus: 'public-detail-serialization-or-db-index',
+    nextFocus: 'app-cpu-or-serialization',
     listPageSize: 12,
     steps: [
       {
@@ -273,5 +274,29 @@ describe('production runtime evidence verifier', () => {
 
     expect(result.status).not.toBe(0)
     expect(result.stderr).toContain('step 1 must use listPageSize=12')
+  })
+
+  it('fails when real load evidence does not include a next-slice focus', () => {
+    const evidenceDir = createEvidenceDir()
+    updateRealLoadSummary(evidenceDir, (summary) => {
+      delete summary.nextFocus
+    })
+
+    const result = runVerifier(evidenceDir)
+
+    expect(result.status).not.toBe(0)
+    expect(result.stderr).toContain('real load summary nextFocus is required')
+  })
+
+  it('fails when real load evidence includes an unknown next-slice focus', () => {
+    const evidenceDir = createEvidenceDir()
+    updateRealLoadSummary(evidenceDir, (summary) => {
+      summary.nextFocus = 'public-detail-serialization-or-db-index'
+    })
+
+    const result = runVerifier(evidenceDir)
+
+    expect(result.status).not.toBe(0)
+    expect(result.stderr).toContain('real load summary nextFocus is unknown')
   })
 })
