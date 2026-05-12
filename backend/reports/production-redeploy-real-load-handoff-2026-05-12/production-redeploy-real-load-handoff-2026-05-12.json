@@ -1,0 +1,81 @@
+{
+  "task": "production-redeploy-real-load-handoff",
+  "date": "2026-05-12",
+  "executedProduction": false,
+  "readyEvidence": {
+    "mainMergeCommit": "389a117ee8cda43e84536c85164bf13afd8e38bf",
+    "ciMainRuntimeRun": "25717479751",
+    "publishGhcrMainRun": "25717736048",
+    "backendImage": "ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-backend:main",
+    "backendDigest": "sha256:ae0679f8166380e0edef07c3d546cc31c9c291380e6f7eccc691c225c44afdf2",
+    "frontendImage": "ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-frontend:main",
+    "frontendDigest": "sha256:8cd7cdea54ad6388bcb34f3b8b694cf87e9721a35273cafd35d0f5fea0bfb5f3"
+  },
+  "anonymousGhcrManifestInspect": {
+    "backend": "success",
+    "frontend": "success",
+    "note": "PROD_GHCR_TOKEN is optional unless the production host cannot pull public GHCR packages due network or rate-limit policy."
+  },
+  "workflow": {
+    "name": "Production Runtime Redeploy",
+    "baseUrl": "https://woonglab.com",
+    "repoDir": "/root/service/woong-blog-aspcore-nextjs",
+    "runRealLoad": true,
+    "rates": "100 200 300 400",
+    "durationSeconds": 30,
+    "maxVus": 500,
+    "preAllocatedVus": 100
+  },
+  "currentPublicTargetScan": {
+    "baseUrl": "https://woonglab.com",
+    "pageSize": 12,
+    "workRead": {
+      "path": "/api/public/works/water-fluid-simulation",
+      "title": "Water Fluid Simulation",
+      "status": 200,
+      "bytes": 76234,
+      "probeMs": 979.6
+    },
+    "studyRead": {
+      "path": "/api/public/blogs/%EC%95%88%EB%A9%B4%EC%9D%B8%EC%8B%9D%EC%9D%84-%EB%84%A3%EA%B8%B0-%EC%9C%84%ED%95%9C-%EC%BD%94%ED%8B%80%EB%A6%B0-%EC%95%88%EB%93%9C%EB%A1%9C%EC%9D%B4%EB%93%9C-%EC%A7%80%EC%8B%9D-%EC%95%88%EB%A9%B4%EC%9D%B8%EC%8B%9D%EC%9D%84-%EB%84%A3%EA%B8%B0-%EC%9C%84%ED%95%9C-%EC%BD%94%ED%8B%80%EB%A6%B0-%EC%95%88%EB%93%9C%EB%A1%9C%EC%9D%B4%EB%93%9C-%EC%A7%80%EC%8B%9D-2",
+      "title": "안면인식을 넣기 위한 코틀린 안드로이드 지식 안면인식을 넣기 위한 코틀린 & 안드로이드 지식 (2)",
+      "status": 200,
+      "bytes": 101560,
+      "probeMs": 575.5
+    }
+  },
+  "requiredSecretBlocker": {
+    "repoSecretsSeen": [
+      "PROMOTION_TOKEN"
+    ],
+    "repoEnvironmentsSeen": [],
+    "missingRequiredSecrets": [
+      "PROD_SSH_HOST",
+      "PROD_SSH_USER",
+      "PROD_SSH_PRIVATE_KEY",
+      "PROD_SSH_KNOWN_HOSTS"
+    ],
+    "missingOptionalSecrets": [
+      "PROD_SSH_PORT"
+    ],
+    "setupCommands": [
+      "gh secret set PROD_SSH_HOST --repo kimwoonggon/woong-blog-aspcore-nextjs --body '<production-host>'",
+      "gh secret set PROD_SSH_USER --repo kimwoonggon/woong-blog-aspcore-nextjs --body '<production-user>'",
+      "gh secret set PROD_SSH_PRIVATE_KEY --repo kimwoonggon/woong-blog-aspcore-nextjs < /path/to/production_ssh_private_key",
+      "gh secret set PROD_SSH_KNOWN_HOSTS --repo kimwoonggon/woong-blog-aspcore-nextjs < /tmp/woong-prod-known-hosts",
+      "gh secret set PROD_SSH_PORT --repo kimwoonggon/woong-blog-aspcore-nextjs --body '22'",
+      "gh secret set PROD_GHCR_TOKEN --repo kimwoonggon/woong-blog-aspcore-nextjs --body '<read-packages-token-if-needed>'"
+    ]
+  },
+  "targetRules": [
+    "Select Work and Study read paths from /api/public/works?page=1&pageSize=12 and /api/public/blogs?page=1&pageSize=12.",
+    "Reject any seed or fixture target.",
+    "Keep LIST_PAGE_SIZE at 12.",
+    "Use public origin through nginx, not backend-direct URLs."
+  ],
+  "sliceSelectionRules": [
+    "Choose HLS fatal fix if upload/HLS processing or video contract preflight fails.",
+    "Choose public detail serialization/body optimization if read P95, payload size, or app elapsed dominates.",
+    "Choose DB/index optimization if DB latency, connection open P95, active connections, or query diagnostics dominate."
+  ]
+}

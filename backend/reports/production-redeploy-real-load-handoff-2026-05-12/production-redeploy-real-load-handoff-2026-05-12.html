@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Production Redeploy And Real Load Handoff - 2026-05-12</title>
+  <style>
+    body { font-family: sans-serif; line-height: 1.5; margin: 2rem auto; max-width: 72rem; padding: 0 1rem; }
+    code, pre { background: #f4f4f4; }
+    code { padding: 0.1rem 0.25rem; }
+    pre { overflow-x: auto; padding: 1rem; }
+  </style>
+</head>
+<body>
+  <h1>Production Redeploy And Real Load Handoff - 2026-05-12</h1>
+  <p>Main and GHCR runtime images are ready. This handoff does not execute production SSH; running the workflow will deploy to production.</p>
+  <h2>Ready Evidence</h2>
+  <ul>
+    <li>Main merge commit: <code>389a117ee8cda43e84536c85164bf13afd8e38bf</code></li>
+    <li>CI Main Runtime run: <code>25717479751</code>, success</li>
+    <li>Publish GHCR Main run: <code>25717736048</code>, success</li>
+    <li>Backend digest: <code>sha256:ae0679f8166380e0edef07c3d546cc31c9c291380e6f7eccc691c225c44afdf2</code></li>
+    <li>Frontend digest: <code>sha256:8cd7cdea54ad6388bcb34f3b8b694cf87e9721a35273cafd35d0f5fea0bfb5f3</code></li>
+  </ul>
+  <h2>Dispatch Command</h2>
+  <p>Do not dispatch until required production SSH secrets exist. Current repository secrets expose only <code>PROMOTION_TOKEN</code>, and no repository environments are configured.</p>
+  <p><code>PROD_GHCR_TOKEN</code> is optional: empty Docker config manifest inspect succeeded for both runtime <code>:main</code> images from this workspace.</p>
+  <h2>Current Real Target Candidates</h2>
+  <ul>
+    <li>Work read: <code>/api/public/works/water-fluid-simulation</code>, HTTP 200, about 76,234 bytes.</li>
+    <li>Study read: <code>/api/public/blogs/%EC%95%88%EB%A9%B4%EC%9D%B8%EC%8B%9D%EC%9D%84-%EB%84%A3%EA%B8%B0-%EC%9C%84%ED%95%9C-%EC%BD%94%ED%8B%80%EB%A6%B0-%EC%95%88%EB%93%9C%EB%A1%9C%EC%9D%B4%EB%93%9C-%EC%A7%80%EC%8B%9D-%EC%95%88%EB%A9%B4%EC%9D%B8%EC%8B%9D%EC%9D%84-%EB%84%A3%EA%B8%B0-%EC%9C%84%ED%95%9C-%EC%BD%94%ED%8B%80%EB%A6%B0-%EC%95%88%EB%93%9C%EB%A1%9C%EC%9D%B4%EB%93%9C-%EC%A7%80%EC%8B%9D-2</code>, HTTP 200, about 101,560 bytes.</li>
+  </ul>
+  <h2>Secret Setup Commands</h2>
+  <pre><code>gh secret set PROD_SSH_HOST --repo kimwoonggon/woong-blog-aspcore-nextjs --body '&lt;production-host&gt;'
+gh secret set PROD_SSH_USER --repo kimwoonggon/woong-blog-aspcore-nextjs --body '&lt;production-user&gt;'
+gh secret set PROD_SSH_PRIVATE_KEY --repo kimwoonggon/woong-blog-aspcore-nextjs &lt; /path/to/production_ssh_private_key
+gh secret set PROD_SSH_KNOWN_HOSTS --repo kimwoonggon/woong-blog-aspcore-nextjs &lt; /tmp/woong-prod-known-hosts
+gh secret set PROD_SSH_PORT --repo kimwoonggon/woong-blog-aspcore-nextjs --body '22'
+gh secret set PROD_GHCR_TOKEN --repo kimwoonggon/woong-blog-aspcore-nextjs --body '&lt;read-packages-token-if-needed&gt;'</code></pre>
+  <pre><code>gh workflow run "Production Runtime Redeploy" \
+  -f base_url=https://woonglab.com \
+  -f repo_dir=/root/service/woong-blog-aspcore-nextjs \
+  -f work_read_path="/api/public/works/water-fluid-simulation" \
+  -f study_read_path="/api/public/blogs/%EC%95%88%EB%A9%B4%EC%9D%B8%EC%8B%9D%EC%9D%84-%EB%84%A3%EA%B8%B0-%EC%9C%84%ED%95%9C-%EC%BD%94%ED%8B%80%EB%A6%B0-%EC%95%88%EB%93%9C%EB%A1%9C%EC%9D%B4%EB%93%9C-%EC%A7%80%EC%8B%9D-%EC%95%88%EB%A9%B4%EC%9D%B8%EC%8B%9D%EC%9D%84-%EB%84%A3%EA%B8%B0-%EC%9C%84%ED%95%9C-%EC%BD%94%ED%8B%80%EB%A6%B0-%EC%95%88%EB%93%9C%EB%A1%9C%EC%9D%B4%EB%93%9C-%EC%A7%80%EC%8B%9D-2" \
+  -f run_real_load=true \
+  -f rates="100 200 300 400" \
+  -f duration_seconds=30 \
+  -f max_vus=500 \
+  -f pre_allocated_vus=100</code></pre>
+  <h2>Required Gates</h2>
+  <ul>
+    <li>Targets must come from public list APIs with <code>pageSize=12</code>.</li>
+    <li>No seed or fixture target is allowed.</li>
+    <li>Preflight must use the public origin through nginx.</li>
+    <li>Evidence bundle verification must pass against actual main SHA and pulled image digests.</li>
+  </ul>
+</body>
+</html>
