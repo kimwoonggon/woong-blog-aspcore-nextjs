@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Active Goal Main Promotion State Audit - 2026-05-12</title>
+  <style>
+    body { font-family: sans-serif; line-height: 1.5; margin: 2rem auto; max-width: 72rem; padding: 0 1rem; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ddd; padding: 0.5rem; vertical-align: top; }
+    th { background: #f5f5f5; text-align: left; }
+    code { background: #f4f4f4; padding: 0.1rem 0.25rem; }
+  </style>
+</head>
+<body>
+  <h1>Active Goal Main Promotion State Audit - 2026-05-12</h1>
+  <p>Main promotion, CI, and GHCR runtime image publish are complete. Production deploy, production preflight, and post-deploy Real Backend Test remain missing because production SSH/server work was explicitly excluded.</p>
+  <table>
+    <thead>
+      <tr><th>Requirement</th><th>Evidence</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Dev slice and local full E2E</td><td>PR #185, commit <code>78f32f3</code>; full E2E 431 passed, 4 skipped</td><td>Complete</td></tr>
+      <tr><td>Dev CI and merge</td><td>PR #185 CI green; dev merge <code>304dc65</code>; dev push CI run <code>25716884120</code> green after rerun</td><td>Complete</td></tr>
+      <tr><td>Main promotion and CI</td><td>PR #186; CI Main Runtime run <code>25717220280</code>; main merge <code>389a117</code>; main push CI run <code>25717479751</code></td><td>Complete</td></tr>
+      <tr><td>GHCR main runtime images</td><td>Publish GHCR Main run <code>25717736048</code>; backend digest <code>sha256:ae0679f8166380e0edef07c3d546cc31c9c291380e6f7eccc691c225c44afdf2</code>; frontend digest <code>sha256:8cd7cdea54ad6388bcb34f3b8b694cf87e9721a35273cafd35d0f5fea0bfb5f3</code></td><td>Complete</td></tr>
+      <tr><td>Anonymous GHCR manifest inspect</td><td>Empty Docker config manifest inspect succeeded for backend and frontend runtime <code>:main</code> images</td><td>Complete</td></tr>
+      <tr><td>Production workflow secrets</td><td>Repo secrets expose only <code>PROMOTION_TOKEN</code>; no repository environments are configured</td><td>Missing</td></tr>
+      <tr><td>Server deploy and production preflight</td><td>Not executed due user production/SSH exclusion</td><td>Missing</td></tr>
+      <tr><td>Production Real Backend Test</td><td>Not executed because production deploy/preflight was not executed</td><td>Missing</td></tr>
+    </tbody>
+  </table>
+  <h2>Recommendation</h2>
+  <p>If production work is authorized later, first add the required production SSH secrets, then run the existing Production Runtime Redeploy workflow or equivalent server-side commands, then execute Real Backend Test with real URLs and <code>pageSize=12</code>.</p>
+</body>
+</html>
