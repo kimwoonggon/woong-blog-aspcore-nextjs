@@ -19,7 +19,7 @@ test('blog detail TOC updates its active heading as the reader moves deeper into
     tags: ['toc-active', 'blog'],
   })
 
-  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.setViewportSize({ width: 1600, height: 900 })
   await page.goto(`/blog/${blog.slug}`)
   await expect(page.getByTestId('blog-detail-title')).toHaveText(blog.title)
   await expect(page.locator('#blog-detail-content h1')).toHaveText('Body H1 Fixture')

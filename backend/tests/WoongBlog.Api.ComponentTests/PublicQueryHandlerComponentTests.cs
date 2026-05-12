@@ -242,6 +242,43 @@ public class PublicQueryHandlerComponentTests
     }
 
     [Fact]
+    public async Task GetHomeQueryHandler_ReturnsUpToFourFeaturedWorks_ForBalancedHomeGrid()
+    {
+        await using var dbContext = CreateDbContext();
+        var now = new DateTimeOffset(2026, 5, 12, 0, 0, 0, TimeSpan.Zero);
+        dbContext.SiteSettings.Add(new SiteSetting
+        {
+            Singleton = true,
+            OwnerName = "Public Owner",
+            Tagline = "Public Tagline"
+        });
+        dbContext.Pages.Add(new PageEntity
+        {
+            Id = Guid.NewGuid(),
+            Slug = "home",
+            Title = "Home",
+            ContentJson = "{}"
+        });
+
+        dbContext.Works.AddRange(
+            CreateWork("Featured Work 1", "featured-work-1", published: true, publishedAt: now.AddMinutes(-1)),
+            CreateWork("Featured Work 2", "featured-work-2", published: true, publishedAt: now.AddMinutes(-2)),
+            CreateWork("Featured Work 3", "featured-work-3", published: true, publishedAt: now.AddMinutes(-3)),
+            CreateWork("Featured Work 4", "featured-work-4", published: true, publishedAt: now.AddMinutes(-4)),
+            CreateWork("Featured Work 5", "featured-work-5", published: true, publishedAt: now.AddMinutes(-5)));
+        await dbContext.SaveChangesAsync();
+
+        var handler = new GetHomeQueryHandler(CreateHomeQueryStore(dbContext));
+
+        var result = await handler.Handle(new GetHomeQuery(), CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Equal(
+            new[] { "Featured Work 1", "Featured Work 2", "Featured Work 3", "Featured Work 4" },
+            result!.FeaturedWorks.Select(work => work.Title).ToArray());
+    }
+
+    [Fact]
     public async Task GetHomeQueryHandler_UsesStoredPublicMediaUrlsWithoutAssetRows()
     {
         await using var dbContext = CreateDbContext();

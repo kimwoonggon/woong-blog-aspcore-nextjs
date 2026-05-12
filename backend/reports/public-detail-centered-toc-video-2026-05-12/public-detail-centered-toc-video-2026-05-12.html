@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Public Detail Centering, Home Works Count, Video Upload E2E Audit - 2026-05-12</title>
+  <style>
+    body { font-family: sans-serif; line-height: 1.5; margin: 2rem auto; max-width: 64rem; padding: 0 1rem; }
+    code { background: #f4f4f4; padding: 0.1rem 0.25rem; }
+    h1, h2 { line-height: 1.2; }
+  </style>
+</head>
+<body>
+  <h1>Public Detail Centering, Home Works Count, Video Upload E2E Audit - 2026-05-12</h1>
+  <h2>Summary</h2>
+  <p>Dev-scoped fixes were applied for public detail body centering, TOC readability, home Works four-card output, and video upload/HLS E2E coverage.</p>
+  <h2>Changed</h2>
+  <ul>
+    <li>Blog and Work detail body columns remain centered while the TOC rail appears only from 1600px.</li>
+    <li>TOC card spacing was tightened for collapse and text readability.</li>
+    <li>Home featured Works query now returns up to 4 items.</li>
+    <li>Playwright and backend component tests were updated for the new behavior.</li>
+  </ul>
+  <h2>Not Changed</h2>
+  <ul>
+    <li>No production SSH, deploy, server pull, or production environment work.</li>
+    <li>No cache shortcut or seed URL shortcut.</li>
+    <li>No public list <code>pageSize=12</code> reduction.</li>
+  </ul>
+  <h2>Validation</h2>
+  <ul>
+    <li>Focused backend RED/GREEN component test completed.</li>
+    <li><code>npm run build</code>, <code>dotnet test backend/WoongBlog.sln</code>, focused Vitest, focused Playwright, video upload/HLS checks, and <code>git diff --check</code> passed.</li>
+    <li>Full dev E2E passed: 431 passed, 4 skipped, latency budget failures 0.</li>
+  </ul>
+  <h2>Risks</h2>
+  <ul>
+    <li>TOC rail is intentionally hidden below 1600px to preserve body centering.</li>
+    <li>Final full E2E used the current local dev compose database, not a freshly dropped database volume.</li>
+    <li>Full E2E reported 14 latency warnings but no budget failures.</li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Proceed with this dev-scoped candidate. For additional confidence, rerun full E2E from a clean database volume before merge.</p>
+</body>
+</html>

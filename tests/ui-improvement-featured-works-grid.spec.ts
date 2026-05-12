@@ -1,4 +1,5 @@
 import { expect, test } from './helpers/performance-test'
+import { createWorkFixture } from './helpers/content-fixtures'
 import { getStyle } from './helpers/ui-improvement'
 import { isLocalQaBaseUrl, LOCAL_QA_FLAG_SKIP_REASON } from './helpers/local-qa'
 
@@ -94,6 +95,22 @@ test('Works collapses to one column on mobile', async ({ page }) => {
   expect(secondBox).toBeTruthy()
   expect(Math.abs(firstBox!.x - secondBox!.x)).toBeLessThan(4)
   expect(secondBox!.y).toBeGreaterThan(firstBox!.y)
+})
+
+test('home Works keeps an even four-card set on mobile to avoid an empty-feeling last row', async ({ page, request }, testInfo) => {
+  for (let index = 0; index < 4; index += 1) {
+    await createWorkFixture(request, testInfo, {
+      titlePrefix: `Balanced Home Work ${index + 1}`,
+      html: `<h2>Balanced work ${index + 1}</h2><p>Fixture body for a deterministic four-card home Works grid.</p>`,
+    })
+  }
+
+  await page.setViewportSize(representativePhoneViewport)
+  await page.goto(`/?balancedWorks=${Date.now()}`)
+
+  const cards = page.getByTestId('featured-work-card')
+  await expect(cards.nth(3)).toBeVisible()
+  await expect(cards).toHaveCount(4)
 })
 
 test('Works stays aligned to the mobile home content rail', async ({ page }) => {

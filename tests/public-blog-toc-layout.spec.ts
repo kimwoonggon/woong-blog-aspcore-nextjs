@@ -28,6 +28,8 @@ test('blog table of contents stays in a right rail instead of covering article c
   expect(bodyBox).toBeTruthy()
   expect(tocBox).toBeTruthy()
   expect(contentLayoutBox).toBeTruthy()
+  const bodyCenter = bodyBox!.x + bodyBox!.width / 2
+  expect(Math.abs(bodyCenter - page.viewportSize()!.width / 2)).toBeLessThanOrEqual(2)
   expect(bodyBox!.x + bodyBox!.width).toBeLessThanOrEqual(tocBox!.x - 24)
   expect(tocBox!.y + tocBox!.height).toBeLessThanOrEqual(contentLayoutBox!.y + contentLayoutBox!.height + 2)
   expect(tocBox!.width).toBeGreaterThanOrEqual(360)

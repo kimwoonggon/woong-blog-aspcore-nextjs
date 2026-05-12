@@ -51,7 +51,7 @@ test('VA-012 and VA-013 home hero keeps a clear typography scale and weight hier
 })
 
 test('VA-120 blog detail table of contents keeps its own surfaced container styling', async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.setViewportSize({ width: 1600, height: 900 })
   await page.goto('/blog/seeded-blog')
 
   const toc = page.getByTestId('blog-toc')
