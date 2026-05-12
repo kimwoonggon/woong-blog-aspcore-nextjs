@@ -1,0 +1,77 @@
+{
+  "task": "active-goal-runtime-redeploy-blocker",
+  "date": "2026-05-13",
+  "completionDecision": "not_complete",
+  "currentBranches": {
+    "dev": "c63426237052c8a503b7209befdf0855d7a8d8ad",
+    "main": "0bb3fc8c3077112396ce9afaacd34ed0b9c23e6d"
+  },
+  "alreadyVerified": {
+    "ciMainRuntimeRun": {
+      "id": 25744361298,
+      "headSha": "0bb3fc8c3077112396ce9afaacd34ed0b9c23e6d",
+      "conclusion": "success"
+    },
+    "publishGhcrMainRun": {
+      "id": 25744784930,
+      "headSha": "0bb3fc8c3077112396ce9afaacd34ed0b9c23e6d",
+      "conclusion": "success"
+    },
+    "runtimeImages": {
+      "backend": {
+        "tag": "ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-backend:sha-0bb3fc8c3077",
+        "digest": "sha256:441aed27ca41e588f045954c5092e2401ce4ad7fc54d8fb1f95fa4c798caa692"
+      },
+      "frontend": {
+        "tag": "ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-frontend:sha-0bb3fc8c3077",
+        "digest": "sha256:02d6269629745fe581850b9ece4ffca8246f32a214ec515263c90be7af74a204"
+      }
+    }
+  },
+  "productionRedeployReadiness": {
+    "dispatchRecommended": false,
+    "reason": "Required SSH secrets are absent; workflow would fail at Prepare SSH before pull/deploy/preflight/load.",
+    "presentRepoSecrets": [
+      "PROMOTION_TOKEN"
+    ],
+    "missingRepoSecrets": [
+      "PROD_SSH_HOST",
+      "PROD_SSH_USER",
+      "PROD_SSH_PRIVATE_KEY",
+      "PROD_SSH_KNOWN_HOSTS"
+    ]
+  },
+  "productionRedeployRuns": [
+    {
+      "id": 25628772593,
+      "createdAt": "2026-05-10T12:30:18Z",
+      "headSha": "757ab203e55cadf8f89ee0da42b7ef580deebad3",
+      "conclusion": "failure"
+    },
+    {
+      "id": 25628614468,
+      "createdAt": "2026-05-10T12:22:28Z",
+      "headSha": "757ab203e55cadf8f89ee0da42b7ef580deebad3",
+      "conclusion": "failure"
+    },
+    {
+      "id": 25628508822,
+      "createdAt": "2026-05-10T12:17:16Z",
+      "headSha": "757ab203e55cadf8f89ee0da42b7ef580deebad3",
+      "conclusion": "failure"
+    }
+  ],
+  "missingRequirements": [
+    "server-side current-main image pull/deploy evidence",
+    "production preflight result after current-main deploy",
+    "valid Real Backend Test summary after current-main deploy",
+    "proof of pageSize=12/no seed/no fixture/no cache workaround/real Work and Study URLs",
+    "result-based next slice selection",
+    "full E2E after selected slice",
+    "CI green after selected slice"
+  ],
+  "nextActions": [
+    "Configure PROD_SSH_HOST, PROD_SSH_USER, PROD_SSH_PRIVATE_KEY, and PROD_SSH_KNOWN_HOSTS, then dispatch Production Runtime Redeploy with run_real_load=true.",
+    "Alternatively run backend/reports/current-main-server-evidence-handoff-2026-05-12/server-current-main-preflight-load-evidence.sh on the server and return the evidence bundle."
+  ]
+}
