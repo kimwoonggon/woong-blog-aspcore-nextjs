@@ -1,0 +1,46 @@
+{
+  "slug": "prod-runtime-evidence-next-focus-guard-2026-05-13",
+  "date": "2026-05-13",
+  "changed": [
+    "scripts/prod-runtime-evidence-verify.sh",
+    "src/test/prod-runtime-evidence-verify.test.ts",
+    "todolist-2026-05-13.md"
+  ],
+  "intentionalNonChanges": [
+    "No production SSH, deployment, or server command was executed.",
+    "No Real Backend Test was run from this environment.",
+    "No load target behavior was weakened.",
+    "No next code slice was selected because current-main server evidence is still missing."
+  ],
+  "validations": [
+    {
+      "command": "npm test -- --run src/test/prod-runtime-evidence-verify.test.ts",
+      "result": "failed before implementation as expected because missing and unknown nextFocus were accepted"
+    },
+    {
+      "command": "npm test -- --run src/test/prod-runtime-evidence-verify.test.ts",
+      "result": "passed, 11 tests"
+    },
+    {
+      "command": "npm test -- --run src/test/prod-runtime-evidence-verify.test.ts src/test/prod-real-load-steps.test.ts src/test/prod-runtime-evidence-bundle.test.ts",
+      "result": "passed on clean origin/dev worktree, 21 tests"
+    },
+    {
+      "command": "bash -n scripts/prod-runtime-evidence-verify.sh",
+      "result": "passed"
+    },
+    {
+      "command": "npx eslint src/test/prod-runtime-evidence-verify.test.ts src/test/prod-real-load-steps.test.ts src/test/prod-runtime-evidence-bundle.test.ts",
+      "result": "passed"
+    }
+  ],
+  "activeGoalComplete": false,
+  "remainingBlockers": [
+    "Server pull/deploy evidence for current main runtime image is missing.",
+    "Production preflight evidence after current-main deploy is missing.",
+    "Real Backend Test evidence with pageSize=12, no seed, no cache workaround, and real Work/Study URLs is missing.",
+    "Next slice has not been selected because valid load evidence is missing.",
+    "Full E2E and CI after the selected slice have not run."
+  ],
+  "recommendation": "Keep the nextFocus verifier guard and wait for or collect a valid current-main server evidence bundle before selecting the next slice."
+}
