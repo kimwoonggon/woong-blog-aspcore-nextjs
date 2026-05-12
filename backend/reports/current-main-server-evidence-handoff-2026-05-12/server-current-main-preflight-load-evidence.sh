@@ -212,8 +212,10 @@ docker compose --env-file "${APP_ENV_FILE}" -f "${COMPOSE_FILE}" exec -T backend
   | grep -E '^(ASPNETCORE_ENVIRONMENT|LoadTesting__BaseUrl|POSTGRES_MAX_POOL_SIZE)=|^ConnectionStrings__Postgres=' \
   | sed -E 's/(Password=)[^;]*/\1***REDACTED***/'
 
+mkdir -p "${OUTPUT_DIR%/}"
+preflight_log="${OUTPUT_DIR%/}/current-main-preflight.log"
 info "running production preflight"
-BASE_URL="${BASE_URL}" ./scripts/prod-runtime-preflight.sh
+BASE_URL="${BASE_URL}" ./scripts/prod-runtime-preflight.sh 2>&1 | tee "${preflight_log}"
 
 info "checking public DTO/list contract after deploy"
 assert_public_list_contract "public works" "/api/public/works?page=1&pageSize=12" \
@@ -295,6 +297,7 @@ cat >"${manifest}" <<JSON
   "repoDir": "${REPO_DIR}",
   "mainSha": "${actual_sha}",
   "baseUrl": "${BASE_URL}",
+  "preflightLog": "${preflight_log}",
   "frontendImage": "${FRONTEND_IMAGE}",
   "frontendDigest": "${FRONTEND_DIGEST}",
   "backendImage": "${BACKEND_IMAGE}",
@@ -315,6 +318,7 @@ fi
 tar -czf "${ARTIFACT_BUNDLE}" -C "${output_parent}" "${output_name}"
 
 info "evidence manifest: ${manifest}"
+info "preflight log: ${preflight_log}"
 info "summary json: ${summary_json}"
 info "summary markdown: ${summary_md}"
 info "artifact bundle: ${ARTIFACT_BUNDLE}"

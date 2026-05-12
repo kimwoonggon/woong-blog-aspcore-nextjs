@@ -1,4 +1,4 @@
-import { copyFileSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { spawnSync } from 'node:child_process'
@@ -75,6 +75,58 @@ function createEvidenceDir() {
   return evidenceDir
 }
 
+function writeCurrentMainEvidenceDir(evidenceDir: string) {
+  writeFileSync(path.join(evidenceDir, 'current-main-preflight.log'), [
+    '[prod-runtime-preflight] required services: backend frontend nginx db',
+    '[prod-runtime-preflight] LoadTesting__BaseUrl=https://woonglab.com',
+    '[prod-runtime-preflight] nginx request_time header: available (0.010)',
+    '[prod-runtime-preflight] app elapsed header: available (2.1)',
+    '[prod-runtime-preflight] gzip public response: available',
+    '[prod-runtime-preflight] public Work list contract: current',
+    '[prod-runtime-preflight] public Work detail contract: current',
+    '[prod-runtime-preflight] PASS',
+  ].join('\n'))
+
+  writeFileSync(path.join(evidenceDir, 'prod-real-load-steps-summary.json'), JSON.stringify({
+    baseUrl: 'https://woonglab.com',
+    cleanCeilingRps: 300,
+    firstSaturationRate: 400,
+    nextFocus: 'public-detail-serialization-or-db-index',
+    listPageSize: 12,
+    steps: [
+      {
+        rate: 100,
+        listPageSize: 12,
+        targets: {
+          work_list: { path: '/api/public/works?page=1&pageSize=12' },
+          work_read: { path: '/api/public/works/real-work' },
+          study_list: { path: '/api/public/blogs?page=1&pageSize=12' },
+          study_read: { path: '/api/public/blogs/real-study' },
+        },
+        http: { failedRate: 0, droppedIterations: 0, durationP95Ms: 120 },
+      },
+    ],
+  }, null, 2))
+
+  writeFileSync(path.join(evidenceDir, 'prod-real-load-steps-summary.md'), '# Production Real Load Steps Summary\n')
+  writeFileSync(path.join(evidenceDir, 'current-main-evidence-manifest.json'), JSON.stringify({
+    mainSha: '761e0040e1339101c4ab6007d032a0b5527ce049',
+    baseUrl: 'https://woonglab.com',
+    backendDigest: 'sha256:backend',
+    frontendDigest: 'sha256:frontend',
+    preflightLog: `${evidenceDir}/current-main-preflight.log`,
+    listPageSize: 12,
+    summaryJson: `${evidenceDir}/prod-real-load-steps-summary.json`,
+    summaryMarkdown: `${evidenceDir}/prod-real-load-steps-summary.md`,
+  }, null, 2))
+}
+
+function createCurrentMainEvidenceDir() {
+  const evidenceDir = mkdtempSync(path.join(os.tmpdir(), 'current-main-evidence-verify-'))
+  writeCurrentMainEvidenceDir(evidenceDir)
+  return evidenceDir
+}
+
 function runVerifier(evidenceDir: string, extraEnv: Record<string, string> = {}) {
   return spawnSync('bash', [scriptPath], {
     cwd: repoRoot,
@@ -138,6 +190,33 @@ describe('production runtime evidence verifier', () => {
     expect(tarResult.status, `${tarResult.stdout}\n${tarResult.stderr}`).toBe(0)
 
     const result = runVerifier(bundleOutputDir)
+
+    expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0)
+    expect(result.stdout).toContain('[prod-runtime-evidence-verify] PASS')
+  })
+
+  it('passes for current-main handoff evidence with flat image digest fields', () => {
+    const evidenceDir = createCurrentMainEvidenceDir()
+
+    const result = runVerifier(evidenceDir)
+
+    expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0)
+    expect(result.stdout).toContain('[prod-runtime-evidence-verify] PASS')
+  })
+
+  it('passes for a current-main handoff bundle that contains a nested output directory', () => {
+    const bundleOutputDir = mkdtempSync(path.join(os.tmpdir(), 'current-main-evidence-bundle-output-'))
+    const evidenceDir = path.join(bundleOutputDir, 'loadtest')
+    mkdirSync(evidenceDir)
+    writeCurrentMainEvidenceDir(evidenceDir)
+
+    const returnedDir = mkdtempSync(path.join(os.tmpdir(), 'current-main-evidence-returned-'))
+    const tarballPath = path.join(returnedDir, 'current-main-preflight-load-evidence.tgz')
+    const tarResult = spawnSync('tar', ['-czf', tarballPath, '-C', bundleOutputDir, 'loadtest'], { encoding: 'utf8' })
+
+    expect(tarResult.status, `${tarResult.stdout}\n${tarResult.stderr}`).toBe(0)
+
+    const result = runVerifier(returnedDir)
 
     expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0)
     expect(result.stdout).toContain('[prod-runtime-evidence-verify] PASS')

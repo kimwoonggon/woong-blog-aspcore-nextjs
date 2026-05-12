@@ -25,7 +25,7 @@
     "Uses immutable sha-${resolvedShaShort} runtime image tags unless image override env vars are set",
     "Resolves GHCR manifest digests before compose pull",
     "Runs docker compose pull and up",
-    "Runs scripts/prod-runtime-preflight.sh",
+    "Runs scripts/prod-runtime-preflight.sh and persists its output as current-main-preflight.log",
     "Fails on stale public list DTO keys",
     "Runs scripts/prod-real-load-steps.sh with LIST_PAGE_SIZE=12",
     "Rejects seed/fixture read paths",
@@ -34,6 +34,7 @@
   ],
   "requiredReturnedEvidence": [
     "terminal output ending with [current-main-evidence] PASS",
+    "current-main-preflight.log",
     "current-main-evidence-manifest.json",
     "prod-real-load-steps-summary.json",
     "prod-real-load-steps-summary.md",
