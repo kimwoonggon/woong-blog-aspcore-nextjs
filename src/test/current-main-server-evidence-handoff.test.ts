@@ -29,4 +29,23 @@ describe('current-main server evidence handoff', () => {
     expect(json.currentMainResolution).toEqual('dynamic-origin-main')
     expect(json.scriptGuarantees).toContain('Defaults to the latest fetched origin/main instead of a hard-coded commit SHA')
   })
+
+  it('fails fast when optional expected image digests do not match resolved GHCR digests', () => {
+    const script = read(`${handoffDir}/server-current-main-preflight-load-evidence.sh`)
+    const markdown = read(`${handoffDir}/current-main-server-evidence-handoff-2026-05-12.md`)
+    const json = JSON.parse(read(`${handoffDir}/current-main-server-evidence-handoff-2026-05-12.json`))
+
+    expect(script).toContain('EXPECTED_FRONTEND_IMAGE_DIGEST="${EXPECTED_FRONTEND_IMAGE_DIGEST:-}"')
+    expect(script).toContain('EXPECTED_BACKEND_IMAGE_DIGEST="${EXPECTED_BACKEND_IMAGE_DIGEST:-}"')
+    expect(script).toContain('if [[ -n "${EXPECTED_FRONTEND_IMAGE_DIGEST}" && "${FRONTEND_DIGEST}" != "${EXPECTED_FRONTEND_IMAGE_DIGEST}" ]]')
+    expect(script).toContain('if [[ -n "${EXPECTED_BACKEND_IMAGE_DIGEST}" && "${BACKEND_DIGEST}" != "${EXPECTED_BACKEND_IMAGE_DIGEST}" ]]')
+    expect(script).toContain('fail "frontend image digest mismatch')
+    expect(script).toContain('fail "backend image digest mismatch')
+
+    expect(markdown).toContain('EXPECTED_BACKEND_IMAGE_DIGEST=sha256:<backend-digest>')
+    expect(markdown).toContain('EXPECTED_FRONTEND_IMAGE_DIGEST=sha256:<frontend-digest>')
+    expect(markdown).toContain('Fails immediately if provided expected image digests do not match the resolved GHCR manifest digests')
+
+    expect(json.scriptGuarantees).toContain('Fails immediately if provided expected image digests do not match the resolved GHCR manifest digests')
+  })
 })

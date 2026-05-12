@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Current Main Handoff Digest Pin Audit 2026-05-12</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 920px; margin: 40px auto; line-height: 1.55; color: #1f2937; }
+    h1, h2 { color: #111827; }
+    code { background: #f3f4f6; padding: 0.1rem 0.25rem; border-radius: 0.25rem; }
+    .warn { border-left: 4px solid #d97706; padding: 0.75rem 1rem; background: #fffbeb; }
+  </style>
+</head>
+<body>
+  <h1>Current Main Handoff Digest Pin Audit 2026-05-12</h1>
+  <p class="warn"><strong>Status:</strong> handoff hardening is complete locally, but the active goal still needs returned server evidence.</p>
+  <h2>Changed</h2>
+  <ul>
+    <li>Added <code>EXPECTED_BACKEND_IMAGE_DIGEST</code> and <code>EXPECTED_FRONTEND_IMAGE_DIGEST</code>.</li>
+    <li>The handoff fails before compose pull/up if provided expected digests do not match resolved GHCR digests.</li>
+    <li>Operator docs and post-main audit command now include digest pins.</li>
+  </ul>
+  <h2>Validations</h2>
+  <ul>
+    <li>Focused Vitest passed, 2 tests.</li>
+    <li>Shell syntax check passed.</li>
+    <li>JSON parse checks passed.</li>
+    <li>ESLint passed for the changed test file.</li>
+  </ul>
+</body>
+</html>
