@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Active Goal Completion Audit - 2026-05-12</title>
+  <style>
+    body { font-family: system-ui, sans-serif; line-height: 1.5; margin: 2rem; max-width: 1000px; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ccc; padding: 0.5rem; text-align: left; vertical-align: top; }
+    code { background: #f2f2f2; padding: 0.1rem 0.25rem; border-radius: 0.25rem; }
+  </style>
+</head>
+<body>
+  <h1>Active Goal Completion Audit - 2026-05-12</h1>
+  <p><strong>Decision:</strong> do not mark the active goal complete.</p>
+  <h2>Success Criteria</h2>
+  <ol>
+    <li>Server pulls and deploys current <code>main</code> runtime images.</li>
+    <li>Production preflight passes after deployment.</li>
+    <li>Real Backend Test reruns with <code>pageSize=12</code>, no seed/fixture targets, no cache workaround, and real Work/Study URLs.</li>
+    <li>The next slice is selected from the valid result.</li>
+    <li>Full E2E and CI are green after the selected slice.</li>
+  </ol>
+  <h2>Evidence</h2>
+  <table>
+    <tr><th>Item</th><th>Result</th></tr>
+    <tr><td>Main CI</td><td>Success: run 25717479751, SHA 389a117ee8cda43e84536c85164bf13afd8e38bf</td></tr>
+    <tr><td>GHCR main publish</td><td>Success: run 25717736048</td></tr>
+    <tr><td>Backend image digest</td><td><code>sha256:ae0679f8166380e0edef07c3d546cc31c9c291380e6f7eccc691c225c44afdf2</code></td></tr>
+    <tr><td>Frontend image digest</td><td><code>sha256:8cd7cdea54ad6388bcb34f3b8b694cf87e9721a35273cafd35d0f5fea0bfb5f3</code></td></tr>
+    <tr><td>Production SSH secrets</td><td>Missing; only <code>PROMOTION_TOKEN</code> is present.</td></tr>
+    <tr><td>Production Runtime Redeploy</td><td>No current-main success; latest runs are May 10 failures on old SHA.</td></tr>
+    <tr><td>Public origin</td><td>HTTP 200, but Works list still exposes stale <code>iconUrl</code> and <code>period</code>.</td></tr>
+    <tr><td>Real Backend Test evidence</td><td>Missing for current deployed runtime.</td></tr>
+  </table>
+  <h2>Recommendation</h2>
+  <p>Do not run or interpret Real Backend Test as valid until server-side deploy/preflight evidence proves the current main runtime is active.</p>
+</body>
+</html>
