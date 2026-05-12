@@ -1,0 +1,80 @@
+{
+  "task": "active-goal-runtime-redeploy-blocker",
+  "date": "2026-05-12",
+  "completionDecision": "not_complete",
+  "dispatchProductionRuntimeRedeploy": false,
+  "reasonDispatchSkipped": "Required Production Runtime Redeploy secrets are absent; dispatch would fail before server pull/deploy/preflight/load.",
+  "currentMain": {
+    "sha": "2c6b8b418990f5388aabbf24c07c3bfe6c3f507c",
+    "mergeSource": "PR #199 release/main-promote -> main",
+    "ciMainRuntimeRun": 25738704187,
+    "publishGhcrMainRun": 25739101934
+  },
+  "runtimeImages": {
+    "frontend": {
+      "main": "ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-frontend:main",
+      "sha": "ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-frontend:sha-2c6b8b418990",
+      "digest": "sha256:d26607a2756a1557c6a50532618269d315cd555f7110e3c72f050dcc9e75c2fb"
+    },
+    "backend": {
+      "main": "ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-backend:main",
+      "sha": "ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-backend:sha-2c6b8b418990",
+      "digest": "sha256:26014f5ccaab828c21066eec9818038796d243ed0dfeb68a8e9c7e6d38c92e2c"
+    }
+  },
+  "requiredSecrets": [
+    "PROD_SSH_HOST",
+    "PROD_SSH_USER",
+    "PROD_SSH_PRIVATE_KEY",
+    "PROD_SSH_KNOWN_HOSTS"
+  ],
+  "presentRepoSecrets": [
+    "PROMOTION_TOKEN"
+  ],
+  "publicOriginProbe": {
+    "healthStatus": 200,
+    "worksStatus": 200,
+    "blogsStatus": 200,
+    "worksPageSize": 12,
+    "worksFirstItemKeys": [
+      "category",
+      "excerpt",
+      "iconUrl",
+      "id",
+      "period",
+      "publishedAt",
+      "slug",
+      "tags",
+      "thumbnailUrl",
+      "title"
+    ],
+    "staleWorkListKeysPresent": [
+      "iconUrl",
+      "period"
+    ],
+    "publicOriginProvesCurrentMainRuntime": false
+  },
+  "handoffVerified": {
+    "path": "backend/reports/current-main-server-evidence-handoff-2026-05-12/",
+    "resolution": "dynamic-origin-main",
+    "exactPinInputs": [
+      "EXPECTED_MAIN_SHA",
+      "EXPECTED_BACKEND_IMAGE_DIGEST",
+      "EXPECTED_FRONTEND_IMAGE_DIGEST"
+    ],
+    "status": "verified"
+  },
+  "missingRequirements": [
+    "server-side current-main image pull/deploy evidence",
+    "production preflight result after current-main deploy",
+    "valid Real Backend Test summary after current-main deploy",
+    "proof of pageSize=12/no seed/no fixture/no cache workaround/real Work and Study URLs",
+    "result-based next slice selection",
+    "full E2E after selected slice",
+    "CI green after selected slice"
+  ],
+  "nextActions": [
+    "Configure the missing Production Runtime Redeploy secrets, then dispatch the workflow with run_real_load=true.",
+    "Alternatively run the refreshed server-side handoff script and return the evidence bundle."
+  ]
+}
