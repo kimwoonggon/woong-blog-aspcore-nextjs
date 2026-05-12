@@ -1,0 +1,66 @@
+{
+  "task": "home-works-responsive-grid-2026-05-12",
+  "date": "2026-05-12",
+  "status": "implemented_local_validated",
+  "goals": [
+    "Home Works desktop renders up to 8 items as 2 rows x 4 columns.",
+    "Home Works mobile renders one column and only 4 visible cards.",
+    "Work and Study detail reading content uses a white surface in light mode."
+  ],
+  "changed": [
+    "backend home featured works limit changed from 4 to 8",
+    "home featured works render guard slices to 8",
+    "home featured works grid changed to 1/2/4 responsive columns",
+    "home featured works after index 3 are hidden below md breakpoint",
+    "blog and work detail body containers use bg-card white reading surfaces",
+    "backend and Playwright tests updated for new behavior"
+  ],
+  "not_changed": [
+    "global light-mode background token",
+    "public Works list pagination",
+    "load-test pageSize=12 policy",
+    "production SSH/deployment behavior",
+    "cache behavior",
+    "public list DTO contracts"
+  ],
+  "validations": [
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj --filter FullyQualifiedName~GetHomeQueryHandler_ReturnsUpToEightFeaturedWorks_ForBalancedDesktopHomeGrid --logger console;verbosity=minimal",
+      "result": "passed"
+    },
+    {
+      "command": "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:13000 npx playwright test tests/ui-improvement-featured-works-grid.spec.ts --project=chromium-public --grep 'eight DOM cards|two columns on tablet and four on desktop' --workers=1",
+      "result": "passed"
+    },
+    {
+      "command": "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:13000 npx playwright test tests/ui-quality-blog-detail-visuals.spec.ts --project=chromium-authenticated --grep 'white reading surface' --workers=1",
+      "result": "passed"
+    },
+    {
+      "command": "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:13000 npx playwright test tests/public-detail-toc-fallback.spec.ts tests/public-blog-toc-layout.spec.ts tests/public-work-toc.spec.ts --project=chromium-public --workers=1",
+      "result": "passed"
+    },
+    {
+      "command": "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:13000 npx playwright test tests/ui-quality-responsive-admin.spec.ts --project=chromium-authenticated --workers=1",
+      "result": "passed"
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "passed"
+    },
+    {
+      "command": "npm run lint",
+      "result": "passed_with_5_existing_warnings"
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    }
+  ],
+  "risks": [
+    "Hidden mobile Works cards remain in DOM intentionally for server-rendered markup stability.",
+    "Detail body padding reduces inner text width, though TOC and related-layout regressions passed.",
+    "Lint still reports 5 unrelated pre-existing warnings."
+  ],
+  "recommendation": "Open a dev PR and let CI validate the slice before merging."
+}
