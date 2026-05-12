@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Active Goal Runtime Redeploy Blocker - 2026-05-13</title>
+  <style>
+    body { font-family: sans-serif; margin: 2rem; line-height: 1.5; color: #1f2937; }
+    main { max-width: 980px; }
+    code { background: #f3f4f6; padding: 0.1rem 0.25rem; border-radius: 0.25rem; }
+    .warn { border-left: 4px solid #d97706; background: #fffbeb; padding: 1rem; }
+    .bad { color: #b91c1c; font-weight: 700; }
+    .ok { color: #047857; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Active Goal Runtime Redeploy Blocker - 2026-05-13</h1>
+    <p class="warn"><strong>Decision:</strong> keep the active goal open. Latest main CI/GHCR are green, but server deploy/preflight/load evidence is still missing.</p>
+    <h2>Current Branches</h2>
+    <ul>
+      <li><code>origin/dev</code>: <code>c63426237052c8a503b7209befdf0855d7a8d8ad</code></li>
+      <li><code>origin/main</code>: <code>0bb3fc8c3077112396ce9afaacd34ed0b9c23e6d</code></li>
+    </ul>
+    <h2>Verified Green Gates</h2>
+    <ul>
+      <li class="ok">CI Main Runtime run <code>25744361298</code>: success</li>
+      <li class="ok">Publish GHCR Main run <code>25744784930</code>: success</li>
+      <li>Backend digest: <code>sha256:441aed27ca41e588f045954c5092e2401ce4ad7fc54d8fb1f95fa4c798caa692</code></li>
+      <li>Frontend digest: <code>sha256:02d6269629745fe581850b9ece4ffca8246f32a214ec515263c90be7af74a204</code></li>
+    </ul>
+    <h2>Blocker</h2>
+    <p class="bad">Repo secrets still expose only <code>PROMOTION_TOKEN</code>. Required <code>PROD_SSH_HOST</code>, <code>PROD_SSH_USER</code>, <code>PROD_SSH_PRIVATE_KEY</code>, and <code>PROD_SSH_KNOWN_HOSTS</code> are absent.</p>
+    <h2>Production Redeploy Runs</h2>
+    <p>No successful production redeploy run exists for current main. Latest workflow-dispatch runs are old failures from 2026-05-10.</p>
+    <h2>Missing Requirements</h2>
+    <ul>
+      <li>Server-side current-main image pull/deploy evidence</li>
+      <li>Production preflight result after current-main deploy</li>
+      <li>Real Backend Test result using pageSize=12, no seed/fixture/cache workaround, and real Work/Study URLs</li>
+      <li>Result-based next slice selection</li>
+      <li>Full E2E and CI after the selected slice</li>
+    </ul>
+    <h2>Next</h2>
+    <p>Add the missing production SSH secrets and dispatch <code>Production Runtime Redeploy</code> with <code>run_real_load=true</code>, or run the server-side handoff script and return the evidence bundle.</p>
+  </main>
+</body>
+</html>
