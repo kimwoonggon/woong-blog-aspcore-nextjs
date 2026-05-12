@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Active Goal Runtime Redeploy Blocker - 2026-05-12</title>
+  <style>
+    body { font-family: sans-serif; margin: 2rem; line-height: 1.5; color: #1f2937; }
+    main { max-width: 980px; }
+    code { background: #f3f4f6; padding: 0.1rem 0.25rem; border-radius: 0.25rem; }
+    .warn { border-left: 4px solid #d97706; background: #fffbeb; padding: 1rem; }
+    .bad { color: #b91c1c; font-weight: 700; }
+    .ok { color: #047857; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Active Goal Runtime Redeploy Blocker - 2026-05-12</h1>
+    <p class="warn"><strong>Decision:</strong> do not mark the active goal complete, and do not dispatch Production Runtime Redeploy until required secrets exist.</p>
+    <h2>Current Main Evidence</h2>
+    <ul>
+      <li><code>origin/main</code>: <code>2c6b8b418990f5388aabbf24c07c3bfe6c3f507c</code></li>
+      <li class="ok">CI Main Runtime run <code>25738704187</code>: success</li>
+      <li class="ok">Publish GHCR Main run <code>25739101934</code>: success</li>
+      <li>Frontend digest: <code>sha256:d26607a2756a1557c6a50532618269d315cd555f7110e3c72f050dcc9e75c2fb</code></li>
+      <li>Backend digest: <code>sha256:26014f5ccaab828c21066eec9818038796d243ed0dfeb68a8e9c7e6d38c92e2c</code></li>
+    </ul>
+    <h2>Blocker</h2>
+    <p class="bad">Repository secrets currently expose only <code>PROMOTION_TOKEN</code>. Required <code>PROD_SSH_*</code> secrets are absent.</p>
+    <h2>Public Origin</h2>
+    <p>Public probes returned HTTP 200, but Work list still includes stale <code>iconUrl</code> and <code>period</code>, so it does not prove current main runtime is deployed.</p>
+    <h2>Action Taken</h2>
+    <p>Verified <code>backend/reports/current-main-server-evidence-handoff-2026-05-12/</code> still resolves latest <code>origin/main</code> dynamically and supports exact pin inputs.</p>
+    <h2>Next</h2>
+    <p>Configure missing secrets and dispatch the workflow, or run the refreshed server-side handoff script and return the evidence bundle.</p>
+  </main>
+</body>
+</html>
