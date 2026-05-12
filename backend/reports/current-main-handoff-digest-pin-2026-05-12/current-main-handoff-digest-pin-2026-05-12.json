@@ -1,0 +1,52 @@
+{
+  "taskSlug": "current-main-handoff-digest-pin-2026-05-12",
+  "date": "2026-05-12",
+  "objective": "Fail fast in the server-side current-main handoff when provided expected runtime image digests do not match resolved GHCR digests.",
+  "changed": [
+    "Added EXPECTED_BACKEND_IMAGE_DIGEST and EXPECTED_FRONTEND_IMAGE_DIGEST inputs to the current-main server handoff script",
+    "Added mismatch checks after GHCR digest resolution and before docker compose pull/up",
+    "Updated current-main handoff Markdown, HTML, and JSON guidance",
+    "Updated post-main active-goal audit command to include digest pins",
+    "Added focused Vitest contract coverage"
+  ],
+  "notChanged": [
+    "No production SSH",
+    "No server-side deploy or production preflight execution from this workspace",
+    "No Real Backend Test execution from this workspace",
+    "No cache workaround",
+    "No seed or fixture target",
+    "No pageSize=12 weakening",
+    "No backend optimization slice selection before returned evidence"
+  ],
+  "expectedDigests": {
+    "mainSha": "3885eaeb16266de752fc984258bc30aafd3d7a62",
+    "backend": "sha256:112355097189a1f160ca5d4335bd00a95301b82c8c7b9e50408c932ce4eb774b",
+    "frontend": "sha256:e43ea1f01e4e9d6bd550ea78c4bf2a13dccdeaad3a499120850040a319518232"
+  },
+  "validations": [
+    {
+      "command": "npx vitest run src/test/current-main-server-evidence-handoff.test.ts --pool=threads --maxWorkers=2",
+      "phase": "RED",
+      "result": "failed before implementation because EXPECTED_*_IMAGE_DIGEST inputs were missing"
+    },
+    {
+      "command": "npx vitest run src/test/current-main-server-evidence-handoff.test.ts --pool=threads --maxWorkers=2",
+      "phase": "GREEN",
+      "result": "passed, 2 tests"
+    },
+    {
+      "command": "bash -n backend/reports/current-main-server-evidence-handoff-2026-05-12/server-current-main-preflight-load-evidence.sh",
+      "result": "passed"
+    },
+    {
+      "command": "JSON parse checks for current-main handoff and post-main audit JSON",
+      "result": "passed"
+    },
+    {
+      "command": "npx eslint src/test/current-main-server-evidence-handoff.test.ts",
+      "result": "passed"
+    }
+  ],
+  "completionDecision": "active_goal_not_complete",
+  "recommendation": "Use the digest-pinned server handoff command, return the evidence bundle, then verify it before selecting the next backend slice."
+}
