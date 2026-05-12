@@ -150,6 +150,13 @@ const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'))
 const realLoad = JSON.parse(fs.readFileSync(realLoadPath, 'utf8'))
 const failRateLimit = Number(failRateLimitRaw)
 const droppedIterationLimit = Number(droppedIterationLimitRaw)
+const allowedNextFocusValues = new Set([
+  'increase-rate-or-extend-soak',
+  'db-pool-or-resource-pressure',
+  'payload-or-network-transfer',
+  'app-cpu-or-serialization',
+  'measure-more',
+])
 
 function fail(message) {
   console.error(`[prod-runtime-evidence-verify] ERROR: ${message}`)
@@ -224,6 +231,14 @@ if (String(realLoad.baseUrl || '').match(/^https?:\/\/(backend|127\.0\.0\.1|loca
 
 if (!Array.isArray(realLoad.steps) || realLoad.steps.length === 0) {
   fail('real load summary has no steps')
+}
+
+if (typeof realLoad.nextFocus !== 'string' || realLoad.nextFocus.length === 0) {
+  fail('real load summary nextFocus is required')
+}
+
+if (!allowedNextFocusValues.has(realLoad.nextFocus)) {
+  fail(`real load summary nextFocus is unknown: ${realLoad.nextFocus}`)
 }
 
 const summaryListPageSize = Number(realLoad.listPageSize ?? 12)

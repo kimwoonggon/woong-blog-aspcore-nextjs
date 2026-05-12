@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Production Evidence Next Focus Guard Audit - 2026-05-13</title>
+</head>
+<body>
+  <main>
+    <h1>Production Evidence Next Focus Guard Audit - 2026-05-13</h1>
+    <p>Hardened the production runtime evidence verifier so Real Backend Test evidence must include a known producer-supported <code>nextFocus</code>.</p>
+    <h2>Validations</h2>
+    <ul>
+      <li>RED: <code>npm test -- --run src/test/prod-runtime-evidence-verify.test.ts</code> failed before implementation as expected.</li>
+      <li>GREEN: <code>npm test -- --run src/test/prod-runtime-evidence-verify.test.ts</code> passed with 11 tests.</li>
+      <li>Clean worktree: <code>npm test -- --run src/test/prod-runtime-evidence-verify.test.ts src/test/prod-real-load-steps.test.ts src/test/prod-runtime-evidence-bundle.test.ts</code> passed with 21 tests.</li>
+      <li><code>bash -n scripts/prod-runtime-evidence-verify.sh</code> passed.</li>
+      <li><code>npx eslint src/test/prod-runtime-evidence-verify.test.ts src/test/prod-real-load-steps.test.ts src/test/prod-runtime-evidence-bundle.test.ts</code> passed.</li>
+    </ul>
+    <h2>Remaining Active-Goal Blocker</h2>
+    <p>Current-main server deploy, preflight, and Real Backend Test evidence is still missing, so the active goal is not complete.</p>
+  </main>
+</body>
+</html>
