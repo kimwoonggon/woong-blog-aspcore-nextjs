@@ -1,0 +1,97 @@
+{
+  "taskSlug": "active-goal-current-state-audit-2026-05-12",
+  "date": "2026-05-12",
+  "completionDecision": "not_complete",
+  "objective": [
+    "Server pulls and deploys current main runtime images.",
+    "Production preflight passes after deployment.",
+    "Real Backend Test reruns with pageSize=12, no seed or fixture targets, no cache workaround, and real Work/Study URLs.",
+    "Next slice is selected from the valid Real Backend Test result.",
+    "Selected slice is implemented.",
+    "Full E2E is green after the selected slice.",
+    "CI is green through PR/dev/main promotion after the selected slice."
+  ],
+  "currentMain": {
+    "sha": "acdb7ef8e5070d13b3efb711e168c9da50e5db24",
+    "ciMainRuntime": {
+      "runId": 25727092625,
+      "conclusion": "success"
+    },
+    "publishGhcrMain": {
+      "runId": 25727410166,
+      "conclusion": "success"
+    },
+    "runtimeImages": {
+      "backend": {
+        "tag": "ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-backend:sha-acdb7ef8e507",
+        "digest": "sha256:d546c00a7340c1b5c764004c2d20017364ee57d48e1d415d9330115a88ef3174"
+      },
+      "frontend": {
+        "tag": "ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-frontend:sha-acdb7ef8e507",
+        "digest": "sha256:554830dcc8c585451d3e94fdcb5add479858b94f4eb3f725cd887a5629f2c04e"
+      }
+    }
+  },
+  "productionDeployPath": {
+    "repoSecrets": ["PROMOTION_TOKEN"],
+    "environments": [],
+    "productionRuntimeRedeployLatestRuns": [
+      {
+        "runId": 25628772593,
+        "sha": "757ab203e55cadf8f89ee0da42b7ef580deebad3",
+        "conclusion": "failure",
+        "failedStep": "Prepare SSH",
+        "failureReason": "Missing required secret: PROD_SSH_PRIVATE_KEY"
+      },
+      {
+        "runId": 25628614468,
+        "sha": "757ab203e55cadf8f89ee0da42b7ef580deebad3",
+        "conclusion": "failure"
+      },
+      {
+        "runId": 25628508822,
+        "sha": "757ab203e55cadf8f89ee0da42b7ef580deebad3",
+        "conclusion": "failure"
+      }
+    ]
+  },
+  "publicOriginProbe": {
+    "timestampUtc": "2026-05-12T10:10:35Z",
+    "health": {
+      "statusCode": 200,
+      "timeTotalSeconds": 1.059873,
+      "provesCurrentRuntime": false
+    },
+    "worksList": {
+      "url": "https://woonglab.com/api/public/works?page=1&pageSize=12",
+      "statusCode": 200,
+      "itemCount": 7,
+      "firstItemKeys": ["category", "excerpt", "iconUrl", "id", "period", "publishedAt", "slug", "tags", "thumbnailUrl", "title"],
+      "staleKeysPresent": ["iconUrl", "period"],
+      "provesCurrentRuntime": false
+    },
+    "blogsList": {
+      "url": "https://woonglab.com/api/public/blogs?page=1&pageSize=12",
+      "statusCode": 200,
+      "itemCount": 12,
+      "firstItemKeys": ["coverUrl", "excerpt", "id", "publishedAt", "slug", "tags", "title"]
+    }
+  },
+  "currentMainHandoff": {
+    "path": "backend/reports/current-main-server-evidence-handoff-2026-05-12/server-current-main-preflight-load-evidence.sh",
+    "dynamicOriginMainResolutionPresent": true,
+    "exactPinEnv": "EXPECTED_MAIN_SHA",
+    "recommendedCommand": "cd /root/service/woong-blog-aspcore-nextjs && git fetch origin main --prune && git checkout main && git pull --ff-only origin main && EXPECTED_MAIN_SHA=acdb7ef8e5070d13b3efb711e168c9da50e5db24 bash backend/reports/current-main-server-evidence-handoff-2026-05-12/server-current-main-preflight-load-evidence.sh"
+  },
+  "missingRequirements": [
+    "Server-side proof that current main runtime images were pulled and deployed.",
+    "Production preflight result from the current deployed runtime.",
+    "Real Backend Test summary from the current deployed runtime.",
+    "Proof that the real-load run used pageSize=12, no seed/fixture targets, no cache workaround, and real Work/Study read URLs.",
+    "Result-based selection of HLS fatal fix, public detail serialization/body optimization, or DB/index optimization.",
+    "Selected slice implementation.",
+    "Full E2E result after the selected slice.",
+    "CI result after the selected slice and main promotion."
+  ],
+  "recommendation": "Run the current-main server handoff script on the server and return the evidence bundle before running or interpreting Real Backend Test results."
+}

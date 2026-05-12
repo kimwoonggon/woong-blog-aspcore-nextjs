@@ -73,7 +73,7 @@ bash backend/reports/current-main-server-evidence-handoff-2026-05-12/server-curr
   - `APP_ENV_FILE=.env.prod`
   - `NGINX_DEFAULT_CONF=./nginx/prod.conf`
 - Runs `docker compose pull` and `docker compose up -d --remove-orphans`.
-- Runs `scripts/prod-runtime-preflight.sh`.
+- Runs `scripts/prod-runtime-preflight.sh` and persists its output as `current-main-preflight.log`.
 - Checks public list DTOs after deploy and fails on stale list keys.
 - Runs `scripts/prod-real-load-steps.sh` with `LIST_PAGE_SIZE=12`.
 - Rejects seed/fixture read paths.
@@ -86,6 +86,7 @@ bash backend/reports/current-main-server-evidence-handoff-2026-05-12/server-curr
 The server-side run must produce:
 
 - terminal output ending with `[current-main-evidence] PASS`
+- `current-main-preflight.log`
 - `current-main-evidence-manifest.json`
 - `prod-real-load-steps-summary.json`
 - `prod-real-load-steps-summary.md`
