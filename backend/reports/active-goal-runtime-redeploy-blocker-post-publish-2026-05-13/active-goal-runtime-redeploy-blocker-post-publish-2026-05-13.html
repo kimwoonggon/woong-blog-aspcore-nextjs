@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Active Goal Runtime Redeploy Blocker Post-Publish Audit - 2026-05-13</title></head>
+<body>
+  <main>
+    <h1>Active Goal Runtime Redeploy Blocker Post-Publish Audit - 2026-05-13</h1>
+    <p><strong>Decision:</strong> not complete.</p>
+    <p><strong>Rechecked:</strong> <code>2026-05-12T17:14:31Z</code></p>
+    <p>Report PR #202 and promotion PR #203 are merged; CI Dev, CI Main Runtime, and Publish GHCR Main are green for <code>main@4e50c0f899e2bae8b41238fd737a802ccad91a81</code>.</p>
+    <p>Backend digest: <code>sha256:8701e95460c966cb62a6cbf5df5c7471edceb3d8a3fb10411aa9fced03c4c10b</code></p>
+    <p>Frontend digest: <code>sha256:5a9b6e3d07b916bbb07c2744dc303bdc2f785a6ba602b9cd7c9ac9730ebc09bc</code></p>
+    <p>Still blocked: repo secrets expose only <code>PROMOTION_TOKEN</code>; <code>PROD_SSH_HOST</code>, <code>PROD_SSH_USER</code>, <code>PROD_SSH_PRIVATE_KEY</code>, and <code>PROD_SSH_KNOWN_HOSTS</code> are absent. No successful production redeploy run exists.</p>
+    <p>Secret routing was rechecked: repo secrets contain only <code>PROMOTION_TOKEN</code>, org secrets API returned HTTP 404, no repo environments are configured, and the production redeploy workflow has no <code>environment:</code> binding.</p>
+    <p>Local environment secret material was also checked without printing values; <code>PROD_SSH_HOST</code>, <code>PROD_SSH_USER</code>, <code>PROD_SSH_PRIVATE_KEY</code>, <code>PROD_SSH_KNOWN_HOSTS</code>, <code>PROD_SSH_PORT</code>, and <code>PROD_GHCR_TOKEN</code> are all missing.</p>
+    <p>Public origin recheck is still insufficient: health/list endpoints return HTTP 200, but Work list still includes stale <code>iconUrl</code> and <code>period</code> fields.</p>
+    <p>The active <code>Production Runtime Redeploy</code> workflow would run deploy, preflight, real load, and evidence verification when <code>run_real_load=true</code>, but that path remains unreachable until the SSH secrets are configured.</p>
+    <p>Verifier unit coverage was rechecked with <code>npm test -- --run src/test/prod-runtime-evidence-verify.test.ts</code>: 1 file and 9 tests passed. This validates the verifier only; it is not production evidence.</p>
+    <p>The current-main handoff script was adjusted to resolve GHCR OCI index digests first, with platform-manifest fallback if Docker Buildx is unavailable. This keeps exact digest pins aligned with the published GHCR image digests.</p>
+    <p>Root-wide evidence search found no current-main or production evidence bundle/manifest. The only load summary found is an older local artifact using <code>http://127.0.0.1:3020</code> from <code>2026-05-11T07:54:12.698Z</code>, so it is not current-production evidence.</p>
+  </main>
+</body>
+</html>
