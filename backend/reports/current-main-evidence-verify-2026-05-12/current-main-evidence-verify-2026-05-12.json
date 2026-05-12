@@ -1,0 +1,56 @@
+{
+  "taskSlug": "current-main-evidence-verify-2026-05-12",
+  "date": "2026-05-12",
+  "objective": "Harden verification for current-main server evidence bundles without using production SSH from this workspace.",
+  "changed": [
+    "scripts/prod-runtime-evidence-verify.sh supports legacy production-runtime evidence and current-main evidence",
+    "Verifier extracts current-main-preflight-load-evidence.tgz and finds nested evidence roots",
+    "Verifier accepts current-main flat digest fields and preflightLog while preserving pageSize=12 and no seed/fixture checks",
+    "server-current-main-preflight-load-evidence.sh writes current-main-preflight.log into the evidence directory and manifest",
+    "current-main handoff Markdown, HTML, and JSON list current-main-preflight.log as required evidence",
+    "prod-runtime-evidence-verify Vitest coverage includes current-main directory and nested tarball cases"
+  ],
+  "notChanged": [
+    "No production SSH",
+    "No production workflow dispatch",
+    "No production Real Backend Test execution from this workspace",
+    "No cache workaround",
+    "No seed or fixture target",
+    "No pageSize=12 weakening",
+    "No backend optimization slice selection before valid returned evidence"
+  ],
+  "validations": [
+    {
+      "command": "npx vitest run src/test/prod-runtime-evidence-verify.test.ts --pool=threads --maxWorkers=2",
+      "phase": "RED",
+      "result": "failed before implementation on current-main evidence cases because prod-runtime-preflight.log was required at the input root"
+    },
+    {
+      "command": "npx vitest run src/test/prod-runtime-evidence-verify.test.ts --pool=threads --maxWorkers=2",
+      "phase": "GREEN",
+      "result": "passed, 9 tests"
+    },
+    {
+      "command": "bash -n scripts/prod-runtime-evidence-verify.sh && bash -n backend/reports/current-main-server-evidence-handoff-2026-05-12/server-current-main-preflight-load-evidence.sh",
+      "result": "passed"
+    },
+    {
+      "command": "npx eslint src/test/prod-runtime-evidence-verify.test.ts",
+      "result": "passed"
+    },
+    {
+      "command": "node JSON parse check for current-main handoff and active-goal audit JSON",
+      "result": "passed"
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    }
+  ],
+  "risks": [
+    "Active goal remains incomplete until server-side current-main evidence is returned and verified",
+    "Nested evidence root search is limited to depth 3",
+    "Actual server execution of the updated handoff script remains pending"
+  ],
+  "recommendation": "Promote this verifier hardening through dev/main, then verify the returned current-main-preflight-load-evidence.tgz from the server."
+}

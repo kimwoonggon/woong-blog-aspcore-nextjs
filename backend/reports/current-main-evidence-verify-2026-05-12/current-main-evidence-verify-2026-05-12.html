@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Current Main Evidence Verify Audit 2026-05-12</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 920px; margin: 40px auto; line-height: 1.55; color: #1f2937; }
+    h1, h2 { color: #111827; }
+    code { background: #f3f4f6; padding: 0.1rem 0.25rem; border-radius: 0.25rem; }
+    .warn { border-left: 4px solid #d97706; padding: 0.75rem 1rem; background: #fffbeb; }
+  </style>
+</head>
+<body>
+  <h1>Current Main Evidence Verify Audit 2026-05-12</h1>
+  <p class="warn"><strong>Status:</strong> verifier hardening is complete locally, but the active goal still needs returned server evidence.</p>
+  <h2>Changed</h2>
+  <ul>
+    <li><code>prod-runtime-evidence-verify.sh</code> now supports legacy and current-main evidence.</li>
+    <li>The verifier extracts <code>current-main-preflight-load-evidence.tgz</code> and finds nested evidence roots.</li>
+    <li>The handoff script writes <code>current-main-preflight.log</code> into the evidence bundle and manifest.</li>
+    <li>Tests cover current-main directory and nested tarball verification.</li>
+  </ul>
+  <h2>Validations</h2>
+  <ul>
+    <li>Focused Vitest passed, 9 tests.</li>
+    <li>Shell syntax checks passed.</li>
+    <li>ESLint passed for the changed test file.</li>
+    <li>JSON parse checks passed.</li>
+    <li><code>git diff --check</code> passed.</li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Promote this verifier hardening through <code>dev</code> and <code>main</code>, then verify the returned server bundle.</p>
+</body>
+</html>
