@@ -4,12 +4,11 @@ trap 'echo "[current-main-evidence] failed at line ${LINENO}" >&2' ERR
 
 REPO_DIR="${REPO_DIR:-/root/service/woong-blog-aspcore-nextjs}"
 BASE_URL="${BASE_URL:-https://woonglab.com}"
-EXPECTED_MAIN_SHA="${EXPECTED_MAIN_SHA:-389a117ee8cda43e84536c85164bf13afd8e38bf}"
-SHA_SHORT="${EXPECTED_MAIN_SHA:0:12}"
-FRONTEND_IMAGE="${FRONTEND_IMAGE:-ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-frontend:sha-${SHA_SHORT}}"
-BACKEND_IMAGE="${BACKEND_IMAGE:-ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-backend:sha-${SHA_SHORT}}"
-FRONTEND_DIGEST="${FRONTEND_DIGEST:-sha256:8cd7cdea54ad6388bcb34f3b8b694cf87e9721a35273cafd35d0f5fea0bfb5f3}"
-BACKEND_DIGEST="${BACKEND_DIGEST:-sha256:ae0679f8166380e0edef07c3d546cc31c9c291380e6f7eccc691c225c44afdf2}"
+EXPECTED_MAIN_SHA="${EXPECTED_MAIN_SHA:-}"
+FRONTEND_IMAGE="${FRONTEND_IMAGE:-}"
+BACKEND_IMAGE="${BACKEND_IMAGE:-}"
+FRONTEND_DIGEST="${FRONTEND_DIGEST:-}"
+BACKEND_DIGEST="${BACKEND_DIGEST:-}"
 APP_ENV_FILE="${APP_ENV_FILE:-.env.prod}"
 COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.prod.yml}"
 WORK_READ_PATH="${WORK_READ_PATH:-}"
@@ -117,6 +116,21 @@ if (stale.length) {
 ' "${label}" "${forbidden[@]}"
 }
 
+resolve_image_digest() {
+  local image="$1"
+  docker --config "${DOCKER_CONFIG_DIR}" manifest inspect "${image}" \
+    | node -e '
+const fs = require("node:fs");
+const manifest = JSON.parse(fs.readFileSync(0, "utf8"));
+const digest = manifest.manifests?.[0]?.digest || manifest.config?.digest || "";
+if (!digest) {
+  console.error("unable to resolve digest from manifest");
+  process.exit(30);
+}
+console.log(digest);
+'
+}
+
 require_command git
 require_command docker
 require_command curl
@@ -129,12 +143,27 @@ cd "${REPO_DIR}"
 
 info "repository: ${REPO_DIR}"
 git fetch origin main --prune
+target_main_sha="$(git rev-parse origin/main)"
+if [[ -n "${EXPECTED_MAIN_SHA}" ]]; then
+  if [[ "${target_main_sha}" != "${EXPECTED_MAIN_SHA}" ]]; then
+    fail "fetched origin/main SHA ${target_main_sha}, expected pinned ${EXPECTED_MAIN_SHA}"
+  fi
+  target_main_sha="${EXPECTED_MAIN_SHA}"
+fi
+SHA_SHORT="${target_main_sha:0:12}"
+if [[ -z "${FRONTEND_IMAGE}" ]]; then
+  FRONTEND_IMAGE="ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-frontend:sha-${SHA_SHORT}"
+fi
+if [[ -z "${BACKEND_IMAGE}" ]]; then
+  BACKEND_IMAGE="ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-backend:sha-${SHA_SHORT}"
+fi
+
 git checkout main
 git pull --ff-only origin main
 
 actual_sha="$(git rev-parse HEAD)"
-if [[ "${actual_sha}" != "${EXPECTED_MAIN_SHA}" ]]; then
-  fail "checked out main SHA ${actual_sha}, expected ${EXPECTED_MAIN_SHA}"
+if [[ "${actual_sha}" != "${target_main_sha}" ]]; then
+  fail "checked out main SHA ${actual_sha}, expected ${target_main_sha}"
 fi
 info "checked out expected main SHA: ${actual_sha}"
 
@@ -157,10 +186,12 @@ else
   info "GHCR_TOKEN not set; using anonymous GHCR access with temporary Docker config"
 fi
 
-for image in "${FRONTEND_IMAGE}" "${BACKEND_IMAGE}"; do
-  docker --config "${DOCKER_CONFIG_DIR}" manifest inspect "${image}" >/dev/null \
-    || fail "cannot read GHCR manifest: ${image}"
-done
+if [[ -z "${FRONTEND_DIGEST}" ]]; then
+  FRONTEND_DIGEST="$(resolve_image_digest "${FRONTEND_IMAGE}")"
+fi
+if [[ -z "${BACKEND_DIGEST}" ]]; then
+  BACKEND_DIGEST="$(resolve_image_digest "${BACKEND_IMAGE}")"
+fi
 
 info "runtime image targets:"
 printf '  FRONTEND_IMAGE=%s\n' "${FRONTEND_IMAGE}"

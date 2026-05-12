@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Current Main Handoff Dynamic Fix 2026-05-12</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 920px; margin: 40px auto; line-height: 1.55; color: #1f2937; }
+    h1, h2 { color: #111827; }
+    code { background: #f3f4f6; padding: 0.1rem 0.25rem; border-radius: 0.25rem; }
+    .note { border-left: 4px solid #2563eb; padding: 0.75rem 1rem; background: #eff6ff; }
+  </style>
+</head>
+<body>
+  <h1>Current Main Handoff Dynamic Fix 2026-05-12</h1>
+  <p class="note">The handoff now resolves latest fetched <code>origin/main</code> dynamically and keeps <code>EXPECTED_MAIN_SHA=&lt;40-char-sha&gt;</code> for exact pinning.</p>
+  <h2>Changed</h2>
+  <ul>
+    <li>Added focused Vitest contract coverage.</li>
+    <li>Removed hard-coded default main SHA and fixed digests from the server handoff path.</li>
+    <li>Updated handoff and active-goal audit artifacts.</li>
+    <li>Recorded live Work/Study search while typing as future scope.</li>
+  </ul>
+  <h2>Validation</h2>
+  <ul>
+    <li>Focused Vitest passed.</li>
+    <li>Shell syntax passed.</li>
+    <li>JSON parse, grep, diff hygiene, and ESLint passed.</li>
+    <li>Current main CI/GHCR publish and GHCR manifests were verified.</li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Merge this fix before giving the server command to an operator, then collect the generated server evidence bundle before selecting the next backend slice.</p>
+</body>
+</html>
