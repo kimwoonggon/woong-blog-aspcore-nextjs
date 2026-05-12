@@ -1,0 +1,36 @@
+{
+  "taskSlug": "current-main-handoff-dynamic-2026-05-12",
+  "date": "2026-05-12",
+  "summary": "Updated the current-main server evidence handoff to resolve origin/main dynamically instead of embedding a stale default SHA.",
+  "changed": [
+    "Added focused Vitest contract coverage for the handoff behavior.",
+    "Changed the server handoff script to fetch origin/main and derive the target SHA at run time.",
+    "Updated handoff Markdown, HTML, and JSON to describe dynamic latest-main behavior.",
+    "Updated the active-goal completion audit with current main/GHCR evidence.",
+    "Recorded live Work/Study search while typing as a future UI slice."
+  ],
+  "notChanged": [
+    "No production SSH or remote server execution.",
+    "No production Real Backend Test execution from this workspace.",
+    "No cache, seed, or pageSize load-test rule changes.",
+    "No live Work/Study search implementation in this slice.",
+    "Active goal not marked complete."
+  ],
+  "validations": [
+    "npx vitest run src/test/current-main-server-evidence-handoff.test.ts --pool=threads --maxWorkers=2",
+    "bash -n backend/reports/current-main-server-evidence-handoff-2026-05-12/server-current-main-preflight-load-evidence.sh",
+    "JSON parse check for current-main handoff and active-goal audit reports",
+    "grep check rejecting hard-coded default SHA and literal sha-<12hex> tags in handoff artifacts",
+    "git diff --check",
+    "npx eslint src/test/current-main-server-evidence-handoff.test.ts",
+    "GitHub Actions CI Main Runtime run 25724499083 success",
+    "GitHub Actions Publish GHCR Main run 25724820291 success",
+    "GHCR manifest inspect for backend/frontend sha-74bd832467de tags"
+  ],
+  "risks": [
+    "Active goal remains incomplete until server-side deploy/preflight/load evidence is returned.",
+    "Image override env vars are not the normal path for this current-main handoff because compose validation expects the derived current-main SHA tag.",
+    "Live Work/Study search still needs a separate frontend implementation and E2E coverage."
+  ],
+  "recommendation": "Merge this fix before giving the server command to an operator; then use the dynamic handoff script from current main and return the generated evidence bundle."
+}

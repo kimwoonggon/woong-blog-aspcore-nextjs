@@ -2,35 +2,34 @@
 
 ## Purpose
 
-This handoff is the next concrete action toward the active goal while production SSH remains out of scope. It gives the server operator a single script that proves the server pulled and started the current main runtime images, runs production preflight, runs realistic Real Backend Test steps, and bundles evidence for review.
+This handoff is the next concrete action toward the active goal while production SSH remains out of scope. It gives the server operator a single script that proves the server pulled and started the current `main` runtime images, runs production preflight, runs realistic Real Backend Test steps, and bundles evidence for review.
 
-## Current Main Runtime Evidence
+## Runtime Resolution
 
-- Current `origin/main`: `389a117ee8cda43e84536c85164bf13afd8e38bf`
-- Main merge source: PR #186, `release/main-promote -> main`
-- `CI Main Runtime` run: `25717479751`, success
-- `Publish GHCR Main` run: `25717736048`, success
-- Runtime image short tag: `sha-389a117ee8cd`
+The handoff script defaults to the latest fetched `origin/main`. It does not pin a commit in the repository artifact because that artifact itself is merged forward through `dev` and `main`; hard-coding a default SHA would become stale as soon as the handoff update reaches `main`.
 
-Published runtime images:
+Set `EXPECTED_MAIN_SHA=<40-char-sha>` only when an exact deployment pin is required. When this value is set, the script still fetches `origin/main` first and fails if the fetched main does not match the requested pin.
 
-- Frontend:
-  - `ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-frontend:main`
-  - `ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-frontend:sha-389a117ee8cd`
-  - digest `sha256:8cd7cdea54ad6388bcb34f3b8b694cf87e9721a35273cafd35d0f5fea0bfb5f3`
-- Backend:
-  - `ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-backend:main`
-  - `ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-backend:sha-389a117ee8cd`
-  - digest `sha256:ae0679f8166380e0edef07c3d546cc31c9c291380e6f7eccc691c225c44afdf2`
+Resolved runtime images are computed at run time:
+
+- Frontend: `ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-frontend:sha-${resolvedShaShort}`
+- Backend: `ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-backend:sha-${resolvedShaShort}`
+
+The script resolves GHCR manifest digests at run time before `docker compose pull`, then writes those digests into `current-main-evidence-manifest.json`.
 
 ## Why This Is Needed
 
-The latest public-origin probe returned HTTP 200, but it did not prove the current runtime is deployed:
+Green CI and public-origin HTTP 200 responses do not prove the production host has pulled and started the current runtime images. The required evidence is server-side:
 
-- API responses still lacked `X-Nginx-Request-Time`.
-- Works list still exposed stale `period` and `iconUrl` keys that current `origin/main` `WorkCardDto` does not expose.
+- fetched `origin/main` SHA
+- checked-out local `main` SHA
+- immutable runtime image tags derived from that SHA
+- resolved GHCR image digests
+- compose pull/up output
+- production preflight output
+- realistic Real Backend Test summary
 
-Therefore, production load results remain ambiguous until the server-side pull/deploy/preflight evidence exists.
+Until that evidence exists, public load-test results remain ambiguous and cannot select the next backend slice.
 
 ## Server Command
 
@@ -47,9 +46,10 @@ GHCR_USER=kimwoonggon GHCR_TOKEN=<github-token-with-read-packages> \
 bash backend/reports/current-main-server-evidence-handoff-2026-05-12/server-current-main-preflight-load-evidence.sh
 ```
 
-Optional overrides:
+Optional exact pin and target overrides:
 
 ```bash
+EXPECTED_MAIN_SHA=<40-char-sha> \
 WORK_READ_PATH=/api/public/works/<real-work-slug> \
 STUDY_READ_PATH=/api/public/blogs/<real-study-slug> \
 RATES="100 200 300 400" \
@@ -61,10 +61,11 @@ bash backend/reports/current-main-server-evidence-handoff-2026-05-12/server-curr
 
 ## Script Guarantees
 
-- Checks out `main` and fails unless the checked-out SHA is `389a117ee8cda43e84536c85164bf13afd8e38bf`.
-- Sets runtime images to immutable `sha-389a117ee8cd` tags.
-- Verifies GHCR manifests are readable before compose pull.
-- Backs up `.env.prod`.
+- Defaults to the latest fetched `origin/main` instead of a hard-coded commit SHA.
+- Preserves explicit `EXPECTED_MAIN_SHA` pinning when a specific main deployment must be enforced.
+- Sets runtime images to immutable `sha-${resolvedShaShort}` tags unless explicit image overrides are provided.
+- Resolves GHCR manifest digests before compose pull.
+- Backs up `.env.prod` before editing it.
 - Sets:
   - `FRONTEND_IMAGE`
   - `BACKEND_IMAGE`
@@ -100,6 +101,10 @@ Use `prod-real-load-steps-summary.json` after this run:
 | High response body size, high receiving time, or app elapsed dominated by serialization | Public detail serialization/body optimization |
 | High DB command latency, high DB connection-open latency, or active connection pressure | DB/index optimization |
 | Clean run through current rates | Increase rate, extend soak, or defer backend change |
+
+## Future UI Slice
+
+Work and Study search should update related results while the user types, not only after pressing Enter. That is a separate frontend behavior slice and is intentionally not implemented by this production handoff fix.
 
 ## Current Completion State
 
