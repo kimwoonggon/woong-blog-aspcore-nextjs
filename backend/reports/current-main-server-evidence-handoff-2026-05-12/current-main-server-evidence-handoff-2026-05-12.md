@@ -15,7 +15,7 @@ Resolved runtime images are computed at run time:
 - Frontend: `ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-frontend:sha-${resolvedShaShort}`
 - Backend: `ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-backend:sha-${resolvedShaShort}`
 
-The script resolves GHCR manifest digests at run time before `docker compose pull`, then writes those digests into `current-main-evidence-manifest.json`.
+The script resolves GHCR OCI index digests at run time before `docker compose pull`, then writes those digests into `current-main-evidence-manifest.json`. If Docker Buildx is unavailable, it falls back to the platform manifest digest returned by `docker manifest inspect`.
 
 ## Why This Is Needed
 
@@ -66,7 +66,7 @@ bash backend/reports/current-main-server-evidence-handoff-2026-05-12/server-curr
 - Defaults to the latest fetched `origin/main` instead of a hard-coded commit SHA.
 - Preserves explicit `EXPECTED_MAIN_SHA` pinning when a specific main deployment must be enforced.
 - Sets runtime images to immutable `sha-${resolvedShaShort}` tags unless explicit image overrides are provided.
-- Resolves GHCR manifest digests before compose pull.
+- Resolves GHCR OCI index digests before compose pull, with platform-manifest fallback if Buildx is unavailable.
 - Fails immediately if provided expected image digests do not match the resolved GHCR manifest digests.
 - Backs up `.env.prod` before editing it.
 - Sets:
