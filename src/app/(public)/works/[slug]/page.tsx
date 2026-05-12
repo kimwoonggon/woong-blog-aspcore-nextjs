@@ -100,10 +100,10 @@ export default async function WorkDetailPage({ params }: PageProps) {
     const newerWork = currentIndex > 0 ? sortedWorks[currentIndex - 1] : null
     const olderWork = currentIndex >= 0 && currentIndex < sortedWorks.length - 1 ? sortedWorks[currentIndex + 1] : null
     return (
-        <article className="mx-auto w-full max-w-7xl px-4 py-8 md:px-6 md:py-12">
+        <article className="mx-auto w-full max-w-[100rem] px-4 py-8 md:px-6 md:py-12 min-[1600px]:px-0">
             <div id="work-detail-toc-start" aria-hidden="true" className="h-0" />
-            <div data-testid="work-article-content-layout" className="mx-auto w-full min-w-0 xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,48rem)_24rem] xl:items-start xl:gap-10 2xl:gap-12">
-                <div data-testid="work-detail-body" className="mx-auto min-w-0 w-full max-w-3xl xl:col-start-2">
+            <div data-testid="work-article-content-layout" className="mx-auto w-full min-w-0 min-[1600px]:grid min-[1600px]:grid-cols-[minmax(0,1fr)_minmax(0,48rem)_minmax(0,1fr)] min-[1600px]:items-start min-[1600px]:gap-6">
+                <div data-testid="work-detail-body" className="mx-auto min-w-0 w-full max-w-3xl min-[1600px]:col-start-2">
                     <header className="mb-8">
                         <h1 className="mb-4 text-3xl font-heading font-bold leading-tight text-foreground text-balance md:text-4xl">
                             <span data-testid="work-detail-title">{work.title}</span>
@@ -165,7 +165,7 @@ export default async function WorkDetailPage({ params }: PageProps) {
 
                 </div>
 
-                <aside className="hidden xl:sticky xl:top-28 xl:col-start-3 xl:block xl:w-full xl:max-w-[24rem] xl:justify-self-start xl:self-start">
+                <aside className="hidden min-[1600px]:sticky min-[1600px]:top-28 min-[1600px]:col-start-3 min-[1600px]:block min-[1600px]:w-full min-[1600px]:max-w-[24rem] min-[1600px]:justify-self-start min-[1600px]:self-start">
                     <WorkTableOfContentsRail
                         contentRootId="work-detail-content"
                         title="On This Work"

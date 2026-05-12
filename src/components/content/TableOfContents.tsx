@@ -118,9 +118,9 @@ export function TableOfContents({
     <nav
       aria-label="Table of contents"
       data-testid={testId}
-      className="w-full min-w-0 rounded-2xl border border-border/80 bg-background/95 p-4 shadow-sm transition-all"
+      className="w-full min-w-0 rounded-2xl border border-border/80 bg-background/95 px-3.5 py-4 shadow-sm transition-all"
     >
-      <div className="mb-3 grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-2">
+      <div className="mb-3 grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-x-2 gap-y-2">
         <p className="min-w-0 break-words pt-2 text-xs font-semibold uppercase leading-snug tracking-[0.18em] text-muted-foreground">
           {title}
         </p>
@@ -128,7 +128,7 @@ export function TableOfContents({
           type="button"
           onClick={() => setCollapsed((value) => !value)}
           disabled={!hasItems}
-          className="min-h-10 min-w-[4.75rem] shrink-0 whitespace-nowrap rounded-full border border-border/80 px-3 py-2 text-center text-[11px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+          className="min-h-10 min-w-[4.25rem] shrink-0 whitespace-nowrap rounded-full border border-border/80 px-2.5 py-2 text-center text-[11px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
           aria-expanded={!collapsed}
           aria-controls={hasItems ? listId : undefined}
         >
@@ -143,7 +143,7 @@ export function TableOfContents({
                 href={`#${item.id}`}
                 className={[
                   'block w-full min-w-0 rounded-xl px-3 py-2 leading-snug transition-colors [overflow-wrap:anywhere]',
-                  item.level === 3 ? 'ml-5 text-muted-foreground' : item.level === 2 ? 'ml-2 font-medium' : 'font-semibold',
+                  item.level === 3 ? 'ml-5 text-muted-foreground' : item.level === 2 ? 'font-medium' : 'font-semibold',
                   activeId === item.id
                     ? 'bg-muted text-foreground'
                     : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground',
