@@ -10,7 +10,7 @@ test('desktop blog detail renders a table of contents and anchors headings', asy
     tags: ['toc-anchor', 'blog'],
   })
 
-  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.setViewportSize({ width: 1600, height: 900 })
   await page.goto(`/blog/${blog.slug}`)
 
   const toc = page.getByTestId('blog-toc')

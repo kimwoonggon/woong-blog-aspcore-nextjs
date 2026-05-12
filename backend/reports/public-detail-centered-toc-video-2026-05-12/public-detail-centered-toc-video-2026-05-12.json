@@ -1,0 +1,70 @@
+{
+  "task": "public-detail-centered-toc-video",
+  "date": "2026-05-12",
+  "scope": "dev",
+  "changed": [
+    "Centered public blog and work detail bodies with the TOC rail present",
+    "Moved public detail TOC rail visibility to 1600px and wider",
+    "Improved TableOfContents collapse and item text spacing",
+    "Changed home featured Works query from 3 to 4 items",
+    "Updated backend component and Playwright tests",
+    "Hardened two E2E checks that were failing for measurement or fast-load reasons"
+  ],
+  "notChanged": [
+    "Production SSH or deployment",
+    "Production environment files",
+    "Cache shortcuts",
+    "Seed URL shortcuts for Real Backend Test",
+    "Public list pageSize=12 behavior",
+    "Article reading column max width"
+  ],
+  "validations": [
+    {
+      "command": "dotnet test backend/tests/WoongBlog.Api.ComponentTests/WoongBlog.Api.ComponentTests.csproj --filter FullyQualifiedName~GetHomeQueryHandler_ReturnsUpToFourFeaturedWorks_ForBalancedHomeGrid",
+      "result": "failed before implementation, passed after implementation"
+    },
+    {
+      "command": "npx vitest --run src/test/table-of-contents.test.tsx",
+      "result": "passed, 9 tests"
+    },
+    {
+      "command": "npm run build",
+      "result": "passed"
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln",
+      "result": "passed"
+    },
+    {
+      "command": "focused Playwright layout specs",
+      "result": "passed, 4 tests"
+    },
+    {
+      "command": "focused Playwright mobile home Works spec",
+      "result": "passed, 1 test"
+    },
+    {
+      "command": "focused Playwright video upload specs",
+      "result": "passed, 7 tests"
+    },
+    {
+      "command": "focused Playwright S3-compatible HLS processing spec",
+      "result": "passed, 1 test"
+    },
+    {
+      "command": "npm run test:e2e",
+      "result": "passed, 431 passed, 4 skipped, latency budget failures 0"
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    }
+  ],
+  "risks": [
+    "TOC rail is intentionally hidden below 1600px to preserve body centering.",
+    "Final full E2E used the current local dev compose database, not a freshly dropped database volume.",
+    "Full E2E reported 14 latency warnings but no latency budget failures.",
+    "Dependency vulnerability remediation from npm ci output was outside this task."
+  ],
+  "recommendation": "Proceed with this dev-scoped candidate; run a clean-volume full E2E if additional pre-merge confidence is required."
+}

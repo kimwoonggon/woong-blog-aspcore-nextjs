@@ -43,11 +43,9 @@ test('admin can create and publish a work that appears on public works page', as
 
       return await saveResponse.json() as { slug: string }
     },
-    async () => {
-      await expect(page).toHaveURL(/\/admin\/works(?:\?.*)?$/, { timeout: 20000 })
-      await expect(page.getByRole('link', { name: title }).first()).toBeVisible()
-    },
   )
+  await expect(page).toHaveURL(/\/admin\/works(?:\?.*)?$/, { timeout: 20000 })
+  await expect(page.getByRole('link', { name: title }).first()).toBeVisible()
   await measureStep(
     testInfo,
     'Published work public detail render after create',

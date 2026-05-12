@@ -5,7 +5,7 @@ function px(value: string) {
 }
 
 test('VA-120 blog TOC stays visually separated from the article body', async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.setViewportSize({ width: 1600, height: 900 })
   await page.goto('/blog/seeded-blog')
 
   const toc = page.getByTestId('blog-toc')

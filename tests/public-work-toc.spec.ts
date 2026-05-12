@@ -19,7 +19,7 @@ test('work detail exposes a desktop table of contents that anchors into the arti
     allPropertiesJson: '{}',
   })
 
-  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.setViewportSize({ width: 1600, height: 900 })
   await page.goto(`/works/${work.slug}`)
 
   const contentLayout = page.getByTestId('work-article-content-layout')
@@ -42,9 +42,13 @@ test('work detail exposes a desktop table of contents that anchors into the arti
   await expect(rail).toHaveAttribute('data-range-state', 'active')
 
   const tocBox = await rail.boundingBox()
+  const bodyBox = await page.getByTestId('work-detail-body').boundingBox()
   const contentLayoutBox = await contentLayout.boundingBox()
   expect(tocBox).toBeTruthy()
+  expect(bodyBox).toBeTruthy()
   expect(contentLayoutBox).toBeTruthy()
+  const bodyCenter = bodyBox!.x + bodyBox!.width / 2
+  expect(Math.abs(bodyCenter - page.viewportSize()!.width / 2)).toBeLessThanOrEqual(2)
   expect(tocBox!.y + tocBox!.height).toBeLessThanOrEqual(contentLayoutBox!.y + contentLayoutBox!.height + 2)
   expect(tocBox!.width).toBeGreaterThanOrEqual(360)
   expect(tocBox!.x + tocBox!.width).toBeLessThanOrEqual(page.viewportSize()!.width)

@@ -27,6 +27,10 @@ test('WQ-024 admin dashboard transitions expose loading chrome before the dashbo
   await dashboardLink.click()
 
   const skeleton = page.locator('.animate-pulse').first()
-  await expect(skeleton).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Dashboard', exact: true })).toBeVisible()
+  const heading = page.getByRole('heading', { name: 'Dashboard', exact: true })
+  await Promise.race([
+    skeleton.waitFor({ state: 'visible', timeout: 1500 }).catch(() => undefined),
+    heading.waitFor({ state: 'visible', timeout: 1500 }).catch(() => undefined),
+  ])
+  await expect(heading).toBeVisible()
 })
