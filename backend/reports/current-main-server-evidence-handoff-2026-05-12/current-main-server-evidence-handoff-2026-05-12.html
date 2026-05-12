@@ -13,12 +13,14 @@
 <body>
   <h1>Current Main Server Evidence Handoff 2026-05-12</h1>
   <p class="warn"><strong>Status:</strong> active goal remains incomplete until the server-side evidence script is run and evidence is returned.</p>
-  <h2>Current Main</h2>
-  <p><code>389a117ee8cda43e84536c85164bf13afd8e38bf</code>, runtime image short tag <code>sha-389a117ee8cd</code>.</p>
+  <h2>Runtime Resolution</h2>
+  <p>The script defaults to the latest fetched <code>origin/main</code> instead of a hard-coded commit SHA.</p>
+  <p>Set <code>EXPECTED_MAIN_SHA=&lt;40-char-sha&gt;</code> only when an exact deployment pin is required.</p>
   <h2>Images</h2>
   <ul>
-    <li>Frontend digest: <code>sha256:8cd7cdea54ad6388bcb34f3b8b694cf87e9721a35273cafd35d0f5fea0bfb5f3</code></li>
-    <li>Backend digest: <code>sha256:ae0679f8166380e0edef07c3d546cc31c9c291380e6f7eccc691c225c44afdf2</code></li>
+    <li>Frontend: <code>ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-frontend:sha-${resolvedShaShort}</code></li>
+    <li>Backend: <code>ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-backend:sha-${resolvedShaShort}</code></li>
+    <li>Digests are resolved from GHCR manifests at run time.</li>
   </ul>
   <h2>Script</h2>
   <p><code>backend/reports/current-main-server-evidence-handoff-2026-05-12/server-current-main-preflight-load-evidence.sh</code></p>
@@ -30,5 +32,7 @@
     <li><code>prod-real-load-steps-summary.md</code></li>
     <li><code>current-main-preflight-load-evidence.tgz</code></li>
   </ul>
+  <h2>Future UI Slice</h2>
+  <p>Work and Study search should update related results while the user types, not only after pressing Enter. This is intentionally outside this handoff fix.</p>
 </body>
 </html>
