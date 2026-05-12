@@ -2,38 +2,35 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Active Goal Completion Audit - 2026-05-12</title>
+  <title>Active Goal Completion Audit 2026-05-12</title>
   <style>
-    body { font-family: system-ui, sans-serif; line-height: 1.5; margin: 2rem; max-width: 1000px; }
-    table { border-collapse: collapse; width: 100%; }
-    th, td { border: 1px solid #ccc; padding: 0.5rem; text-align: left; vertical-align: top; }
-    code { background: #f2f2f2; padding: 0.1rem 0.25rem; border-radius: 0.25rem; }
+    body { font-family: system-ui, sans-serif; max-width: 920px; margin: 40px auto; line-height: 1.55; color: #1f2937; }
+    h1, h2 { color: #111827; }
+    code { background: #f3f4f6; padding: 0.1rem 0.25rem; border-radius: 0.25rem; }
+    .warn { border-left: 4px solid #dc2626; padding: 0.75rem 1rem; background: #fef2f2; }
   </style>
 </head>
 <body>
-  <h1>Active Goal Completion Audit - 2026-05-12</h1>
-  <p><strong>Decision:</strong> do not mark the active goal complete.</p>
-  <h2>Success Criteria</h2>
-  <ol>
-    <li>Server pulls and deploys current <code>main</code> runtime images.</li>
-    <li>Production preflight passes after deployment.</li>
-    <li>Real Backend Test reruns with <code>pageSize=12</code>, no seed/fixture targets, no cache workaround, and real Work/Study URLs.</li>
-    <li>The next slice is selected from the valid result.</li>
-    <li>Full E2E and CI are green after the selected slice.</li>
-  </ol>
-  <h2>Evidence</h2>
-  <table>
-    <tr><th>Item</th><th>Result</th></tr>
-    <tr><td>Main CI</td><td>Success: run 25717479751, SHA 389a117ee8cda43e84536c85164bf13afd8e38bf</td></tr>
-    <tr><td>GHCR main publish</td><td>Success: run 25717736048</td></tr>
-    <tr><td>Backend image digest</td><td><code>sha256:ae0679f8166380e0edef07c3d546cc31c9c291380e6f7eccc691c225c44afdf2</code></td></tr>
-    <tr><td>Frontend image digest</td><td><code>sha256:8cd7cdea54ad6388bcb34f3b8b694cf87e9721a35273cafd35d0f5fea0bfb5f3</code></td></tr>
-    <tr><td>Production SSH secrets</td><td>Missing; only <code>PROMOTION_TOKEN</code> is present.</td></tr>
-    <tr><td>Production Runtime Redeploy</td><td>No current-main success; latest runs are May 10 failures on old SHA.</td></tr>
-    <tr><td>Public origin</td><td>HTTP 200, but Works list still exposes stale <code>iconUrl</code> and <code>period</code>.</td></tr>
-    <tr><td>Real Backend Test evidence</td><td>Missing for current deployed runtime.</td></tr>
-  </table>
-  <h2>Recommendation</h2>
-  <p>Do not run or interpret Real Backend Test as valid until server-side deploy/preflight evidence proves the current main runtime is active.</p>
+  <h1>Active Goal Completion Audit 2026-05-12</h1>
+  <p class="warn"><strong>Decision:</strong> do not mark the active goal complete.</p>
+  <h2>Current Main Evidence</h2>
+  <ul>
+    <li><code>origin/main</code>: <code>74bd832467de1094497359a364fa655c340724a2</code></li>
+    <li><code>CI Main Runtime</code>: run <code>25724499083</code>, success</li>
+    <li><code>Publish GHCR Main</code>: run <code>25724820291</code>, success</li>
+    <li>Backend digest: <code>sha256:31c7fe01866bfc4c5fa1e4b0fca1adfa522857bef41a14b25bcfa9010c1e9ab0</code></li>
+    <li>Frontend digest: <code>sha256:fca6a35695991cde42556ac35aa484dd41d79595c3ce77349bff7dd4aab5588e</code></li>
+  </ul>
+  <h2>Missing Evidence</h2>
+  <ul>
+    <li>Server-side proof that current main runtime images were pulled and deployed.</li>
+    <li>Production preflight result from the current deployed runtime.</li>
+    <li>Real Backend Test summary with pageSize=12, real URLs, no seed/fixture, no cache workaround.</li>
+    <li>Result-selected backend slice and post-slice full E2E/CI evidence.</li>
+  </ul>
+  <h2>Handoff Correction</h2>
+  <p>The server handoff now resolves latest fetched <code>origin/main</code> dynamically and supports <code>EXPECTED_MAIN_SHA=&lt;40-char-sha&gt;</code> only when exact pinning is required.</p>
+  <h2>Future UI Slice</h2>
+  <p>Work and Study search should update related results while the user types, not only after pressing Enter.</p>
 </body>
 </html>
