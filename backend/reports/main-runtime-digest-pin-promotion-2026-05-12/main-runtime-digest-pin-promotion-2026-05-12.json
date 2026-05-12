@@ -1,0 +1,63 @@
+{
+  "report": "main-runtime-digest-pin-promotion-2026-05-12",
+  "date": "2026-05-12",
+  "activeGoalComplete": false,
+  "objectiveRestatement": [
+    "Server pulls and deploys current main runtime images and production preflight passes.",
+    "Real Backend Test reruns with pageSize=12, no seed, no cache workaround, and real Work/Study URLs.",
+    "Use load-test result to choose and implement HLS fatal fix, public detail serialization/body optimization, or DB/index optimization.",
+    "After the selected slice, full E2E passes and CI is green."
+  ],
+  "github": {
+    "devMerge": {
+      "pr": 194,
+      "mergeCommit": "62ac17e97567babb1a3f48309b0b171abb590ba3",
+      "ciDevRun": 25732372942,
+      "ciDevConclusion": "success"
+    },
+    "mainPromotion": {
+      "pr": 195,
+      "mainSha": "bc88b3fd19ded9f463b1fc92a08b9b7fa9782192",
+      "promotionPrCiRun": 25732671941,
+      "mainPushCiRun": 25733203959,
+      "publishGhcrMainRun": 25733621502,
+      "conclusion": "success"
+    }
+  },
+  "images": {
+    "backend": {
+      "image": "ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-backend:sha-bc88b3fd19de",
+      "indexDigest": "sha256:7c2b6c32785e874589dddce2b949ad9ca335e0ee4d944f7efd01e7d4c0232210"
+    },
+    "frontend": {
+      "image": "ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-frontend:sha-bc88b3fd19de",
+      "indexDigest": "sha256:e7b025c2304a9085cd9dde17737028add6ae56f7e29d3584580d3cb420cacc85"
+    }
+  },
+  "publicOriginProxySignal": {
+    "health": "HTTP 200 body status ok",
+    "workList": "sample still exposes stale iconUrl and period fields",
+    "blogList": "sample did not expose stale body/content fields",
+    "completionProof": false
+  },
+  "checklist": [
+    { "requirement": "digest-pin handoff reaches dev", "status": "complete", "evidence": "PR #194 merged; CI Dev run 25732372942 succeeded" },
+    { "requirement": "runtime-only promotion reaches main", "status": "complete", "evidence": "PR #195 merged; origin/main=bc88b3fd19ded9f463b1fc92a08b9b7fa9782192" },
+    { "requirement": "main push CI green", "status": "complete", "evidence": "CI Main Runtime run 25733203959 succeeded" },
+    { "requirement": "GHCR main images published", "status": "complete", "evidence": "Publish GHCR Main run 25733621502 succeeded" },
+    { "requirement": "server deploy and preflight", "status": "missing", "evidence": "no returned server evidence bundle" },
+    { "requirement": "Real Backend Test rerun", "status": "missing", "evidence": "no returned prod-real-load-steps-summary artifacts" },
+    { "requirement": "result-based slice implementation", "status": "missing", "evidence": "blocked until verified load evidence exists" },
+    { "requirement": "after-slice full E2E and CI", "status": "missing", "evidence": "blocked until slice is selected and implemented" }
+  ],
+  "serverHandoffCommand": "EXPECTED_MAIN_SHA=bc88b3fd19ded9f463b1fc92a08b9b7fa9782192 EXPECTED_BACKEND_IMAGE_DIGEST=sha256:7c2b6c32785e874589dddce2b949ad9ca335e0ee4d944f7efd01e7d4c0232210 EXPECTED_FRONTEND_IMAGE_DIGEST=sha256:e7b025c2304a9085cd9dde17737028add6ae56f7e29d3584580d3cb420cacc85 bash backend/reports/current-main-server-evidence-handoff-2026-05-12/server-current-main-preflight-load-evidence.sh",
+  "verifyReturnedBundleCommand": "EXPECTED_MAIN_SHA=bc88b3fd19ded9f463b1fc92a08b9b7fa9782192 EXPECTED_BACKEND_IMAGE_DIGEST=sha256:7c2b6c32785e874589dddce2b949ad9ca335e0ee4d944f7efd01e7d4c0232210 EXPECTED_FRONTEND_IMAGE_DIGEST=sha256:e7b025c2304a9085cd9dde17737028add6ae56f7e29d3584580d3cb420cacc85 bash scripts/prod-runtime-evidence-verify.sh /path/to/current-main-preflight-load-evidence.tgz",
+  "requiredReturnedArtifacts": [
+    "current-main-preflight.log",
+    "current-main-evidence-manifest.json",
+    "prod-real-load-steps-summary.json",
+    "prod-real-load-steps-summary.md",
+    "current-main-preflight-load-evidence.tgz"
+  ],
+  "finalRecommendation": "Do not mark the active goal complete. Run the server handoff command and return the evidence bundle before selecting the next slice."
+}
