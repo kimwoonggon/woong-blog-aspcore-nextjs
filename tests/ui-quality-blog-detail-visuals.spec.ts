@@ -1,4 +1,5 @@
 import { expect, test } from './helpers/performance-test'
+import { getColorChannels, getStyle } from './helpers/ui-improvement'
 
 function px(value: string) {
   return Number.parseFloat(value.replace('px', ''))
@@ -50,6 +51,32 @@ test('VA-121 blog body keeps readable paragraph line-height and spacing', async 
   expect(ratio).toBeGreaterThanOrEqual(1.5)
   expect(px(metrics.marginBottom)).toBeGreaterThan(0)
   expect(px(metrics.marginTop)).toBeGreaterThanOrEqual(0)
+})
+
+test('public Work and Study detail pages use a white reading surface in light mode', async ({ page }) => {
+  await page.emulateMedia({ colorScheme: 'dark' })
+  await page.addInitScript(() => window.localStorage.removeItem('theme'))
+
+  for (const target of [
+    { path: '/blog/seeded-blog', testId: 'blog-detail-body' },
+    { path: '/works/seeded-work', testId: 'work-detail-body' },
+  ]) {
+    await page.goto(target.path)
+    await expect(page.locator('html')).not.toHaveClass(/dark/)
+
+    const body = page.getByTestId(target.testId)
+    await expect(body).toBeVisible()
+
+    const [background, borderWidth, shadow] = await Promise.all([
+      getColorChannels(body, 'background-color'),
+      getStyle(body, 'border-top-width'),
+      getStyle(body, 'box-shadow'),
+    ])
+
+    expect(Array.from(background).slice(0, 3)).toEqual([255, 255, 255])
+    expect(px(borderWidth)).toBeGreaterThan(0)
+    expect(shadow).not.toBe('none')
+  }
 })
 
 test('VA-122 blog previous and next cards keep balanced sizing and shared chrome', async ({ page }) => {

@@ -97,11 +97,11 @@ test('Works collapses to one column on mobile', async ({ page }) => {
   expect(secondBox!.y).toBeGreaterThan(firstBox!.y)
 })
 
-test('home Works keeps an even four-card set on mobile to avoid an empty-feeling last row', async ({ page, request }, testInfo) => {
-  for (let index = 0; index < 4; index += 1) {
+test('home Works keeps eight DOM cards but only four visible on mobile', async ({ page, request }, testInfo) => {
+  for (let index = 0; index < 8; index += 1) {
     await createWorkFixture(request, testInfo, {
       titlePrefix: `Balanced Home Work ${index + 1}`,
-      html: `<h2>Balanced work ${index + 1}</h2><p>Fixture body for a deterministic four-card home Works grid.</p>`,
+      html: `<h2>Balanced work ${index + 1}</h2><p>Fixture body for a deterministic eight-card home Works grid.</p>`,
     })
   }
 
@@ -110,7 +110,15 @@ test('home Works keeps an even four-card set on mobile to avoid an empty-feeling
 
   const cards = page.getByTestId('featured-work-card')
   await expect(cards.nth(3)).toBeVisible()
-  await expect(cards).toHaveCount(4)
+  await expect(cards.nth(4)).toBeHidden()
+  await expect(cards).toHaveCount(8)
+
+  const visibleCards = await cards.evaluateAll((elements) => elements.filter((element) => {
+    const rect = element.getBoundingClientRect()
+    const style = window.getComputedStyle(element)
+    return rect.width > 0 && rect.height > 0 && style.display !== 'none' && style.visibility !== 'hidden'
+  }).length)
+  expect(visibleCards).toBe(4)
 })
 
 test('Works stays aligned to the mobile home content rail', async ({ page }) => {
@@ -269,7 +277,7 @@ test('Works card width stays stable when mobile viewport height is extremely sho
   }
 })
 
-test('Works uses two columns on tablet and three on desktop', async ({ page }) => {
+test('Works uses two columns on tablet and four on desktop', async ({ page }) => {
   const measureColumns = async (width: number, height: number) => {
     await page.setViewportSize({ width, height })
     await page.goto('/')
@@ -282,7 +290,7 @@ test('Works uses two columns on tablet and three on desktop', async ({ page }) =
   }
 
   expect(await measureColumns(768, 1024)).toBe(2)
-  expect(await measureColumns(1280, 800)).toBe(3)
+  expect(await measureColumns(1280, 800)).toBe(4)
 })
 
 test('hero CTAs keep a clear primary-versus-secondary visual hierarchy', async ({ page }) => {
