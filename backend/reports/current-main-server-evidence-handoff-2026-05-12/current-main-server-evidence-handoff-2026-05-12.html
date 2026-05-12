@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Current Main Server Evidence Handoff 2026-05-12</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 920px; margin: 40px auto; line-height: 1.55; color: #1f2937; }
+    h1, h2 { color: #111827; }
+    code { background: #f3f4f6; padding: 0.1rem 0.25rem; border-radius: 0.25rem; }
+    .warn { border-left: 4px solid #d97706; padding: 0.75rem 1rem; background: #fffbeb; }
+  </style>
+</head>
+<body>
+  <h1>Current Main Server Evidence Handoff 2026-05-12</h1>
+  <p class="warn"><strong>Status:</strong> active goal remains incomplete until the server-side evidence script is run and evidence is returned.</p>
+  <h2>Current Main</h2>
+  <p><code>389a117ee8cda43e84536c85164bf13afd8e38bf</code>, runtime image short tag <code>sha-389a117ee8cd</code>.</p>
+  <h2>Images</h2>
+  <ul>
+    <li>Frontend digest: <code>sha256:8cd7cdea54ad6388bcb34f3b8b694cf87e9721a35273cafd35d0f5fea0bfb5f3</code></li>
+    <li>Backend digest: <code>sha256:ae0679f8166380e0edef07c3d546cc31c9c291380e6f7eccc691c225c44afdf2</code></li>
+  </ul>
+  <h2>Script</h2>
+  <p><code>backend/reports/current-main-server-evidence-handoff-2026-05-12/server-current-main-preflight-load-evidence.sh</code></p>
+  <h2>Required Output</h2>
+  <ul>
+    <li>Terminal output ending with <code>[current-main-evidence] PASS</code></li>
+    <li><code>current-main-evidence-manifest.json</code></li>
+    <li><code>prod-real-load-steps-summary.json</code></li>
+    <li><code>prod-real-load-steps-summary.md</code></li>
+    <li><code>current-main-preflight-load-evidence.tgz</code></li>
+  </ul>
+</body>
+</html>

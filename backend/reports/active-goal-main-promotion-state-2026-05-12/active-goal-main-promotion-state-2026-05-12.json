@@ -1,0 +1,70 @@
+{
+  "task": "active-goal-main-promotion-state",
+  "date": "2026-05-12",
+  "goalComplete": false,
+  "completed": [
+    {
+      "requirement": "Dev-scoped slice implemented",
+      "evidence": "PR #185, commit 78f32f350802ce5a05dcfc7a2151208d6ef99901"
+    },
+    {
+      "requirement": "Local full dev E2E after slice",
+      "evidence": "npm run test:e2e passed: 431 passed, 4 skipped, latency budget failures 0"
+    },
+    {
+      "requirement": "Dev CI and merge",
+      "evidence": "PR #185 CI Dev green; merged to dev as 304dc6595b28eff171ad33c7f039578dd1e0fb36; dev push CI run 25716884120 success after rerun of transient registry failure"
+    },
+    {
+      "requirement": "Main promotion and CI",
+      "evidence": "PR #186 merged to main as 389a117ee8cda43e84536c85164bf13afd8e38bf; CI Main Runtime runs 25717220280 and 25717479751 success"
+    },
+    {
+      "requirement": "GHCR main runtime image publish",
+      "evidence": "Publish GHCR Main run 25717736048 success"
+    },
+    {
+      "requirement": "GHCR backend main manifest",
+      "evidence": "ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-backend:main sha256:ae0679f8166380e0edef07c3d546cc31c9c291380e6f7eccc691c225c44afdf2"
+    },
+    {
+      "requirement": "GHCR frontend main manifest",
+      "evidence": "ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-frontend:main sha256:8cd7cdea54ad6388bcb34f3b8b694cf87e9721a35273cafd35d0f5fea0bfb5f3"
+    },
+    {
+      "requirement": "Anonymous GHCR manifest inspect",
+      "evidence": "Empty DOCKER_CONFIG manifest inspect succeeded for backend and frontend runtime :main images"
+    },
+    {
+      "requirement": "Real public target candidates identified",
+      "evidence": "Public GET scan from https://woonglab.com pageSize=12 lists selected /api/public/works/water-fluid-simulation and the long Study read path documented in production handoff"
+    },
+    {
+      "requirement": "Production Runtime Redeploy workflow exists",
+      "evidence": "Workflow is active and dispatchable"
+    }
+  ],
+  "missing": [
+    {
+      "requirement": "Production workflow required secrets exist",
+      "reason": "gh secret list shows only PROMOTION_TOKEN and repository environments list is empty; PROD_SSH_HOST, PROD_SSH_USER, PROD_SSH_PRIVATE_KEY, PROD_SSH_KNOWN_HOSTS, and optional PROD_SSH_PORT are not configured at repository level"
+    },
+    {
+      "requirement": "Server pulls/deploys main runtime images",
+      "reason": "Not executed because production SSH/server work was explicitly excluded by user instruction and required production SSH secrets are not configured"
+    },
+    {
+      "requirement": "Production preflight after deploy",
+      "reason": "Not executable without server deploy"
+    },
+    {
+      "requirement": "Real Backend Test with pageSize=12, no seed, no cache, real Work/Study URLs",
+      "reason": "Not executable without production deploy/preflight and not run in this session"
+    },
+    {
+      "requirement": "Next slice selected from Real Backend Test result",
+      "reason": "No post-deploy Real Backend Test result exists"
+    }
+  ],
+  "recommendation": "Do not mark the active goal complete. If production work is authorized later, first add required production SSH secrets, then run Production Runtime Redeploy or equivalent server-side commands, then run Real Backend Test with real URLs and pageSize=12."
+}
