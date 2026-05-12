@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Main Runtime Digest-Pin Promotion Audit - 2026-05-12</title>
+  <style>body{font-family:Arial,sans-serif;max-width:960px;margin:32px auto;line-height:1.5;color:#1f2937}code,pre{background:#f3f4f6;padding:2px 4px;border-radius:4px}pre{padding:12px;overflow:auto}table{border-collapse:collapse;width:100%}td,th{border:1px solid #d1d5db;padding:8px;text-align:left}th{background:#f9fafb}.missing{color:#b91c1c;font-weight:bold}.complete{color:#166534;font-weight:bold}</style>
+</head>
+<body>
+  <h1>Main Runtime Digest-Pin Promotion Audit - 2026-05-12</h1>
+  <p>This audit verifies GitHub/main/GHCR readiness only. The active goal remains incomplete until server-side deploy, preflight, Real Backend Test, result-based slice selection, and after-slice full E2E are complete.</p>
+  <h2>Latest Main Runtime</h2>
+  <ul>
+    <li><code>origin/main</code>: <code>bc88b3fd19ded9f463b1fc92a08b9b7fa9782192</code></li>
+    <li><code>CI Dev</code> run: <code>25732372942</code>, success</li>
+    <li>Promotion PR <code>CI Main Runtime</code> run: <code>25732671941</code>, success</li>
+    <li>Main push <code>CI Main Runtime</code> run: <code>25733203959</code>, success</li>
+    <li><code>Publish GHCR Main</code> run: <code>25733621502</code>, success</li>
+  </ul>
+  <h2>Image Digests</h2>
+  <ul>
+    <li>Backend: <code>ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-backend:sha-bc88b3fd19de</code></li>
+    <li>Backend digest: <code>sha256:7c2b6c32785e874589dddce2b949ad9ca335e0ee4d944f7efd01e7d4c0232210</code></li>
+    <li>Frontend: <code>ghcr.io/kimwoonggon/woong-blog-aspcore-nextjs-runtime-frontend:sha-bc88b3fd19de</code></li>
+    <li>Frontend digest: <code>sha256:e7b025c2304a9085cd9dde17737028add6ae56f7e29d3584580d3cb420cacc85</code></li>
+  </ul>
+  <h2>Checklist</h2>
+  <table>
+    <tr><th>Requirement</th><th>Status</th></tr>
+    <tr><td>Digest-pin handoff merged to dev and dev CI green</td><td class="complete">Complete</td></tr>
+    <tr><td>Runtime-only promotion merged to main and main CI green</td><td class="complete">Complete</td></tr>
+    <tr><td>GHCR main runtime images published</td><td class="complete">Complete</td></tr>
+    <tr><td>Server deploy/preflight evidence returned</td><td class="missing">Missing</td></tr>
+    <tr><td>Real Backend Test rerun evidence returned</td><td class="missing">Missing</td></tr>
+    <tr><td>Result-based next slice implemented</td><td class="missing">Missing</td></tr>
+    <tr><td>After-slice full E2E and CI green</td><td class="missing">Missing</td></tr>
+  </table>
+  <h2>Server Handoff</h2>
+  <pre><code>cd /root/service/woong-blog-aspcore-nextjs
+
+git fetch origin main --prune
+git checkout main
+git pull --ff-only origin main
+
+EXPECTED_MAIN_SHA=bc88b3fd19ded9f463b1fc92a08b9b7fa9782192 \
+EXPECTED_BACKEND_IMAGE_DIGEST=sha256:7c2b6c32785e874589dddce2b949ad9ca335e0ee4d944f7efd01e7d4c0232210 \
+EXPECTED_FRONTEND_IMAGE_DIGEST=sha256:e7b025c2304a9085cd9dde17737028add6ae56f7e29d3584580d3cb420cacc85 \
+bash backend/reports/current-main-server-evidence-handoff-2026-05-12/server-current-main-preflight-load-evidence.sh</code></pre>
+  <h2>Recommendation</h2>
+  <p>Do not mark the active goal complete. Run the server handoff command and return <code>current-main-preflight-load-evidence.tgz</code> plus the listed summary artifacts before selecting the next implementation slice.</p>
+</body>
+</html>
