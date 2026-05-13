@@ -1,0 +1,45 @@
+{
+  "task": "evidence-verifier-hls-priority",
+  "date": "2026-05-13",
+  "status": "slice_complete_active_goal_incomplete",
+  "changed": [
+    "scripts/prod-runtime-evidence-verify.sh",
+    "scripts/prod-runtime-evidence-bundle.sh",
+    "src/test/prod-runtime-evidence-verify.test.ts",
+    "src/test/prod-runtime-evidence-bundle.test.ts",
+    "todolist-2026-05-13.md"
+  ],
+  "intentionallyNotChanged": [
+    "direct production SSH",
+    "server pull/deploy evidence",
+    "production preflight execution",
+    "real backend load execution",
+    "actual HLS upload implementation fix",
+    "real load pageSize/seed/cache target rules"
+  ],
+  "validations": [
+    {
+      "command": "npm test -- --run src/test/prod-runtime-evidence-bundle.test.ts src/test/prod-runtime-evidence-verify.test.ts src/test/prod-real-load-steps.test.ts",
+      "result": "passed",
+      "tests": 26
+    },
+    {
+      "command": "bash -n scripts/prod-runtime-evidence-bundle.sh scripts/prod-runtime-evidence-verify.sh scripts/prod-real-load-steps.sh",
+      "result": "passed"
+    },
+    {
+      "command": "npx eslint src/test/prod-runtime-evidence-bundle.test.ts src/test/prod-runtime-evidence-verify.test.ts src/test/prod-real-load-steps.test.ts",
+      "result": "passed"
+    }
+  ],
+  "activeGoalChecklist": {
+    "serverPullDeployCurrentMain": "missing",
+    "productionPreflightAfterDeploy": "missing",
+    "realBackendTestCurrentRuntime": "missing",
+    "resultBasedSliceSelection": "partially_strengthened_by_verifier",
+    "selectedSliceImplemented": "missing",
+    "fullE2EAfterSlice": "missing",
+    "ciAfterSlice": "missing"
+  },
+  "recommendation": "keep_active_goal_open_until_returned_server_evidence_selects_and_verifies_a_slice"
+}
