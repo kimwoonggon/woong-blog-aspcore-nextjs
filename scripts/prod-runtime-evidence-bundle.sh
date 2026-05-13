@@ -83,6 +83,13 @@ const fs = require('node:fs')
 
 const [summaryPath, manifestPath, markdownPath, mainSha, backendDigest, frontendDigest] = process.argv.slice(2)
 const summary = JSON.parse(fs.readFileSync(summaryPath, 'utf8'))
+const allowedNextFocusValues = new Set([
+  'increase-rate-or-extend-soak',
+  'db-pool-or-resource-pressure',
+  'payload-or-network-transfer',
+  'app-cpu-or-serialization',
+  'measure-more',
+])
 
 function fail(message) {
   console.error(`[prod-runtime-evidence-bundle] ERROR: ${message}`)
@@ -139,6 +146,14 @@ if (listPageSizes.length === 0 || listPageSizes.some((value) => Number(value) !=
 
 if (!summary.steps.length) {
   fail('real load summary has no steps')
+}
+
+if (typeof summary.nextFocus !== 'string' || summary.nextFocus.length === 0) {
+  fail('real load summary nextFocus is required')
+}
+
+if (!allowedNextFocusValues.has(summary.nextFocus)) {
+  fail(`real load summary nextFocus is unknown: ${summary.nextFocus}`)
 }
 
 if (String(summary.baseUrl || '').match(/^https?:\/\/(backend|127\.0\.0\.1|localhost):?8080/i)) {
