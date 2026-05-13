@@ -205,6 +205,47 @@ describe('production runtime evidence verifier', () => {
     expect(result.stdout).toContain('[prod-runtime-evidence-verify] PASS')
   })
 
+  it('prioritizes a fatal HLS smoke result over the load-derived next focus', () => {
+    const evidenceDir = createCurrentMainEvidenceDir()
+    updateRealLoadSummary(evidenceDir, (summary) => {
+      summary.nextFocus = 'db-pool-or-resource-pressure'
+    })
+    writeFileSync(path.join(evidenceDir, 'hls-smoke-summary.json'), JSON.stringify({
+      status: 'failed',
+      fatal: true,
+      phase: 'hls-job',
+      message: 'failed to process HLS',
+    }, null, 2))
+
+    const result = runVerifier(evidenceDir)
+
+    expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0)
+    expect(result.stdout).toContain('recommendedSlice=hls-fatal-fix')
+  })
+
+  it('prioritizes a fatal HLS smoke result from a returned compressed evidence tarball', () => {
+    const extractedEvidenceDir = createEvidenceDir()
+    updateRealLoadSummary(extractedEvidenceDir, (summary) => {
+      summary.nextFocus = 'app-cpu-or-serialization'
+    })
+    writeFileSync(path.join(extractedEvidenceDir, 'hls-smoke-summary.json'), JSON.stringify({
+      status: 'error',
+      fatal: false,
+      phase: 'hls-job',
+      message: 'failed to process HLS',
+    }, null, 2))
+    const returnedDir = mkdtempSync(path.join(os.tmpdir(), 'prod-runtime-evidence-hls-returned-'))
+    const tarballPath = path.join(returnedDir, 'production-runtime-evidence.tar.gz')
+    const tarResult = spawnSync('tar', ['-czf', tarballPath, '-C', extractedEvidenceDir, '.'], { encoding: 'utf8' })
+
+    expect(tarResult.status, `${tarResult.stdout}\n${tarResult.stderr}`).toBe(0)
+
+    const result = runVerifier(returnedDir)
+
+    expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0)
+    expect(result.stdout).toContain('recommendedSlice=hls-fatal-fix')
+  })
+
   it('passes for a current-main handoff bundle that contains a nested output directory', () => {
     const bundleOutputDir = mkdtempSync(path.join(os.tmpdir(), 'current-main-evidence-bundle-output-'))
     const evidenceDir = path.join(bundleOutputDir, 'loadtest')
