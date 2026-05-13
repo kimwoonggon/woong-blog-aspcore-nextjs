@@ -184,4 +184,25 @@ describe('production runtime evidence bundle', () => {
     expect(manifest.realLoad.listPageSize).toBe(12)
     expect(readFileSync(markdownPath, 'utf8')).toContain('Next focus: `db-pool-or-resource-pressure`')
   })
+
+  it('includes optional HLS smoke evidence in the returned tarball', () => {
+    const runtime = createRuntime()
+    writeValidEvidence(runtime)
+    writeFileSync(path.join(runtime.loadDir, 'hls-smoke-summary.json'), JSON.stringify({
+      status: 'failed',
+      fatal: true,
+      phase: 'hls-job',
+      message: 'failed to process HLS',
+    }, null, 2))
+
+    const result = runScript(runtime)
+
+    expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0)
+
+    const tarballPath = path.join(runtime.outputDir, 'production-runtime-evidence.tar.gz')
+    const listResult = spawnSync('tar', ['-tzf', tarballPath], { encoding: 'utf8' })
+
+    expect(listResult.status, `${listResult.stdout}\n${listResult.stderr}`).toBe(0)
+    expect(listResult.stdout).toContain('./hls-smoke-summary.json')
+  })
 })

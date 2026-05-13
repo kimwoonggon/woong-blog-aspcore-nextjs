@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Evidence Verifier HLS Priority - 2026-05-13</title></head>
+<body>
+  <main>
+    <h1>Evidence Verifier HLS Priority - 2026-05-13</h1>
+    <p>Status: slice complete, active goal incomplete.</p>
+    <h2>Changed</h2>
+    <ul>
+      <li>Verifier reads optional <code>hls-smoke-summary.json</code> and prints <code>recommendedSlice=hls-fatal-fix</code> for fatal HLS evidence.</li>
+      <li>Bundle script preserves optional HLS smoke evidence in the returned tarball.</li>
+      <li>Tests cover flat evidence, compressed tarball evidence, and tarball preservation.</li>
+    </ul>
+    <h2>Validation</h2>
+    <ul>
+      <li>Vitest targeted suite: passed, 26 tests.</li>
+      <li>Shell syntax check: passed.</li>
+      <li>ESLint targeted tests: passed.</li>
+    </ul>
+    <h2>Recommendation</h2>
+    <p>Keep the active goal open until current-main server deploy, preflight, real backend load, selected slice, full E2E, and CI evidence exist.</p>
+  </main>
+</body>
+</html>
