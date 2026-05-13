@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Evidence Verifier HLS Priority Main Promotion - 2026-05-13</title></head>
+<body>
+  <main>
+    <h1>Evidence Verifier HLS Priority Main Promotion - 2026-05-13</h1>
+    <p>Status: main promotion slice ready, active runtime goal incomplete.</p>
+    <h2>Changed</h2>
+    <ul>
+      <li>Promoted HLS fatal evidence priority from dev onto current main without unrelated dev commits.</li>
+      <li>Preserves optional <code>hls-smoke-summary.json</code> in evidence tarballs.</li>
+      <li>Verifier emits <code>recommendedSlice=hls-fatal-fix</code> when returned HLS evidence is fatal/failed/error.</li>
+    </ul>
+    <h2>Validation</h2>
+    <ul>
+      <li>Targeted Vitest: passed, 26 tests.</li>
+      <li>Shell syntax: passed.</li>
+      <li>ESLint targeted tests: passed.</li>
+    </ul>
+    <h2>Recommendation</h2>
+    <p>Merge via main PR, verify main CI/GHCR, then continue with server deploy/preflight/load evidence. Do not mark the active goal complete yet.</p>
+  </main>
+</body>
+</html>

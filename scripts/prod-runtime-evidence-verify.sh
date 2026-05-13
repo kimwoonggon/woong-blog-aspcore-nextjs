@@ -117,6 +117,10 @@ fi
 
 REAL_LOAD_JSON="${EVIDENCE_DIR}/prod-real-load-steps-summary.json"
 REAL_LOAD_MD="${EVIDENCE_DIR}/prod-real-load-steps-summary.md"
+HLS_SMOKE_JSON=""
+if [[ -f "${EVIDENCE_DIR}/hls-smoke-summary.json" ]]; then
+  HLS_SMOKE_JSON="${EVIDENCE_DIR}/hls-smoke-summary.json"
+fi
 
 require_file "$(basename "${PREFLIGHT_LOG}")" "${PREFLIGHT_LOG}"
 require_file "prod-real-load-steps-summary.json" "${REAL_LOAD_JSON}"
@@ -133,7 +137,7 @@ require_log_line "${PREFLIGHT_LOG}" "gzip public response" 'gzip public response
 require_log_line "${PREFLIGHT_LOG}" "public Work list contract" 'public Work list contract: current'
 require_log_line "${PREFLIGHT_LOG}" "public Work detail contract" 'public Work detail contract: current'
 
-node - "${MANIFEST_JSON}" "${REAL_LOAD_JSON}" "${EXPECTED_MAIN_SHA}" "${EXPECTED_BACKEND_IMAGE_DIGEST}" "${EXPECTED_FRONTEND_IMAGE_DIGEST}" "${FAIL_RATE_LIMIT}" "${DROPPED_ITERATION_LIMIT}" <<'NODE'
+node - "${MANIFEST_JSON}" "${REAL_LOAD_JSON}" "${EXPECTED_MAIN_SHA}" "${EXPECTED_BACKEND_IMAGE_DIGEST}" "${EXPECTED_FRONTEND_IMAGE_DIGEST}" "${FAIL_RATE_LIMIT}" "${DROPPED_ITERATION_LIMIT}" "${HLS_SMOKE_JSON}" <<'NODE'
 const fs = require('node:fs')
 
 const [
@@ -144,6 +148,7 @@ const [
   expectedFrontendDigest,
   failRateLimitRaw,
   droppedIterationLimitRaw,
+  hlsSmokePath,
 ] = process.argv.slice(2)
 
 const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'))
@@ -156,6 +161,13 @@ const allowedNextFocusValues = new Set([
   'payload-or-network-transfer',
   'app-cpu-or-serialization',
   'measure-more',
+])
+const nextFocusRecommendedSlices = new Map([
+  ['db-pool-or-resource-pressure', 'db-index-optimization'],
+  ['payload-or-network-transfer', 'public-detail-serialization-body-optimization'],
+  ['app-cpu-or-serialization', 'public-detail-serialization-body-optimization'],
+  ['increase-rate-or-extend-soak', 'increase-rate-or-extend-soak'],
+  ['measure-more', 'measure-more'],
 ])
 
 function fail(message) {
@@ -199,6 +211,27 @@ function isPublicDetailTarget(value, kind) {
   }
 }
 
+function readOptionalJson(path) {
+  if (!path) {
+    return null
+  }
+
+  return JSON.parse(fs.readFileSync(path, 'utf8'))
+}
+
+function isFatalHlsSmokeResult(summary) {
+  if (!summary) {
+    return false
+  }
+
+  const status = String(summary.status ?? summary.result ?? '').toLowerCase()
+  const message = String(summary.message ?? summary.error ?? summary.reason ?? '').toLowerCase()
+
+  return summary.fatal === true
+    || ['failed', 'failure', 'error'].includes(status)
+    || message.includes('failed to process hls')
+}
+
 requireEqual('main SHA', manifest.mainSha, expectedMainSha)
 const backendDigest = manifest.images?.backendDigest ?? manifest.backendDigest
 const frontendDigest = manifest.images?.frontendDigest ?? manifest.frontendDigest
@@ -240,6 +273,11 @@ if (typeof realLoad.nextFocus !== 'string' || realLoad.nextFocus.length === 0) {
 if (!allowedNextFocusValues.has(realLoad.nextFocus)) {
   fail(`real load summary nextFocus is unknown: ${realLoad.nextFocus}`)
 }
+
+const hlsSmoke = readOptionalJson(hlsSmokePath)
+const recommendedSlice = isFatalHlsSmokeResult(hlsSmoke)
+  ? 'hls-fatal-fix'
+  : nextFocusRecommendedSlices.get(realLoad.nextFocus)
 
 const summaryListPageSize = Number(realLoad.listPageSize ?? 12)
 if (summaryListPageSize !== 12) {
@@ -290,6 +328,8 @@ for (const [index, step] of realLoad.steps.entries()) {
     fail(`step ${index + 1} droppedIterations ${droppedIterations} exceeds ${droppedIterationLimit}`)
   }
 }
+
+console.log(`[prod-runtime-evidence-verify] recommendedSlice=${recommendedSlice}`)
 NODE
 
 info "evidence: ${EVIDENCE_INPUT}"

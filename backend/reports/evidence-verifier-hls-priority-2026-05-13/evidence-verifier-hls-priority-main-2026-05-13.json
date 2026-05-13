@@ -1,0 +1,40 @@
+{
+  "task": "evidence-verifier-hls-priority-main-promotion",
+  "date": "2026-05-13",
+  "status": "main_pr_slice_ready_active_goal_incomplete",
+  "baseMainSha": "703c1551fa90072afcddf6c537ed869d597150ba",
+  "sourceDevMergeSha": "4a6213e1e9e41f823885a4f2cb8316b6100b4839",
+  "changed": [
+    "scripts/prod-runtime-evidence-bundle.sh",
+    "scripts/prod-runtime-evidence-verify.sh",
+    "src/test/prod-runtime-evidence-bundle.test.ts",
+    "src/test/prod-runtime-evidence-verify.test.ts",
+    "backend/reports/evidence-verifier-hls-priority-2026-05-13/",
+    "todolist-2026-05-13.md"
+  ],
+  "validations": [
+    {
+      "command": "npm test -- --run src/test/prod-runtime-evidence-bundle.test.ts src/test/prod-runtime-evidence-verify.test.ts src/test/prod-real-load-steps.test.ts",
+      "result": "passed",
+      "tests": 26
+    },
+    {
+      "command": "bash -n scripts/prod-runtime-evidence-bundle.sh scripts/prod-runtime-evidence-verify.sh scripts/prod-real-load-steps.sh",
+      "result": "passed"
+    },
+    {
+      "command": "npx eslint src/test/prod-runtime-evidence-bundle.test.ts src/test/prod-runtime-evidence-verify.test.ts src/test/prod-real-load-steps.test.ts",
+      "result": "passed"
+    }
+  ],
+  "activeGoalChecklist": {
+    "serverPullDeployCurrentMain": "missing",
+    "productionPreflightAfterDeploy": "missing",
+    "realBackendTestCurrentRuntime": "missing",
+    "actualResultBasedSliceSelection": "missing",
+    "selectedSliceImplementation": "missing",
+    "fullE2EAfterSlice": "missing",
+    "ciAfterSlice": "missing"
+  },
+  "recommendation": "merge_this_minimal_main_promotion_then_wait_for_real_server_evidence"
+}

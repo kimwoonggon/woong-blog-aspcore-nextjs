@@ -53,6 +53,7 @@ require_dir "REAL_LOAD_DIR" "${REAL_LOAD_DIR}"
 
 REAL_LOAD_JSON="${REAL_LOAD_DIR%/}/prod-real-load-steps-summary.json"
 REAL_LOAD_MD="${REAL_LOAD_DIR%/}/prod-real-load-steps-summary.md"
+HLS_SMOKE_JSON="${REAL_LOAD_DIR%/}/hls-smoke-summary.json"
 require_file "prod-real-load-steps-summary.json" "${REAL_LOAD_JSON}"
 require_file "prod-real-load-steps-summary.md" "${REAL_LOAD_MD}"
 
@@ -223,6 +224,9 @@ cp "${REAL_LOAD_JSON}" "${STAGING_DIR}/prod-real-load-steps-summary.json"
 cp "${REAL_LOAD_MD}" "${STAGING_DIR}/prod-real-load-steps-summary.md"
 cp "${MANIFEST_JSON}" "${STAGING_DIR}/production-runtime-evidence-manifest.json"
 cp "${SUMMARY_MD}" "${STAGING_DIR}/production-runtime-evidence-summary.md"
+if [[ -f "${HLS_SMOKE_JSON}" ]]; then
+  cp "${HLS_SMOKE_JSON}" "${STAGING_DIR}/hls-smoke-summary.json"
+fi
 
 tar -czf "${TARBALL}" -C "${STAGING_DIR}" .
 
