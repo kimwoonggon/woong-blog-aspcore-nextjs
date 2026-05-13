@@ -111,6 +111,34 @@ describe('production runtime evidence bundle', () => {
     expect(result.stderr).toContain('real load summary contains backend-direct target')
   })
 
+  it('fails when real load summary has no next-slice focus', () => {
+    const runtime = createRuntime()
+    writeValidEvidence(runtime)
+    const summaryPath = path.join(runtime.loadDir, 'prod-real-load-steps-summary.json')
+    const summary = JSON.parse(readFileSync(summaryPath, 'utf8'))
+    delete summary.nextFocus
+    writeFileSync(summaryPath, JSON.stringify(summary, null, 2))
+
+    const result = runScript(runtime)
+
+    expect(result.status).not.toBe(0)
+    expect(result.stderr).toContain('real load summary nextFocus is required')
+  })
+
+  it('fails when real load summary has an unknown next-slice focus', () => {
+    const runtime = createRuntime()
+    writeValidEvidence(runtime)
+    const summaryPath = path.join(runtime.loadDir, 'prod-real-load-steps-summary.json')
+    const summary = JSON.parse(readFileSync(summaryPath, 'utf8'))
+    summary.nextFocus = 'public-detail-serialization-or-db-index'
+    writeFileSync(summaryPath, JSON.stringify(summary, null, 2))
+
+    const result = runScript(runtime)
+
+    expect(result.status).not.toBe(0)
+    expect(result.stderr).toContain('real load summary nextFocus is unknown')
+  })
+
   it('fails when preflight evidence does not prove the public Work list contract is current', () => {
     const runtime = createRuntime()
     writeValidEvidence(runtime)

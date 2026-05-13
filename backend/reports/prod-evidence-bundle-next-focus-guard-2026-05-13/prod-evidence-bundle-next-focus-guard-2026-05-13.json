@@ -1,0 +1,43 @@
+{
+  "slug": "prod-evidence-bundle-next-focus-guard-2026-05-13",
+  "date": "2026-05-13",
+  "changed": [
+    "scripts/prod-runtime-evidence-bundle.sh",
+    "src/test/prod-runtime-evidence-bundle.test.ts",
+    "todolist-2026-05-13.md"
+  ],
+  "allowedNextFocusValues": [
+    "increase-rate-or-extend-soak",
+    "db-pool-or-resource-pressure",
+    "payload-or-network-transfer",
+    "app-cpu-or-serialization",
+    "measure-more"
+  ],
+  "validations": [
+    {
+      "command": "npm test -- --run src/test/prod-runtime-evidence-bundle.test.ts",
+      "result": "failed before implementation as expected because missing and unknown nextFocus were accepted"
+    },
+    {
+      "command": "npm test -- --run src/test/prod-runtime-evidence-bundle.test.ts src/test/prod-runtime-evidence-verify.test.ts src/test/prod-real-load-steps.test.ts",
+      "result": "passed, 23 tests"
+    },
+    {
+      "command": "bash -n scripts/prod-runtime-evidence-bundle.sh scripts/prod-runtime-evidence-verify.sh scripts/prod-real-load-steps.sh",
+      "result": "passed"
+    },
+    {
+      "command": "npx eslint src/test/prod-runtime-evidence-bundle.test.ts src/test/prod-runtime-evidence-verify.test.ts src/test/prod-real-load-steps.test.ts",
+      "result": "passed"
+    }
+  ],
+  "activeGoalComplete": false,
+  "remainingBlockers": [
+    "Server deploy evidence for current main runtime image is missing.",
+    "Production preflight evidence after current-main deploy is missing.",
+    "Real Backend Test evidence with pageSize=12, no seed, no cache workaround, and real Work/Study URLs is missing.",
+    "No next slice has been selected from a valid load result.",
+    "Full E2E and CI after selected slice have not run."
+  ],
+  "recommendation": "Promote this guard through dev/main, then obtain and verify the current-main server evidence bundle."
+}

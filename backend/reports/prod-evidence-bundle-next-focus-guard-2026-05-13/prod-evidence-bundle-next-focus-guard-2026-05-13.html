@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Production Evidence Bundle Next Focus Guard Audit - 2026-05-13</title>
+</head>
+<body>
+  <main>
+    <h1>Production Evidence Bundle Next Focus Guard Audit - 2026-05-13</h1>
+    <p>The evidence bundle script now rejects missing or unknown Real Backend Test <code>nextFocus</code> values before creating an evidence tarball.</p>
+    <h2>Validations</h2>
+    <ul>
+      <li>RED: bundle tests failed before implementation because invalid <code>nextFocus</code> values were accepted.</li>
+      <li>GREEN: related Vitest suites passed with 23 tests.</li>
+      <li>Shell syntax and ESLint passed.</li>
+    </ul>
+    <h2>Completion</h2>
+    <p>The active goal is still incomplete because current-main server deploy, preflight, and Real Backend Test evidence are missing.</p>
+  </main>
+</body>
+</html>
