@@ -6,8 +6,11 @@ README.md
 .next
 .next-build
 .next-playwright
+.next-e2e-local
 .git
 .codex
+.agent-runtime
+.agent-backups
 .vercel
 .omx
 test-results
@@ -16,11 +19,13 @@ playwright-report
 .env
 downloads
 docs
+reports
 db_status
 .docker-data
 .tmp
 .devcontainer-data
 .refs
 .local-certs
+backend/reports
 backend/**/bin
 backend/**/obj

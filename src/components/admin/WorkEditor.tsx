@@ -437,20 +437,24 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
         setThumbnailSourceKind(sourceKind)
     }
 
-    async function tryAutoGenerateThumbnailFromUploadedVideo(file: File) {
+    async function tryAutoGenerateThumbnailFromUploadedVideo(file: File, applySelection = true) {
         const thumbnailBlob = await extractVideoFrameThumbnailBlob(file)
         const uploadedThumbnail = await uploadGeneratedThumbnail(
             thumbnailBlob,
             `${file.name.replace(/\.[^.]+$/, '') || 'video'}-thumbnail.jpg`,
         )
-        applyThumbnailSelection(uploadedThumbnail, 'uploaded-video')
+        if (applySelection) {
+            applyThumbnailSelection(uploadedThumbnail, 'uploaded-video')
+        }
         return uploadedThumbnail
     }
 
-    async function tryAutoGenerateThumbnailFromYouTube(videoId: string) {
+    async function tryAutoGenerateThumbnailFromYouTube(videoId: string, applySelection = true) {
         const thumbnailBlob = await fetchRemoteImageBlob(buildYouTubeThumbnailUrl(videoId))
         const uploadedThumbnail = await uploadGeneratedThumbnail(thumbnailBlob, `${videoId}-thumbnail.jpg`)
-        applyThumbnailSelection(uploadedThumbnail, 'youtube')
+        if (applySelection) {
+            applyThumbnailSelection(uploadedThumbnail, 'youtube')
+        }
         return uploadedThumbnail
     }
 
@@ -473,7 +477,7 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
         return await tryAutoGenerateThumbnailFromUploadedVideo(file)
     }
 
-    async function maybeApplyAutoThumbnailForCandidate(candidate: ThumbnailCandidate) {
+    async function maybeApplyAutoThumbnailForCandidate(candidate: ThumbnailCandidate, applySelection = true) {
         if (!shouldReplaceWorkThumbnailSource(thumbnailSourceKind, candidate.kind)) {
             return null
         }
@@ -482,16 +486,16 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
 
         try {
             if (candidate.kind === 'uploaded-video' && candidate.file) {
-                return await tryAutoGenerateThumbnailFromUploadedVideo(candidate.file)
+                return await tryAutoGenerateThumbnailFromUploadedVideo(candidate.file, applySelection)
             }
 
             if (candidate.kind === 'youtube' && candidate.youtubeVideoId) {
-                return await tryAutoGenerateThumbnailFromYouTube(candidate.youtubeVideoId)
+                return await tryAutoGenerateThumbnailFromYouTube(candidate.youtubeVideoId, applySelection)
             }
 
             return null
         } catch (error) {
-            if (candidate.kind === 'youtube') {
+            if (applySelection && candidate.kind === 'youtube') {
                 setThumbnailSourceKind('youtube')
                 setThumbnailUrl(buildYouTubeThumbnailUrl(candidate.youtubeVideoId ?? ''))
             }
@@ -516,6 +520,18 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
         }
 
         return await response.json().catch(() => null) as { id?: string; slug?: string; Slug?: string } | null
+    }
+
+    async function persistThumbnailSelectionAndRevalidate(workId: string, nextThumbnailAssetId: string) {
+        const responsePayload = await persistThumbnailSelectionForWork(workId, nextThumbnailAssetId)
+        const nextSlug = resolveWorkSaveSlug({
+            payload: responsePayload,
+            title,
+            initialSlug: initialWork?.slug,
+        })
+
+        await revalidatePublicPathsAfterMutation(getWorkPublicRevalidationPaths(nextSlug, initialWork?.slug))
+        return responsePayload
     }
 
     async function uploadWorkImage(
@@ -571,7 +587,7 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
             const uploadedThumbnail = await tryAutoGenerateThumbnailFromSavedVideo(nextSource.video)
             if (uploadedThumbnail) {
                 if (initialWork?.id) {
-                    await persistThumbnailSelectionForWork(initialWork.id, uploadedThumbnail.id)
+                    await persistThumbnailSelectionAndRevalidate(initialWork.id, uploadedThumbnail.id)
                 }
                 return
             }
@@ -708,9 +724,10 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
             const normalizedVideoId = normalizeYouTubeVideoId(youtubeUrlOrId)
             if (normalizedVideoId) {
                 try {
-                    const uploadedThumbnail = await maybeApplyAutoThumbnailForCandidate({ kind: 'youtube', youtubeVideoId: normalizedVideoId })
+                    const uploadedThumbnail = await maybeApplyAutoThumbnailForCandidate({ kind: 'youtube', youtubeVideoId: normalizedVideoId }, false)
                     if (uploadedThumbnail) {
-                        await persistThumbnailSelectionForWork(initialWork.id, uploadedThumbnail.id)
+                        await persistThumbnailSelectionAndRevalidate(initialWork.id, uploadedThumbnail.id)
+                        applyThumbnailSelection(uploadedThumbnail, 'youtube')
                     }
                 } catch (error) {
                     toast.error(error instanceof Error ? error.message : 'Failed to auto-generate a YouTube thumbnail.')
@@ -825,24 +842,31 @@ export function WorkEditor({ initialWork, inlineMode = false, onSaved }: WorkEdi
         const processingPhaseTimer = window.setTimeout(() => {
             setVideoUploadPhase('processing', file.name)
         }, 700)
+        let thumbnailError: unknown = null
+        const uploadedThumbnailPromise = maybeApplyAutoThumbnailForCandidate({ kind: 'uploaded-video', file }, false)
+            .catch((error: unknown) => {
+                thumbnailError = error
+                return null
+            })
 
         try {
             const payload = await uploadHlsVideo(initialWork.id, file, videosVersion)
             syncVideos(payload)
             setHasPersistedVideoChanges(true)
-            try {
-                const uploadedThumbnail = await maybeApplyAutoThumbnailForCandidate({ kind: 'uploaded-video', file })
-                if (uploadedThumbnail) {
-                    await persistThumbnailSelectionForWork(initialWork.id, uploadedThumbnail.id)
-                }
-            } catch (error) {
-                toast.error(error instanceof Error ? error.message : 'Failed to auto-generate a video thumbnail.')
+            const uploadedThumbnail = await uploadedThumbnailPromise
+            if (thumbnailError) {
+                toast.error(thumbnailError instanceof Error ? thumbnailError.message : 'Failed to auto-generate a video thumbnail.')
+            }
+            if (uploadedThumbnail) {
+                await persistThumbnailSelectionAndRevalidate(initialWork.id, uploadedThumbnail.id)
+                applyThumbnailSelection(uploadedThumbnail, 'uploaded-video')
             }
             refreshInlinePublicWorkIfNeeded()
             window.clearTimeout(processingPhaseTimer)
             setVideoUploadPhase('complete', file.name)
             toast.success('HLS video uploaded.')
         } catch (error) {
+            await uploadedThumbnailPromise
             window.clearTimeout(processingPhaseTimer)
             setVideoUploadStatus(null)
             const message = error instanceof Error ? error.message : 'Failed to upload HLS video.'

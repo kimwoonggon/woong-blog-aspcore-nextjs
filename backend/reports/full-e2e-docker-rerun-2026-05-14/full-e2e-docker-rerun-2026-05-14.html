@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Full E2E Docker Rerun Audit - 2026-05-14</title>
+  <style>
+    body { font-family: sans-serif; max-width: 920px; margin: 40px auto; padding: 0 20px; line-height: 1.55; color: #172033; }
+    code { background: #f2f4f8; padding: 0.1rem 0.25rem; border-radius: 4px; }
+    .ok { color: #0f766e; font-weight: 700; }
+    .warn { color: #b45309; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <h1>Full E2E Docker Rerun Audit - 2026-05-14</h1>
+  <p><strong>Scope:</strong> Docker dev stack full E2E rerun and fixes for observed failures. Production was not touched.</p>
+  <h2>Outcome</h2>
+  <p class="ok">Final full E2E passed: 431 passed, 4 skipped, 0 failed in 13.0m.</p>
+  <p>Latency summary: testCount 435, budgetFailureCount 0, warningCount 67.</p>
+  <h2>Changes</h2>
+  <ul>
+    <li>Study archive desktop grid uses <code>xl:grid-cols-3</code>.</li>
+    <li>Existing-work generated thumbnails are persisted and public Work paths are revalidated before the ready preview is exposed.</li>
+    <li>Targeted unit coverage was added for both behaviors.</li>
+  </ul>
+  <h2>Validation</h2>
+  <ul>
+    <li>Readiness passed for Docker daemon, backend health, and frontend.</li>
+    <li>Targeted Vitest passed: 57 tests.</li>
+    <li>Focused Playwright passed: 12 tests.</li>
+    <li>Full Playwright passed: 431 passed, 4 skipped.</li>
+    <li>Targeted ESLint: 0 errors, 2 warnings in test mocks.</li>
+    <li><code>git diff --check</code> passed.</li>
+  </ul>
+  <h2>Risks</h2>
+  <ul>
+    <li>Dev DB/media artifacts were created by full E2E.</li>
+    <li class="warn">Repository has unrelated pre-existing dirty files; isolate this task before commit.</li>
+    <li>Dev Docker stack remains running.</li>
+  </ul>
+</body>
+</html>

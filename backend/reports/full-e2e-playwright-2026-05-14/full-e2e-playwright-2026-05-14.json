@@ -1,0 +1,66 @@
+{
+  "report": {
+    "slug": "full-e2e-playwright-2026-05-14",
+    "title": "Full Playwright E2E Audit",
+    "date": "2026-05-14",
+    "status": "failed"
+  },
+  "environment": {
+    "baseUrl": "http://127.0.0.1:3000",
+    "externalServer": true,
+    "stack": "Docker compose development stack via nginx"
+  },
+  "command": "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 npm run test:e2e",
+  "resolvedScript": "ENABLE_LOCAL_ADMIN_SHORTCUT=true PLAYWRIGHT_EXPECT_LOCAL_ADMIN_SHORTCUT=visible PLAYWRIGHT_E2E_PROFILE=core node scripts/run-e2e-latency.mjs -- --workers=1",
+  "summary": {
+    "total": 435,
+    "passed": 429,
+    "failed": 2,
+    "skipped": 4,
+    "duration": "14.8m",
+    "latencyArtifacts": 435,
+    "latencyBudgetFailures": 0,
+    "latencyWarnings": 76
+  },
+  "failedTests": [
+    {
+      "project": "chromium-public",
+      "spec": "tests/ui-improvement-blog-card-anchors.spec.ts",
+      "line": 25,
+      "title": "blog grid uses three columns at xl breakpoint",
+      "failure": "Expected 3 distinct first-row column positions, received 1.",
+      "artifacts": {
+        "screenshot": "test-results/playwright/ui-improvement-blog-card-a-29130-ee-columns-at-xl-breakpoint-chromium-public/test-failed-1.png",
+        "errorContext": "test-results/playwright/ui-improvement-blog-card-a-29130-ee-columns-at-xl-breakpoint-chromium-public/error-context.md",
+        "video": "test-results/playwright/ui-improvement-blog-card-a-29130-ee-columns-at-xl-breakpoint-chromium-public/video.webm",
+        "trace": "test-results/playwright/ui-improvement-blog-card-a-29130-ee-columns-at-xl-breakpoint-chromium-public/trace.zip"
+      }
+    },
+    {
+      "project": "chromium-authenticated",
+      "spec": "tests/work-inline-create-flow.spec.ts",
+      "line": 58,
+      "title": "existing work video uploads persist thumbnails immediately without requiring Update Work",
+      "failure": "getByAltText('Work thumbnail preview') was not found within 5000 ms.",
+      "artifacts": {
+        "screenshot": "test-results/playwright/work-inline-create-flow-ex-b9844-thout-requiring-Update-Work-chromium-authenticated/test-failed-1.png",
+        "errorContext": "test-results/playwright/work-inline-create-flow-ex-b9844-thout-requiring-Update-Work-chromium-authenticated/error-context.md",
+        "video": "test-results/playwright/work-inline-create-flow-ex-b9844-thout-requiring-Update-Work-chromium-authenticated/video.webm",
+        "trace": "test-results/playwright/work-inline-create-flow-ex-b9844-thout-requiring-Update-Work-chromium-authenticated/trace.zip"
+      }
+    }
+  ],
+  "artifacts": {
+    "latencySummaryMarkdown": "test-results/playwright/e2e-latency-summary.md",
+    "latencySummaryJson": "test-results/playwright/e2e-latency-summary.json",
+    "auditMarkdown": "backend/reports/full-e2e-playwright-2026-05-14/full-e2e-playwright-2026-05-14.md",
+    "auditHtml": "backend/reports/full-e2e-playwright-2026-05-14/full-e2e-playwright-2026-05-14.html",
+    "auditJson": "backend/reports/full-e2e-playwright-2026-05-14/full-e2e-playwright-2026-05-14.json"
+  },
+  "intentionallyNotChanged": [
+    "Production code",
+    "Test code",
+    "Application configuration"
+  ],
+  "recommendation": "Treat the full E2E gate as failed, fix the two failing specs, and rerun the full Playwright suite before claiming a full E2E pass."
+}
