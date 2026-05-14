@@ -673,6 +673,25 @@ describe('PublicResponsiveFeed', () => {
     expect(screen.getAllByTestId('blog-card')).toHaveLength(3)
   })
 
+  it('uses the built-in xl breakpoint for the desktop Study grid', () => {
+    setViewportMode('desktop')
+
+    render(
+      <PublicResponsiveFeed
+        kind="blog"
+        query=""
+        desktopPayload={{ items: buildBlogItems('desktop', 12), page: 1, pageSize: 12, totalItems: 12, totalPages: 1 }}
+        mobileInitialPayload={{ items: buildBlogItems('mobile', 10), page: 1, pageSize: 10, totalItems: 10, totalPages: 1 }}
+        desktopReturnTo={encodeURIComponent('/blog?page=1&pageSize=12')}
+      />,
+    )
+
+    const grid = screen.getByTestId('blog-grid')
+    expect(grid).toHaveClass('md:grid-cols-2')
+    expect(grid).toHaveClass('xl:grid-cols-3')
+    expect(grid.className).not.toContain('min-[1200px]:grid-cols-3')
+  })
+
   it('renders multiple saved tags and hides the summary block when the saved excerpt is blank', () => {
     setViewportMode('desktop')
 

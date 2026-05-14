@@ -1031,6 +1031,7 @@ describe('WorkEditor', () => {
       .mockResolvedValueOnce(okJson(hlsMutationPayload()))
       .mockResolvedValueOnce(okJson({ id: 'thumb-1', url: '/media/work-thumbnails/thumb-1.jpg' }))
       .mockResolvedValueOnce(okJson({ id: 'work-1', slug: 'existing-work' }))
+      .mockResolvedValueOnce(okJson({}))
 
     render(
       <WorkEditor
@@ -1058,6 +1059,16 @@ describe('WorkEditor', () => {
         '/api/admin/works/work-1',
         expect.objectContaining({ method: 'PUT' }),
       )
+    })
+    expect(mocks.fetchWithCsrf).toHaveBeenCalledWith(
+      '/revalidate-public',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ paths: ['/', '/works', '/works/existing-work'] }),
+      }),
+    )
+    await waitFor(() => {
+      expect(screen.getByRole('img', { name: 'Work thumbnail preview' })).toHaveAttribute('src', '/media/work-thumbnails/thumb-1.jpg')
     })
   })
 
