@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Full E2E Fix Audit - 2026-05-14</title>
+    <style>
+      body {
+        color: #111827;
+        font-family: Arial, sans-serif;
+        line-height: 1.5;
+        margin: 2rem;
+        max-width: 960px;
+      }
+      code, pre {
+        font-family: Consolas, monospace;
+      }
+      pre {
+        background: #f3f4f6;
+        overflow-x: auto;
+        padding: 1rem;
+      }
+      .status {
+        background: #dcfce7;
+        border-radius: 0.25rem;
+        color: #166534;
+        display: inline-block;
+        font-weight: 700;
+        padding: 0.2rem 0.5rem;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      th, td {
+        border: 1px solid #d1d5db;
+        padding: 0.5rem;
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        background: #f9fafb;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Full E2E Fix Audit - 2026-05-14</h1>
+    <p><span class="status">Passed</span></p>
+    <p>Fixed the two failing Playwright E2E specs and reran the full suite against the Docker-backed development stack at <code>http://127.0.0.1:3000</code>.</p>
+
+    <h2>Changes</h2>
+    <ul>
+      <li><code>src/components/content/PublicResponsiveFeed.tsx</code>: Study archive reaches three desktop columns at <code>min-[1200px]</code>.</li>
+      <li><code>src/components/admin/WorkEditor.tsx</code>: existing-work HLS uploads generate the thumbnail immediately in parallel with video processing.</li>
+      <li><code>todolist-2026-05-14.md</code>: records plan, progress, and verification.</li>
+    </ul>
+
+    <h2>Final Full E2E Result</h2>
+    <table>
+      <tbody>
+        <tr><th>Command</th><td><code>PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 npm run test:e2e</code></td></tr>
+        <tr><th>Passed</th><td>431</td></tr>
+        <tr><th>Failed</th><td>0</td></tr>
+        <tr><th>Skipped</th><td>4</td></tr>
+        <tr><th>Duration</th><td>13.2 minutes</td></tr>
+        <tr><th>Latency budget failures</th><td>0</td></tr>
+        <tr><th>Latency warnings</th><td>74</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Other Validations</h2>
+    <ul>
+      <li>Focused affected specs: 6 passed after patch.</li>
+      <li><code>npm run typecheck</code>: passed.</li>
+      <li><code>npx eslint src/components/admin/WorkEditor.tsx src/components/content/PublicResponsiveFeed.tsx</code>: passed.</li>
+    </ul>
+
+    <h2>Recommendation</h2>
+    <p>Keep the two source changes and treat the full Playwright E2E gate as passed for this branch.</p>
+  </body>
+</html>

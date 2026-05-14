@@ -1,0 +1,82 @@
+{
+  "task": "full-e2e-docker-rerun-2026-05-14",
+  "date": "2026-05-14",
+  "scope": "Docker dev full E2E rerun and fixes for observed failures",
+  "environment": {
+    "baseUrl": "http://127.0.0.1:3000",
+    "backendHealthUrl": "http://127.0.0.1:18080/api/health",
+    "productionTouched": false
+  },
+  "changes": [
+    "Corrected Study archive desktop grid to xl:grid-cols-3",
+    "Delayed existing-work generated thumbnail preview until thumbnail persistence and public revalidation complete",
+    "Added targeted unit coverage for Study grid class and thumbnail revalidation flow",
+    "Updated dated TODO and created backups"
+  ],
+  "notChanged": [
+    "Backend API and database schema",
+    "HLS transcoder implementation",
+    "Docker compose configuration",
+    "Production or SSH workflows",
+    "Unrelated dirty files"
+  ],
+  "initialFullE2E": {
+    "passed": 427,
+    "failed": 4,
+    "skipped": 4,
+    "failedSpecs": [
+      "tests/public-layout-stability.spec.ts",
+      "tests/ui-improvement-blog-card-anchors.spec.ts",
+      "tests/ui-improvement-blog-stripe-grid.spec.ts",
+      "tests/work-inline-create-flow.spec.ts"
+    ]
+  },
+  "finalFullE2E": {
+    "passed": 431,
+    "failed": 0,
+    "skipped": 4,
+    "duration": "13.0m",
+    "latency": {
+      "testCount": 435,
+      "budgetFailureCount": 0,
+      "warningCount": 67
+    }
+  },
+  "validations": [
+    {
+      "command": "BACKEND_PUBLISH_PORT=18080 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 E2E_READINESS_TIMEOUT_MS=10000 npm run test:e2e:readiness",
+      "result": "passed"
+    },
+    {
+      "command": "npm test -- --run src/test/public-responsive-feed.test.tsx src/test/work-editor.test.tsx",
+      "result": "passed: 57 tests"
+    },
+    {
+      "command": "BACKEND_PUBLISH_PORT=18080 docker compose -f docker-compose.dev.yml up -d --no-deps --build frontend",
+      "result": "passed: Next build and TypeScript completed"
+    },
+    {
+      "command": "focused Playwright rerun for four failed spec files",
+      "result": "passed: 12 tests"
+    },
+    {
+      "command": "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 npm run test:e2e",
+      "result": "passed: 431 passed, 4 skipped"
+    },
+    {
+      "command": "npx eslint targeted edited files",
+      "result": "passed with 0 errors and 2 test mock warnings"
+    },
+    {
+      "command": "git diff --check targeted files",
+      "result": "passed"
+    }
+  ],
+  "risks": [
+    "Full E2E left generated dev DB/media artifacts",
+    "Targeted ESLint reports two existing no-img-element warnings in test mocks",
+    "Repository has many unrelated pre-existing dirty files",
+    "Dev Docker stack remains running"
+  ],
+  "recommendation": "Keep the changes and isolate this task's diffs before commit."
+}

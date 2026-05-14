@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Full Playwright E2E Audit - 2026-05-14</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        line-height: 1.5;
+        margin: 2rem;
+        max-width: 960px;
+        color: #111827;
+      }
+      code, pre {
+        font-family: Consolas, monospace;
+      }
+      pre {
+        background: #f3f4f6;
+        padding: 1rem;
+        overflow-x: auto;
+      }
+      .status {
+        display: inline-block;
+        padding: 0.2rem 0.5rem;
+        border-radius: 0.25rem;
+        background: #fee2e2;
+        color: #991b1b;
+        font-weight: 700;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      th, td {
+        border: 1px solid #d1d5db;
+        padding: 0.5rem;
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        background: #f9fafb;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Full Playwright E2E Audit - 2026-05-14</h1>
+    <p><span class="status">Failed</span></p>
+    <p>Full Playwright E2E was run against the Docker-backed development stack through nginx at <code>http://127.0.0.1:3000</code>.</p>
+
+    <h2>Command</h2>
+    <pre>PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 npm run test:e2e</pre>
+
+    <h2>Result</h2>
+    <table>
+      <tbody>
+        <tr><th>Total</th><td>435</td></tr>
+        <tr><th>Passed</th><td>429</td></tr>
+        <tr><th>Failed</th><td>2</td></tr>
+        <tr><th>Skipped</th><td>4</td></tr>
+        <tr><th>Duration</th><td>14.8 minutes</td></tr>
+        <tr><th>Latency budget failures</th><td>0</td></tr>
+        <tr><th>Latency warnings</th><td>76</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Failing Tests</h2>
+    <ol>
+      <li>
+        <p><code>tests/ui-improvement-blog-card-anchors.spec.ts:25</code> - blog grid uses three columns at xl breakpoint.</p>
+        <p>Failure: expected 3 distinct first-row column positions, received 1.</p>
+      </li>
+      <li>
+        <p><code>tests/work-inline-create-flow.spec.ts:58</code> - existing work video uploads persist thumbnails immediately without requiring Update Work.</p>
+        <p>Failure: <code>getByAltText('Work thumbnail preview')</code> was not found within 5000 ms.</p>
+      </li>
+    </ol>
+
+    <h2>Artifacts</h2>
+    <ul>
+      <li><code>test-results/playwright/e2e-latency-summary.md</code></li>
+      <li><code>test-results/playwright/e2e-latency-summary.json</code></li>
+      <li><code>test-results/playwright/ui-improvement-blog-card-a-29130-ee-columns-at-xl-breakpoint-chromium-public/trace.zip</code></li>
+      <li><code>test-results/playwright/work-inline-create-flow-ex-b9844-thout-requiring-Update-Work-chromium-authenticated/trace.zip</code></li>
+    </ul>
+
+    <h2>Recommendation</h2>
+    <p>Treat the full E2E gate as failed. Fix the two failing specs, then rerun the full Playwright suite before claiming a full Playwright pass.</p>
+  </body>
+</html>
