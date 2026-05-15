@@ -1140,7 +1140,7 @@ public class PublicQueryHandlerComponentTests
         Assert.NotNull(result);
         Assert.Equal("Alpha Same Day", result!.Newer?.Title);
         Assert.Equal("Zulu Same Day", result.Older?.Title);
-        Assert.Equal(new[] { "Newer Work", "Alpha Same Day" }, result.Related.Select(x => x.Title).ToArray());
+        Assert.Equal(new[] { "Alpha Same Day", "Zulu Same Day" }, result.Related.Select(x => x.Title).ToArray());
         Assert.DoesNotContain(result.Related, x => x.Slug == "current-work");
         Assert.DoesNotContain(result.Related, x => x.Slug == "draft-work");
         Assert.Null(missing);
@@ -1393,7 +1393,7 @@ public class PublicQueryHandlerComponentTests
         Assert.NotNull(result);
         Assert.Equal("Alpha Same Day", result!.Newer?.Title);
         Assert.Equal("Zulu Same Day", result.Older?.Title);
-        Assert.Equal(new[] { "Newer Blog", "Alpha Same Day" }, result.Related.Select(x => x.Title).ToArray());
+        Assert.Equal(new[] { "Alpha Same Day", "Zulu Same Day" }, result.Related.Select(x => x.Title).ToArray());
         Assert.DoesNotContain(result.Related, x => x.Slug == "current-blog");
         Assert.DoesNotContain(result.Related, x => x.Slug == "draft-blog");
         Assert.Null(missing);

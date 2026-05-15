@@ -1,0 +1,89 @@
+{
+  "task": "public-detail-ui-pagination",
+  "date": "2026-05-15",
+  "base": {
+    "branch": "origin/dev",
+    "commit": "d0a4e42"
+  },
+  "workingBranch": "codex/public-detail-ui-pagination-20260515",
+  "status": "local_validation_passed",
+  "changed": [
+    "Widened Work and Study detail TOC rail layout.",
+    "Kept Work and Study detail light-mode reading shells white.",
+    "Increased detail related context from 9 to 24 items.",
+    "Balanced backend related context around the current item.",
+    "Fixed centered related pagination math for larger page sizes.",
+    "Added focused Vitest, xUnit, and Playwright coverage.",
+    "Updated the dated TODO and generated audit artifacts."
+  ],
+  "notChanged": [
+    "No unrelated dirty primary-worktree changes were included.",
+    "No secrets, local certs, storage state, Docker runtime data, or generated media were added.",
+    "No package upgrades or dependency remediation were attempted."
+  ],
+  "validations": [
+    {
+      "name": "focused-vitest",
+      "result": "passed",
+      "details": "4 files / 16 tests"
+    },
+    {
+      "name": "focused-backend-component",
+      "result": "passed",
+      "details": "2 tests"
+    },
+    {
+      "name": "focused-backend-integration",
+      "result": "passed",
+      "details": "2 tests"
+    },
+    {
+      "name": "targeted-eslint",
+      "result": "passed"
+    },
+    {
+      "name": "npm-run-typecheck",
+      "result": "passed"
+    },
+    {
+      "name": "npm-test",
+      "result": "passed",
+      "details": "93 files / 654 tests"
+    },
+    {
+      "name": "dotnet-test-solution",
+      "result": "passed",
+      "details": "component 133, unit 61, architecture 40, integration 234, contract 1 skipped"
+    },
+    {
+      "name": "docker-readiness",
+      "result": "passed",
+      "details": "backend http://127.0.0.1:18082/api/health, frontend http://127.0.0.1:13002"
+    },
+    {
+      "name": "focused-playwright-layout",
+      "result": "passed",
+      "details": "7 passed"
+    },
+    {
+      "name": "docker-core-full-e2e",
+      "result": "passed",
+      "details": "432 passed, 4 skipped, 0 failed, 15.5m; latency artifacts 436, budget failures 0, warnings 81"
+    }
+  ],
+  "environment": {
+    "dockerCpuCount": 8,
+    "dockerMemoryBytes": 67364700160,
+    "strictTwoCoreEightGbProven": false,
+    "backendPort": 18082,
+    "frontendHttpPort": 13002,
+    "nginxConfig": "./nginx/default.conf"
+  },
+  "risks": [
+    "Strict 2 core / 8 GB Docker limit was not proven in this run.",
+    "Existing npm audit vulnerabilities were not remediated.",
+    "Existing NU1901 AWSSDK.Core warning was not remediated.",
+    "E2E latency warnings were 81, but budget failures were 0."
+  ],
+  "recommendation": "Commit, push, open a PR into dev, and promote to main only after dev CI is green."
+}

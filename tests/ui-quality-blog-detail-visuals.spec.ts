@@ -99,7 +99,23 @@ test('VA-122 blog previous and next cards keep balanced sizing and shared chrome
 test('VA-123 Work and Study detail pages keep long-form reading bodies on a white surface', async ({ page }) => {
   await gotoWithTheme(page, '/blog/seeded-blog', 'light')
   await expectWhiteReadingSurface(page, 'blog-detail-body', '#blog-detail-content')
+  await expectWhiteReadingSurface(page, 'blog-detail-page-shell', '#blog-detail-content')
 
   await gotoWithTheme(page, '/works/seeded-work', 'light')
   await expectWhiteReadingSurface(page, 'work-detail-body', '#work-detail-content')
+  await expectWhiteReadingSurface(page, 'work-detail-page-shell', '#work-detail-content')
+})
+
+test('VA-124 Work and Study TOC rails keep a readable desktop width', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+
+  await page.goto('/blog/seeded-blog')
+  const blogTocBox = await page.getByTestId('blog-toc').boundingBox()
+  expect(blogTocBox).toBeTruthy()
+  expect(blogTocBox!.width).toBeGreaterThanOrEqual(280)
+
+  await page.goto('/works/seeded-work')
+  const workTocBox = await page.getByTestId('work-toc-rail').boundingBox()
+  expect(workTocBox).toBeTruthy()
+  expect(workTocBox!.width).toBeGreaterThanOrEqual(280)
 })

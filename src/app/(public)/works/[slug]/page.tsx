@@ -15,6 +15,8 @@ import { formatDetailPublishDate, resolveWorkContentHtml } from './work-detail-h
 
 export const revalidate = 60
 
+const detailRelatedContextLimit = 24
+
 interface PageProps {
     params: Promise<{ slug: string }>
 }
@@ -38,6 +40,35 @@ function normalizeStaticParamSlug(slug: unknown) {
     }
 
     return cleanedSlug
+}
+
+function toSortablePublishedTime(publishedAt?: string | null) {
+    if (!publishedAt) {
+        return Number.NEGATIVE_INFINITY
+    }
+
+    const timestamp = Date.parse(publishedAt)
+    return Number.isNaN(timestamp) ? Number.NEGATIVE_INFINITY : timestamp
+}
+
+function compareWorkListItems(left: { title: string; publishedAt?: string | null }, right: { title: string; publishedAt?: string | null }) {
+    const publishedTimeDelta = toSortablePublishedTime(right.publishedAt) - toSortablePublishedTime(left.publishedAt)
+    if (publishedTimeDelta !== 0) {
+        return publishedTimeDelta
+    }
+
+    return left.title.localeCompare(right.title)
+}
+
+function buildRelatedWorks(work: NonNullable<Awaited<ReturnType<typeof fetchPublicWorkBySlug>>>, related: NonNullable<Awaited<ReturnType<typeof fetchPublicWorkContext>>>['related'] = []) {
+    const byId = new Map<string, typeof related[number] | typeof work>()
+    for (const item of [work, ...related]) {
+        if (!byId.has(item.id)) {
+            byId.set(item.id, item)
+        }
+    }
+
+    return Array.from(byId.values()).sort(compareWorkListItems)
 }
 
 export async function generateStaticParams() {
@@ -78,7 +109,7 @@ export default async function WorkDetailPage({ params }: PageProps) {
     const decodedSlug = decodeURIComponent(slug)
     const [work, context] = await Promise.all([
         fetchPublicWorkBySlug(decodedSlug),
-        fetchPublicWorkContext(decodedSlug, 9).catch(() => null),
+        fetchPublicWorkContext(decodedSlug, detailRelatedContextLimit).catch(() => null),
     ])
 
     if (!work) {
@@ -92,11 +123,11 @@ export default async function WorkDetailPage({ params }: PageProps) {
     const publishDate = formatDetailPublishDate(work.publishedAt)
     const newerWork = context?.newer ?? null
     const olderWork = context?.older ?? null
-    const relatedWorks = [work, ...(context?.related ?? [])]
+    const relatedWorks = buildRelatedWorks(work, context?.related ?? [])
     return (
-        <article className="mx-auto w-full max-w-7xl px-4 py-8 md:px-6 md:py-12">
+        <article data-testid="work-detail-page-shell" className="mx-auto w-full max-w-[82rem] bg-white px-4 py-8 dark:bg-background md:px-6 md:py-12">
             <div id="work-detail-toc-start" aria-hidden="true" className="h-0" />
-            <div data-testid="work-article-content-layout" className="mx-auto w-full min-w-0 xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,48rem)_minmax(0,1fr)] xl:items-start xl:gap-12">
+            <div data-testid="work-article-content-layout" className="mx-auto w-full min-w-0 xl:grid xl:grid-cols-[minmax(2rem,1fr)_minmax(0,48rem)_minmax(20rem,22rem)] xl:items-start xl:gap-12">
                 <div data-testid="work-detail-body" className="mx-auto min-w-0 w-full max-w-3xl rounded-[2rem] border border-border/70 bg-white px-5 py-6 text-card-foreground shadow-sm dark:bg-card md:px-8 md:py-8 xl:col-start-2">
                     <header className="mb-8">
                         <h1 className="mb-4 text-3xl font-heading font-bold leading-tight text-foreground text-balance md:text-4xl">
@@ -159,7 +190,7 @@ export default async function WorkDetailPage({ params }: PageProps) {
 
                 </div>
 
-                <aside className="hidden xl:sticky xl:top-28 xl:col-start-3 xl:block xl:w-full xl:max-w-80 xl:justify-self-start xl:self-start xl:pl-10">
+                <aside className="hidden xl:sticky xl:top-28 xl:col-start-3 xl:block xl:w-full xl:max-w-none xl:justify-self-stretch xl:self-start">
                     <WorkTableOfContentsRail
                         contentRootId="work-detail-content"
                         title="On This Work"
