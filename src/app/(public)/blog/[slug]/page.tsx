@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Metadata } from 'next'
 import { Suspense } from 'react'
 import { resolveBlogRenderableContent } from '@/lib/content/blog-content'
-import { fetchAllPublicBlogs, fetchPublicBlogBySlug } from '@/lib/api/blogs'
+import { fetchPublicBlogContext, fetchPublicBlogBySlug, fetchPublicBlogs } from '@/lib/api/blogs'
 import { createPublicMetadata } from '@/lib/seo'
 import { formatDetailPublishDate } from './blog-detail-helpers'
 
@@ -44,17 +44,21 @@ function normalizeStaticParamSlug(slug: unknown) {
     return cleanedSlug
 }
 
-function getSortablePublishedTime(value?: string | null) {
-    if (!value) {
-        return 0
+export async function generateStaticParams() {
+    const firstPage = await fetchPublicBlogs(1, 100).catch(() => null)
+    if (!firstPage) {
+        return []
     }
 
-    const time = new Date(value).getTime()
-    return Number.isNaN(time) ? 0 : time
-}
+    const blogs = [...firstPage.items]
+    for (let page = 2; page <= firstPage.totalPages; page += 1) {
+        const nextPage = await fetchPublicBlogs(page, 100).catch(() => null)
+        if (!nextPage) {
+            break
+        }
+        blogs.push(...nextPage.items)
+    }
 
-export async function generateStaticParams() {
-    const blogs = await fetchAllPublicBlogs().catch(() => [])
     return blogs.flatMap((blog) => {
         const slug = normalizeStaticParamSlug(blog.slug)
         return slug ? [{ slug }] : []
@@ -81,9 +85,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function BlogDetailPage({ params }: PageProps) {
     const { slug } = await params
     const decodedSlug = decodeURIComponent(slug)
-    const [blog, allBlogs] = await Promise.all([
+    const [blog, context] = await Promise.all([
         fetchPublicBlogBySlug(decodedSlug),
-        fetchAllPublicBlogs(),
+        fetchPublicBlogContext(decodedSlug, 9).catch(() => null),
     ])
 
     if (!blog) {
@@ -93,24 +97,14 @@ export default async function BlogDetailPage({ params }: PageProps) {
     const renderedContent = resolveBlogRenderableContent(blog.content, blog.contentJson)
 
     const publishDate = formatDetailPublishDate(blog.publishedAt)
-    const sortedBlogs = [...allBlogs].sort((left, right) => {
-        const leftTime = getSortablePublishedTime(left.publishedAt)
-        const rightTime = getSortablePublishedTime(right.publishedAt)
-
-        if (leftTime !== rightTime) {
-            return rightTime - leftTime
-        }
-
-        return left.title.localeCompare(right.title)
-    })
-    const currentIndex = sortedBlogs.findIndex((item) => item.id === blog.id)
-    const newerBlog = currentIndex > 0 ? sortedBlogs[currentIndex - 1] : null
-    const olderBlog = currentIndex >= 0 && currentIndex < sortedBlogs.length - 1 ? sortedBlogs[currentIndex + 1] : null
+    const newerBlog = context?.newer ?? null
+    const olderBlog = context?.older ?? null
+    const relatedBlogs = [blog, ...(context?.related ?? [])]
 
     return (
-        <article className="mx-auto w-full max-w-[100rem] px-4 py-8 md:px-6 md:py-12 min-[1600px]:px-0">
-            <div data-testid="blog-article-content-layout" className="mx-auto w-full min-w-0 min-[1600px]:grid min-[1600px]:grid-cols-[minmax(0,1fr)_minmax(0,48rem)_minmax(0,1fr)] min-[1600px]:items-start min-[1600px]:gap-6">
-                <div data-testid="blog-detail-body" className="mx-auto min-w-0 w-full max-w-3xl rounded-[2rem] border border-border/70 bg-card px-5 py-6 shadow-sm md:px-8 md:py-8 min-[1600px]:col-start-2">
+        <article className="mx-auto w-full max-w-7xl px-4 py-8 md:px-6 md:py-12">
+            <div data-testid="blog-article-content-layout" className="mx-auto w-full min-w-0 xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,48rem)_minmax(0,1fr)] xl:items-start xl:gap-12">
+                <div data-testid="blog-detail-body" className="mx-auto min-w-0 w-full max-w-3xl rounded-[2rem] border border-border/70 bg-white px-5 py-6 text-card-foreground shadow-sm dark:bg-card md:px-8 md:py-8 xl:col-start-2">
                     <header className="mb-8">
                         <h1 className="mb-4 text-3xl font-heading font-bold leading-tight text-foreground text-balance md:text-4xl">
                             <span data-testid="blog-detail-title">{blog.title}</span>
@@ -133,7 +127,7 @@ export default async function BlogDetailPage({ params }: PageProps) {
 
                     <PublicBlogDetailAdminActions blogId={blog.id} />
 
-                    <div id="blog-detail-content" className="mt-8 min-w-0 overflow-hidden">
+                    <div id="blog-detail-content" className="mt-8 min-w-0 overflow-hidden bg-white dark:bg-card">
                         {renderedContent && (
                             <InteractiveRenderer html={renderedContent} />
                         )}
@@ -141,7 +135,7 @@ export default async function BlogDetailPage({ params }: PageProps) {
 
                 </div>
 
-                <aside className="hidden min-[1600px]:sticky min-[1600px]:top-28 min-[1600px]:col-start-3 min-[1600px]:block min-[1600px]:w-full min-[1600px]:max-w-[24rem] min-[1600px]:justify-self-start min-[1600px]:self-start">
+                <aside className="hidden xl:sticky xl:top-28 xl:col-start-3 xl:block xl:w-full xl:max-w-80 xl:justify-self-start xl:self-start xl:pl-10">
                     <div className="max-h-[calc(100vh-8rem)] overflow-y-auto">
                         <TableOfContents contentRootId="blog-detail-content" />
                     </div>
@@ -173,7 +167,7 @@ export default async function BlogDetailPage({ params }: PageProps) {
                         <RelatedContentList
                             heading="More Studies"
                             hrefBase="/blog"
-                            items={sortedBlogs}
+                            items={relatedBlogs}
                             currentItemId={blog.id}
                             desktopPageSize={9}
                             tabletPageSize={4}

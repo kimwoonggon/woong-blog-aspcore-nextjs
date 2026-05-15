@@ -7,6 +7,7 @@ using WoongBlog.Application.Modules.Composition.GetHome;
 using WoongBlog.Application.Modules.Content.Blogs.Abstractions;
 using WoongBlog.Application.Modules.Content.Blogs.GetAdminBlogById;
 using WoongBlog.Application.Modules.Content.Blogs.GetAdminBlogs;
+using WoongBlog.Application.Modules.Content.Blogs.GetBlogDetailContext;
 using WoongBlog.Application.Modules.Content.Blogs.GetBlogBySlug;
 using WoongBlog.Application.Modules.Content.Blogs.GetBlogs;
 using WoongBlog.Application.Modules.Content.Common;
@@ -17,6 +18,7 @@ namespace WoongBlog.Infrastructure.Modules.Content.Blogs.Persistence;
 public sealed class BlogQueryStore(WoongBlogDbContext dbContext) : IBlogQueryStore
 {
     private const string PostgresProviderName = "Npgsql.EntityFrameworkCore.PostgreSQL";
+    private const int MaxDetailContextLimit = 9;
     private static readonly ConcurrentDictionary<IModel, Func<WoongBlogDbContext, string, IAsyncEnumerable<BlogDetailDto>>> PublishedDetailBySlugQueries = new();
 
     private static Func<WoongBlogDbContext, string, IAsyncEnumerable<BlogDetailDto>> CreatePublishedDetailBySlugQuery(IModel _)
@@ -195,6 +197,79 @@ public sealed class BlogQueryStore(WoongBlogDbContext dbContext) : IBlogQuerySto
         return null;
     }
 
+    public async Task<BlogDetailContextDto?> GetPublishedDetailContextBySlugAsync(
+        string slug,
+        int limit,
+        CancellationToken cancellationToken)
+    {
+        var current = await dbContext.Blogs
+            .AsNoTracking()
+            .Where(blog => blog.Slug == slug && blog.Published)
+            .Select(blog => new BlogContextCurrentRow(blog.Id, blog.Title, blog.PublishedAt))
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (current is null)
+        {
+            return null;
+        }
+
+        var relatedLimit = Math.Clamp(limit, 0, MaxDetailContextLimit);
+        var publishedBlogs = dbContext.Blogs
+            .AsNoTracking()
+            .Where(blog => blog.Published && blog.Id != current.Id);
+        var currentPublishedAt = current.PublishedAt ?? DateTimeOffset.MinValue;
+
+        var newer = await publishedBlogs
+            .Where(blog =>
+                (blog.PublishedAt ?? DateTimeOffset.MinValue) > currentPublishedAt
+                || ((blog.PublishedAt ?? DateTimeOffset.MinValue) == currentPublishedAt
+                    && string.Compare(blog.Title, current.Title) < 0))
+            .OrderBy(blog => blog.PublishedAt ?? DateTimeOffset.MinValue)
+            .ThenByDescending(blog => blog.Title)
+            .Select(blog => new BlogCardDto(
+                blog.Id,
+                blog.Slug,
+                blog.Title,
+                blog.Excerpt,
+                blog.Tags,
+                blog.PublicCoverUrl,
+                blog.PublishedAt))
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var older = await publishedBlogs
+            .Where(blog =>
+                (blog.PublishedAt ?? DateTimeOffset.MinValue) < currentPublishedAt
+                || ((blog.PublishedAt ?? DateTimeOffset.MinValue) == currentPublishedAt
+                    && string.Compare(blog.Title, current.Title) > 0))
+            .OrderByDescending(blog => blog.PublishedAt ?? DateTimeOffset.MinValue)
+            .ThenBy(blog => blog.Title)
+            .Select(blog => new BlogCardDto(
+                blog.Id,
+                blog.Slug,
+                blog.Title,
+                blog.Excerpt,
+                blog.Tags,
+                blog.PublicCoverUrl,
+                blog.PublishedAt))
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var related = await publishedBlogs
+            .OrderByDescending(blog => blog.PublishedAt)
+            .ThenBy(blog => blog.Title)
+            .Take(relatedLimit)
+            .Select(blog => new BlogCardDto(
+                blog.Id,
+                blog.Slug,
+                blog.Title,
+                blog.Excerpt,
+                blog.Tags,
+                blog.PublicCoverUrl,
+                blog.PublishedAt))
+            .ToListAsync(cancellationToken);
+
+        return new BlogDetailContextDto(newer, older, related);
+    }
+
     private static IQueryable<Blog> ApplySearch(
         IQueryable<Blog> query,
         string? normalizedQuery,
@@ -212,4 +287,9 @@ public sealed class BlogQueryStore(WoongBlogDbContext dbContext) : IBlogQuerySto
             _ => query.Where(x => x.SearchTitle.Contains(normalizedQuery) || x.SearchText.Contains(normalizedQuery))
         };
     }
+
+    private sealed record BlogContextCurrentRow(
+        Guid Id,
+        string Title,
+        DateTimeOffset? PublishedAt);
 }

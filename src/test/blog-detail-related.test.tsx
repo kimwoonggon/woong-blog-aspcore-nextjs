@@ -15,14 +15,22 @@ describe('public blog detail related content', () => {
     vi.clearAllMocks()
   })
 
-  it('passes the full blog list including the current post to the related content section', async () => {
-    const relatedItems = Array.from({ length: 37 }, (_, index) => ({
+  it('passes bounded blog context including the current post to the related content section', async () => {
+    const relatedItems = Array.from({ length: 9 }, (_, index) => ({
       id: `related-${index + 1}`,
       slug: `related-${index + 1}`,
       title: `Related ${index + 1}`,
       excerpt: `Excerpt ${index + 1}`,
       tags: [],
       publishedAt: '2026-03-29T00:00:00.000Z',
+    }))
+    const fetchAllPublicBlogs = vi.fn(async () => {
+      throw new Error('blog detail page render must not fetch all public blogs')
+    })
+    const fetchPublicBlogContext = vi.fn(async () => ({
+      newer: null,
+      older: null,
+      related: relatedItems,
     }))
 
     vi.doMock('@/lib/api/blogs', () => ({
@@ -35,10 +43,8 @@ describe('public blog detail related content', () => {
         publishedAt: '2026-03-29T00:00:00.000Z',
         contentJson: JSON.stringify({ html: '<p>Hello</p>' }),
       })),
-      fetchAllPublicBlogs: vi.fn(async () => [
-        { id: 'blog-1', slug: 'current-post', title: 'Current Post', excerpt: 'excerpt', tags: [], publishedAt: '2026-03-29T00:00:00.000Z' },
-        ...relatedItems,
-      ]),
+      fetchPublicBlogContext,
+      fetchAllPublicBlogs,
       fetchAdminBlogById: vi.fn(async () => null),
     }))
 
@@ -63,10 +69,24 @@ describe('public blog detail related content', () => {
     const BlogDetailPage = (await import('@/app/(public)/blog/[slug]/page')).default
     render(await BlogDetailPage({ params: Promise.resolve({ slug: 'current-post' }) }))
 
-    expect(screen.getByTestId('related-count')).toHaveTextContent('38')
+    expect(screen.getByTestId('related-count')).toHaveTextContent('10')
+    expect(fetchPublicBlogContext).toHaveBeenCalledWith('current-post', 9)
+    expect(fetchAllPublicBlogs).not.toHaveBeenCalled()
   }, 120000)
 
-  it('orders valid dated blog relations before invalid and missing dates', async () => {
+  it('passes bounded blog context relation order through unchanged', async () => {
+    const fetchAllPublicBlogs = vi.fn(async () => {
+      throw new Error('blog detail page render must not fetch all public blogs')
+    })
+    const fetchPublicBlogContext = vi.fn(async () => ({
+      newer: { id: 'newer', slug: 'newer-post', title: 'Newer Valid Post', excerpt: '', tags: [], publishedAt: '2026-03-30T00:00:00.000Z' },
+      older: { id: 'older', slug: 'older-post', title: 'Older Valid Post', excerpt: '', tags: [], publishedAt: '2026-03-10T00:00:00.000Z' },
+      related: [
+        { id: 'newer', slug: 'newer-post', title: 'Newer Valid Post', excerpt: '', tags: [], publishedAt: '2026-03-30T00:00:00.000Z' },
+        { id: 'older', slug: 'older-post', title: 'Older Valid Post', excerpt: '', tags: [], publishedAt: '2026-03-10T00:00:00.000Z' },
+      ],
+    }))
+
     vi.doMock('@/lib/api/blogs', () => ({
       fetchPublicBlogBySlug: vi.fn(async () => ({
         id: 'current',
@@ -77,13 +97,8 @@ describe('public blog detail related content', () => {
         publishedAt: '2026-03-20T00:00:00.000Z',
         contentJson: JSON.stringify({ html: '<p>Hello</p>' }),
       })),
-      fetchAllPublicBlogs: vi.fn(async () => [
-        { id: 'invalid', slug: 'invalid-post', title: 'Invalid Date Post', excerpt: '', tags: [], publishedAt: 'not-a-date' },
-        { id: 'older', slug: 'older-post', title: 'Older Valid Post', excerpt: '', tags: [], publishedAt: '2026-03-10T00:00:00.000Z' },
-        { id: 'missing', slug: 'missing-post', title: 'Missing Date Post', excerpt: '', tags: [], publishedAt: null },
-        { id: 'newer', slug: 'newer-post', title: 'Newer Valid Post', excerpt: '', tags: [], publishedAt: '2026-03-30T00:00:00.000Z' },
-        { id: 'current', slug: 'current-post', title: 'Current Post', excerpt: '', tags: [], publishedAt: '2026-03-20T00:00:00.000Z' },
-      ]),
+      fetchPublicBlogContext,
+      fetchAllPublicBlogs,
       fetchAdminBlogById: vi.fn(async () => null),
     }))
 
@@ -111,11 +126,11 @@ describe('public blog detail related content', () => {
     render(await BlogDetailPage({ params: Promise.resolve({ slug: 'current-post' }) }))
 
     expect(screen.getByTestId('related-order')).toHaveTextContent([
-      'Newer Valid Post',
       'Current Post',
+      'Newer Valid Post',
       'Older Valid Post',
-      'Invalid Date Post',
-      'Missing Date Post',
     ].join(''))
+    expect(fetchPublicBlogContext).toHaveBeenCalledWith('current-post', 9)
+    expect(fetchAllPublicBlogs).not.toHaveBeenCalled()
   }, 120000)
 })

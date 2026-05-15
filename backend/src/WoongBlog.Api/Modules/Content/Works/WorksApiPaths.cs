@@ -14,4 +14,5 @@ internal static class WorksApiPaths
     internal const string DeleteWork = $"{AdminRoot}/{{id:guid}}";
     internal const string GetWorks = PublicRoot;
     internal const string GetWorkBySlug = $"{PublicRoot}/{{slug}}";
+    internal const string GetWorkDetailContext = $"{PublicRoot}/{{slug}}/context";
 }

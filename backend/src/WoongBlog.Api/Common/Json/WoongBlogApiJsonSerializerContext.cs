@@ -1,9 +1,11 @@
 using System.Text.Json.Serialization;
 using WoongBlog.Application.Modules.Composition.GetHome;
+using WoongBlog.Application.Modules.Content.Blogs.GetBlogDetailContext;
 using WoongBlog.Application.Modules.Content.Blogs.GetBlogBySlug;
 using WoongBlog.Application.Modules.Content.Blogs.GetBlogs;
 using WoongBlog.Application.Modules.Content.Common;
 using WoongBlog.Application.Modules.Content.Pages.GetPageBySlug;
+using WoongBlog.Application.Modules.Content.Works.GetWorkDetailContext;
 using WoongBlog.Application.Modules.Content.Works.GetWorkBySlug;
 using WoongBlog.Application.Modules.Content.Works.GetWorks;
 using WoongBlog.Application.Modules.Content.Works.WorkVideos;
@@ -23,9 +25,11 @@ namespace WoongBlog.Api.Common.Json;
 [JsonSerializable(typeof(PagedBlogsDto))]
 [JsonSerializable(typeof(BlogCardDto))]
 [JsonSerializable(typeof(BlogDetailDto))]
+[JsonSerializable(typeof(BlogDetailContextDto))]
 [JsonSerializable(typeof(PagedWorksDto))]
 [JsonSerializable(typeof(WorkCardDto))]
 [JsonSerializable(typeof(WorkDetailDto))]
+[JsonSerializable(typeof(WorkDetailContextDto))]
 [JsonSerializable(typeof(PublicContentBodyDto))]
 [JsonSerializable(typeof(WorkVideoDto))]
 [JsonSerializable(typeof(PublicWorkVideoDto))]

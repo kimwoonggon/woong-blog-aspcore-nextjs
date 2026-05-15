@@ -1,0 +1,74 @@
+{
+  "task": "dev-main-promotion",
+  "date": "2026-05-15",
+  "generatedAtUtc": "2026-05-15T10:55:33Z",
+  "status": "pre_push_validated",
+  "branch": "codex/frontend-test-perfect-completion-20260515",
+  "base": "origin/dev",
+  "changed": [
+    "backend public blog/work detail context endpoints",
+    "bounded detail context query DTO handler paths",
+    "query-store context methods",
+    "frontend public detail pages using bounded context",
+    "paginated public static route tests",
+    "home six-card featured works layout",
+    "live public search debounce",
+    "direct Vitest xUnit Playwright coverage",
+    "frontend test completion reports"
+  ],
+  "intentionallyNotChanged": [
+    "production redeploy workflow rollback-like dirty diff",
+    "Dockerfile SWC compatibility rollback-like dirty diff",
+    "runtime allowlist rollback-like dirty diff",
+    "production preflight rollback-like dirty diff",
+    "database schema patch rollback-like dirty diff",
+    "TOC component accessibility rollback-like dirty diff",
+    "stale primary dirty worktree wholesale push"
+  ],
+  "validations": [
+    {
+      "command": "./node_modules/.bin/vitest run focused frontend tests --pool=threads --maxWorkers=2 --reporter=dot",
+      "status": "passed",
+      "summary": "7 files, 40 tests"
+    },
+    {
+      "command": "npm run lint -- targeted frontend files",
+      "status": "passed"
+    },
+    {
+      "command": "npm run typecheck",
+      "status": "passed"
+    },
+    {
+      "command": "dotnet test component filter PublicQueryHandlerComponentTests",
+      "status": "passed",
+      "summary": "43 tests"
+    },
+    {
+      "command": "dotnet test integration filter PublicEndpointsTests",
+      "status": "passed",
+      "summary": "33 tests"
+    },
+    {
+      "command": "npm test",
+      "status": "passed",
+      "summary": "93 files, 653 tests, 1329.62s"
+    },
+    {
+      "command": "dotnet test backend/WoongBlog.sln",
+      "status": "passed",
+      "summary": "component 133, unit 61, architecture 40, integration 234, contract 1 skipped"
+    },
+    {
+      "command": "git diff --check",
+      "status": "passed"
+    }
+  ],
+  "risks": [
+    "GitHub dev CI pending",
+    "GitHub main CI pending",
+    "clean-worktree Docker E2E not rerun after isolating the scoped branch",
+    "existing frontend warning noise remains"
+  ],
+  "recommendation": "Push the scoped branch and open the dev gate PR. Promote to main only after CI is green."
+}

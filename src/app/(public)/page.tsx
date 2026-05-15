@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { LocalQaNoImageBoundary } from '@/components/content/LocalQaQueryBoundary'
 import { fetchPublicHome } from '@/lib/api/home'
 import { parsePageContentJson, toHomeContent } from '@/lib/content/page-content'
+import { cn } from '@/lib/utils'
 
 export const revalidate = 60
 
@@ -49,7 +50,7 @@ export default async function HomePage() {
   const introText = homeContent.introText || 'Amet minim mollit non deserunt ullamco est sit aliqua dolor do amet sint. Velit officia consequat duis enim velit mollit. Exercitation veniam consequat sunt nostrud amet.'
   const profileImageUrl = homeContent.profileImageUrl || ''
   const recentPosts = (payload?.recentPosts || []).slice(0, 6)
-  const featuredWorks = (payload?.featuredWorks || []).slice(0, 8)
+  const featuredWorks = payload?.featuredWorks || []
 
   return (
     <div className="container mx-auto max-w-7xl flex flex-col gap-12 px-4 py-8 md:px-6 md:py-10">
@@ -129,7 +130,7 @@ export default async function HomePage() {
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Link>
         </div>
-        <div data-testid="featured-works-grid" className="grid min-w-0 grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4">
+        <div data-testid="featured-works-grid" className="grid min-w-0 grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
           {featuredWorks.length > 0 ? (
             featuredWorks.map((work, index) => {
               const thumbnailUrl = work.thumbnailUrl || null
@@ -140,7 +141,10 @@ export default async function HomePage() {
                   key={work.id}
                   href={`/works/${work.slug}`}
                   data-testid="featured-work-card"
-                  className={`group block h-full min-w-0 max-w-full ${index >= 4 ? 'max-md:hidden' : ''}`}
+                  className={cn(
+                    'group h-full min-w-0 max-w-full',
+                    index >= 4 ? 'hidden lg:block' : 'block',
+                  )}
                 >
                   <Card className="flex h-full min-w-0 max-w-full flex-col overflow-hidden rounded-2xl border-border/80 bg-background py-0 shadow-sm transition hover:border-primary/30 hover:shadow-md">
                     <div className="relative min-w-0 aspect-[4/3] overflow-hidden bg-muted">

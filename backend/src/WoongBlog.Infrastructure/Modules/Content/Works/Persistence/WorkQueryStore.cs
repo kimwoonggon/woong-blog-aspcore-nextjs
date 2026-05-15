@@ -9,6 +9,7 @@ using WoongBlog.Application.Modules.Content.Common.Support;
 using WoongBlog.Application.Modules.Content.Works.Abstractions;
 using WoongBlog.Application.Modules.Content.Works.GetAdminWorkById;
 using WoongBlog.Application.Modules.Content.Works.GetAdminWorks;
+using WoongBlog.Application.Modules.Content.Works.GetWorkDetailContext;
 using WoongBlog.Application.Modules.Content.Works.GetWorkBySlug;
 using WoongBlog.Application.Modules.Content.Works.GetWorks;
 using WoongBlog.Application.Modules.Content.Works.Support;
@@ -21,6 +22,7 @@ public sealed class WorkQueryStore(
     IWorkVideoPlaybackUrlBuilder playbackUrlBuilder) : IWorkQueryStore
 {
     private const string PostgresProviderName = "Npgsql.EntityFrameworkCore.PostgreSQL";
+    private const int MaxDetailContextLimit = 9;
     private static readonly ConcurrentDictionary<IModel, Func<WoongBlogDbContext, string, IAsyncEnumerable<PublicWorkDetailRow>>> PublishedDetailBySlugQueries = new();
 
     private static Func<WoongBlogDbContext, string, IAsyncEnumerable<PublicWorkDetailRow>> CreatePublishedDetailBySlugQuery(IModel _)
@@ -186,6 +188,82 @@ public sealed class WorkQueryStore(
         return work is null
             ? null
             : BuildPublicDetail(work);
+    }
+
+    public async Task<WorkDetailContextDto?> GetPublishedDetailContextBySlugAsync(
+        string slug,
+        int limit,
+        CancellationToken cancellationToken)
+    {
+        var current = await dbContext.Works
+            .AsNoTracking()
+            .Where(work => work.Slug == slug && work.Published)
+            .Select(work => new WorkContextCurrentRow(work.Id, work.Title, work.PublishedAt))
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (current is null)
+        {
+            return null;
+        }
+
+        var relatedLimit = Math.Clamp(limit, 0, MaxDetailContextLimit);
+        var publishedWorks = dbContext.Works
+            .AsNoTracking()
+            .Where(work => work.Published && work.Id != current.Id);
+        var currentPublishedAt = current.PublishedAt ?? DateTimeOffset.MinValue;
+
+        var newer = await publishedWorks
+            .Where(work =>
+                (work.PublishedAt ?? DateTimeOffset.MinValue) > currentPublishedAt
+                || ((work.PublishedAt ?? DateTimeOffset.MinValue) == currentPublishedAt
+                    && string.Compare(work.Title, current.Title) < 0))
+            .OrderBy(work => work.PublishedAt ?? DateTimeOffset.MinValue)
+            .ThenByDescending(work => work.Title)
+            .Select(work => new WorkCardDto(
+                work.Id,
+                work.Slug,
+                work.Title,
+                work.Excerpt,
+                work.Category,
+                work.Tags,
+                work.PublicThumbnailUrl,
+                work.PublishedAt))
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var older = await publishedWorks
+            .Where(work =>
+                (work.PublishedAt ?? DateTimeOffset.MinValue) < currentPublishedAt
+                || ((work.PublishedAt ?? DateTimeOffset.MinValue) == currentPublishedAt
+                    && string.Compare(work.Title, current.Title) > 0))
+            .OrderByDescending(work => work.PublishedAt ?? DateTimeOffset.MinValue)
+            .ThenBy(work => work.Title)
+            .Select(work => new WorkCardDto(
+                work.Id,
+                work.Slug,
+                work.Title,
+                work.Excerpt,
+                work.Category,
+                work.Tags,
+                work.PublicThumbnailUrl,
+                work.PublishedAt))
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var related = await publishedWorks
+            .OrderByDescending(work => work.PublishedAt)
+            .ThenBy(work => work.Title)
+            .Take(relatedLimit)
+            .Select(work => new WorkCardDto(
+                work.Id,
+                work.Slug,
+                work.Title,
+                work.Excerpt,
+                work.Category,
+                work.Tags,
+                work.PublicThumbnailUrl,
+                work.PublishedAt))
+            .ToListAsync(cancellationToken);
+
+        return new WorkDetailContextDto(newer, older, related);
     }
 
     private async Task<AdminWorkDetailDto> BuildAdminDetailAsync(Work work, CancellationToken cancellationToken)
@@ -441,4 +519,9 @@ public sealed class WorkQueryStore(
         string PublicSocialShareMessage,
         int VideosVersion,
         string PublicVideosJson);
+
+    private sealed record WorkContextCurrentRow(
+        Guid Id,
+        string Title,
+        DateTimeOffset? PublishedAt);
 }

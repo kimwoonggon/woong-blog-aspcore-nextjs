@@ -3,6 +3,7 @@ using WoongBlog.Api.Modules.Content.Blogs.CreateBlog;
 using WoongBlog.Api.Modules.Content.Blogs.DeleteBlog;
 using WoongBlog.Api.Modules.Content.Blogs.GetAdminBlogById;
 using WoongBlog.Api.Modules.Content.Blogs.GetAdminBlogs;
+using WoongBlog.Api.Modules.Content.Blogs.GetBlogDetailContext;
 using WoongBlog.Api.Modules.Content.Blogs.GetBlogBySlug;
 using WoongBlog.Api.Modules.Content.Blogs.GetBlogs;
 using WoongBlog.Api.Modules.Content.Blogs.UpdateBlog;
@@ -19,6 +20,7 @@ internal static class BlogsEndpoints
         app.MapUpdateBlog();
         app.MapDeleteBlog();
         app.MapGetBlogs();
+        app.MapGetBlogDetailContext();
         app.MapGetBlogBySlug();
     }
 }
