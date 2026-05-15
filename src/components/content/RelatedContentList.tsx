@@ -80,8 +80,9 @@ function resolveInitialPage(
   }
 
   const totalWindows = Math.max(1, items.length - pageSize + 1)
-  const centeredWindow = Math.max(1, Math.min(totalWindows, currentIndex - 1))
-  return centeredWindow
+  const centeredWindow = currentIndex - Math.floor(pageSize / 2) + 1
+  const boundedCenteredWindow = Math.max(1, Math.min(totalWindows, centeredWindow))
+  return boundedCenteredWindow
 }
 
 function RelatedContentPager({

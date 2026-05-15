@@ -16,7 +16,7 @@ describe('public blog detail related content', () => {
   })
 
   it('passes bounded blog context including the current post to the related content section', async () => {
-    const relatedItems = Array.from({ length: 9 }, (_, index) => ({
+    const relatedItems = Array.from({ length: 24 }, (_, index) => ({
       id: `related-${index + 1}`,
       slug: `related-${index + 1}`,
       title: `Related ${index + 1}`,
@@ -69,12 +69,12 @@ describe('public blog detail related content', () => {
     const BlogDetailPage = (await import('@/app/(public)/blog/[slug]/page')).default
     render(await BlogDetailPage({ params: Promise.resolve({ slug: 'current-post' }) }))
 
-    expect(screen.getByTestId('related-count')).toHaveTextContent('10')
-    expect(fetchPublicBlogContext).toHaveBeenCalledWith('current-post', 9)
+    expect(screen.getByTestId('related-count')).toHaveTextContent('25')
+    expect(fetchPublicBlogContext).toHaveBeenCalledWith('current-post', 24)
     expect(fetchAllPublicBlogs).not.toHaveBeenCalled()
   }, 120000)
 
-  it('passes bounded blog context relation order through unchanged', async () => {
+  it('sorts bounded blog context around the current post before rendering related content', async () => {
     const fetchAllPublicBlogs = vi.fn(async () => {
       throw new Error('blog detail page render must not fetch all public blogs')
     })
@@ -82,8 +82,8 @@ describe('public blog detail related content', () => {
       newer: { id: 'newer', slug: 'newer-post', title: 'Newer Valid Post', excerpt: '', tags: [], publishedAt: '2026-03-30T00:00:00.000Z' },
       older: { id: 'older', slug: 'older-post', title: 'Older Valid Post', excerpt: '', tags: [], publishedAt: '2026-03-10T00:00:00.000Z' },
       related: [
-        { id: 'newer', slug: 'newer-post', title: 'Newer Valid Post', excerpt: '', tags: [], publishedAt: '2026-03-30T00:00:00.000Z' },
         { id: 'older', slug: 'older-post', title: 'Older Valid Post', excerpt: '', tags: [], publishedAt: '2026-03-10T00:00:00.000Z' },
+        { id: 'newer', slug: 'newer-post', title: 'Newer Valid Post', excerpt: '', tags: [], publishedAt: '2026-03-30T00:00:00.000Z' },
       ],
     }))
 
@@ -126,11 +126,11 @@ describe('public blog detail related content', () => {
     render(await BlogDetailPage({ params: Promise.resolve({ slug: 'current-post' }) }))
 
     expect(screen.getByTestId('related-order')).toHaveTextContent([
-      'Current Post',
       'Newer Valid Post',
+      'Current Post',
       'Older Valid Post',
     ].join(''))
-    expect(fetchPublicBlogContext).toHaveBeenCalledWith('current-post', 9)
+    expect(fetchPublicBlogContext).toHaveBeenCalledWith('current-post', 24)
     expect(fetchAllPublicBlogs).not.toHaveBeenCalled()
   }, 120000)
 })
