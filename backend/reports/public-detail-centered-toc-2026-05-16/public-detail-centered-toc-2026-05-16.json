@@ -1,0 +1,95 @@
+{
+  "task": "public-detail-centered-toc-2026-05-16",
+  "date": "2026-05-16",
+  "scope": "Work and Study public detail UI follow-up for light-mode white surfaces and body centering independent of the TOC rail.",
+  "changed": [
+    "Re-centered Blog and Work detail article bodies with symmetric desktop grid columns.",
+    "Made the TOC rail detached with viewport-aware clamp width.",
+    "Changed light-mode root background and public detail surfaces to white.",
+    "Added Playwright tests VA-125 and VA-126.",
+    "Replaced safe-area arbitrary Tailwind classes with named CSS utilities.",
+    "Restricted Tailwind source detection to src to avoid scanning reports and backups."
+  ],
+  "intentionallyNotChanged": [
+    "Backend API, database, domain, and persistence code.",
+    "Public content pagination behavior.",
+    "Dark-mode palette redesign.",
+    "Remote dev/main promotion."
+  ],
+  "goalVerification": [
+    {
+      "requirement": "Light-mode basic color should be white.",
+      "evidence": "Root light --background is pure white and VA-126 passed."
+    },
+    {
+      "requirement": "Cards, backgrounds, and bordered detail areas should be white in light mode.",
+      "evidence": "TOC, related shell, related cards, page shell, body, and content root are verified by VA-126."
+    },
+    {
+      "requirement": "The wider TOC rail must not push Work/Study content left.",
+      "evidence": "VA-125 verifies Blog and Work article body center at the 1440px viewport midpoint within 4px."
+    }
+  ],
+  "validations": [
+    {
+      "name": "Red Playwright before implementation",
+      "command": "npx playwright test tests/ui-quality-blog-detail-visuals.spec.ts --grep \"VA-125|VA-126\" --workers=1",
+      "result": "failed as expected: body center 152px off; light body background 7 RGB levels below white"
+    },
+    {
+      "name": "Focused local Playwright",
+      "command": "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:13016 BACKEND_PUBLISH_PORT=18082 ENABLE_LOCAL_ADMIN_SHORTCUT=true PLAYWRIGHT_EXPECT_LOCAL_ADMIN_SHORTCUT=visible npx playwright test tests/ui-quality-blog-detail-visuals.spec.ts --grep \"VA-125|VA-126\" --workers=1",
+      "result": "2 passed"
+    },
+    {
+      "name": "Relevant local Playwright regression subset",
+      "command": "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:13016 BACKEND_PUBLISH_PORT=18082 ENABLE_LOCAL_ADMIN_SHORTCUT=true PLAYWRIGHT_EXPECT_LOCAL_ADMIN_SHORTCUT=visible npx playwright test tests/ui-quality-blog-detail-visuals.spec.ts tests/public-blog-toc-layout.spec.ts tests/ui-quality-visual-advanced.spec.ts tests/ui-improvement-related-content-width.spec.ts tests/ui-improvement-blog-toc.spec.ts tests/public-detail-toc-fallback.spec.ts tests/mobile-public-navigation.spec.ts tests/ui-header-responsive.spec.ts --workers=1",
+      "result": "25 passed"
+    },
+    {
+      "name": "Focused Vitest",
+      "command": "npm test -- src/test/table-of-contents.test.tsx src/test/navbar-mobile-nav.test.tsx",
+      "result": "2 files passed, 14 tests passed"
+    },
+    {
+      "name": "ESLint",
+      "command": "npm run lint -- changed frontend/test files",
+      "result": "passed"
+    },
+    {
+      "name": "TypeScript",
+      "command": "npm run typecheck",
+      "result": "passed"
+    },
+    {
+      "name": "Production build",
+      "command": "npm run build",
+      "result": "passed"
+    },
+    {
+      "name": "Docker dev stack build and readiness",
+      "command": "POSTGRES_DATA_DIR=/home/kimwoonggon/.woong-blog-docker/dev-detail-layout-20260516/postgres BACKEND_PUBLISH_PORT=18180 NGINX_HTTP_PORT=13017 NGINX_HTTPS_PORT=13018 ./scripts/dev-up.sh",
+      "result": "frontend/backend images built; backend health ok; frontend login 200 after nginx recreated with nginx/default.conf"
+    },
+    {
+      "name": "Focused Docker Playwright",
+      "command": "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:13017 BACKEND_PUBLISH_PORT=18180 ENABLE_LOCAL_ADMIN_SHORTCUT=true PLAYWRIGHT_EXPECT_LOCAL_ADMIN_SHORTCUT=visible npx playwright test tests/ui-quality-blog-detail-visuals.spec.ts --grep \"VA-125|VA-126\" --workers=1",
+      "result": "2 passed"
+    },
+    {
+      "name": "Whitespace",
+      "command": "git diff --check",
+      "result": "passed"
+    }
+  ],
+  "risks": [
+    "Docker Desktop resource limits were not changed or proven to be 2 core / 8GB.",
+    "Full npm test was not run; targeted Vitest passed and the pre-existing public-static-routes stale mock issue remains out of scope.",
+    "Full core E2E was not rerun; targeted local and Docker Playwright coverage was used for this UI-scoped follow-up.",
+    "Docker stack remains running on frontend http://127.0.0.1:13017 and backend http://127.0.0.1:18180 for inspection."
+  ],
+  "externalReferences": [
+    "https://tailwindcss.com/docs/detecting-classes-in-source-files"
+  ],
+  "finalRecommendation": "Commit this branch and push/open it toward dev; run CI and a full promotion suite before merging to main."
+}

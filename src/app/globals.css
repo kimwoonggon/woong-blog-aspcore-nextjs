@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import "tailwindcss" source("../");
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "highlight.js/styles/github-dark.css";
@@ -56,8 +56,8 @@
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(0.98 0 0);
-  /* Vapor White #FAFAFA */
+  --background: oklch(1 0 0);
+  /* Pure White */
   --foreground: oklch(0.23 0.06 280);
   /* Deep Ink #2F2941 (approx) */
   --card: oklch(1 0 0);
@@ -241,6 +241,28 @@
   .dark ::selection {
     background: oklch(0.60 0.22 25 / 40%);
     color: var(--foreground);
+  }
+}
+
+.safe-area-main-bottom {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 4.8rem);
+}
+
+.safe-area-footer-bottom {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 5.8rem);
+}
+
+.safe-area-mobile-tabs {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 0.35rem);
+}
+
+@media (min-width: 64rem) {
+  .safe-area-main-bottom {
+    padding-bottom: 0;
+  }
+
+  .safe-area-footer-bottom {
+    padding-bottom: 1.5rem;
   }
 }
 

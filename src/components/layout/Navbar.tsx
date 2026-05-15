@@ -426,7 +426,7 @@ export function Navbar({ ownerName = "John Doe" }: NavbarProps) {
                 data-testid="mobile-bottom-nav"
                 className="fixed inset-x-0 bottom-0 z-[60] border-t border-border/80 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 lg:hidden"
             >
-                <ul className="grid grid-cols-6 gap-1 px-2 pb-[calc(env(safe-area-inset-bottom)+0.35rem)] pt-1.5">
+                <ul className="safe-area-mobile-tabs grid grid-cols-6 gap-1 px-2 pt-1.5">
                     {mobileTabItems.map(({ name, href, icon: Icon }) => {
                         const active = isActivePath(pathname, href)
                         return (

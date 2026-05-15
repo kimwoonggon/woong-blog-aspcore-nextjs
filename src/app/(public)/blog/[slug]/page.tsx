@@ -134,7 +134,7 @@ export default async function BlogDetailPage({ params }: PageProps) {
 
     return (
         <article data-testid="blog-detail-page-shell" className="mx-auto w-full max-w-[82rem] bg-white px-4 py-8 dark:bg-background md:px-6 md:py-12">
-            <div data-testid="blog-article-content-layout" className="mx-auto w-full min-w-0 xl:grid xl:grid-cols-[minmax(2rem,1fr)_minmax(0,48rem)_minmax(20rem,22rem)] xl:items-start xl:gap-12">
+            <div data-testid="blog-article-content-layout" className="mx-auto w-full min-w-0 xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,48rem)_minmax(0,1fr)] xl:items-start xl:gap-12">
                 <div data-testid="blog-detail-body" className="mx-auto min-w-0 w-full max-w-3xl rounded-[2rem] border border-border/70 bg-white px-5 py-6 text-card-foreground shadow-sm dark:bg-card md:px-8 md:py-8 xl:col-start-2">
                     <header className="mb-8">
                         <h1 className="mb-4 text-3xl font-heading font-bold leading-tight text-foreground text-balance md:text-4xl">
@@ -166,7 +166,7 @@ export default async function BlogDetailPage({ params }: PageProps) {
 
                 </div>
 
-                <aside className="hidden xl:sticky xl:top-28 xl:col-start-3 xl:block xl:w-full xl:max-w-none xl:justify-self-stretch xl:self-start">
+                <aside className="hidden xl:sticky xl:top-28 xl:col-start-3 xl:block xl:w-[clamp(13rem,calc(50vw-27rem),20rem)] xl:max-w-none xl:justify-self-start xl:self-start">
                     <div className="max-h-[calc(100vh-8rem)] overflow-y-auto">
                         <TableOfContents contentRootId="blog-detail-content" />
                     </div>
@@ -193,7 +193,7 @@ export default async function BlogDetailPage({ params }: PageProps) {
                     </Suspense>
                 )}
 
-                <div data-testid="blog-related-shell" className="mt-16 border-t pt-12">
+                <div data-testid="blog-related-shell" className="mt-16 border-t bg-white pt-12 dark:bg-background">
                     <Suspense fallback={null}>
                         <RelatedContentList
                             heading="More Studies"
