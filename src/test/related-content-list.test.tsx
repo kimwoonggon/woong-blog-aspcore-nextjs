@@ -121,6 +121,35 @@ describe('RelatedContentList', () => {
     expect(screen.getByTestId('related-blog-current-card')).toHaveTextContent('Post 5')
   })
 
+  it('centers the current item for desktop-sized related windows and shows page numbers around it', () => {
+    mocks.pageSize = 9
+    const longItems = Array.from({ length: 25 }, (_, index) => ({
+      id: `post-${index + 1}`,
+      slug: `post-${index + 1}`,
+      title: `Post ${index + 1}`,
+      excerpt: `Excerpt ${index + 1}`,
+      publishedAt: `2026-04-${String(Math.min(index + 1, 28)).padStart(2, '0')}T00:00:00.000Z`,
+    }))
+
+    render(
+      <RelatedContentList
+        heading="More Studies"
+        hrefBase="/blog"
+        items={longItems}
+        currentItemId="post-13"
+        centerCurrentOnInitialPage
+        testIdBase="related-blog"
+      />,
+    )
+
+    expect(screen.getByText('Page 9 of 17')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Go to page 7' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Go to page 11' })).toBeInTheDocument()
+    expect(screen.getByTestId('related-blog-current-card')).toHaveTextContent('Post 13')
+    expect(screen.getByTestId('related-blog-grid')).toHaveTextContent('Post 9')
+    expect(screen.getByTestId('related-blog-grid')).toHaveTextContent('Post 17')
+  })
+
   it('renders fallback dates for invalid or missing related item dates', () => {
     const dateEdgeItems = [
       { id: 'post-invalid', slug: 'post-invalid', title: 'Malformed Date Post', excerpt: 'Excerpt', publishedAt: 'not-a-date' },

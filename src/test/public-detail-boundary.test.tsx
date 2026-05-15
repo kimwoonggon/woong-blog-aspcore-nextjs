@@ -82,7 +82,7 @@ describe('public detail route admin boundary', () => {
     expect(screen.getByTestId('blog-admin-actions')).toHaveTextContent('blog-1')
     expect(fetchServerSession).not.toHaveBeenCalled()
     expect(fetchAdminBlogById).not.toHaveBeenCalled()
-    expect(fetchPublicBlogContext).toHaveBeenCalledWith('public-blog', 9)
+    expect(fetchPublicBlogContext).toHaveBeenCalledWith('public-blog', 24)
     expect(fetchAllPublicBlogs).not.toHaveBeenCalled()
   }, 30_000)
 
@@ -130,7 +130,7 @@ describe('public detail route admin boundary', () => {
     expect(screen.getByTestId('work-admin-actions')).toHaveTextContent('work-1')
     expect(fetchServerSession).not.toHaveBeenCalled()
     expect(fetchAdminWorkById).not.toHaveBeenCalled()
-    expect(fetchPublicWorkContext).toHaveBeenCalledWith('public-work', 9)
+    expect(fetchPublicWorkContext).toHaveBeenCalledWith('public-work', 24)
     expect(fetchAllPublicWorks).not.toHaveBeenCalled()
   })
 

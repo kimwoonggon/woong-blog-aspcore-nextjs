@@ -15,7 +15,7 @@ describe('public work detail related content ordering', () => {
     vi.clearAllMocks()
   })
 
-  it('passes bounded work context relations to the related content section', async () => {
+  it('sorts bounded work context around the current work before rendering related content', async () => {
     const fetchAllPublicWorks = vi.fn(async () => {
       throw new Error('work detail page render must not fetch all public works')
     })
@@ -23,8 +23,8 @@ describe('public work detail related content ordering', () => {
       newer: { id: 'newer', slug: 'newer-work', title: 'Newer Valid Work', excerpt: '', category: 'Platform', tags: [], publishedAt: '2026-03-30T00:00:00.000Z' },
       older: { id: 'older', slug: 'older-work', title: 'Older Valid Work', excerpt: '', category: 'Platform', tags: [], publishedAt: '2026-03-10T00:00:00.000Z' },
       related: [
-        { id: 'newer', slug: 'newer-work', title: 'Newer Valid Work', excerpt: '', category: 'Platform', tags: [], publishedAt: '2026-03-30T00:00:00.000Z' },
         { id: 'older', slug: 'older-work', title: 'Older Valid Work', excerpt: '', category: 'Platform', tags: [], publishedAt: '2026-03-10T00:00:00.000Z' },
+        { id: 'newer', slug: 'newer-work', title: 'Newer Valid Work', excerpt: '', category: 'Platform', tags: [], publishedAt: '2026-03-30T00:00:00.000Z' },
       ],
     }))
 
@@ -79,11 +79,11 @@ describe('public work detail related content ordering', () => {
     render(await WorkDetailPage({ params: Promise.resolve({ slug: 'current-work' }) }))
 
     expect(screen.getByTestId('related-order')).toHaveTextContent([
-      'Current Work',
       'Newer Valid Work',
+      'Current Work',
       'Older Valid Work',
     ].join(''))
-    expect(fetchPublicWorkContext).toHaveBeenCalledWith('current-work', 9)
+    expect(fetchPublicWorkContext).toHaveBeenCalledWith('current-work', 24)
     expect(fetchAllPublicWorks).not.toHaveBeenCalled()
   }, 120000)
 })

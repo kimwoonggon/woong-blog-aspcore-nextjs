@@ -406,7 +406,7 @@ public class PublicEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         var context = await ReadJsonAsync<WorkDetailContextDto>(response);
         Assert.Equal($"{token} Alpha", context.Newer?.Title);
         Assert.Equal($"{token} Zulu", context.Older?.Title);
-        Assert.Equal(new[] { $"{token} Newer", $"{token} Alpha" }, context.Related.Select(x => x.Title).ToArray());
+        Assert.Equal(new[] { $"{token} Alpha", $"{token} Zulu" }, context.Related.Select(x => x.Title).ToArray());
         Assert.DoesNotContain(context.Related, x => x.Slug == $"{token}-current");
         Assert.DoesNotContain(context.Related, x => x.Slug == $"{token}-draft");
         Assert.Equal(HttpStatusCode.NotFound, missingResponse.StatusCode);
@@ -901,7 +901,7 @@ public class PublicEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         var context = await ReadJsonAsync<BlogDetailContextDto>(response);
         Assert.Equal($"{token} Alpha", context.Newer?.Title);
         Assert.Equal($"{token} Zulu", context.Older?.Title);
-        Assert.Equal(new[] { $"{token} Newer", $"{token} Alpha" }, context.Related.Select(x => x.Title).ToArray());
+        Assert.Equal(new[] { $"{token} Alpha", $"{token} Zulu" }, context.Related.Select(x => x.Title).ToArray());
         Assert.DoesNotContain(context.Related, x => x.Slug == $"{token}-current");
         Assert.DoesNotContain(context.Related, x => x.Slug == $"{token}-draft");
         Assert.Equal(HttpStatusCode.NotFound, missingResponse.StatusCode);
