@@ -22,7 +22,7 @@ export default async function PublicLayout({
             <main
                 id="main-content"
                 tabIndex={-1}
-                className="flex-1 pb-[calc(env(safe-area-inset-bottom)+4.8rem)] lg:pb-0"
+                className="safe-area-main-bottom flex-1"
             >
                 {children}
             </main>
@@ -33,7 +33,7 @@ export default async function PublicLayout({
                 twitterUrl={siteSettings?.twitterUrl || ''}
                 linkedinUrl={siteSettings?.linkedInUrl || ''}
                 githubUrl={siteSettings?.gitHubUrl || ''}
-                className="pb-[calc(env(safe-area-inset-bottom)+5.8rem)] lg:pb-6"
+                className="safe-area-footer-bottom"
             />
         </div>
     )

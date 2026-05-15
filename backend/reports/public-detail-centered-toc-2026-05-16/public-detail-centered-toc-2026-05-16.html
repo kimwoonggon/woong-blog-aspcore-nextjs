@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Public Detail Centered TOC Audit - 2026-05-16</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 2rem; line-height: 1.55; color: #20242c; }
+    main { max-width: 900px; }
+    h1, h2 { line-height: 1.2; }
+    code { background: #f4f5f7; padding: 0.1rem 0.25rem; border-radius: 0.25rem; }
+    li { margin: 0.35rem 0; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Public Detail Centered TOC And Light Surface Audit</h1>
+    <p><strong>Date:</strong> 2026-05-16</p>
+    <h2>Changed</h2>
+    <ul>
+      <li>Re-centered Blog and Work detail bodies using symmetric desktop grid columns.</li>
+      <li>Detached the TOC rail with viewport-aware clamp width.</li>
+      <li>Made light-mode root, TOC, related shells, related cards, pagination, and adjacent cards white.</li>
+      <li>Added Playwright coverage for centered bodies and white light-mode surfaces.</li>
+      <li>Moved safe-area padding out of arbitrary Tailwind classes and limited Tailwind source detection to <code>src</code>.</li>
+    </ul>
+    <h2>Validation</h2>
+    <ul>
+      <li>Focused local Playwright <code>VA-125|VA-126</code>: 2 passed.</li>
+      <li>Relevant local Playwright regression subset: 25 passed.</li>
+      <li>Focused Vitest: 2 files passed, 14 tests passed.</li>
+      <li>ESLint, typecheck, production build, and <code>git diff --check</code>: passed.</li>
+      <li>Docker dev stack on <code>http://127.0.0.1:13017</code> with backend <code>18180</code>: ready.</li>
+      <li>Focused Docker Playwright <code>VA-125|VA-126</code>: 2 passed.</li>
+    </ul>
+    <h2>Risks</h2>
+    <ul>
+      <li>Docker Desktop was not proven to be constrained to 2 core / 8GB.</li>
+      <li>Full <code>npm test</code> and full core E2E were not rerun for this targeted UI follow-up.</li>
+      <li>The alternate Docker stack remains running for inspection.</li>
+    </ul>
+    <h2>Recommendation</h2>
+    <p>Commit this branch and push/open it toward <code>dev</code>; run CI and a full promotion suite before merging to <code>main</code>.</p>
+  </main>
+</body>
+</html>
