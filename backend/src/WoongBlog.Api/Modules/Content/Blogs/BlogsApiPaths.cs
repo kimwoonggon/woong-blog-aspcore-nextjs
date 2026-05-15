@@ -14,4 +14,5 @@ internal static class BlogsApiPaths
     internal const string DeleteBlog = $"{AdminRoot}/{{id:guid}}";
     internal const string GetBlogs = PublicRoot;
     internal const string GetBlogBySlug = $"{PublicRoot}/{{slug}}";
+    internal const string GetBlogDetailContext = $"{PublicRoot}/{{slug}}/context";
 }

@@ -1,0 +1,20 @@
+services:
+  frontend:
+    cpus: "0.60"
+    mem_limit: 3g
+    memswap_limit: 3g
+
+  backend:
+    cpus: "0.80"
+    mem_limit: 3g
+    memswap_limit: 3g
+
+  db:
+    cpus: "0.40"
+    mem_limit: 1536m
+    memswap_limit: 1536m
+
+  nginx:
+    cpus: "0.20"
+    mem_limit: 512m
+    memswap_limit: 512m

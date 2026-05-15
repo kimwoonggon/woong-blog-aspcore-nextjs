@@ -15,7 +15,19 @@ describe('public work detail related content ordering', () => {
     vi.clearAllMocks()
   })
 
-  it('orders valid dated work relations before invalid and missing dates', async () => {
+  it('passes bounded work context relations to the related content section', async () => {
+    const fetchAllPublicWorks = vi.fn(async () => {
+      throw new Error('work detail page render must not fetch all public works')
+    })
+    const fetchPublicWorkContext = vi.fn(async () => ({
+      newer: { id: 'newer', slug: 'newer-work', title: 'Newer Valid Work', excerpt: '', category: 'Platform', tags: [], publishedAt: '2026-03-30T00:00:00.000Z' },
+      older: { id: 'older', slug: 'older-work', title: 'Older Valid Work', excerpt: '', category: 'Platform', tags: [], publishedAt: '2026-03-10T00:00:00.000Z' },
+      related: [
+        { id: 'newer', slug: 'newer-work', title: 'Newer Valid Work', excerpt: '', category: 'Platform', tags: [], publishedAt: '2026-03-30T00:00:00.000Z' },
+        { id: 'older', slug: 'older-work', title: 'Older Valid Work', excerpt: '', category: 'Platform', tags: [], publishedAt: '2026-03-10T00:00:00.000Z' },
+      ],
+    }))
+
     vi.doMock('@/lib/api/works', () => ({
       fetchPublicWorkBySlug: vi.fn(async () => ({
         id: 'current',
@@ -31,13 +43,8 @@ describe('public work detail related content ordering', () => {
         videosVersion: 0,
         videos: [],
       })),
-      fetchAllPublicWorks: vi.fn(async () => [
-        { id: 'invalid', slug: 'invalid-work', title: 'Invalid Date Work', excerpt: '', category: 'Platform', tags: [], publishedAt: 'not-a-date' },
-        { id: 'older', slug: 'older-work', title: 'Older Valid Work', excerpt: '', category: 'Platform', tags: [], publishedAt: '2026-03-10T00:00:00.000Z' },
-        { id: 'missing', slug: 'missing-work', title: 'Missing Date Work', excerpt: '', category: 'Platform', tags: [], publishedAt: null },
-        { id: 'newer', slug: 'newer-work', title: 'Newer Valid Work', excerpt: '', category: 'Platform', tags: [], publishedAt: '2026-03-30T00:00:00.000Z' },
-        { id: 'current', slug: 'current-work', title: 'Current Work', excerpt: '', category: 'Platform', tags: [], publishedAt: '2026-03-20T00:00:00.000Z' },
-      ]),
+      fetchPublicWorkContext,
+      fetchAllPublicWorks,
     }))
 
     vi.doMock('@/lib/api/server', () => ({
@@ -72,11 +79,11 @@ describe('public work detail related content ordering', () => {
     render(await WorkDetailPage({ params: Promise.resolve({ slug: 'current-work' }) }))
 
     expect(screen.getByTestId('related-order')).toHaveTextContent([
-      'Newer Valid Work',
       'Current Work',
+      'Newer Valid Work',
       'Older Valid Work',
-      'Invalid Date Work',
-      'Missing Date Work',
     ].join(''))
+    expect(fetchPublicWorkContext).toHaveBeenCalledWith('current-work', 9)
+    expect(fetchAllPublicWorks).not.toHaveBeenCalled()
   }, 120000)
 })

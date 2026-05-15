@@ -6,9 +6,11 @@ using Microsoft.Extensions.DependencyInjection;
 using WoongBlog.Api.Domain.Entities;
 using WoongBlog.Application.Modules.Composition.GetHome;
 using WoongBlog.Application.Modules.Content.Blogs.GetBlogBySlug;
+using WoongBlog.Application.Modules.Content.Blogs.GetBlogDetailContext;
 using WoongBlog.Application.Modules.Content.Blogs.GetBlogs;
 using WoongBlog.Application.Modules.Content.Pages.GetPageBySlug;
 using WoongBlog.Application.Modules.Content.Works.GetWorkBySlug;
+using WoongBlog.Application.Modules.Content.Works.GetWorkDetailContext;
 using WoongBlog.Application.Modules.Content.Works.GetWorks;
 using WoongBlog.Application.Modules.Content.Works.WorkVideos;
 using WoongBlog.Application.Modules.Site.GetSiteSettings;
@@ -376,6 +378,38 @@ public class PublicEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         var response = await client.GetAsync($"/api/public/works/{slug}");
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetWorkDetailContext_ReturnsBoundedPublicContext_AndNotFoundForMissingSlug()
+    {
+        var client = _factory.CreateClient();
+        var token = $"work-context-{Guid.NewGuid():N}";
+        var now = new DateTimeOffset(2040, 5, 13, 12, 0, 0, TimeSpan.Zero);
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
+            dbContext.Works.AddRange(
+                CreateWorkContextEntity($"{token} Newer", $"{token}-newer", now.AddDays(1), published: true),
+                CreateWorkContextEntity($"{token} Alpha", $"{token}-alpha", now, published: true),
+                CreateWorkContextEntity($"{token} Current", $"{token}-current", now, published: true),
+                CreateWorkContextEntity($"{token} Zulu", $"{token}-zulu", now, published: true),
+                CreateWorkContextEntity($"{token} Draft", $"{token}-draft", now.AddDays(2), published: false));
+            await dbContext.SaveChangesAsync();
+        }
+
+        var response = await client.GetAsync($"/api/public/works/{token}-current/context?limit=2");
+        var missingResponse = await client.GetAsync($"/api/public/works/{token}-missing/context");
+
+        response.EnsureSuccessStatusCode();
+        var context = await ReadJsonAsync<WorkDetailContextDto>(response);
+        Assert.Equal($"{token} Alpha", context.Newer?.Title);
+        Assert.Equal($"{token} Zulu", context.Older?.Title);
+        Assert.Equal(new[] { $"{token} Newer", $"{token} Alpha" }, context.Related.Select(x => x.Title).ToArray());
+        Assert.DoesNotContain(context.Related, x => x.Slug == $"{token}-current");
+        Assert.DoesNotContain(context.Related, x => x.Slug == $"{token}-draft");
+        Assert.Equal(HttpStatusCode.NotFound, missingResponse.StatusCode);
     }
 
     [Fact]
@@ -842,6 +876,38 @@ public class PublicEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
+    public async Task GetBlogDetailContext_ReturnsBoundedPublicContext_AndNotFoundForMissingSlug()
+    {
+        var client = _factory.CreateClient();
+        var token = $"blog-context-{Guid.NewGuid():N}";
+        var now = new DateTimeOffset(2040, 5, 13, 12, 0, 0, TimeSpan.Zero);
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<WoongBlogDbContext>();
+            dbContext.Blogs.AddRange(
+                CreateBlogContextEntity($"{token} Newer", $"{token}-newer", now.AddDays(1), published: true),
+                CreateBlogContextEntity($"{token} Alpha", $"{token}-alpha", now, published: true),
+                CreateBlogContextEntity($"{token} Current", $"{token}-current", now, published: true),
+                CreateBlogContextEntity($"{token} Zulu", $"{token}-zulu", now, published: true),
+                CreateBlogContextEntity($"{token} Draft", $"{token}-draft", now.AddDays(2), published: false));
+            await dbContext.SaveChangesAsync();
+        }
+
+        var response = await client.GetAsync($"/api/public/blogs/{token}-current/context?limit=2");
+        var missingResponse = await client.GetAsync($"/api/public/blogs/{token}-missing/context");
+
+        response.EnsureSuccessStatusCode();
+        var context = await ReadJsonAsync<BlogDetailContextDto>(response);
+        Assert.Equal($"{token} Alpha", context.Newer?.Title);
+        Assert.Equal($"{token} Zulu", context.Older?.Title);
+        Assert.Equal(new[] { $"{token} Newer", $"{token} Alpha" }, context.Related.Select(x => x.Title).ToArray());
+        Assert.DoesNotContain(context.Related, x => x.Slug == $"{token}-current");
+        Assert.DoesNotContain(context.Related, x => x.Slug == $"{token}-draft");
+        Assert.Equal(HttpStatusCode.NotFound, missingResponse.StatusCode);
+    }
+
+    [Fact]
     public async Task GetPublicBlogs_FiltersDraftsOrdersByPublishedDateAndMapsAssets()
     {
         var client = _factory.CreateClient();
@@ -991,6 +1057,52 @@ public class PublicEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         Assert.NotNull(result);
         using var document = JsonDocument.Parse(body);
         return (result!, document.RootElement.Clone());
+    }
+
+    private static Work CreateWorkContextEntity(
+        string title,
+        string slug,
+        DateTimeOffset publishedAt,
+        bool published)
+    {
+        return new Work
+        {
+            Id = Guid.NewGuid(),
+            Title = title,
+            Slug = slug,
+            Excerpt = $"Excerpt for {title}",
+            Category = "context",
+            Tags = ["context"],
+            PublicThumbnailUrl = string.Empty,
+            ContentJson = "{}",
+            AllPropertiesJson = "{}",
+            Published = published,
+            PublishedAt = publishedAt,
+            CreatedAt = publishedAt,
+            UpdatedAt = publishedAt
+        };
+    }
+
+    private static Blog CreateBlogContextEntity(
+        string title,
+        string slug,
+        DateTimeOffset publishedAt,
+        bool published)
+    {
+        return new Blog
+        {
+            Id = Guid.NewGuid(),
+            Title = title,
+            Slug = slug,
+            Excerpt = $"Excerpt for {title}",
+            Tags = ["context"],
+            PublicCoverUrl = string.Empty,
+            ContentJson = "{}",
+            Published = published,
+            PublishedAt = publishedAt,
+            CreatedAt = publishedAt,
+            UpdatedAt = publishedAt
+        };
     }
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
