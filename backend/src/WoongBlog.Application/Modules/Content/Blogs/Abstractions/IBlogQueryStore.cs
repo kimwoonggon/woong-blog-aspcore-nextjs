@@ -1,5 +1,6 @@
 using WoongBlog.Application.Modules.Content.Blogs.GetAdminBlogById;
 using WoongBlog.Application.Modules.Content.Blogs.GetAdminBlogs;
+using WoongBlog.Application.Modules.Content.Blogs.GetBlogDetailContext;
 using WoongBlog.Application.Modules.Content.Blogs.GetBlogBySlug;
 using WoongBlog.Application.Modules.Content.Blogs.GetBlogs;
 using WoongBlog.Application.Modules.Content.Common.Support;
@@ -17,4 +18,8 @@ public interface IBlogQueryStore
         ContentSearchMode searchMode,
         CancellationToken cancellationToken);
     Task<BlogDetailDto?> GetPublishedDetailBySlugAsync(string slug, CancellationToken cancellationToken);
+    Task<BlogDetailContextDto?> GetPublishedDetailContextBySlugAsync(
+        string slug,
+        int limit,
+        CancellationToken cancellationToken);
 }

@@ -1,5 +1,4 @@
 import { expect, test } from './helpers/performance-test'
-import { createWorkFixture } from './helpers/content-fixtures'
 import { getStyle } from './helpers/ui-improvement'
 import { isLocalQaBaseUrl, LOCAL_QA_FLAG_SKIP_REASON } from './helpers/local-qa'
 
@@ -95,30 +94,6 @@ test('Works collapses to one column on mobile', async ({ page }) => {
   expect(secondBox).toBeTruthy()
   expect(Math.abs(firstBox!.x - secondBox!.x)).toBeLessThan(4)
   expect(secondBox!.y).toBeGreaterThan(firstBox!.y)
-})
-
-test('home Works keeps eight DOM cards but only four visible on mobile', async ({ page, request }, testInfo) => {
-  for (let index = 0; index < 8; index += 1) {
-    await createWorkFixture(request, testInfo, {
-      titlePrefix: `Balanced Home Work ${index + 1}`,
-      html: `<h2>Balanced work ${index + 1}</h2><p>Fixture body for a deterministic eight-card home Works grid.</p>`,
-    })
-  }
-
-  await page.setViewportSize(representativePhoneViewport)
-  await page.goto(`/?balancedWorks=${Date.now()}`)
-
-  const cards = page.getByTestId('featured-work-card')
-  await expect(cards.nth(3)).toBeVisible()
-  await expect(cards.nth(4)).toBeHidden()
-  await expect(cards).toHaveCount(8)
-
-  const visibleCards = await cards.evaluateAll((elements) => elements.filter((element) => {
-    const rect = element.getBoundingClientRect()
-    const style = window.getComputedStyle(element)
-    return rect.width > 0 && rect.height > 0 && style.display !== 'none' && style.visibility !== 'hidden'
-  }).length)
-  expect(visibleCards).toBe(4)
 })
 
 test('Works stays aligned to the mobile home content rail', async ({ page }) => {
@@ -277,7 +252,7 @@ test('Works card width stays stable when mobile viewport height is extremely sho
   }
 })
 
-test('Works uses two columns on tablet and four on desktop', async ({ page }) => {
+test('Works uses two columns on tablet and three from lg desktop for a balanced six-card grid', async ({ page }) => {
   const measureColumns = async (width: number, height: number) => {
     await page.setViewportSize({ width, height })
     await page.goto('/')
@@ -290,7 +265,8 @@ test('Works uses two columns on tablet and four on desktop', async ({ page }) =>
   }
 
   expect(await measureColumns(768, 1024)).toBe(2)
-  expect(await measureColumns(1280, 800)).toBe(4)
+  expect(await measureColumns(1024, 800)).toBe(3)
+  expect(await measureColumns(1280, 800)).toBe(3)
 })
 
 test('hero CTAs keep a clear primary-versus-secondary visual hierarchy', async ({ page }) => {

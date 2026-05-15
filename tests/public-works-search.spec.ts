@@ -1,32 +1,37 @@
 import { expect, test } from './helpers/performance-test'
 import { measureStep } from './helpers/latency'
-import { createWorkFixture } from './helpers/content-fixtures'
+import { createBlogFixture, createWorkFixture } from './helpers/content-fixtures'
 
-test('public study search submits query without searchMode', async ({ page }, testInfo) => {
+test('public study search updates query while typing without searchMode', async ({ page, request }, testInfo) => {
+  const blog = await createBlogFixture(request, testInfo, {
+    titlePrefix: 'Searchable Study',
+    html: '<p>Searchable study fixture body.</p>',
+    tags: ['search-fixture'],
+  })
+
   await page.goto('/blog')
   await expect.poll(() => new URL(page.url()).searchParams.get('pageSize')).not.toBeNull()
 
   const studySearchForm = page.getByRole('search')
   const studySearchInput = studySearchForm.getByRole('textbox', { name: 'Search studies' })
-  await studySearchInput.fill('seeded')
-  await expect(studySearchInput).toHaveValue('seeded')
 
   await measureStep(
     testInfo,
-    'Study unified search submit',
+    'Study live search debounce',
     'publicSearch',
     async () => {
-      await studySearchForm.getByRole('button', { name: 'Search studies' }).click()
+      await studySearchInput.fill(blog.title)
     },
     async () => {
-      await expect.poll(() => new URL(page.url()).searchParams.get('query')).toBe('seeded')
+      await expect.poll(() => new URL(page.url()).searchParams.get('query')).toBe(blog.title)
       await expect.poll(() => new URL(page.url()).searchParams.get('searchMode')).toBeNull()
-      await expect(studySearchInput).toHaveValue('seeded')
+      await expect(studySearchInput).toHaveValue(blog.title)
+      await expect(page.getByTestId('blog-card').first()).toContainText(blog.title)
     },
   )
 })
 
-test('public works search submits query without searchMode', async ({ page, request }, testInfo) => {
+test('public works search updates query while typing without searchMode', async ({ page, request }, testInfo) => {
   const work = await createWorkFixture(request, testInfo, {
     titlePrefix: 'Searchable Work',
     html: '<p>Searchable work fixture body.</p>',
@@ -39,15 +44,13 @@ test('public works search submits query without searchMode', async ({ page, requ
 
   const worksSearchForm = page.getByRole('search')
   const worksSearchInput = worksSearchForm.getByRole('textbox', { name: 'Search work' })
-  await worksSearchInput.fill(work.title)
-  await expect(worksSearchInput).toHaveValue(work.title)
 
   await measureStep(
     testInfo,
-    'Works unified search submit',
+    'Works live search debounce',
     'publicSearch',
     async () => {
-      await worksSearchForm.getByRole('button', { name: 'Search works' }).click()
+      await worksSearchInput.fill(work.title)
     },
     async () => {
       await expect.poll(() => new URL(page.url()).searchParams.get('query')).toBe(work.title)

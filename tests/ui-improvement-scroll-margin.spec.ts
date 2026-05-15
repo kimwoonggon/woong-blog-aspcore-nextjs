@@ -8,7 +8,7 @@ test('public detail headings reserve scroll margin under the sticky navbar', asy
     tags: ['scroll-margin', 'blog'],
   })
 
-  await page.setViewportSize({ width: 1600, height: 900 })
+  await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto(`/blog/${blog.slug}`)
 
   const firstLink = page.getByTestId('blog-toc').getByRole('link').first()

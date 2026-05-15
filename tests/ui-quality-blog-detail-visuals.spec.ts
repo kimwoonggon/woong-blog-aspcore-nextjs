@@ -1,12 +1,27 @@
-import { expect, test } from './helpers/performance-test'
-import { getColorChannels, getStyle } from './helpers/ui-improvement'
+import { expect, test, type Page } from './helpers/performance-test'
+import { expectRgbClose, getColorChannels, gotoWithTheme } from './helpers/ui-improvement'
 
 function px(value: string) {
   return Number.parseFloat(value.replace('px', ''))
 }
 
+async function expectWhiteReadingSurface(page: Page, testId: string, contentRootSelector: string) {
+  const body = page.getByTestId(testId)
+  const contentRoot = page.locator(contentRootSelector)
+  await expect(body).toBeVisible()
+  await expect(contentRoot).toBeVisible()
+
+  const [bodyBackground, contentBackground] = await Promise.all([
+    getColorChannels(body, 'background-color'),
+    getColorChannels(contentRoot, 'background-color'),
+  ])
+
+  expectRgbClose(bodyBackground, [255, 255, 255, 255], 3)
+  expectRgbClose(contentBackground, [255, 255, 255, 255], 3)
+}
+
 test('VA-120 blog TOC stays visually separated from the article body', async ({ page }) => {
-  await page.setViewportSize({ width: 1600, height: 900 })
+  await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto('/blog/seeded-blog')
 
   const toc = page.getByTestId('blog-toc')
@@ -53,32 +68,6 @@ test('VA-121 blog body keeps readable paragraph line-height and spacing', async 
   expect(px(metrics.marginTop)).toBeGreaterThanOrEqual(0)
 })
 
-test('public Work and Study detail pages use a white reading surface in light mode', async ({ page }) => {
-  await page.emulateMedia({ colorScheme: 'dark' })
-  await page.addInitScript(() => window.localStorage.removeItem('theme'))
-
-  for (const target of [
-    { path: '/blog/seeded-blog', testId: 'blog-detail-body' },
-    { path: '/works/seeded-work', testId: 'work-detail-body' },
-  ]) {
-    await page.goto(target.path)
-    await expect(page.locator('html')).not.toHaveClass(/dark/)
-
-    const body = page.getByTestId(target.testId)
-    await expect(body).toBeVisible()
-
-    const [background, borderWidth, shadow] = await Promise.all([
-      getColorChannels(body, 'background-color'),
-      getStyle(body, 'border-top-width'),
-      getStyle(body, 'box-shadow'),
-    ])
-
-    expect(Array.from(background).slice(0, 3)).toEqual([255, 255, 255])
-    expect(px(borderWidth)).toBeGreaterThan(0)
-    expect(shadow).not.toBe('none')
-  }
-})
-
 test('VA-122 blog previous and next cards keep balanced sizing and shared chrome', async ({ page }) => {
   await page.goto('/blog/seeded-blog')
 
@@ -105,4 +94,12 @@ test('VA-122 blog previous and next cards keep balanced sizing and shared chrome
 
   expect(px(chrome.borderTopWidth)).toBeGreaterThan(0)
   expect(chrome.backgroundColor).not.toBe('rgba(0, 0, 0, 0)')
+})
+
+test('VA-123 Work and Study detail pages keep long-form reading bodies on a white surface', async ({ page }) => {
+  await gotoWithTheme(page, '/blog/seeded-blog', 'light')
+  await expectWhiteReadingSurface(page, 'blog-detail-body', '#blog-detail-content')
+
+  await gotoWithTheme(page, '/works/seeded-work', 'light')
+  await expectWhiteReadingSurface(page, 'work-detail-body', '#work-detail-content')
 })

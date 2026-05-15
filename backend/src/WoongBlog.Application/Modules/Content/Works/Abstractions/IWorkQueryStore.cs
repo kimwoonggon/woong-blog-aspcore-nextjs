@@ -1,6 +1,7 @@
 using WoongBlog.Application.Modules.Content.Common.Support;
 using WoongBlog.Application.Modules.Content.Works.GetAdminWorkById;
 using WoongBlog.Application.Modules.Content.Works.GetAdminWorks;
+using WoongBlog.Application.Modules.Content.Works.GetWorkDetailContext;
 using WoongBlog.Application.Modules.Content.Works.GetWorkBySlug;
 using WoongBlog.Application.Modules.Content.Works.GetWorks;
 
@@ -17,4 +18,8 @@ public interface IWorkQueryStore
         ContentSearchMode searchMode,
         CancellationToken cancellationToken);
     Task<WorkDetailDto?> GetPublishedDetailBySlugAsync(string slug, CancellationToken cancellationToken);
+    Task<WorkDetailContextDto?> GetPublishedDetailContextBySlugAsync(
+        string slug,
+        int limit,
+        CancellationToken cancellationToken);
 }

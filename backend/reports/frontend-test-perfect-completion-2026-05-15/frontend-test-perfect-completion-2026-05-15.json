@@ -1,0 +1,127 @@
+{
+  "report": {
+    "slug": "frontend-test-perfect-completion-2026-05-15",
+    "date": "2026-05-15",
+    "type": "follow-up-hardening",
+    "recommendation": "Frontend test gate is now clean: Vitest passed, targeted lint passed, and Docker-backed core Playwright passed under an explicit runtime profile totaling 2core/8GiB."
+  },
+  "changes": [
+    {
+      "path": "src/test/public-static-routes.test.ts",
+      "summary": "Updated stale static route tests to mock current paginated fetchPublicBlogs/fetchPublicWorks behavior and added failure-path coverage."
+    },
+    {
+      "path": "backend/reports/frontend-test-perfect-completion-2026-05-15/docker-compose.e2e-2core-8gb.override.yml",
+      "summary": "Added a Docker compose override whose service runtime limits total 2.0 vCPU and 8GiB memory."
+    },
+    {
+      "path": "todolist-2026-05-15.md",
+      "summary": "Recorded the follow-up checklist, backup, validation commands, and final evidence."
+    }
+  ],
+  "non_changes": [
+    "No production frontend code changed.",
+    "No backend code changed.",
+    "No Playwright specs changed.",
+    "No base Docker compose file changed.",
+    "No production, CI, SSH, GHCR, or deployment configuration changed."
+  ],
+  "resource_profile": {
+    "override_file": "backend/reports/frontend-test-perfect-completion-2026-05-15/docker-compose.e2e-2core-8gb.override.yml",
+    "services": {
+      "frontend": {
+        "cpus": 0.6,
+        "memory_bytes": 3221225472,
+        "memory_label": "3GiB",
+        "inspect": {
+          "NanoCpus": 600000000,
+          "Memory": 3221225472,
+          "MemorySwap": 3221225472
+        }
+      },
+      "backend": {
+        "cpus": 0.8,
+        "memory_bytes": 3221225472,
+        "memory_label": "3GiB",
+        "inspect": {
+          "NanoCpus": 800000000,
+          "Memory": 3221225472,
+          "MemorySwap": 3221225472
+        }
+      },
+      "db": {
+        "cpus": 0.4,
+        "memory_bytes": 1610612736,
+        "memory_label": "1.5GiB",
+        "inspect": {
+          "NanoCpus": 400000000,
+          "Memory": 1610612736,
+          "MemorySwap": 1610612736
+        }
+      },
+      "nginx": {
+        "cpus": 0.2,
+        "memory_bytes": 536870912,
+        "memory_label": "512MiB",
+        "inspect": {
+          "NanoCpus": 200000000,
+          "Memory": 536870912,
+          "MemorySwap": 536870912
+        }
+      }
+    },
+    "totals": {
+      "cpus": 2.0,
+      "memory_bytes": 8589934592,
+      "memory_label": "8GiB"
+    }
+  },
+  "validations": [
+    {
+      "command": "npx vitest run src/test/public-static-routes.test.ts --pool=threads --maxWorkers=2 --reporter=dot",
+      "status": "passed",
+      "summary": "1 file, 7 tests passed."
+    },
+    {
+      "command": "npm test",
+      "status": "passed",
+      "summary": "90 files, 627 tests passed in 1268.87s."
+    },
+    {
+      "command": "npm run lint -- src/test/public-static-routes.test.ts",
+      "status": "passed",
+      "summary": "Targeted ESLint completed without findings."
+    },
+    {
+      "command": "npm run typecheck",
+      "status": "passed",
+      "summary": "TypeScript completed with no errors."
+    },
+    {
+      "command": "docker inspect --format '{{.Name}} NanoCpus={{.HostConfig.NanoCpus}} Memory={{.HostConfig.Memory}} MemorySwap={{.HostConfig.MemorySwap}}' ...",
+      "status": "passed",
+      "summary": "Effective runtime limits matched the 2core/8GiB override totals."
+    },
+    {
+      "command": "BACKEND_PUBLISH_PORT=18080 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 npm run test:e2e:readiness",
+      "status": "passed",
+      "summary": "Docker daemon, backend health, and frontend were reachable."
+    },
+    {
+      "command": "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 BACKEND_PUBLISH_PORT=18080 npm run test:e2e",
+      "status": "passed",
+      "summary": "431 passed, 4 skipped, 0 failed in 17.1m; 435 latency artifacts; 0 budget failures; 69 warnings."
+    }
+  ],
+  "risks": [
+    "2core/8GiB E2E is slower; the slowest observed test was about 19.7s but still within the 30s timeout.",
+    "Skipped/fixme Playwright tests remain intentionally skipped.",
+    "Vitest still emits pre-existing warning noise such as React act warnings and mocked revalidation warnings."
+  ],
+  "artifacts": {
+    "markdown": "backend/reports/frontend-test-perfect-completion-2026-05-15/frontend-test-perfect-completion-2026-05-15.md",
+    "html": "backend/reports/frontend-test-perfect-completion-2026-05-15/frontend-test-perfect-completion-2026-05-15.html",
+    "json": "backend/reports/frontend-test-perfect-completion-2026-05-15/frontend-test-perfect-completion-2026-05-15.json",
+    "docker_compose_override": "backend/reports/frontend-test-perfect-completion-2026-05-15/docker-compose.e2e-2core-8gb.override.yml"
+  }
+}

@@ -132,6 +132,40 @@ describe('public/admin api clients', () => {
     await expect(fetchPublicWorkBySlug('missing-work')).resolves.toBeNull()
   })
 
+  it('fetches bounded public detail context for blog and work detail pages', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({
+          newer: { id: 'newer-blog', slug: 'newer-blog', title: 'Newer Blog', excerpt: 'newer', tags: [] },
+          older: null,
+          related: [{ id: 'related-blog', slug: 'related-blog', title: 'Related Blog', excerpt: 'related', tags: [] }],
+        }), { status: 200, headers: { 'Content-Type': 'application/json' } }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({
+          newer: null,
+          older: { id: 'older-work', slug: 'older-work', title: 'Older Work', excerpt: 'older', category: 'platform', tags: [] },
+          related: [{ id: 'related-work', slug: 'related-work', title: 'Related Work', excerpt: 'related', category: 'platform', tags: [] }],
+        }), { status: 200, headers: { 'Content-Type': 'application/json' } }),
+      )
+    vi.stubGlobal('fetch', fetchMock as typeof fetch)
+
+    const { fetchPublicBlogContext } = await import('@/lib/api/blogs')
+    const { fetchPublicWorkContext } = await import('@/lib/api/works')
+
+    await expect(fetchPublicBlogContext('seeded blog', 9)).resolves.toMatchObject({
+      newer: { slug: 'newer-blog' },
+      related: [{ slug: 'related-blog' }],
+    })
+    await expect(fetchPublicWorkContext('seeded work', 9)).resolves.toMatchObject({
+      older: { slug: 'older-work' },
+      related: [{ slug: 'related-work' }],
+    })
+
+    expect(fetchMock).toHaveBeenNthCalledWith(1, 'http://localhost/api/public/blogs/seeded%20blog/context?limit=9', { next: { revalidate: 60, tags: ['public-blogs', 'public-blog:seeded blog'] } })
+    expect(fetchMock).toHaveBeenNthCalledWith(2, 'http://localhost/api/public/works/seeded%20work/context?limit=9', { next: { revalidate: 60, tags: ['public-works', 'public-work:seeded work'] } })
+  })
+
   it('fetchPublicWorkBySlug parses socialShareMessage when present', async () => {
     const fetchMock = vi.fn(async () =>
       new Response(JSON.stringify({
