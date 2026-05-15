@@ -33,6 +33,12 @@ export interface BlogDetail extends BlogListItem {
   contentJson?: string
 }
 
+export interface BlogDetailContext {
+  newer: BlogListItem | null
+  older: BlogListItem | null
+  related: BlogListItem[]
+}
+
 export interface PublicBlogSearchOptions {
   query?: string | null
   legacySearchMode?: 'title' | 'content' | string | null
@@ -92,6 +98,19 @@ export async function fetchAllPublicBlogs(pageSize = 100) {
   }
 
   return items
+}
+
+export async function fetchPublicBlogContext(slug: string, limit = 9) {
+  const apiBaseUrl = await getPublicServerApiBaseUrl()
+  const params = new URLSearchParams({ limit: String(limit) })
+  const response = await fetch(`${apiBaseUrl}/public/blogs/${encodeURIComponent(slug)}/context?${params.toString()}`, {
+    ...publicContentFetchInit([PUBLIC_CONTENT_TAGS.blogs, PUBLIC_CONTENT_TAGS.blog(slug)]),
+  })
+  if (response.status === 404) return null
+  if (!response.ok) {
+    await throwPublicApiError(response, `Failed to load public blog context '${slug}'.`)
+  }
+  return response.json() as Promise<BlogDetailContext>
 }
 
 export async function fetchPublicBlogBySlug(slug: string) {

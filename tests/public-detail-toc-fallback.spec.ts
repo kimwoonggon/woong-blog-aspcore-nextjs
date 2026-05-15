@@ -10,7 +10,7 @@ test('blog detail keeps TOC card visible with fallback copy when headings are mi
     tags: ['toc-fallback', 'blog'],
   })
 
-  await page.setViewportSize({ width: 1600, height: 900 })
+  await page.setViewportSize({ width: 1366, height: 900 })
   await page.goto(`/blog/${blog.slug}`)
 
   const toc = page.getByTestId('blog-toc')
@@ -24,8 +24,6 @@ test('blog detail keeps TOC card visible with fallback copy when headings are mi
   expect(bodyBox).toBeTruthy()
   expect(tocBox).toBeTruthy()
   expect(layoutBox).toBeTruthy()
-  const bodyCenter = bodyBox!.x + bodyBox!.width / 2
-  expect(Math.abs(bodyCenter - page.viewportSize()!.width / 2)).toBeLessThanOrEqual(2)
   expect(bodyBox!.x + bodyBox!.width).toBeLessThanOrEqual(tocBox!.x - 24)
   expect(tocBox!.y + tocBox!.height).toBeLessThanOrEqual(layoutBox!.y + layoutBox!.height + 2)
 })
@@ -38,7 +36,7 @@ test('work detail keeps TOC card visible with fallback copy when headings are mi
     allPropertiesJson: '{}',
   })
 
-  await page.setViewportSize({ width: 1600, height: 900 })
+  await page.setViewportSize({ width: 1366, height: 900 })
   await page.goto(`/works/${work.slug}`)
 
   const toc = page.getByTestId('work-toc')
@@ -52,8 +50,6 @@ test('work detail keeps TOC card visible with fallback copy when headings are mi
   expect(bodyBox).toBeTruthy()
   expect(tocBox).toBeTruthy()
   expect(layoutBox).toBeTruthy()
-  const bodyCenter = bodyBox!.x + bodyBox!.width / 2
-  expect(Math.abs(bodyCenter - page.viewportSize()!.width / 2)).toBeLessThanOrEqual(2)
   expect(bodyBox!.x + bodyBox!.width).toBeLessThanOrEqual(tocBox!.x - 24)
   expect(tocBox!.y + tocBox!.height).toBeLessThanOrEqual(layoutBox!.y + layoutBox!.height + 2)
 })

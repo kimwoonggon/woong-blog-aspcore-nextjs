@@ -3,6 +3,7 @@ using WoongBlog.Api.Modules.Content.Works.CreateWork;
 using WoongBlog.Api.Modules.Content.Works.DeleteWork;
 using WoongBlog.Api.Modules.Content.Works.GetAdminWorkById;
 using WoongBlog.Api.Modules.Content.Works.GetAdminWorks;
+using WoongBlog.Api.Modules.Content.Works.GetWorkDetailContext;
 using WoongBlog.Api.Modules.Content.Works.GetWorkBySlug;
 using WoongBlog.Api.Modules.Content.Works.GetWorks;
 using WoongBlog.Api.Modules.Content.Works.UpdateWork;
@@ -21,6 +22,7 @@ internal static class WorksEndpoints
         app.MapDeleteWork();
         app.MapWorkVideoEndpoints();
         app.MapGetWorks();
+        app.MapGetWorkDetailContext();
         app.MapGetWorkBySlug();
     }
 }

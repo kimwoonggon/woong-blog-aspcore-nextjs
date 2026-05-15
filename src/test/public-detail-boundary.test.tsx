@@ -48,6 +48,14 @@ describe('public detail route admin boundary', () => {
   it('renders blog public content without a server session or admin detail fetch', async () => {
     const fetchServerSession = vi.fn(async () => ({ authenticated: true, role: 'admin' }))
     const fetchAdminBlogById = vi.fn(async () => ({ id: 'blog-1', title: 'Admin Blog' }))
+    const fetchAllPublicBlogs = vi.fn(async () => {
+      throw new Error('blog detail page render must not fetch all public blogs')
+    })
+    const fetchPublicBlogContext = vi.fn(async () => ({
+      newer: null,
+      older: null,
+      related: [],
+    }))
 
     vi.doMock('@/lib/api/server', () => ({
       fetchServerSession,
@@ -62,9 +70,8 @@ describe('public detail route admin boundary', () => {
         publishedAt: '2026-04-01T00:00:00.000Z',
         contentJson: JSON.stringify({ html: '<h2>Public content</h2>' }),
       })),
-      fetchAllPublicBlogs: vi.fn(async () => [
-        { id: 'blog-1', slug: 'public-blog', title: 'Public Blog', excerpt: 'Public excerpt', tags: [], publishedAt: '2026-04-01T00:00:00.000Z' },
-      ]),
+      fetchPublicBlogContext,
+      fetchAllPublicBlogs,
       fetchAdminBlogById,
     }))
 
@@ -75,11 +82,21 @@ describe('public detail route admin boundary', () => {
     expect(screen.getByTestId('blog-admin-actions')).toHaveTextContent('blog-1')
     expect(fetchServerSession).not.toHaveBeenCalled()
     expect(fetchAdminBlogById).not.toHaveBeenCalled()
+    expect(fetchPublicBlogContext).toHaveBeenCalledWith('public-blog', 9)
+    expect(fetchAllPublicBlogs).not.toHaveBeenCalled()
   }, 30_000)
 
   it('renders work public content without a server session or admin detail fetch', async () => {
     const fetchServerSession = vi.fn(async () => ({ authenticated: true, role: 'admin' }))
     const fetchAdminWorkById = vi.fn(async () => ({ id: 'work-1', title: 'Admin Work' }))
+    const fetchAllPublicWorks = vi.fn(async () => {
+      throw new Error('work detail page render must not fetch all public works')
+    })
+    const fetchPublicWorkContext = vi.fn(async () => ({
+      newer: null,
+      older: null,
+      related: [],
+    }))
 
     vi.doMock('@/lib/api/server', () => ({
       fetchServerSession,
@@ -99,9 +116,8 @@ describe('public detail route admin boundary', () => {
         videosVersion: 0,
         videos: [],
       })),
-      fetchAllPublicWorks: vi.fn(async () => [
-        { id: 'work-1', slug: 'public-work', title: 'Public Work', excerpt: 'Public excerpt', category: 'Platform', tags: [], publishedAt: '2026-04-01T00:00:00.000Z' },
-      ]),
+      fetchPublicWorkContext,
+      fetchAllPublicWorks,
       fetchAdminWorkById,
     }))
 
@@ -114,11 +130,14 @@ describe('public detail route admin boundary', () => {
     expect(screen.getByTestId('work-admin-actions')).toHaveTextContent('work-1')
     expect(fetchServerSession).not.toHaveBeenCalled()
     expect(fetchAdminWorkById).not.toHaveBeenCalled()
+    expect(fetchPublicWorkContext).toHaveBeenCalledWith('public-work', 9)
+    expect(fetchAllPublicWorks).not.toHaveBeenCalled()
   })
 
   it('uses notFound for missing blog detail slugs', async () => {
     vi.doMock('@/lib/api/blogs', () => ({
       fetchPublicBlogBySlug: vi.fn(async () => null),
+      fetchPublicBlogContext: vi.fn(async () => null),
       fetchAllPublicBlogs: vi.fn(async () => []),
     }))
 
@@ -131,6 +150,7 @@ describe('public detail route admin boundary', () => {
   it('uses notFound for missing work detail slugs', async () => {
     vi.doMock('@/lib/api/works', () => ({
       fetchPublicWorkBySlug: vi.fn(async () => null),
+      fetchPublicWorkContext: vi.fn(async () => null),
       fetchAllPublicWorks: vi.fn(async () => []),
     }))
 

@@ -25,6 +25,19 @@ vi.mock('@/lib/api/home', () => ({
 
 const mockFetchPublicHome = vi.mocked(fetchPublicHome)
 
+function createHomeWork(index: number) {
+  return {
+    id: `work-${index}`,
+    slug: `work-${index}`,
+    title: `Work ${index}`,
+    excerpt: `Work excerpt ${index}`,
+    category: 'Platform',
+    tags: [],
+    thumbnailUrl: '',
+    publishedAt: '2026-05-13T00:00:00Z',
+  }
+}
+
 describe('public home date fallbacks', () => {
   afterEach(() => {
     vi.clearAllMocks()
@@ -68,5 +81,35 @@ describe('public home date fallbacks', () => {
 
     expect(screen.getAllByText('Unknown Date')).toHaveLength(2)
     expect(container.textContent).not.toMatch(/Invalid Date|RangeError/i)
+  })
+
+  it('renders six featured works while keeping the fifth and sixth cards desktop-only below lg', async () => {
+    mockFetchPublicHome.mockResolvedValueOnce({
+      homePage: {
+        title: 'Home',
+        contentJson: JSON.stringify({ headline: 'Home headline', introText: 'Intro' }),
+      },
+      siteSettings: {
+        ownerName: 'Owner',
+        tagline: '',
+        gitHubUrl: '',
+        linkedInUrl: '',
+        resumePublicUrl: '',
+      },
+      featuredWorks: Array.from({ length: 6 }, (_, index) => createHomeWork(index + 1)),
+      recentPosts: [],
+    })
+
+    render(await HomePage())
+
+    const featuredWorkCards = screen.getAllByTestId('featured-work-card')
+    expect(featuredWorkCards).toHaveLength(6)
+    expect(featuredWorkCards[0]).toHaveClass('block')
+    expect(featuredWorkCards[3]).toHaveClass('block')
+    expect(featuredWorkCards[4]).toHaveClass('hidden')
+    expect(featuredWorkCards[4]).toHaveClass('lg:block')
+    expect(featuredWorkCards[5]).toHaveClass('hidden')
+    expect(featuredWorkCards[5]).toHaveClass('lg:block')
+    expect(screen.getByTestId('featured-works-grid')).toHaveClass('lg:grid-cols-3')
   })
 })

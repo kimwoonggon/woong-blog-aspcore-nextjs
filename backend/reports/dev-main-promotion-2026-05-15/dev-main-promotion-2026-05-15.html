@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Dev/Main Promotion Audit - 2026-05-15</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 2rem; line-height: 1.5; color: #111827; }
+    h1, h2 { line-height: 1.2; }
+    code { background: #f3f4f6; padding: 0.1rem 0.25rem; border-radius: 0.25rem; }
+    .status { font-weight: 700; color: #166534; }
+  </style>
+</head>
+<body>
+  <h1>Dev/Main Promotion Audit - 2026-05-15</h1>
+  <p class="status">Status: pre-push validated</p>
+  <h2>Scope</h2>
+  <p>Scoped promotion branch based on <code>origin/dev</code>, excluding rollback-like dirty-tree diffs.</p>
+  <h2>Validations</h2>
+  <ul>
+    <li>Focused Vitest: passed, 7 files / 40 tests.</li>
+    <li>Targeted ESLint: passed.</li>
+    <li>Typecheck: passed.</li>
+    <li>Backend component filter: passed, 43 tests.</li>
+    <li>Backend integration filter: passed, 33 tests.</li>
+    <li>Full npm test: passed, 93 files / 653 tests.</li>
+    <li>Full dotnet solution: passed, contract 1 skipped.</li>
+    <li>git diff --check: passed.</li>
+  </ul>
+  <h2>Recommendation</h2>
+  <p>Push the scoped branch and use GitHub CI as the dev gate. Promote to main only after CI is green.</p>
+</body>
+</html>

@@ -5,6 +5,7 @@ using WoongBlog.Application.Modules.Composition.Abstractions;
 using WoongBlog.Application.Modules.Composition.GetHome;
 using WoongBlog.Infrastructure.Modules.Composition.Persistence;
 using WoongBlog.Application.Modules.Content.Blogs.Abstractions;
+using WoongBlog.Application.Modules.Content.Blogs.GetBlogDetailContext;
 using WoongBlog.Application.Modules.Content.Blogs.GetBlogBySlug;
 using WoongBlog.Application.Modules.Content.Blogs.GetBlogs;
 using WoongBlog.Infrastructure.Modules.Content.Blogs.Persistence;
@@ -13,6 +14,7 @@ using WoongBlog.Application.Modules.Content.Pages.GetPageBySlug;
 using WoongBlog.Infrastructure.Modules.Content.Pages.Persistence;
 using WoongBlog.Application.Modules.Content.Works.Abstractions;
 using WoongBlog.Application.Modules.Content.Works.GetAdminWorkById;
+using WoongBlog.Application.Modules.Content.Works.GetWorkDetailContext;
 using WoongBlog.Application.Modules.Content.Works.GetWorkBySlug;
 using WoongBlog.Application.Modules.Content.Works.GetWorks;
 using WoongBlog.Application.Modules.Content.Works.WorkVideos;
@@ -242,10 +244,10 @@ public class PublicQueryHandlerComponentTests
     }
 
     [Fact]
-    public async Task GetHomeQueryHandler_ReturnsUpToEightFeaturedWorks_ForBalancedDesktopHomeGrid()
+    public async Task GetHomeQueryHandler_ReturnsSixFeaturedWorksForBalancedDesktopHomeGrid()
     {
         await using var dbContext = CreateDbContext();
-        var now = new DateTimeOffset(2026, 5, 12, 0, 0, 0, TimeSpan.Zero);
+        var now = new DateTimeOffset(2026, 5, 12, 12, 0, 0, TimeSpan.Zero);
         dbContext.SiteSettings.Add(new SiteSetting
         {
             Singleton = true,
@@ -259,14 +261,15 @@ public class PublicQueryHandlerComponentTests
             Title = "Home",
             ContentJson = "{}"
         });
-
         dbContext.Works.AddRange(
-            Enumerable.Range(1, 9)
-                .Select(index => CreateWork(
-                    $"Featured Work {index}",
-                    $"featured-work-{index}",
-                    published: true,
-                    publishedAt: now.AddMinutes(-index))));
+            CreateWork("Newest Work", "newest-work", published: true, publishedAt: now),
+            CreateWork("Second Work", "second-work", published: true, publishedAt: now.AddDays(-1)),
+            CreateWork("Third Work", "third-work", published: true, publishedAt: now.AddDays(-2)),
+            CreateWork("Fourth Work", "fourth-work", published: true, publishedAt: now.AddDays(-3)),
+            CreateWork("Fifth Work", "fifth-work", published: true, publishedAt: now.AddDays(-4)),
+            CreateWork("Sixth Work", "sixth-work", published: true, publishedAt: now.AddDays(-5)),
+            CreateWork("Seventh Work", "seventh-work", published: true, publishedAt: now.AddDays(-6)),
+            CreateWork("Draft Work", "draft-work", published: false, publishedAt: now.AddDays(1)));
         await dbContext.SaveChangesAsync();
 
         var handler = new GetHomeQueryHandler(CreateHomeQueryStore(dbContext));
@@ -275,8 +278,8 @@ public class PublicQueryHandlerComponentTests
 
         Assert.NotNull(result);
         Assert.Equal(
-            Enumerable.Range(1, 8).Select(index => $"Featured Work {index}").ToArray(),
-            result!.FeaturedWorks.Select(work => work.Title).ToArray());
+            new[] { "Newest Work", "Second Work", "Third Work", "Fourth Work", "Fifth Work", "Sixth Work" },
+            result!.FeaturedWorks.Select(x => x.Title).ToArray());
     }
 
     [Fact]
@@ -1116,6 +1119,34 @@ public class PublicQueryHandlerComponentTests
     }
 
     [Fact]
+    public async Task GetWorkDetailContextQueryHandler_ReturnsBoundedPublicContext_WithAdjacentItems()
+    {
+        await using var dbContext = CreateDbContext();
+        var now = new DateTimeOffset(2026, 5, 13, 12, 0, 0, TimeSpan.Zero);
+        dbContext.Works.AddRange(
+            CreateWork("Newer Work", "newer-work", published: true, publishedAt: now.AddDays(1)),
+            CreateWork("Alpha Same Day", "alpha-same-day", published: true, publishedAt: now),
+            CreateWork("Current Work", "current-work", published: true, publishedAt: now),
+            CreateWork("Zulu Same Day", "zulu-same-day", published: true, publishedAt: now),
+            CreateWork("Older Work", "older-work", published: true, publishedAt: now.AddDays(-1)),
+            CreateWork("Draft Work", "draft-work", published: false, publishedAt: now.AddDays(2)));
+        await dbContext.SaveChangesAsync();
+
+        var handler = new GetWorkDetailContextQueryHandler(CreateWorkQueryStore(dbContext));
+
+        var result = await handler.Handle(new GetWorkDetailContextQuery("current-work", Limit: 2), CancellationToken.None);
+        var missing = await handler.Handle(new GetWorkDetailContextQuery("missing-work"), CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Equal("Alpha Same Day", result!.Newer?.Title);
+        Assert.Equal("Zulu Same Day", result.Older?.Title);
+        Assert.Equal(new[] { "Newer Work", "Alpha Same Day" }, result.Related.Select(x => x.Title).ToArray());
+        Assert.DoesNotContain(result.Related, x => x.Slug == "current-work");
+        Assert.DoesNotContain(result.Related, x => x.Slug == "draft-work");
+        Assert.Null(missing);
+    }
+
+    [Fact]
     public async Task GetAdminWorkByIdQueryHandler_OmitsTimelinePreviewUrls_WhenPreviewAssetsAreMissing()
     {
         await using var dbContext = CreateDbContext();
@@ -1338,6 +1369,34 @@ public class PublicQueryHandlerComponentTests
 
         Assert.Null(draftResult);
         Assert.Null(missingResult);
+    }
+
+    [Fact]
+    public async Task GetBlogDetailContextQueryHandler_ReturnsBoundedPublicContext_WithAdjacentItems()
+    {
+        await using var dbContext = CreateDbContext();
+        var now = new DateTimeOffset(2026, 5, 13, 12, 0, 0, TimeSpan.Zero);
+        dbContext.Blogs.AddRange(
+            CreateBlog("Newer Blog", "newer-blog", published: true, publishedAt: now.AddDays(1)),
+            CreateBlog("Alpha Same Day", "alpha-same-day", published: true, publishedAt: now),
+            CreateBlog("Current Blog", "current-blog", published: true, publishedAt: now),
+            CreateBlog("Zulu Same Day", "zulu-same-day", published: true, publishedAt: now),
+            CreateBlog("Older Blog", "older-blog", published: true, publishedAt: now.AddDays(-1)),
+            CreateBlog("Draft Blog", "draft-blog", published: false, publishedAt: now.AddDays(2)));
+        await dbContext.SaveChangesAsync();
+
+        var handler = new GetBlogDetailContextQueryHandler(CreateBlogQueryStore(dbContext));
+
+        var result = await handler.Handle(new GetBlogDetailContextQuery("current-blog", Limit: 2), CancellationToken.None);
+        var missing = await handler.Handle(new GetBlogDetailContextQuery("missing-blog"), CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Equal("Alpha Same Day", result!.Newer?.Title);
+        Assert.Equal("Zulu Same Day", result.Older?.Title);
+        Assert.Equal(new[] { "Newer Blog", "Alpha Same Day" }, result.Related.Select(x => x.Title).ToArray());
+        Assert.DoesNotContain(result.Related, x => x.Slug == "current-blog");
+        Assert.DoesNotContain(result.Related, x => x.Slug == "draft-blog");
+        Assert.Null(missing);
     }
 
     private static Blog CreateBlog(

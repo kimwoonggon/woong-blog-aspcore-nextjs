@@ -60,6 +60,12 @@ export interface WorkDetail extends WorkListItem {
   videos: WorkVideo[]
 }
 
+export interface WorkDetailContext {
+  newer: WorkListItem | null
+  older: WorkListItem | null
+  related: WorkListItem[]
+}
+
 async function buildAdminHeaders(): Promise<Record<string, string>> {
   const { getServerCookieHeader } = await import('@/lib/api/server')
   const cookieHeader = await getServerCookieHeader()
@@ -264,6 +270,19 @@ export async function fetchAllPublicWorks(pageSize = 100) {
   }
 
   return items
+}
+
+export async function fetchPublicWorkContext(slug: string, limit = 9) {
+  const apiBaseUrl = await getPublicServerApiBaseUrl()
+  const params = new URLSearchParams({ limit: String(limit) })
+  const response = await fetch(`${apiBaseUrl}/public/works/${encodeURIComponent(slug)}/context?${params.toString()}`, {
+    ...publicContentFetchInit([PUBLIC_CONTENT_TAGS.works, PUBLIC_CONTENT_TAGS.work(slug)]),
+  })
+  if (response.status === 404) return null
+  if (!response.ok) {
+    await throwPublicApiError(response, `Failed to load public work context '${slug}'.`)
+  }
+  return response.json() as Promise<WorkDetailContext>
 }
 
 export async function fetchPublicWorkBySlug(slug: string) {
