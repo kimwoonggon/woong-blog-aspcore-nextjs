@@ -63,7 +63,7 @@ export function PublicDetailAdjacentLink({
       href={href}
       prefetch={false}
       className={[
-        'group rounded-2xl border border-border/80 bg-background p-4 transition hover:border-primary/30 hover:shadow-sm',
+        'group rounded-2xl border border-border/80 bg-white p-4 transition hover:border-primary/30 hover:shadow-sm dark:bg-card',
         alignEnd ? 'text-left sm:justify-self-end' : '',
       ].join(' ')}
     >

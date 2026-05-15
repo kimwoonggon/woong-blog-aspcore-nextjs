@@ -131,13 +131,13 @@ function RelatedContentPager({
     : 'Move through neighboring case studies without resetting the page.'
 
   return (
-    <section className="mt-12 space-y-5">
+    <section className="mt-12 space-y-5 bg-white dark:bg-background">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 className="text-2xl font-heading font-bold text-foreground text-balance">{heading}</h2>
           <p className="max-w-2xl text-sm text-muted-foreground text-pretty">{followUpCopy}</p>
         </div>
-        <span className="shrink-0 rounded-full border border-border/80 bg-background px-3 py-1 text-xs font-medium tabular-nums text-muted-foreground">
+        <span className="shrink-0 rounded-full border border-border/80 bg-white px-3 py-1 text-xs font-medium tabular-nums text-muted-foreground dark:bg-card">
           {visibleItems.length} visible
         </span>
       </div>
@@ -147,7 +147,7 @@ function RelatedContentPager({
           const card = (
             <article
               className={[
-                'responsive-feed-card flex h-full flex-col overflow-hidden rounded-2xl bg-background py-0 shadow-sm transition',
+                'responsive-feed-card flex h-full flex-col overflow-hidden rounded-2xl bg-white py-0 shadow-sm transition dark:bg-card',
                 item.id === currentItemId
                   ? 'border-2 border-brand-accent ring-1 ring-brand-accent/20'
                   : 'border border-border/80 hover:border-primary/30 hover:shadow-md',
@@ -223,7 +223,7 @@ function RelatedContentPager({
         })}
       </div>
 
-      <nav aria-label={`${heading} pagination`} className="rounded-2xl border border-border/70 bg-background/80 p-4 shadow-sm">
+      <nav aria-label={`${heading} pagination`} className="rounded-2xl border border-border/70 bg-white p-4 shadow-sm dark:bg-card">
         <div className="flex flex-wrap items-center justify-center gap-2">
           {pageWindow.map((pageNumber) => (
             <Button

@@ -1,5 +1,7 @@
-import { expect, test, type Page } from './helpers/performance-test'
+import { expect, test, type Locator, type Page } from './helpers/performance-test'
 import { expectRgbClose, getColorChannels, gotoWithTheme } from './helpers/ui-improvement'
+
+test.setTimeout(60_000)
 
 function px(value: string) {
   return Number.parseFloat(value.replace('px', ''))
@@ -18,6 +20,12 @@ async function expectWhiteReadingSurface(page: Page, testId: string, contentRoot
 
   expectRgbClose(bodyBackground, [255, 255, 255, 255], 3)
   expectRgbClose(contentBackground, [255, 255, 255, 255], 3)
+}
+
+async function expectWhiteSurface(locator: Locator) {
+  await expect(locator).toBeVisible()
+  const background = await getColorChannels(locator, 'background-color')
+  expectRgbClose(background, [255, 255, 255, 255], 3)
 }
 
 test('VA-120 blog TOC stays visually separated from the article body', async ({ page }) => {
@@ -118,4 +126,54 @@ test('VA-124 Work and Study TOC rails keep a readable desktop width', async ({ p
   const workTocBox = await page.getByTestId('work-toc-rail').boundingBox()
   expect(workTocBox).toBeTruthy()
   expect(workTocBox!.width).toBeGreaterThanOrEqual(280)
+})
+
+test('VA-125 Work and Study detail pages keep the article body centered independently of the TOC rail', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+
+  await page.goto('/blog/seeded-blog')
+  const blogBody = page.getByTestId('blog-detail-body')
+  const blogToc = page.getByTestId('blog-toc')
+  await expect(blogBody).toBeVisible()
+  await expect(blogToc).toBeVisible()
+  const [blogBodyBox, blogTocBox] = await Promise.all([blogBody.boundingBox(), blogToc.boundingBox()])
+  expect(blogBodyBox).toBeTruthy()
+  expect(blogTocBox).toBeTruthy()
+  expect(Math.abs(blogBodyBox!.x + blogBodyBox!.width / 2 - 720)).toBeLessThanOrEqual(4)
+  expect(blogTocBox!.x - (blogBodyBox!.x + blogBodyBox!.width)).toBeGreaterThanOrEqual(24)
+  expect(blogTocBox!.width).toBeGreaterThanOrEqual(280)
+
+  await page.goto('/works/seeded-work')
+  const workBody = page.getByTestId('work-detail-body')
+  const workToc = page.getByTestId('work-toc-rail')
+  await expect(workBody).toBeVisible()
+  await expect(workToc).toBeVisible()
+  const [workBodyBox, workTocBox] = await Promise.all([workBody.boundingBox(), workToc.boundingBox()])
+  expect(workBodyBox).toBeTruthy()
+  expect(workTocBox).toBeTruthy()
+  expect(Math.abs(workBodyBox!.x + workBodyBox!.width / 2 - 720)).toBeLessThanOrEqual(4)
+  expect(workTocBox!.x - (workBodyBox!.x + workBodyBox!.width)).toBeGreaterThanOrEqual(24)
+  expect(workTocBox!.width).toBeGreaterThanOrEqual(280)
+})
+
+test('VA-126 Work and Study detail light mode uses white base surfaces for body, TOC, and related cards', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+
+  await gotoWithTheme(page, '/blog/seeded-blog', 'light')
+  await expectWhiteSurface(page.locator('body'))
+  await expectWhiteSurface(page.getByTestId('blog-detail-page-shell'))
+  await expectWhiteSurface(page.getByTestId('blog-detail-body'))
+  await expectWhiteSurface(page.locator('#blog-detail-content'))
+  await expectWhiteSurface(page.getByTestId('blog-toc'))
+  await expectWhiteSurface(page.getByTestId('blog-related-shell'))
+  await expectWhiteSurface(page.getByTestId('related-blog-card').first().locator('article'))
+
+  await gotoWithTheme(page, '/works/seeded-work', 'light')
+  await expectWhiteSurface(page.locator('body'))
+  await expectWhiteSurface(page.getByTestId('work-detail-page-shell'))
+  await expectWhiteSurface(page.getByTestId('work-detail-body'))
+  await expectWhiteSurface(page.locator('#work-detail-content'))
+  await expectWhiteSurface(page.getByTestId('work-toc-nav'))
+  await expectWhiteSurface(page.getByTestId('work-related-shell'))
+  await expectWhiteSurface(page.getByTestId('related-work-card').first().locator('article'))
 })
