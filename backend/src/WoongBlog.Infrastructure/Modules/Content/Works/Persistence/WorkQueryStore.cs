@@ -22,7 +22,7 @@ public sealed class WorkQueryStore(
     IWorkVideoPlaybackUrlBuilder playbackUrlBuilder) : IWorkQueryStore
 {
     private const string PostgresProviderName = "Npgsql.EntityFrameworkCore.PostgreSQL";
-    private const int MaxDetailContextLimit = 9;
+    private const int MaxDetailContextLimit = 24;
     private static readonly ConcurrentDictionary<IModel, Func<WoongBlogDbContext, string, IAsyncEnumerable<PublicWorkDetailRow>>> PublishedDetailBySlugQueries = new();
 
     private static Func<WoongBlogDbContext, string, IAsyncEnumerable<PublicWorkDetailRow>> CreatePublishedDetailBySlugQuery(IModel _)
@@ -248,8 +248,31 @@ public sealed class WorkQueryStore(
                 work.PublishedAt))
             .FirstOrDefaultAsync(cancellationToken);
 
-        var related = await publishedWorks
-            .OrderByDescending(work => work.PublishedAt)
+        var newerRelated = await publishedWorks
+            .Where(work =>
+                (work.PublishedAt ?? DateTimeOffset.MinValue) > currentPublishedAt
+                || ((work.PublishedAt ?? DateTimeOffset.MinValue) == currentPublishedAt
+                    && string.Compare(work.Title, current.Title) < 0))
+            .OrderBy(work => work.PublishedAt ?? DateTimeOffset.MinValue)
+            .ThenByDescending(work => work.Title)
+            .Take(relatedLimit)
+            .Select(work => new WorkCardDto(
+                work.Id,
+                work.Slug,
+                work.Title,
+                work.Excerpt,
+                work.Category,
+                work.Tags,
+                work.PublicThumbnailUrl,
+                work.PublishedAt))
+            .ToListAsync(cancellationToken);
+
+        var olderRelated = await publishedWorks
+            .Where(work =>
+                (work.PublishedAt ?? DateTimeOffset.MinValue) < currentPublishedAt
+                || ((work.PublishedAt ?? DateTimeOffset.MinValue) == currentPublishedAt
+                    && string.Compare(work.Title, current.Title) > 0))
+            .OrderByDescending(work => work.PublishedAt ?? DateTimeOffset.MinValue)
             .ThenBy(work => work.Title)
             .Take(relatedLimit)
             .Select(work => new WorkCardDto(
@@ -263,7 +286,41 @@ public sealed class WorkQueryStore(
                 work.PublishedAt))
             .ToListAsync(cancellationToken);
 
+        var related = BuildBalancedRelatedContext(newerRelated, olderRelated, relatedLimit);
+
         return new WorkDetailContextDto(newer, older, related);
+    }
+
+    private static List<WorkCardDto> BuildBalancedRelatedContext(
+        List<WorkCardDto> newerClosest,
+        List<WorkCardDto> olderClosest,
+        int limit)
+    {
+        if (limit <= 0)
+        {
+            return [];
+        }
+
+        var newerTarget = limit / 2;
+        var olderTarget = limit - newerTarget;
+        var selectedNewer = newerClosest.Take(newerTarget).ToList();
+        var selectedOlder = olderClosest.Take(olderTarget).ToList();
+
+        var remaining = limit - selectedNewer.Count - selectedOlder.Count;
+        if (remaining > 0)
+        {
+            selectedOlder.AddRange(olderClosest.Skip(selectedOlder.Count).Take(remaining));
+        }
+
+        remaining = limit - selectedNewer.Count - selectedOlder.Count;
+        if (remaining > 0)
+        {
+            selectedNewer.AddRange(newerClosest.Skip(selectedNewer.Count).Take(remaining));
+        }
+
+        selectedNewer.Reverse();
+        selectedNewer.AddRange(selectedOlder);
+        return selectedNewer;
     }
 
     private async Task<AdminWorkDetailDto> BuildAdminDetailAsync(Work work, CancellationToken cancellationToken)

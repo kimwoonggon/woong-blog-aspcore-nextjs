@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Public Detail UI Pagination Audit - 2026-05-15</title>
+  <style>
+    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.55; margin: 2rem auto; max-width: 860px; padding: 0 1rem; color: #111827; background: #fff; }
+    h1, h2 { line-height: 1.2; }
+    code { background: #f3f4f6; padding: 0.1rem 0.25rem; border-radius: 4px; }
+    .pass { color: #047857; font-weight: 700; }
+    .warn { color: #92400e; font-weight: 700; }
+    li { margin: 0.25rem 0; }
+  </style>
+</head>
+<body>
+  <h1>Public Detail UI Pagination Audit - 2026-05-15</h1>
+  <p><strong>Status:</strong> <span class="pass">Local validation passed</span></p>
+  <p><strong>Branch:</strong> <code>codex/public-detail-ui-pagination-20260515</code>, based on <code>origin/dev</code> at <code>d0a4e42</code>.</p>
+
+  <h2>Changed</h2>
+  <ul>
+    <li>Widened Work and Study detail TOC rails without squeezing the reading column.</li>
+    <li>Kept Work and Study detail reading shells white in light mode.</li>
+    <li>Expanded and balanced related context around the current detail item.</li>
+    <li>Fixed centered related pagination math for larger page sizes.</li>
+    <li>Added focused Vitest, xUnit, and Playwright coverage.</li>
+  </ul>
+
+  <h2>Validation</h2>
+  <ul>
+    <li>Focused Vitest: <span class="pass">passed</span>, 4 files / 16 tests.</li>
+    <li>Focused backend component and integration xUnit: <span class="pass">passed</span>, 4 total tests.</li>
+    <li>Targeted ESLint and <code>npm run typecheck</code>: <span class="pass">passed</span>.</li>
+    <li>Full <code>npm test</code>: <span class="pass">passed</span>, 93 files / 654 tests.</li>
+    <li>Full <code>dotnet test backend/WoongBlog.sln</code>: <span class="pass">passed</span>.</li>
+    <li>Docker readiness: <span class="pass">passed</span> for backend <code>18082</code> and frontend <code>13002</code>.</li>
+    <li>Final Docker core full E2E: <span class="pass">432 passed, 4 skipped, 0 failed</span>, 15.5m.</li>
+    <li>Latency: 436 artifacts, 0 budget failures, 81 warnings.</li>
+  </ul>
+
+  <h2>Risks</h2>
+  <ul>
+    <li><span class="warn">Not proven:</span> strict 2 core / 8 GB Docker resource limit.</li>
+    <li>Existing npm audit vulnerabilities and NU1901 <code>AWSSDK.Core</code> warning were not remediated.</li>
+    <li>Local stack used alternate ports because default host ports were unavailable.</li>
+  </ul>
+
+  <h2>Recommendation</h2>
+  <p>Proceed to commit, push, open a PR into <code>dev</code>, and promote to <code>main</code> only after dev CI is green.</p>
+</body>
+</html>
