@@ -118,7 +118,7 @@ export function TableOfContents({
     <nav
       aria-label="Table of contents"
       data-testid={testId}
-      className="w-full min-w-0 rounded-2xl border border-border/80 bg-background/95 px-3.5 py-4 shadow-sm transition-all"
+      className="w-full min-w-0 rounded-2xl border border-border/80 bg-white px-3.5 py-4 shadow-sm transition-all dark:bg-card"
     >
       <div className="mb-3 grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-x-2 gap-y-2">
         <p className="min-w-0 break-words pt-2 text-xs font-semibold uppercase leading-snug tracking-[0.18em] text-muted-foreground">
